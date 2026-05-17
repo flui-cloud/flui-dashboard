@@ -1,0 +1,238 @@
+<div class="space-y-6">
+  <!-- Header with refresh button and health status -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-semibold text-foreground">Cluster Monitoring</h2>
+      <div class="flex items-center gap-2">
+        <p class="text-sm text-sub">
+          @if (pollingPaused()) {
+            <span class="text-orange-600 dark:text-orange-400 font-medium">⚠️ Auto-refresh paused</span>
+          } @else {
+            Real-time metrics updated every 5 seconds
+          }
+        </p>
+        @if (!pollingPaused() && !isLoading()) {
+          <span class="inline-flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+        }
+      </div>
+    </div>
+    <button
+      (click)="refreshMetrics()"
+      [disabled]="isLoading() || (pollingPaused() && !canRetry())"
+      [title]="pollingPaused() ? 'Retry' : 'Refresh'"
+      class="inline-flex items-center p-1.5 rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      [class]="pollingPaused() && canRetry()
+        ? 'border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+        : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'"
+    >
+      <ng-icon name="lucideRefreshCw" [class.animate-spin]="isLoading()" class="h-3.5 w-3.5" />
+    </button>
+  </div>
+
+  <!-- Autoscale warning banner -->
+  <app-autoscale-warning-banner
+    [status]="autoscaleStatus()"
+    (configure)="goToAutoscaling()"
+    (addWorker)="openAddWorker()"
+  />
+
+  @if (showAddWorkerDialog() && clusterService.cluster()?.id; as cid) {
+    <app-add-worker-dialog
+      [clusterId]="cid"
+      [currentNodes]="autoscaleStatus()?.currentNodes ?? 0"
+      [maxNodes]="autoscaleStatus()?.maxNodes ?? null"
+      (closed)="showAddWorkerDialog.set(false)"
+    />
+  }
+
+  <!-- Error message -->
+  @if (error()) {
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+      <p class="text-red-700 dark:text-red-400">{{ error() }}</p>
+    </div>
+  }
+
+  <!-- Historical Metrics Charts -->
+  <div class="space-y-6">
+    <!-- Time range selector -->
+    <div class="flex items-center justify-between card-surface p-4">
+      <h3 class="text-lg font-semibold text-foreground">Historical Metrics</h3>
+      <div class="flex gap-2">
+        <button
+          (click)="setTimeRange('1h')"
+          [class.bg-blue-600]="timeRange() === '1h'"
+          [class.text-white]="timeRange() === '1h'"
+          [class.bg-muted]="timeRange() !== '1h'"
+          [class.text-muted-foreground]="timeRange() !== '1h'"
+          class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+        >
+          1 Hour
+        </button>
+        <button
+          (click)="setTimeRange('2h')"
+          [class.bg-blue-600]="timeRange() === '2h'"
+          [class.text-white]="timeRange() === '2h'"
+          [class.bg-muted]="timeRange() !== '2h'"
+          [class.text-muted-foreground]="timeRange() !== '2h'"
+          class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+        >
+          2 Hours
+        </button>
+        <button
+          (click)="setTimeRange('3h')"
+          [class.bg-blue-600]="timeRange() === '3h'"
+          [class.text-white]="timeRange() === '3h'"
+          [class.bg-muted]="timeRange() !== '3h'"
+          [class.text-muted-foreground]="timeRange() !== '3h'"
+          class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+        >
+          3 Hours
+        </button>
+        <button
+          (click)="setTimeRange('6h')"
+          [class.bg-blue-600]="timeRange() === '6h'"
+          [class.text-white]="timeRange() === '6h'"
+          [class.bg-muted]="timeRange() !== '6h'"
+          [class.text-muted-foreground]="timeRange() !== '6h'"
+          class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+        >
+          6 Hours
+        </button>
+        <button
+          (click)="setTimeRange('1d')"
+          [class.bg-blue-600]="timeRange() === '1d'"
+          [class.text-white]="timeRange() === '1d'"
+          [class.bg-muted]="timeRange() !== '1d'"
+          [class.text-muted-foreground]="timeRange() !== '1d'"
+          class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+        >
+          1 Day
+        </button>
+      </div>
+    </div>
+
+    <!-- CPU History Chart -->
+    @if (cpuHistory()) {
+      <div class="card-surface p-6">
+        <h4 class="text-md font-semibold text-foreground mb-4">CPU Usage Over Time</h4>
+        <app-time-series-line [data]="cpuHistory()!" [config]="cpuTimeSeriesConfig()" />
+      </div>
+    }
+
+    <!-- Memory History Chart -->
+    @if (memoryHistory()) {
+      <div class="card-surface p-6">
+        <h4 class="text-md font-semibold text-foreground mb-4">Memory Usage Over Time</h4>
+        <app-time-series-line [data]="memoryHistory()!" [config]="memoryTimeSeriesConfig()" />
+      </div>
+    }
+
+    <!-- Network History Chart -->
+    @if (networkHistory()) {
+      <div class="card-surface p-6">
+        <h4 class="text-md font-semibold text-foreground mb-4">Network I/O Over Time</h4>
+        <app-time-series-line [data]="networkHistory()!" [config]="networkTimeSeriesConfig" />
+      </div>
+    }
+
+    <!-- Loading state for history -->
+    @if (loadingHistory() && !cpuHistory()) {
+      <div class="animate-pulse space-y-4">
+        @for (i of [1,2,3]; track i) {
+          <div class="card-surface p-6 space-y-3">
+            <div class="skeleton h-5 w-48"></div>
+            <div class="skeleton h-[300px]"></div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Per-Server Detailed Metrics -->
+  @if (servers().length > 0) {
+    <div class="space-y-6">
+      @for (server of servers(); track server.serverId) {
+        <div class="card-surface p-6">
+          <!-- Server header -->
+          <div class="mb-4 border-b border-border pb-3">
+            <h3 class="text-lg font-semibold text-foreground">
+              Server: {{ server.serverId }}
+            </h3>
+            <p class="text-sm text-sub">
+              Instance: {{ server.instance }}
+            </p>
+          </div>
+
+          <!-- Gauges grid -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- CPU Gauge -->
+            <div class="card-inner border border-border rounded-lg p-4">
+              <app-grade-gauge [data]="getCpuData(server)" [config]="cpuConfig()" />
+            </div>
+
+            <!-- Memory Gauge -->
+            <div class="card-inner border border-border rounded-lg p-4">
+              <app-grade-gauge [data]="getMemoryData(server)" [config]="memoryConfig()" />
+            </div>
+
+            <!-- Disk Gauge -->
+            <div class="card-inner border border-border rounded-lg p-4">
+              <app-grade-gauge [data]="getDiskData(server)" [config]="diskConfig" />
+            </div>
+          </div>
+
+          <!-- Network stats (simple text for now, will be chart later) -->
+          @if (server.network.bytesIn > 0 || server.network.bytesOut > 0) {
+            <div class="mt-4 pt-4 border-t border-border">
+              <div class="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <p class="text-xs text-sub">Network In</p>
+                  <p class="text-lg font-semibold text-foreground">
+                    {{ (server.network.bytesIn / (1024 * 1024)).toFixed(2) }} MB
+                  </p>
+                </div>
+                <div>
+                  <p class="text-xs text-sub">Network Out</p>
+                  <p class="text-lg font-semibold text-foreground">
+                    {{ (server.network.bytesOut / (1024 * 1024)).toFixed(2) }} MB
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (servers().length === 0 && !isLoading() && !error()) {
+    <div class="card-surface p-12">
+      <div class="text-center">
+        <ng-icon name="lucideActivity" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+        <p class="text-sub">
+          No metrics available. Waiting for data...
+        </p>
+      </div>
+    </div>
+  }
+
+  <!-- Loading skeleton -->
+  @if (isLoading() && servers().length === 0) {
+    <div class="animate-pulse space-y-4">
+      @for (i of [1,2]; track i) {
+        <div class="card-surface p-6">
+          <div class="mb-4 pb-3 border-b border-border space-y-1.5">
+            <div class="skeleton h-5 w-40"></div>
+            <div class="skeleton h-3 w-28"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            @for (j of [1,2,3]; track j) {
+              <div class="skeleton card-inner border border-border rounded-lg p-4 h-[200px]"></div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

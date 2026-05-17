@@ -1,0 +1,317 @@
+<div class="firewall-inline-editor">
+  <!-- Header with Add Button -->
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      Firewall Rules ({{ workingRules().length }})
+    </h3>
+    <button
+      (click)="startAddNewRule()"
+      [disabled]="isAddingNew()"
+      class="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+    >
+      + Add New Rule
+    </button>
+  </div>
+
+  <!-- Add New Rule Form (appears at top when active) -->
+  @if (isAddingNew()) {
+    <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/10 border-2 border-blue-300 dark:border-blue-700 rounded-lg shadow-md">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <span class="text-blue-600">+</span> New Rule
+        </h4>
+        <div class="flex gap-2">
+          <button
+            (click)="cancelAddNew()"
+            class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Cancel
+          </button>
+          <button
+            (click)="addNewRule()"
+            class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
+      <!-- Validation Errors -->
+      @if (newRuleErrors().length > 0) {
+        <div class="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm">
+          <ul class="list-disc list-inside text-red-700 dark:text-red-400">
+            @for (error of newRuleErrors(); track error) {
+              <li>{{ error }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Compact Form -->
+      <div class="grid grid-cols-2 gap-3">
+        <input
+          type="text"
+          [value]="newRuleForm().description"
+          (input)="updateNewRuleField('description', $any($event.target).value)"
+          placeholder="Description (e.g., SSH Access)"
+          class="col-span-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+        />
+
+        <select
+          [value]="newRuleForm().direction"
+          (change)="updateNewRuleField('direction', $any($event.target).value); sourceIpsText.set(''); destinationIpsText.set('')"
+          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+        >
+          <option value="in">Inbound</option>
+          <option value="out">Outbound</option>
+        </select>
+
+        <select
+          [value]="newRuleForm().protocol"
+          (change)="updateNewRuleField('protocol', $any($event.target).value)"
+          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+        >
+          <option value="tcp">TCP</option>
+          <option value="udp">UDP</option>
+          <option value="icmp">ICMP</option>
+        </select>
+
+        @if (newRuleForm().protocol !== 'icmp') {
+          <input
+            type="text"
+            [value]="newRuleForm().port"
+            (input)="updateNewRuleField('port', $any($event.target).value)"
+            placeholder="Port (e.g., 22, 80, 8000-8100)"
+            class="col-span-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          />
+        }
+
+        <div class="col-span-2">
+          <input
+            type="text"
+            [value]="newRuleForm().direction === 'in' ? sourceIpsText() : destinationIpsText()"
+            (input)="newRuleForm().direction === 'in' ? sourceIpsText.set($any($event.target).value) : destinationIpsText.set($any($event.target).value)"
+            [placeholder]="newRuleForm().direction === 'in' ? 'Source IPs (CIDR)' : 'Destination IPs (CIDR)'"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          />
+
+          <!-- Compact IP Helpers -->
+          <div class="mt-1 flex flex-wrap gap-1">
+            @if (newRuleForm().direction === 'in') {
+              <button type="button" (click)="detectCurrentIp(true)" [disabled]="detectingIp()"
+                class="text-xs px-2 py-0.5 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50">
+                {{ detectingIp() ? 'Detecting...' : '🌐 My IP' }}
+              </button>
+            }
+            <button type="button" (click)="setIpPreset('0.0.0.0/0', true)"
+              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">All IPs</button>
+            <button type="button" (click)="setIpPreset('192.168.0.0/16', true)"
+              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">192.168.x.x</button>
+            <button type="button" (click)="setIpPreset('10.0.0.0/8', true)"
+              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">10.x.x.x</button>
+            <button type="button" (click)="setIpPreset('172.16.0.0/12', true)"
+              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">172.16-31.x.x</button>
+            <button type="button" (click)="clearIpField(true)"
+              class="text-xs px-2 py-0.5 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Rules List -->
+  <div class="space-y-2">
+    @if (workingRules().length === 0) {
+      <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+        <p>No firewall rules configured</p>
+        <p class="text-sm mt-1">Click "Add New Rule" to create your first rule</p>
+      </div>
+    } @else {
+      @for (rule of workingRules(); track $index) {
+        <div
+          [class]="expandedIndex() === $index ?
+            'rule-card rule-card--editing' :
+            'rule-card'"
+          [class.rule-card--dirty]="isRuleModified($index)"
+        >
+          <!-- Collapsed View -->
+          @if (expandedIndex() !== $index) {
+            <div class="flex items-center justify-between p-3">
+              <button type="button" class="flex-1 text-left" (click)="expandRule($index)">
+                <div class="flex items-center gap-2">
+                  @if (isRuleModified($index)) {
+                    <span class="text-orange-500 text-lg leading-none">•</span>
+                  }
+                  <span class="text-gray-600 dark:text-gray-400">▸</span>
+                  <span class="font-medium text-gray-900 dark:text-gray-100">
+                    {{ rule.description }}
+                  </span>
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400 ml-7 mt-0.5">
+                  {{ getRuleSummary(rule) }}
+                </div>
+              </button>
+
+              <div class="flex items-center gap-1">
+                <button
+                  (click)="expandRule($index)"
+                  class="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                  title="Edit"
+                >
+                  ✎
+                </button>
+                <button
+                  (click)="deleteRule($index)"
+                  class="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                  title="Delete"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Expanded Edit View -->
+          @if (expandedIndex() === $index) {
+            <div class="p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-600 dark:text-gray-400">▾</span>
+                  <h4 class="font-medium text-gray-900 dark:text-gray-100">
+                    {{ rule.description || 'Edit Rule' }}
+                  </h4>
+                </div>
+                <div class="flex gap-2">
+                  <button
+                    (click)="collapseRule($index)"
+                    class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    (click)="saveEditedRule($index)"
+                    class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+
+              <!-- Validation Errors -->
+              @if (ruleErrors().has($index)) {
+                <div class="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm">
+                  <ul class="list-disc list-inside text-red-700 dark:text-red-400">
+                    @for (error of ruleErrors().get($index); track error) {
+                      <li>{{ error }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              <!-- Compact Edit Form -->
+              <div class="grid grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  [value]="rule.description"
+                  (input)="updateRuleField($index, 'description', $any($event.target).value)"
+                  placeholder="Description"
+                  class="col-span-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+
+                <select
+                  [value]="rule.direction"
+                  (change)="updateRuleField($index, 'direction', $any($event.target).value); sourceIpsText.set(''); destinationIpsText.set('')"
+                  class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="in">Inbound</option>
+                  <option value="out">Outbound</option>
+                </select>
+
+                <select
+                  [value]="rule.protocol"
+                  (change)="updateRuleField($index, 'protocol', $any($event.target).value)"
+                  class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="tcp">TCP</option>
+                  <option value="udp">UDP</option>
+                  <option value="icmp">ICMP</option>
+                </select>
+
+                @if (rule.protocol !== 'icmp') {
+                  <input
+                    type="text"
+                    [value]="rule.port"
+                    (input)="updateRuleField($index, 'port', $any($event.target).value)"
+                    placeholder="Port"
+                    class="col-span-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  />
+                }
+
+                <div class="col-span-2">
+                  <input
+                    type="text"
+                    [value]="rule.direction === 'in' ? sourceIpsText() : destinationIpsText()"
+                    (input)="rule.direction === 'in' ? sourceIpsText.set($any($event.target).value) : destinationIpsText.set($any($event.target).value)"
+                    [placeholder]="rule.direction === 'in' ? 'Source IPs (CIDR)' : 'Destination IPs (CIDR)'"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  />
+
+                  <!-- Compact IP Helpers -->
+                  <div class="mt-1 flex flex-wrap gap-1">
+                    @if (rule.direction === 'in') {
+                      <button type="button" (click)="detectCurrentIp(false)" [disabled]="detectingIp()"
+                        class="text-xs px-2 py-0.5 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50">
+                        {{ detectingIp() ? 'Detecting...' : '🌐 My IP' }}
+                      </button>
+                    }
+                    <button type="button" (click)="setIpPreset('0.0.0.0/0', false)"
+                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">All IPs</button>
+                    <button type="button" (click)="setIpPreset('192.168.0.0/16', false)"
+                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">192.168.x.x</button>
+                    <button type="button" (click)="setIpPreset('10.0.0.0/8', false)"
+                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">10.x.x.x</button>
+                    <button type="button" (click)="setIpPreset('172.16.0.0/12', false)"
+                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">172.16-31.x.x</button>
+                    <button type="button" (click)="clearIpField(false)"
+                      class="text-xs px-2 py-0.5 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20">Clear</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Sticky Bottom Save Bar -->
+  @if (isDirty()) {
+    <div class="sticky bottom-0 left-0 right-0 mt-6 p-4 bg-white dark:bg-gray-800 border-t-2 border-orange-500 shadow-lg rounded-t-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-orange-600 dark:text-orange-400 font-medium flex items-center gap-2">
+            <span class="text-lg">•</span> You have unsaved changes
+          </span>
+          <span class="text-sm text-gray-600 dark:text-gray-400">
+            {{ changedRulesCount() }} rule(s) modified
+          </span>
+        </div>
+        <div class="flex gap-2">
+          <button
+            (click)="discardAllChanges()"
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Discard Changes
+          </button>
+          <button
+            (click)="saveAllChanges()"
+            [disabled]="hasValidationErrors()"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,151 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# ---------- Build output ----------
+/dist
+/tmp
+/out-tsc
+/bazel-out
+*.tsbuildinfo
+
+# ---------- Dependencies ----------
+/node_modules
+.pnpm-store/
+.yarn/
+package-lock.json
+yarn.lock
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+pnpm-debug.log
+
+# ---------- Angular / Nx caches ----------
+/.angular
+/.nx
+
+# ---------- Test / coverage ----------
+/coverage
+/.nyc_output
+testem.log
+karma.log
+
+# ---------- Editors & IDEs ----------
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.sublime-project
+.history/
+
+# Visual Studio Code (allow shared workspace files only)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains
+*.iml
+
+# ---------- AI assistants & extensions ----------
+# Claude Code / Anthropic
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.anthropic/
+
+# Cursor
+.cursor/
+.cursorignore
+.cursorrules
+.cursorindexignore
+
+# GitHub Copilot
+.copilot/
+.github/copilot-instructions.md
+
+# Codeium / Windsurf
+.codeium/
+.windsurf/
+.windsurfrules
+
+# Continue
+.continue/
+
+# Aider
+.aider*
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v*/
+
+# Cline / Roo / Kilo
+.cline/
+.clinerules
+.roo/
+.roomodes
+.kilocode/
+.kilocoderules
+
+# Gemini / Google AI
+.gemini/
+GEMINI.md
+.idx/
+
+# Other AI tools
+AGENTS.md
+.agent/
+.agents/
+.gpteng/
+.gptengineer/
+.devin/
+.tabnine/
+.sourcegraph/
+.codegpt/
+.zed/
+.amp/
+.qwen/
+
+# Local AI rule / prompt drops
+.prompts/
+.ai/
+
+# ---------- Secrets / local env ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---------- Sonar (local-only analysis — CI uses SonarCloud) ----------
+.sonar/
+sonar-project.properties
+
+# ---------- Internal / private docs ----------
+internal-docs/
+
+# ---------- Logs & temp ----------
+*.log
+*.bak
+*.tmp
+*.orig
+.sass-cache/
+/connect.lock
+/libpeerconnection.log
+/typings
+
+# ---------- Tooling residue ----------
+/tools
+structure.sh
+build.log
+build-output.log
+
+# ---------- Backups ----------
+src/assets/config.json.backup*
+
+# ---------- OS files ----------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini

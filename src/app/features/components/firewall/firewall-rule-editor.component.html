@@ -1,0 +1,317 @@
+<div class="firewall-rule-editor bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+      Edit Firewall Rules
+    </h2>
+    <div class="flex items-center gap-2">
+      <button
+        (click)="startAddRule()"
+        [disabled]="showAddForm()"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        + Add Rule
+      </button>
+    </div>
+  </div>
+
+  <!-- Rules List -->
+  @if (rules().length > 0) {
+    <div class="space-y-3 mb-6">
+      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+        Configured Rules ({{ rules().length }})
+      </h3>
+      @for (rule of rules(); track $index) {
+        <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+          <!-- Rule Info -->
+          <div class="flex-1">
+            <div class="font-medium text-gray-900 dark:text-gray-100">
+              {{ rule.description }}
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {{ getRuleSummary(rule) }}
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-1">
+            <button
+              (click)="startEditRule($index)"
+              class="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              title="Edit"
+            >
+              ✎
+            </button>
+            <button
+              (click)="deleteRule($index)"
+              class="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+              title="Delete"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="text-center py-8 mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+      <p class="text-gray-600 dark:text-gray-400">No rules configured</p>
+      <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Click "Add Rule" to create your first rule</p>
+    </div>
+  }
+
+  <!-- Add/Edit Form -->
+  @if (showAddForm()) {
+    <div class="p-6 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg space-y-4">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+        {{ editingIndex() !== null ? 'Edit Rule' : 'Add New Rule' }}
+      </h3>
+
+      <!-- Validation Errors -->
+      @if (validationErrors().length > 0) {
+        <div class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <ul class="list-disc list-inside text-sm text-red-700 dark:text-red-400">
+            @for (error of validationErrors(); track error) {
+              <li>{{ error }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Description -->
+      <div>
+        <label for="fw-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Description *
+        </label>
+        <input
+          id="fw-description"
+          type="text"
+          [value]="editForm().description"
+          (input)="updateField('description', $any($event.target).value)"
+          placeholder="e.g., SSH Access, HTTPS Traffic"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+        />
+      </div>
+
+      <!-- Direction and Protocol -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="fw-direction" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Direction *
+          </label>
+          <select
+            id="fw-direction"
+            [value]="editForm().direction"
+            (change)="updateField('direction', $any($event.target).value)"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="in">Inbound</option>
+            <option value="out">Outbound</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="fw-protocol" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Protocol *
+          </label>
+          <select
+            id="fw-protocol"
+            [value]="editForm().protocol"
+            (change)="updateField('protocol', $any($event.target).value)"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="tcp">TCP</option>
+            <option value="udp">UDP</option>
+            <option value="icmp">ICMP</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Port -->
+      @if (editForm().protocol !== 'icmp') {
+        <div>
+          <label for="fw-port" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Port *
+          </label>
+          <input
+            id="fw-port"
+            type="text"
+            [value]="editForm().port"
+            (input)="updateField('port', $any($event.target).value)"
+            placeholder="e.g., 22, 80, 443, 8000-8100"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          />
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Single port (22) or range (8000-8100)
+          </p>
+        </div>
+      }
+
+      <!-- Source IPs (Inbound only) -->
+      @if (editForm().direction === 'in') {
+        <div>
+          <label for="fw-sources" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Source IPs (CIDR) *
+          </label>
+          <input
+            id="fw-sources"
+            type="text"
+            [value]="sourceIpsText()"
+            (input)="sourceIpsText.set($any($event.target).value)"
+            placeholder="e.g., 0.0.0.0/0, 192.168.1.0/24"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          />
+
+          <!-- IP Helper Buttons -->
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              (click)="detectCurrentIp()"
+              [disabled]="detectingIp()"
+              class="px-2 py-1 text-xs border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50"
+            >
+              @if (detectingIp()) {
+                <span>Detecting...</span>
+              } @else {
+                <span>🌐 My IP</span>
+              }
+            </button>
+            <button
+              type="button"
+              (click)="setIpPreset('0.0.0.0/0')"
+              class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              All IPs
+            </button>
+            <button
+              type="button"
+              (click)="setIpPreset('192.168.0.0/16')"
+              class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Private 192.168.x.x
+            </button>
+            <button
+              type="button"
+              (click)="setIpPreset('10.0.0.0/8')"
+              class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Private 10.x.x.x
+            </button>
+            <button
+              type="button"
+              (click)="setIpPreset('172.16.0.0/12')"
+              class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Private 172.16-31.x.x
+            </button>
+            <button
+              type="button"
+              (click)="clearIpField()"
+              class="px-2 py-1 text-xs border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              Clear
+            </button>
+          </div>
+
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Comma-separated CIDR notation. Use quick buttons to add common IP ranges.
+          </p>
+        </div>
+      }
+
+      <!-- Destination IPs (Outbound only) -->
+      @if (editForm().direction === 'out') {
+        <div>
+          <label for="fw-destinations" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Destination IPs (CIDR) *
+          </label>
+          <input
+            id="fw-destinations"
+            type="text"
+            [value]="destinationIpsText()"
+            (input)="destinationIpsText.set($any($event.target).value)"
+            placeholder="e.g., 0.0.0.0/0, 10.0.0.0/8"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          />
+
+          <!-- IP Helper Buttons -->
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              (click)="setIpPreset('0.0.0.0/0')"
+              class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              All IPs
+            </button>
+            <button
+              type="button"
+              (click)="setIpPreset('192.168.0.0/16')"
+              class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Private 192.168.x.x
+            </button>
+            <button
+              type="button"
+              (click)="setIpPreset('10.0.0.0/8')"
+              class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Private 10.x.x.x
+            </button>
+            <button
+              type="button"
+              (click)="setIpPreset('172.16.0.0/12')"
+              class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Private 172.16-31.x.x
+            </button>
+            <button
+              type="button"
+              (click)="clearIpField()"
+              class="px-2 py-1 text-xs border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              Clear
+            </button>
+          </div>
+
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Comma-separated CIDR notation. Use quick buttons to add common IP ranges.
+          </p>
+        </div>
+      }
+
+      <!-- Form Actions -->
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-blue-200 dark:border-blue-800">
+        <button
+          (click)="cancelEdit()"
+          class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="saveRule()"
+          [disabled]="!isFormValid()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ editingIndex() !== null ? 'Update Rule' : 'Add Rule' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Bottom Actions -->
+  <div class="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+    <button
+      (click)="cancelAllChanges()"
+      class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+    >
+      Cancel
+    </button>
+    <button
+      (click)="saveAllRules()"
+      [disabled]="rules().length === 0"
+      class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Save Changes
+    </button>
+  </div>
+</div>

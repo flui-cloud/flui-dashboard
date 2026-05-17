@@ -1,0 +1,294 @@
+@import "@angular/cdk/overlay-prebuilt.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "";
+}
+
+:root {
+  /* Base colors */
+  --background: 0 0% 100%; /* Pure white */
+  --foreground: 0 0% 3.9%; /* Almost black for text */
+
+  /* Card & Popover surfaces */
+  --card: 0 0% 100%; /* Pure white like background */
+  --card-foreground: 0 0% 3.9%; /* Same as main foreground */
+  --popover: 0 0% 100%; /* Pure white like background */
+  --popover-foreground: 0 0% 3.9%; /* Same as main foreground */
+
+  /* Primary & Secondary colors */
+  --primary: 0 0% 0%; /* Pure black */
+  --primary-foreground: 0 0% 100%; /* Pure white */
+  --secondary: 0 0% 96.1%; /* Very light gray */
+  --secondary-foreground: 0 0% 0%; /* Pure black */
+
+  /* Muted & Accent variations */
+  --muted: 0 0% 96.1%; /* Very light gray */
+  --muted-foreground: 0 0% 45.1%; /* Medium gray */
+  --accent: 0 0% 96.1%; /* Very light gray */
+  --accent-foreground: 0 0% 9%; /* Very dark gray */
+
+  /* Functional states */
+  --destructive: 0 84.2% 60.2%; /* Keeping red for errors */
+  --destructive-foreground: 0 0% 98%; /* Almost white */
+
+  /* Borders, Inputs & Focus */
+  --border: 0 0% 89.8%; /* Light gray */
+  --input: 0 0% 89.8%; /* Light gray */
+  --ring: 0 0% 3.9%; /* Almost black */
+
+  --radius: 1rem;
+}
+
+.dark {
+  /* Base colors — slate blue-gray più intenso */
+  --background: 222 47% 7%;   /* quasi navy scuro */
+  --foreground: 210 40% 98%;
+
+  /* Card & Popover surfaces */
+  --card: 222 40% 12%;        /* blu-slate visibile */
+  --card-foreground: 210 40% 98%;
+  --popover: 222 40% 12%;
+  --popover-foreground: 210 40% 98%;
+
+  /* Primary & Secondary colors */
+  --primary: 210 40% 98%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 222 35% 18%;
+  --secondary-foreground: 210 40% 98%;
+
+  /* Muted & Accent variations */
+  --muted: 222 35% 18%;       /* inner boxes */
+  --muted-foreground: 215 25% 58%;
+  --accent: 222 35% 18%;
+  --accent-foreground: 210 40% 98%;
+
+  /* Functional states */
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* Borders, Inputs & Focus */
+  --border: 222 35% 22%;
+  --input: 222 35% 22%;
+  --ring: 212 95% 68%;
+}
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 3.9%;
+  --muted: 0 0% 96.1%;
+  --muted-foreground: 0 0% 45.1%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 3.9%;
+  --border: 0 0% 89.8%;
+  --input: 0 0% 89.8%;
+  --primary: 0 0% 9%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 0 0% 96.1%;
+  --secondary-foreground: 0 0% 9%;
+  --accent: 0 0% 96.1%;
+  --accent-foreground: 0 0% 9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 0 0% 3.9%;
+  --radius: 0.5rem;
+  color-scheme: light;
+}
+
+.dark {
+  --background: 222 47% 7%;
+  --foreground: 210 40% 98%;
+  --muted: 222 35% 18%;
+  --muted-foreground: 215 25% 58%;
+  --popover: 222 40% 12%;
+  --popover-foreground: 210 40% 98%;
+  --card: 222 40% 12%;
+  --card-foreground: 210 40% 98%;
+  --border: 222 35% 22%;
+  --input: 222 35% 22%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 222 35% 18%;
+  --secondary-foreground: 210 40% 98%;
+  --accent: 222 35% 18%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 212 95% 68%;
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+}
+
+/**
+ * Semantic component utilities — use these instead of hardcoded gray-xxx dark:gray-xxx.
+ * They automatically switch between light/dark using the CSS variables defined above.
+ *
+ * CARDS
+ *   card-surface      → bg-card + border + rounded-lg          (outer card)
+ *   card-inner        → bg-muted/50 + rounded                  (inner stat boxes)
+ *   card-header       → label style for card section headers
+ *
+ * TEXT
+ *   text-label        → muted uppercase tracking label
+ *   text-value        → primary value text
+ *   text-sub          → secondary/helper text
+ *
+ * STATUS DOTS / BADGES
+ *   status-healthy    → green
+ *   status-degraded   → orange/yellow
+ *   status-error      → red
+ *   status-pending    → gray
+ *
+ * SKELETON
+ *   skeleton          → animate-pulse placeholder block
+ */
+@layer components {
+
+  /* ── Surfaces ─────────────────────────────────────────────── */
+  .card-surface {
+    @apply bg-card text-card-foreground border border-border rounded-lg;
+  }
+
+  .card-inner {
+    @apply bg-muted/50 rounded;
+  }
+
+  /* ── Typography ───────────────────────────────────────────── */
+  .text-label {
+    @apply text-xs font-medium text-muted-foreground uppercase tracking-wide;
+  }
+
+  .text-value {
+    @apply font-medium text-foreground;
+  }
+
+  .text-sub {
+    @apply text-xs text-muted-foreground;
+  }
+
+  /* ── Status colors ────────────────────────────────────────── */
+  .status-healthy {
+    @apply text-green-600 dark:text-green-400;
+  }
+
+  .status-degraded {
+    @apply text-orange-500 dark:text-orange-400;
+  }
+
+  .status-error {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  .status-pending {
+    @apply text-muted-foreground;
+  }
+
+  .dot-healthy { @apply bg-green-500; }
+  .dot-degraded { @apply bg-orange-400; }
+  .dot-error { @apply bg-red-500; }
+  .dot-pending { @apply bg-muted-foreground; }
+
+  /* ── Skeleton ─────────────────────────────────────────────── */
+  .skeleton {
+    @apply animate-pulse rounded bg-muted;
+  }
+
+  /* ── Link inline ──────────────────────────────────────────── */
+  .card-link {
+    @apply mt-3 flex items-center gap-1 text-xs text-primary hover:underline;
+  }
+
+  /* ── Badges ───────────────────────────────────────────────── */
+  .badge {
+    @apply text-xs px-2.5 py-1 rounded-full font-medium;
+  }
+  .badge-success {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400;
+  }
+  .badge-error {
+    @apply bg-destructive/10 text-destructive;
+  }
+  .badge-in-progress {
+    @apply bg-muted text-muted-foreground;
+  }
+  .badge-pending {
+    @apply bg-muted text-muted-foreground;
+  }
+
+  /* ── Step icon (deploy/operation timeline) ────────────────── */
+  .step-icon {
+    @apply flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0;
+  }
+  .step-icon-completed {
+    @apply bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400;
+  }
+  .step-icon-running {
+    @apply bg-muted text-foreground;
+  }
+  .step-icon-error {
+    @apply bg-destructive/10 text-destructive;
+  }
+  .step-icon-pending {
+    @apply bg-muted text-muted-foreground/50;
+  }
+
+  /* ── Inline spinner (small, subtle) ──────────────────────── */
+  .spinner-sm {
+    @apply h-4 w-4 animate-spin text-muted-foreground;
+  }
+}
+
+/* Shimmer animation for progress bars */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Slide-in animation for toast notifications */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+@keyframes slide-in-from-top {
+  from {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-from-top {
+  animation: slide-in-from-top 0.15s ease-out;
+}

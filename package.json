@@ -1,0 +1,79 @@
+{
+  "name": "flui.dashboard",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "api:generate": "openapi-generator-cli generate -i http://localhost:3000/swagger/json -g typescript-angular -o ./src/app/core/api --additional-properties=ngVersion=19 --skip-validate-spec",
+    "test:coverage": "ng test --no-watch --code-coverage"
+  },
+  "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@openapitools/openapi-generator-cli",
+      "esbuild",
+      "@parcel/watcher"
+    ],
+    "ignoredBuiltDependencies": [
+      "@nestjs/core",
+      "less",
+      "lmdb",
+      "msgpackr-extract",
+      "nx"
+    ]
+  },
+  "dependencies": {
+    "@angular/animations": "^19.0.0",
+    "@angular/cdk": "^19.2.17",
+    "@angular/common": "^19.0.0",
+    "@angular/compiler": "^19.0.0",
+    "@angular/core": "^19.0.0",
+    "@angular/forms": "^19.0.0",
+    "@angular/platform-browser": "^19.0.0",
+    "@angular/platform-browser-dynamic": "^19.0.0",
+    "@angular/router": "^19.0.0",
+    "@dawit-io/spartan-sidebar": "^0.0.7",
+    "@dawit-io/spartan-sidebar-core": "^0.0.6",
+    "@ng-icons/core": "^29.10.0",
+    "@ng-icons/lucide": ">=29.0.0",
+    "@spartan-ng/brain": "0.0.1-alpha.465",
+    "@spartan-ng/ui-core": "^0.0.1-alpha.380",
+    "@xterm/addon-fit": "^0.10.0",
+    "angular-oauth2-oidc": "^17.0.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "echarts": "^6.0.0",
+    "ngx-echarts": "^18.0.0",
+    "rxjs": "~7.8.0",
+    "simple-icons": "^16.15.0",
+    "socket.io-client": "^4.8.1",
+    "tslib": "^2.3.0",
+    "xterm": "^5.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.0.7",
+    "@angular/cli": "^19.0.7",
+    "@angular/compiler-cli": "^19.0.0",
+    "@openapitools/openapi-generator-cli": "^2.30.2",
+    "@spartan-ng/cli": "^0.0.1-alpha.465",
+    "@tailwindcss/postcss": "^4.1.7",
+    "@types/jasmine": "~5.1.0",
+    "@types/node": "^25.6.2",
+    "autoprefixer": "^10.4.21",
+    "jasmine-core": "~5.4.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.3",
+    "tailwind-merge": "^2.2.0",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.6",
+    "typescript": "~5.6.2"
+  }
+}

@@ -1,0 +1,196 @@
+<div class="p-6 space-y-6">
+  @if (loading() && !firewall()) {
+    <div class="text-center py-12">
+      <p class="text-gray-600 dark:text-gray-400">Loading firewall...</p>
+    </div>
+  } @else if (error() && !firewall()) {
+    <div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+      <p class="text-sm text-red-700 dark:text-red-400">{{ error() }}</p>
+      <button (click)="goBack()" class="mt-2 inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">
+        <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
+        Back
+      </button>
+    </div>
+  } @else {
+    @if (firewall(); as fw) {
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <button
+          (click)="goBack()"
+          class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
+          Back
+        </button>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Firewall Details
+          </h1>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 font-mono">
+            {{ fw.id }}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        @if (canReconcile()) {
+          <button
+            (click)="reconcile()"
+            [disabled]="isReconciling()"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            @if (isReconciling()) {
+              <span>Reconciling...</span>
+            } @else {
+              <span>Reconcile Now</span>
+            }
+          </button>
+        }
+        <button
+          (click)="deleteFirewall()"
+          [disabled]="isDeleting()"
+          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+        >
+          @if (isDeleting()) {
+            <span>Deleting...</span>
+          } @else {
+            <span>Delete</span>
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Card -->
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        Status Information
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Cluster ID</span>
+          <p class="mt-1 text-gray-900 dark:text-gray-100 font-mono">{{ fw.clusterId }}</p>
+        </div>
+
+        <div>
+          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Reconciliation Status</span>
+          <div class="mt-1">
+            <app-reconciliation-status-badge [status]="fw.reconciliationStatus" />
+          </div>
+        </div>
+
+        @if (fw.providerFirewallId) {
+          <div>
+            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Provider Firewall ID</span>
+            <p class="mt-1 text-gray-900 dark:text-gray-100 font-mono">{{ fw.providerFirewallId }}</p>
+          </div>
+        }
+
+        <div>
+          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Last Reconciliation</span>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">{{ formatDate(fw.lastReconciliationAt) }}</p>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <app-drift-indicator
+          [hasDrift]="fw.hasDrift"
+          [status]="fw.reconciliationStatus"
+          [showDetails]="true"
+          [desiredHash]="fw.desiredHash"
+          [lastAppliedHash]="fw.lastAppliedHash"
+        />
+      </div>
+
+      @if (fw.errorMessage) {
+        <div class="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <span class="text-sm font-medium text-red-700 dark:text-red-400">Error Message</span>
+          <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ fw.errorMessage }}</p>
+        </div>
+      }
+    </div>
+
+    <!-- Rules Section -->
+    @if (editMode()) {
+      <!-- Edit Mode: Show Inline Rule Editor -->
+      <app-firewall-inline-rule-editor
+        [initialRules]="desiredRules()"
+        (save)="saveRules($event)"
+        (cancelled)="cancelEdit()"
+      />
+    } @else {
+      <!-- View Mode: Show Rules List -->
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Firewall Rules
+          </h2>
+          <div class="flex items-center gap-2">
+            <button
+              (click)="toggleComparison()"
+              class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              {{ showComparison() ? 'Hide' : 'Show' }} Comparison
+            </button>
+            <button
+              (click)="goToEditRules()"
+              class="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Edit Rules
+            </button>
+          </div>
+        </div>
+
+      @if (showComparison()) {
+        <app-firewall-rule-comparison
+          [desiredRules]="fw.desiredRules"
+          [appliedRules]="fw.lastAppliedRules || []"
+          [desiredHash]="fw.desiredHash"
+          [lastAppliedHash]="fw.lastAppliedHash"
+          [showHashComparison]="true"
+        />
+      } @else {
+        <!-- Simple Rules List -->
+        <div class="space-y-3">
+          <h3 class="text-md font-medium text-gray-900 dark:text-gray-100">
+            Desired Rules ({{ fw.desiredRules.length || 0 }})
+          </h3>
+          @if (fw.desiredRules && fw.desiredRules.length > 0) {
+            @for (rule of fw.desiredRules; track $index) {
+              <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div class="font-medium text-gray-900 dark:text-gray-100">
+                  {{ $any(rule).description }}
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {{ $any(rule).direction === 'in' ? 'Inbound' : 'Outbound' }} •
+                  {{ $any(rule).protocol.toUpperCase() }}{{ $any(rule).port ? ':' + $any(rule).port : '' }}
+                  @if ($any(rule).direction === 'in' && $any(rule).sourceIps) {
+                    • From: {{ $any(rule).sourceIps.join(', ') }}
+                  }
+                  @if ($any(rule).direction === 'out' && $any(rule).destinationIps) {
+                    • To: {{ $any(rule).destinationIps.join(', ') }}
+                  }
+                </div>
+              </div>
+            }
+          } @else {
+            <p class="text-sm text-gray-500 dark:text-gray-400 italic">No rules configured</p>
+          }
+        </div>
+      }
+      </div>
+    }
+
+    <!-- Metadata Section -->
+    @if (fw.metadata) {
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Metadata
+        </h2>
+        <pre class="text-sm text-gray-700 dark:text-gray-300 overflow-auto">{{ fw.metadata | json }}</pre>
+      </div>
+    }
+    }
+  }
+</div>

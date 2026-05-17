@@ -1,0 +1,231 @@
+<div class="p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        Cluster Firewalls
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        Manage firewall rules for your Kubernetes clusters
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a
+        routerLink="/infrastructure/firewall/provider-firewalls"
+        class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline-offset-2 hover:underline"
+        title="Inspect raw firewalls on each provider — debug only"
+      >
+        Debug on provider
+      </a>
+      <button
+        (click)="refresh()"
+        [disabled]="loading()"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+      >
+        @if (loading()) {
+          <span>Loading...</span>
+        } @else {
+          <span>Refresh</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+    <!-- Reconciliation stats -->
+    <div class="bg-white dark:bg-gray-800/60 p-4 rounded-lg border border-gray-200 dark:border-gray-700/50">
+      <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ stats().total }}</div>
+      <div class="text-xs text-gray-600 dark:text-gray-400">Total</div>
+    </div>
+    <div class="bg-green-50 dark:bg-gray-800/60 p-4 rounded-lg border border-green-200 dark:border-gray-700/50">
+      <div class="text-2xl font-bold text-green-700 dark:text-green-400">{{ stats().inSync }}</div>
+      <div class="text-xs text-green-600 dark:text-green-400">In Sync</div>
+    </div>
+    <div class="bg-yellow-50 dark:bg-gray-800/60 p-4 rounded-lg border border-yellow-200 dark:border-gray-700/50">
+      <div class="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{{ stats().drift }}</div>
+      <div class="text-xs text-yellow-600 dark:text-yellow-400">Drift</div>
+    </div>
+    <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-lg border border-gray-200 dark:border-gray-700/50">
+      <div class="text-2xl font-bold text-gray-700 dark:text-gray-400">{{ stats().pending }}</div>
+      <div class="text-xs text-gray-600 dark:text-gray-400">Pending</div>
+    </div>
+    <div class="bg-red-50 dark:bg-gray-800/60 p-4 rounded-lg border border-red-200 dark:border-gray-700/50">
+      <div class="text-2xl font-bold text-red-700 dark:text-red-400">{{ stats().error }}</div>
+      <div class="text-xs text-red-600 dark:text-red-400">Error</div>
+    </div>
+    <div class="bg-blue-50 dark:bg-gray-800/60 p-4 rounded-lg border border-blue-200 dark:border-gray-700/50">
+      <div class="text-2xl font-bold text-blue-700 dark:text-blue-400">{{ stats().reconciling }}</div>
+      <div class="text-xs text-blue-600 dark:text-blue-400">Reconciling</div>
+    </div>
+    <!-- Coverage stats -->
+    <div class="bg-orange-50 dark:bg-gray-800/60 p-4 rounded-lg border border-orange-200 dark:border-gray-700/50">
+      <div class="text-2xl font-bold text-orange-700 dark:text-orange-400">{{ stats().partial }}</div>
+      <div class="text-xs text-orange-600 dark:text-orange-400">Partial Coverage</div>
+    </div>
+    <div class="bg-red-50 dark:bg-gray-800/60 p-4 rounded-lg border border-red-300 dark:border-gray-700/50">
+      <div class="text-2xl font-bold text-red-800 dark:text-red-500">{{ stats().orphaned }}</div>
+      <div class="text-xs text-red-700 dark:text-red-500">Orphaned</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-col md:flex-row gap-4">
+    <input
+      type="text"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="onSearchChange($event)"
+      placeholder="Search by cluster or firewall ID..."
+      class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+    />
+    <select
+      [ngModel]="selectedStatus()"
+      (ngModelChange)="onStatusFilterChange($event)"
+      class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+    >
+      @for (option of statusOptions; track option.value) {
+        <option [ngValue]="option.value">{{ option.label }}</option>
+      }
+    </select>
+    <select
+      [ngModel]="selectedCoverage()"
+      (ngModelChange)="onCoverageFilterChange($event)"
+      class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+    >
+      @for (option of coverageOptions; track option.value) {
+        <option [ngValue]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </div>
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+      <p class="text-sm text-red-700 dark:text-red-400">{{ error() }}</p>
+    </div>
+  }
+
+  <!-- Firewalls List -->
+  <div class="space-y-4">
+    @if (loading() && firewalls().length === 0) {
+      <div class="text-center py-12">
+        <p class="text-gray-600 dark:text-gray-400">Loading firewalls...</p>
+      </div>
+    } @else if (firewalls().length === 0) {
+      <div class="text-center py-12">
+        <p class="text-gray-600 dark:text-gray-400">No firewalls found</p>
+      </div>
+    } @else {
+      @for (firewall of firewalls(); track firewall.id) {
+        <div class="relative" [class]="getCardClass(firewall.coverageStatus)">
+          <a
+            [routerLink]="['/infrastructure/firewall', firewall.id]"
+            class="absolute inset-0"
+            [attr.aria-label]="'View firewall for ' + (firewall.clusterInfo?.clusterName || firewall.clusterId)"
+          ></a>
+          <div class="flex items-start justify-between">
+            <div class="flex-1 space-y-2">
+              <!-- Title row -->
+              <div class="flex items-center gap-3 flex-wrap">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  {{ firewall.clusterInfo?.clusterName || firewall.clusterId }}
+                </h3>
+                <app-reconciliation-status-badge [status]="firewall.reconciliationStatus" />
+                <span [class]="getCoverageBadgeClass(firewall.coverageStatus)">
+                  {{ getCoverageLabel(firewall.coverageStatus) }}
+                </span>
+              </div>
+
+              <!-- Firewall ID -->
+              <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                {{ firewall.id }}
+              </div>
+
+              <!-- Drift indicator -->
+              <app-drift-indicator
+                [hasDrift]="firewall.hasDrift"
+                [status]="firewall.reconciliationStatus"
+              />
+
+              <!-- Cluster node info row -->
+              @if (firewall.clusterInfo) {
+                <div class="flex items-center gap-4 text-xs">
+                  <!-- Node health bar -->
+                  <div class="flex items-center gap-2">
+                    <span class="text-gray-500 dark:text-gray-400">Nodes:</span>
+                    <div class="flex items-center gap-1">
+                      @for (node of firewall.clusterInfo.nodes; track node.nodeId) {
+                        <span
+                          [title]="node.serverName + ' (' + node.nodeType + ') — ' + node.status"
+                          [class]="getNodeDotClass(node.status)"
+                        ></span>
+                      }
+                    </div>
+                    <span [class]="getNodeCountClass(firewall.coverageStatus)">
+                      {{ firewall.clusterInfo.readyNodes }}/{{ firewall.clusterInfo.totalNodes }} ready
+                    </span>
+                  </div>
+                  <!-- Cluster status -->
+                  <span class="text-gray-400 dark:text-gray-500">
+                    Cluster: <span [class]="getClusterStatusClass(firewall.clusterInfo.clusterStatus)">{{ firewall.clusterInfo.clusterStatus }}</span>
+                  </span>
+                </div>
+              }
+
+              <!-- ORPHANED warning -->
+              @if (firewall.coverageStatus === 'ORPHANED') {
+                <div class="mt-1 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
+                  <span>⚠</span>
+                  <span>This firewall is no longer protecting any active cluster nodes. Consider deleting it.</span>
+                </div>
+              }
+
+              <!-- PARTIAL warning -->
+              @if (firewall.coverageStatus === 'PARTIAL') {
+                <div class="mt-1 flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400">
+                  <span>⚠</span>
+                  <span>
+                    Some nodes are not ready —
+                    {{ firewall.clusterInfo?.totalNodes! - firewall.clusterInfo?.readyNodes! }} node(s) need attention.
+                  </span>
+                </div>
+              }
+
+              <!-- Meta row -->
+              <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                <span>Rules: {{ firewall.desiredRules.length || 0 }}</span>
+                @if (firewall.providerFirewallId) {
+                  <span>Provider ID: {{ firewall.providerFirewallId }}</span>
+                }
+                <span>Last Reconciled: {{ formatDate(firewall.lastReconciliationAt) }}</span>
+              </div>
+
+              @if (firewall.errorMessage) {
+                <div class="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs text-red-700 dark:text-red-400">
+                  {{ firewall.errorMessage }}
+                </div>
+              }
+            </div>
+
+            <!-- Actions -->
+            <div class="relative z-10 flex items-center gap-2 ml-4">
+              @if (firewall.hasDrift || firewall.reconciliationStatus === 'ERROR') {
+                <button
+                  (click)="reconcileFirewall(firewall.id, $event)"
+                  [disabled]="isReconciling(firewall.id)"
+                  class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                >
+                  @if (isReconciling(firewall.id)) {
+                    <span>Reconciling...</span>
+                  } @else {
+                    <span>Reconcile</span>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

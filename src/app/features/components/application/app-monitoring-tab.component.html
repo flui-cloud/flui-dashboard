@@ -1,0 +1,411 @@
+<div class="space-y-6">
+  <!-- Header with refresh button -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Application Monitoring</h2>
+      <div class="flex items-center gap-2">
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          @if (pollingPaused()) {
+            <span class="text-orange-600 dark:text-orange-400 font-medium">Auto-refresh paused</span>
+          } @else {
+            Real-time metrics updated every 5 seconds
+          }
+        </p>
+        @if (!pollingPaused() && !isLoading()) {
+          <span class="inline-flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+        }
+      </div>
+    </div>
+    <button
+      (click)="refreshMetrics()"
+      [disabled]="isLoading() || (pollingPaused() && !canRetry())"
+      [title]="pollingPaused() ? 'Retry' : 'Refresh'"
+      class="inline-flex items-center p-1.5 rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      [class]="pollingPaused() && canRetry()
+        ? 'border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+        : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'"
+    >
+      <ng-icon name="lucideRefreshCw" [class.animate-spin]="isLoading()" class="h-3.5 w-3.5" />
+    </button>
+  </div>
+
+  <!-- Error message -->
+  @if (error()) {
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+      <p class="text-red-700 dark:text-red-400">{{ error() }}</p>
+    </div>
+  }
+
+  <!-- Real-time Gauges -->
+  @if (metrics(); as m) {
+    <!-- Pod / Replica selector: shown only with 2+ replicas -->
+    @if (availableReplicas().length > 1) {
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">View:</span>
+          <div class="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
+            <!-- All replicas chip -->
+            <button
+              (click)="selectPod(null)"
+              class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors"
+              [class.bg-blue-600]="selectedPod() === null"
+              [class.text-white]="selectedPod() === null"
+              [class.bg-gray-100]="selectedPod() !== null"
+              [class.dark:bg-gray-700]="selectedPod() !== null"
+              [class.text-gray-700]="selectedPod() !== null"
+              [class.dark:text-gray-300]="selectedPod() !== null"
+            >
+              All replicas
+              <span class="opacity-70">({{ availableReplicas().length }})</span>
+            </button>
+            <!-- Per-pod chips -->
+            @for (replica of availableReplicas(); track replica.pod) {
+              <button
+                (click)="selectPod(replica.pod)"
+                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors"
+                [class.bg-blue-600]="selectedPod() === replica.pod"
+                [class.text-white]="selectedPod() === replica.pod"
+                [class.bg-gray-100]="selectedPod() !== replica.pod"
+                [class.dark:bg-gray-700]="selectedPod() !== replica.pod"
+                [class.text-gray-700]="selectedPod() !== replica.pod"
+                [class.dark:text-gray-300]="selectedPod() !== replica.pod"
+              >
+                <span
+                  class="inline-flex h-1.5 w-1.5 rounded-full shrink-0"
+                  [class.bg-green-400]="replica.status.ready === 1"
+                  [class.bg-red-400]="replica.status.ready !== 1"
+                ></span>
+                {{ replica.pod }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Single replica: show pod name as non-interactive label -->
+    @if (availableReplicas().length === 1) {
+      <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+        <span
+          class="inline-flex h-1.5 w-1.5 rounded-full"
+          [class.bg-green-400]="availableReplicas()[0].status.ready === 1"
+          [class.bg-red-400]="availableReplicas()[0].status.ready !== 1"
+        ></span>
+        <span class="font-mono">{{ availableReplicas()[0].pod }}</span>
+      </div>
+    }
+
+    <!-- Health card -->
+    @if (m.health) {
+      <div class="bg-card border border-border rounded-lg p-4">
+        <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+          <ng-icon name="lucideHeartPulse" class="h-4 w-4" />
+          Health
+        </h3>
+        @if ((m.health.unavailable_pods ?? 0) > 0) {
+          <div class="flex items-start gap-3">
+            <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-orange-700 dark:text-orange-400">
+                {{ m.health.unavailable_pods }} pod(s) unavailable out of {{ m.health.total_pods }}
+              </p>
+              @if (m.health.condition_message) {
+                <p class="text-xs text-muted-foreground mt-1">{{ m.health.condition_message }}</p>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="flex items-center gap-3">
+            <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-green-500 shrink-0" />
+            <p class="text-sm font-medium text-green-700 dark:text-green-400">
+              {{ m.health.ready_pods }}/{{ m.health.total_pods }} pods operational
+            </p>
+          </div>
+        }
+        @if (m.health.checked_at) {
+          <p class="text-xs text-muted-foreground mt-2">Last check: {{ formatHealthDate(m.health.checked_at) }}</p>
+        }
+      </div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <app-grade-gauge [data]="cpuGaugeData()" [config]="cpuGaugeConfig" />
+        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-center">
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Usage</p>
+              <p class="font-semibold text-gray-900 dark:text-gray-100">{{ formatCpu(activeCpu()?.usage_cores ?? 0) }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Limit</p>
+              <p class="font-semibold text-gray-900 dark:text-gray-100">{{ formatCpu(activeCpu()?.limits_cores ?? 0) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <app-grade-gauge [data]="memoryGaugeData()" [config]="memoryGaugeConfig" />
+        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-center">
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Usage</p>
+              <p class="font-semibold text-gray-900 dark:text-gray-100">{{ formatBytes(activeMemory()?.usage_bytes ?? 0) }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Limit</p>
+              <p class="font-semibold text-gray-900 dark:text-gray-100">{{ formatBytes(activeMemory()?.limits_bytes ?? 0) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Replicas - Compact Inline -->
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Replicas</h3>
+        <div class="flex items-center gap-3 text-sm">
+          <div class="flex items-center gap-1.5">
+            <span class="text-gray-600 dark:text-gray-400">Ready:</span>
+            <span class="font-bold" [class]="replicaStats().ready > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+              {{ replicaStats().ready }}
+            </span>
+          </div>
+          <span class="text-gray-400">/</span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-gray-600 dark:text-gray-400">Desired:</span>
+            <span class="font-bold text-blue-600 dark:text-blue-400">
+              {{ replicaStats().desired }}
+            </span>
+          </div>
+          @if (replicaStats().unavailable > 0) {
+            <span class="text-gray-400">/</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-gray-600 dark:text-gray-400">Unavailable:</span>
+              <span class="font-bold text-red-600 dark:text-red-400">
+                {{ replicaStats().unavailable }}
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <app-multi-stat-card [data]="restartStats()" [config]="{ layout: 'horizontal' }" />
+      <app-multi-stat-card [data]="networkStats()" [config]="{ layout: 'horizontal' }" />
+    </div>
+
+    <!-- Per-replica breakdown: shown only with 2+ replicas -->
+    @if (availableReplicas().length > 1) {
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Replicas breakdown</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          @for (replica of availableReplicas(); track replica.pod) {
+            <button
+              type="button"
+              (click)="selectPod(replica.pod)"
+              class="text-left bg-gray-50 dark:bg-gray-900/40 border rounded-lg p-3 transition-colors hover:bg-gray-100 dark:hover:bg-gray-900/70"
+              [class.border-blue-500]="selectedPod() === replica.pod"
+              [class.dark:border-blue-400]="selectedPod() === replica.pod"
+              [class.border-gray-200]="selectedPod() !== replica.pod"
+              [class.dark:border-gray-700]="selectedPod() !== replica.pod"
+            >
+              <!-- Pod header -->
+              <div class="flex items-center gap-2 mb-3 min-w-0">
+                <span
+                  class="inline-flex h-1.5 w-1.5 rounded-full shrink-0"
+                  [class.bg-green-400]="replica.status.ready === 1"
+                  [class.bg-red-400]="replica.status.ready !== 1"
+                ></span>
+                <span class="font-mono text-xs text-gray-700 dark:text-gray-300 truncate" [title]="replica.pod">
+                  {{ replica.pod }}
+                </span>
+                <span class="ml-auto text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                  {{ replica.status.phase }}
+                </span>
+              </div>
+
+              <!-- CPU -->
+              <div class="mb-3">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="text-gray-500 dark:text-gray-400">CPU</span>
+                  <span class="font-medium text-gray-900 dark:text-gray-100">
+                    {{ (replica.cpu.utilization_percent ?? 0).toFixed(1) }}%
+                  </span>
+                </div>
+                <div class="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  <div
+                    class="h-full bg-blue-500"
+                    [style.width.%]="replica.cpu.utilization_percent ?? 0"
+                  ></div>
+                </div>
+                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <span>{{ formatCpu(replica.cpu.usage_cores ?? 0) }}</span>
+                  <span>limit {{ formatCpu(replica.cpu.limits_cores ?? 0) }}</span>
+                </div>
+              </div>
+
+              <!-- Memory -->
+              <div class="mb-3">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="text-gray-500 dark:text-gray-400">Memory</span>
+                  <span class="font-medium text-gray-900 dark:text-gray-100">
+                    {{ (replica.memory.utilization_percent ?? 0).toFixed(1) }}%
+                  </span>
+                </div>
+                <div class="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  <div
+                    class="h-full bg-purple-500"
+                    [style.width.%]="replica.memory.utilization_percent ?? 0"
+                  ></div>
+                </div>
+                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <span>{{ formatBytes(replica.memory.usage_bytes ?? 0) }}</span>
+                  <span>limit {{ formatBytes(replica.memory.limits_bytes ?? 0) }}</span>
+                </div>
+              </div>
+
+              <!-- Network + restarts -->
+              <div class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div>
+                  <p class="text-gray-500 dark:text-gray-400">Net In</p>
+                  <p class="font-medium text-gray-900 dark:text-gray-100">
+                    {{ formatBytes(replica.network.receive_bytes_rate ?? 0) }}/s
+                  </p>
+                </div>
+                <div>
+                  <p class="text-gray-500 dark:text-gray-400">Net Out</p>
+                  <p class="font-medium text-gray-900 dark:text-gray-100">
+                    {{ formatBytes(replica.network.transmit_bytes_rate ?? 0) }}/s
+                  </p>
+                </div>
+                <div>
+                  <p class="text-gray-500 dark:text-gray-400">Restarts</p>
+                  <p class="font-medium"
+                    [class.text-gray-900]="(replica.status.restart_total ?? 0) === 0"
+                    [class.dark:text-gray-100]="(replica.status.restart_total ?? 0) === 0"
+                    [class.text-orange-600]="(replica.status.restart_total ?? 0) > 0"
+                    [class.dark:text-orange-400]="(replica.status.restart_total ?? 0) > 0"
+                  >
+                    {{ replica.status.restart_total ?? 0 }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-gray-500 dark:text-gray-400">Last Hour</p>
+                  <p class="font-medium"
+                    [class.text-gray-900]="(replica.status.restart_rate_1h ?? 0) === 0"
+                    [class.dark:text-gray-100]="(replica.status.restart_rate_1h ?? 0) === 0"
+                    [class.text-red-600]="(replica.status.restart_rate_1h ?? 0) > 0"
+                    [class.dark:text-red-400]="(replica.status.restart_rate_1h ?? 0) > 0"
+                  >
+                    {{ (replica.status.restart_rate_1h ?? 0).toFixed(1) }}
+                  </p>
+                </div>
+              </div>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Pod Phases -->
+    @if (monitoring.podPhases().length > 0) {
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Pod Phases</h3>
+        <div class="flex gap-3 flex-wrap">
+          @for (pod of monitoring.podPhases(); track pod.phase) {
+            <div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2">
+              <span class="inline-flex h-2 w-2 rounded-full"
+                [class.bg-green-500]="pod.phase === 'Running'"
+                [class.bg-yellow-500]="pod.phase === 'Pending'"
+                [class.bg-red-500]="pod.phase === 'Failed'"
+                [class.bg-gray-400]="pod.phase !== 'Running' && pod.phase !== 'Pending' && pod.phase !== 'Failed'"
+              ></span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{ pod.phase }}</span>
+              <span class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ pod.count }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Historical Metrics Charts -->
+  <div class="space-y-6">
+    <!-- Time range selector -->
+    <div class="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Historical Metrics</h3>
+      <div class="flex gap-2">
+        @for (range of ['1h', '2h', '3h', '6h', '1d']; track range) {
+          <button
+            (click)="setTimeRange($any(range))"
+            [class.bg-blue-600]="timeRange() === range"
+            [class.text-white]="timeRange() === range"
+            [class.bg-gray-200]="timeRange() !== range"
+            [class.dark:bg-gray-700]="timeRange() !== range"
+            [class.text-gray-700]="timeRange() !== range"
+            [class.dark:text-gray-300]="timeRange() !== range"
+            class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+          >
+            {{ range === '1d' ? '1 Day' : range === '1h' ? '1 Hour' : range === '2h' ? '2 Hours' : range === '3h' ? '3 Hours' : '6 Hours' }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- CPU History Chart -->
+    @if (cpuHistory()) {
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h4 class="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">CPU Usage Over Time</h4>
+        <app-time-series-line [data]="cpuHistory()!" [config]="cpuTsConfig" />
+      </div>
+    }
+
+    <!-- Memory History Chart -->
+    @if (memoryHistory()) {
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h4 class="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">Memory Usage Over Time</h4>
+        <app-time-series-line [data]="memoryHistory()!" [config]="memoryTsConfig" />
+      </div>
+    }
+
+    <!-- Network History Chart -->
+    @if (networkHistory()) {
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h4 class="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">Network I/O Over Time</h4>
+        <app-time-series-line [data]="networkHistory()!" [config]="networkTsConfig" />
+      </div>
+    }
+
+    <!-- Loading state for history -->
+    @if (loadingHistory() && !cpuHistory()) {
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12">
+        <div class="text-center">
+          <ng-icon name="lucideRefreshCw" class="h-12 w-12 text-gray-400 mx-auto mb-3 animate-spin" />
+          <p class="text-gray-600 dark:text-gray-400">Loading historical metrics...</p>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Empty state -->
+  @if (!metrics() && !isLoading() && !error()) {
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12">
+      <div class="text-center">
+        <ng-icon name="lucideActivity" class="h-12 w-12 text-gray-400 mx-auto mb-3" />
+        <p class="text-gray-600 dark:text-gray-400">No metrics available. Waiting for data...</p>
+      </div>
+    </div>
+  }
+
+  <!-- Loading skeleton -->
+  @if (isLoading() && !metrics()) {
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12">
+      <div class="text-center">
+        <ng-icon name="lucideRefreshCw" class="h-12 w-12 text-gray-400 mx-auto mb-3 animate-spin" />
+        <p class="text-gray-600 dark:text-gray-400">Loading metrics...</p>
+      </div>
+    </div>
+  }
+</div>
