@@ -141,7 +141,9 @@ structure.sh
 build.log
 build-output.log
 
-# ---------- Backups ----------
+# ---------- Local dashboard config ----------
+# Generated/overwritten by `flui env export-config` — only the .example.json is tracked.
+src/assets/config.json
 src/assets/config.json.backup*
 
 # ---------- OS files ----------

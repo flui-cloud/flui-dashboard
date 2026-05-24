@@ -181,7 +181,7 @@ export interface AppOption {
               <span class="text-xs font-medium">Your domain</span>
             </div>
             <p class="mt-1 text-[11px] text-muted-foreground">
-              {{ assignment() ? 'Pick a subdomain under your cluster zone or use a different one.' : 'Use a domain you own — point its DNS to the cluster.' }}
+              {{ effectiveAssignment() ? 'Pick a subdomain under your cluster zone or use a different one.' : 'Use a domain you own — point its DNS to the cluster.' }}
             </p>
           </button>
         </div>
@@ -250,7 +250,7 @@ export interface AppOption {
           Domain (FQDN) <span class="text-red-500 ml-0.5">*</span>
         </label>
 
-        @if (assignment(); as zone) {
+        @if (effectiveAssignment(); as zone) {
           <!-- Zone mode: split pill — user types only the subdomain prefix -->
           <div class="flex items-stretch">
             <input
@@ -328,10 +328,24 @@ export interface AppOption {
             </div>
           }
         }
+        @if (assignment() && endpointType() === 'public') {
+          <button
+            type="button"
+            (click)="toggleByodOverride()"
+            [disabled]="isEditMode()"
+            class="mt-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+          >
+            @if (byodOverride()) {
+              ← Use the cluster zone ({{ assignment()!.dnsZone.zoneName }})
+            } @else {
+              Use a different domain (BYOD) →
+            }
+          </button>
+        }
       </div>
 
-      <!-- BYOD instructions (no zone assigned) -->
-      @if (!assignment()) {
+      <!-- BYOD instructions (no zone assigned, or zone assigned + user opted out via byodOverride) -->
+      @if (!effectiveAssignment()) {
         <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-2">
           <p class="text-xs text-amber-800 dark:text-amber-300 font-medium">No DNS zone — manual configuration required</p>
           <p class="text-xs text-amber-700 dark:text-amber-400">
@@ -395,7 +409,7 @@ export interface AppOption {
           Provision TLS certificate (HTTPS)
         </label>
 
-        @if (!assignment() && form.certificateRequired) {
+        @if (!effectiveAssignment() && form.certificateRequired) {
           <p class="ml-6 text-xs text-amber-600 dark:text-amber-400">
             Single-domain certificate only — wildcard requires a managed DNS zone.
           </p>
@@ -586,6 +600,12 @@ export class ClusterEndpointFormComponent implements OnChanges {
   protected certificateMode = this.appConfig.certificateMode;
   protected startsInStaging = this.certificateMode === 'staging' || this.certificateMode === 'preflight';
 
+  // Declared above `form`: emptyForm() reads effectiveAssignment().
+  protected byodOverride = signal(false);
+  protected effectiveAssignment = computed(() =>
+    this.byodOverride() ? null : this.assignment(),
+  );
+
   protected form = this.emptyForm();
   protected copied = signal(false);
   protected fqdnError = signal<string | null>(null);
@@ -646,13 +666,13 @@ export class ClusterEndpointFormComponent implements OnChanges {
 
   /** Suffix appended to the prefix in zone mode — `internal.<zone>` for internal apps, `<zone>` otherwise. */
   protected zoneSuffix = computed(() => {
-    const zone = this.assignment();
+    const zone = this.effectiveAssignment();
     if (!zone) return '';
     return this.isInternal() ? `internal.${zone.dnsZone.zoneName}` : zone.dnsZone.zoneName;
   });
 
   protected canUseDns01 = computed(() => {
-    const zone = this.assignment();
+    const zone = this.effectiveAssignment();
     return !!zone && !!zone.wildcardCertificate;
   });
 
@@ -703,7 +723,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
   );
 
   protected fqdnPlaceholder = computed(() => {
-    const zone = this.assignment();
+    const zone = this.effectiveAssignment();
     const slug = this.fixedAppSlug() || this.slugFromSelect();
     if (slug && zone) return `${slug}.${this.zoneSuffix()}`;
     if (slug) return `${slug}.example.com`;
@@ -729,10 +749,26 @@ export class ClusterEndpointFormComponent implements OnChanges {
     return slug.replaceAll('_',  '-').toLowerCase();
   });
 
+  protected toggleByodOverride(): void {
+    if (this.isEditMode()) return;
+    const next = !this.byodOverride();
+    this.byodOverride.set(next);
+    this.form.fqdn = '';
+    this.form.subdomainPrefix = '';
+    this.fqdnError.set(null);
+    this.subdomainError.set(null);
+    this.dnsResult.set(null);
+    this.dnsChecking.set(false);
+    // BYOD can't use DNS-01 wildcard — fall back to HTTP-01.
+    if (next && this.form.certChallenge === 'dns-01') {
+      this.form.certChallenge = 'http-01';
+    }
+  }
+
   protected autoGenerate(): void {
     const slug = this.currentSlug();
     if (!slug) return;
-    if (this.assignment()) {
+    if (this.effectiveAssignment()) {
       this.form.subdomainPrefix = slug;
       this.onSubdomainChange();
     } else {
@@ -747,7 +783,10 @@ export class ClusterEndpointFormComponent implements OnChanges {
       this.selectedAppId.set(ep.applicationId ?? this.fixedApplicationId());
       // Endpoint type is immutable on edit — read it from the persisted row.
       this.endpointType.set((ep.endpointType as EndpointType) ?? 'public');
-      const zone = this.assignment();
+      // If the cluster has a zone but the existing endpoint isn't tied to it,
+      // it was created in BYOD mode — preserve that on edit.
+      this.byodOverride.set(!!this.assignment() && !ep.clusterDnsZoneId);
+      const zone = this.effectiveAssignment();
       let prefix = '';
       let fqdn = ep.fqdn;
       if (zone) {
@@ -778,6 +817,10 @@ export class ClusterEndpointFormComponent implements OnChanges {
       };
     } else {
       this.selectedAppId.set(this.fixedApplicationId());
+      // New endpoints default to zone mode when a zone is assigned — the user
+      // can opt into BYOD via the toggle. Reset here so reusing the modal
+      // doesn't carry a previous selection.
+      this.byodOverride.set(false);
       // For new endpoints, honor parent's defaultEndpointType — but downgrade
       // to "public" if the cluster cannot host internal endpoints, so the user
       // never starts on a disabled option.
@@ -822,7 +865,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
     // DNS verification — only in BYOD mode (no zone assigned) and if format is valid
     if (this.dnsDebounceTimer) clearTimeout(this.dnsDebounceTimer);
     const ip = this.masterIp();
-    if (!this.assignment() && ip && !this.fqdnError()) {
+    if (!this.effectiveAssignment() && ip && !this.fqdnError()) {
       this.dnsResult.set(null);
       this.dnsChecking.set(true);
       this.dnsDebounceTimer = setTimeout(() => this.runDnsCheck(v, ip), 600);
@@ -870,7 +913,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
 
   protected onAppChange(appId: string): void {
     this.selectedAppId.set(appId);
-    const zone = this.assignment();
+    const zone = this.effectiveAssignment();
     const slug = this.applications().find(a => a.id === appId)?.slug ?? '';
     if (zone) {
       if (!this.form.subdomainPrefix && slug) this.form.subdomainPrefix = slug;
@@ -894,6 +937,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
     if (!hasApp) return false;
 
     // Internal endpoints: needs a zone + subdomain + cluster capabilities + Auth Proxy.
+    // (Internal always uses the cluster zone — byodOverride is ignored here.)
     if (this.endpointType() === 'internal') {
       const zone = this.assignment();
       const subdomainOk =
@@ -905,7 +949,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
       return subdomainOk && gatesOk;
     }
 
-    const zone = this.assignment();
+    const zone = this.effectiveAssignment();
     let fqdnOk = true;
     let fqdnFormatOk = true;
     if (this.form.hostnameMode === 'ip') {
@@ -926,7 +970,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
     if (!this.isValid()) return;
     const ep = this.endpoint();
     const applicationId = this.fixedApplicationId() || this.form.applicationId;
-    const zone = this.assignment();
+    const zone = this.effectiveAssignment();
 
     let resolvedFqdn: string | undefined;
     if (this.form.hostnameMode === 'ip') {
@@ -942,7 +986,12 @@ export class ClusterEndpointFormComponent implements OnChanges {
       resolvedFqdn = this.form.fqdn.trim() || undefined;
     }
 
-    const sendZoneId = this.form.hostnameMode === 'domain' && this.form.clusterDnsZoneId;
+    // Skip clusterDnsZoneId in BYOD-override mode so the backend treats this
+    // endpoint as fully external (no DNS/cert auto-management under the zone).
+    const sendZoneId =
+      this.form.hostnameMode === 'domain' &&
+      !this.byodOverride() &&
+      this.form.clusterDnsZoneId;
 
     if (ep) {
       const providerForSubmit = (this.form.certificateRequired && this.promoteToProd())
@@ -986,7 +1035,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
   }
 
   private emptyForm() {
-    const zone = this.assignment();
+    const zone = this.effectiveAssignment();
     const defaultHostname: 'ip' | 'domain' = zone ? 'domain' : 'ip';
     const defaultChallenge: 'http-01' | 'dns-01' = zone?.wildcardCertificate ? 'dns-01' : 'http-01';
     return {
