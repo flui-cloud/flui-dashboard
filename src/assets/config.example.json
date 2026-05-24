@@ -2,9 +2,9 @@
   "apiBaseUrl": "http://localhost:3000",
   "wsUrl": "ws://localhost:3000",
   "authMode": "oidc",
-  "oidcIssuer": "https://auth.warm-finch-zs.162-55-56-10.nip.io",
-  "oidcClientId": "372617423133671450",
+  "oidcIssuer": "",
+  "oidcClientId": "",
+  "oidcAudience": "",
   "_certificateMode_doc": "Allowed values: 'staging' (staging certs only), 'preflight' (staging then auto-promote to production), 'production' (production certs directly).",
-  "certificateMode": "production",
-  "oidcAudience": "372617423133671450"
+  "certificateMode": "staging"
 }
