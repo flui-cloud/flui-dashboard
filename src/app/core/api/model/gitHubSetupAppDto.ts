@@ -26,5 +26,17 @@ export interface GitHubSetupAppDto {
      * GitHub App slug (from the app URL)
      */
     appSlug: string;
+    /**
+     * OAuth Client ID of the GitHub App. Required if \"Request user authorization (OAuth) during installation\" is enabled, so users can connect their own GitHub identity.
+     */
+    clientId?: string;
+    /**
+     * OAuth Client Secret paired with clientId.
+     */
+    clientSecret?: string;
+    /**
+     * OAuth callback URL (must match the \"Callback URL\" set on the GitHub App). Required to start the user-authorization flow.
+     */
+    callbackUrl?: string;
 }
 

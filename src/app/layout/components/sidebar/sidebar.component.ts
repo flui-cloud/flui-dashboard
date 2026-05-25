@@ -37,6 +37,7 @@ import {
   lucideHammer,
   lucideStore,
   lucideArchive,
+  lucideGithub,
 } from '@ng-icons/lucide';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { BrnMenuTriggerDirective } from '@spartan-ng/brain/menu';
@@ -132,6 +133,7 @@ const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
       lucideHammer,
       lucideStore,
       lucideArchive,
+      lucideGithub,
     }),
   ],
   template: `
@@ -504,7 +506,7 @@ export class SidebarComponent {
     },
   ];
 
-  // Management items (Providers + Backup + Settings)
+  // Management items (Providers + Backup + GitHub Setup + Settings)
   allManagementItems: SidebarNavItem[] = [
     {
       label: 'Providers',
@@ -517,6 +519,12 @@ export class SidebarComponent {
       link: '/management/backup',
       routerLinkActive: 'active',
       icon: 'lucideArchive',
+    },
+    {
+      label: 'GitHub Setup',
+      link: '/apps/repositories/github-setup',
+      routerLinkActive: 'active',
+      icon: 'lucideGithub',
     },
     {
       label: 'Settings',

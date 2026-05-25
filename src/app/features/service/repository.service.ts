@@ -7,6 +7,7 @@ import { GitHubOAuthService } from '../../core/api/api/gitHubOAuth.service';
 import { GitHubSetupService } from '../../core/api/api/gitHubSetup.service';
 import { ImportRepositoriesResponseDto } from '../../core/api/model/importRepositoriesResponseDto';
 import { GitHubSetupStatusResponseDto } from '../../core/api/model/gitHubSetupStatusResponseDto';
+import { GitHubSetupHealthResponseDto } from '../../core/api/model/gitHubSetupHealthResponseDto';
 import { PublicRepoSearchResultDto } from '../../core/api/model/publicRepoSearchResultDto';
 import { RepositoryAnalysisDto } from '../../core/api/model/repositoryAnalysisDto';
 import { ExtractedEnvVarDto } from '../../core/api/model/extractedEnvVarDto';
@@ -69,6 +70,7 @@ export class RepositoryService {
   private readonly error = signal<string | null>(null);
   private readonly selectedRepositoryId = signal<string | null>(null);
   private readonly githubSetupStatus = signal<GitHubSetupStatusResponseDto | null>(null);
+  private readonly githubSetupHealth = signal<GitHubSetupHealthResponseDto | null>(null);
 
   // Public readonly signals
   readonly repositories = this.repositoriesList.asReadonly();
@@ -78,6 +80,7 @@ export class RepositoryService {
   readonly errorMessage = this.error.asReadonly();
   readonly selectedId = this.selectedRepositoryId.asReadonly();
   readonly setupStatus = this.githubSetupStatus.asReadonly();
+  readonly setupHealth = this.githubSetupHealth.asReadonly();
 
   // Computed signals
   readonly hasRepositories = computed(() => this.repositoriesList().length > 0);
@@ -163,6 +166,21 @@ export class RepositoryService {
     }
   }
 
+  async checkSetupHealth(): Promise<GitHubSetupHealthResponseDto | null> {
+    try {
+      const health = await firstValueFrom(
+        this.gitHubSetupApi.gitHubSetupControllerHealth()
+      );
+      this.githubSetupHealth.set(health);
+      return health;
+    } catch (err) {
+      // 403 expected for non-admin users; null signals "unknown" to callers.
+      console.debug('[repository.service] health check skipped:', err);
+      this.githubSetupHealth.set(null);
+      return null;
+    }
+  }
+
   /**
    * Load imported repositories from API
    */
@@ -226,33 +244,6 @@ export class RepositoryService {
     } catch (error: any) {
       const errorMessage = error?.error?.message || error?.message || 'Failed to load available repositories';
       console.error('❌ Failed to load available repositories:', error);
-      this.error.set(errorMessage);
-      throw error;
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  /**
-   * Connect OAuth provider (GitHub)
-   */
-  async connectOAuth(provider: GitProvider): Promise<string> {
-    this.isLoading.set(true);
-    this.error.set(null);
-
-    try {
-      if (provider !== GitProvider.GitHub) {
-        throw new Error('Only GitHub OAuth is currently supported');
-      }
-
-      const response = await firstValueFrom(
-        this.gitHubOAuthApi.gitHubOAuthControllerConnect()
-      );
-
-      return response.url || '';
-    } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Failed to connect OAuth';
-      console.error('❌ Failed to connect OAuth:', error);
       this.error.set(errorMessage);
       throw error;
     } finally {
