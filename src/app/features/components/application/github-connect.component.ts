@@ -58,11 +58,7 @@ interface ScopeCheckResult {
       } @else {
         <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Connect your GitHub account</h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-8">
-          @if (authMethod() === 'oauth_app') {
-            Authorize Flui to access your GitHub repositories. You'll be redirected to GitHub.
-          } @else {
-            Paste a Personal Access Token to give Flui access to your GitHub repositories.
-          }
+          Paste a Personal Access Token to give Flui access to your GitHub repositories.
         </p>
       }
 
@@ -91,21 +87,6 @@ interface ScopeCheckResult {
             <p class="text-xs text-red-700 dark:text-red-400">{{ error() }}</p>
           </div>
         }
-      } @else if (authMethod() === 'oauth_app') {
-        <!-- OAuth connect button -->
-        <button
-          (click)="connectOAuth()"
-          [disabled]="isLoading()"
-          class="flex items-center gap-2 px-6 py-3 bg-slate-900 dark:bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-        >
-          @if (isLoading()) {
-            <ng-icon name="lucideLoader" size="16" class="animate-spin" />
-            <span>Redirecting...</span>
-          } @else {
-            <ng-icon name="lucideGithub" size="16" />
-            <span>Connect with GitHub</span>
-          }
-        </button>
       } @else {
         <!-- PAT form -->
         <div class="w-full max-w-sm space-y-4 text-left">
@@ -218,12 +199,6 @@ interface ScopeCheckResult {
         </div>
       }
 
-      @if (authMethod() === 'oauth_app' && error()) {
-        <div class="mt-4 flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 max-w-sm w-full text-left">
-          <ng-icon name="lucideAlertCircle" size="16" class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-          <p class="text-xs text-red-700 dark:text-red-400">{{ error() }}</p>
-        </div>
-      }
     </div>
   `,
 })
@@ -267,21 +242,6 @@ export class GithubConnectComponent {
         err?.error?.message ||
           'Could not generate the GitHub install link. Please try again.',
       );
-      this.isLoading.set(false);
-    }
-  }
-
-  async connectOAuth(): Promise<void> {
-    this.isLoading.set(true);
-    this.error.set(null);
-
-    try {
-      const response = await firstValueFrom(
-        this.gitHubOAuthApi.gitHubOAuthControllerConnect()
-      );
-      globalThis.window.location.href = response.url;
-    } catch (err: any) {
-      this.error.set(err?.error?.message || 'Failed to initiate GitHub connection. Please try again.');
       this.isLoading.set(false);
     }
   }

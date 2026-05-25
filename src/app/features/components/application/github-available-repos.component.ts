@@ -255,7 +255,7 @@ import { firstValueFrom } from 'rxjs';
   `,
 })
 export class GithubAvailableReposComponent implements OnInit {
-  readonly authMethod = input<'oauth_app' | 'pat' | null>(null);
+  readonly authMethod = input<'github_app' | 'pat' | null>(null);
   readonly imported = output<void>();
 
   private readonly repositoriesApi = inject(RepositoriesService);

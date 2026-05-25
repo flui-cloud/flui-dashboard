@@ -21,13 +21,15 @@ import { ConnectPatDto } from '../model/connectPatDto';
 // @ts-ignore
 import { ConnectPatResponseDto } from '../model/connectPatResponseDto';
 // @ts-ignore
-import { GitHubOAuthInitiateResponseDto } from '../model/gitHubOAuthInitiateResponseDto';
-// @ts-ignore
 import { GitHubOAuthStatusResponseDto } from '../model/gitHubOAuthStatusResponseDto';
+// @ts-ignore
+import { PatValidationResultDto } from '../model/patValidationResultDto';
 // @ts-ignore
 import { PublicRepoBranchDto } from '../model/publicRepoBranchDto';
 // @ts-ignore
 import { PublicRepoSearchResultDto } from '../model/publicRepoSearchResultDto';
+// @ts-ignore
+import { ValidatePatDto } from '../model/validatePatDto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -43,116 +45,6 @@ export class GitHubOAuthService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
-    }
-
-    /**
-     * Handle GitHub OAuth callback
-     * @endpoint get /api/v1/repositories/github/callback
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public gitHubOAuthControllerCallback(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public gitHubOAuthControllerCallback(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public gitHubOAuthControllerCallback(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public gitHubOAuthControllerCallback(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (bearer) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/v1/repositories/github/callback`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Initiate GitHub OAuth flow
-     * Returns a GitHub authorization URL. Only available when setup method is oauth_app.
-     * @endpoint get /api/v1/repositories/github/connect
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public gitHubOAuthControllerConnect(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GitHubOAuthInitiateResponseDto>;
-    public gitHubOAuthControllerConnect(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GitHubOAuthInitiateResponseDto>>;
-    public gitHubOAuthControllerConnect(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GitHubOAuthInitiateResponseDto>>;
-    public gitHubOAuthControllerConnect(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (bearer) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/v1/repositories/github/connect`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<GitHubOAuthInitiateResponseDto>('get', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
     }
 
     /**
@@ -532,6 +424,76 @@ export class GitHubOAuthService extends BaseService {
         return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Validate a Personal Access Token without persisting it
+     * Calls GitHub /user with the supplied token and returns who it authenticated as, which scopes were actually granted, and which required scopes are missing. The token is never stored. Use this before POST /connect-pat to give the user immediate feedback.
+     * @endpoint post /api/v1/repositories/github/validate-pat
+     * @param validatePatDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public gitHubOAuthControllerValidatePat(validatePatDto: ValidatePatDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<PatValidationResultDto>;
+    public gitHubOAuthControllerValidatePat(validatePatDto: ValidatePatDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<PatValidationResultDto>>;
+    public gitHubOAuthControllerValidatePat(validatePatDto: ValidatePatDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<PatValidationResultDto>>;
+    public gitHubOAuthControllerValidatePat(validatePatDto: ValidatePatDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (validatePatDto === null || validatePatDto === undefined) {
+            throw new Error('Required parameter validatePatDto was null or undefined when calling gitHubOAuthControllerValidatePat.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/repositories/github/validate-pat`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<PatValidationResultDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: validatePatDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

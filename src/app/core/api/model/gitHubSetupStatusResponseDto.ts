@@ -25,7 +25,6 @@ export interface GitHubSetupStatusResponseDto {
 }
 export namespace GitHubSetupStatusResponseDto {
     export const AuthMethodEnum = {
-        OauthApp: 'oauth_app',
         Pat: 'pat',
         GithubApp: 'github_app'
     } as const;

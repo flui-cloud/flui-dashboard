@@ -160,7 +160,7 @@ export class GhcrPatModalComponent implements OnInit {
     if (this.initialExpiresAt) {
       this.expiresAt = this.initialExpiresAt.slice(0, 10);
     } else {
-      this.expiresAt = TODAY_PLUS_DAYS(90);
+      this.expiresAt = TODAY_PLUS_DAYS(30);
     }
   }
 

@@ -17,9 +17,13 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
+import { GitHubAppManifestStartDto } from '../model/gitHubAppManifestStartDto';
+// @ts-ignore
+import { GitHubAppManifestStartResponseDto } from '../model/gitHubAppManifestStartResponseDto';
+// @ts-ignore
 import { GitHubSetupAppDto } from '../model/gitHubSetupAppDto';
 // @ts-ignore
-import { GitHubSetupOAuthDto } from '../model/gitHubSetupOAuthDto';
+import { GitHubSetupHealthResponseDto } from '../model/gitHubSetupHealthResponseDto';
 // @ts-ignore
 import { GitHubSetupStatusResponseDto } from '../model/gitHubSetupStatusResponseDto';
 
@@ -40,8 +44,8 @@ export class GitHubSetupService extends BaseService {
     }
 
     /**
-     * Configure GitHub App
-     * Store GitHub App credentials (App ID, Private Key, Webhook Secret). Create your GitHub App at https://github.com/settings/apps/new. Required permissions: contents (write), actions (read+write), workflows (write), packages (write). Subscribe to webhook events: installation, workflow_run, push.
+     * Configure GitHub App (manual)
+     * Store GitHub App credentials manually. Prefer the manifest flow (POST /github-app/manifest-start) which generates the App on GitHub and auto-fills these fields. Use this endpoint only when you already have an existing GitHub App you want to connect.
      * @endpoint post /api/v1/repositories/github/setup/github-app
      * @param gitHubSetupAppDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -99,76 +103,6 @@ export class GitHubSetupService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: gitHubSetupAppDto,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Configure GitHub OAuth App
-     * Store GitHub OAuth App credentials (Client ID + Secret). Create your OAuth App at https://github.com/settings/developers. Set the callback URL to: &lt;your-api-url&gt;/api/v1/repositories/github/callback
-     * @endpoint post /api/v1/repositories/github/setup/oauth
-     * @param gitHubSetupOAuthDto 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public gitHubSetupControllerConfigureOAuth(gitHubSetupOAuthDto: GitHubSetupOAuthDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GitHubSetupStatusResponseDto>;
-    public gitHubSetupControllerConfigureOAuth(gitHubSetupOAuthDto: GitHubSetupOAuthDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GitHubSetupStatusResponseDto>>;
-    public gitHubSetupControllerConfigureOAuth(gitHubSetupOAuthDto: GitHubSetupOAuthDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GitHubSetupStatusResponseDto>>;
-    public gitHubSetupControllerConfigureOAuth(gitHubSetupOAuthDto: GitHubSetupOAuthDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (gitHubSetupOAuthDto === null || gitHubSetupOAuthDto === undefined) {
-            throw new Error('Required parameter gitHubSetupOAuthDto was null or undefined when calling gitHubSetupControllerConfigureOAuth.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (bearer) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-            'application/json'
-        ];
-        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
-        if (httpContentTypeSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
-        }
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/v1/repositories/github/setup/oauth`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<GitHubSetupStatusResponseDto>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                body: gitHubSetupOAuthDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -292,8 +226,206 @@ export class GitHubSetupService extends BaseService {
     }
 
     /**
+     * Live health check of the configured GitHub integration
+     * Performs a real call to GitHub (App JWT auth or PAT mode note) to verify the stored credentials still work. Returns mode-specific details.
+     * @endpoint get /api/v1/repositories/github/setup/health
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public gitHubSetupControllerHealth(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GitHubSetupHealthResponseDto>;
+    public gitHubSetupControllerHealth(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GitHubSetupHealthResponseDto>>;
+    public gitHubSetupControllerHealth(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GitHubSetupHealthResponseDto>>;
+    public gitHubSetupControllerHealth(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/repositories/github/setup/health`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<GitHubSetupHealthResponseDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * GitHub App manifest conversion callback (browser redirect target)
+     * Receives the redirect from GitHub after the admin confirms the App creation. Validates the state (path parameter, single-use), exchanges the temporary code for the App credentials, persists them, and redirects the browser back to the dashboard with manifest&#x3D;success|error.
+     * @endpoint get /api/v1/repositories/github/setup/github-app/manifest-callback/{state}
+     * @param code 
+     * @param state 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public gitHubSetupControllerManifestCallback(code: string, state: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public gitHubSetupControllerManifestCallback(code: string, state: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public gitHubSetupControllerManifestCallback(code: string, state: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public gitHubSetupControllerManifestCallback(code: string, state: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (code === null || code === undefined) {
+            throw new Error('Required parameter code was null or undefined when calling gitHubSetupControllerManifestCallback.');
+        }
+        if (state === null || state === undefined) {
+            throw new Error('Required parameter state was null or undefined when calling gitHubSetupControllerManifestCallback.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'code',
+            <any>code,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/repositories/github/setup/github-app/manifest-callback/${this.configuration.encodeParam({name: "state", value: state, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Start GitHub App creation via manifest flow
+     * Returns a GitHub App manifest payload + the GitHub URL where the admin should POST it. The dashboard/CLI builds a hidden HTML form and submits it to githubUrl with the manifest as a hidden field — GitHub then pre-fills its New-App form with all permissions, events, webhook and callback URLs. After the admin confirms, GitHub redirects back to our manifest-callback endpoint with a temporary code; we exchange it server-side for App credentials and persist them automatically.
+     * @endpoint post /api/v1/repositories/github/setup/github-app/manifest-start
+     * @param gitHubAppManifestStartDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public gitHubSetupControllerManifestStart(gitHubAppManifestStartDto: GitHubAppManifestStartDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GitHubAppManifestStartResponseDto>;
+    public gitHubSetupControllerManifestStart(gitHubAppManifestStartDto: GitHubAppManifestStartDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GitHubAppManifestStartResponseDto>>;
+    public gitHubSetupControllerManifestStart(gitHubAppManifestStartDto: GitHubAppManifestStartDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GitHubAppManifestStartResponseDto>>;
+    public gitHubSetupControllerManifestStart(gitHubAppManifestStartDto: GitHubAppManifestStartDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (gitHubAppManifestStartDto === null || gitHubAppManifestStartDto === undefined) {
+            throw new Error('Required parameter gitHubAppManifestStartDto was null or undefined when calling gitHubSetupControllerManifestStart.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/repositories/github/setup/github-app/manifest-start`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<GitHubAppManifestStartResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: gitHubAppManifestStartDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Reset GitHub integration configuration
-     * Removes all stored GitHub OAuth App config. Does not revoke existing user tokens.
+     * Removes all stored GitHub integration config. Does not revoke existing user tokens.
      * @endpoint delete /api/v1/repositories/github/setup
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.

@@ -250,10 +250,11 @@ model/firewallResponseDto.ts
 model/firewallRuleResponseDto.ts
 model/ghcrTagDto.ts
 model/gitHubActionsWebhookDto.ts
-model/gitHubOAuthInitiateResponseDto.ts
+model/gitHubAppManifestStartDto.ts
+model/gitHubAppManifestStartResponseDto.ts
 model/gitHubOAuthStatusResponseDto.ts
 model/gitHubSetupAppDto.ts
-model/gitHubSetupOAuthDto.ts
+model/gitHubSetupHealthResponseDto.ts
 model/gitHubSetupStatusResponseDto.ts
 model/healthCheckConfigDto.ts
 model/healthHistoryPointDto.ts
@@ -300,6 +301,7 @@ model/observabilityClusterControllerTestGrafanaConnection200Response.ts
 model/observabilityEndpointsDto.ts
 model/oidcReadinessDto.ts
 model/packageCacheEntryDto.ts
+model/patValidationResultDto.ts
 model/pingResponseDto.ts
 model/platformComponentConditionDto.ts
 model/platformComponentLogsResponseDto.ts
@@ -437,6 +439,7 @@ model/vNetRouteResponseDto.ts
 model/vNetSubnetResponseDto.ts
 model/vNetTopologyDto.ts
 model/vNetZoneDto.ts
+model/validatePatDto.ts
 model/validationResultDto.ts
 model/variableSetSummaryDto.ts
 model/volumeMonthToDateDto.ts

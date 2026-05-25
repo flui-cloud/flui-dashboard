@@ -26,6 +26,7 @@ import {
   lucideX,
   lucideSearch,
   lucideShieldAlert,
+  lucideTriangleAlert,
   lucideArrowRight,
   lucideKey,
 } from '@ng-icons/lucide';
@@ -67,6 +68,7 @@ import { RepoDeployChoiceModalComponent } from './repo-deploy-choice-modal.compo
       lucideX,
       lucideSearch,
       lucideShieldAlert,
+      lucideTriangleAlert,
       lucideArrowRight,
       lucideKey,
     }),
@@ -228,6 +230,46 @@ import { RepoDeployChoiceModalComponent } from './repo-deploy-choice-modal.compo
             </h3>
             <p class="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
               GitHub integration hasn't been set up yet. Please contact your administrator to configure it.
+            </p>
+          </div>
+        }
+
+        @case ('misconfigured-admin') {
+          <div class="bg-white dark:bg-slate-800 border-2 border-dashed border-amber-300 dark:border-amber-700 rounded-xl p-12 text-center">
+            <div class="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
+              <ng-icon name="lucideTriangleAlert" class="h-8 w-8 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              GitHub Integration Misconfigured
+            </h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-2 max-w-md mx-auto">
+              Flui has stored GitHub App credentials but a live check against GitHub failed —
+              the App may have been deleted or its private key revoked.
+            </p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 font-mono">
+              {{ setupHealthError() }}
+            </p>
+            <button
+              (click)="navigateToSetup()"
+              class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
+            >
+              <ng-icon name="lucideGithub" class="h-4 w-4" />
+              Reconfigure GitHub Integration
+              <ng-icon name="lucideArrowRight" class="h-4 w-4" />
+            </button>
+          </div>
+        }
+
+        @case ('misconfigured-user') {
+          <div class="bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 rounded-xl p-12 text-center">
+            <div class="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
+              <ng-icon name="lucideTriangleAlert" class="h-8 w-8 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              GitHub Integration Broken
+            </h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
+              Connecting to GitHub is currently failing. Please contact your administrator to reconfigure the integration.
             </p>
           </div>
         }
@@ -420,20 +462,6 @@ import { RepoDeployChoiceModalComponent } from './repo-deploy-choice-modal.compo
                 >
                   <ng-icon name="lucideDownload" class="h-4 w-4" />
                   Import Repositories
-                </button>
-              } @else {
-                <button
-                  (click)="connectOAuth('github')"
-                  [disabled]="isConnecting()"
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
-                >
-                  @if (isConnecting()) {
-                    <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                    Connecting...
-                  } @else {
-                    <ng-icon name="lucideGithub" class="h-4 w-4" />
-                    Connect GitHub
-                  }
                 </button>
               }
             </div>
@@ -934,13 +962,25 @@ export class RepositoriesListComponent implements OnInit {
   // Funnel page state
   readonly isInitializing = signal(true);
 
-  readonly pageState = computed<'initializing' | 'not-configured-admin' | 'not-configured-user' | 'not-connected' | 'connected'>(() => {
+  readonly setupHealth = this.repoService.setupHealth;
+
+  readonly pageState = computed<'initializing' | 'not-configured-admin' | 'not-configured-user' | 'misconfigured-admin' | 'misconfigured-user' | 'not-connected' | 'connected'>(() => {
     if (this.isInitializing()) return 'initializing';
     const setup = this.setupStatus();
     if (!setup?.configured) {
       return this.isAdmin() ? 'not-configured-admin' : 'not-configured-user';
     }
+    if (this.setupHealth()?.ok === false) {
+      return this.isAdmin() ? 'misconfigured-admin' : 'misconfigured-user';
+    }
     return this.isGitHubConnected() ? 'connected' : 'not-connected';
+  });
+
+  readonly setupHealthError = computed(() => {
+    const details = this.setupHealth()?.details as
+      | { error?: string; message?: string }
+      | undefined;
+    return details?.message ?? details?.error ?? 'unreachable';
   });
 
   // Computed
@@ -1040,19 +1080,21 @@ export class RepositoriesListComponent implements OnInit {
         }
       });
   
-      // Check setup and connection status first (funnel logic)
-      await this.repoService.checkSetupStatus();
-      await this.repoService.checkOAuthStatus();
-  
+      await Promise.all([
+        this.repoService.checkSetupStatus(),
+        this.repoService.checkSetupHealth(),
+        this.repoService.checkOAuthStatus(),
+      ]);
+
       const setup = this.repoService.setupStatus();
       if (setup?.configured && this.isGitHubConnected()) {
         await this.loadRepos();
       }
-  
+
       if (setup?.authMethod === 'github_app' && this.isGitHubConnected()) {
         this.loadPatStatus();
       }
-  
+
       this.isInitializing.set(false);
     })();
   }
@@ -1182,24 +1224,6 @@ export class RepositoriesListComponent implements OnInit {
       queryParams: {},
       replaceUrl: true
     });
-  }
-
-  async connectOAuth(provider: 'github' | 'gitlab') {
-    this.isConnecting.set(true);
-
-    try {
-      const gitProvider = provider === 'github' ? GitProvider.GitHub : GitProvider.GitLab;
-      const authUrl = await this.repoService.connectOAuth(gitProvider);
-
-      // Redirect to GitHub OAuth URL
-      if (authUrl) {
-        globalThis.window.location.href = authUrl;
-        // Note: isConnecting will remain true until page redirects
-      }
-    } catch (error) {
-      console.error('Failed to connect OAuth:', error);
-      this.isConnecting.set(false);
-    }
   }
 
   disconnectOAuth(provider: 'github' | 'gitlab') {
