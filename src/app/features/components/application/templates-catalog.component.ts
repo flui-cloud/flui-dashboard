@@ -26,6 +26,8 @@ import {
   siFastapi,
   siDotnet,
   siAstro,
+  siVuedotjs,
+  siVitepress,
 } from 'simple-icons';
 import type { SimpleIcon } from 'simple-icons';
 
@@ -69,6 +71,9 @@ const FRAMEWORK_META: Record<string, FrameworkMeta> = {
   aspnetcore:    { icon: siDotnet,     colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
   dotnet:        { icon: siDotnet,     colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
   astro:         { icon: siAstro,      colorClass: 'text-black dark:text-white' },
+  'vue-vite':    { icon: siVuedotjs,   colorClass: 'text-[#4FC08D]' },
+  vue:           { icon: siVuedotjs,   colorClass: 'text-[#4FC08D]' },
+  vitepress:     { icon: siVitepress,  colorClass: 'text-[#5072A7] dark:text-[#8AB4F8]' },
   generic:       { icon: null,         colorClass: 'text-slate-600 dark:text-white' },
 };
 
@@ -87,8 +92,7 @@ const CATEGORY_OVERRIDES: Record<string, Category> = {
   sveltekit:    'frontend',
   svelte:       'frontend',
   astro:        'frontend',
-  // The "generic" template is a bare Dockerfile catch-all — it belongs to
-  // neither Frontend nor Backend, so it lives under its own Generic category.
+  vitepress:    'frontend',
   generic:      'generic',
 };
 
