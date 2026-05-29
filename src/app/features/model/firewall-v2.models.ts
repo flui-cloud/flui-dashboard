@@ -180,7 +180,8 @@ export const OBSERVABILITY_DEFAULT_RULES: FirewallRuleFormData[] = [
 
 /**
  * Default firewall rules for Workload clusters
- * Ports: SSH (22), K3s API Server (6443)
+ * Ports: SSH (22). The K3s API (6443) is not exposed here — the API scopes it
+ * internally to the VNet/subnet CIDR, never publicly.
  */
 export const WORKLOAD_DEFAULT_RULES: FirewallRuleFormData[] = [
   {
@@ -188,13 +189,6 @@ export const WORKLOAD_DEFAULT_RULES: FirewallRuleFormData[] = [
     direction: 'in',
     protocol: 'tcp',
     port: '22',
-    sourceIps: ['0.0.0.0/0']
-  },
-  {
-    description: 'K3s API Server',
-    direction: 'in',
-    protocol: 'tcp',
-    port: '6443',
     sourceIps: ['0.0.0.0/0']
   },
   {

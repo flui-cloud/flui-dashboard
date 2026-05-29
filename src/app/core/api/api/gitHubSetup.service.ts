@@ -425,7 +425,7 @@ export class GitHubSetupService extends BaseService {
 
     /**
      * Reset GitHub integration configuration
-     * Removes all stored GitHub integration config. Does not revoke existing user tokens.
+     * Removes the instance-wide GitHub integration config AND all per-user tokens and App installations. Users will need to reconnect after the integration is reconfigured.
      * @endpoint delete /api/v1/repositories/github/setup
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.

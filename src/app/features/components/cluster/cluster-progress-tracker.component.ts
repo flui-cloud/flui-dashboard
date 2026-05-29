@@ -15,7 +15,6 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
   lucideArrowRight,
-  lucideDownload,
 } from '@ng-icons/lucide';
 import {
   OperationProgressTrackerComponent,
@@ -32,7 +31,6 @@ import { ClusterService } from '../../service/cluster.service';
     provideIcons({
       lucideCheck,
       lucideArrowRight,
-      lucideDownload,
     }),
   ],
   template: `
@@ -76,18 +74,6 @@ import { ClusterService } from '../../service/cluster.service';
               Go to Cluster
               <ng-icon name="lucideArrowRight" class="h-4 w-4 ml-2" />
             </button>
-            <button
-              (click)="downloadKubeconfig()"
-              [disabled]="isDownloadingKubeconfig()"
-              class="inline-flex items-center justify-center rounded-md border border-input bg-background px-6 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              @if (isDownloadingKubeconfig()) {
-                <span class="inline-block animate-spin mr-2">⏳</span>
-              } @else {
-                <ng-icon name="lucideDownload" class="h-4 w-4 mr-2" />
-              }
-              Download Kubeconfig
-            </button>
           </div>
         </div>
       </div>
@@ -102,7 +88,6 @@ export class ClusterProgressTrackerComponent implements OnInit {
 
   operationId: string = '';
   private readonly clusterId = signal<string>('');
-  isDownloadingKubeconfig = signal<boolean>(false);
 
   // Computed cluster info from service
   readonly clusterInfo = this.clusterService.cluster;
@@ -185,21 +170,6 @@ export class ClusterProgressTrackerComponent implements OnInit {
     } else {
       // Fallback to cluster list if no ID available
       this.router.navigate(['/cluster']);
-    }
-  }
-
-  async downloadKubeconfig(): Promise<void> {
-    const id = this.clusterId() || this.clusterInfo()?.id;
-    if (!id) return;
-
-    this.isDownloadingKubeconfig.set(true);
-
-    try {
-      const kubeconfig = await this.clusterService.downloadKubeconfig(id);
-      this.clusterService.downloadKubeconfigFile(kubeconfig, this.clusterName());
-    } catch {
-    } finally {
-      this.isDownloadingKubeconfig.set(false);
     }
   }
 }

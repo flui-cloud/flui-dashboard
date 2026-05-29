@@ -41,20 +41,32 @@ export class TemplatesService extends BaseService {
 
     /**
      * Get template details
-     * Get details for a specific framework template
+     * Get details for a specific framework template. When &#x60;version&#x60; is omitted, returns the &#x60;isDefault&#x60; entry.
      * @endpoint get /api/v1/templates/{framework}
      * @param framework 
+     * @param version Pin a specific major version, e.g. &#x60;16&#x60; for Next.js
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public templatesControllerGetTemplate(framework: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TemplateResponseDto>;
-    public templatesControllerGetTemplate(framework: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TemplateResponseDto>>;
-    public templatesControllerGetTemplate(framework: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TemplateResponseDto>>;
-    public templatesControllerGetTemplate(framework: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public templatesControllerGetTemplate(framework: string, version?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TemplateResponseDto>;
+    public templatesControllerGetTemplate(framework: string, version?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TemplateResponseDto>>;
+    public templatesControllerGetTemplate(framework: string, version?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TemplateResponseDto>>;
+    public templatesControllerGetTemplate(framework: string, version?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (framework === null || framework === undefined) {
             throw new Error('Required parameter framework was null or undefined when calling templatesControllerGetTemplate.');
         }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'version',
+            <any>version,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -89,6 +101,7 @@ export class TemplatesService extends BaseService {
         return this.httpClient.request<TemplateResponseDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

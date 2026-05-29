@@ -23,6 +23,14 @@ export interface ProviderCapabilitiesDto {
      * VNet topology info — null when privateNetworking is false
      */
     vnetTopology?: VNetTopologyDto | null;
+    /**
+     * Whether a VNet/Subnet must be selected when creating a cluster on this provider
+     */
+    vnetRequired: boolean;
+    /**
+     * Whether a workload may target a provider different from the control cluster provider
+     */
+    crossClusterAllowed: boolean;
 }
 export namespace ProviderCapabilitiesDto {
     export const CredentialTypeEnum = {

@@ -19,7 +19,7 @@ export interface AppOperationResponseDto {
     totalSteps: number;
     errorMessage?: string;
     imageRef?: string;
-    digest?: string | null;
+    digest?: string;
     startedAt?: string;
     completedAt?: string;
     createdAt: string;

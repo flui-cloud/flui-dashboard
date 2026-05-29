@@ -61,7 +61,7 @@ export class ClusterDNSZoneService extends BaseService {
 
     /**
      * Assign a DNS zone to a cluster
-     * Assign a registered DNS zone to a cluster. Each cluster can have at most one active DNS zone. DNS records and certificates for app endpoints will use this zone.
+     * Assign a registered DNS zone to a cluster. A cluster may have multiple zones assigned — DNS records for an app endpoint are written to the zone whose name is the longest suffix of the endpoint FQDN.
      * @endpoint post /api/v1/clusters/{clusterId}/dns-zone
      * @param clusterId Cluster ID
      * @param assignDnsZoneDto 
@@ -863,7 +863,8 @@ export class ClusterDNSZoneService extends BaseService {
     }
 
     /**
-     * Get the DNS zone assigned to a cluster
+     * Get the primary (first-assigned) DNS zone for a cluster
+     * Backward-compat endpoint returning the cluster\&#39;s first DNS zone assignment. Use GET /list to retrieve all assigned zones.
      * @endpoint get /api/v1/clusters/{clusterId}/dns-zone
      * @param clusterId Cluster ID
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -922,8 +923,131 @@ export class ClusterDNSZoneService extends BaseService {
     }
 
     /**
-     * Remove the DNS zone assignment from a cluster
-     * Remove the DNS zone from the cluster. Existing app endpoints will become BYOD (user manages DNS externally).
+     * List all DNS zone assignments for a cluster
+     * Returns all DNS zone assignments for the cluster. Endpoint FQDNs are matched to the assignment with the longest matching zone suffix.
+     * @endpoint get /api/v1/clusters/{clusterId}/dns-zone/list
+     * @param clusterId Cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterDnsZoneControllerListZoneAssignments(clusterId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ClusterDnsZoneResponseDto>>;
+    public clusterDnsZoneControllerListZoneAssignments(clusterId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ClusterDnsZoneResponseDto>>>;
+    public clusterDnsZoneControllerListZoneAssignments(clusterId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ClusterDnsZoneResponseDto>>>;
+    public clusterDnsZoneControllerListZoneAssignments(clusterId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerListZoneAssignments.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/dns-zone/list`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<ClusterDnsZoneResponseDto>>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Remove a single DNS zone assignment from a cluster
+     * Remove one DNS zone assignment. Endpoints that were matching this zone will become BYOD (user manages DNS externally).
+     * @endpoint delete /api/v1/clusters/{clusterId}/dns-zone/{assignmentId}
+     * @param assignmentId Assignment ID
+     * @param clusterId Cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterDnsZoneControllerRemoveAssignment(assignmentId: string, clusterId: any, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public clusterDnsZoneControllerRemoveAssignment(assignmentId: string, clusterId: any, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public clusterDnsZoneControllerRemoveAssignment(assignmentId: string, clusterId: any, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public clusterDnsZoneControllerRemoveAssignment(assignmentId: string, clusterId: any, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (assignmentId === null || assignmentId === undefined) {
+            throw new Error('Required parameter assignmentId was null or undefined when calling clusterDnsZoneControllerRemoveAssignment.');
+        }
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerRemoveAssignment.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}/dns-zone/${this.configuration.encodeParam({name: "assignmentId", value: assignmentId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Remove all DNS zone assignments from a cluster
+     * Backward-compat endpoint removing every DNS zone assigned to the cluster. Prefer DELETE /:assignmentId for selective removal.
      * @endpoint delete /api/v1/clusters/{clusterId}/dns-zone
      * @param clusterId Cluster ID
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -1203,20 +1327,84 @@ export class ClusterDNSZoneService extends BaseService {
     }
 
     /**
-     * Update certificate configuration for the cluster DNS zone
-     * Update the certificate provider, ACME email, and wildcard certificate settings.
+     * Update certificate configuration for one DNS zone assignment
+     * Update the certificate provider, ACME email, and wildcard certificate settings for the given assignment.
+     * @endpoint put /api/v1/clusters/{clusterId}/dns-zone/{assignmentId}
+     * @param assignmentId Assignment ID
+     * @param clusterId Cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterDnsZoneControllerUpdateCertConfig(assignmentId: string, clusterId: any, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClusterDnsZoneResponseDto>;
+    public clusterDnsZoneControllerUpdateCertConfig(assignmentId: string, clusterId: any, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClusterDnsZoneResponseDto>>;
+    public clusterDnsZoneControllerUpdateCertConfig(assignmentId: string, clusterId: any, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClusterDnsZoneResponseDto>>;
+    public clusterDnsZoneControllerUpdateCertConfig(assignmentId: string, clusterId: any, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (assignmentId === null || assignmentId === undefined) {
+            throw new Error('Required parameter assignmentId was null or undefined when calling clusterDnsZoneControllerUpdateCertConfig.');
+        }
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerUpdateCertConfig.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}/dns-zone/${this.configuration.encodeParam({name: "assignmentId", value: assignmentId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ClusterDnsZoneResponseDto>('put', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Update certificate configuration for the primary DNS zone assignment
+     * Backward-compat endpoint updating the cluster\&#39;s first DNS zone assignment. Prefer PUT /:assignmentId for multi-zone clusters.
      * @endpoint put /api/v1/clusters/{clusterId}/dns-zone
      * @param clusterId Cluster ID
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public clusterDnsZoneControllerUpdateCertConfig(clusterId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClusterDnsZoneResponseDto>;
-    public clusterDnsZoneControllerUpdateCertConfig(clusterId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClusterDnsZoneResponseDto>>;
-    public clusterDnsZoneControllerUpdateCertConfig(clusterId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClusterDnsZoneResponseDto>>;
-    public clusterDnsZoneControllerUpdateCertConfig(clusterId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public clusterDnsZoneControllerUpdatePrimaryCertConfig(clusterId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClusterDnsZoneResponseDto>;
+    public clusterDnsZoneControllerUpdatePrimaryCertConfig(clusterId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClusterDnsZoneResponseDto>>;
+    public clusterDnsZoneControllerUpdatePrimaryCertConfig(clusterId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClusterDnsZoneResponseDto>>;
+    public clusterDnsZoneControllerUpdatePrimaryCertConfig(clusterId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (clusterId === null || clusterId === undefined) {
-            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerUpdateCertConfig.');
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerUpdatePrimaryCertConfig.');
         }
 
         let localVarHeaders = this.defaultHeaders;

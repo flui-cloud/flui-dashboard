@@ -20,7 +20,7 @@ export interface ApplicationReleaseDto {
     /**
      * Canonical digest (sha256:...) of the image being deployed, when known. Preferred identifier for client-side matching.
      */
-    digest?: string | null;
+    digest?: string;
     /**
      * Image that was active before this release was triggered. Useful to show \"rolled back to X\" in the UI.
      */

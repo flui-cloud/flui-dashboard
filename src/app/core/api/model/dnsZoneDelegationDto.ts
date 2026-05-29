@@ -11,10 +11,6 @@
 
 export interface DnsZoneDelegationDto { 
     /**
-     * Nameservers to set at your domain registrar
-     */
-    nameservers: Array<string>;
-    /**
      * Official guide URL for delegating an external domain
      */
     delegationGuideUrl: string;

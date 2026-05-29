@@ -69,6 +69,15 @@ import { PricingService } from '../../services/pricing.service';
           <span>{{ wizardService.providerError() }}</span>
         </div>
 
+        <!-- Provider lock note -->
+        <div
+          *ngIf="lockedProvider()"
+          class="flex items-center gap-2 mb-3 p-3 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 rounded-lg text-sm"
+        >
+          <ng-icon name="lucideShield" size="16"></ng-icon>
+          <span>Workloads must run on the same provider as the control cluster.</span>
+        </div>
+
         <!-- Provider Grid -->
         <div
           *ngIf="!wizardService.isProviderLoading() && !wizardService.providerError()"
@@ -76,11 +85,11 @@ import { PricingService } from '../../services/pricing.service';
         >
           <div
             *ngFor="let provider of wizardService.providersData()"
-            (click)="!provider.comingSoon && selectProvider(provider.id)"
+            (click)="!isProviderDisabled(provider) && selectProvider(provider.id)"
             [class]="getProviderCardClass(provider)"
             class="relative p-3 border-2 rounded-lg transition-all"
-            [class.cursor-pointer]="!provider.comingSoon"
-            [class.cursor-not-allowed]="provider.comingSoon"
+            [class.cursor-pointer]="!isProviderDisabled(provider)"
+            [class.cursor-not-allowed]="isProviderDisabled(provider)"
           >
             <div class="flex flex-col items-center gap-2 text-center">
               <!-- Provider Logo -->
@@ -271,6 +280,7 @@ export class ProviderRegionSelectorComponent implements OnInit {
   readonly selectedProvider = input<string>('');
   readonly selectedRegion = input<string>('');
   readonly selectedServerTypeId = input<string>('');
+  readonly lockedProvider = input<string | null>(null);
 
   // === Outputs ===
   readonly providerSelected = output<string>();
@@ -342,7 +352,15 @@ export class ProviderRegionSelectorComponent implements OnInit {
   // === Methods ===
 
   selectProvider(providerId: string): void {
+    const locked = this.lockedProvider();
+    if (locked && providerId !== locked) return;
     this.providerSelected.emit(providerId);
+  }
+
+  isProviderDisabled(provider: ProviderOption): boolean {
+    if (provider.comingSoon) return true;
+    const locked = this.lockedProvider();
+    return !!locked && provider.id !== locked;
   }
 
   selectRegion(regionId: string): void {
@@ -364,7 +382,7 @@ export class ProviderRegionSelectorComponent implements OnInit {
   // === Styling Methods ===
 
   getProviderCardClass(provider: ProviderOption): string {
-    if (provider.comingSoon) {
+    if (this.isProviderDisabled(provider)) {
       return 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed opacity-60';
     }
 

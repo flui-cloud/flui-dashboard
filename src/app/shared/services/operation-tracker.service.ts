@@ -94,17 +94,24 @@ export class OperationTrackerService {
       return; // No metadata available
     }
 
-    const existingSteps = this.creationSteps();
-    const existingStepIds = new Set(existingSteps.map(s => s.id));
+    console.log(`🔍 Syncing steps: currentIndex=${currentStepIndex}, totalSteps=${status.totalSteps}, existing=${this.creationSteps().length}`);
 
-    console.log(`🔍 Syncing steps: currentIndex=${currentStepIndex}, totalSteps=${status.totalSteps}, existing=${existingSteps.length}`);
-
-    // Reconstruct all steps BEFORE current step as completed
+    // Every step BEFORE the current one must be completed: reconstruct missing ones,
+    // and complete any that already exist but are still running/pending (e.g. a step
+    // the UI showed as running while polling jumped past it).
     for (let i = 0; i < currentStepIndex; i++) {
       const stepDef = operationSteps[i];
       const stepId = stepDef.step;
 
-      if (!existingStepIds.has(stepId)) {
+      const existing = this.creationSteps().find(s => s.id === stepId);
+      if (existing) {
+        if (existing.status !== 'completed') {
+          this.updateCreationStep(stepId, {
+            status: 'completed',
+            completedAt: existing.completedAt ?? new Date(),
+          });
+        }
+      } else {
         console.log(`🔧 Reconstructing completed step ${i + 1}/${status.totalSteps}: ${stepDef.description}`);
 
         // Mark as seen to prevent duplicate creation
@@ -204,17 +211,14 @@ export class OperationTrackerService {
           this.creationProgress.set(100);
           this.creationMessage.set('Operation completed successfully!');
 
-          // Mark last step as completed
-          const steps = this.creationSteps();
-          if (steps.length > 0) {
-            const lastStep = steps.at(-1)!;
-            if (lastStep.status === 'running') {
-              this.updateCreationStep(lastStep.id, {
-                status: 'completed',
-                completedAt: new Date(),
-              });
-            }
-          }
+          // Operation succeeded: no step may be left running/pending
+          this.creationSteps.update((steps) =>
+            steps.map((step) =>
+              step.status === 'completed'
+                ? step
+                : { ...step, status: 'completed', completedAt: step.completedAt ?? new Date() }
+            )
+          );
 
           // Add final completion step
           const finalStep: ClusterCreationStep = {

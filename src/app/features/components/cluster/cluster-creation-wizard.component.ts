@@ -1,9 +1,11 @@
 import {
   Component,
   computed,
+  effect,
   inject,
   output,
   signal,
+  untracked,
   OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -37,7 +39,7 @@ import {
   lucideNetwork,
   lucideHardDrive,
 } from '@ng-icons/lucide';
-import { WizardStep, NodeSizeOption, ClusterConfiguration, ProviderType } from '../../model/cluster.models';
+import { WizardStep, NodeSizeOption, ClusterConfiguration, ProviderType, ClusterType as ClusterEntityType } from '../../model/cluster.models';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 import { AutoscaleDefaults } from '../../model/autoscale.models';
@@ -215,6 +217,7 @@ import {
                   [selectedProvider]="selectedProvider()"
                   [selectedRegion]="selectedRegion()"
                   [selectedServerTypeId]="selectedServerTypeId()"
+                  [lockedProvider]="lockedProvider()"
                   (providerSelected)="onProviderSelected($event)"
                   (regionSelected)="onRegionSelected($event)"
                   (serverTypeSelected)="onServerTypeSelected($event)"
@@ -531,7 +534,7 @@ import {
         <!-- Step 3: Network Configuration (VNet & Subnet) -->
         @case (3) {
           <div class="space-y-6">
-            @if (autoScalingEnabled()) {
+            @if (autoScalingEnabled() && !vnetRequired()) {
               <div class="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20 p-3 flex items-start gap-2">
                 <ng-icon name="lucideInfo" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <p class="text-xs text-blue-900 dark:text-blue-200">
@@ -545,8 +548,10 @@ import {
             <div>
               <app-vnet-selector
                 [provider]="selectedProvider()"
-                [required]="false"
-                [description]="'Select a VNet and subnet to attach all cluster nodes to a private network. This is optional but recommended for production clusters.'"
+                [required]="vnetRequired()"
+                [description]="vnetRequired()
+                  ? 'This provider requires all cluster nodes to share a private network. Select a VNet and subnet to continue.'
+                  : 'Select a VNet and subnet to attach all cluster nodes to a private network. This is optional but recommended for production clusters.'"
                 (vnetSelected)="onVNetSelected($event)"
               />
             </div>
@@ -1132,6 +1137,36 @@ export class ClusterCreationWizardComponent implements OnInit {
     return serverType.pricePerHour + this.storageCostPerHour();
   });
 
+  readonly controlClusterProvider = computed<string | null>(() => {
+    const observability = this.clusterService
+      .clusters()
+      .find(c => c.clusterType === ClusterEntityType.OBSERVABILITY);
+    return observability?.provider ?? null;
+  });
+
+  readonly lockedProvider = computed<string | null>(() => {
+    const control = this.controlClusterProvider();
+    if (!control) return null;
+    const crossAllowed =
+      this.wizardService.getProviderDefinition(control)?.capabilities?.crossClusterAllowed ?? false;
+    return crossAllowed ? null : control;
+  });
+
+  readonly vnetRequired = computed<boolean>(() => {
+    const provider = this.selectedProvider();
+    if (!provider) return false;
+    return this.wizardService.getProviderDefinition(provider)?.capabilities?.vnetRequired ?? false;
+  });
+
+  constructor() {
+    effect(() => {
+      const locked = this.lockedProvider();
+      if (locked && this.selectedProvider() !== locked) {
+        untracked(() => this.onProviderSelected(locked));
+      }
+    });
+  }
+
   // Wizard steps - Consolidated (6 steps total)
   readonly wizardSteps = computed<WizardStep[]>(() => {
     const currentIndex = this.currentStepIndex();
@@ -1164,10 +1199,11 @@ export class ClusterCreationWizardComponent implements OnInit {
       {
         id: 'network',
         title: 'Network',
-        description: 'Configure virtual network (optional)',
+        description: this.vnetRequired() ? 'Configure virtual network' : 'Configure virtual network (optional)',
         icon: 'lucideNetwork',
-        // If VNet is selected, subnet must also be selected
-        isValid: this.selectedVNetId() ? !!this.selectedSubnetId() : true,
+        isValid: this.vnetRequired()
+          ? (!!this.selectedVNetId() && !!this.selectedSubnetId())
+          : (this.selectedVNetId() ? !!this.selectedSubnetId() : true),
         isCompleted: currentIndex > 3,
       },
       {
@@ -1212,8 +1248,10 @@ export class ClusterCreationWizardComponent implements OnInit {
         // autoscale defaults unavailable — form uses manual inputs
       }
   
-      // Load existing clusters to check for name uniqueness
-      await this.clusterService.loadClusters();
+      await Promise.all([
+        this.clusterService.loadClusters(),
+        this.wizardService.loadProviders(),
+      ]);
   
       // Track form validity changes with signal
       this.basicConfigForm.statusChanges.subscribe(() => {
@@ -1404,11 +1442,13 @@ export class ClusterCreationWizardComponent implements OnInit {
   }
 
   canComplete(): boolean {
+    const vnetOk = !this.vnetRequired() || (!!this.selectedVNetId() && !!this.selectedSubnetId());
     return (
       this.basicConfigForm.valid &&
       !!this.selectedProvider() &&
       !!this.selectedRegion() &&
-      !!this.selectedServerTypeId()
+      !!this.selectedServerTypeId() &&
+      vnetOk
     );
   }
 
@@ -1720,10 +1760,24 @@ export class ClusterCreationWizardComponent implements OnInit {
       console.error('Failed to create cluster:', error);
       this.completeOutput.emit({
         success: false,
-        error: error.message || 'Failed to create cluster',
+        error: this.mapCreateClusterError(error),
       });
     } finally {
       this.isCreating.set(false);
+    }
+  }
+
+  private mapCreateClusterError(error: any): string {
+    const body = error?.error;
+    switch (body?.code) {
+      case 'CROSS_PROVIDER_NOT_ALLOWED':
+        return body.message
+          ?? 'This workload must use the same provider as the control cluster.';
+      case 'VNET_REQUIRED':
+        return body.message
+          ?? 'This provider requires a VNet/Subnet selection.';
+      default:
+        return body?.message ?? error?.message ?? 'Failed to create cluster';
     }
   }
 

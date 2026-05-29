@@ -92,11 +92,16 @@ export class ClusterDnsZoneService {
   }
 
   async updateCertConfig(clusterId: string): Promise<ClusterDnsZoneResponseDto | null> {
+    const assignmentId = this.assignmentData()?.id;
+    if (!assignmentId) {
+      this.errorData.set('No DNS zone assignment to update');
+      return null;
+    }
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerUpdateCertConfig(clusterId)
+        this.apiService.clusterDnsZoneControllerUpdateCertConfig(assignmentId, clusterId)
       );
       this.assignmentData.set(result);
       return result;
