@@ -32,15 +32,15 @@ export class FirewallService {
     this.providerFirewallsError.asReadonly();
 
   /**
-   * Check if a firewall is an observability firewall
+   * Check if a firewall is a control-cluster firewall
    */
   private isObservabilityFirewall(fw: ProviderFirewallExtended): boolean {
-    return fw.labels?.['flui-cluster-type'] === 'observability';
+    return fw.labels?.['flui-cluster-type'] === 'control' || fw.labels?.['flui-cluster-type'] === 'observability';
   }
 
   /**
    * Get effective "inUse" status for a firewall.
-   * Observability firewalls are always considered in use.
+   * Control-cluster firewalls are always considered in use.
    */
   private isFirewallInUse(fw: ProviderFirewallExtended): boolean {
     return this.isObservabilityFirewall(fw) || fw.inUse;

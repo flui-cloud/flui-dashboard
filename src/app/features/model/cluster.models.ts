@@ -35,8 +35,15 @@ export enum ClusterViewMode {
 }
 
 export enum ClusterType {
-  OBSERVABILITY = 'observability',
-  WORKLOAD = 'workload'
+  CONTROL = 'control',
+  WORKLOAD = 'workload',
+  /** @deprecated legacy value for the control cluster; accepted for back-compat. */
+  OBSERVABILITY = 'observability'
+}
+
+/** True for the control cluster, accepting both the new and legacy enum values. */
+export function isControlClusterType(type?: ClusterType | string | null): boolean {
+  return type === ClusterType.CONTROL || type === ClusterType.OBSERVABILITY;
 }
 
 export interface ClusterInfo {

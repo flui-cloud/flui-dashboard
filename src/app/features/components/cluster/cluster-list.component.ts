@@ -313,9 +313,9 @@ interface FilterState {
                 </button>
                 <button
                   (click)="confirmDelete(cluster)"
-                  [disabled]="cluster.status === ClusterStatus.DELETING || cluster.clusterType === ClusterType.OBSERVABILITY"
+                  [disabled]="cluster.status === ClusterStatus.DELETING || (cluster.clusterType === ClusterType.CONTROL || cluster.clusterType === ClusterType.OBSERVABILITY)"
                   class="h-10 w-10 inline-flex items-center justify-center border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  [title]="cluster.clusterType === ClusterType.OBSERVABILITY ? 'Observability cluster can only be managed via CLI' : 'Delete Cluster'"
+                  [title]="(cluster.clusterType === ClusterType.CONTROL || cluster.clusterType === ClusterType.OBSERVABILITY) ? 'Control cluster can only be managed via CLI' : 'Delete Cluster'"
                 >
                   <ng-icon name="lucideTrash2" class="h-4 w-4" />
                 </button>

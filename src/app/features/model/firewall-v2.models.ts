@@ -105,16 +105,17 @@ export interface FirewallStats {
  * Cluster type enum for default rules
  */
 export enum ClusterType {
-  OBSERVABILITY = 'observability',
-  WORKLOAD = 'workload'
+  CONTROL = 'control',
+  WORKLOAD = 'workload',
+  OBSERVABILITY = 'observability'
 }
 
 /**
- * Default firewall rules for Observability clusters
+ * Default firewall rules for control clusters
  * Ports: SSH (22), Grafana (30300), Prometheus (30900), PostgreSQL (30432),
  *        Redis (30379), Loki (30100), Health Check (30080)
  */
-export const OBSERVABILITY_DEFAULT_RULES: FirewallRuleFormData[] = [
+export const CONTROL_DEFAULT_RULES: FirewallRuleFormData[] = [
   {
     description: 'SSH Access',
     direction: 'in',
@@ -210,8 +211,9 @@ export const WORKLOAD_DEFAULT_RULES: FirewallRuleFormData[] = [
  */
 export function getDefaultRulesForClusterType(type: ClusterType): FirewallRuleFormData[] {
   switch (type) {
+    case ClusterType.CONTROL:
     case ClusterType.OBSERVABILITY:
-      return [...OBSERVABILITY_DEFAULT_RULES];
+      return [...CONTROL_DEFAULT_RULES];
     case ClusterType.WORKLOAD:
       return [...WORKLOAD_DEFAULT_RULES];
     default:

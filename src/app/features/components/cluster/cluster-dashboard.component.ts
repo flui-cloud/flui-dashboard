@@ -174,9 +174,9 @@ interface TabItem {
             @if (clusterData.status === ClusterStatus.ACTIVE || clusterData.status === ClusterStatus.STOPPING) {
               <button
                 (click)="stopCluster()"
-                [disabled]="clusterData.status !== ClusterStatus.ACTIVE || isObservability(clusterData.clusterType)"
+                [disabled]="clusterData.status !== ClusterStatus.ACTIVE || isControlCluster(clusterData.clusterType)"
                 class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                [title]="isObservability(clusterData.clusterType) ? 'Observability cluster can only be managed via CLI' : 'Stop cluster'"
+                [title]="isControlCluster(clusterData.clusterType) ? 'Control cluster can only be managed via CLI' : 'Stop cluster'"
               >
                 <ng-icon name="lucideSquare" class="h-3.5 w-3.5" />
                 Stop
@@ -185,9 +185,9 @@ interface TabItem {
             @if (clusterData.status === ClusterStatus.STOPPED || clusterData.status === ClusterStatus.STARTING) {
               <button
                 (click)="startCluster()"
-                [disabled]="clusterData.status !== ClusterStatus.STOPPED || isObservability(clusterData.clusterType)"
+                [disabled]="clusterData.status !== ClusterStatus.STOPPED || isControlCluster(clusterData.clusterType)"
                 class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                [title]="isObservability(clusterData.clusterType) ? 'Observability cluster can only be managed via CLI' : 'Start cluster'"
+                [title]="isControlCluster(clusterData.clusterType) ? 'Control cluster can only be managed via CLI' : 'Start cluster'"
               >
                 <ng-icon name="lucidePlay" class="h-3.5 w-3.5" />
                 Start
@@ -196,9 +196,9 @@ interface TabItem {
             <div class="w-px h-4 bg-border mx-1"></div>
             <button
               (click)="confirmDelete()"
-              [disabled]="clusterData.status === ClusterStatus.DELETING || isObservability(clusterData.clusterType)"
+              [disabled]="clusterData.status === ClusterStatus.DELETING || isControlCluster(clusterData.clusterType)"
               class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              [title]="isObservability(clusterData.clusterType) ? 'Observability cluster can only be managed via CLI' : 'Delete cluster'"
+              [title]="isControlCluster(clusterData.clusterType) ? 'Control cluster can only be managed via CLI' : 'Delete cluster'"
             >
               <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
               Delete
@@ -377,8 +377,8 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
     this.router.navigate(['/cluster']);
   }
 
-  isObservability(type?: ClusterType): boolean {
-    return type === ClusterType.OBSERVABILITY;
+  isControlCluster(type?: ClusterType): boolean {
+    return type === ClusterType.CONTROL || type === ClusterType.OBSERVABILITY;
   }
 
   async stopCluster() {

@@ -94,7 +94,7 @@ interface MappingEntry {
               <option value="cluster">Whole cluster</option>
               <option value="namespace">Namespace</option>
               <option value="application">Application</option>
-              <option value="observability">Observability</option>
+              <option value="control">Control</option>
             </select>
           </label>
         </div>

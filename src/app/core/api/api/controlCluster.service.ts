@@ -19,11 +19,11 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 // @ts-ignore
 import { ClusterResponseDto } from '../model/clusterResponseDto';
 // @ts-ignore
-import { ObservabilityClusterControllerCreateLokiDatasource201Response } from '../model/observabilityClusterControllerCreateLokiDatasource201Response';
+import { ControlClusterControllerCreateLokiDatasource201Response } from '../model/controlClusterControllerCreateLokiDatasource201Response';
 // @ts-ignore
-import { ObservabilityClusterControllerCreateLokiDatasource400Response } from '../model/observabilityClusterControllerCreateLokiDatasource400Response';
+import { ControlClusterControllerCreateLokiDatasource400Response } from '../model/controlClusterControllerCreateLokiDatasource400Response';
 // @ts-ignore
-import { ObservabilityClusterControllerTestGrafanaConnection200Response } from '../model/observabilityClusterControllerTestGrafanaConnection200Response';
+import { ControlClusterControllerTestGrafanaConnection200Response } from '../model/controlClusterControllerTestGrafanaConnection200Response';
 // @ts-ignore
 import { ObservabilityEndpointsDto } from '../model/observabilityEndpointsDto';
 
@@ -37,7 +37,7 @@ import { BaseService } from '../api.base.service';
 @Injectable({
   providedIn: 'root'
 })
-export class ObservabilityClusterService extends BaseService {
+export class ControlClusterService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
@@ -46,15 +46,15 @@ export class ObservabilityClusterService extends BaseService {
     /**
      * Create centralized Loki datasource
      * Creates or updates the centralized Loki datasource in Grafana. This datasource is shared across all workload clusters and filters logs using labels (cluster_name, service, etc.). This endpoint is idempotent - if the datasource already exists, it will be updated. Useful for: - Re-creating datasource if initial creation failed - Updating datasource configuration (e.g., after LOKI_ENDPOINT change) - Manual datasource management and debugging
-     * @endpoint post /api/v1/observability-cluster/grafana-datasources/loki
+     * @endpoint post /api/v1/control-cluster/grafana-datasources/loki
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public observabilityClusterControllerCreateLokiDatasource(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ObservabilityClusterControllerCreateLokiDatasource201Response>;
-    public observabilityClusterControllerCreateLokiDatasource(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ObservabilityClusterControllerCreateLokiDatasource201Response>>;
-    public observabilityClusterControllerCreateLokiDatasource(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ObservabilityClusterControllerCreateLokiDatasource201Response>>;
-    public observabilityClusterControllerCreateLokiDatasource(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public controlClusterControllerCreateLokiDatasource(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ControlClusterControllerCreateLokiDatasource201Response>;
+    public controlClusterControllerCreateLokiDatasource(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ControlClusterControllerCreateLokiDatasource201Response>>;
+    public controlClusterControllerCreateLokiDatasource(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ControlClusterControllerCreateLokiDatasource201Response>>;
+    public controlClusterControllerCreateLokiDatasource(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -84,9 +84,9 @@ export class ObservabilityClusterService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/observability-cluster/grafana-datasources/loki`;
+        let localVarPath = `/api/v1/control-cluster/grafana-datasources/loki`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<ObservabilityClusterControllerCreateLokiDatasource201Response>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ControlClusterControllerCreateLokiDatasource201Response>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -100,17 +100,17 @@ export class ObservabilityClusterService extends BaseService {
     }
 
     /**
-     * Get observability service endpoints
-     * Returns the URLs for all observability services (Prometheus, Loki, Grafana, PostgreSQL, Redis). These endpoints are used by workload clusters to send metrics and logs to the observability cluster.
-     * @endpoint get /api/v1/observability-cluster/endpoints
+     * Get control cluster info
+     * Returns the control cluster details including endpoints, status, and configuration. This endpoint is used to check if an control cluster exists and retrieve its information.
+     * @endpoint get /api/v1/control-cluster
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public observabilityClusterControllerGetEndpoints(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ObservabilityEndpointsDto>;
-    public observabilityClusterControllerGetEndpoints(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ObservabilityEndpointsDto>>;
-    public observabilityClusterControllerGetEndpoints(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ObservabilityEndpointsDto>>;
-    public observabilityClusterControllerGetEndpoints(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public controlClusterControllerGetControlCluster(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClusterResponseDto>;
+    public controlClusterControllerGetControlCluster(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClusterResponseDto>>;
+    public controlClusterControllerGetControlCluster(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClusterResponseDto>>;
+    public controlClusterControllerGetControlCluster(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -140,63 +140,7 @@ export class ObservabilityClusterService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/observability-cluster/endpoints`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<ObservabilityEndpointsDto>('get', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Get observability cluster info
-     * Returns the observability cluster details including endpoints, status, and configuration. This endpoint is used to check if an observability cluster exists and retrieve its information.
-     * @endpoint get /api/v1/observability-cluster
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public observabilityClusterControllerGetObservabilityCluster(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClusterResponseDto>;
-    public observabilityClusterControllerGetObservabilityCluster(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClusterResponseDto>>;
-    public observabilityClusterControllerGetObservabilityCluster(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClusterResponseDto>>;
-    public observabilityClusterControllerGetObservabilityCluster(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (bearer) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/v1/observability-cluster`;
+        let localVarPath = `/api/v1/control-cluster`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ClusterResponseDto>('get', `${basePath}${localVarPath}`,
             {
@@ -212,17 +156,17 @@ export class ObservabilityClusterService extends BaseService {
     }
 
     /**
-     * Test Grafana connection
-     * Tests the Grafana connection using current configuration (environment variables or cluster metadata). Useful for verifying GRAFANA_URL, GRAFANA_ADMIN_USERNAME, and GRAFANA_ADMIN_PASSWORD are correctly set. Does not create or modify any resources.
-     * @endpoint get /api/v1/observability-cluster/test-grafana
+     * Get observability service endpoints
+     * Returns the URLs for all observability services (Prometheus, Loki, Grafana, PostgreSQL, Redis). These endpoints are used by workload clusters to send metrics and logs to the control cluster.
+     * @endpoint get /api/v1/control-cluster/endpoints
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public observabilityClusterControllerTestGrafanaConnection(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ObservabilityClusterControllerTestGrafanaConnection200Response>;
-    public observabilityClusterControllerTestGrafanaConnection(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ObservabilityClusterControllerTestGrafanaConnection200Response>>;
-    public observabilityClusterControllerTestGrafanaConnection(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ObservabilityClusterControllerTestGrafanaConnection200Response>>;
-    public observabilityClusterControllerTestGrafanaConnection(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public controlClusterControllerGetEndpoints(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ObservabilityEndpointsDto>;
+    public controlClusterControllerGetEndpoints(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ObservabilityEndpointsDto>>;
+    public controlClusterControllerGetEndpoints(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ObservabilityEndpointsDto>>;
+    public controlClusterControllerGetEndpoints(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -252,9 +196,65 @@ export class ObservabilityClusterService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/observability-cluster/test-grafana`;
+        let localVarPath = `/api/v1/control-cluster/endpoints`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<ObservabilityClusterControllerTestGrafanaConnection200Response>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ObservabilityEndpointsDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Test Grafana connection
+     * Tests the Grafana connection using current configuration (environment variables or cluster metadata). Useful for verifying GRAFANA_URL, GRAFANA_ADMIN_USERNAME, and GRAFANA_ADMIN_PASSWORD are correctly set. Does not create or modify any resources.
+     * @endpoint get /api/v1/control-cluster/test-grafana
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public controlClusterControllerTestGrafanaConnection(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ControlClusterControllerTestGrafanaConnection200Response>;
+    public controlClusterControllerTestGrafanaConnection(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ControlClusterControllerTestGrafanaConnection200Response>>;
+    public controlClusterControllerTestGrafanaConnection(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ControlClusterControllerTestGrafanaConnection200Response>>;
+    public controlClusterControllerTestGrafanaConnection(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/control-cluster/test-grafana`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ControlClusterControllerTestGrafanaConnection200Response>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

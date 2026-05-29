@@ -21,6 +21,7 @@ api/catalog.service.ts
 api/clusterDNSZone.service.ts
 api/clusterHealth.service.ts
 api/clusterMetricsLogs.service.ts
+api/controlCluster.service.ts
 api/credentials.service.ts
 api/dNSZones.service.ts
 api/firewalls.service.ts
@@ -35,7 +36,6 @@ api/infrastructureOperations.service.ts
 api/infrastructurePlatformComponents.service.ts
 api/infrastructureServers.service.ts
 api/observability.service.ts
-api/observabilityCluster.service.ts
 api/providerConnections.service.ts
 api/providerFirewalls.service.ts
 api/providerManagement.service.ts
@@ -188,6 +188,10 @@ model/containerDetailDto.ts
 model/containerResourceSpecDto.ts
 model/containerResourcesDto.ts
 model/containerRuntimeDetailDto.ts
+model/controlClusterControllerCreateLokiDatasource201Response.ts
+model/controlClusterControllerCreateLokiDatasource201ResponseDatasource.ts
+model/controlClusterControllerCreateLokiDatasource400Response.ts
+model/controlClusterControllerTestGrafanaConnection200Response.ts
 model/cpuMetricsDto.ts
 model/createApiKeyDto.ts
 model/createApiKeyResultDto.ts
@@ -294,10 +298,6 @@ model/nodeMonthToDateDto.ts
 model/nodeSizeLocationDto.ts
 model/nodeSizeOptionDto.ts
 model/nodeSizePriceDto.ts
-model/observabilityClusterControllerCreateLokiDatasource201Response.ts
-model/observabilityClusterControllerCreateLokiDatasource201ResponseDatasource.ts
-model/observabilityClusterControllerCreateLokiDatasource400Response.ts
-model/observabilityClusterControllerTestGrafanaConnection200Response.ts
 model/observabilityEndpointsDto.ts
 model/oidcReadinessDto.ts
 model/packageCacheEntryDto.ts

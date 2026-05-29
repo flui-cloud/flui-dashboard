@@ -9,7 +9,7 @@
  */
 
 
-export interface ObservabilityClusterControllerCreateLokiDatasource400Response { 
+export interface ControlClusterControllerCreateLokiDatasource400Response { 
     success?: boolean;
     error?: string;
     details?: string;

@@ -248,7 +248,7 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
                           </div>
                           @if (isObservabilityFirewall(firewall)) {
                             <span hlmBadge variant="outline" class="text-xs bg-purple-50 dark:bg-gray-700/50 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-gray-600/50">
-                              Observability
+                              Control
                             </span>
                           }
                         </div>
@@ -302,7 +302,7 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
                             size="sm"
                             disabled
                             class="text-muted-foreground cursor-not-allowed"
-                            title="Observability firewalls are managed automatically and cannot be deleted"
+                            title="Control-cluster firewalls are managed automatically and cannot be deleted"
                           >
                             <ng-icon name="lucideTrash2" class="h-4 w-4" />
                           </button>
@@ -414,12 +414,12 @@ export class FirewallProviderInstancesComponent {
   }
 
   isObservabilityFirewall(firewall: ProviderFirewallExtended): boolean {
-    return firewall.labels?.['flui-cluster-type'] === 'observability';
+    return firewall.labels?.['flui-cluster-type'] === 'control' || firewall.labels?.['flui-cluster-type'] === 'observability';
   }
 
   deleteFirewall(firewall: ProviderFirewallExtended): void {
     if (this.isObservabilityFirewall(firewall)) {
-      alert('Observability firewalls are managed automatically and cannot be deleted manually.');
+      alert('Control-cluster firewalls are managed automatically and cannot be deleted manually.');
       return;
     }
 

@@ -45,8 +45,9 @@ export namespace DistributionClusterDto {
     } as const;
     export type StatusEnum = typeof StatusEnum[keyof typeof StatusEnum];
     export const ClusterTypeEnum = {
-        Observability: 'observability',
-        Workload: 'workload'
+        Control: 'control',
+        Workload: 'workload',
+        Observability: 'observability'
     } as const;
     export type ClusterTypeEnum = typeof ClusterTypeEnum[keyof typeof ClusterTypeEnum];
 }

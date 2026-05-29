@@ -1689,7 +1689,7 @@ export class InfrastructureClustersService extends BaseService {
 
     /**
      * Register an existing cluster
-     * Registers an existing cluster (e.g., observability cluster) into the database without creating new infrastructure. This enables metrics monitoring via the API.
+     * Registers an existing cluster (e.g., control cluster) into the database without creating new infrastructure. This enables metrics monitoring via the API.
      * @endpoint post /api/v1/infrastructure/clusters/register
      * @param registerClusterDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -2157,7 +2157,7 @@ export class InfrastructureClustersService extends BaseService {
 
     /**
      * Update cluster metadata
-     * Merges new metadata with existing cluster metadata. If isObservabilityCluster is updated, the cluster type will be automatically adjusted.
+     * Merges new metadata with existing cluster metadata. If isControlCluster (legacy: isObservabilityCluster) is set, the cluster type will be automatically adjusted.
      * @endpoint patch /api/v1/infrastructure/clusters/{id}/metadata
      * @param id Cluster ID
      * @param updateClusterMetadataDto 

@@ -38,7 +38,7 @@ import { InstanceManagedBadgeComponent } from './instance-managed-badge.componen
 import { InstanceDeleteDialogComponent } from './instance-delete-dialog.component';
 import { SshTerminalComponent } from './ssh-terminal.component';
 import { ClusterService } from '../../service/cluster.service';
-import { ClusterType } from '../../model/cluster.models';
+import { ClusterType, isControlClusterType } from '../../model/cluster.models';
 
 @Component({
   selector: 'app-instance-detail',
@@ -133,7 +133,7 @@ import { ClusterType } from '../../model/cluster.models';
                       size="sm"
                       (click)="openDeleteDialog()"
                       [disabled]="isDeleting() || isObservabilityInstance()"
-                      [title]="isObservabilityInstance() ? 'Observability instance can only be managed via CLI' : 'Delete instance'"
+                      [title]="isObservabilityInstance() ? 'Control instance can only be managed via CLI' : 'Delete instance'"
                     >
                       @if (isDeleting()) {
                         <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
@@ -265,7 +265,7 @@ import { ClusterType } from '../../model/cluster.models';
                   <div class="flex-1">
                     <p class="text-sm font-medium text-yellow-900 dark:text-yellow-200">Observability Instance</p>
                     <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                      This instance is part of the observability cluster and can only be managed via CLI.
+                      This instance is part of the control cluster and can only be managed via CLI.
                     </p>
                   </div>
                 </div>
@@ -510,7 +510,7 @@ export class InstanceDetailComponent implements OnInit {
   });
 
   isObservabilityInstance = computed(() => {
-    return this.instanceClusterType() === ClusterType.OBSERVABILITY;
+    return isControlClusterType(this.instanceClusterType());
   });
 
   isWorkloadInstance = computed(() => {

@@ -9,16 +9,16 @@
  */
 
 
-export interface ObservabilityClusterControllerTestGrafanaConnection200Response { 
+export interface ControlClusterControllerTestGrafanaConnection200Response { 
     success?: boolean;
     url?: string;
     username?: string;
     message?: string;
-    configSource?: ObservabilityClusterControllerTestGrafanaConnection200Response.ConfigSourceEnum;
+    configSource?: ControlClusterControllerTestGrafanaConnection200Response.ConfigSourceEnum;
     error?: string;
     details?: string;
 }
-export namespace ObservabilityClusterControllerTestGrafanaConnection200Response {
+export namespace ControlClusterControllerTestGrafanaConnection200Response {
     export const ConfigSourceEnum = {
         ClusterMetadata: 'cluster-metadata',
         EnvironmentVariables: 'environment-variables',

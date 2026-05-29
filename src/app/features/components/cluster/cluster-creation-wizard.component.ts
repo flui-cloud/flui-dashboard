@@ -39,7 +39,7 @@ import {
   lucideNetwork,
   lucideHardDrive,
 } from '@ng-icons/lucide';
-import { WizardStep, NodeSizeOption, ClusterConfiguration, ProviderType, ClusterType as ClusterEntityType } from '../../model/cluster.models';
+import { WizardStep, NodeSizeOption, ClusterConfiguration, ProviderType, ClusterType as ClusterEntityType, isControlClusterType } from '../../model/cluster.models';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 import { AutoscaleDefaults } from '../../model/autoscale.models';
@@ -1140,7 +1140,7 @@ export class ClusterCreationWizardComponent implements OnInit {
   readonly controlClusterProvider = computed<string | null>(() => {
     const observability = this.clusterService
       .clusters()
-      .find(c => c.clusterType === ClusterEntityType.OBSERVABILITY);
+      .find(c => isControlClusterType(c.clusterType));
     return observability?.provider ?? null;
   });
 

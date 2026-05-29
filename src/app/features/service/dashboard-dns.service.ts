@@ -5,7 +5,7 @@ import { AppEndpointsService as AppEndpointsApi } from '../../core/api/api/appEn
 import { SystemDnsStatusResponseDto } from '../../core/api/model/systemDnsStatusResponseDto';
 import { AppEndpointResponseDto } from '../../core/api/model/appEndpointResponseDto';
 import { ClusterService } from './cluster.service';
-import { ClusterType } from '../model/cluster.models';
+import { ClusterType, isControlClusterType } from '../model/cluster.models';
 
 export interface AppDnsInfo {
   applicationId: string | null;
@@ -60,7 +60,7 @@ export class DashboardDnsService {
   async load(): Promise<void> {
     const clusters = this.clusterService.clusters();
     const target =
-      clusters.find(c => c.clusterType === ClusterType.OBSERVABILITY && !!c.id) ??
+      clusters.find(c => isControlClusterType(c.clusterType) && !!c.id) ??
       clusters.find(c => !!c.id);
 
     if (!target?.id) return;

@@ -72,7 +72,7 @@ export class AuthService extends BaseService {
     }
 
     /**
-     * Run full OIDC bootstrap for the observability cluster (idempotent)
+     * Run full OIDC bootstrap for the control cluster (idempotent)
      * Creates the Flui project, roles, web + CLI OIDC apps, bootstrap admin, patches ConfigMap and triggers rolling restart. Called automatically by the CLI after Zitadel becomes ready during &#x60;flui env create&#x60;. Safe to re-run on existing installs.
      * @endpoint post /api/v1/auth/bootstrap
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -196,7 +196,7 @@ export class AuthService extends BaseService {
 
     /**
      * Switch platform auth mode (local ↔ oidc)
-     * Patches flui-secrets, flui-api-config, and flui-web-config on the observability cluster with the new auth configuration, then restarts flui-api and flui-web. Requires admin. In local mode: first call allowed without auth if no users exist yet.
+     * Patches flui-secrets, flui-api-config, and flui-web-config on the control cluster with the new auth configuration, then restarts flui-api and flui-web. Requires admin. In local mode: first call allowed without auth if no users exist yet.
      * @endpoint post /api/v1/auth/configure-mode
      * @param configureAuthModeDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

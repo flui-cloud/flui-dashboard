@@ -9,7 +9,7 @@
  */
 
 
-export interface ObservabilityClusterControllerCreateLokiDatasource201ResponseDatasource { 
+export interface ControlClusterControllerCreateLokiDatasource201ResponseDatasource { 
     name?: string;
     uid?: string;
     type?: string;
