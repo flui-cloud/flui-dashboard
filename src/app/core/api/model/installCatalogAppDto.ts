@@ -48,6 +48,14 @@ export interface InstallCatalogAppDto {
      * Override the manifest\'s default exposure at install time. Only effective when the catalog app reports `privatizable: true`. Omit to use the manifest default.
      */
     exposure?: InstallCatalogAppDto.ExposureEnum;
+    /**
+     * Authentication method chosen at install, among spec.auth.modes. Defaults to spec.auth.default (or native).
+     */
+    authMode?: InstallCatalogAppDto.AuthModeEnum;
+    /**
+     * Install-time feature toggles (spec.options[].key → enabled). Omitted keys fall back to the option default.
+     */
+    options?: { [key: string]: boolean; };
 }
 export namespace InstallCatalogAppDto {
     export const ExposureEnum = {
@@ -55,6 +63,13 @@ export namespace InstallCatalogAppDto {
         Internal: 'internal'
     } as const;
     export type ExposureEnum = typeof ExposureEnum[keyof typeof ExposureEnum];
+    export const AuthModeEnum = {
+        Native: 'native',
+        Oidc: 'oidc',
+        Proxy: 'proxy',
+        None: 'none'
+    } as const;
+    export type AuthModeEnum = typeof AuthModeEnum[keyof typeof AuthModeEnum];
 }
 
 

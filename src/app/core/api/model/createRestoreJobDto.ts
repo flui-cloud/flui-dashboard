@@ -22,6 +22,7 @@ export namespace CreateRestoreJobDto {
         Cluster: 'cluster',
         Namespace: 'namespace',
         Application: 'application',
+        Control: 'control',
         Observability: 'observability'
     } as const;
     export type TargetKindEnum = typeof TargetKindEnum[keyof typeof TargetKindEnum];

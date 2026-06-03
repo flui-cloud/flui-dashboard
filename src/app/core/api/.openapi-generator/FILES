@@ -88,6 +88,7 @@ model/appStatusMetricsDto.ts
 model/appVariableSourcesDto.ts
 model/appVariablesCombinedResponseDto.ts
 model/appVariablesResponseDto.ts
+model/applicationGroupDto.ts
 model/applicationReleaseDto.ts
 model/applicationReleaseListDto.ts
 model/applicationResourcesDto.ts

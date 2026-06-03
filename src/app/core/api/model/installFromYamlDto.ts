@@ -49,6 +49,14 @@ export interface InstallFromYamlDto {
      * Exposure override (only effective when manifest is privatizable).
      */
     exposure?: InstallFromYamlDto.ExposureEnum;
+    /**
+     * Authentication method chosen at install, among spec.auth.modes. Defaults to spec.auth.default (or native).
+     */
+    authMode?: InstallFromYamlDto.AuthModeEnum;
+    /**
+     * Install-time feature toggles (spec.options[].key → enabled). Omitted keys fall back to the option default.
+     */
+    options?: { [key: string]: boolean; };
 }
 export namespace InstallFromYamlDto {
     export const ExposureEnum = {
@@ -56,6 +64,13 @@ export namespace InstallFromYamlDto {
         Internal: 'internal'
     } as const;
     export type ExposureEnum = typeof ExposureEnum[keyof typeof ExposureEnum];
+    export const AuthModeEnum = {
+        Native: 'native',
+        Oidc: 'oidc',
+        Proxy: 'proxy',
+        None: 'none'
+    } as const;
+    export type AuthModeEnum = typeof AuthModeEnum[keyof typeof AuthModeEnum];
 }
 
 

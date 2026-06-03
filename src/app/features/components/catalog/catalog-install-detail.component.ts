@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import { map, firstValueFrom } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowLeft,
@@ -14,9 +14,13 @@ import {
 } from '@ng-icons/lucide';
 import { CatalogService } from '../../service/catalog.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
+import { ApplicationsService } from '../../../core/api/api/applications.service';
 import { evaluateEndpointReadiness } from '../../model/endpoint-readiness';
 import { buildOpenAppUrl } from '../../model/open-app-url';
-import { CatalogInstallResponseDto } from '../../../core/api/model/models';
+import {
+  CatalogInstallResponseDto,
+  ApplicationResponseDto,
+} from '../../../core/api/model/models';
 import { CatalogInstallStatusBadgeComponent } from './catalog-install-status-badge.component';
 
 const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
@@ -44,11 +48,11 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
   template: `
     <div class="mx-auto max-w-3xl space-y-6 p-6">
       <a
-        routerLink="/apps/catalog"
+        [routerLink]="backLink()"
         class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
         <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        Back to catalog
+        {{ backLabel() }}
       </a>
 
       @let inst = install();
@@ -206,6 +210,36 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
             </div>
           }
         </section>
+
+        @if (components().length > 0) {
+          <section class="rounded-2xl border border-border bg-card p-6">
+            <h2 class="mb-3 text-sm font-semibold text-foreground">
+              Components
+              <span class="ml-1 text-xs font-normal text-muted-foreground">({{ components().length }})</span>
+            </h2>
+            <div class="flex flex-col gap-1.5">
+              @for (c of components(); track c.id) {
+                <a
+                  [routerLink]="['/apps/applications', c.id]"
+                  class="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-muted"
+                >
+                  <span [class]="dotClass(c.status)" class="flex-shrink-0"></span>
+                  <div class="min-w-0 flex-1">
+                    <span class="flex items-center gap-2 truncate text-sm font-medium text-foreground">
+                      {{ role(c) }}
+                      @if (c.id === primaryId()) {
+                        <span class="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:bg-sky-900/20 dark:text-sky-400">primary</span>
+                      }
+                    </span>
+                    <span class="block truncate font-mono text-xs text-muted-foreground">{{ c.slug }}</span>
+                  </div>
+                  <span class="hidden flex-shrink-0 font-mono text-xs text-muted-foreground sm:block">{{ c.exposure }}</span>
+                  <span class="flex-shrink-0 text-xs capitalize text-muted-foreground">{{ c.status }}</span>
+                </a>
+              }
+            </div>
+          </section>
+        }
       }
     </div>
   `,
@@ -213,11 +247,27 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
 export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   private readonly catalog = inject(CatalogService);
   private readonly endpointsService = inject(AppEndpointsService);
+  private readonly applicationsApi = inject(ApplicationsService);
   private readonly route = inject(ActivatedRoute);
+
+  protected readonly components = signal<ApplicationResponseDto[]>([]);
+  protected readonly primaryId = signal<string | undefined>(undefined);
+  private readonly componentsKey = signal<string | null>(null);
 
   private readonly id = toSignal(
     this.route.paramMap.pipe(map((p) => p.get('id'))),
     { initialValue: this.route.snapshot.paramMap.get('id') },
+  );
+
+  private readonly from = toSignal(
+    this.route.queryParamMap.pipe(map((p) => p.get('from'))),
+    { initialValue: this.route.snapshot.queryParamMap.get('from') },
+  );
+  protected readonly backLink = computed(() =>
+    this.from() === 'applications' ? '/apps/applications' : '/apps/catalog',
+  );
+  protected readonly backLabel = computed(() =>
+    this.from() === 'applications' ? 'Back to applications' : 'Back to catalog',
   );
 
   protected readonly install = this.catalog.currentInstall;
@@ -276,6 +326,55 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
       const path = await this.catalog.getEntrypointPathByDefinitionId(defId);
       this.entrypointPath.set(path);
     });
+
+    effect(() => {
+      const inst = this.install();
+      if (!inst?.clusterId) return;
+      const key = `${inst.id}:${inst.status}`;
+      if (this.componentsKey() === key) return;
+      this.componentsKey.set(key);
+      void this.loadComponents(inst.clusterId, inst.id);
+    });
+  }
+
+  private async loadComponents(clusterId: string, installId: string): Promise<void> {
+    try {
+      const groups = await firstValueFrom(
+        this.applicationsApi.applicationsControllerListGroupedByCluster(clusterId),
+      );
+      const group = groups.find((g) => g.catalogInstallId === installId);
+      this.components.set(group?.components ?? []);
+      this.primaryId.set(group?.primaryComponentId);
+    } catch {
+    }
+  }
+
+  role(c: ApplicationResponseDto): string {
+    const labels = c.labels as Record<string, string> | undefined;
+    return labels?.['flui.cloud/composed-component'] ?? c.name;
+  }
+
+  dotClass(status: string): string {
+    const base = 'h-2.5 w-2.5 rounded-full';
+    switch (status) {
+      case 'running':
+        return `${base} bg-green-500`;
+      case 'provisioning':
+      case 'updating':
+      case 'awaiting_build':
+        return `${base} bg-blue-500 animate-pulse`;
+      case 'failed':
+        return `${base} bg-red-500`;
+      case 'degraded':
+        return `${base} bg-orange-500`;
+      case 'deleting':
+        return `${base} bg-gray-400 animate-pulse`;
+      case 'stopped':
+      case 'deleted':
+        return `${base} bg-gray-400`;
+      default:
+        return `${base} bg-yellow-500`;
+    }
   }
 
   ngOnInit(): void {

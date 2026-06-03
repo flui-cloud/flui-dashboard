@@ -23,6 +23,8 @@ import { AppResourceResponseDto } from '../model/appResourceResponseDto';
 // @ts-ignore
 import { AppRevisionResponseDto } from '../model/appRevisionResponseDto';
 // @ts-ignore
+import { ApplicationGroupDto } from '../model/applicationGroupDto';
+// @ts-ignore
 import { ApplicationReleaseDto } from '../model/applicationReleaseDto';
 // @ts-ignore
 import { ApplicationReleaseListDto } from '../model/applicationReleaseListDto';
@@ -1548,6 +1550,79 @@ export class ApplicationsService extends BaseService {
         let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/applications`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<ApplicationResponseDto>>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * List applications grouped by composed-app bundle
+     * Like the flat listing, but composed catalog installs collapse their component apps into a single entry (with aggregated status and the primary URL). Standalone apps are groups of one. Both the dashboard and CLI render from this shape.
+     * @endpoint get /api/v1/clusters/{clusterId}/applications/grouped
+     * @param clusterId Cluster ID
+     * @param refresh Reconcile application status from K8s before returning (default: false)
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applicationsControllerListGroupedByCluster(clusterId: string, refresh?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ApplicationGroupDto>>;
+    public applicationsControllerListGroupedByCluster(clusterId: string, refresh?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ApplicationGroupDto>>>;
+    public applicationsControllerListGroupedByCluster(clusterId: string, refresh?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ApplicationGroupDto>>>;
+    public applicationsControllerListGroupedByCluster(clusterId: string, refresh?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling applicationsControllerListGroupedByCluster.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'refresh',
+            <any>refresh,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/applications/grouped`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<ApplicationGroupDto>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 params: localVarQueryParameters.toHttpParams(),

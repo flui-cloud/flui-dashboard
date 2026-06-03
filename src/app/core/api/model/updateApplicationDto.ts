@@ -59,7 +59,8 @@ export interface UpdateApplicationDto {
 export namespace UpdateApplicationDto {
     export const ExposureEnum = {
         Public: 'public',
-        Internal: 'internal'
+        Internal: 'internal',
+        Cluster: 'cluster'
     } as const;
     export type ExposureEnum = typeof ExposureEnum[keyof typeof ExposureEnum];
 }

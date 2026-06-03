@@ -20,11 +20,12 @@ import { ApplicationService } from '../../service/application.service';
 import { ClusterService } from '../../service/cluster.service';
 import {
   Application,
+  AppGroupView,
   ApplicationKind,
   ApplicationKindEnum,
   getKindLabel,
 } from '../../model/application.models';
-import { ApplicationRowComponent } from './application-row.component';
+import { ApplicationGroupRowComponent } from './application-group-row.component';
 
 interface FilterState {
   search: string;
@@ -36,7 +37,7 @@ interface FilterState {
 @Component({
   selector: 'app-applications-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, ApplicationRowComponent],
+  imports: [CommonModule, FormsModule, NgIconComponent, ApplicationGroupRowComponent],
   providers: [
     provideIcons({
       lucideRefreshCw,
@@ -92,7 +93,7 @@ interface FilterState {
       <div class="grid grid-cols-3 gap-3">
         <div class="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/50 rounded-lg px-4 py-3">
           <p class="text-xs text-gray-500 dark:text-gray-400">Total</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ kindScopedApps().length }}</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ kindScopedGroups().length }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800/60 border border-green-200 dark:border-gray-700/50 rounded-lg px-4 py-3">
           <p class="text-xs text-green-600 dark:text-green-400">Running</p>
@@ -174,7 +175,7 @@ interface FilterState {
           @for (i of skeletonRows; track i) {
             <div class="animate-pulse bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg h-14"></div>
           }
-        } @else if (filteredApplications().length === 0) {
+        } @else if (filteredGroups().length === 0) {
           <div class="flex flex-col items-center justify-center py-16">
             <ng-icon name="lucidePackage" class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
             <p class="text-sm font-medium text-gray-900 dark:text-white mb-1">{{ emptyTitle() }}</p>
@@ -196,20 +197,21 @@ interface FilterState {
             }
           </div>
         } @else {
-          @for (app of filteredApplications(); track app.id) {
-            <app-application-row
-              [app]="app"
+          @for (group of filteredGroups(); track group.id) {
+            <app-application-group-row
+              [group]="group"
               [refreshing]="isRefreshing()"
               (view)="viewApplication($event)"
               (delete)="confirmDelete($event)"
+              (openBundle)="openBundleDetail($event)"
             />
           }
         }
       </div>
 
-      @if (filteredApplications().length > 0) {
+      @if (filteredGroups().length > 0) {
         <p class="text-center text-xs text-gray-500 dark:text-gray-400">
-          Showing {{ filteredApplications().length }} of {{ kindScopedApps().length }} application(s)
+          Showing {{ filteredGroups().length }} of {{ kindScopedGroups().length }} application(s)
         </p>
       }
     </div>
@@ -328,14 +330,16 @@ export class ApplicationsListComponent implements OnInit {
     }
   });
 
-  kindScopedApps = computed(() =>
-    this.allApplications().filter((app) => app.kind === this.kind()),
+  allGroups = this.appService.applicationGroups;
+
+  kindScopedGroups = computed(() =>
+    this.allGroups().filter((g) => this.groupKind(g) === this.kind()),
   );
   kindRunningCount = computed(
-    () => this.kindScopedApps().filter((a) => a.status === 'running').length,
+    () => this.kindScopedGroups().filter((g) => g.status === 'running').length,
   );
   kindFailedCount = computed(
-    () => this.kindScopedApps().filter((a) => a.status === 'failed').length,
+    () => this.kindScopedGroups().filter((g) => g.status === 'failed').length,
   );
 
   clusterNames = computed(() =>
@@ -345,17 +349,23 @@ export class ApplicationsListComponent implements OnInit {
   isInitialLoading = computed(() => this.isLoading() && this.allApplications().length === 0);
   isRefreshing = computed(() => this.isLoading() && this.allApplications().length > 0);
 
-  filteredApplications = computed(() => {
-    const apps = this.kindScopedApps();
+  filteredGroups = computed(() => {
+    const groups = this.kindScopedGroups();
     const f = this.filtersState();
-    return apps.filter((app) => {
-      if (f.search && !app.name.toLowerCase().includes(f.search.toLowerCase())) return false;
-      if (f.category && app.category !== f.category) return false;
-      if (f.status && app.status !== f.status) return false;
-      if (f.cluster && app.clusterId !== f.cluster) return false;
+    return groups.filter((g) => {
+      if (f.search && !g.name.toLowerCase().includes(f.search.toLowerCase())) return false;
+      if (f.category && g.category !== f.category) return false;
+      if (f.status && g.status !== f.status) return false;
+      if (f.cluster && g.clusterId !== f.cluster) return false;
       return true;
     });
   });
+
+  private groupKind(g: AppGroupView): ApplicationKind {
+    const primary =
+      g.components.find((c) => c.id === g.primaryComponentId) ?? g.components[0];
+    return primary?.kind ?? ApplicationKindEnum.Application;
+  }
 
   activeFiltersCount = computed(() => {
     const f = this.filtersState();
@@ -390,6 +400,12 @@ export class ApplicationsListComponent implements OnInit {
 
   viewApplication(appId: string) {
     this.router.navigate(['/apps/applications', appId]);
+  }
+
+  openBundleDetail(installId: string) {
+    this.router.navigate(['/apps/catalog/installs', installId], {
+      queryParams: { from: 'applications' },
+    });
   }
 
   confirmDelete(app: Application) {

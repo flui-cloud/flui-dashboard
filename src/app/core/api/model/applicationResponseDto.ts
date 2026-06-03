@@ -66,9 +66,13 @@ export interface ApplicationResponseDto {
      */
     persistenceScope: ApplicationResponseDto.PersistenceScopeEnum;
     /**
-     * When persistenceScope=dedicated, the Kubernetes node name the pod is pinned to. Null means the master node (the default).
+     * When persistenceScope=dedicated, the Kubernetes node name the pod is pinned to. Null until the deploy auto-assigns the worker with the most free capacity.
      */
     dedicatedNodeName?: string | null;
+    /**
+     * When persistenceScope=dedicated, whether the app may schedule on the master (control-plane) node instead of a worker. Defaults to false.
+     */
+    allowMasterPlacement: boolean;
     labels: object;
     metadata: object;
     lastDeployedAt?: string;
@@ -107,6 +111,14 @@ export interface ApplicationResponseDto {
      * Catalog version pinned at install time (mirrors metadata.version of the manifest). Compare against the current catalog definition version to flag \"update available\". Undefined for non-catalog apps.
      */
     catalogVersion?: string;
+    /**
+     * Set only within a composed-app group response: true for the component that is the face of the bundle (owns the public endpoint). Undefined in flat listings.
+     */
+    isPrimary?: boolean;
+    /**
+     * Set only within a composed-app group response: the bundle display name (e.g. \"Nextcloud\") this component belongs to. Undefined in flat listings.
+     */
+    composedAppName?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -154,7 +166,8 @@ export namespace ApplicationResponseDto {
     export type ReconciliationStatusEnum = typeof ReconciliationStatusEnum[keyof typeof ReconciliationStatusEnum];
     export const ExposureEnum = {
         Public: 'public',
-        Internal: 'internal'
+        Internal: 'internal',
+        Cluster: 'cluster'
     } as const;
     export type ExposureEnum = typeof ExposureEnum[keyof typeof ExposureEnum];
     export const WorkloadKindEnum = {

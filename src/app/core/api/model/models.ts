@@ -33,6 +33,7 @@ export * from './appStatusMetricsDto';
 export * from './appVariableSourcesDto';
 export * from './appVariablesCombinedResponseDto';
 export * from './appVariablesResponseDto';
+export * from './applicationGroupDto';
 export * from './applicationReleaseDto';
 export * from './applicationReleaseListDto';
 export * from './applicationResourcesDto';

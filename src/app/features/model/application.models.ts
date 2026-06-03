@@ -32,6 +32,11 @@ export type { SingleAppMetricsResponseDto } from '../../core/api/model/singleApp
 export type { SingleAppMetricsHistoryResponseDto } from '../../core/api/model/singleAppMetricsHistoryResponseDto';
 
 import { ApplicationResponseDto } from '../../core/api/model/applicationResponseDto';
+import { ApplicationGroupDto } from '../../core/api/model/applicationGroupDto';
+
+export { ApplicationGroupDto } from '../../core/api/model/applicationGroupDto';
+export const ApplicationGroupTypeEnum = ApplicationGroupDto.TypeEnum;
+export type ApplicationGroupTypeValue = ApplicationGroupDto.TypeEnum;
 
 // ===== TYPE ALIASES =====
 export type Application = ApplicationResponseDto;
@@ -51,6 +56,21 @@ export const LastBuildConclusionEnum = ApplicationResponseDto.LastBuildConclusio
 
 export type LastBuildStatus = ApplicationResponseDto.LastBuildStatusEnum;
 export type LastBuildConclusion = ApplicationResponseDto.LastBuildConclusionEnum;
+
+export interface AppGroupView {
+  id: string;
+  type: ApplicationGroupTypeValue;
+  name: string;
+  status: ApplicationStatus;
+  category: ApplicationCategory;
+  clusterId: string;
+  url?: string;
+  catalogSlug?: string;
+  catalogInstallId?: string;
+  primaryComponentId?: string;
+  createdAt: string;
+  components: Application[];
+}
 
 // ===== HELPER FUNCTIONS =====
 

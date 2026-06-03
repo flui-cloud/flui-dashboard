@@ -68,7 +68,7 @@ export class DashboardService {
   readonly hasActiveOperations = computed(() => this.clustersInOperation().length > 0);
 
   // App aggregates
-  readonly totalApps = computed(() => this.applicationService.applications().length);
+  readonly totalApps = computed(() => this.applicationService.applicationGroups().length);
   readonly userTotalApps = this.applicationService.userTotalAppsCount;
   readonly databasesApps = this.applicationService.databasesCount;
   readonly applicationsApps = this.applicationService.applicationsCount;

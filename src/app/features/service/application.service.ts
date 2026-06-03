@@ -3,9 +3,13 @@ import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import {
   Application,
+  ApplicationStatus,
   ApplicationStatusEnum,
   ApplicationCategoryEnum,
+  ApplicationKind,
   ApplicationKindEnum,
+  ApplicationGroupTypeEnum,
+  AppGroupView,
   DeployWizardConfiguration,
   DeploymentProgress,
 } from '../model/application.models';
@@ -42,6 +46,36 @@ export interface WorkflowStatusResult {
   headSha?: string;
 }
 
+interface BundleMeta {
+  name: string;
+  slug: string;
+  url?: string;
+  primaryComponentId?: string;
+  catalogSlug?: string;
+  category: Application['category'];
+  createdAt: string;
+}
+
+const STATUS_SEVERITY: ApplicationStatus[] = [
+  ApplicationStatusEnum.Failed,
+  ApplicationStatusEnum.Degraded,
+  ApplicationStatusEnum.Deleting,
+  ApplicationStatusEnum.RollingBack,
+  ApplicationStatusEnum.Updating,
+  ApplicationStatusEnum.Provisioning,
+  ApplicationStatusEnum.AwaitingBuild,
+  ApplicationStatusEnum.Pending,
+  ApplicationStatusEnum.Stopped,
+  ApplicationStatusEnum.Running,
+];
+
+function aggregateStatus(statuses: ApplicationStatus[]): ApplicationStatus {
+  for (const candidate of STATUS_SEVERITY) {
+    if (statuses.includes(candidate)) return candidate;
+  }
+  return ApplicationStatusEnum.Running;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -55,6 +89,7 @@ export class ApplicationService {
 
   // State signals
   private readonly applicationsList = signal<Application[]>([]);
+  private readonly bundleMeta = signal<Record<string, BundleMeta>>({});
   private readonly selectedApplicationSignal = signal<Application | null>(null);
   private readonly isLoading = signal<boolean>(false);
   private readonly error = signal<string | null>(null);
@@ -82,6 +117,61 @@ export class ApplicationService {
   // Computed signals
   readonly hasApplications = computed(() => this.applicationsList().length > 0);
 
+  readonly applicationGroups = computed<AppGroupView[]>(() => {
+    const meta = this.bundleMeta();
+    const byInstall = new Map<string, Application[]>();
+    const standalone: Application[] = [];
+    for (const app of this.applicationsList()) {
+      const installId = app.catalogInstallId;
+      if (installId && meta[installId]) {
+        const bucket = byInstall.get(installId) ?? [];
+        bucket.push(app);
+        byInstall.set(installId, bucket);
+      } else {
+        standalone.push(app);
+      }
+    }
+
+    const groups: Array<AppGroupView & { _sort: number }> = [];
+    for (const [installId, components] of byInstall) {
+      const m = meta[installId];
+      groups.push({
+        id: installId,
+        type: ApplicationGroupTypeEnum.Composed,
+        name: m.name,
+        status: aggregateStatus(components.map((c) => c.status)),
+        category: m.category,
+        clusterId: components[0].clusterId,
+        url: m.url,
+        catalogSlug: m.catalogSlug,
+        catalogInstallId: installId,
+        primaryComponentId: m.primaryComponentId,
+        createdAt: m.createdAt,
+        components,
+        _sort: new Date(m.createdAt).getTime(),
+      });
+    }
+    for (const app of standalone) {
+      groups.push({
+        id: app.id,
+        type: ApplicationGroupTypeEnum.Standalone,
+        name: app.name,
+        status: app.status,
+        category: app.category,
+        clusterId: app.clusterId,
+        catalogSlug: app.catalogSlug,
+        catalogInstallId: app.catalogInstallId,
+        createdAt: app.createdAt,
+        components: [app],
+        _sort: new Date(app.createdAt).getTime(),
+      });
+    }
+
+    return groups
+      .sort((a, b) => b._sort - a._sort)
+      .map(({ _sort, ...g }) => g);
+  });
+
   readonly selectedApplication = computed(() => this.selectedApplicationSignal());
 
   refreshSelectedApplication(app: Application): void {
@@ -93,62 +183,68 @@ export class ApplicationService {
   }
 
   readonly runningAppsCount = computed(
-    () => this.applicationsList().filter(
-      (app) => app.status === ApplicationStatusEnum.Running
+    () => this.applicationGroups().filter(
+      (g) => g.status === ApplicationStatusEnum.Running
     ).length
   );
 
   readonly failedAppsCount = computed(
-    () => this.applicationsList().filter(
-      (app) => app.status === ApplicationStatusEnum.Failed
+    () => this.applicationGroups().filter(
+      (g) => g.status === ApplicationStatusEnum.Failed
     ).length
   );
 
   readonly provisioningAppsCount = computed(
-    () => this.applicationsList().filter(
-      (app) => app.status === ApplicationStatusEnum.Provisioning
+    () => this.applicationGroups().filter(
+      (g) => g.status === ApplicationStatusEnum.Provisioning
     ).length
   );
 
   readonly systemAppsCount = computed(
-    () => this.applicationsList().filter(
-      (app) => app.category === ApplicationCategoryEnum.System
+    () => this.applicationGroups().filter(
+      (g) => g.category === ApplicationCategoryEnum.System
     ).length
   );
 
   readonly userAppsCount = computed(
-    () => this.applicationsList().filter(
-      (app) => app.category === ApplicationCategoryEnum.User
+    () => this.applicationGroups().filter(
+      (g) => g.category === ApplicationCategoryEnum.User
     ).length
   );
 
   readonly databasesCount = computed(
-    () => this.applicationsList().filter(
-      (app) => app.kind === ApplicationKindEnum.Database
+    () => this.applicationGroups().filter(
+      (g) => this.groupKind(g) === ApplicationKindEnum.Database
     ).length
   );
 
   readonly applicationsCount = computed(
-    () => this.applicationsList().filter(
-      (app) => app.kind === ApplicationKindEnum.Application
+    () => this.applicationGroups().filter(
+      (g) => this.groupKind(g) === ApplicationKindEnum.Application
     ).length
   );
 
   readonly toolsCount = computed(
-    () => this.applicationsList().filter(
-      (app) => app.kind === ApplicationKindEnum.Tool
+    () => this.applicationGroups().filter(
+      (g) => this.groupKind(g) === ApplicationKindEnum.Tool
     ).length
   );
 
   readonly systemKindCount = computed(
-    () => this.applicationsList().filter(
-      (app) => app.kind === ApplicationKindEnum.System
+    () => this.applicationGroups().filter(
+      (g) => this.groupKind(g) === ApplicationKindEnum.System
     ).length
   );
 
   readonly userTotalAppsCount = computed(
     () => this.databasesCount() + this.applicationsCount() + this.toolsCount()
   );
+
+  private groupKind(g: AppGroupView): ApplicationKind {
+    const primary =
+      g.components.find((c) => c.id === g.primaryComponentId) ?? g.components[0];
+    return primary?.kind ?? ApplicationKindEnum.Application;
+  }
 
   /**
    * Load all applications across all clusters.
@@ -191,17 +287,31 @@ export class ApplicationService {
       const results = await Promise.allSettled(
         validClusters.map((cluster) =>
           firstValueFrom(
-            this.applicationsApi.applicationsControllerListByCluster(cluster.id!, refresh)
+            this.applicationsApi.applicationsControllerListGroupedByCluster(cluster.id!, refresh)
           )
         )
       );
 
       const allApps: Application[] = [];
+      const meta: Record<string, BundleMeta> = {};
       for (const result of results) {
-        if (result.status === 'fulfilled' && Array.isArray(result.value)) {
-          allApps.push(...result.value);
+        if (result.status !== 'fulfilled' || !Array.isArray(result.value)) continue;
+        for (const group of result.value) {
+          allApps.push(...group.components);
+          if (group.type === 'composed' && group.catalogInstallId) {
+            meta[group.catalogInstallId] = {
+              name: group.name,
+              slug: group.slug,
+              url: group.url,
+              primaryComponentId: group.primaryComponentId,
+              catalogSlug: group.catalogSlug,
+              category: group.category,
+              createdAt: group.createdAt,
+            };
+          }
         }
       }
+      this.bundleMeta.set(meta);
 
       const filtered = allApps.filter(a =>
         a.status !== 'deleted' && !this._deletedAppIds.has(a.id)
