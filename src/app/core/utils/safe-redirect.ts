@@ -32,6 +32,11 @@ export function clearLoopGuard(redirect: string): void {
 }
 
 export function isSafeRedirect(url: string): boolean {
+  // Same-origin relative path (e.g. `/apps/repositories/github-setup?x=1`).
+  // Reject protocol-relative (`//host`) and backslash tricks to avoid open redirects.
+  if (url.startsWith('/') && !url.startsWith('//') && !url.startsWith('/\\')) {
+    return true;
+  }
   try {
     const { hostname } = new URL(url);
     if (hostname.endsWith('.flui.cloud') || hostname === 'flui.cloud') return true;

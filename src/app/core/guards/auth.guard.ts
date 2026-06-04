@@ -7,7 +7,7 @@ import { AuthService } from '../services/auth.service';
 import { LocalAuthService } from '../services/local-auth.service';
 import { AppConfigService } from '../services/app-config.service';
 
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
   const local = inject(LocalAuthService);
   const cfg = inject(AppConfigService);
@@ -18,15 +18,19 @@ export const authGuard: CanActivateFn = () => {
     return true;
   }
 
+  // Preserve the attempted URL so the user lands back here after login.
+  const loginUrl = () =>
+    router.createUrlTree(['/login'], { queryParams: { redirect: state.url } });
+
   // OIDC: no silent refresh here — redirect to login
   if (cfg.authMode === 'oidc') {
-    return router.createUrlTree(['/login']);
+    return loginUrl();
   }
 
   // Local mode: try to refresh the access token silently
   const refreshToken = local.getRefreshToken();
   if (!refreshToken) {
-    return router.createUrlTree(['/login']);
+    return loginUrl();
   }
 
   return local.refresh().pipe(
@@ -43,7 +47,7 @@ export const authGuard: CanActivateFn = () => {
       if (isAuthError) {
         auth.logout().subscribe();
       }
-      return of(router.createUrlTree(['/login']));
+      return of(loginUrl());
     }),
   );
 };
