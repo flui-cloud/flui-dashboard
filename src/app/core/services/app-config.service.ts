@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { tap, map, catchError } from 'rxjs/operators';
+import { tap, map, catchError, switchMap, timeout } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AppConfig, CertificateMode } from '../model/app-config.model';
 
@@ -12,6 +12,13 @@ interface RawConfig {
   oidcIssuer?: string;
   oidcClientId?: string;
   certificateMode?: string;
+}
+
+interface ApiAuthConfig {
+  authMode?: string;
+  issuer?: string;
+  clientId?: string;
+  cliClientId?: string;
 }
 
 const VALID_CERT_MODES: ReadonlySet<CertificateMode> = new Set(['staging', 'preflight', 'production']);
@@ -33,6 +40,7 @@ export class AppConfigService {
 
   load(): Observable<void> {
     return this.http.get<RawConfig>('/assets/config.json').pipe(
+      catchError(() => of({} as RawConfig)),
       tap((raw) => {
         if (raw.apiBaseUrl) {
           this.config.apiBaseUrl = raw.apiBaseUrl;
@@ -57,9 +65,32 @@ export class AppConfigService {
           this.config.certificateMode = raw.certificateMode as CertificateMode;
         }
       }),
+      switchMap(() => this.ensureOidcClientId()),
       map(() => void 0),
-      catchError(() => of(void 0)),
     );
+  }
+
+  /** flui-web's config.json (frozen subPath) can serve an empty client id —
+   *  fall back to the API's public auth config so OIDC sign-in still works. */
+  private ensureOidcClientId(): Observable<void> {
+    if (this.config.authMode !== 'oidc' || this.config.oidcClientId) {
+      return of(void 0);
+    }
+    return this.http
+      .get<ApiAuthConfig>(`${this.config.apiBaseUrl}/api/v1/auth/config`)
+      .pipe(
+        timeout(5000),
+        tap((api) => {
+          if (api?.clientId) {
+            this.config.oidcClientId = api.clientId;
+          }
+          if (!this.config.oidcIssuer && api?.issuer) {
+            this.config.oidcIssuer = api.issuer;
+          }
+        }),
+        map(() => void 0),
+        catchError(() => of(void 0)),
+      );
   }
 
   get(): AppConfig {
