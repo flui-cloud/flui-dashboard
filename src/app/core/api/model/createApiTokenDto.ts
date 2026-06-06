@@ -30,5 +30,18 @@ export interface CreateApiTokenDto {
      * Optional expiry date of the key, if set by the user
      */
     expiresAt?: string;
+    /**
+     * What the credential is used for
+     */
+    purpose?: CreateApiTokenDto.PurposeEnum;
 }
+export namespace CreateApiTokenDto {
+    export const PurposeEnum = {
+        Compute: 'compute',
+        ObjectStorage: 'object_storage',
+        Inference: 'inference'
+    } as const;
+    export type PurposeEnum = typeof PurposeEnum[keyof typeof PurposeEnum];
+}
+
 

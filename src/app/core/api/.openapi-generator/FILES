@@ -31,6 +31,7 @@ api/githubAppOauth.service.ts
 api/health.service.ts
 api/imageRegistry.service.ts
 api/images.service.ts
+api/inference.service.ts
 api/infrastructureClusters.service.ts
 api/infrastructureOperations.service.ts
 api/infrastructurePlatformComponents.service.ts
@@ -179,6 +180,7 @@ model/clustersControllerRefreshGrafanaDatasources200Response.ts
 model/clustersControllerUpdateNodeMetadata200Response.ts
 model/configureAuthModeDto.ts
 model/configureAuthModeResultDto.ts
+model/configureInferenceDto.ts
 model/configureIssuerDto.ts
 model/configureProviderDto.ts
 model/configureSystemIngressDto.ts
@@ -208,6 +210,7 @@ model/createClusterDto.ts
 model/createClusterResponseDto.ts
 model/createDnsZoneDto.ts
 model/createIdentityUserDto.ts
+model/createInferenceConnectionDto.ts
 model/createRestoreJobDto.ts
 model/createSSHKeyDto.ts
 model/createSanCertificateDto.ts
@@ -273,6 +276,8 @@ model/importFirewallDto.ts
 model/importRepositoriesDto.ts
 model/importRepositoriesResponseDto.ts
 model/importedRepositoryRefDto.ts
+model/inferenceConnectionDto.ts
+model/inferenceProviderInfoDto.ts
 model/installAuthzDto.ts
 model/installCatalogAppDto.ts
 model/installFromYamlDto.ts

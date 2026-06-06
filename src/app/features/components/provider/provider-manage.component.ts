@@ -22,11 +22,12 @@ import { ProviderConfigurationDto, ProviderDefinitionDto } from '../../../core/a
 import { HealthStatus } from '../../model/provider.models';
 import { ProviderCredentialsPanelComponent } from './provider-credentials-panel.component';
 import { ProviderRegionsPanelComponent } from './provider-regions-panel.component';
+import { ProviderInferencePanelComponent } from './provider-inference-panel.component';
 
 @Component({
   selector: 'provider-manage',
   standalone: true,
-  imports: [CommonModule, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent],
+  imports: [CommonModule, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent, ProviderInferencePanelComponent],
   providers: [
     provideIcons({
       lucideActivity,
@@ -126,6 +127,8 @@ import { ProviderRegionsPanelComponent } from './provider-regions-panel.componen
                 [provider]="provider()!"
                 [configuration]="configuration()!"
               />
+
+              <provider-inference-panel [providerId]="providerId()" />
 
               <!-- Health card -->
               <section class="bg-card border border-border rounded-xl overflow-hidden">

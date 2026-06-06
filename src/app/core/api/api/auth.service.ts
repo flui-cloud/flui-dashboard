@@ -334,7 +334,7 @@ export class AuthService extends BaseService {
     }
 
     /**
-     * Get public auth configuration (auth mode, OIDC issuer, CLI client ID)
+     * Get public auth configuration (auth mode, OIDC issuer, web + CLI client IDs)
      * @endpoint get /api/v1/auth/config
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
