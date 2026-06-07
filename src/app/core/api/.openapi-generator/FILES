@@ -10,6 +10,7 @@ api/applicationLogs.service.ts
 api/applicationManagement.service.ts
 api/applicationMetrics.service.ts
 api/applications.service.ts
+api/assistant.service.ts
 api/auth.service.ts
 api/authz.service.ts
 api/backups.service.ts
@@ -151,6 +152,8 @@ model/certDiagnosticsResponseDto.ts
 model/certificateDiagnosticsDto.ts
 model/certificateRequestInfoDto.ts
 model/changePasswordDto.ts
+model/chatCompletionRequestDto.ts
+model/chatMessageDto.ts
 model/cleanupBuildNamespaceDto.ts
 model/clearBuildCacheResponseDto.ts
 model/clusterAppDistributionDto.ts
@@ -180,7 +183,6 @@ model/clustersControllerRefreshGrafanaDatasources200Response.ts
 model/clustersControllerUpdateNodeMetadata200Response.ts
 model/configureAuthModeDto.ts
 model/configureAuthModeResultDto.ts
-model/configureInferenceDto.ts
 model/configureIssuerDto.ts
 model/configureProviderDto.ts
 model/configureSystemIngressDto.ts

@@ -29,7 +29,7 @@ export class InferenceSettingsService {
   }
 
   validateProvider(provider: InferenceProvider): Observable<ValidationResultDto> {
-    return this.api.inferenceControllerValidateProvider(provider, { apiKey: '' });
+    return this.api.inferenceControllerValidateProvider(provider);
   }
 
   createConnection(dto: CreateInferenceConnectionDto): Observable<InferenceConnectionDto> {

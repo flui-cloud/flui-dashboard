@@ -2,6 +2,8 @@ import { ApplicationConfig, inject, provideAppInitializer, provideZoneChangeDete
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideEcharts } from 'ngx-echarts';
+import { Renderer, type Tokens } from 'marked';
+import { MARKED_OPTIONS, provideMarkdown } from 'ngx-markdown';
 import { provideOAuthClient } from 'angular-oauth2-oidc';
 import { firstValueFrom } from 'rxjs';
 
@@ -19,6 +21,23 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideEcharts(),
+    provideMarkdown({
+      markedOptions: {
+        provide: MARKED_OPTIONS,
+        useFactory: () => {
+          const renderer = new Renderer();
+          renderer.code = ({ text, lang }: Tokens.Code) => {
+            const language = lang ?? 'text';
+            const escaped = text
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;');
+            return `<div class="md-code-block"><div class="md-code-header"><span class="md-code-lang">${language}</span><span class="md-copy-btn" role="button" tabindex="0">Copy</span></div><pre><code>${escaped}</code></pre></div>`;
+          };
+          return { renderer };
+        },
+      },
+    }),
     provideOAuthClient(),
     provideAppInitializer(async () => {
       const cfg = inject(AppConfigService);
