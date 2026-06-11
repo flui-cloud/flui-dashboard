@@ -20,6 +20,18 @@ interface ConnUiState {
   deleting: boolean;
 }
 
+interface ConnectionPreset {
+  id: string;
+  label: string;
+  baseUrl: string;
+}
+
+const CONNECTION_PRESETS: ConnectionPreset[] = [
+  { id: 'mistral', label: 'Mistral', baseUrl: 'https://api.mistral.ai/v1' },
+  { id: 'custom', label: 'Custom', baseUrl: '' },
+];
+const DEFAULT_PRESET = CONNECTION_PRESETS[0];
+
 @Component({
   selector: 'app-inference-connections',
   standalone: true,
@@ -129,6 +141,19 @@ interface ConnUiState {
             </div>
             <div hlmCardContent>
               <form [formGroup]="form" (ngSubmit)="submitForm()" class="space-y-4">
+                <div class="space-y-1.5">
+                  <label hlmLabel for="conn-preset">Provider</label>
+                  <select
+                    id="conn-preset"
+                    formControlName="preset"
+                    (change)="applyPreset()"
+                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    @for (p of presets; track p.id) {
+                      <option [value]="p.id">{{ p.label }}</option>
+                    }
+                  </select>
+                </div>
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div class="space-y-1.5">
                     <label hlmLabel for="conn-label">Label</label>
@@ -226,12 +251,24 @@ export class InferenceConnectionsComponent implements OnInit {
   readonly creating = signal(false);
   readonly createError = signal<string | null>(null);
 
+  protected readonly presets = CONNECTION_PRESETS;
+
   readonly form = this.fb.nonNullable.group({
-    label: ['', Validators.required],
-    baseUrl: ['', [Validators.required, Validators.pattern(/^https?:\/\/.+/)]],
+    preset: [DEFAULT_PRESET.id],
+    label: [DEFAULT_PRESET.label, Validators.required],
+    baseUrl: [DEFAULT_PRESET.baseUrl, [Validators.required, Validators.pattern(/^https?:\/\/.+/)]],
     apiKey: ['', Validators.required],
     isDefault: [false],
   });
+
+  applyPreset(): void {
+    const preset = CONNECTION_PRESETS.find((p) => p.id === this.form.controls.preset.value);
+    if (!preset || preset.id === 'custom') {
+      this.form.patchValue({ label: '', baseUrl: '' });
+      return;
+    }
+    this.form.patchValue({ label: preset.label, baseUrl: preset.baseUrl });
+  }
 
   connState(id: string): ConnUiState {
     return this.states()[id] ?? { validating: false, validation: null, deleting: false };
@@ -254,7 +291,7 @@ export class InferenceConnectionsComponent implements OnInit {
     this.patchConn(id, { validating: true, validation: null });
     this.service.validateConnection(id).subscribe({
       next: (r) => {
-        const models = (r.details as any)?.models;
+        const models = (r.details as { models?: unknown[] } | undefined)?.models;
         let msg: string;
         if (Array.isArray(models)) {
           msg = `${models.length} model${models.length === 1 ? '' : 's'} found`;
@@ -275,7 +312,11 @@ export class InferenceConnectionsComponent implements OnInit {
   deleteConn(id: string): void {
     this.patchConn(id, { deleting: true });
     this.service.deleteConnection(id).subscribe({
-      error: () => this.patchConn(id, { deleting: false }),
+      error: (err) =>
+        this.patchConn(id, {
+          deleting: false,
+          validation: { ok: false, message: err?.error?.message ?? 'Delete failed' },
+        }),
     });
   }
 
@@ -286,9 +327,10 @@ export class InferenceConnectionsComponent implements OnInit {
     this.creating.set(true);
     this.createError.set(null);
     this.service.createConnection({ label, baseUrl, apiKey, isDefault }).subscribe({
-      next: () => {
+      next: (conn) => {
         this.creating.set(false);
         this.cancelForm();
+        this.validateConn(conn.id);
       },
       error: (err) => {
         this.creating.set(false);
@@ -303,7 +345,13 @@ export class InferenceConnectionsComponent implements OnInit {
 
   cancelForm(): void {
     this.showForm.set(false);
-    this.form.reset();
+    this.form.reset({
+      preset: DEFAULT_PRESET.id,
+      label: DEFAULT_PRESET.label,
+      baseUrl: DEFAULT_PRESET.baseUrl,
+      apiKey: '',
+      isDefault: false,
+    });
     this.createError.set(null);
   }
 }
