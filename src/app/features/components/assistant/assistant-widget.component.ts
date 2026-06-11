@@ -392,6 +392,14 @@ const SELECTION_KEY = 'flui.assistant.modelSelection';
         <!-- Composer -->
         <ng-template #composerTpl>
           <div class="space-y-2" [class.mx-auto]="isFull()" [class.max-w-3xl]="isFull()" [class.w-full]="isFull()">
+            @if (chatService.destructiveEnabled()) {
+              <div class="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-1.5">
+                <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 shrink-0 text-destructive" />
+                <p class="text-[11px] text-destructive leading-tight">
+                  Destructive actions (delete/uninstall) are enabled on this server — they still ask for confirmation, but proceed with care.
+                </p>
+              </div>
+            }
             @if (chatService.contextLong()) {
               <div class="flex items-center justify-between gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5">
                 <p class="text-[11px] text-amber-700 dark:text-amber-400 leading-tight">

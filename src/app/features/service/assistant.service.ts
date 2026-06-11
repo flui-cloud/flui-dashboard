@@ -116,6 +116,8 @@ export class AssistantChatService {
   readonly sending = signal(false);
   readonly error = signal<string | null>(null);
   readonly pendingActions = signal<PendingAction[]>([]);
+  // Server-wide destructive enablement (MCP_ALLOW_DESTRUCTIVE), surfaced for the banner.
+  readonly destructiveEnabled = signal(false);
 
   private readonly _streamingText = signal('');
   private readonly _streamingSteps = signal<AgentToolStep[]>([]);
@@ -139,6 +141,12 @@ export class AssistantChatService {
       const conversations = this._conversations();
       const activeId = this._activeId();
       this.writeStorage({ conversations, activeId });
+    });
+
+    this.api.assistantControllerInfo().subscribe({
+      next: (info: any) =>
+        this.destructiveEnabled.set(!!info?.capabilities?.destructiveEnabled),
+      error: () => this.destructiveEnabled.set(false),
     });
   }
 
