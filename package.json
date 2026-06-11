@@ -8,7 +8,10 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "api:generate": "openapi-generator-cli generate -i http://localhost:3000/swagger/json -g typescript-angular -o ./src/app/core/api --additional-properties=ngVersion=19 --skip-validate-spec",
-    "test:coverage": "ng test --no-watch --code-coverage"
+    "test:coverage": "ng test --no-watch --code-coverage",
+    "sonar:scan": "set -a && . ./.env.local && set +a && docker run --rm -e SONAR_HOST_URL=http://host.docker.internal:9000 -e SONAR_TOKEN=$SONAR_TOKEN -v \"$PWD:/usr/src\" sonarsource/sonar-scanner-cli",
+    "sonar:report": "set -a && . ./.env.local && set +a && npx -y tsx internal-docs/scripts/sonar-report.ts",
+    "sonar:loop": "pnpm run sonar:scan && pnpm run sonar:report"
   },
   "private": true,
   "pnpm": {
