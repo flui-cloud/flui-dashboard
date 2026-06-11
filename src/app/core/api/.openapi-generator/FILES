@@ -10,6 +10,7 @@ api/applicationLogs.service.ts
 api/applicationManagement.service.ts
 api/applicationMetrics.service.ts
 api/applications.service.ts
+api/assistant.service.ts
 api/auth.service.ts
 api/authz.service.ts
 api/backups.service.ts
@@ -31,10 +32,12 @@ api/githubAppOauth.service.ts
 api/health.service.ts
 api/imageRegistry.service.ts
 api/images.service.ts
+api/inference.service.ts
 api/infrastructureClusters.service.ts
 api/infrastructureOperations.service.ts
 api/infrastructurePlatformComponents.service.ts
 api/infrastructureServers.service.ts
+api/mcp.service.ts
 api/observability.service.ts
 api/providerConnections.service.ts
 api/providerFirewalls.service.ts
@@ -61,6 +64,8 @@ model/addWorkerDto.ts
 model/addWorkerResponseDto.ts
 model/advisorChoiceOptionDto.ts
 model/advisorUserChoiceDto.ts
+model/agentMessageDto.ts
+model/agentRequestDto.ts
 model/analyzeRepositoryDto.ts
 model/apiDomainSyncResultDto.ts
 model/apiKeyResponseDto.ts
@@ -96,6 +101,7 @@ model/applicationResponseDto.ts
 model/applicationScalingDto.ts
 model/appliedServerDto.ts
 model/assignDnsZoneDto.ts
+model/assistantRecommendationsDto.ts
 model/attachClusterToVNetResponseDto.ts
 model/attachServerToSubnetDto.ts
 model/authDomainSyncResultDto.ts
@@ -150,6 +156,8 @@ model/certDiagnosticsResponseDto.ts
 model/certificateDiagnosticsDto.ts
 model/certificateRequestInfoDto.ts
 model/changePasswordDto.ts
+model/chatCompletionRequestDto.ts
+model/chatMessageDto.ts
 model/cleanupBuildNamespaceDto.ts
 model/clearBuildCacheResponseDto.ts
 model/clusterAppDistributionDto.ts
@@ -208,6 +216,7 @@ model/createClusterDto.ts
 model/createClusterResponseDto.ts
 model/createDnsZoneDto.ts
 model/createIdentityUserDto.ts
+model/createInferenceConnectionDto.ts
 model/createRestoreJobDto.ts
 model/createSSHKeyDto.ts
 model/createSanCertificateDto.ts
@@ -273,6 +282,8 @@ model/importFirewallDto.ts
 model/importRepositoriesDto.ts
 model/importRepositoriesResponseDto.ts
 model/importedRepositoryRefDto.ts
+model/inferenceConnectionDto.ts
+model/inferenceProviderInfoDto.ts
 model/installAuthzDto.ts
 model/installCatalogAppDto.ts
 model/installFromYamlDto.ts
@@ -330,6 +341,9 @@ model/publicRepoSearchResultDto.ts
 model/publicRepositoryAnalyzeDto.ts
 model/queuedBuildInfoDto.ts
 model/quickSetupDto.ts
+model/recommendationGroupDto.ts
+model/recommendedModelDto.ts
+model/recommendedProviderDto.ts
 model/reconcileFirewallsDto.ts
 model/reconcileFirewallsResponseDto.ts
 model/reconcileStatusDto.ts

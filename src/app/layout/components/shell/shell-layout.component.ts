@@ -19,6 +19,7 @@ import { HeaderComponent } from '../header/header.component';
 import { QuickSshOverlayComponent } from '../../../features/components/ssh/quick-ssh-overlay.component';
 import { QuickSshDockComponent } from '../../../features/components/ssh/quick-ssh-dock.component';
 import { ToastContainerComponent } from '../../../shared/components/toast-container.component';
+import { AssistantWidgetComponent } from '../../../features/components/assistant/assistant-widget.component';
 
 @Component({
   selector: 'app-shell-layout',
@@ -33,6 +34,7 @@ import { ToastContainerComponent } from '../../../shared/components/toast-contai
     QuickSshDockComponent,
     ToastContainerComponent,
     UniverseMapComponent,
+    AssistantWidgetComponent,
   ],
   providers: [
     BrnSidebarService,
@@ -91,6 +93,7 @@ import { ToastContainerComponent } from '../../../shared/components/toast-contai
     <app-quick-ssh-overlay />
     <app-quick-ssh-dock />
     <app-toast-container />
+    <app-assistant-widget />
 
     @if (universeOverlay.isOpen()) {
       <app-universe-map class="universe-overlay" />

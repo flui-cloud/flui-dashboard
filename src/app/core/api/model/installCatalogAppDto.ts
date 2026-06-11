@@ -25,6 +25,18 @@ export interface InstallCatalogAppDto {
      */
     domain?: string;
     /**
+     * ACME challenge override. Overrides manifest domain.certChallenge; http-01 forces a per-host cert even on a wildcard zone. Default: derived from cluster config.
+     */
+    certChallenge?: InstallCatalogAppDto.CertChallengeEnum;
+    /**
+     * Certificate issuer override. Overrides manifest domain.certificateProvider.
+     */
+    certificateProvider?: InstallCatalogAppDto.CertificateProviderEnum;
+    /**
+     * Hostname mode override. Overrides manifest domain.hostnameMode.
+     */
+    hostnameMode?: InstallCatalogAppDto.HostnameModeEnum;
+    /**
      * When true, skip endpoint (DNS + certificate) provisioning at install time even if the cluster is ready. The user will configure domain and TLS later. Default false.
      */
     skipEndpoint?: boolean;
@@ -58,6 +70,21 @@ export interface InstallCatalogAppDto {
     options?: { [key: string]: boolean; };
 }
 export namespace InstallCatalogAppDto {
+    export const CertChallengeEnum = {
+        Http01: 'http-01',
+        Dns01: 'dns-01'
+    } as const;
+    export type CertChallengeEnum = typeof CertChallengeEnum[keyof typeof CertChallengeEnum];
+    export const CertificateProviderEnum = {
+        LetsEncrypt: 'lets-encrypt',
+        LetsEncryptStaging: 'lets-encrypt-staging'
+    } as const;
+    export type CertificateProviderEnum = typeof CertificateProviderEnum[keyof typeof CertificateProviderEnum];
+    export const HostnameModeEnum = {
+        Ip: 'ip',
+        Domain: 'domain'
+    } as const;
+    export type HostnameModeEnum = typeof HostnameModeEnum[keyof typeof HostnameModeEnum];
     export const ExposureEnum = {
         Public: 'public',
         Internal: 'internal'

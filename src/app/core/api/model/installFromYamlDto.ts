@@ -29,6 +29,18 @@ export interface InstallFromYamlDto {
      */
     domain?: string;
     /**
+     * ACME challenge override. Overrides manifest domain.certChallenge; http-01 forces a per-host cert even on a wildcard zone. Default: derived from cluster config.
+     */
+    certChallenge?: InstallFromYamlDto.CertChallengeEnum;
+    /**
+     * Certificate issuer override for the app endpoint. Takes precedence over the manifest domain.certificateProvider.
+     */
+    certificateProvider?: InstallFromYamlDto.CertificateProviderEnum;
+    /**
+     * Hostname mode override for the app endpoint. Takes precedence over the manifest domain.hostnameMode.
+     */
+    hostnameMode?: InstallFromYamlDto.HostnameModeEnum;
+    /**
      * Skip endpoint provisioning at install time.
      */
     skipEndpoint?: boolean;
@@ -59,6 +71,21 @@ export interface InstallFromYamlDto {
     options?: { [key: string]: boolean; };
 }
 export namespace InstallFromYamlDto {
+    export const CertChallengeEnum = {
+        Http01: 'http-01',
+        Dns01: 'dns-01'
+    } as const;
+    export type CertChallengeEnum = typeof CertChallengeEnum[keyof typeof CertChallengeEnum];
+    export const CertificateProviderEnum = {
+        LetsEncrypt: 'lets-encrypt',
+        LetsEncryptStaging: 'lets-encrypt-staging'
+    } as const;
+    export type CertificateProviderEnum = typeof CertificateProviderEnum[keyof typeof CertificateProviderEnum];
+    export const HostnameModeEnum = {
+        Ip: 'ip',
+        Domain: 'domain'
+    } as const;
+    export type HostnameModeEnum = typeof HostnameModeEnum[keyof typeof HostnameModeEnum];
     export const ExposureEnum = {
         Public: 'public',
         Internal: 'internal'

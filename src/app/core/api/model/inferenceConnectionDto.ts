@@ -9,8 +9,12 @@
  */
 
 
-export interface ResourceAmountDto { 
-    request: string;
-    limit: string;
+export interface InferenceConnectionDto { 
+    id: string;
+    label: string;
+    baseUrl: string;
+    models: Array<string>;
+    isDefault: boolean;
+    createdAt: string;
 }
 

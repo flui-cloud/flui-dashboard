@@ -17,6 +17,7 @@ import {
   lucideUser,
   lucideShield,
   lucideShieldPlus,
+  lucideNetwork,
 } from '@ng-icons/lucide';
 import { AuthService } from '../../../core/services/auth.service';
 import { AppConfigService } from '../../../core/services/app-config.service';
@@ -28,8 +29,9 @@ import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { ProfileTabComponent } from './profile-tab.component';
 import { SecurityTabComponent } from './security-tab.component';
 import { InfrastructureAuthProxyComponent } from '../infrastructure/infrastructure-auth-proxy.component';
+import { InferenceConnectionsComponent } from './inference-connections.component';
 
-type SectionId = 'profile' | 'security' | 'auth-proxy';
+type SectionId = 'profile' | 'security' | 'auth-proxy' | 'inference-connections';
 
 interface SectionDef {
   id: SectionId;
@@ -50,9 +52,10 @@ interface SectionDef {
     ProfileTabComponent,
     SecurityTabComponent,
     InfrastructureAuthProxyComponent,
+    InferenceConnectionsComponent,
   ],
   providers: [
-    provideIcons({ lucideUser, lucideShield, lucideShieldPlus }),
+    provideIcons({ lucideUser, lucideShield, lucideShieldPlus, lucideNetwork }),
   ],
   template: `
     <div class="p-6 max-w-6xl mx-auto">
@@ -135,6 +138,14 @@ interface SectionDef {
             </section>
           }
 
+          <section #section id="inference-connections" data-section="inference-connections" class="scroll-mt-6 space-y-3">
+            <header>
+              <h3 class="text-lg font-semibold text-foreground">LLM Connections</h3>
+              <p class="text-sm text-muted-foreground">Bring your own API key to connect any OpenAI-compatible language model.</p>
+            </header>
+            <app-inference-connections />
+          </section>
+
         </div>
       </div>
     </div>
@@ -170,6 +181,12 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       label: 'Auth Proxy',
       icon: 'lucideShieldPlus',
       visible: () => this._isAdmin(),
+    },
+    {
+      id: 'inference-connections',
+      label: 'LLM Connections',
+      icon: 'lucideNetwork',
+      visible: () => true,
     },
   ];
 
@@ -252,6 +269,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private isSectionId(value: string): value is SectionId {
-    return value === 'profile' || value === 'security' || value === 'auth-proxy';
+    return ['profile', 'security', 'auth-proxy', 'inference-connections'].includes(value);
   }
 }

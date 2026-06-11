@@ -292,3 +292,113 @@
 .animate-slide-in-from-top {
   animation: slide-in-from-top 0.15s ease-out;
 }
+
+/* ── Flui Assistant markdown rendering ────────────────────────────────────── */
+.md {
+  p { margin: 0.3em 0; line-height: 1.65; }
+  p:first-child { margin-top: 0; }
+  p:last-child  { margin-bottom: 0; }
+
+  h1, h2, h3, h4 { font-weight: 600; line-height: 1.3; margin: 0.8em 0 0.3em; }
+  h1 { font-size: 1.1em; }
+  h2 { font-size: 1.0em; }
+  h3 { font-size: 0.95em; }
+
+  ul { list-style: disc outside;   padding-left: 1.4em; margin: 0.35em 0; }
+  ol { list-style: decimal outside; padding-left: 1.4em; margin: 0.35em 0; }
+  li { margin: 0.2em 0; line-height: 1.6; }
+  li > ul, li > ol { margin: 0.1em 0; }
+
+  code:not(pre code) {
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    font-size: 0.82em;
+    background: rgba(0, 0, 0, 0.08);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+  }
+
+  strong { font-weight: 600; }
+  em     { font-style: italic; }
+
+  blockquote {
+    border-left: 3px solid currentColor;
+    opacity: 0.75;
+    padding-left: 0.8rem;
+    margin: 0.5rem 0;
+  }
+
+  a { text-decoration: underline; }
+
+  hr { border: none; border-top: 1px solid rgba(0,0,0,0.15); margin: 0.6rem 0; }
+
+  table { border-collapse: collapse; font-size: 0.82em; margin: 0.5rem 0; width: 100%; }
+  th, td { border: 1px solid rgba(0,0,0,0.15); padding: 0.3rem 0.6rem; text-align: left; }
+  th { font-weight: 600; background: rgba(0,0,0,0.04); }
+}
+
+.dark .md {
+  code:not(pre code) { background: rgba(255,255,255,0.1); }
+  hr { border-top-color: rgba(255,255,255,0.15); }
+  th, td { border-color: rgba(255,255,255,0.12); }
+  th { background: rgba(255,255,255,0.05); }
+}
+
+/* Code blocks — always dark regardless of theme */
+.md-code-block {
+  margin: 0.55em 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #30363d;
+  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+}
+
+.md-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 12px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+}
+
+.md-code-lang {
+  font-size: 11px;
+  font-weight: 500;
+  color: #7d8590;
+  letter-spacing: 0.02em;
+}
+
+.md-copy-btn {
+  font-size: 11px;
+  color: #7d8590;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  font-family: inherit;
+
+  &:hover { color: #c9d1d9; background: #21262d; }
+  &.copied { color: #3fb950; }
+}
+
+.md-code-block pre {
+  margin: 0;
+  padding: 13px 16px;
+  background: #0d1117;
+  overflow-x: auto;
+
+  code {
+    font-size: 13px;
+    line-height: 1.55;
+    color: #e6edf3;
+    background: none;
+    padding: 0;
+  }
+}
+
+/* Inline code inside user bubble (white background) needs different treatment */
+.md-user-bubble .md code:not(pre code) {
+  background: rgba(255,255,255,0.18);
+}
