@@ -9,8 +9,11 @@
  */
 
 
-export interface ResourceAmountDto { 
-    request: string;
-    limit: string;
+export interface AgentMessageDto { 
+    role: string;
+    content?: string | null;
+    tool_calls?: Array<string>;
+    tool_call_id?: string;
+    name?: string;
 }
 

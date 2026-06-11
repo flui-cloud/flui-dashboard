@@ -24,6 +24,10 @@ export interface InferenceProviderInfoDto {
      * Live model ids when configured
      */
     models: Array<string>;
+    /**
+     * Default chat model used when none is specified
+     */
+    defaultModel?: string;
 }
 export namespace InferenceProviderInfoDto {
     export const ProviderEnum = {
