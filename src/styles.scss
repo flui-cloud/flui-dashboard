@@ -5,127 +5,86 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: "";
-}
+  --font-sans: "Geist", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "Cascadia Code", monospace;
 
-:root {
-  /* Base colors */
-  --background: 0 0% 100%; /* Pure white */
-  --foreground: 0 0% 3.9%; /* Almost black for text */
+  --background: 220 20% 97%;
+  --foreground: 220 10% 11%;
 
-  /* Card & Popover surfaces */
-  --card: 0 0% 100%; /* Pure white like background */
-  --card-foreground: 0 0% 3.9%; /* Same as main foreground */
-  --popover: 0 0% 100%; /* Pure white like background */
-  --popover-foreground: 0 0% 3.9%; /* Same as main foreground */
-
-  /* Primary & Secondary colors */
-  --primary: 0 0% 0%; /* Pure black */
-  --primary-foreground: 0 0% 100%; /* Pure white */
-  --secondary: 0 0% 96.1%; /* Very light gray */
-  --secondary-foreground: 0 0% 0%; /* Pure black */
-
-  /* Muted & Accent variations */
-  --muted: 0 0% 96.1%; /* Very light gray */
-  --muted-foreground: 0 0% 45.1%; /* Medium gray */
-  --accent: 0 0% 96.1%; /* Very light gray */
-  --accent-foreground: 0 0% 9%; /* Very dark gray */
-
-  /* Functional states */
-  --destructive: 0 84.2% 60.2%; /* Keeping red for errors */
-  --destructive-foreground: 0 0% 98%; /* Almost white */
-
-  /* Borders, Inputs & Focus */
-  --border: 0 0% 89.8%; /* Light gray */
-  --input: 0 0% 89.8%; /* Light gray */
-  --ring: 0 0% 3.9%; /* Almost black */
-
-  --radius: 1rem;
-}
-
-.dark {
-  /* Base colors — slate blue-gray più intenso */
-  --background: 222 47% 7%;   /* quasi navy scuro */
-  --foreground: 210 40% 98%;
-
-  /* Card & Popover surfaces */
-  --card: 222 40% 12%;        /* blu-slate visibile */
-  --card-foreground: 210 40% 98%;
-  --popover: 222 40% 12%;
-  --popover-foreground: 210 40% 98%;
-
-  /* Primary & Secondary colors */
-  --primary: 210 40% 98%;
-  --primary-foreground: 222 47% 11%;
-  --secondary: 222 35% 18%;
-  --secondary-foreground: 210 40% 98%;
-
-  /* Muted & Accent variations */
-  --muted: 222 35% 18%;       /* inner boxes */
-  --muted-foreground: 215 25% 58%;
-  --accent: 222 35% 18%;
-  --accent-foreground: 210 40% 98%;
-
-  /* Functional states */
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-
-  /* Borders, Inputs & Focus */
-  --border: 222 35% 22%;
-  --input: 222 35% 22%;
-  --ring: 212 95% 68%;
-}
-
-:root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
-  --muted: 0 0% 96.1%;
-  --muted-foreground: 0 0% 45.1%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.9%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.9%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 89.8%;
-  --primary: 0 0% 9%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 96.1%;
-  --secondary-foreground: 0 0% 9%;
-  --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --ring: 0 0% 3.9%;
-  --radius: 0.5rem;
+  --card-foreground: 220 10% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 10% 11%;
+
+  --primary: 224 88% 54%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 220 10% 11%;
+
+  --muted: 220 16% 96%;
+  --muted-foreground: 220 8% 39%;
+  --accent: 220 16% 96%;
+  --accent-foreground: 224 88% 54%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 216 15% 94%;
+  --input: 216 15% 94%;
+  --ring: 224 88% 54%;
+
+  --brand: 224 88% 54%;
+  --brand-bright: 217 100% 65%;
+  --ok: 142 76% 36%;
+  --warn: 33 90% 40%;
+  --purple: 252 100% 68%;
+
+  --radius: 0.75rem;
   color-scheme: light;
 }
 
 .dark {
-  --background: 222 47% 7%;
-  --foreground: 210 40% 98%;
-  --muted: 222 35% 18%;
-  --muted-foreground: 215 25% 58%;
-  --popover: 222 40% 12%;
-  --popover-foreground: 210 40% 98%;
-  --card: 222 40% 12%;
-  --card-foreground: 210 40% 98%;
-  --border: 222 35% 22%;
-  --input: 222 35% 22%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222 47% 11%;
-  --secondary: 222 35% 18%;
-  --secondary-foreground: 210 40% 98%;
-  --accent: 222 35% 18%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --ring: 212 95% 68%;
+  --background: 220 36% 5%;
+  --foreground: 218 28% 92%;
+
+  --card: 218 35% 8%;
+  --card-foreground: 218 28% 92%;
+  --popover: 219 35% 9%;
+  --popover-foreground: 218 28% 92%;
+
+  --primary: 224 100% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 218 30% 14%;
+  --secondary-foreground: 218 28% 92%;
+
+  --muted: 218 32% 12%;
+  --muted-foreground: 218 15% 65%;
+  --accent: 218 32% 12%;
+  --accent-foreground: 224 100% 70%;
+
+  --destructive: 0 85% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 218 30% 15%;
+  --input: 218 30% 15%;
+  --ring: 224 100% 65%;
+
+  --brand: 224 100% 60%;
+  --brand-bright: 217 100% 69%;
+  --ok: 152 67% 50%;
+  --warn: 41 94% 46%;
+  --purple: 252 100% 71%;
+
   color-scheme: dark;
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+  body {
+    font-family: var(--font-sans);
+    @apply bg-background text-foreground;
   }
 }
 
@@ -246,6 +205,34 @@
   .spinner-sm {
     @apply h-4 w-4 animate-spin text-muted-foreground;
   }
+
+  .icon-chip {
+    @apply flex h-[38px] w-[38px] flex-none items-center justify-center rounded-[10px];
+  }
+  .icon-chip-sm { @apply h-7 w-7 rounded-lg; }
+  .icon-chip-lg { @apply h-[60px] w-[60px] rounded-full; }
+
+  .chip-brand  { background: hsl(var(--brand) / 0.10);  color: hsl(var(--brand)); }
+  .chip-purple { background: hsl(var(--purple) / 0.12); color: hsl(var(--purple)); }
+  .chip-ok     { background: hsl(var(--ok) / 0.12);     color: hsl(var(--ok)); }
+  .chip-warn   { background: hsl(var(--warn) / 0.12);   color: hsl(var(--warn)); }
+  .chip-danger { background: hsl(var(--destructive) / 0.10); color: hsl(var(--destructive)); }
+
+  .brand-soft {
+    background: hsl(var(--brand) / 0.10);
+    color: hsl(var(--brand));
+  }
+}
+
+hlm-sidebar a.active {
+  background: hsl(var(--brand) / 0.10);
+  box-shadow: inset 2.5px 0 0 hsl(var(--brand));
+  border-radius: 0.5rem;
+}
+hlm-sidebar a.active span,
+hlm-sidebar a.active ng-icon {
+  color: hsl(var(--brand)) !important;
+  font-weight: 600;
 }
 
 /* Shimmer animation for progress bars */

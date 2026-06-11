@@ -39,8 +39,8 @@ import { ClusterStatus } from '../../model/cluster.models';
       <!-- Header -->
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2.5">
-          <div class="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-            <ng-icon name="lucideServer" class="h-4 w-4 text-muted-foreground" />
+          <div class="icon-chip chip-brand h-9 w-9">
+            <ng-icon name="lucideServer" class="h-4 w-4" />
           </div>
           <div>
             <h2 class="font-semibold text-foreground text-sm">Clusters</h2>

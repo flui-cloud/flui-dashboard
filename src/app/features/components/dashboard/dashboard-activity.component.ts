@@ -37,7 +37,7 @@ const STATUS_COLORS: Partial<Record<ClusterStatus, { dot: string; label: string;
       <!-- Header -->
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2">
-          <ng-icon name="lucideActivity" class="h-4 w-4 text-muted-foreground" />
+          <ng-icon name="lucideActivity" class="h-4 w-4 text-primary" />
           <h2 class="font-semibold text-foreground">Recent Cluster Activity</h2>
         </div>
         <a

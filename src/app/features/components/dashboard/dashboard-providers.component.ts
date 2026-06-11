@@ -43,8 +43,8 @@ interface ExpiryAlert {
       <!-- Header -->
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2.5">
-          <div class="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-            <ng-icon name="lucideCloud" class="h-4 w-4 text-muted-foreground" />
+          <div class="icon-chip chip-brand h-9 w-9">
+            <ng-icon name="lucideCloud" class="h-4 w-4" />
           </div>
           <div>
             <h2 class="font-semibold text-foreground text-sm">Cloud Providers</h2>
@@ -84,8 +84,8 @@ interface ExpiryAlert {
       @if (isEmpty()) {
         <!-- Empty state -->
         <div class="flex flex-col items-center justify-center flex-1 gap-3 py-4">
-          <div class="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-            <ng-icon name="lucideCloud" class="h-6 w-6 text-muted-foreground" />
+          <div class="icon-chip icon-chip-lg chip-brand">
+            <ng-icon name="lucideCloud" class="h-6 w-6" />
           </div>
           <div class="text-center">
             <p class="text-sm font-medium text-foreground">No providers configured</p>

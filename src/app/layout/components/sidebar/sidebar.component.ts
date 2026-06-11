@@ -195,7 +195,7 @@ const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
               <ng-icon
                 hlm
                 name="lucideCloud"
-                class="h-4 w-4 text-muted-foreground"
+                class="h-4 w-4 text-primary"
               />
             </hlm-sidebar-group-label>
             <hlm-sidebar-group-content [items]="clusterItems" />
@@ -214,7 +214,7 @@ const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
               <ng-icon
                 hlm
                 name="lucideContainer"
-                class="h-4 w-4 text-muted-foreground"
+                class="h-4 w-4 text-primary"
               />
             </hlm-sidebar-group-label>
             <hlm-sidebar-group-content [items]="workloadItems()" />
@@ -243,7 +243,7 @@ const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
               <ng-icon
                 hlm
                 name="lucideZap"
-                class="h-4 w-4 text-muted-foreground"
+                class="h-4 w-4 text-primary"
               />
             </hlm-sidebar-group-label>
             <hlm-sidebar-group-content [items]="deployItems" />
@@ -262,7 +262,7 @@ const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
               <ng-icon
                 hlm
                 name="lucideServer"
-                class="h-4 w-4 text-muted-foreground"
+                class="h-4 w-4 text-primary"
               />
             </hlm-sidebar-group-label>
             <hlm-sidebar-group-content [items]="infrastructureItems" />
@@ -276,7 +276,7 @@ const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
               <ng-icon
                 hlm
                 name="lucideShield"
-                class="h-4 w-4 text-muted-foreground"
+                class="h-4 w-4 text-primary"
               />
             </hlm-sidebar-group-label>
             <hlm-sidebar-group-content [items]="firewallItems" />
@@ -295,7 +295,7 @@ const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
               <ng-icon
                 hlm
                 name="lucideCloud"
-                class="h-4 w-4 text-muted-foreground"
+                class="h-4 w-4 text-primary"
               />
             </hlm-sidebar-group-label>
             <hlm-sidebar-group-content [items]="allManagementItems" />

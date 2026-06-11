@@ -1,17 +1,14 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
-  ElementRef,
-  OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
-  viewChildren,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideUser,
@@ -45,7 +42,6 @@ interface SectionDef {
   standalone: true,
   imports: [
     NgIcon,
-    RouterLink,
     HlmCardDirective,
     HlmCardContentDirective,
     HlmBadgeDirective,
@@ -58,68 +54,66 @@ interface SectionDef {
     provideIcons({ lucideUser, lucideShield, lucideShieldPlus, lucideNetwork }),
   ],
   template: `
-    <div class="p-6 max-w-6xl mx-auto">
-      <div class="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8 items-start">
+    <div class="p-6 max-w-6xl mx-auto space-y-6">
 
-        <!-- Anchor nav (sticky) -->
-        <aside class="lg:sticky lg:top-6 self-start">
-          <nav class="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible">
-            @for (s of visibleSections(); track s.id) {
-              <a
-                [routerLink]="[]"
-                [fragment]="s.id"
-                (click)="onAnchorClick($event, s.id)"
-                class="flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors whitespace-nowrap"
-                [class.bg-muted]="activeSection() === s.id"
-                [class.text-foreground]="activeSection() === s.id"
-                [class.font-medium]="activeSection() === s.id"
-                [class.text-muted-foreground]="activeSection() !== s.id"
-                [class.hover:bg-muted]="activeSection() !== s.id"
-                [class.hover:text-foreground]="activeSection() !== s.id"
-              >
-                <ng-icon [name]="s.icon" class="h-4 w-4" />
-                {{ s.label }}
-              </a>
-            }
-          </nav>
-        </aside>
-
-        <!-- Content sections -->
-        <div class="space-y-10 min-w-0">
-
-          <!-- User header card -->
-          <div hlmCard>
-            <div hlmCardContent class="pt-6">
-              <div class="flex items-center gap-4">
-                <div class="flex h-16 w-16 items-center justify-center rounded-xl bg-muted border border-border text-xl font-bold text-muted-foreground select-none shrink-0">
-                  {{ _initials() }}
-                </div>
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <h2 class="text-xl font-semibold text-foreground">{{ _displayName() }}</h2>
-                    @if (_isAdmin()) {
-                      <span hlmBadge variant="default" class="text-xs">Admin</span>
-                    }
-                  </div>
-                  <p class="text-sm text-muted-foreground mt-0.5">{{ _email() }}</p>
-                  <p class="text-xs text-muted-foreground mt-1">
-                    {{ _authMode() === 'oidc' ? 'Managed via OIDC provider' : 'Local account' }}
-                  </p>
-                </div>
+      <!-- User header card -->
+      <div hlmCard>
+        <div hlmCardContent class="pt-6">
+          <div class="flex items-center gap-4">
+            <div class="flex h-16 w-16 items-center justify-center rounded-xl bg-muted border border-border text-xl font-bold text-muted-foreground select-none shrink-0">
+              {{ _initials() }}
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-xl font-semibold text-foreground">{{ _displayName() }}</h2>
+                @if (_isAdmin()) {
+                  <span hlmBadge variant="default" class="text-xs">Admin</span>
+                }
               </div>
+              <p class="text-sm text-muted-foreground mt-0.5">{{ _email() }}</p>
+              <p class="text-xs text-muted-foreground mt-1">
+                {{ _authMode() === 'oidc' ? 'Managed via OIDC provider' : 'Local account' }}
+              </p>
             </div>
           </div>
+        </div>
+      </div>
 
-          <section #section id="profile" data-section="profile" class="scroll-mt-6 space-y-3">
-            <header>
-              <h3 class="text-lg font-semibold text-foreground">Profile</h3>
-              <p class="text-sm text-muted-foreground">Your account information.</p>
-            </header>
-            <app-profile-tab />
-          </section>
+      <!-- Tab navigation -->
+      <div class="border-b border-border relative">
+        <nav class="flex -mb-px gap-1 overflow-x-auto scrollbar-none pr-8">
+          @for (s of visibleSections(); track s.id) {
+            <button
+              type="button"
+              (click)="select(s.id)"
+              [title]="s.label"
+              class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0"
+              [class]="activeSection() === s.id
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'"
+            >
+              <ng-icon [name]="s.icon" class="h-4 w-4 flex-shrink-0" />
+              <span>{{ s.label }}</span>
+            </button>
+          }
+        </nav>
+        <div class="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent"></div>
+      </div>
 
-          @if (_authMode() === 'local') {
-            <section #section id="security" data-section="security" class="scroll-mt-6 space-y-3">
+      <!-- Active section -->
+      <div class="min-w-0">
+        @switch (activeSection()) {
+          @case ('profile') {
+            <section class="space-y-3">
+              <header>
+                <h3 class="text-lg font-semibold text-foreground">Profile</h3>
+                <p class="text-sm text-muted-foreground">Your account information.</p>
+              </header>
+              <app-profile-tab />
+            </section>
+          }
+          @case ('security') {
+            <section class="space-y-3">
               <header>
                 <h3 class="text-lg font-semibold text-foreground">Security</h3>
                 <p class="text-sm text-muted-foreground">Manage your password and account security.</p>
@@ -127,9 +121,8 @@ interface SectionDef {
               <app-security-tab />
             </section>
           }
-
-          @if (_isAdmin()) {
-            <section #section id="auth-proxy" data-section="auth-proxy" class="scroll-mt-6 space-y-3">
+          @case ('auth-proxy') {
+            <section class="space-y-3">
               <header>
                 <h3 class="text-lg font-semibold text-foreground">Auth Proxy</h3>
                 <p class="text-sm text-muted-foreground">Protect internal apps with OIDC-based access per cluster.</p>
@@ -137,29 +130,26 @@ interface SectionDef {
               <app-infrastructure-auth-proxy />
             </section>
           }
-
-          <section #section id="inference-connections" data-section="inference-connections" class="scroll-mt-6 space-y-3">
-            <header>
-              <h3 class="text-lg font-semibold text-foreground">LLM Connections</h3>
-              <p class="text-sm text-muted-foreground">Bring your own API key to connect any OpenAI-compatible language model.</p>
-            </header>
-            <app-inference-connections />
-          </section>
-
-        </div>
+          @case ('inference-connections') {
+            <section class="space-y-3">
+              <header>
+                <h3 class="text-lg font-semibold text-foreground">LLM Connections</h3>
+                <p class="text-sm text-muted-foreground">Bring your own API key to connect any OpenAI-compatible language model.</p>
+              </header>
+              <app-inference-connections />
+            </section>
+          }
+        }
       </div>
     </div>
   `,
 })
-export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
+export class SettingsComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly cfg = inject(AppConfigService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-
-  private readonly sectionEls = viewChildren<ElementRef<HTMLElement>>('section');
-  private observer: IntersectionObserver | null = null;
 
   readonly activeSection = signal<SectionId>('profile');
 
@@ -194,6 +184,15 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.sections.filter((s) => s.visible()),
   );
 
+  constructor() {
+    effect(() => {
+      const visible = this.visibleSections();
+      if (!visible.some((s) => s.id === this.activeSection())) {
+        this.activeSection.set(visible[0]?.id ?? 'profile');
+      }
+    });
+  }
+
   protected readonly _displayName = computed(() => {
     const u = this.authService.currentUser();
     return u?.name || u?.email || 'User';
@@ -218,57 +217,22 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.route.fragment
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((fragment) => {
-        if (!fragment) return;
-        if (this.isSectionId(fragment)) {
+        if (fragment && this.isVisibleSection(fragment)) {
           this.activeSection.set(fragment);
-          queueMicrotask(() => this.scrollTo(fragment));
         }
       });
   }
 
-  ngAfterViewInit(): void {
-    this.observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) {
-          const id = (visible.target as HTMLElement).dataset['section'];
-          if (id && this.isSectionId(id)) {
-            this.activeSection.set(id);
-          }
-        }
-      },
-      { rootMargin: '-20% 0px -60% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] },
-    );
-    for (const ref of this.sectionEls()) {
-      this.observer.observe(ref.nativeElement);
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.observer?.disconnect();
-  }
-
-  onAnchorClick(event: MouseEvent, id: SectionId): void {
-    event.preventDefault();
+  select(id: SectionId): void {
     this.activeSection.set(id);
     this.router.navigate([], {
       relativeTo: this.route,
       fragment: id,
       replaceUrl: true,
     });
-    this.scrollTo(id);
   }
 
-  private scrollTo(id: SectionId): void {
-    const el = this.sectionEls().find(
-      (ref) => ref.nativeElement.id === id,
-    )?.nativeElement;
-    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  private isSectionId(value: string): value is SectionId {
-    return ['profile', 'security', 'auth-proxy', 'inference-connections'].includes(value);
+  private isVisibleSection(value: string): value is SectionId {
+    return this.visibleSections().some((s) => s.id === value);
   }
 }

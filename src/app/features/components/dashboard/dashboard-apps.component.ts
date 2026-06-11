@@ -18,7 +18,7 @@ interface AppStatItem {
   label: string;
   value: number;
   colorClass: string;
-  bgClass: string;
+  chipClass: string;
   icon: string;
 }
 
@@ -52,8 +52,8 @@ interface AppStatItem {
       <!-- Header -->
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2.5">
-          <div class="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-            <ng-icon name="lucidePackage" class="h-4 w-4 text-muted-foreground" />
+          <div class="icon-chip chip-brand h-9 w-9">
+            <ng-icon name="lucidePackage" class="h-4 w-4" />
           </div>
           <div>
             <h2 class="font-semibold text-foreground text-sm">Applications</h2>
@@ -76,8 +76,10 @@ interface AppStatItem {
       <!-- Stats grid -->
       <div class="grid grid-cols-4 gap-2 flex-1">
         @for (stat of stats(); track stat.label) {
-          <div class="flex flex-col gap-1 rounded-md p-2.5" [class]="stat.bgClass">
-            <ng-icon [name]="stat.icon" class="h-3.5 w-3.5" [class]="stat.colorClass" />
+          <div class="flex flex-col gap-2 rounded-lg border border-border p-2.5">
+            <div class="icon-chip icon-chip-sm" [class]="stat.chipClass">
+              <ng-icon [name]="stat.icon" class="h-3.5 w-3.5" />
+            </div>
             <span class="text-xl font-bold" [class]="stat.colorClass">{{ stat.value }}</span>
             <span class="text-xs text-muted-foreground leading-tight">{{ stat.label }}</span>
           </div>
@@ -99,28 +101,28 @@ export class DashboardAppsComponent {
         label: 'Databases',
         value: this.dashboardService.databasesApps(),
         colorClass: 'text-foreground',
-        bgClass: 'bg-muted/50',
+        chipClass: 'chip-brand',
         icon: 'lucideDatabase',
       },
       {
         label: 'Apps',
         value: this.dashboardService.applicationsApps(),
         colorClass: 'text-foreground',
-        bgClass: 'bg-muted/50',
+        chipClass: 'chip-purple',
         icon: 'lucideContainer',
       },
       {
         label: 'Tools',
         value: this.dashboardService.toolsApps(),
         colorClass: 'text-foreground',
-        bgClass: 'bg-muted/50',
+        chipClass: 'chip-warn',
         icon: 'lucideHammer',
       },
       {
         label: 'Failed',
         value: failed,
         colorClass: failed > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground',
-        bgClass: 'bg-muted/50',
+        chipClass: 'chip-danger',
         icon: 'lucideAlertCircle',
       },
     ];
