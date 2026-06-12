@@ -33,7 +33,7 @@ import {
   HlmCardTitleDirective,
 } from '@spartan-ng/ui-card-helm';
 import { VirtualInstancesService, InfrastructureServersService } from '../../../core/api';
-import { InstanceWithLabels, isManagedByFlui, getClusterInfo } from '../../model/instance.models';
+import { InstanceWithLabels, isManagedByFlui, getOwnership, getClusterInfo } from '../../model/instance.models';
 import { InstanceManagedBadgeComponent } from './instance-managed-badge.component';
 import { InstanceDeleteDialogComponent } from './instance-delete-dialog.component';
 import { SshTerminalComponent } from './ssh-terminal.component';
@@ -150,7 +150,7 @@ import { ClusterType, isControlClusterType } from '../../model/cluster.models';
               <div hlmCardContent class="pt-0">
                 <!-- Inline Badges -->
                 <div class="flex flex-wrap items-center gap-2">
-                  <app-instance-managed-badge [isManaged]="isManaged()" />
+                  <app-instance-managed-badge [ownership]="ownership()" />
 
                   <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                     <ng-icon name="lucideBox" class="h-3 w-3" />
@@ -502,6 +502,11 @@ export class InstanceDetailComponent implements OnInit {
   isManaged = computed(() => {
     const inst = this.instance();
     return inst ? isManagedByFlui(inst) : false;
+  });
+
+  ownership = computed(() => {
+    const inst = this.instance();
+    return inst ? getOwnership(inst) : 'unmanaged';
   });
 
   clusterInfo = computed(() => {

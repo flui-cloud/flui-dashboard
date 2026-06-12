@@ -16,7 +16,7 @@ import {
   lucideSquare,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
-import { InstanceWithLabels, isManagedByFlui } from '../../model/instance.models';
+import { InstanceWithLabels, getOwnership } from '../../model/instance.models';
 import { InstanceManagedBadgeComponent } from './instance-managed-badge.component';
 import { InstanceActionsComponent } from './instance-actions.component';
 import { InstanceStatusBadgeComponent } from './instance-status-badge.component';
@@ -62,7 +62,7 @@ import { InstanceStatusBadgeComponent } from './instance-status-badge.component'
             <span class="text-xs text-muted-foreground hidden lg:inline">· {{ instance.osType }}</span>
           }
         </div>
-        <app-instance-actions [instance]="instance" [isManaged]="isManaged()" />
+        <app-instance-actions [instance]="instance" [isManaged]="isSelf()" />
       </div>
 
       <!-- Details row -->
@@ -128,7 +128,7 @@ import { InstanceStatusBadgeComponent } from './instance-status-badge.component'
 
         <!-- Managed -->
         <div class="flex justify-end">
-          <app-instance-managed-badge [isManaged]="isManaged()" />
+          <app-instance-managed-badge [ownership]="ownership()" />
         </div>
       </div>
     </div>
@@ -139,7 +139,8 @@ export class InstanceRowComponent {
 
   @Input({ required: true }) instance!: InstanceWithLabels;
 
-  isManaged = computed(() => isManagedByFlui(this.instance));
+  ownership = computed(() => getOwnership(this.instance));
+  isSelf = computed(() => this.ownership() === 'self');
   copiedIp = signal(false);
 
   providerLogoUrl = computed(

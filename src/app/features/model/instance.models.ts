@@ -30,6 +30,25 @@ export function isManagedByFlui(instance: InstanceWithLabels): boolean {
   return instance.metadata?.labels?.['managed-by'] === 'flui-cloud';
 }
 
+export type InstanceOwnership = 'self' | 'other-flui' | 'unmanaged';
+
+/**
+ * Ownership relative to the installation this dashboard is connected to.
+ * Prefers the server-computed `ownership` field; falls back to the managed-by
+ * label for older API responses (which cannot tell self from other-flui).
+ */
+export function getOwnership(instance: InstanceWithLabels): InstanceOwnership {
+  const ownership = instance.ownership;
+  if (
+    ownership === 'self' ||
+    ownership === 'other-flui' ||
+    ownership === 'unmanaged'
+  ) {
+    return ownership;
+  }
+  return isManagedByFlui(instance) ? 'self' : 'unmanaged';
+}
+
 /**
  * Get cluster information from instance labels
  */

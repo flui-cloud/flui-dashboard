@@ -100,6 +100,10 @@ export interface InstanceDto {
      */
     metadata?: object;
     /**
+     * Ownership relative to this installation
+     */
+    ownership?: InstanceDto.OwnershipEnum;
+    /**
      * Creation timestamp
      */
     createdAt: string;
@@ -139,6 +143,12 @@ export namespace InstanceDto {
         Deleting: 'deleting'
     } as const;
     export type StatusEnum = typeof StatusEnum[keyof typeof StatusEnum];
+    export const OwnershipEnum = {
+        Self: 'self',
+        OtherFlui: 'other-flui',
+        Unmanaged: 'unmanaged'
+    } as const;
+    export type OwnershipEnum = typeof OwnershipEnum[keyof typeof OwnershipEnum];
 }
 
 

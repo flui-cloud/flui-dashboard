@@ -23,7 +23,7 @@ import { QuickSshService, SshSession } from '../../service/quick-ssh.service';
 import { SshTerminalComponent } from '../compute/ssh-terminal.component';
 import { VirtualInstancesService } from '../../../core/api/api/virtualInstances.service';
 import { InstanceResponseDto } from '../../../core/api/model/instanceResponseDto';
-import { InstanceWithLabels, isManagedByFlui, getClusterInfo } from '../../model/instance.models';
+import { InstanceWithLabels, getOwnership, getClusterInfo } from '../../model/instance.models';
 
 type ResizeEdge = 'top' | 'left' | 'top-left' | null;
 
@@ -305,7 +305,9 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (response: InstanceResponseDto) => {
         const allInstances = (response.data || []) as InstanceWithLabels[];
-        this.nodes.set(allInstances.filter(i => isManagedByFlui(i) && !!i.ipConfig?.v4?.ip));
+        // Only this installation's own nodes are reachable over SSH; nodes from
+        // a parallel installation sharing the provider account are hidden.
+        this.nodes.set(allInstances.filter(i => getOwnership(i) === 'self' && !!i.ipConfig?.v4?.ip));
         this.isLoadingNodes.set(false);
       },
       error: () => {
