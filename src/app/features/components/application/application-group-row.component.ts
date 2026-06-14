@@ -39,7 +39,7 @@ import { ApplicationRowComponent } from './application-row.component';
       <div
         class="flex items-center gap-4 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer group"
         [class.animate-pulse]="refreshing()"
-        (click)="openBundle.emit(group().catalogInstallId ?? group().id)"
+        (click)="open.emit(group().id)"
       >
         <span [class]="dotClass(group().status, '2.5')" class="flex-shrink-0"></span>
 
@@ -98,7 +98,7 @@ import { ApplicationRowComponent } from './application-row.component';
       <app-application-row
         [app]="group().components[0]"
         [refreshing]="refreshing()"
-        (view)="view.emit($event)"
+        (view)="open.emit($event)"
         (delete)="delete.emit($event)"
       />
     }
@@ -108,9 +108,8 @@ export class ApplicationGroupRowComponent {
   group = input.required<AppGroupView>();
   refreshing = input<boolean>(false);
 
-  view = output<string>();
+  open = output<string>();
   delete = output<Application>();
-  openBundle = output<string>();
 
   isComposed(): boolean {
     return this.group().type === 'composed';

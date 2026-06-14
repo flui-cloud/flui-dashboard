@@ -6,11 +6,12 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
   lucideCircleCheck,
+  lucideDatabase,
   lucideExternalLink,
   lucideLoader,
   lucidePlug,
@@ -21,6 +22,7 @@ import { CatalogService } from '../../service/catalog.service';
 import { CatalogClientResponseDto } from '../../../core/api/model/models';
 import { Application } from '../../model/application.models';
 import { CATALOG_APP_LABEL, buildOpenAppUrl } from '../../model/open-app-url';
+import { consoleRouteFor, isKeyValueDatabase } from '../../model/db-engine';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { InternalServiceInfoComponent } from './internal-service-info.component';
 
@@ -33,11 +35,12 @@ interface ClientRow {
   selector: 'app-app-clients-tab',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, InternalServiceInfoComponent],
+  imports: [NgIcon, InternalServiceInfoComponent, RouterLink],
   providers: [
     provideIcons({
       lucideCheck,
       lucideCircleCheck,
+      lucideDatabase,
       lucideExternalLink,
       lucideLoader,
       lucidePlug,
@@ -54,13 +57,32 @@ interface ClientRow {
         />
       }
 
+      @if (consoleTarget(); as c) {
+        <div class="rounded-xl border border-border bg-card p-5">
+          <div class="flex items-start gap-3">
+            <ng-icon name="lucideDatabase" class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <div class="min-w-0 flex-1">
+              <h3 class="text-sm font-semibold text-foreground">{{ c.title }}</h3>
+              <p class="mt-1 text-xs text-muted-foreground">{{ c.desc }}</p>
+              <a
+                [routerLink]="[c.route, c.id]"
+                class="mt-3 inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:bg-primary/90"
+              >
+                <ng-icon name="lucideDatabase" class="h-3 w-3" />
+                {{ c.cta }}
+              </a>
+            </div>
+          </div>
+        </div>
+      }
+
       <div class="rounded-xl border border-border bg-card p-5">
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-sm font-semibold text-foreground">Compatible clients</h3>
             <p class="mt-1 text-xs text-muted-foreground">
-              Install a browser UI to access this database. Credentials will be wired
-              automatically — no passwords to copy.
+              Prefer a full browser UI? Install a compatible client below. Credentials are
+              wired automatically — no passwords to copy.
             </p>
           </div>
           @if (loadingClients()) {
@@ -188,6 +210,24 @@ export class AppClientsTabComponent implements OnInit {
   protected readonly buildingBlockSlug = computed(
     () => this.labels()[CATALOG_APP_LABEL] || undefined,
   );
+
+  // The built-in console entry, routed by engine family (SQL → query console, Redis/Valkey →
+  // key browser). Driven by the engine registry, never a hardcoded slug.
+  protected readonly consoleTarget = computed(() => {
+    const app = this.appService.selectedApplication();
+    const route = consoleRouteFor(app);
+    if (!route || !app) return null;
+    const kv = isKeyValueDatabase(app);
+    return {
+      route,
+      id: app.id,
+      title: kv ? 'Browse this datastore' : 'Access this database',
+      desc: kv
+        ? 'Browse keys and values from your browser with the built-in key browser — nothing to install, credentials stay in the cluster, read-only by default.'
+        : 'Run SQL straight from your browser with the built-in console — nothing to install, credentials stay in the cluster, and queries are read-only by default.',
+      cta: kv ? 'Open Key Browser' : 'Open Query console',
+    };
+  });
 
   protected readonly clients = signal<CatalogClientResponseDto[]>([]);
   protected readonly loadingClients = signal(false);

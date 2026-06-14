@@ -296,7 +296,7 @@ export class AssistantWidgetComponent implements OnInit, OnDestroy {
   protected readonly showHistory = signal(false);
 
   protected readonly noInference = computed(
-    () => this.inferenceService.providers().length === 0 && this.inferenceService.connections().length === 0,
+    () => this.inferenceService.configuredProviders().length === 0 && this.inferenceService.connections().length === 0,
   );
 
   protected readonly isAdmin = computed(() => this.authService.currentUser()?.isAdmin ?? false);

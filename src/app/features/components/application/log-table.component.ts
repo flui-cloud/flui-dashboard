@@ -64,11 +64,11 @@ const PAGE_SIZE = 50;
       } @else {
         @for (entry of pagedEntries(); track entry.timestamp + entry.message) {
           <div
-            class="group border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors cursor-pointer"
-            (click)="toggleExpand(entry)"
+            class="group border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors"
           >
             <!-- Main row -->
-            <div class="grid grid-cols-[130px_64px_1fr_90px_80px] items-start px-3 py-1.5">
+            <div class="grid grid-cols-[130px_64px_1fr_90px_80px] items-start px-3 py-1.5 cursor-pointer"
+              (click)="toggleExpand(entry)">
               <span class="text-[11px] font-mono text-gray-500 dark:text-gray-400 leading-5 truncate"
                 [title]="entry.timestamp">
                 {{ formatTimestamp(entry.timestamp) }}
@@ -106,7 +106,7 @@ const PAGE_SIZE = 50;
 
             <!-- Expanded detail -->
             @if (isExpanded(entry)) {
-              <div class="mx-3 mb-2 rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 text-xs font-mono">
+              <div class="mx-3 mb-2 rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 text-xs font-mono select-text cursor-text">
                 <div class="grid grid-cols-[140px_1fr] gap-y-1.5 gap-x-3">
                   <span class="text-gray-400 dark:text-gray-500">timestamp</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ entry.timestamp }}</span>
@@ -241,6 +241,7 @@ export class LogTableComponent {
   }
 
   toggleExpand(entry: AppLogEntryDto) {
+    if ((globalThis.getSelection()?.toString().length ?? 0) > 0) return;
     const key = entry.timestamp + entry.message;
     this._expandedKeys.update(s => {
       const next = new Set(s);

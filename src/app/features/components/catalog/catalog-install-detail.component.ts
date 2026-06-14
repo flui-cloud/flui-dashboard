@@ -10,18 +10,23 @@ import {
   lucideGlobe,
   lucideLoader,
   lucideRocket,
-  lucideTrash,
 } from '@ng-icons/lucide';
 import { CatalogService } from '../../service/catalog.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { ApplicationsService } from '../../../core/api/api/applications.service';
+import { DbConsoleService } from '../../service/db-console.service';
 import { evaluateEndpointReadiness } from '../../model/endpoint-readiness';
 import { buildOpenAppUrl } from '../../model/open-app-url';
+import { DbConnectionInfo } from '../../model/db-console.models';
+import { databaseEngineOf } from '../../model/db-engine';
 import {
   CatalogInstallResponseDto,
   ApplicationResponseDto,
 } from '../../../core/api/model/models';
 import { CatalogInstallStatusBadgeComponent } from './catalog-install-status-badge.component';
+import { AppDbConnectCardComponent } from '../application/app-db-connect-card.component';
+import { AppComponentsListComponent } from '../application/app-components-list.component';
+
 
 const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
   CatalogInstallResponseDto.StatusEnum.Running,
@@ -33,7 +38,13 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
   selector: 'app-catalog-install-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, NgIcon, CatalogInstallStatusBadgeComponent],
+  imports: [
+    RouterLink,
+    NgIcon,
+    CatalogInstallStatusBadgeComponent,
+    AppDbConnectCardComponent,
+    AppComponentsListComponent,
+  ],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -42,7 +53,6 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
       lucideGlobe,
       lucideLoader,
       lucideRocket,
-      lucideTrash,
     }),
   ],
   template: `
@@ -96,7 +106,11 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
           }
 
           @if (inst.status === 'RUNNING') {
-            @if (inst.resolvedFqdn) {
+            @if (dbApps().length) {
+              @for (db of dbApps(); track db.id) {
+                <app-db-connect-card [app]="db" [connInfo]="connInfoFor(db.id)" />
+              }
+            } @else if (inst.resolvedFqdn) {
               @let r = readiness();
               <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-4">
                 <div class="min-w-0 flex-1">
@@ -173,73 +187,9 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
             </div>
           }
 
-          @if (canUninstall()) {
-            <div class="mt-6 flex items-center justify-end border-t border-border pt-4">
-              @if (confirmingUninstall()) {
-                <div class="flex items-center gap-2">
-                  <span class="text-xs text-muted-foreground">Remove this install and all its resources?</span>
-                  <button
-                    type="button"
-                    (click)="confirmingUninstall.set(false)"
-                    class="rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    (click)="uninstall()"
-                    [disabled]="uninstallLoading()"
-                    class="inline-flex items-center gap-1.5 rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
-                  >
-                    @if (uninstallLoading()) {
-                      <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                    }
-                    Uninstall
-                  </button>
-                </div>
-              } @else {
-                <button
-                  type="button"
-                  (click)="confirmingUninstall.set(true)"
-                  class="inline-flex items-center gap-1.5 rounded-md border border-destructive/30 bg-background px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/5"
-                >
-                  <ng-icon name="lucideTrash" class="h-3.5 w-3.5" />
-                  Uninstall
-                </button>
-              }
-            </div>
-          }
         </section>
 
-        @if (components().length > 0) {
-          <section class="rounded-2xl border border-border bg-card p-6">
-            <h2 class="mb-3 text-sm font-semibold text-foreground">
-              Components
-              <span class="ml-1 text-xs font-normal text-muted-foreground">({{ components().length }})</span>
-            </h2>
-            <div class="flex flex-col gap-1.5">
-              @for (c of components(); track c.id) {
-                <a
-                  [routerLink]="['/apps/applications', c.id]"
-                  class="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-muted"
-                >
-                  <span [class]="dotClass(c.status)" class="flex-shrink-0"></span>
-                  <div class="min-w-0 flex-1">
-                    <span class="flex items-center gap-2 truncate text-sm font-medium text-foreground">
-                      {{ role(c) }}
-                      @if (c.id === primaryId()) {
-                        <span class="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:bg-sky-900/20 dark:text-sky-400">primary</span>
-                      }
-                    </span>
-                    <span class="block truncate font-mono text-xs text-muted-foreground">{{ c.slug }}</span>
-                  </div>
-                  <span class="hidden flex-shrink-0 font-mono text-xs text-muted-foreground sm:block">{{ c.exposure }}</span>
-                  <span class="flex-shrink-0 text-xs capitalize text-muted-foreground">{{ c.status }}</span>
-                </a>
-              }
-            </div>
-          </section>
-        }
+        <app-components-list [components]="components()" [primaryComponentId]="primaryId()" />
       }
     </div>
   `,
@@ -248,7 +198,21 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   private readonly catalog = inject(CatalogService);
   private readonly endpointsService = inject(AppEndpointsService);
   private readonly applicationsApi = inject(ApplicationsService);
+  private readonly dbConsole = inject(DbConsoleService);
   private readonly route = inject(ActivatedRoute);
+
+  // Per-component connection coordinates (no password), keyed by application id.
+  protected readonly connInfo = signal<Record<string, DbConnectionInfo>>({});
+  private readonly connRequested = new Set<string>();
+
+  // Every component that is a database/cache (composed apps may bundle several, e.g. postgres + valkey).
+  protected readonly dbApps = computed(() =>
+    this.components().filter((c) => databaseEngineOf(c)),
+  );
+
+  protected connInfoFor(appId: string): DbConnectionInfo | null {
+    return this.connInfo()[appId] ?? null;
+  }
 
   protected readonly components = signal<ApplicationResponseDto[]>([]);
   protected readonly primaryId = signal<string | undefined>(undefined);
@@ -274,20 +238,11 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   protected readonly progress = this.catalog.installProgress;
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
-  protected readonly confirmingUninstall = signal(false);
-  protected readonly uninstallLoading = signal(false);
 
   protected readonly progressPct = computed(() => this.progress()?.overallProgress ?? 0);
   protected readonly currentStepLabel = computed(
     () => this.progress()?.stepLabel ?? 'Preparing…',
   );
-  protected readonly canUninstall = computed(() => {
-    const status = this.install()?.status;
-    return (
-      status === CatalogInstallResponseDto.StatusEnum.Running ||
-      status === CatalogInstallResponseDto.StatusEnum.Failed
-    );
-  });
   protected readonly firstAppId = computed(
     () => this.install()?.applicationIds?.[0] ?? null,
   );
@@ -335,6 +290,24 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
       this.componentsKey.set(key);
       void this.loadComponents(inst.clusterId, inst.id);
     });
+
+    // Load connection coordinates (no password) for each bundled database/cache.
+    effect(() => {
+      for (const db of this.dbApps()) {
+        if (this.connRequested.has(db.id)) continue;
+        this.connRequested.add(db.id);
+        void this.loadConnInfo(db.id);
+      }
+    });
+  }
+
+  private async loadConnInfo(appId: string): Promise<void> {
+    try {
+      const info = await firstValueFrom(this.dbConsole.getConnectionInfo(appId));
+      this.connInfo.update((m) => ({ ...m, [appId]: info }));
+    } catch {
+      /* leave coordinates blank; the console link still works */
+    }
   }
 
   private async loadComponents(clusterId: string, installId: string): Promise<void> {
@@ -346,34 +319,6 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
       this.components.set(group?.components ?? []);
       this.primaryId.set(group?.primaryComponentId);
     } catch {
-    }
-  }
-
-  role(c: ApplicationResponseDto): string {
-    const labels = c.labels as Record<string, string> | undefined;
-    return labels?.['flui.cloud/composed-component'] ?? c.name;
-  }
-
-  dotClass(status: string): string {
-    const base = 'h-2.5 w-2.5 rounded-full';
-    switch (status) {
-      case 'running':
-        return `${base} bg-green-500`;
-      case 'provisioning':
-      case 'updating':
-      case 'awaiting_build':
-        return `${base} bg-blue-500 animate-pulse`;
-      case 'failed':
-        return `${base} bg-red-500`;
-      case 'degraded':
-        return `${base} bg-orange-500`;
-      case 'deleting':
-        return `${base} bg-gray-400 animate-pulse`;
-      case 'stopped':
-      case 'deleted':
-        return `${base} bg-gray-400`;
-      default:
-        return `${base} bg-yellow-500`;
     }
   }
 
@@ -417,23 +362,6 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
       const refreshed = await this.endpointsService.getEndpointStatus(ep.id);
       if (!refreshed) continue;
       if (evaluateEndpointReadiness(refreshed).isTerminal) return;
-    }
-  }
-
-  async uninstall(): Promise<void> {
-    const id = this.id();
-    if (!id) return;
-    this.uninstallLoading.set(true);
-    try {
-      const result = await this.catalog.uninstall(id);
-      this.confirmingUninstall.set(false);
-      if (result && !TERMINAL_STATES.has(result.status)) {
-        this.startPolling(result);
-      }
-    } catch (err) {
-      this.errorMessage.set((err as Error).message ?? 'Failed to uninstall.');
-    } finally {
-      this.uninstallLoading.set(false);
     }
   }
 

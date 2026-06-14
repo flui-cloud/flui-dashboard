@@ -139,7 +139,7 @@ export class AssistantChatComponent implements OnInit {
 
   protected readonly pickerOptions = computed<PickerOption[]>(() => {
     const opts: PickerOption[] = [{ label: 'Default (auto)', opts: null }];
-    for (const p of this.inferenceService.providers()) {
+    for (const p of this.inferenceService.configuredProviders()) {
       const models = p.models ?? [];
       if (models.length) {
         for (const m of models) {
