@@ -72,6 +72,10 @@ export interface InstallCatalogAppDto {
      * Install-time feature toggles (spec.options[].key → enabled). Omitted keys fall back to the option default.
      */
     options?: { [key: string]: boolean; };
+    /**
+     * When true, skip the cluster capacity gate and install even if the footprint exceeds free capacity. The user explicitly accepts the risk (pods may be OOM-killed or throttled at peak). Powers the wizard \"Install anyway\" action. Default false.
+     */
+    force?: boolean;
 }
 export namespace InstallCatalogAppDto {
     export const CertChallengeEnum = {

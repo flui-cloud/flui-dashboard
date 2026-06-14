@@ -17,9 +17,13 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
+import { CatalogCapacityPreviewDto } from '../model/catalogCapacityPreviewDto';
+// @ts-ignore
 import { CatalogClientResponseDto } from '../model/catalogClientResponseDto';
 // @ts-ignore
 import { CatalogClusterCapabilitiesDto } from '../model/catalogClusterCapabilitiesDto';
+// @ts-ignore
+import { ResourceAvailabilityResponseDto } from '../model/resourceAvailabilityResponseDto';
 // @ts-ignore
 import { CatalogDetailResponseDto } from '../model/catalogDetailResponseDto';
 // @ts-ignore
@@ -489,10 +493,83 @@ export class CatalogService extends BaseService {
     }
 
     /**
+     * Preview whether a cluster can fit a catalog install
+     * @endpoint post /api/v1/catalog/{slug}/capacity-preview
+     * @param slug
+     * @param catalogCapacityPreviewDto
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public catalogControllerCapacityPreview(slug: string, catalogCapacityPreviewDto: CatalogCapacityPreviewDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ResourceAvailabilityResponseDto>;
+    public catalogControllerCapacityPreview(slug: string, catalogCapacityPreviewDto: CatalogCapacityPreviewDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ResourceAvailabilityResponseDto>>;
+    public catalogControllerCapacityPreview(slug: string, catalogCapacityPreviewDto: CatalogCapacityPreviewDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ResourceAvailabilityResponseDto>>;
+    public catalogControllerCapacityPreview(slug: string, catalogCapacityPreviewDto: CatalogCapacityPreviewDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (slug === null || slug === undefined) {
+            throw new Error('Required parameter slug was null or undefined when calling catalogControllerCapacityPreview.');
+        }
+        if (catalogCapacityPreviewDto === null || catalogCapacityPreviewDto === undefined) {
+            throw new Error('Required parameter catalogCapacityPreviewDto was null or undefined when calling catalogControllerCapacityPreview.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/catalog/${this.configuration.encodeParam({name: "slug", value: slug, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/capacity-preview`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ResourceAvailabilityResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: catalogCapacityPreviewDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Install a catalog app on a cluster
      * @endpoint post /api/v1/catalog/{slug}/install
-     * @param slug 
-     * @param installCatalogAppDto 
+     * @param slug
+     * @param installCatalogAppDto
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options

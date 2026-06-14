@@ -38,6 +38,7 @@ api/infrastructureClusters.service.ts
 api/infrastructureOperations.service.ts
 api/infrastructurePlatformComponents.service.ts
 api/infrastructureServers.service.ts
+api/kvConsole.service.ts
 api/mcp.service.ts
 api/observability.service.ts
 api/providerConnections.service.ts
@@ -138,6 +139,7 @@ model/cacheLayerSummaryDto.ts
 model/capacityCandidateDto.ts
 model/capacityMasterDto.ts
 model/capacityStorageDto.ts
+model/catalogAuthSpecDto.ts
 model/catalogClientResponseDto.ts
 model/catalogClusterCapabilitiesDto.ts
 model/catalogDependencyDto.ts
@@ -145,6 +147,7 @@ model/catalogDetailResponseDto.ts
 model/catalogDomainSpecDto.ts
 model/catalogEditableEnvDto.ts
 model/catalogInstallResponseDto.ts
+model/catalogOptionDto.ts
 model/catalogResourceSpecDto.ts
 model/catalogResourcesDto.ts
 model/catalogResponseDto.ts

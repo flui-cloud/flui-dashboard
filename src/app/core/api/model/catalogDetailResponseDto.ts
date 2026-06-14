@@ -8,9 +8,11 @@
  * Do not edit the class manually.
  */
 import { CatalogDomainSpecDto } from './catalogDomainSpecDto';
+import { CatalogAuthSpecDto } from './catalogAuthSpecDto';
 import { CatalogDependencyDto } from './catalogDependencyDto';
 import { CatalogEditableEnvDto } from './catalogEditableEnvDto';
 import { CatalogUserInputPromptDto } from './catalogUserInputPromptDto';
+import { CatalogOptionDto } from './catalogOptionDto';
 import { CatalogResourcesDto } from './catalogResourcesDto';
 
 
@@ -60,6 +62,10 @@ export interface CatalogDetailResponseDto {
      */
     replicas: number;
     /**
+     * Whether install-time resource overrides (CPU/memory/replicas) actually take effect for this app. True for standalone apps and building blocks (the override is applied to the workload). False for composed apps, whose components always deploy at their manifest defaults — the install wizard MUST hide the override controls and show resources read-only rather than offer a knob that does nothing. Capacity for composed apps is still computed correctly via POST /catalog/:slug/capacity-preview (options-aware).
+     */
+    resourceOverridesSupported: boolean;
+    /**
      * True when the manifest declares at least one port with `expose: true` AND `exposure` is `public`. False for building blocks, for standalone apps with `exposure: internal`, and for any app whose ports are all internal. The install wizard MUST skip the Domain step when false; the app detail page MUST hide the \"App Endpoints\" / DNS / Certificate tabs.
      */
     exposesPublicEndpoint: boolean;
@@ -67,6 +73,14 @@ export interface CatalogDetailResponseDto {
      * Manifest-declared domain/endpoint defaults. Drives the initial values of the install wizard \"Domain\" step. Omitted when the manifest does not declare `spec.domain` or when `exposesPublicEndpoint=false`.
      */
     domain?: CatalogDomainSpecDto;
+    /**
+     * Manifest-declared authentication options. Present when spec.auth declares one or more modes; omitted when the app has no selectable auth. Drives the install wizard auth-mode selector and is sent back as InstallCatalogAppDto.authMode.
+     */
+    auth?: CatalogAuthSpecDto;
+    /**
+     * Manifest-declared install-time feature toggles (spec.options). Present only for composed apps that declare options (e.g. Nextcloud → \"office\"/Collabora); omitted otherwise. Each toggle the user enables is sent back as InstallCatalogAppDto.options[key] = true.
+     */
+    options?: Array<CatalogOptionDto>;
     /**
      * How this catalog app is reached once installed. `public` (default) creates Ingress + Certificate + DNS on a public hostname. `internal` skips all public exposure: the app lives only on a ClusterIP Service and is reachable only from the Flui dashboard via the ForwardAuth proxy on a wildcard internal hostname. Building blocks are always reported as `internal` regardless of their manifest.
      */
