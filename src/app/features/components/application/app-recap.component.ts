@@ -151,6 +151,7 @@ const DETAIL_TABS = [
         @if (g.type === 'standalone' && primaryApp) {
           <a
             [routerLink]="['/apps/applications', primaryApp.id]"
+            [queryParams]="{ returnTo: '/apps/recap/' + g.id }"
             class="block rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-muted"
           >
             <div class="flex items-center justify-between gap-3">
@@ -178,6 +179,7 @@ const DETAIL_TABS = [
           <app-components-list
             [components]="g.components"
             [primaryComponentId]="g.primaryComponentId"
+            [returnTo]="'/apps/recap/' + g.id"
           />
         }
 

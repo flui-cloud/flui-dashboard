@@ -543,6 +543,11 @@ export class ApplicationDetailComponent implements OnDestroy {
   }
 
   backToList() {
+    const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+    if (returnTo) {
+      void this.router.navigateByUrl(returnTo);
+      return;
+    }
     this.router.navigate([this.listRouteForKind()]);
   }
 

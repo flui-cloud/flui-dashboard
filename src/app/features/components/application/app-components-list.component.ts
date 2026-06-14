@@ -18,6 +18,7 @@ import { ApplicationResponseDto } from '../../../core/api/model/models';
           @for (c of components(); track c.id) {
             <a
               [routerLink]="['/apps/applications', c.id]"
+              [queryParams]="returnTo() ? { returnTo: returnTo() } : null"
               class="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-muted"
             >
               <span [class]="dotClass(c.status)" class="flex-shrink-0"></span>
@@ -42,6 +43,7 @@ import { ApplicationResponseDto } from '../../../core/api/model/models';
 export class AppComponentsListComponent {
   readonly components = input.required<ApplicationResponseDto[]>();
   readonly primaryComponentId = input<string | undefined>(undefined);
+  readonly returnTo = input<string | undefined>(undefined);
 
   role(c: ApplicationResponseDto): string {
     const labels = c.labels as Record<string, string> | undefined;
