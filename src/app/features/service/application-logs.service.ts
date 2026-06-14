@@ -197,7 +197,16 @@ export class ApplicationLogsService {
 
   toggleLevel(level: string) {
     this._levelActive.update(m => ({ ...m, [level]: !m[level] }));
-    // client-side filter only — no API call
+    // Push the level filter down to Loki and re-query: the list is capped at 500 most-recent
+    // lines (often dominated by INFO), so rare levels (e.g. a handful of ERRORs) fall outside
+    // that window — a client-side filter alone would show an empty list despite the badge count.
+    this._refreshLogs();
+  }
+
+  /** Active levels as a Loki filter, or undefined when all (no filter needed). */
+  private _activeLevels(): string[] {
+    const active = this._levelActive();
+    return ALL_LOG_LEVELS.filter((l) => active[l]);
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -232,18 +241,22 @@ export class ApplicationLogsService {
     const ctx = this._appContext();
     if (!ctx) return;
     const vRange = this.volumeIsoRange();
-    const lRange = this.logsIsoRange();
     const step   = rangeToStep(vRange.start, vRange.end);
-    this._loadLogs({ ...ctx, tail: 500, start: lRange.start, end: lRange.end, search: this._search() || undefined });
+    // Volume (badges/histogram) always covers the full range & all levels — load it first.
     this._loadVolume(ctx.clusterId, ctx.namespace, ctx.app, vRange.start, vRange.end, step);
+    this._refreshLogs();
   }
 
-  /** Reload logs only (after brush/search changes — volume stays intact) */
+  /** Reload logs only (after brush/search/level changes — volume stays intact) */
   private _refreshLogs() {
     const ctx = this._appContext();
     if (!ctx) return;
+    const levels = this._activeLevels();
+    if (levels.length === 0) { this._logs.set([]); return; }
+    // All levels on → no filter; a strict subset → push it to Loki so rare levels are fetched.
+    const level = levels.length === ALL_LOG_LEVELS.length ? undefined : levels.join('|');
     const lRange = this.logsIsoRange();
-    this._loadLogs({ ...ctx, tail: 500, start: lRange.start, end: lRange.end, search: this._search() || undefined });
+    this._loadLogs({ ...ctx, tail: 500, start: lRange.start, end: lRange.end, search: this._search() || undefined, level });
   }
 
   private async _loadLogs(params: LogQueryParams): Promise<void> {
@@ -254,8 +267,11 @@ export class ApplicationLogsService {
         this.api.applicationLogsControllerGetAppLogs(
           params.clusterId,
           params.namespace,
-          params.app,
-          undefined, // container
+          // The log shipper indexes the unique workload identity in the `container` label
+          // (= the app/component slug). The `app` label holds the install base, which for a
+          // composed install is shared by all components — so filter by container, not app.
+          undefined, // app
+          params.app, // container == app/component slug
           undefined, // pod
           undefined, // stream
           params.level || undefined,
@@ -287,7 +303,8 @@ export class ApplicationLogsService {
     try {
       const response = await firstValueFrom(
         this.api.applicationLogsControllerGetAppLogVolume(
-          clusterId, start, end, namespace, app, undefined, undefined, step,
+          // Filter by `container` (= app/component slug), not `app` (install base). See _loadLogs.
+          clusterId, start, end, namespace, undefined, app, undefined, step,
         )
       );
       this._volume.set(response);

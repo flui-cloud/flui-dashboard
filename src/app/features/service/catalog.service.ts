@@ -3,7 +3,6 @@ import { firstValueFrom } from 'rxjs';
 import { CatalogService as CatalogApiService } from '../../core/api/api/catalog.service';
 import { InfrastructureOperationsService } from '../../core/api/api/infrastructureOperations.service';
 import {
-  CatalogClientResponseDto,
   CatalogClusterCapabilitiesDto,
   CatalogDetailResponseDto,
   CatalogInstallResponseDto,
@@ -385,16 +384,6 @@ export class CatalogService {
     if (!id) return undefined;
     if (this._catalog().length === 0) await this.loadCatalog();
     return this._catalog().find((c) => c.id === id)?.entrypointPath;
-  }
-
-  async getCompatibleClients(bbSlug: string): Promise<CatalogClientResponseDto[]> {
-    if (!bbSlug) return [];
-    try {
-      const response = await firstValueFrom(this.api.catalogControllerListClients(bbSlug));
-      return response ?? [];
-    } catch {
-      return [];
-    }
   }
 
   /**

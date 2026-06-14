@@ -212,6 +212,18 @@ export class DeployWizardStateService {
   readonly catalogAvailabilityError = signal<string | null>(null);
   /** User opted in to install despite a red capacity check. Reset on each re-check. */
   readonly forceInstallDespiteCapacity = signal<boolean>(false);
+  /**
+   * For dedicated-storage apps on a worker-less cluster: user opted to place the
+   * components on the control-plane node instead of requiring a worker. Only
+   * surfaced (and only relevant) when {@link allowMasterPlacementRelevant} holds.
+   */
+  readonly allowMasterPlacement = signal<boolean>(false);
+  /**
+   * True when the master-placement toggle should be shown: the catalog app uses
+   * dedicated storage AND the chosen cluster has no worker node. Computed by
+   * {@link refreshMasterPlacementRelevance} when the wizard enters Review.
+   */
+  readonly allowMasterPlacementRelevant = signal<boolean>(false);
 
   /** True when every non-empty override string matches the backend regex. Empty = use manifest default. */
   readonly catalogOverridesValid = computed(() => {
@@ -227,14 +239,18 @@ export class DeployWizardStateService {
     return true;
   });
 
-  /** Effective cpu/memory/replicas used for the capacity check (override-if-set, else manifest).
+  /** Effective cpu (request) / memory (peak = limit, else request) / replicas used for the
+   *  capacity check — mirrors the server-side gate so the wizard and backend agree.
+   *  CPU is compressible (gate on requests); memory is incompressible (gate on the peak).
    *  When a manifest dependency is set to DEDICATED, its own resource footprint
    *  is folded in so the cluster sees the combined cost of installing both apps. */
   readonly effectiveCatalogResources = computed(() => {
     const detail = this.catalogDetail();
     const o = this.catalogResourceOverrides();
     const cpuStr = o.cpuRequest || detail?.resources?.requests?.cpu || '';
-    const memStr = o.memoryRequest || detail?.resources?.requests?.memory || '';
+    const memLimit = o.memoryLimit || detail?.resources?.limits?.memory || '';
+    const memRequest = o.memoryRequest || detail?.resources?.requests?.memory || '';
+    const memStr = memLimit || memRequest;
     const replicasNum = o.replicas
       ? Number.parseInt(o.replicas, 10)
       : detail?.replicas ?? 1;
@@ -251,8 +267,10 @@ export class DeployWizardStateService {
       const depDetail = depDetails[dep.ref];
       if (!depDetail) continue;
       const depReplicas = depDetail.replicas && depDetail.replicas > 0 ? depDetail.replicas : 1;
+      const depMem =
+        depDetail.resources?.limits?.memory ?? depDetail.resources?.requests?.memory ?? '';
       cpuMc += parseCpuToMillicores(depDetail.resources?.requests?.cpu ?? '') * depReplicas;
-      memMi += parseMemoryToMi(depDetail.resources?.requests?.memory ?? '') * depReplicas;
+      memMi += parseMemoryToMi(depMem) * depReplicas;
     }
 
     return {
@@ -316,9 +334,8 @@ export class DeployWizardStateService {
 
   readonly catalogDomainValid = computed(() => {
     const mode = this.domainMode();
-    const caps = this.catalogService.capabilities();
     if (mode === 'skip') return true;
-    if (mode === 'auto') return caps?.canAutoAssignDomain === true;
+    if (mode === 'auto') return true;
     const domain = this.requestedDomain().trim();
     return /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/i.test(
       domain,
@@ -544,6 +561,8 @@ export class DeployWizardStateService {
     this.catalogAvailabilityLoading.set(false);
     this.catalogAvailabilityError.set(null);
     this.forceInstallDespiteCapacity.set(false);
+    this.allowMasterPlacement.set(false);
+    this.allowMasterPlacementRelevant.set(false);
     this.dependencyChoices.set({});
     this.dependencyInstances.set({});
     this.dependencyDetails.set({});
@@ -583,6 +602,41 @@ export class DeployWizardStateService {
       this.catalogAvailability.set(null);
     } finally {
       this.catalogAvailabilityLoading.set(false);
+    }
+  }
+
+  /**
+   * Decide whether to offer the "run on the control-plane node" toggle: only when
+   * the catalog app uses dedicated (node-local) storage AND the chosen cluster has
+   * no worker node — exactly the case that would otherwise fail the deploy with
+   * NO_WORKER_FOR_DEDICATED_APP. If we can't determine node composition we hide the
+   * toggle (the backend still guards the deploy).
+   */
+  async refreshMasterPlacementRelevance(clusterId: string): Promise<void> {
+    const detail = this.catalogDetail();
+    if (!clusterId || detail?.persistenceScope !== 'dedicated') {
+      this.allowMasterPlacementRelevant.set(false);
+      this.allowMasterPlacement.set(false);
+      return;
+    }
+    try {
+      const nodes = await firstValueFrom(
+        this.clustersApi.clustersControllerGetClusterNodes(clusterId),
+      );
+      const workerCount = Array.isArray(nodes)
+        ? nodes.filter(
+            (n: { nodeType?: string }) => n?.nodeType === 'worker',
+          ).length
+        : 0;
+      const relevant = workerCount === 0;
+      this.allowMasterPlacementRelevant.set(relevant);
+      // Pre-select the safe default: a dedicated app on a worker-less cluster can
+      // only run on the control-plane node. The user may untick it, but the wizard
+      // then blocks the install (it would otherwise fail with NO_WORKER_FOR_DEDICATED_APP).
+      this.allowMasterPlacement.set(relevant);
+    } catch {
+      this.allowMasterPlacementRelevant.set(false);
+      this.allowMasterPlacement.set(false);
     }
   }
 
@@ -1118,6 +1172,11 @@ export class DeployWizardStateService {
 
     const depPayload = this.buildDependencyChoicesPayload();
     if (depPayload) dto.dependencyChoices = depPayload;
+
+    // Dedicated-storage apps need a worker; when the user opted to run on the
+    // control-plane node (worker-less cluster), pass it through so the deploy
+    // doesn't fail with NO_WORKER_FOR_DEDICATED_APP.
+    if (this.allowMasterPlacement()) dto.allowMasterPlacement = true;
 
     this.installError.set(null);
     this.backendFieldErrors.set({});

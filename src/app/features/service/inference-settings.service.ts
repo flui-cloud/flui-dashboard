@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { InferenceService } from '../../core/api/api/inference.service';
 import { AssistantService } from '../../core/api/api/assistant.service';
@@ -20,6 +20,7 @@ export class InferenceSettingsService {
   private readonly assistantApi = inject(AssistantService);
 
   readonly providers = signal<InferenceProviderInfoDto[]>([]);
+  readonly configuredProviders = computed(() => this.providers().filter((p) => p.configured));
   readonly connections = signal<InferenceConnectionDto[]>([]);
   readonly recommendations = signal<AssistantRecommendationsDto | null>(null);
   readonly isHosted = signal(false);

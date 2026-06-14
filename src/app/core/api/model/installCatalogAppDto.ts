@@ -41,6 +41,10 @@ export interface InstallCatalogAppDto {
      */
     skipEndpoint?: boolean;
     /**
+     * When the app uses dedicated (node-local) storage, allow its components to schedule on the control-plane node instead of requiring a worker. Set this when the target cluster has no worker node so the install does not fail. Defaults to false.
+     */
+    allowMasterPlacement?: boolean;
+    /**
      * Answers to valueFrom.userInput prompts keyed by env var name.
      */
     userInputs?: { [key: string]: string; };

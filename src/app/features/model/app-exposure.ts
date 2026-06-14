@@ -17,6 +17,14 @@ export function isBuildingBlock(
   return labels['flui.cloud/app-type'] === 'building-block';
 }
 
+/** A sub-component of a composed catalog install (e.g. immich's bundled postgres/valkey). */
+export function isComposedComponent(
+  app: ApplicationResponseDto | null | undefined,
+): boolean {
+  const labels = (app?.labels ?? {}) as Record<string, string>;
+  return !!labels['flui.cloud/composed-component'];
+}
+
 type InternalHostingMissing = 'dns_zone' | 'wildcard_issuer' | 'internal_wildcard_dns';
 
 interface InternalHostingErrorBody {

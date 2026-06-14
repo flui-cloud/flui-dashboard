@@ -374,7 +374,7 @@ export class ComputeInstancesComponent implements OnInit {
   loadInstances() {
     this.isLoading.set(true);
 
-    this.virtualInstancesService.instancesControllerFindAll(undefined, undefined, undefined, undefined, undefined, undefined, undefined, true).subscribe({
+    this.virtualInstancesService.instancesControllerFindAll(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true).subscribe({
       next: (response: InstanceResponseDto) => {
         this.instances.set(response.data || []);
         this.partialErrors.set(response.partialErrors || []);

@@ -36,6 +36,7 @@ import { CrashDiagnosesService } from '../../service/crash-diagnoses.service';
 import { AppRuntimeWebSocketService } from '../../service/app-runtime-websocket.service';
 import {
   ApplicationStatus,
+  ApplicationKind,
   ApplicationKindEnum,
   getStatusLabel,
   getCategoryLabel,
@@ -46,6 +47,7 @@ import {
 } from '../../model/application.models';
 import { isActionAvailable } from '../../model/app-status-actions';
 import { isBuildingBlock } from '../../model/app-exposure';
+import { databaseEngineOf } from '../../model/db-engine';
 
 interface TabItem {
   label: string;
@@ -432,6 +434,7 @@ export class ApplicationDetailComponent implements OnDestroy {
   showErrorToast = signal(false);
   errorToastMessage = signal('');
   private readonly _appWasLoaded = signal(false);
+  private readonly lastKnownKind = signal<ApplicationKind | undefined>(undefined);
 
   private readonly routeId = toSignal(
     this.route.paramMap.pipe(map(p => p.get('id'))),
@@ -439,6 +442,11 @@ export class ApplicationDetailComponent implements OnDestroy {
   );
 
   constructor() {
+    effect(() => {
+      const kind = this.application()?.kind;
+      if (kind) this.lastKnownKind.set(kind);
+    });
+
     effect(() => {
       if (this._appWasLoaded() && !this.application() && !this.isLoading()) {
         this.router.navigate([this.listRouteForKind()]);
@@ -494,8 +502,12 @@ export class ApplicationDetailComponent implements OnDestroy {
     const baseTabs: TabItem[] = [
       { label: 'Overview', route: 'overview', icon: 'lucideLayoutDashboard' },
     ];
-    if (isBuildingBlock(app)) {
-      baseTabs.push({ label: 'Clients', route: 'clients', icon: 'lucidePlug' });
+    // A database/cache — either a standalone building-block or one bundled inside a composed
+    // catalog install (e.g. immich's postgres/valkey, wordpress's mariadb). Both get the Access
+    // tab so the console/connection details are reachable from the component's own detail page.
+    const isDatabase = isBuildingBlock(app) || !!databaseEngineOf(app);
+    if (isDatabase) {
+      baseTabs.push({ label: 'Access', route: 'clients', icon: 'lucidePlug' });
     }
     baseTabs.push(
       { label: 'Monitoring', route: 'monitoring', icon: 'lucideChartArea' },
@@ -504,10 +516,11 @@ export class ApplicationDetailComponent implements OnDestroy {
       { label: 'Configuration', route: 'configuration', icon: 'lucideSettings' },
       { label: 'Resources', route: 'resources', icon: 'lucideCpu' },
     );
-    // Hide DNS tab only for building blocks (cluster-local services, no endpoint at all).
+    // Hide DNS tab for databases/caches (cluster-local services, no endpoint at all) — both
+    // standalone building blocks and composed-install DB components.
     // Internal apps (exposure=internal) DO have endpoints — just with endpointType='internal'
     // — so the DNS tab is shown and renders a simplified card for them.
-    if (!isBuildingBlock(app)) {
+    if (!isDatabase) {
       baseTabs.push({ label: 'DNS', route: 'dns', icon: 'lucideGlobe' });
     }
     if (app?.sourceType === 'git_build') {
@@ -530,11 +543,16 @@ export class ApplicationDetailComponent implements OnDestroy {
   }
 
   backToList() {
+    const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+    if (returnTo) {
+      void this.router.navigateByUrl(returnTo);
+      return;
+    }
     this.router.navigate([this.listRouteForKind()]);
   }
 
   private listRouteForKind(): string {
-    switch (this.application()?.kind) {
+    switch (this.application()?.kind ?? this.lastKnownKind()) {
       case ApplicationKindEnum.Database:
         return '/apps/databases';
       case ApplicationKindEnum.Tool:

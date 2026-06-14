@@ -1633,7 +1633,6 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                           <span class="font-medium text-foreground">Internal service.</span>
                           This app runs cluster-internal and will not get a public URL.
                           Other apps in the same cluster reach it via its internal service DNS.
-                          Install a compatible client to access it from a browser.
                         </div>
                       }
                     } @else {
@@ -1649,6 +1648,34 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                       </div>
                     }
                   </div>
+                  @if (state.allowMasterPlacementRelevant()) {
+                    <div class="mt-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-3 text-xs space-y-2">
+                      <div class="flex items-start gap-2">
+                        <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                        <div class="space-y-1">
+                          <p class="font-medium text-amber-900 dark:text-amber-200">This cluster has no worker node</p>
+                          <p class="text-amber-800/90 dark:text-amber-300/90">
+                            {{ state.catalogDetail()?.name }} uses dedicated (node-local) storage, which normally runs on a worker node.
+                            Allow it to run on the control-plane node instead, or add a worker with
+                            <span class="font-mono">flui node add</span> and come back.
+                          </p>
+                        </div>
+                      </div>
+                      <label class="flex items-center gap-2 cursor-pointer select-none pl-6">
+                        <input
+                          type="checkbox"
+                          [checked]="state.allowMasterPlacement()"
+                          (change)="state.allowMasterPlacement.set($any($event.target).checked)"
+                        />
+                        <span class="font-medium text-amber-900 dark:text-amber-200">Run on the control-plane node</span>
+                      </label>
+                      @if (!state.allowMasterPlacement()) {
+                        <p class="pl-6 text-amber-700 dark:text-amber-300/90">
+                          Required to continue — without a worker node the install would fail. Untick only if you plan to add a worker first.
+                        </p>
+                      }
+                    </div>
+                  }
                 } @else if (flowSubtype() === 'template') {
                   <h4 class="font-medium mb-3 flex items-center">
                     <ng-icon name="lucideRocket" class="h-4 w-4 mr-2" />
@@ -2180,7 +2207,10 @@ export class DeployWizardComponent implements OnInit {
       id: 'review',
       title: 'Review',
       icon: 'lucideCheck',
-      isValid: true,
+      // A dedicated app on a worker-less cluster must run on the control-plane node;
+      // block proceeding while the placement toggle is shown but left unticked, since
+      // the install would otherwise fail with NO_WORKER_FOR_DEDICATED_APP.
+      isValid: !(this.state.allowMasterPlacementRelevant() && !this.state.allowMasterPlacement()),
       isCompleted: false,
     };
 
@@ -2537,6 +2567,9 @@ export class DeployWizardComponent implements OnInit {
       const clusterId = this.selectedCluster()?.id;
       if (clusterId) {
         this.state.checkCatalogResourceAvailability(clusterId);
+        // Surface the control-plane placement toggle when a dedicated-storage app
+        // targets a worker-less cluster, instead of failing the deploy later.
+        this.state.refreshMasterPlacementRelevance(clusterId);
       }
     }
 

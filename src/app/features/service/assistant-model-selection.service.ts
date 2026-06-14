@@ -34,7 +34,7 @@ export class AssistantModelSelectionService {
 
   readonly pickerOptions = computed<PickerOption[]>(() => {
     const opts: PickerOption[] = [{ label: 'Default (auto)', opts: null }];
-    for (const p of this.inference.providers()) {
+    for (const p of this.inference.configuredProviders()) {
       for (const m of p.models ?? []) {
         opts.push({ label: `${p.provider} — ${m}`, opts: { provider: p.provider, model: m } });
       }
@@ -54,7 +54,8 @@ export class AssistantModelSelectionService {
   readonly selectedLabel = computed(() => this.pickerOptions()[this.selectedIdx()]?.label ?? '');
 
   readonly defaultModelLabel = computed(() => {
-    const provider = this.inference.providers().find((p) => p.euDataResidency) ?? this.inference.providers()[0];
+    const providers = this.inference.configuredProviders();
+    const provider = providers.find((p) => p.euDataResidency) ?? providers[0];
     return provider?.defaultModel ?? this.inference.recommendations()?.recommendedProvider.defaultModel ?? '';
   });
 
@@ -111,7 +112,7 @@ export class AssistantModelSelectionService {
   });
 
   readonly emptyStateHint = computed(() => {
-    const providers = this.inference.providers();
+    const providers = this.inference.configuredProviders();
     const connections = this.inference.connections();
     if (providers.length === 0 && connections.length === 0) {
       return 'No inference endpoint is configured yet.';
@@ -129,7 +130,7 @@ export class AssistantModelSelectionService {
   readonly endpointLabel = computed(() => {
     const opt = this.pickerOptions()[this.selectedIdx()];
     if (!opt?.opts) {
-      const providers = this.inference.providers();
+      const providers = this.inference.configuredProviders();
       if (providers.length === 1 && providers[0].euDataResidency) {
         return `EU inference · ${providers[0].provider}`;
       }
@@ -137,7 +138,7 @@ export class AssistantModelSelectionService {
     }
     const { provider, connectionId } = opt.opts;
     if (provider) {
-      const info = this.inference.providers().find((p) => p.provider === provider);
+      const info = this.inference.configuredProviders().find((p) => p.provider === provider);
       return info?.euDataResidency ? `EU inference · ${provider}` : provider;
     }
     if (connectionId) {

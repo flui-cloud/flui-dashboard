@@ -25,6 +25,7 @@ api/clusterMetricsLogs.service.ts
 api/controlCluster.service.ts
 api/credentials.service.ts
 api/dNSZones.service.ts
+api/dbConsole.service.ts
 api/firewalls.service.ts
 api/gitHubOAuth.service.ts
 api/gitHubSetup.service.ts

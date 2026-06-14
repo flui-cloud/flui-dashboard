@@ -301,7 +301,7 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
   loadNodes(): void {
     this.isLoadingNodes.set(true);
     this.instancesService.instancesControllerFindAll(
-      undefined, 'running', undefined, undefined, undefined, undefined, undefined, true
+      undefined, 'running', undefined, undefined, undefined, undefined, undefined, undefined, true
     ).subscribe({
       next: (response: InstanceResponseDto) => {
         const allInstances = (response.data || []) as InstanceWithLabels[];

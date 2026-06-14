@@ -67,18 +67,6 @@ interface Ratings {
             </div>
           }
 
-          @if (app().clientFor.length > 0) {
-            <div class="mt-2 flex flex-wrap gap-1.5">
-              @for (bb of app().clientFor; track bb) {
-                <span
-                  class="inline-flex items-center gap-1 rounded-md border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-300"
-                >
-                  🔌 Client for {{ bb }}
-                </span>
-              }
-            </div>
-          }
-
           @if (app().description) {
             <p class="mt-3 line-clamp-2 text-sm text-muted-foreground">
               {{ app().description }}
