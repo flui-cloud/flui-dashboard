@@ -100,7 +100,7 @@ export interface InstanceDto {
      */
     metadata?: object;
     /**
-     * Ownership relative to this installation
+     * Ownership relative to this installation: \"self\" if managed by this installation, \"other-flui\" if managed by another installation sharing the same provider account, \"unmanaged\" if not provisioned by flui
      */
     ownership?: InstanceDto.OwnershipEnum;
     /**

@@ -45,15 +45,16 @@ export class VirtualInstancesService extends BaseService {
      * @param dataCenter Filter by data center
      * @param search Search by name or display name
      * @param clusterId Filter by cluster ID (from flui-cluster-id label)
+     * @param ownership Filter by ownership relative to this installation (self / other-flui / unmanaged)
      * @param skipCache Skip cache and fetch fresh data from providers
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public instancesControllerFindAll(type?: 'vps' | 'vm' | 'container' | 'dedicated', status?: 'running' | 'stopped' | 'starting' | 'stopping' | 'provisioning' | 'error' | 'unknown' | 'rebuilding' | 'migrating' | 'deleting', provider?: 'contabo' | 'hetzner' | 'scaleway', region?: string, dataCenter?: string, search?: string, clusterId?: string, skipCache?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<InstanceResponseDto>;
-    public instancesControllerFindAll(type?: 'vps' | 'vm' | 'container' | 'dedicated', status?: 'running' | 'stopped' | 'starting' | 'stopping' | 'provisioning' | 'error' | 'unknown' | 'rebuilding' | 'migrating' | 'deleting', provider?: 'contabo' | 'hetzner' | 'scaleway', region?: string, dataCenter?: string, search?: string, clusterId?: string, skipCache?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<InstanceResponseDto>>;
-    public instancesControllerFindAll(type?: 'vps' | 'vm' | 'container' | 'dedicated', status?: 'running' | 'stopped' | 'starting' | 'stopping' | 'provisioning' | 'error' | 'unknown' | 'rebuilding' | 'migrating' | 'deleting', provider?: 'contabo' | 'hetzner' | 'scaleway', region?: string, dataCenter?: string, search?: string, clusterId?: string, skipCache?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<InstanceResponseDto>>;
-    public instancesControllerFindAll(type?: 'vps' | 'vm' | 'container' | 'dedicated', status?: 'running' | 'stopped' | 'starting' | 'stopping' | 'provisioning' | 'error' | 'unknown' | 'rebuilding' | 'migrating' | 'deleting', provider?: 'contabo' | 'hetzner' | 'scaleway', region?: string, dataCenter?: string, search?: string, clusterId?: string, skipCache?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public instancesControllerFindAll(type?: 'vps' | 'vm' | 'container' | 'dedicated', status?: 'running' | 'stopped' | 'starting' | 'stopping' | 'provisioning' | 'error' | 'unknown' | 'rebuilding' | 'migrating' | 'deleting', provider?: 'contabo' | 'hetzner' | 'scaleway', region?: string, dataCenter?: string, search?: string, clusterId?: string, ownership?: 'self' | 'other-flui' | 'unmanaged', skipCache?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<InstanceResponseDto>;
+    public instancesControllerFindAll(type?: 'vps' | 'vm' | 'container' | 'dedicated', status?: 'running' | 'stopped' | 'starting' | 'stopping' | 'provisioning' | 'error' | 'unknown' | 'rebuilding' | 'migrating' | 'deleting', provider?: 'contabo' | 'hetzner' | 'scaleway', region?: string, dataCenter?: string, search?: string, clusterId?: string, ownership?: 'self' | 'other-flui' | 'unmanaged', skipCache?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<InstanceResponseDto>>;
+    public instancesControllerFindAll(type?: 'vps' | 'vm' | 'container' | 'dedicated', status?: 'running' | 'stopped' | 'starting' | 'stopping' | 'provisioning' | 'error' | 'unknown' | 'rebuilding' | 'migrating' | 'deleting', provider?: 'contabo' | 'hetzner' | 'scaleway', region?: string, dataCenter?: string, search?: string, clusterId?: string, ownership?: 'self' | 'other-flui' | 'unmanaged', skipCache?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<InstanceResponseDto>>;
+    public instancesControllerFindAll(type?: 'vps' | 'vm' | 'container' | 'dedicated', status?: 'running' | 'stopped' | 'starting' | 'stopping' | 'provisioning' | 'error' | 'unknown' | 'rebuilding' | 'migrating' | 'deleting', provider?: 'contabo' | 'hetzner' | 'scaleway', region?: string, dataCenter?: string, search?: string, clusterId?: string, ownership?: 'self' | 'other-flui' | 'unmanaged', skipCache?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
 
@@ -115,6 +116,15 @@ export class VirtualInstancesService extends BaseService {
             localVarQueryParameters,
             'clusterId',
             <any>clusterId,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'ownership',
+            <any>ownership,
             QueryParamStyle.Form,
             true,
         );

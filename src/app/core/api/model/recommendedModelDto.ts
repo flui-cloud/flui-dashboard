@@ -23,11 +23,11 @@ export interface RecommendedModelDto {
      */
     isDefault?: boolean;
     /**
-     * Short human badge, e.g. \"Paid plan only\"
+     * Short human caveat badge, e.g. \"Not recommended on free plan\"
      */
     note?: string;
     /**
-     * Whether the model requires a paid plan
+     * Whether the model requires a paid plan. Unused by the dashboard — the human-facing signal is `note`.
      */
     requiresPaidPlan?: boolean;
 }

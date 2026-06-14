@@ -300,7 +300,7 @@ export class AssistantService extends BaseService {
     }
 
     /**
-     * Assistant identity and knowledge-base version binding
+     * Assistant identity, KB version binding, and server capabilities
      * @endpoint get /api/v1/assistant/v1/info
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
