@@ -22,6 +22,7 @@ import { QuickSshOverlayComponent } from '../../../features/components/ssh/quick
 import { QuickSshDockComponent } from '../../../features/components/ssh/quick-ssh-dock.component';
 import { ToastContainerComponent } from '../../../shared/components/toast-container.component';
 import { AssistantWidgetComponent } from '../../../features/components/assistant/assistant-widget.component';
+import { FluiBackdropComponent } from '../../../shared/components/flui-backdrop/flui-backdrop.component';
 
 @Component({
   selector: 'app-shell-layout',
@@ -37,6 +38,7 @@ import { AssistantWidgetComponent } from '../../../features/components/assistant
     ToastContainerComponent,
     UniverseMapComponent,
     AssistantWidgetComponent,
+    FluiBackdropComponent,
   ],
   providers: [
     BrnSidebarService,
@@ -87,8 +89,11 @@ import { AssistantWidgetComponent } from '../../../features/components/assistant
           <div class="ml-auto bg-background"></div>
           <header></header>
         </hlm-sidebar-content-header>
-        <div class="flex-1 overflow-y-auto p-2 subtle-scroll">
-          <router-outlet></router-outlet>
+        <div class="relative flex-1 overflow-hidden">
+          <app-flui-backdrop placement="bottom-right" intensity="soft" />
+          <div class="absolute inset-0 overflow-y-auto p-2 subtle-scroll">
+            <router-outlet></router-outlet>
+          </div>
         </div>
       </div>
     </div>
