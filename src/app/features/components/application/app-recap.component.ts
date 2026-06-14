@@ -326,7 +326,7 @@ export class AppRecapComponent implements OnInit {
 
   ngOnInit(): void {
     void (async () => {
-      if (this.appService.applications().length === 0) {
+      if (this.appService.applications().length === 0 || !this.group()) {
         try {
           await this.appService.loadApplications();
         } catch {

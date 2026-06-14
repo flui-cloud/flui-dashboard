@@ -508,6 +508,73 @@ export class ApplicationService {
     setTimeout(() => poll(), POLL_INTERVAL);
   }
 
+  trackBundleUninstall(componentIds: string[], operationId?: string, bundleName?: string): void {
+    const ids = componentIds.filter(Boolean);
+    if (ids.length === 0) return;
+
+    for (const id of ids) {
+      this._deletingAppIds.add(id);
+      this._updateAppStatus(id, ApplicationStatusEnum.Deleting);
+    }
+
+    if (operationId) {
+      this._pollUninstallOperation(ids, operationId, { value: false }, bundleName ?? 'Bundle');
+    }
+  }
+
+  private _pollUninstallOperation(
+    componentIds: string[],
+    operationId: string,
+    cancelled: { value: boolean },
+    bundleName: string,
+  ): void {
+    const POLL_INTERVAL = 3000;
+    const MAX_POLLS = 60;
+    let pollCount = 0;
+
+    const complete = (): void => {
+      cancelled.value = true;
+      this.notificationService.add({
+        title: `${bundleName} deleted`,
+        body: 'The bundle and all its components have been removed.',
+        link: { label: 'View applications', route: '/apps/applications' },
+        type: 'success',
+        source: 'websocket',
+        category: 'app-delete',
+      });
+      componentIds.forEach((id) => this._onDeleteCompleted(id));
+    };
+
+    const poll = async (): Promise<void> => {
+      if (cancelled.value || pollCount >= MAX_POLLS) return;
+      pollCount++;
+      try {
+        const result = await firstValueFrom(
+          this.http.get<{ status: string }>(`${this.appConfig.apiBaseUrl}/api/v1/operations/${operationId}`)
+        );
+        if (cancelled.value) return;
+        if (result.status === 'COMPLETED') {
+          complete();
+          return;
+        }
+        if (result.status === 'FAILED') {
+          cancelled.value = true;
+          componentIds.forEach((id) => this._onDeleteFailed(id));
+          return;
+        }
+      } catch (err: any) {
+        if (cancelled.value) return;
+        if (err?.status === 404) {
+          complete();
+          return;
+        }
+      }
+      setTimeout(() => poll(), POLL_INTERVAL);
+    };
+
+    setTimeout(() => poll(), POLL_INTERVAL);
+  }
+
   async deploy(id: string, dto?: { imageRef?: string; commitSha?: string; buildId?: string; useCurrentImage?: boolean; reason?: string }): Promise<string | null> {
     this.error.set(null);
     this._updateAppStatus(id, ApplicationStatusEnum.Updating);

@@ -214,7 +214,11 @@ export class AppDeleteDialogComponent {
     this.deleteError.set(null);
     try {
       if (g.type === 'composed' && g.catalogInstallId) {
-        await this.catalog.uninstall(g.catalogInstallId);
+        const result = await this.catalog.uninstall(g.catalogInstallId);
+        const componentIds = result?.applicationIds?.length
+          ? result.applicationIds
+          : g.components.map((c) => c.id);
+        this.appService.trackBundleUninstall(componentIds, result?.operationId, g.name);
         this.notifications.add({
           title: `Uninstalling ${g.name}`,
           body: 'The bundle and its components are being removed.',

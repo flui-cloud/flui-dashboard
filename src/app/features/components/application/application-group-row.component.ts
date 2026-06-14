@@ -63,7 +63,7 @@ import { ApplicationRowComponent } from './application-row.component';
         </span>
 
         <span [class]="getStatusBadgeClass(group().status)" class="flex-shrink-0 hidden sm:inline-flex items-center gap-1">
-          <ng-icon [name]="getStatusIcon(group().status)" class="h-3 w-3" />
+          <ng-icon [name]="getStatusIcon(group().status)" [class]="getStatusIconClass(group().status)" />
           {{ statusLabel(group().status) }}
         </span>
 
@@ -231,6 +231,7 @@ export class ApplicationGroupRowComponent {
       case ApplicationStatusEnum.AwaitingBuild:
       case ApplicationStatusEnum.Provisioning:
       case ApplicationStatusEnum.Updating:
+      case ApplicationStatusEnum.Deleting:
         return 'lucideLoader';
       case ApplicationStatusEnum.Failed:
         return 'lucideCircleX';
@@ -239,5 +240,14 @@ export class ApplicationGroupRowComponent {
       default:
         return 'lucideCircle';
     }
+  }
+
+  getStatusIconClass(status: ApplicationStatus): string {
+    const spin =
+      status === ApplicationStatusEnum.AwaitingBuild ||
+      status === ApplicationStatusEnum.Provisioning ||
+      status === ApplicationStatusEnum.Updating ||
+      status === ApplicationStatusEnum.Deleting;
+    return spin ? 'h-3 w-3 animate-spin' : 'h-3 w-3';
   }
 }
