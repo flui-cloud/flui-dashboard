@@ -556,6 +556,7 @@ export class InstanceDetailComponent implements OnInit {
         undefined, // dataCenter
         undefined, // search
         undefined, // clusterId
+        undefined, // ownership
         true       // skipCache - always fetch fresh data from providers
       )
       .subscribe({

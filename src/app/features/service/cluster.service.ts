@@ -657,6 +657,7 @@ export class ClusterService {
           undefined, // dataCenter
           undefined, // search
           clusterId, // clusterId - filter by cluster ID
+          undefined, // ownership
           true       // skipCache - always fetch fresh data from providers
         )
       );
