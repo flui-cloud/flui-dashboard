@@ -25,8 +25,10 @@ import {
 } from '../model/k8s-quantities';
 import { internalHostingErrorMessage } from '../model/app-exposure';
 import {
+  CatalogAuthSpecDto,
   CatalogDetailResponseDto,
   CatalogInstallResponseDto,
+  CatalogOptionDto,
   CatalogReusableInstanceDto,
   DependencyChoiceDto,
   InstallCatalogAppDto,
@@ -181,6 +183,8 @@ export class DeployWizardStateService {
   /** Per-field backend errors extracted from a 400 response. Cleared on each submit and on user edit of the matching field. */
   readonly backendFieldErrors = signal<Record<string, string>>({});
   readonly envOverrides = signal<Record<string, string>>({});
+  readonly catalogAuthMode = signal<CatalogAuthSpecDto.ModesEnum | null>(null);
+  readonly catalogFeatureToggles = signal<Record<string, boolean>>({});
   /** 'auto' → backend assigns {install-slug}.{zoneName}; 'custom' → user-provided FQDN; 'skip' → no endpoint. */
   readonly domainMode = signal<'auto' | 'custom' | 'skip'>('auto');
   readonly requestedDomain = signal<string>('');
@@ -344,6 +348,24 @@ export class DeployWizardStateService {
 
   readonly catalogDisplayNameValid = computed(
     () => this.catalogDisplayName().trim().length > 0,
+  );
+
+  readonly catalogAuthModes = computed<CatalogAuthSpecDto.ModesEnum[]>(
+    () => this.catalogDetail()?.auth?.modes ?? [],
+  );
+
+  readonly catalogAuthDefault = computed<CatalogAuthSpecDto.DefaultEnum | null>(
+    () => this.catalogDetail()?.auth?.default ?? null,
+  );
+
+  readonly catalogHasAuthChoice = computed(() => this.catalogAuthModes().length > 1);
+
+  readonly catalogFeatureOptions = computed<CatalogOptionDto[]>(
+    () => this.catalogDetail()?.options ?? [],
+  );
+
+  readonly needsCatalogFeaturesStep = computed(
+    () => this.catalogHasAuthChoice() || this.catalogFeatureOptions().length > 0,
   );
 
   /** True when the selected cluster supports internal apps. Drives the visibility
@@ -551,6 +573,8 @@ export class DeployWizardStateService {
     this.userInputConfirms.set({});
     this.backendFieldErrors.set({});
     this.envOverrides.set({});
+    this.catalogAuthMode.set(null);
+    this.catalogFeatureToggles.set({});
     this.domainMode.set('auto');
     this.requestedDomain.set('');
     this.currentInstall.set(null);
@@ -576,8 +600,8 @@ export class DeployWizardStateService {
    * on every invocation so the user re-confirms after any change.
    */
   async checkCatalogResourceAvailability(clusterId: string): Promise<void> {
-    const eff = this.effectiveCatalogResources();
-    if (!clusterId || eff.cpuMc === 0 || eff.memMi === 0) {
+    const slug = this.catalogSlug();
+    if (!clusterId || !slug) {
       this.catalogAvailability.set(null);
       return;
     }
@@ -585,15 +609,15 @@ export class DeployWizardStateService {
     this.catalogAvailabilityError.set(null);
     this.forceInstallDespiteCapacity.set(false);
     try {
-      const response = await firstValueFrom(
-        this.clustersApi.clustersControllerCheckResourceAvailability(
-          clusterId,
-          undefined, // profile — not used for catalog apps
-          String(eff.cpuMc),
-          String(eff.memMi),
-          1,
-        ),
-      );
+      const featureToggles = this.catalogFeatureToggles();
+      const overrides = this.buildResourceOverridesPayload();
+      const response = await this.catalogService.previewCapacity(slug, {
+        clusterId,
+        ...(Object.keys(featureToggles).length > 0
+          ? { options: { ...featureToggles } }
+          : {}),
+        ...(overrides ? { resourceOverrides: overrides } : {}),
+      });
       this.catalogAvailability.set(response);
     } catch (e: any) {
       this.catalogAvailabilityError.set(
@@ -751,6 +775,13 @@ export class DeployWizardStateService {
       if (env.default !== undefined) envs[env.name] = env.default;
     }
     this.envOverrides.set(envs);
+
+    this.catalogAuthMode.set(detail.auth?.default ?? null);
+    const toggles: Record<string, boolean> = {};
+    for (const opt of detail.options ?? []) {
+      toggles[opt.key] = opt.default;
+    }
+    this.catalogFeatureToggles.set(toggles);
 
     // Manifest-declared `spec.domain.auto=false` means the catalog app must skip
     // endpoint creation entirely (e.g. internal-only apps). `userCustomizable=false`
@@ -1177,6 +1208,18 @@ export class DeployWizardStateService {
     // control-plane node (worker-less cluster), pass it through so the deploy
     // doesn't fail with NO_WORKER_FOR_DEDICATED_APP.
     if (this.allowMasterPlacement()) dto.allowMasterPlacement = true;
+
+    const authMode = this.catalogAuthMode();
+    if (authMode && authMode !== detail.auth?.default) {
+      dto.authMode = authMode;
+    }
+
+    const featureToggles = this.catalogFeatureToggles();
+    if (Object.keys(featureToggles).length > 0) {
+      dto.options = { ...featureToggles };
+    }
+
+    if (this.forceInstallDespiteCapacity()) dto.force = true;
 
     this.installError.set(null);
     this.backendFieldErrors.set({});

@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { CatalogService as CatalogApiService } from '../../core/api/api/catalog.service';
 import { InfrastructureOperationsService } from '../../core/api/api/infrastructureOperations.service';
 import {
+  CatalogCapacityPreviewDto,
   CatalogClusterCapabilitiesDto,
   CatalogDetailResponseDto,
   CatalogInstallResponseDto,
@@ -10,6 +11,7 @@ import {
   CatalogReusableInstanceDto,
   CatalogYamlResponseDto,
   InstallCatalogAppDto,
+  ResourceAvailabilityResponseDto,
 } from '../../core/api/model/models';
 import { ApplicationService } from './application.service';
 import { Application } from '../model/application.models';
@@ -226,6 +228,13 @@ export class CatalogService {
     } finally {
       this._installLoading.set(false);
     }
+  }
+
+  async previewCapacity(
+    slug: string,
+    dto: CatalogCapacityPreviewDto,
+  ): Promise<ResourceAvailabilityResponseDto> {
+    return firstValueFrom(this.api.catalogControllerCapacityPreview(slug, dto));
   }
 
   async getInstall(id: string): Promise<CatalogInstallResponseDto | null> {

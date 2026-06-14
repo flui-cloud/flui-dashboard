@@ -143,9 +143,9 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
                     Open app
                     <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
                   </a>
-                } @else if (firstAppId()) {
+                } @else if (dnsAppId()) {
                   <a
-                    [routerLink]="['/apps/applications', firstAppId(), 'dns']"
+                    [routerLink]="['/apps/applications', dnsAppId(), 'dns']"
                     class="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
                   >
                     <ng-icon name="lucideGlobe" class="h-4 w-4" />
@@ -153,7 +153,7 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
                   </a>
                 }
               </div>
-            } @else if (firstAppId()) {
+            } @else if (dnsAppId()) {
               <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-4">
                 <div class="min-w-0">
                   <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
@@ -169,7 +169,7 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
                   </p>
                 </div>
                 <a
-                  [routerLink]="['/apps/applications', firstAppId(), 'dns']"
+                  [routerLink]="['/apps/applications', dnsAppId(), 'dns']"
                   class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium
                          text-primary-foreground hover:bg-primary/90"
                 >
@@ -245,6 +245,9 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   );
   protected readonly firstAppId = computed(
     () => this.install()?.applicationIds?.[0] ?? null,
+  );
+  protected readonly dnsAppId = computed(
+    () => this.primaryId() ?? this.firstAppId(),
   );
 
   protected readonly matchedEndpoint = computed(() => {

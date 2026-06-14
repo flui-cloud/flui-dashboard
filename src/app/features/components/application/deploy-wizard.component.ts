@@ -37,6 +37,7 @@ import {
   lucideRocket,
   lucideStore,
   lucideDatabase,
+  lucideSlidersHorizontal,
 } from '@ng-icons/lucide';
 import { RepositoryAnalysisDto } from '../../../core/api/model/repositoryAnalysisDto';
 import { RepositoryService, ConnectedRepository } from '../../service/repository.service';
@@ -57,6 +58,7 @@ import { CatalogOverviewStepComponent } from './deploy-wizard-catalog-steps/cata
 import { CatalogInputsStepComponent } from './deploy-wizard-catalog-steps/catalog-inputs-step.component';
 import { CatalogConfigStepComponent } from './deploy-wizard-catalog-steps/catalog-config-step.component';
 import { CatalogDomainStepComponent } from './deploy-wizard-catalog-steps/catalog-domain-step.component';
+import { CatalogFeaturesStepComponent, catalogAuthLabel } from './deploy-wizard-catalog-steps/catalog-features-step.component';
 import { CatalogLinkedBbStepComponent } from './deploy-wizard-catalog-steps/catalog-linked-bb-step.component';
 import { CatalogDependenciesStepComponent } from './deploy-wizard-catalog-steps/catalog-dependencies-step.component';
 import { CatalogSuccessStepComponent } from './deploy-wizard-catalog-steps/catalog-success-step.component';
@@ -91,6 +93,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
     CatalogInputsStepComponent,
     CatalogConfigStepComponent,
     CatalogDomainStepComponent,
+    CatalogFeaturesStepComponent,
     CatalogLinkedBbStepComponent,
     CatalogDependenciesStepComponent,
     CatalogSuccessStepComponent,
@@ -130,6 +133,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
       lucideRocket,
       lucideStore,
       lucideDatabase,
+      lucideSlidersHorizontal,
     }),
   ],
   template: `
@@ -1463,6 +1467,11 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
             <app-catalog-config-step />
           }
 
+          <!-- Marketplace: auth mode + feature toggles -->
+          @case ('catalog-features') {
+            <app-catalog-features-step />
+          }
+
           <!-- Marketplace: Domain choice -->
           @case ('catalog-domain') {
             <app-catalog-domain-step />
@@ -1599,6 +1608,24 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                       <span class="text-muted-foreground">Category:</span>
                       <span class="font-medium capitalize">{{ state.catalogDetail()?.category }}</span>
                     </div>
+                    @if (state.catalogHasAuthChoice() && catalogAuthModeLabel(); as authLabel) {
+                      <div class="flex justify-between">
+                        <span class="text-muted-foreground">Authentication:</span>
+                        <span class="font-medium">{{ authLabel }}</span>
+                      </div>
+                    }
+                    @if (state.catalogFeatureOptions().length > 0) {
+                      <div class="flex justify-between gap-4">
+                        <span class="text-muted-foreground">Features:</span>
+                        <span class="font-medium text-right">
+                          @if (enabledFeatureLabels().length > 0) {
+                            {{ enabledFeatureLabels().join(', ') }}
+                          } @else {
+                            None
+                          }
+                        </span>
+                      </div>
+                    }
                     @if (state.linkedBbRefs().length > 0) {
                       <div class="mt-2 rounded-md border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/10 p-3 text-xs text-sky-900 dark:text-sky-200">
                         <div class="font-medium">
@@ -2359,6 +2386,16 @@ export class DeployWizardComponent implements OnInit {
           id: 'catalog-config',
           title: 'Settings',
           icon: 'lucideSettings',
+          isValid: true,
+          isCompleted: false,
+        });
+      }
+
+      if (this.state.needsCatalogFeaturesStep()) {
+        marketplaceSteps.push({
+          id: 'catalog-features',
+          title: 'Features',
+          icon: 'lucideSlidersHorizontal',
           isValid: true,
           isCompleted: false,
         });
@@ -3381,6 +3418,18 @@ export class DeployWizardComponent implements OnInit {
     const slug = rawName.toLowerCase().replaceAll(/[^a-z0-9-]/g, '-').replaceAll(/^-+|-+$/g, '') || 'app';
     return 'https://' + template.replace('{slug}', slug);
   });
+
+  readonly catalogAuthModeLabel = computed<string | null>(() => {
+    const mode = this.state.catalogAuthMode();
+    return mode ? catalogAuthLabel(mode) : null;
+  });
+
+  readonly enabledFeatureLabels = computed<string[]>(() =>
+    this.state
+      .catalogFeatureOptions()
+      .filter((o) => this.state.catalogFeatureToggles()[o.key] ?? o.default)
+      .map((o) => o.label),
+  );
 
   // Deploy — dispatches on flowSubtype
   async deployApplication(): Promise<void> {

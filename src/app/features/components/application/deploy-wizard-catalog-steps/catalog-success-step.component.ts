@@ -159,13 +159,13 @@ interface InternalReadiness {
               <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
             </a>
           }
-          @if (firstAppId()) {
+          @if (detailRoute(); as route) {
             <a
-              [routerLink]="['/apps/applications', firstAppId()]"
+              [routerLink]="route"
               [class]="appDetailsButtonClass()"
             >
               <ng-icon name="lucideLayoutDashboard" class="h-4 w-4" />
-              App details
+              {{ isComposedInstall() ? 'Bundle details' : 'App details' }}
             </a>
           }
         </div>
@@ -184,6 +184,18 @@ export class CatalogSuccessStepComponent implements OnDestroy {
   protected readonly firstAppId = computed(
     () => this.install()?.applicationIds?.[0] ?? null,
   );
+
+  protected readonly isComposedInstall = computed(
+    () => this.state.catalogDetail()?.appType === 'composed',
+  );
+
+  protected readonly detailRoute = computed<string[] | null>(() => {
+    const inst = this.install();
+    if (!inst) return null;
+    if (this.isComposedInstall()) return ['/apps/recap', inst.id];
+    const appId = this.firstAppId();
+    return appId ? ['/apps/applications', appId] : null;
+  });
 
   private readonly clusterLoaded = signal<string | null>(null);
   private readonly internalAppLoaded = signal<string | null>(null);

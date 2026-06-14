@@ -119,13 +119,18 @@ import {
                 <span>Cluster total:</span><span class="text-right font-mono">{{ av.total.cpu }} · {{ av.total.memory }}</span>
               </div>
               <p class="text-xs text-red-700 dark:text-red-300 mt-2">
-                Shrink the override below, pick another cluster, or check the "install anyway" box to proceed at your own risk.
+                @if (detail?.resourceOverridesSupported) {
+                  Shrink the override below, pick another cluster, or check the "install anyway" box to proceed at your own risk.
+                } @else {
+                  Pick a cluster with more capacity, free up resources, or check the "install anyway" box to proceed at your own risk.
+                }
               </p>
             </div>
           </div>
         }
       }
 
+      @if (detail?.resourceOverridesSupported) {
       <!-- Advanced override panel -->
       <div class="pt-2 border-t border-border">
         <button
@@ -139,10 +144,19 @@ import {
 
         @if (advancedOpen()) {
           <div class="mt-3 space-y-3">
-            <p class="text-xs text-muted-foreground">
-              Override the manifest defaults. Leave a field empty to keep the manifest value.
-              Lowering request below the app's real usage may cause OOM-kill or CPU throttling.
-            </p>
+            <div class="flex items-start gap-2 p-3 rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/15 text-xs">
+              <ng-icon name="lucideTriangleAlert" class="h-4 w-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div class="space-y-1 text-amber-800 dark:text-amber-200">
+                <p class="font-semibold">Not recommended — overriding resources can break the cluster.</p>
+                <p class="text-amber-700/90 dark:text-amber-300/90">
+                  The manifest defaults are sized to run safely. Raising memory/limits or replicas can
+                  oversubscribe the node and OOM-kill other apps — including system components, which can
+                  take the whole cluster down. Lowering a request below the app's real usage can get this
+                  app OOM-killed or CPU-throttled. Only change these if you know exactly what you're doing;
+                  leave a field empty to keep the manifest value.
+                </p>
+              </div>
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
@@ -226,6 +240,15 @@ import {
           </div>
         }
       </div>
+      } @else {
+        <div class="pt-2 border-t border-border">
+          <p class="text-xs text-muted-foreground">
+            Resources for this app are fixed by its manifest and can't be overridden here —
+            its components always deploy at their defined sizes. To change the footprint,
+            pick a cluster with more capacity or free up resources.
+          </p>
+        </div>
+      }
 
       @if (av && !canDeploy) {
         <label
