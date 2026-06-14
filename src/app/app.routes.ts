@@ -69,6 +69,26 @@ export const routes: Routes = [
         title: 'Dashboard - flui.cloud',
       },
 
+      // SQL console — stable, dedicated URL; DB target is a path param.
+      {
+        path: 'db-console/:applicationId',
+        loadComponent: () =>
+          import(
+            './features/components/database-console/db-console-page.component'
+          ).then((m) => m.DbConsolePageComponent),
+        title: 'SQL Console - flui.cloud',
+      },
+
+      // Key-value console (Redis/Valkey) — separate console, routed by engine family.
+      {
+        path: 'kv-console/:applicationId',
+        loadComponent: () =>
+          import(
+            './features/components/database-console/kv-console-page.component'
+          ).then((m) => m.KvConsolePageComponent),
+        title: 'Key Browser - flui.cloud',
+      },
+
       // Infrastructure Routes
       {
         path: 'infrastructure',
@@ -386,6 +406,14 @@ export const routes: Routes = [
                 ],
               },
             ],
+          },
+          {
+            path: 'recap/:id',
+            loadComponent: () =>
+              import(
+                './features/components/application/app-recap.component'
+              ).then((m) => m.AppRecapComponent),
+            title: 'App Recap - flui.cloud',
           },
           {
             path: 'repositories',

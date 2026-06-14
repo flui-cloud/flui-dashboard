@@ -20,6 +20,7 @@ interface AppStatItem {
   colorClass: string;
   chipClass: string;
   icon: string;
+  route: string;
 }
 
 @Component({
@@ -76,7 +77,14 @@ interface AppStatItem {
       <!-- Stats grid -->
       <div class="grid grid-cols-4 gap-2 flex-1">
         @for (stat of stats(); track stat.label) {
-          <div class="flex flex-col gap-2 rounded-lg border border-border p-2.5">
+          <div
+            class="flex flex-col gap-2 rounded-lg border border-border p-2.5 cursor-pointer
+                   transition-colors hover:border-primary/40 hover:bg-muted/40"
+            role="button"
+            tabindex="0"
+            (click)="goToList(stat.route); $event.stopPropagation()"
+            (keydown.enter)="goToList(stat.route); $event.stopPropagation()"
+          >
             <div class="icon-chip icon-chip-sm" [class]="stat.chipClass">
               <ng-icon [name]="stat.icon" class="h-3.5 w-3.5" />
             </div>
@@ -98,11 +106,12 @@ export class DashboardAppsComponent {
     const failed = this.dashboardService.failedApps();
     return [
       {
-        label: 'Databases',
+        label: 'DBs',
         value: this.dashboardService.databasesApps(),
         colorClass: 'text-foreground',
         chipClass: 'chip-brand',
         icon: 'lucideDatabase',
+        route: '/apps/databases',
       },
       {
         label: 'Apps',
@@ -110,6 +119,7 @@ export class DashboardAppsComponent {
         colorClass: 'text-foreground',
         chipClass: 'chip-purple',
         icon: 'lucideContainer',
+        route: '/apps/applications',
       },
       {
         label: 'Tools',
@@ -117,6 +127,7 @@ export class DashboardAppsComponent {
         colorClass: 'text-foreground',
         chipClass: 'chip-warn',
         icon: 'lucideHammer',
+        route: '/apps/tools',
       },
       {
         label: 'Failed',
@@ -124,11 +135,26 @@ export class DashboardAppsComponent {
         colorClass: failed > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground',
         chipClass: 'chip-danger',
         icon: 'lucideAlertCircle',
+        route: '/apps/applications',
       },
     ];
   });
 
+  private readonly primaryListRoute = computed(() => {
+    const db = this.dashboardService.databasesApps();
+    const app = this.dashboardService.applicationsApps();
+    const tool = this.dashboardService.toolsApps();
+    const max = Math.max(db, app, tool);
+    if (max === 0 || app === max) return '/apps/applications';
+    if (db === max) return '/apps/databases';
+    return '/apps/tools';
+  });
+
   goToApps(): void {
-    this.router.navigate(['/apps/applications']);
+    this.router.navigate([this.primaryListRoute()]);
+  }
+
+  goToList(route: string): void {
+    this.router.navigate([route]);
   }
 }

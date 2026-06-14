@@ -201,9 +201,8 @@ interface FilterState {
             <app-application-group-row
               [group]="group"
               [refreshing]="isRefreshing()"
-              (view)="viewApplication($event)"
+              (open)="openRecap($event)"
               (delete)="confirmDelete($event)"
-              (openBundle)="openBundleDetail($event)"
             />
           }
         }
@@ -398,12 +397,8 @@ export class ApplicationsListComponent implements OnInit {
     this.filtersState.set({ search: '', category: '', status: '', cluster: '' });
   }
 
-  viewApplication(appId: string) {
-    this.router.navigate(['/apps/applications', appId]);
-  }
-
-  openBundleDetail(installId: string) {
-    this.router.navigate(['/apps/catalog/installs', installId], {
+  openRecap(groupId: string) {
+    this.router.navigate(['/apps/recap', groupId], {
       queryParams: { from: 'applications' },
     });
   }
@@ -434,6 +429,11 @@ export class ApplicationsListComponent implements OnInit {
   }
 
   deployNewApp() {
-    this.router.navigate(['/apps/deploy/new'], { queryParams: { appKind: this.kind() } });
+    const kind = this.kind();
+    if (kind === ApplicationKindEnum.Database || kind === ApplicationKindEnum.Tool) {
+      this.router.navigate(['/apps/catalog'], { queryParams: { appKind: kind } });
+      return;
+    }
+    this.router.navigate(['/apps/deploy/new'], { queryParams: { appKind: kind } });
   }
 }

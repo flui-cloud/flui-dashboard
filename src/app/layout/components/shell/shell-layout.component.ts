@@ -1,5 +1,7 @@
 import { Component, HostBinding, inject, input } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { UniverseMapComponent } from '../../../features/components/topology/universe-map.component';
 import { UniverseOverlayService } from '../../../features/service/universe-overlay.service';
 import {
@@ -93,7 +95,11 @@ import { AssistantWidgetComponent } from '../../../features/components/assistant
     <app-quick-ssh-overlay />
     <app-quick-ssh-dock />
     <app-toast-container />
-    <app-assistant-widget />
+    <!-- Hide the global Flui assistant where a section has its own assistant
+         (e.g. the SQL console), to avoid two floating assistants competing. -->
+    @if (!hideAssistant()) {
+      <app-assistant-widget />
+    }
 
     @if (universeOverlay.isOpen()) {
       <app-universe-map class="universe-overlay" />
@@ -103,6 +109,20 @@ import { AssistantWidgetComponent } from '../../../features/components/assistant
 export class ShellLayoutComponent {
   protected readonly themeService = inject(ThemeService);
   protected readonly universeOverlay = inject(UniverseOverlayService);
+  private readonly router = inject(Router);
+
+  // Routes that ship their own assistant — hide the global floating one there.
+  private static readonly OWN_ASSISTANT = ['/db-console', '/kv-console'];
+  private hasOwnAssistant(url: string): boolean {
+    return ShellLayoutComponent.OWN_ASSISTANT.some((r) => url.includes(r));
+  }
+  protected readonly hideAssistant = toSignal(
+    this.router.events.pipe(
+      filter((e) => e instanceof NavigationEnd),
+      map(() => this.hasOwnAssistant(this.router.url)),
+    ),
+    { initialValue: this.hasOwnAssistant(this.router.url) },
+  );
   sidebarVariant = input<SidebarVariant>('sidebar');
   collapsibleMode = input<CollapsibleMode>('icon');
 
