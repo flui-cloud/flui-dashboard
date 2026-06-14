@@ -64,7 +64,6 @@ interface InternalReadiness {
           } @else if (state.catalogDetail()?.appType === 'building-block') {
             <p class="text-sm text-muted-foreground">
               This is an internal service — other apps on the same cluster can reach it.
-              Install a compatible client from its app page to access it from a browser.
             </p>
           } @else if (isInternalApp()) {
             <p class="text-sm text-muted-foreground">

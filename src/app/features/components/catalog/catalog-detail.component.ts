@@ -102,14 +102,6 @@ interface Ratings {
                 @if (app.license) {
                   <span class="text-xs text-muted-foreground">{{ app.license }}</span>
                 }
-                @if (app.clientFor.length) {
-                  <span
-                    class="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-300"
-                    [title]="app.clientFor.length > 1 ? 'Compatible with ' + app.clientFor.length + ' building blocks' : ''"
-                  >
-                    🔌 Compatible with {{ app.clientFor.join(' · ') }}
-                  </span>
-                }
               </div>
 
               @if (app.description) {

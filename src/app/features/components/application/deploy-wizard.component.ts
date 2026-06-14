@@ -1633,7 +1633,6 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                           <span class="font-medium text-foreground">Internal service.</span>
                           This app runs cluster-internal and will not get a public URL.
                           Other apps in the same cluster reach it via its internal service DNS.
-                          Install a compatible client to access it from a browser.
                         </div>
                       }
                     } @else {

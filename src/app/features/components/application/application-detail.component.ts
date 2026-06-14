@@ -503,11 +503,11 @@ export class ApplicationDetailComponent implements OnDestroy {
       { label: 'Overview', route: 'overview', icon: 'lucideLayoutDashboard' },
     ];
     // A database/cache — either a standalone building-block or one bundled inside a composed
-    // catalog install (e.g. immich's postgres/valkey, wordpress's mariadb). Both get the Clients
+    // catalog install (e.g. immich's postgres/valkey, wordpress's mariadb). Both get the Access
     // tab so the console/connection details are reachable from the component's own detail page.
     const isDatabase = isBuildingBlock(app) || !!databaseEngineOf(app);
     if (isDatabase) {
-      baseTabs.push({ label: 'Clients', route: 'clients', icon: 'lucidePlug' });
+      baseTabs.push({ label: 'Access', route: 'clients', icon: 'lucidePlug' });
     }
     baseTabs.push(
       { label: 'Monitoring', route: 'monitoring', icon: 'lucideChartArea' },
