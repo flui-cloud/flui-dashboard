@@ -21,6 +21,7 @@ import {
   lucideRocket,
 } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
+import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { ClusterService } from '../../service/cluster.service';
 import { DbConsoleService } from '../../service/db-console.service';
 import { databaseEngineOf } from '../../model/db-engine';
@@ -210,6 +211,7 @@ const DETAIL_TABS = [
 })
 export class AppRecapComponent implements OnInit {
   private readonly appService = inject(ApplicationService);
+  private readonly endpointsService = inject(AppEndpointsService);
   private readonly clusterService = inject(ClusterService);
   private readonly dbConsole = inject(DbConsoleService);
   private readonly route = inject(ActivatedRoute);
@@ -275,20 +277,40 @@ export class AppRecapComponent implements OnInit {
     this.dbComponents().filter((c) => c.id !== this.primary()?.id),
   );
 
-  protected readonly openUrl = computed(() => this.group()?.url ?? this.primary()?.url ?? '');
+  protected readonly rawUrl = computed(() => this.group()?.url ?? this.primary()?.url ?? '');
 
   protected readonly accessKind = computed<'db' | 'web' | 'none'>(() => {
     const p = this.primary();
     if (!p) return 'none';
     if (databaseEngineOf(p)) return 'db';
-    if (this.openUrl()) return 'web';
+    if (this.rawUrl()) return 'web';
     return 'none';
   });
 
   protected readonly endpointHost = computed(() => {
-    const url = this.openUrl();
+    const url = this.rawUrl();
     if (!url) return '';
     return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  });
+
+  protected readonly webEndpoint = computed(() => {
+    const raw = this.rawUrl();
+    if (!raw) return null;
+    let host: string;
+    try {
+      host = new URL(raw).hostname;
+    } catch {
+      host = raw.replace(/^https?:\/\//, '').split('/')[0];
+    }
+    return this.endpointsService.endpoints().find((e) => e.fqdn === host) ?? null;
+  });
+
+  protected readonly openUrl = computed(() => {
+    const raw = this.rawUrl();
+    if (!raw) return '';
+    const ep = this.webEndpoint();
+    if (ep && !ep.tlsEnabled) return raw.replace(/^https:\/\//i, 'http://');
+    return raw;
   });
 
   protected readonly imageRef = computed(() => this.primary()?.imageRef ?? '');
@@ -334,6 +356,10 @@ export class AppRecapComponent implements OnInit {
         }
       }
       this.loadAttempted.set(true);
+      const clusterId = this.group()?.clusterId;
+      if (clusterId && this.rawUrl()) {
+        void this.endpointsService.loadEndpoints(clusterId);
+      }
     })();
   }
 

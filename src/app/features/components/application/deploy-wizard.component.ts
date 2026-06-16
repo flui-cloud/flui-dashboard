@@ -1673,6 +1673,14 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                           }
                         </span>
                       </div>
+                      @if (state.domainMode() !== 'skip') {
+                        <div class="flex justify-between">
+                          <span class="text-muted-foreground">TLS:</span>
+                          <span class="font-medium">
+                            {{ state.enableTls() ? 'HTTPS certificate' : 'HTTP only (no certificate)' }}
+                          </span>
+                        </div>
+                      }
                     }
                   </div>
                   @if (state.allowMasterPlacementRelevant()) {

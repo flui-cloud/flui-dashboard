@@ -222,7 +222,11 @@ export class CatalogSuccessStepComponent implements OnDestroy {
   });
 
   protected readonly openAppUrl = computed(() =>
-    buildOpenAppUrl(this.install()?.resolvedFqdn, this.state.catalogDetail()?.entrypointPath),
+    buildOpenAppUrl(
+      this.install()?.resolvedFqdn,
+      this.state.catalogDetail()?.entrypointPath,
+      this.matchedEndpoint()?.tlsEnabled ?? false,
+    ),
   );
 
   protected readonly readiness = computed(() =>

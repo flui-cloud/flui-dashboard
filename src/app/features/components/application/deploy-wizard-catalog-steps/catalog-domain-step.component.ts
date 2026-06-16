@@ -171,6 +171,31 @@ import { CatalogService } from '../../../service/catalog.service';
               add a domain from the DNS tab.
             </div>
           }
+
+          @if (state.domainMode() !== 'skip') {
+            <label
+              class="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 transition hover:bg-accent/40"
+            >
+              <input
+                type="checkbox"
+                [ngModel]="state.enableTls()"
+                (ngModelChange)="state.enableTls.set($event)"
+                name="enable-tls"
+                class="mt-0.5 h-4 w-4 rounded border-input accent-primary"
+              />
+              <span class="block">
+                <span class="flex items-center gap-1.5 text-sm font-medium">
+                  <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-primary" />
+                  Provision an HTTPS certificate
+                </span>
+                <span class="mt-0.5 block text-xs text-muted-foreground">
+                  On by default. Turn off to serve the endpoint over plain HTTP — DNS only,
+                  no per-app certificate. Useful to avoid certificate rate limits or when
+                  TLS is terminated upstream.
+                </span>
+              </span>
+            </label>
+          }
         }
       }
     </div>

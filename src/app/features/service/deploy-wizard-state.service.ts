@@ -188,6 +188,8 @@ export class DeployWizardStateService {
   /** 'auto' → backend assigns {install-slug}.{zoneName}; 'custom' → user-provided FQDN; 'skip' → no endpoint. */
   readonly domainMode = signal<'auto' | 'custom' | 'skip'>('auto');
   readonly requestedDomain = signal<string>('');
+  /** Provision a per-app TLS certificate for the endpoint; off → DNS-only HTTP (overrides manifest domain.tls). Only relevant when an endpoint is created. */
+  readonly enableTls = signal<boolean>(true);
   /** Building-block install id to auto-Connect to immediately after a successful install. Passed to POST /catalog/installs/:id/connect (not in the install DTO anymore). */
   readonly pendingLinkedInstallId = signal<string | null>(null);
   /** Pre-set when the install came from the BB detail page — the picker is skipped in that case. */
@@ -577,6 +579,7 @@ export class DeployWizardStateService {
     this.catalogFeatureToggles.set({});
     this.domainMode.set('auto');
     this.requestedDomain.set('');
+    this.enableTls.set(true);
     this.currentInstall.set(null);
     this.installPhase.set('idle');
     this.installError.set(null);
@@ -1197,6 +1200,9 @@ export class DeployWizardStateService {
     }
 
     // mode === 'auto' → no domain, no skipEndpoint → backend auto-assigns {install-slug}.{zoneName}
+
+    // Only send tls:false; omit when on so the manifest default (tls:true) wins.
+    if (mode !== 'skip' && !this.enableTls()) dto.tls = false;
 
     const overrides = this.buildResourceOverridesPayload();
     if (overrides) dto.resourceOverrides = overrides;
