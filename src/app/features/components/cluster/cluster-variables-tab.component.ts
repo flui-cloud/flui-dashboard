@@ -13,7 +13,7 @@ import {
 } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterVariablesService } from '../../service/cluster-variables.service';
-import { AppVariablesEditorComponent } from '../application/app-variables-editor.component';
+import { AppVariablesEditorComponent, VariablesSavePayload } from '../application/app-variables-editor.component';
 import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummaryDto';
 
 @Component({
@@ -195,11 +195,11 @@ export class ClusterVariablesTabComponent implements OnInit {
 
   protected async onSaveSet(
     set: VariableSetSummaryDto,
-    data: Record<string, string>,
+    payload: VariablesSavePayload,
     type: 'plain' | 'sensitive'
   ): Promise<void> {
     const id = this.clusterId();
     if (!id) return;
-    await this.variablesService.upsertSet(id, this.namespace, set.name, data, type);
+    await this.variablesService.upsertSet(id, this.namespace, set.name, payload.data, type, payload.deleteKeys);
   }
 }

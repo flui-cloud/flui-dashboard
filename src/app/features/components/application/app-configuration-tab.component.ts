@@ -11,7 +11,7 @@ import {
 } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { AppVariablesService } from '../../service/app-variables.service';
-import { AppVariablesEditorComponent } from './app-variables-editor.component';
+import { AppVariablesEditorComponent, VariablesSavePayload } from './app-variables-editor.component';
 
 @Component({
   selector: 'app-configuration-tab',
@@ -125,17 +125,17 @@ export class AppConfigurationTabComponent implements OnInit {
     });
   }
 
-  protected async onSavePlain(data: Record<string, string>): Promise<void> {
+  protected async onSavePlain(payload: VariablesSavePayload): Promise<void> {
     const app = this.app();
     if (app?.id) {
-      await this.variablesService.upsertPlain(app.id, data);
+      await this.variablesService.upsertPlain(app.id, payload.data, payload.deleteKeys);
     }
   }
 
-  protected async onSaveSensitive(data: Record<string, string>): Promise<void> {
+  protected async onSaveSensitive(payload: VariablesSavePayload): Promise<void> {
     const app = this.app();
     if (app?.id) {
-      await this.variablesService.upsertSensitive(app.id, data);
+      await this.variablesService.upsertSensitive(app.id, payload.data, payload.deleteKeys);
     }
   }
 }

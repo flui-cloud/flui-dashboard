@@ -32,6 +32,11 @@ interface VarRow {
   newSecretValue: string;
 }
 
+export interface VariablesSavePayload {
+  data: Record<string, string>;
+  deleteKeys: string[];
+}
+
 /** Detects if a string looks like JSON, YAML, or is long enough to need a big editor. */
 function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
   const trimmed = value.trim();
@@ -371,7 +376,7 @@ export class AppVariablesEditorComponent implements OnChanges {
   @Input() sensitiveKeys: string[] = [];
   @Input() saving = false;
 
-  @Output() save = new EventEmitter<Record<string, string>>();
+  @Output() save = new EventEmitter<VariablesSavePayload>();
 
   protected rows = signal<VarRow[]>([]);
   protected deletedKeys = signal<Set<string>>(new Set());
@@ -659,18 +664,20 @@ export class AppVariablesEditorComponent implements OnChanges {
   protected onSave(): void {
     if (this.jsonMode()) {
       const parsed = this.jsonParsed();
-      if (parsed) this.save.emit(parsed);
+      if (!parsed) return;
+      const deleteKeys = Object.keys(this.data).filter(
+        k => !this.sensitiveKeys.includes(k) && !(k in parsed),
+      );
+      this.save.emit({ data: parsed, deleteKeys });
       return;
     }
-    // When rows have been deleted, send the full remaining set so the backend
-    // can replace the entire dataset (deletions would otherwise be lost).
-    const hasDeletes = this.deletedKeys().size > 0;
-    const result: Record<string, string> = {};
+    const data: Record<string, string> = {};
     for (const row of this.rows()) {
-      if (!hasDeletes && !this.isDirtyRow(row)) continue;
+      const key = row.key.trim();
+      if (!key) continue;
       if (row.isSensitive && row.value === '****') continue;
-      result[row.key.trim()] = row.value;
+      data[key] = row.value;
     }
-    this.save.emit(result);
+    this.save.emit({ data, deleteKeys: [...this.deletedKeys()] });
   }
 }
