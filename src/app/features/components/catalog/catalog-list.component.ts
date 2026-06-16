@@ -85,7 +85,6 @@ const KIND_ORDER: ApplicationKind[] = [
             </a>
           }
           <div class="flex items-center gap-2 text-primary">
-            <ng-icon name="lucideSparkles" class="h-5 w-5" />
             <span class="text-xs font-semibold uppercase tracking-wider">App Marketplace</span>
           </div>
           <h1 class="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
