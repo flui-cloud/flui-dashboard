@@ -117,7 +117,14 @@ export class ShellLayoutComponent {
   private readonly router = inject(Router);
 
   // Routes that ship their own assistant — hide the global floating one there.
-  private static readonly OWN_ASSISTANT = ['/db-console', '/kv-console'];
+  private static readonly OWN_ASSISTANT = [
+    '/db-console',
+    '/kv-console',
+    '/doc-console',
+    '/object-store-console',
+    '/search-console',
+    '/messaging-console',
+  ];
   private hasOwnAssistant(url: string): boolean {
     return ShellLayoutComponent.OWN_ASSISTANT.some((r) => url.includes(r));
   }

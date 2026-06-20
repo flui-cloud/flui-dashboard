@@ -273,14 +273,18 @@ export class DbConsolePageComponent implements OnInit {
     });
   }
 
-  run(): void {
+  run(forceWrite = false): void {
     const id = this.applicationId();
     const sqlText = (this.editor?.currentQuery() ?? '').trim();
     if (!id || !sqlText || this.running()) return;
     this.running.set(true);
     this.queryError.set(null);
     this.dbConsole
-      .runQuery(id, { sql: sqlText, readOnly: this.readOnly, limit: this.limit })
+      .runQuery(id, {
+        sql: sqlText,
+        readOnly: forceWrite ? false : this.readOnly,
+        limit: this.limit,
+      })
       .subscribe({
         next: (res) => {
           this.result.set(res);
@@ -320,9 +324,9 @@ export class DbConsolePageComponent implements OnInit {
   }
 
   onChatRun(e: { code: string; mutation: boolean }): void {
-    if (e.mutation) this.readOnly = false;
     this.editor?.setText(e.code);
-    this.run();
+    // Confirmed-in-chat write runs once as a one-off; the read-only toggle stays as the user left it.
+    this.run(e.mutation);
   }
 
   onHistoryPick(event: Event): void {

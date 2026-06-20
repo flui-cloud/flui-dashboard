@@ -39,6 +39,13 @@
   --warn: 33 90% 40%;
   --purple: 252 100% 68%;
 
+  // CodeMirror token colours (filter editor + mongo shell). Keys use --foreground for
+  // contrast; only values are tinted. Tuned for the light background.
+  --cm-string: 160 84% 28%;
+  --cm-number: 200 98% 36%;
+  --cm-atom: 262 83% 53%;
+  --cm-keyword: 192 91% 33%;
+
   --radius: 0.75rem;
   color-scheme: light;
 }
@@ -74,6 +81,12 @@
   --ok: 152 67% 50%;
   --warn: 41 94% 46%;
   --purple: 252 100% 71%;
+
+  // Brighter token colours so values stay legible on the near-black editor background.
+  --cm-string: 158 64% 60%;
+  --cm-number: 199 95% 64%;
+  --cm-atom: 255 92% 76%;
+  --cm-keyword: 187 86% 60%;
 
   color-scheme: dark;
 }

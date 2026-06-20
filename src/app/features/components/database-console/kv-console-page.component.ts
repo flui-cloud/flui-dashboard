@@ -30,6 +30,7 @@ import {
   AssistFn,
   DbAssistantChatComponent,
 } from './db-assistant-chat.component';
+import { GateNoticeComponent } from './gate-notice.component';
 
 type ConnState = 'connecting' | 'connected' | 'error';
 const SCAN_COUNT = 100;
@@ -38,7 +39,14 @@ const SCAN_COUNT = 100;
   selector: 'app-kv-console-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, NgIcon, JsonViewerComponent, DbAssistantChatComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    NgIcon,
+    JsonViewerComponent,
+    DbAssistantChatComponent,
+    GateNoticeComponent,
+  ],
   viewProviders: [
     provideIcons({
       lucideArrowLeft,
@@ -68,7 +76,13 @@ const SCAN_COUNT = 100;
           @switch (conn()) {
             @case ('connected') { <span class="text-emerald-600 dark:text-emerald-400">Connected</span> }
             @case ('connecting') { <span class="text-muted-foreground">Connecting…</span> }
-            @case ('error') { <span class="text-destructive">{{ connError() }}</span> }
+            @case ('error') {
+              <span class="text-destructive">{{ connError() }}</span>
+              <button type="button" (click)="connect()"
+                class="ml-2 rounded border border-border px-1.5 py-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+                Retry
+              </button>
+            }
           }
         </span>
       </div>
@@ -102,6 +116,11 @@ const SCAN_COUNT = 100;
           </div>
 
           <div class="min-h-0 flex-1 overflow-auto">
+            @if (scanError(); as e) {
+              <div class="mb-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-[11px] text-destructive">
+                {{ e }}
+              </div>
+            }
             @if (keys().length === 0 && (scanning() || conn() === 'connecting')) {
               @for (i of skeletonRows; track i) {
                 <div class="mb-1 flex items-center gap-2 px-2 py-1">
@@ -147,11 +166,20 @@ const SCAN_COUNT = 100;
             <button
               type="button"
               (click)="runManual()"
-              [disabled]="!cmd.trim()"
+              [disabled]="!cmd.trim() || cmdRunning()"
               class="inline-flex h-8 items-center gap-1 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              <ng-icon name="lucidePlay" class="h-3 w-3" /> Run
+              <ng-icon
+                [name]="cmdRunning() ? 'lucideRefreshCw' : 'lucidePlay'"
+                class="h-3 w-3"
+                [class.animate-spin]="cmdRunning()"
+              />
+              Run
             </button>
+          </div>
+
+          <div class="shrink-0 px-2 pt-2">
+            <app-gate-notice engine="Redis/Valkey" />
           </div>
 
           <div class="min-h-0 flex-1 overflow-y-auto p-4">
@@ -273,6 +301,9 @@ export class KvConsolePageComponent implements OnInit {
   readonly loadingValue = signal(false);
   readonly commandReply = signal<unknown>(undefined);
   readonly commandError = signal<string | null>(null);
+  readonly cmdRunning = signal(false);
+  /** A key-scan failure (separate from the connection state). */
+  readonly scanError = signal<string | null>(null);
 
   cmd = '';
   cmdReadOnly = true;
@@ -340,11 +371,14 @@ export class KvConsolePageComponent implements OnInit {
         next: (res) => {
           this.keys.update((k) => [...k, ...res.keys]);
           this.cursor.set(res.cursor);
+          this.scanError.set(null);
           this.scanning.set(false);
         },
         error: (err) => {
           this.scanning.set(false);
-          this.connError.set(this.messageFrom(err));
+          // A scan failure is not a connection failure — surface it in the key
+          // list, don't poison the "Connected" pill (which never renders it).
+          this.scanError.set(this.messageFrom(err));
         },
       });
   }
@@ -390,24 +424,32 @@ export class KvConsolePageComponent implements OnInit {
   }
 
   onChatRun(e: { code: string; mutation: boolean }): void {
+    // One-off: writes allowed for this call only (mutation ⇒ readOnly false) without touching
+    // the persistent toggle. Mirror the command into the editor for review.
+    this.cmd = e.code;
     this.execCommand(e.code, !e.mutation);
   }
 
   private execCommand(command: string, readOnly: boolean): void {
     const id = this.applicationId();
-    if (!id) return;
+    if (!id || this.cmdRunning()) return;
     this.commandError.set(null);
     this.commandReply.set(undefined);
+    this.cmdRunning.set(true);
     this.kv.runCommand(id, { args: this.tokenize(command), readOnly }).subscribe({
       next: (res) => {
         this.commandReply.set(res.reply);
+        this.cmdRunning.set(false);
         if (!readOnly) {
           this.connect();
           const open = this.selected();
           if (open) this.selectKey(open.key);
         }
       },
-      error: (err) => this.commandError.set(this.messageFrom(err)),
+      error: (err) => {
+        this.cmdRunning.set(false);
+        this.commandError.set(this.messageFrom(err));
+      },
     });
   }
 

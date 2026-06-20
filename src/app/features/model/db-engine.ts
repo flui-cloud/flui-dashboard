@@ -1,9 +1,32 @@
 import { ApplicationResponseDto } from '../../core/api';
 import { isBuildingBlock, isComposedComponent } from './app-exposure';
 
-export type DbEngine = 'postgres' | 'mariadb' | 'redis' | 'valkey';
+export type DbEngine =
+  | 'postgres'
+  | 'mariadb'
+  | 'redis'
+  | 'valkey'
+  | 'ferretdb'
+  | 'garage'
+  | 'opensearch'
+  | 'nats'
+  | 'rabbitmq'
+  | 'memcached'
+  | 'openbao'
+  | 'kafka'
+  | 'meilisearch';
 
-export type DbEngineFamily = 'sql' | 'keyvalue';
+export type DbEngineFamily =
+  | 'sql'
+  | 'keyvalue'
+  | 'document'
+  | 'object-storage'
+  | 'search'
+  | 'messaging'
+  | 'cache'
+  | 'secrets'
+  | 'streaming'
+  | 'fulltext';
 
 export interface DbEngineDescriptor {
   engine: DbEngine;
@@ -25,7 +48,8 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'postgres',
     family: 'sql',
     label: 'PostgreSQL',
-    imagePattern: /postgres/i,
+    // pgvector ships as pgvector/pgvector (Postgres + vector ext) — same wire/console.
+    imagePattern: /postgres|pgvector/i,
     tunnelPort: 55432,
     defaultPort: 5432,
     urlScheme: 'postgresql',
@@ -62,6 +86,96 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     defaultPort: 6379,
     urlScheme: 'redis',
     externalClients: 'redis-cli, RedisInsight',
+  },
+  {
+    engine: 'ferretdb',
+    family: 'document',
+    label: 'FerretDB',
+    imagePattern: /ferretdb/i,
+    tunnelPort: 57017,
+    defaultPort: 27017,
+    urlScheme: 'mongodb',
+    externalClients: 'mongosh, MongoDB Compass',
+  },
+  {
+    engine: 'garage',
+    family: 'object-storage',
+    label: 'Garage',
+    imagePattern: /garage/i,
+    tunnelPort: 53900,
+    defaultPort: 3900,
+    urlScheme: 's3',
+    externalClients: 'aws-cli, rclone, s3cmd',
+  },
+  {
+    engine: 'opensearch',
+    family: 'search',
+    label: 'OpenSearch',
+    imagePattern: /opensearch/i,
+    tunnelPort: 59200,
+    defaultPort: 9200,
+    urlScheme: 'https',
+    externalClients: 'curl, OpenSearch Dashboards, Kibana',
+  },
+  {
+    engine: 'nats',
+    family: 'messaging',
+    label: 'NATS',
+    imagePattern: /nats/i,
+    tunnelPort: 54222,
+    defaultPort: 4222,
+    urlScheme: 'nats',
+    externalClients: 'nats CLI, nats-box',
+  },
+  {
+    engine: 'rabbitmq',
+    family: 'messaging',
+    label: 'RabbitMQ',
+    imagePattern: /rabbitmq/i,
+    tunnelPort: 55672,
+    defaultPort: 5672,
+    urlScheme: 'amqp',
+    externalClients: 'amqp clients, rabbitmqadmin, Management UI (:15672)',
+  },
+  {
+    engine: 'memcached',
+    family: 'cache',
+    label: 'Memcached',
+    imagePattern: /memcached/i,
+    tunnelPort: 51211,
+    defaultPort: 11211,
+    urlScheme: 'memcached',
+    externalClients: 'telnet/nc, libmemcached, php-memcached',
+  },
+  {
+    engine: 'openbao',
+    family: 'secrets',
+    label: 'OpenBao',
+    imagePattern: /openbao/i,
+    tunnelPort: 58200,
+    defaultPort: 8200,
+    urlScheme: 'http',
+    externalClients: 'bao CLI, Vault SDKs, OpenBao UI',
+  },
+  {
+    engine: 'kafka',
+    family: 'streaming',
+    label: 'Apache Kafka',
+    imagePattern: /(^|\/)kafka(-native)?(:|$)|apache\/kafka/i,
+    tunnelPort: 59092,
+    defaultPort: 9092,
+    urlScheme: 'kafka',
+    externalClients: 'kafka CLI, kcat, kafkajs',
+  },
+  {
+    engine: 'meilisearch',
+    family: 'fulltext',
+    label: 'Meilisearch',
+    imagePattern: /meilisearch|getmeili/i,
+    tunnelPort: 57700,
+    defaultPort: 7700,
+    urlScheme: 'http',
+    externalClients: 'Meilisearch SDKs, curl, Meilisearch dashboard',
   },
 ];
 
@@ -100,6 +214,54 @@ export function isKeyValueDatabase(
   return engineFamilyOf(app) === 'keyvalue';
 }
 
+export function isDocumentDatabase(
+  app: ApplicationResponseDto | null | undefined,
+): boolean {
+  return engineFamilyOf(app) === 'document';
+}
+
+export function isObjectStore(
+  app: ApplicationResponseDto | null | undefined,
+): boolean {
+  return engineFamilyOf(app) === 'object-storage';
+}
+
+export function isSearchEngine(
+  app: ApplicationResponseDto | null | undefined,
+): boolean {
+  return engineFamilyOf(app) === 'search';
+}
+
+export function isMessagingServer(
+  app: ApplicationResponseDto | null | undefined,
+): boolean {
+  return engineFamilyOf(app) === 'messaging';
+}
+
+export function isCacheServer(
+  app: ApplicationResponseDto | null | undefined,
+): boolean {
+  return engineFamilyOf(app) === 'cache';
+}
+
+export function isSecretsServer(
+  app: ApplicationResponseDto | null | undefined,
+): boolean {
+  return engineFamilyOf(app) === 'secrets';
+}
+
+export function isStreamingServer(
+  app: ApplicationResponseDto | null | undefined,
+): boolean {
+  return engineFamilyOf(app) === 'streaming';
+}
+
+export function isFulltextServer(
+  app: ApplicationResponseDto | null | undefined,
+): boolean {
+  return engineFamilyOf(app) === 'fulltext';
+}
+
 export function consoleRouteFor(
   app: ApplicationResponseDto | null | undefined,
 ): string | null {
@@ -108,6 +270,22 @@ export function consoleRouteFor(
       return '/db-console';
     case 'keyvalue':
       return '/kv-console';
+    case 'document':
+      return '/doc-console';
+    case 'object-storage':
+      return '/object-store-console';
+    case 'search':
+      return '/search-console';
+    case 'messaging':
+      return '/messaging-console';
+    case 'cache':
+      return '/cache-console';
+    case 'secrets':
+      return '/secrets-console';
+    case 'streaming':
+      return '/kafka-console';
+    case 'fulltext':
+      return '/meilisearch-console';
     default:
       return null;
   }
