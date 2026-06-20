@@ -41,6 +41,10 @@ export interface InstallFromYamlDto {
      */
     hostnameMode?: InstallFromYamlDto.HostnameModeEnum;
     /**
+     * Override manifest domain.tls. When false, the endpoint is provisioned with DNS only and no per-app certificate is requested (HTTP). Useful to avoid Let\'s Encrypt rate limits during bulk installs. Omit to use the manifest default (tls: true).
+     */
+    tls?: boolean;
+    /**
      * Skip endpoint provisioning at install time.
      */
     skipEndpoint?: boolean;
@@ -69,6 +73,14 @@ export interface InstallFromYamlDto {
      * Install-time feature toggles (spec.options[].key → enabled). Omitted keys fall back to the option default.
      */
     options?: { [key: string]: boolean; };
+    /**
+     * When true, skip the cluster capacity gate and install even if the footprint exceeds free capacity. The user explicitly accepts the risk (pods may be OOM-killed or throttled at peak). Default false.
+     */
+    force?: boolean;
+    /**
+     * Allow the workload to be scheduled on the control-plane (master) node. Needed for node-local-storage apps on clusters without a worker node. Default false.
+     */
+    allowMasterPlacement?: boolean;
 }
 export namespace InstallFromYamlDto {
     export const CertChallengeEnum = {

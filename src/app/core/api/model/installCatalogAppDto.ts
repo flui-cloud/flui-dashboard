@@ -41,7 +41,7 @@ export interface InstallCatalogAppDto {
      */
     skipEndpoint?: boolean;
     /**
-     * Override manifest domain.tls. When false, the endpoint is provisioned with DNS only and no per-app certificate is requested (HTTP). Useful to avoid Let\'s Encrypt rate limits. Omit to use the manifest default (tls: true).
+     * Override manifest domain.tls. When false, the endpoint is provisioned with DNS only and no per-app certificate is requested (HTTP). Useful to avoid Let\'s Encrypt rate limits during bulk installs. Omit to use the manifest default (tls: true).
      */
     tls?: boolean;
     /**

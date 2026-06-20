@@ -108,6 +108,10 @@ export interface CreateApplicationDto {
      */
     startCommand?: string;
     /**
+     * Pod/container security settings (fsGroup, runAsUser/runAsGroup, runAsNonRoot, hardened). Emitted into the workload only for the fields that are set. Used so non-root images can write a persistent volume (fsGroup).
+     */
+    securityContext?: object;
+    /**
      * If true, automatically trigger a deploy immediately after creation. The response will include an operation object for tracking progress.
      */
     autoDeploy?: boolean;

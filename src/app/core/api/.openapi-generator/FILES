@@ -26,6 +26,7 @@ api/controlCluster.service.ts
 api/credentials.service.ts
 api/dNSZones.service.ts
 api/dbConsole.service.ts
+api/documentConsole.service.ts
 api/firewalls.service.ts
 api/gitHubOAuth.service.ts
 api/gitHubSetup.service.ts
@@ -140,6 +141,7 @@ model/capacityCandidateDto.ts
 model/capacityMasterDto.ts
 model/capacityStorageDto.ts
 model/catalogAuthSpecDto.ts
+model/catalogCapacityPreviewDto.ts
 model/catalogClientResponseDto.ts
 model/catalogClusterCapabilitiesDto.ts
 model/catalogDependencyDto.ts
