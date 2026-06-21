@@ -1,4 +1,7 @@
 <div class="space-y-6">
+  <!-- Disk usage + near-full alert (DB apps with a volume; hidden otherwise) -->
+  <app-db-disk-usage [appId]="appId()" />
+
   <!-- Header with refresh button -->
   <div class="flex items-center justify-between">
     <div>

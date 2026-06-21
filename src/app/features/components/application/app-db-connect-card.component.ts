@@ -50,7 +50,7 @@ import {
         class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
       >
         <ng-icon name="lucideDatabase" class="h-4 w-4" />
-        {{ engineUi().family === 'keyvalue' ? 'Open Key Browser' : 'Open SQL Console' }}
+        {{ openLabel() }}
       </a>
 
       <div class="rounded-md border border-border bg-background">
@@ -187,6 +187,31 @@ export class AppDbConnectCardComponent {
   protected readonly consoleRoute = computed(
     () => consoleRouteFor(this.app()) ?? '/db-console',
   );
+
+  protected openLabel(): string {
+    switch (this.engineUi().family) {
+      case 'keyvalue':
+        return 'Open Key Browser';
+      case 'document':
+        return 'Open Document Browser';
+      case 'object-storage':
+        return 'Open Storage Browser';
+      case 'search':
+        return 'Open Search Console';
+      case 'messaging':
+        return 'Open Messaging Console';
+      case 'cache':
+        return 'Open Cache Console';
+      case 'secrets':
+        return 'Open Secrets Console';
+      case 'streaming':
+        return 'Open Kafka Console';
+      case 'fulltext':
+        return 'Open Meilisearch Console';
+      default:
+        return 'Open SQL Console';
+    }
+  }
 
   protected localPort(): number {
     return this.engineUi().tunnelPort;

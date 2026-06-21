@@ -15,6 +15,7 @@ import {
 } from '../../../shared/components/charts';
 import { ApplicationMonitoringService } from '../../service/application-monitoring.service';
 import { ApplicationMetricsService } from '../../../core/api/api/applicationMetrics.service';
+import { DbDiskUsageComponent } from './db-disk-usage.component';
 import type { SingleAppMetricsHistoryResponseDto } from '../../model/application.models';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert, lucideHeartPulse } from '@ng-icons/lucide';
@@ -28,6 +29,7 @@ import { lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert
     GradeGaugeComponent,
     TimeSeriesLineComponent,
     MultiStatCardComponent,
+    DbDiskUsageComponent,
   ],
   providers: [
     provideIcons({ lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert, lucideHeartPulse }),
@@ -40,7 +42,7 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   readonly monitoring = inject(ApplicationMonitoringService);
   private readonly metricsApi = inject(ApplicationMetricsService);
 
-  private appId(): string {
+  protected appId(): string {
     return this.route.parent?.snapshot.paramMap.get('id') ?? '';
   }
 
