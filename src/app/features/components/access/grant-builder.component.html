@@ -1,0 +1,157 @@
+<div hlmCard>
+  <div hlmCardContent class="pt-6 space-y-5">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-2">
+      <div class="flex-1 min-w-0">
+        <label for="gb-who" class="block text-xs font-medium text-muted-foreground mb-1">Who</label>
+        <select id="gb-who" [class]="selectClass" (change)="onPrincipal($event)">
+          <option value="" [selected]="principalKey() === ''">Select a person, group…</option>
+          @for (p of iam.principals(); track p.type + p.ref) {
+            <option [value]="p.type + '::' + p.ref" [selected]="principalKey() === p.type + '::' + p.ref">{{ p.displayName }}</option>
+          }
+        </select>
+      </div>
+
+      <span class="hidden lg:block text-sm text-muted-foreground pt-5">can</span>
+
+      <div class="flex-1 min-w-0">
+        <label for="gb-role" class="block text-xs font-medium text-muted-foreground mb-1">Role</label>
+        <select id="gb-role" [class]="selectClass" (change)="onRole($event)">
+          @for (r of iam.roles(); track r.key) {
+            <option [value]="r.key" [selected]="role() === r.key">{{ r.name }}</option>
+          }
+        </select>
+      </div>
+
+      <span class="hidden lg:block text-sm text-muted-foreground pt-5">on</span>
+
+      <div class="flex-1 min-w-0">
+        <label for="gb-what" class="block text-xs font-medium text-muted-foreground mb-1">What</label>
+        <select id="gb-what" [class]="selectClass" (change)="onScopeKind($event)">
+          <option value="everything" [selected]="scopeKind() === 'everything'">Everything</option>
+          <option value="cluster" [selected]="scopeKind() === 'cluster'">A cluster</option>
+          <option value="project" [selected]="scopeKind() === 'project'">A project</option>
+          <option value="app" [selected]="scopeKind() === 'app'">A specific app</option>
+          <option value="kind" [selected]="scopeKind() === 'kind'">Apps of a kind</option>
+          <option value="tag" [selected]="scopeKind() === 'tag'">A collection / tag</option>
+          <option value="section" [selected]="scopeKind() === 'section'">A portal section</option>
+        </select>
+      </div>
+    </div>
+
+    @switch (scopeKind()) {
+      @case ('cluster') {
+        <div class="max-w-sm">
+          <label for="gb-cluster" class="block text-xs font-medium text-muted-foreground mb-1">Cluster</label>
+          <select id="gb-cluster" [class]="selectClass" (change)="clusterId.set(value($event))">
+            <option value="">Select a cluster…</option>
+            @for (c of iam.clusters(); track c.id) {
+              <option [value]="c.id" [selected]="clusterId() === c.id">{{ c.name }} ({{ c.provider }})</option>
+            }
+          </select>
+        </div>
+      }
+      @case ('project') {
+        <div class="max-w-sm">
+          <label for="gb-project" class="block text-xs font-medium text-muted-foreground mb-1">Project</label>
+          <select id="gb-project" [class]="selectClass" (change)="project.set(value($event))">
+            <option value="">Select a project…</option>
+            @for (p of iam.projects(); track p.slug) {
+              <option [value]="p.slug" [selected]="project() === p.slug">{{ p.name }}</option>
+            }
+          </select>
+        </div>
+      }
+      @case ('kind') {
+        <div class="max-w-sm">
+          <label for="gb-kind" class="block text-xs font-medium text-muted-foreground mb-1">App kind</label>
+          <select id="gb-kind" [class]="selectClass" (change)="kindValue.set(value($event))">
+            <option value="">Select a kind…</option>
+            @for (k of iam.kinds(); track k) {
+              <option [value]="k" [selected]="kindValue() === k">{{ titleCase(k) }}</option>
+            }
+          </select>
+        </div>
+      }
+      @case ('app') {
+        <div>
+          <span class="block text-xs font-medium text-muted-foreground mb-1">Apps (one or more)</span>
+          <div class="flex flex-wrap gap-2">
+            @for (a of iam.apps(); track a.id) {
+              <button type="button" (click)="toggleApp(a.slug)"
+                class="rounded-full border px-3 py-1 text-xs transition-colors"
+                [class]="selectedApps().includes(a.slug)
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:text-foreground'">
+                {{ a.slug }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+      @case ('tag') {
+        <div>
+          <span class="block text-xs font-medium text-muted-foreground mb-1">Tags (all of)</span>
+          <div class="flex flex-wrap gap-2">
+            @for (t of iam.tags(); track t) {
+              <button type="button" (click)="toggleTag(t)"
+                class="rounded-full border px-3 py-1 text-xs transition-colors"
+                [class]="selectedTags().includes(t)
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:text-foreground'">
+                {{ t }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+      @case ('section') {
+        <div class="max-w-sm">
+          <label for="gb-section" class="block text-xs font-medium text-muted-foreground mb-1">Portal section</label>
+          <select id="gb-section" [class]="selectClass" (change)="sectionKey.set(value($event))">
+            <option value="">Select a section…</option>
+            @for (s of iam.sections(); track s.key) {
+              <option [value]="s.key" [selected]="sectionKey() === s.key">{{ s.name }}</option>
+            }
+          </select>
+        </div>
+      }
+    }
+
+    <div class="rounded-md border border-border bg-muted/40 p-4 space-y-2">
+      <div class="flex items-center gap-2 text-sm font-medium text-foreground">
+        <ng-icon name="lucideInfo" class="h-4 w-4 text-muted-foreground" />
+        <span>Preview</span>
+      </div>
+      @if (!scope()) {
+        <p class="text-sm text-muted-foreground">Complete the grant above to see what it applies to.</p>
+      } @else if (scope()!.type === 'section') {
+        <p class="text-sm text-foreground">
+          Applies to portal section <span class="font-medium">{{ iam.sectionName(sectionKey()) }}</span> — not app-scoped.
+        </p>
+      } @else {
+        <p class="text-sm text-foreground">
+          Applies to <span class="font-medium">{{ matchedApps().length }}</span> app{{ matchedApps().length === 1 ? '' : 's' }}@if (scope()!.type === 'global') { <span class="text-muted-foreground"> + all portal sections</span> }:
+        </p>
+        <div class="flex flex-wrap gap-1.5">
+          @for (a of matchedApps(); track a.id) {
+            <span hlmBadge variant="secondary" class="text-xs">{{ a.slug }}</span>
+          } @empty {
+            <span class="text-xs text-muted-foreground">No apps match this selector.</span>
+          }
+        </div>
+      }
+      @if (scope()) {
+        <p class="text-[11px] font-mono text-muted-foreground pt-1 break-all">scope = {{ compiled() }}</p>
+      }
+    </div>
+
+    <div class="flex items-center justify-between gap-3">
+      <p class="text-sm text-muted-foreground truncate">{{ sentence() }}</p>
+      <button type="button" (click)="save()" [disabled]="!canSave()"
+        class="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+        <ng-icon name="lucideCirclePlus" class="h-4 w-4" />
+        Add grant
+      </button>
+    </div>
+  </div>
+</div>
