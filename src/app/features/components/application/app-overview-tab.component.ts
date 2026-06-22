@@ -33,6 +33,7 @@ import { CatalogService } from '../../service/catalog.service';
 import { ClientConnectionSectionComponent } from './client-connection-section.component';
 import { InternalServiceInfoComponent, InternalServiceMode } from './internal-service-info.component';
 import { AppLatestReleaseCardComponent } from './app-latest-release-card.component';
+import { AppProjectSectionComponent } from './app-project-section.component';
 
 @Component({
   selector: 'app-overview-tab',
@@ -46,6 +47,7 @@ import { AppLatestReleaseCardComponent } from './app-latest-release-card.compone
     ClientConnectionSectionComponent,
     InternalServiceInfoComponent,
     AppLatestReleaseCardComponent,
+    AppProjectSectionComponent,
   ],
   providers: [
     provideIcons({
@@ -63,373 +65,7 @@ import { AppLatestReleaseCardComponent } from './app-latest-release-card.compone
       lucidePin,
     }),
   ],
-  template: `
-    @if (app(); as app) {
-      <app-client-connection-section [application]="app" />
-      <div class="space-y-3">
-
-        <app-diagnoses-banner [applicationId]="app.id" />
-
-        <app-latest-release-card [appId]="app.id" />
-
-        <!-- Placement hint — visible only when this app uses pinned storage. -->
-        @if (app.persistenceScope === 'dedicated') {
-          <div class="flex items-start gap-3 px-4 py-2.5 rounded-lg border border-indigo-200 dark:border-indigo-900 bg-indigo-50/70 dark:bg-indigo-950/30">
-            <ng-icon name="lucidePin" class="h-4 w-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
-            <div class="text-sm">
-              <div class="font-medium text-indigo-900 dark:text-indigo-200">
-                Pinned to {{ app.dedicatedNodeName ?? 'the master node' }}
-              </div>
-              <div class="text-xs text-indigo-700/80 dark:text-indigo-300/80 mt-0.5">
-                This app keeps its data on one node's local disk, so it always runs there. Resizing that node will briefly stop the app.
-              </div>
-            </div>
-          </div>
-        }
-
-        <!-- Health Bar (slim, full width) -->
-        @if (monitoringService.metrics(); as m) {
-          <a [routerLink]="['../monitoring']" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2.5 flex items-center gap-3 sm:gap-5 text-sm hover:border-blue-300 dark:hover:border-blue-600 transition-colors overflow-hidden">
-            <!-- Status dot -->
-            <div class="flex items-center gap-1.5 font-medium flex-shrink-0" [class]="statusColor(m)">
-              <span class="h-2 w-2 rounded-full flex-shrink-0" [class]="statusDotColor(m)"></span>
-              {{ statusLabel(m) }}
-            </div>
-            <span class="hidden sm:inline text-gray-300 dark:text-gray-600">|</span>
-            <!-- CPU -->
-            <div class="hidden sm:flex items-center gap-2">
-              <span class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">CPU</span>
-              <div class="w-16 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                <div class="h-full rounded-full transition-all" [class]="progressBarColor(getLimitPercent(m.cpu.usage_cores, m.cpu.limits_cores), 70, 90)"
-                     [style.width.%]="getLimitPercent(m.cpu.usage_cores, m.cpu.limits_cores)"></div>
-              </div>
-              <span class="font-medium tabular-nums" [class]="getMetricColor(getLimitPercent(m.cpu.usage_cores, m.cpu.limits_cores), 70, 90)">
-                {{ getLimitPercent(m.cpu.usage_cores, m.cpu.limits_cores).toFixed(0) }}%
-              </span>
-            </div>
-            <span class="hidden sm:inline text-gray-300 dark:text-gray-600">|</span>
-            <!-- Memory -->
-            <div class="hidden sm:flex items-center gap-2">
-              <span class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Memory</span>
-              <div class="w-16 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                <div class="h-full rounded-full transition-all" [class]="progressBarColor(getLimitPercent(m.memory.usage_bytes, m.memory.limits_bytes), 75, 90)"
-                     [style.width.%]="getLimitPercent(m.memory.usage_bytes, m.memory.limits_bytes)"></div>
-              </div>
-              <span class="font-medium tabular-nums" [class]="getMetricColor(getLimitPercent(m.memory.usage_bytes, m.memory.limits_bytes), 75, 90)">
-                {{ getLimitPercent(m.memory.usage_bytes, m.memory.limits_bytes).toFixed(0) }}%
-              </span>
-            </div>
-            <span class="hidden lg:inline text-gray-300 dark:text-gray-600">|</span>
-            <span class="hidden lg:inline text-xs text-gray-400 dark:text-gray-500 truncate">
-              {{ formatCpu(m.cpu.usage_cores ?? 0) }} · {{ formatBytes(m.memory.usage_bytes ?? 0) }}
-            </span>
-            <span class="ml-auto flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 flex-shrink-0">
-              <span class="hidden sm:inline">Monitoring</span> <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-            </span>
-          </a>
-        }
-
-        <!-- Primary application URL — shown when at least one DNS endpoint is IN_SYNC.
-             While the certificate is still being issued the URL is rendered
-             non-clickable with an inline status so users don't hit a TLS error.
-             For internal apps (no public endpoint) we render a cluster-local
-             service panel plus a disabled "Open app" button that will route
-             through the ForwardAuth proxy once internal hosting is configured. -->
-        @if (isPublicApp()) {
-          @if (primaryEndpoint(); as ep) {
-            @let r = primaryEndpointReadiness();
-            @if (r.isReady) {
-              <a
-                [href]="openAppUrl()"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="group flex items-center gap-3 px-4 py-2.5 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg hover:bg-blue-100/70 dark:hover:bg-blue-950/50 transition-colors"
-              >
-                <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                <span class="font-mono text-sm text-blue-700 dark:text-blue-300 truncate flex-1 min-w-0">
-                  {{ openAppUrl() }}
-                </span>
-                @if (extraInSyncCount() > 0) {
-                  <span class="text-xs text-blue-600/80 dark:text-blue-400/80 flex-shrink-0">
-                    +{{ extraInSyncCount() }} more
-                  </span>
-                }
-                <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              </a>
-            } @else {
-              <div
-                class="flex items-center gap-3 px-4 py-2.5 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg"
-                [attr.title]="r.detail"
-              >
-                @if (r.state === 'failed') {
-                  <ng-icon name="lucideAlertCircle" class="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-                } @else {
-                  <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                }
-                <div class="flex-1 min-w-0">
-                  <div class="font-mono text-sm text-amber-700 dark:text-amber-300 truncate">
-                    {{ primaryEndpointScheme() }}://{{ ep.fqdn }}
-                  </div>
-                  <div class="text-xs text-amber-700/80 dark:text-amber-400/80 truncate">
-                    {{ r.label }}
-                  </div>
-                </div>
-                <a
-                  [routerLink]="['../dns']"
-                  class="text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline flex-shrink-0"
-                >
-                  Details <ng-icon name="lucideArrowRight" class="h-3 w-3 inline" />
-                </a>
-              </div>
-            }
-          }
-        } @else {
-          <app-internal-service-info
-            [applicationSlug]="app.slug"
-            [namespace]="app.k8sNamespace"
-            [port]="app.port"
-            [mode]="internalServiceMode()"
-          />
-          @if (internalServiceMode() === 'internal-app') {
-            @let iReady = internalUrlReadiness();
-            @if (iReady === 'ready') {
-              <a
-                [href]="app.internalUrl!"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="group flex items-center gap-3 px-4 py-2.5 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg hover:bg-blue-100/70 dark:hover:bg-blue-950/50 transition-colors"
-              >
-                <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                <span class="font-mono text-sm text-blue-700 dark:text-blue-300 truncate flex-1 min-w-0">
-                  {{ app.internalUrl }}
-                </span>
-                <span class="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex-shrink-0">Internal</span>
-                <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              </a>
-            } @else if (iReady === 'pending' || iReady === 'failed') {
-              <div
-                class="flex items-center gap-3 px-4 py-2.5 rounded-lg border"
-                [class]="iReady === 'failed'
-                  ? 'bg-red-50/70 dark:bg-red-950/30 border-red-200 dark:border-red-900'
-                  : 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900'"
-              >
-                @if (iReady === 'failed') {
-                  <ng-icon name="lucideAlertCircle" class="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-                } @else {
-                  <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                }
-                <div class="flex-1 min-w-0 text-sm"
-                  [class]="iReady === 'failed' ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'">
-                  @if (iReady === 'failed') { Internal endpoint failed }
-                  @else { Setting up internal endpoint… }
-                </div>
-              </div>
-            } @else {
-              <button
-                type="button"
-                disabled
-                title="Internal app hosting not configured for this cluster."
-                class="flex items-center gap-3 px-4 py-2.5 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 w-full text-left"
-              >
-                <ng-icon name="lucideGlobe" class="h-4 w-4 flex-shrink-0" />
-                <span class="text-sm truncate flex-1 min-w-0">Internal app hosting not configured</span>
-                <span class="text-xs flex-shrink-0">Ask your cluster admin</span>
-              </button>
-            }
-          }
-        }
-
-        <!-- 4 Cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-
-          <!-- Card: Replicas -->
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col gap-1">
-            <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <ng-icon name="lucideServer" class="h-3.5 w-3.5" />
-              Replicas
-            </div>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">
-              {{ replicaCounts().ready }}<span class="text-sm font-normal text-gray-400 dark:text-gray-500"> / {{ replicaCounts().desired }}</span>
-            </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">ready / desired</p>
-            <a [routerLink]="['../resources']" class="mt-auto pt-2 flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
-              Edit <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-            </a>
-          </div>
-
-          <!-- Card: CPU / Memory -->
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col gap-1">
-            <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <ng-icon name="lucideCpu" class="h-3.5 w-3.5" />
-              CPU / Memory
-            </div>
-            @if (runtime()?.containers?.[0]; as c) {
-              <div class="space-y-1 text-xs">
-                <div class="flex justify-between">
-                  <span class="text-gray-500 dark:text-gray-400">CPU req</span>
-                  <span class="font-mono font-medium text-gray-800 dark:text-gray-200">{{ c.requests.cpu ?? '—' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500 dark:text-gray-400">CPU lim</span>
-                  <span class="font-mono font-medium text-gray-800 dark:text-gray-200">{{ c.limits.cpu ?? '—' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500 dark:text-gray-400">Mem req</span>
-                  <span class="font-mono font-medium text-gray-800 dark:text-gray-200">{{ c.requests.memory ?? '—' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500 dark:text-gray-400">Mem lim</span>
-                  <span class="font-mono font-medium text-gray-800 dark:text-gray-200">{{ c.limits.memory ?? '—' }}</span>
-                </div>
-              </div>
-            } @else {
-              <p class="text-xs text-gray-400 dark:text-gray-500">—</p>
-            }
-            <a [routerLink]="['../resources']" class="mt-auto pt-2 flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
-              Edit <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-            </a>
-          </div>
-
-          <!-- Card: Configuration -->
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col gap-1">
-            <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <ng-icon name="lucideSettings" class="h-3.5 w-3.5" />
-              Configuration
-            </div>
-            @if (variablesService.loading()) {
-              <p class="text-xs text-gray-400 dark:text-gray-500">Loading...</p>
-            } @else {
-              <p class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{{ varCount() }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">env var{{ varCount() !== 1 ? 's' : '' }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                <span class="font-medium text-gray-700 dark:text-gray-300">{{ secretCount() }}</span> secret{{ secretCount() !== 1 ? 's' : '' }}
-              </p>
-            }
-            <a [routerLink]="['../configuration']" class="mt-auto pt-2 flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
-              Manage <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-            </a>
-          </div>
-
-          <!-- Card: DNS — only when the app has a public endpoint. -->
-          @if (isPublicApp()) {
-            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col gap-1">
-              <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                <ng-icon name="lucideGlobe" class="h-3.5 w-3.5" />
-                DNS Endpoints
-              </div>
-              @if (endpointsService.loading()) {
-                <p class="text-xs text-gray-400 dark:text-gray-500">Loading...</p>
-              } @else {
-                <p class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{{ appEndpointCount() }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">endpoint{{ appEndpointCount() !== 1 ? 's' : '' }}</p>
-                @if (primaryEndpoint(); as ep) {
-                  <p class="text-xs font-mono text-gray-600 dark:text-gray-300 truncate mt-1" [title]="ep.fqdn">{{ ep.fqdn }}</p>
-                }
-                @if (appEndpointCount() > 0) {
-                  <div class="mt-1 flex items-center gap-2 text-xs">
-                    <span class="flex items-center gap-0.5 text-green-600 dark:text-green-400">
-                      <ng-icon name="lucideCheckCircle" class="h-3 w-3" />{{ syncedEndpointCount() }} sync
-                    </span>
-                    @if (driftEndpointCount() > 0) {
-                      <span class="flex items-center gap-0.5 text-orange-500 dark:text-orange-400">
-                        <ng-icon name="lucideAlertCircle" class="h-3 w-3" />{{ driftEndpointCount() }} drift
-                      </span>
-                    }
-                  </div>
-                }
-              }
-              <a [routerLink]="['../dns']" class="mt-auto pt-2 flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
-                Manage <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-              </a>
-            </div>
-          }
-
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-              <ng-icon name="lucideHistory" class="h-4 w-4 text-gray-500 dark:text-gray-400" />
-              Recent Activity
-            </div>
-            <a [routerLink]="['../revisions']" class="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
-              View all <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-            </a>
-          </div>
-          @if (revisionsService.eventsLoading()) {
-            <p class="text-sm text-gray-400 dark:text-gray-500">Loading...</p>
-          } @else if (recentEvents().length === 0) {
-            <p class="text-sm text-gray-400 dark:text-gray-500">No activity yet</p>
-          } @else {
-            <div class="divide-y divide-gray-100 dark:divide-gray-700">
-              @for (ev of recentEvents(); track ev.id) {
-                <div class="flex items-center justify-between py-2 text-sm">
-                  <span class="text-gray-700 dark:text-gray-300 capitalize">{{ ev.eventType.replace('_', ' ') }}</span>
-                  <span class="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{{ ev.createdAt | date:'dd/MM HH:mm' }}</span>
-                </div>
-              }
-            </div>
-          }
-        </div>
-
-        <!-- Danger Zone — only for user apps, not if already deleted -->
-        @if (!app.systemProtected && app.status !== 'deleted') {
-          <div class="border border-red-200 dark:border-red-900/50 rounded-lg overflow-hidden">
-            <div class="px-4 py-2.5 bg-red-50/50 dark:bg-red-950/20 border-b border-red-200 dark:border-red-900/50">
-              <h3 class="text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-500">Danger Zone</h3>
-            </div>
-            <div class="flex items-center justify-between gap-4 px-4 py-3">
-              <div class="min-w-0">
-                <p class="text-sm font-medium text-gray-900 dark:text-white">Delete this application</p>
-                @if (app.status === 'deleting') {
-                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 animate-pulse">
-                    {{ deleteStepMessage() || 'Removing application and its resources...' }}
-                  </p>
-                } @else {
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Removes the deployment and all related resources. This action cannot be undone.
-                  </p>
-                }
-              </div>
-              @if (app.status === 'deleting') {
-                <div class="flex flex-col items-end gap-1 flex-shrink-0">
-                  <div class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 animate-pulse">
-                    <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
-                    Deleting...
-                  </div>
-                  <button
-                    (click)="openDeleteDialog()"
-                    [disabled]="isDeleting()"
-                    class="text-xs text-gray-400 dark:text-gray-600 hover:text-red-400 dark:hover:text-red-500 transition-colors disabled:opacity-50"
-                  >Retry</button>
-                </div>
-              } @else {
-                <button
-                  (click)="openDeleteDialog()"
-                  [disabled]="isDeleting()"
-                  class="flex-shrink-0 px-3 py-1.5 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Delete
-                </button>
-              }
-            </div>
-          </div>
-        }
-
-        <app-confirmation-dialog
-          #deleteDialog
-          variant="danger"
-          [title]="'Delete ' + (app.name || 'application')"
-          message="This will permanently remove the deployment and all related resources. This action cannot be undone."
-          confirmText="Delete"
-          (confirmed)="onDeleteConfirmed()"
-          (cancelled)="deleteDialog.close()"
-        />
-
-      </div>
-    }
-  `,
+  templateUrl: './app-overview-tab.component.html',
 })
 export class AppOverviewTabComponent implements OnInit {
   private readonly appService = inject(ApplicationService);
@@ -445,9 +81,8 @@ export class AppOverviewTabComponent implements OnInit {
 
   @ViewChild('deleteDialog') deleteDialog!: ConfirmationDialogComponent;
 
-  // Delete state
-  isDeleting = signal(false);
-  deleteStepMessage = signal<string | null>(null);
+  readonly isDeleting = signal(false);
+  readonly deleteStepMessage = signal<string | null>(null);
 
   constructor() {
     effect(() => {
@@ -484,27 +119,22 @@ export class AppOverviewTabComponent implements OnInit {
   readonly driftEndpointCount = computed(() =>
     this.appEndpoints().filter(e => e.reconciliationStatus === 'DRIFT' || e.reconciliationStatus === 'ERROR').length
   );
-  /** First in-sync endpoint — used to surface the live app URL in the Overview header. */
   readonly primaryEndpoint = computed(() =>
     this.appEndpoints().find(e => e.reconciliationStatus === 'IN_SYNC') ?? null
   );
   readonly extraInSyncCount = computed(() => Math.max(0, this.syncedEndpointCount() - 1));
 
-  /** Readiness (DNS + certificate) of the primary endpoint — gates the clickable "Open app" link. */
   readonly primaryEndpointReadiness = computed(() =>
     evaluateEndpointReadiness(this.primaryEndpoint()),
   );
 
-  /** Catalog slug stamped on the app as a K8s label when it was installed from the marketplace. */
   readonly catalogSlug = computed<string | undefined>(() => {
     const labels = (this.app() as { labels?: Record<string, string> } | null)?.labels;
     return labels?.[CATALOG_APP_LABEL];
   });
 
-  /** entrypointPath from the catalog manifest for this app, resolved async via catalog list cache. */
   private readonly catalogEntrypointPath = signal<string | undefined>(undefined);
 
-  /** Full "Open app" URL: honours the catalog manifest's entrypointPath when available. */
   readonly openAppUrl = computed(() =>
     buildOpenAppUrl(
       this.primaryEndpoint()?.fqdn,
@@ -513,24 +143,16 @@ export class AppOverviewTabComponent implements OnInit {
     ),
   );
 
-  /** Scheme for the primary endpoint — http when TLS is not enabled (e.g. DNS-only,
-   *  no cert) so we don't link users to a URL that will throw a TLS error. */
   readonly primaryEndpointScheme = computed(() =>
     this.primaryEndpoint()?.tlsEnabled ? 'https' : 'http',
   );
 
-  /** True when the app is expected to have a publicly reachable URL (Ingress + DNS + TLS). */
   readonly isPublicApp = computed(() => hasPublicEndpoint(this.app()));
 
-  /** Which flavor of the internal-service panel to render on Overview for non-public apps.
-   *  Building-block takes priority — a BB may also carry exposure=internal but it's never
-   *  a user-facing internal app, so we always render the cluster-local service info. */
   readonly internalServiceMode = computed<InternalServiceMode>(() =>
     isBuildingBlock(this.app()) ? 'building-block' : 'internal-app',
   );
 
-  /** Readiness state for the internal URL — mirrors the endpoint-readiness pattern used
-   *  by public apps so the overview card shows the same pending/failed/ready states. */
   readonly internalUrlReadiness = computed<'pending' | 'failed' | 'ready' | 'not-configured'>(() => {
     const app = this.app();
     if (!app) return 'not-configured';
@@ -541,7 +163,6 @@ export class AppOverviewTabComponent implements OnInit {
     return 'not-configured';
   });
 
-  /** Live replica counts — prefers polled metrics, falls back to the runtime snapshot. */
   readonly replicaCounts = computed(() => {
     const status = this.monitoringService.statusMetrics();
     const rt = this.runtime();
@@ -583,9 +204,8 @@ export class AppOverviewTabComponent implements OnInit {
   }
 
   getLimitPercent(usage: number | null, limit: number | null): number {
-    const u = usage ?? 0;
-    const l = limit ?? 0;
-    return l > 0 ? Math.min((u / l) * 100, 100) : 0;
+    if (!limit || limit <= 0) return 0;
+    return Math.min(((usage ?? 0) / limit) * 100, 100);
   }
 
   getMetricColor(value: number, warn: number, danger: number): string {
@@ -614,7 +234,6 @@ export class AppOverviewTabComponent implements OnInit {
 
   private resolveStatus(m: AppMetricsDto): 'healthy' | 'degraded' | 'down' {
     const s = m.status;
-    // StatefulSet/DaemonSet: replica fields are null — fall back to pod phases
     if (s.replicas_ready == null && s.replicas_desired == null) {
       const running = m.pods?.some(p => p.phase === 'Running' && (p.count ?? 0) > 0) ?? false;
       return running ? 'healthy' : 'down';

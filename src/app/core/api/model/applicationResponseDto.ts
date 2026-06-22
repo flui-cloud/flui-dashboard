@@ -22,6 +22,8 @@ export interface ApplicationResponseDto {
     kind: ApplicationResponseDto.KindEnum;
     sourceType: ApplicationResponseDto.SourceTypeEnum;
     clusterId: string;
+    /** Owning project id (null/undefined if unassigned). */
+    projectId?: string | null;
     k8sNamespace: string;
     status: ApplicationResponseDto.StatusEnum;
     reconciliationStatus: ApplicationResponseDto.ReconciliationStatusEnum;
