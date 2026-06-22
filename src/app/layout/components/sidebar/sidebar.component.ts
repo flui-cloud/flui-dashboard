@@ -29,6 +29,7 @@ import {
   lucideBinoculars,
   lucideMessageCircleWarning,
   lucideKeyRound,
+  lucideFolders,
   lucideCpu,
   lucideShieldCheck,
   lucideShieldPlus,
@@ -69,8 +70,16 @@ import {
 import { ThemeService } from '../../../core/services/theme.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApplicationService } from '../../../features/service/application.service';
-
-const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
+import { PermissionService } from '../../../core/services/permission.service';
+import {
+  ALL_MANAGEMENT_ITEMS,
+  CLUSTER_ITEMS,
+  DEPLOY_ITEMS,
+  FIREWALL_ITEMS,
+  INFRASTRUCTURE_ITEMS,
+  MANAGEMENT_SECTION_BY_LABEL,
+  SHOW_SYSTEM_APPS_KEY,
+} from './sidebar-nav.config';
 
 @Component({
   selector: 'sidebar',
@@ -125,6 +134,7 @@ const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
       lucideBinoculars,
       lucideMessageCircleWarning,
       lucideKeyRound,
+      lucideFolders,
       lucideCpu,
       lucideShieldCheck,
       lucideShieldPlus,
@@ -136,213 +146,39 @@ const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
       lucideGithub,
     }),
   ],
-  template: `
-    <hlm-sidebar
-      [variant]="sidebarVariant()"
-      [collapsibleMode]="collapsibleMode()"
-    >
-      <hlm-sidebar-header>
-        <div class="flex items-center min-w-0">
-          <div
-            class="flex w-full items-center"
-            [class.justify-center]="!_sidebarService.isExpanded()"
-          >
-            <div class="flex items-center" [class.gap-2]="_sidebarService.isExpanded()">
-              <div class="flex h-8 w-8 items-center justify-center">
-                <img src="icons/logo.png" alt="flui.cloud logo" class="h-6 w-6 object-contain" />
-              </div>
-              @if (_sidebarService.isExpanded()) {
-              <div class="flex min-w-0 flex-col">
-                <span class="truncate text-sm font-semibold text-foreground"
-                  >flui.cloud</span
-                >
-                <span class="truncate text-xs text-muted-foreground"
-                  >EU Cloud Platform</span
-                >
-              </div>
-              }
-            </div>
-          </div>
-        </div>
-      </hlm-sidebar-header>
-
-      <hlm-sidebar-nav
-        class="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin scrollbar-thumb-gray-300/30 scrollbar-track-transparent"
-      >
-        <!-- Dashboard -->
-        <hlm-sidebar-item
-          label="Home"
-          routerLink="/dashboard"
-          routerLinkActive="active"
-          (clicked)="onNavigate('/dashboard')"
-        >
-          <ng-icon
-            hlm
-            name="lucideLayoutDashboard"
-            class="h-4 w-4 text-muted-foreground"
-          />
-        </hlm-sidebar-item>
-
-        <!-- Cluster Section -->
-        <div hlmSidebarSectionTitle>Cluster</div>
-
-        <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1">
-          <hlm-sidebar-group>
-            <hlm-sidebar-group-label
-              [label]="'Flui Clusters'"
-              [items]="clusterItems"
-            >
-              <ng-icon
-                hlm
-                name="lucideCloud"
-                class="h-4 w-4 text-primary"
-              />
-            </hlm-sidebar-group-label>
-            <hlm-sidebar-group-content [items]="clusterItems" />
-          </hlm-sidebar-group>
-        </div>
-
-        <!-- Workloads Section -->
-        <div hlmSidebarSectionTitle>Workloads</div>
-
-        <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1">
-          <hlm-sidebar-group #workloadsGroup>
-            <hlm-sidebar-group-label
-              [label]="'Workloads'"
-              [items]="workloadItems()"
-            >
-              <ng-icon
-                hlm
-                name="lucideContainer"
-                class="h-4 w-4 text-primary"
-              />
-            </hlm-sidebar-group-label>
-            <hlm-sidebar-group-content [items]="workloadItems()" />
-            @if (_sidebarService.isExpanded() && _workloadsGroup()?.isExpanded()) {
-              <button
-                type="button"
-                (click)="toggleShowSystemApps()"
-                class="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <ng-icon hlm name="lucideShield" class="h-3.5 w-3.5" />
-                <span>{{ showSystemApps() ? 'Hide' : 'Show' }} system</span>
-              </button>
-            }
-          </hlm-sidebar-group>
-        </div>
-
-        <!-- Deploy Section -->
-        <div hlmSidebarSectionTitle>Deploy</div>
-
-        <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1">
-          <hlm-sidebar-group>
-            <hlm-sidebar-group-label
-              [label]="'Deploy'"
-              [items]="deployItems"
-            >
-              <ng-icon
-                hlm
-                name="lucideZap"
-                class="h-4 w-4 text-primary"
-              />
-            </hlm-sidebar-group-label>
-            <hlm-sidebar-group-content [items]="deployItems" />
-          </hlm-sidebar-group>
-        </div>
-
-        <!-- Infrastructure Section -->
-        <div hlmSidebarSectionTitle>Infrastructure</div>
-
-        <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1 space-y-1">
-          <hlm-sidebar-group>
-            <hlm-sidebar-group-label
-              [label]="'Infrastructure'"
-              [items]="infrastructureItems"
-            >
-              <ng-icon
-                hlm
-                name="lucideServer"
-                class="h-4 w-4 text-primary"
-              />
-            </hlm-sidebar-group-label>
-            <hlm-sidebar-group-content [items]="infrastructureItems" />
-          </hlm-sidebar-group>
-
-          <hlm-sidebar-group>
-            <hlm-sidebar-group-label
-              [label]="'Firewall'"
-              [items]="firewallItems"
-            >
-              <ng-icon
-                hlm
-                name="lucideShield"
-                class="h-4 w-4 text-primary"
-              />
-            </hlm-sidebar-group-label>
-            <hlm-sidebar-group-content [items]="firewallItems" />
-          </hlm-sidebar-group>
-        </div>
-
-        <!-- Management Section -->
-        <div hlmSidebarSectionTitle>Management</div>
-
-        <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1">
-          <hlm-sidebar-group>
-            <hlm-sidebar-group-label
-              [label]="'Management'"
-              [items]="allManagementItems"
-            >
-              <ng-icon
-                hlm
-                name="lucideCloud"
-                class="h-4 w-4 text-primary"
-              />
-            </hlm-sidebar-group-label>
-            <hlm-sidebar-group-content [items]="allManagementItems" />
-          </hlm-sidebar-group>
-        </div>
-      </hlm-sidebar-nav>
-
-      <hlm-sidebar-footer
-        [title]="_userDisplayName()"
-        [subtitle]="_userEmail()"
-        [initials]="_userInitials()"
-        hlmMenuBarItem
-        brnMenuItem
-        [brnMenuTriggerFor]="menu"
-      />
-    </hlm-sidebar>
-
-    <ng-template #menu>
-      <hlm-menu [class]="_computedHlmMenuClass()">
-        <hlm-menu-group>
-          <button hlmMenuItem routerLink="/settings">
-            <ng-icon hlm name="lucideUser" hlmMenuIcon />
-            <span>Profile</span>
-          </button>
-          <button hlmMenuItem routerLink="/settings">
-            <ng-icon hlm name="lucideSettings" hlmMenuIcon />
-            <span>Settings</span>
-          </button>
-        </hlm-menu-group>
-        <hlm-menu-separator />
-        <button hlmMenuItem (click)="onLogout()">
-          <ng-icon hlm name="lucideLogOut" hlmMenuIcon />
-          <span>Log out</span>
-        </button>
-      </hlm-menu>
-    </ng-template>
-  `,
+  templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent {
-  sidebarVariant = input<SidebarVariant>('sidebar');
-  collapsibleMode = input<CollapsibleMode>('icon');
+  readonly sidebarVariant = input<SidebarVariant>('sidebar');
+  readonly collapsibleMode = input<CollapsibleMode>('icon');
 
   protected readonly _sidebarService = inject(BrnSidebarService);
   protected readonly _themeService = inject(ThemeService);
   private readonly _authService = inject(AuthService);
   private readonly _router = inject(Router);
   private readonly _appService = inject(ApplicationService);
+  private readonly _perms = inject(PermissionService);
+
+  readonly infrastructureItems = INFRASTRUCTURE_ITEMS;
+  readonly firewallItems = FIREWALL_ITEMS;
+  readonly deployItems = DEPLOY_ITEMS;
+  readonly clusterItems = CLUSTER_ITEMS;
+  private readonly allManagementItems = ALL_MANAGEMENT_ITEMS;
+
+  constructor() {
+    this._perms.load();
+  }
+
+  canSee(section: string): boolean {
+    return this._perms.hasSection(section);
+  }
+
+  readonly visibleManagementItems = computed<SidebarNavItem[]>(() =>
+    this.allManagementItems.filter((item) => {
+      const section = MANAGEMENT_SECTION_BY_LABEL[item.label];
+      return section ? this.canSee(section) : true;
+    }),
+  );
 
   protected readonly showSystemApps = signal<boolean>(this._readShowSystemApps());
 
@@ -394,51 +230,6 @@ export class SidebarComponent {
     });
   }
 
-  // Infrastructure items
-  infrastructureItems: SidebarNavItem[] = [
-    {
-      label: 'Compute',
-      link: '/infrastructure/compute',
-      routerLinkActive: 'active',
-      icon: 'lucideServer',
-    },
-    {
-      label: 'Virtual Networks',
-      link: '/infrastructure/vnet',
-      routerLinkActive: 'active',
-      icon: 'lucideNetwork',
-    },
-    {
-      label: 'SSH Keys',
-      link: '/infrastructure/keys',
-      routerLinkActive: 'active',
-      icon: 'lucideKeyRound',
-    },
-    {
-      label: 'Domains',
-      link: '/infrastructure/domains',
-      routerLinkActive: 'active',
-      icon: 'lucideGlobe',
-    },
-    {
-      label: 'Platform',
-      link: '/infrastructure/platform-components',
-      routerLinkActive: 'active',
-      icon: 'lucidePackage',
-    },
-  ];
-
-  // Firewall items (grouped submenu)
-  firewallItems: SidebarNavItem[] = [
-    {
-      label: 'Cluster Firewalls',
-      link: '/infrastructure/firewall/clusters',
-      routerLinkActive: 'active',
-      icon: 'lucideShieldCheck',
-    },
-  ];
-
-  // Workload items — kind-scoped entries with live badge counts
   readonly workloadItems = computed<SidebarNavItem[]>(() => {
     const dbCount = this._appService.databasesCount();
     const appCount = this._appService.applicationsCount();
@@ -477,74 +268,4 @@ export class SidebarComponent {
 
     return items;
   });
-
-  // Deploy items — entry points to add new workloads
-  deployItems: SidebarNavItem[] = [
-    {
-      label: 'App Catalog',
-      link: '/apps/catalog',
-      routerLinkActive: 'active',
-      icon: 'lucideStore',
-    },
-    {
-      label: 'Repositories',
-      link: '/apps/repositories',
-      routerLinkActive: 'active',
-      icon: 'lucideGitBranch',
-    },
-    {
-      label: 'Templates',
-      link: '/apps/templates',
-      routerLinkActive: 'active',
-      icon: 'lucideFileText',
-    },
-    {
-      label: 'Deploy New',
-      link: '/apps/deploy/new',
-      routerLinkActive: 'active',
-      icon: 'lucideRocket',
-    },
-  ];
-
-  // Management items (Providers + Backup + GitHub Setup + Settings)
-  allManagementItems: SidebarNavItem[] = [
-    {
-      label: 'Providers',
-      link: '/management/providers',
-      routerLinkActive: 'active',
-      icon: 'lucideCloud',
-    },
-    {
-      label: 'Backup',
-      link: '/management/backup',
-      routerLinkActive: 'active',
-      icon: 'lucideArchive',
-    },
-    {
-      label: 'GitHub Setup',
-      link: '/apps/repositories/github-setup',
-      routerLinkActive: 'active',
-      icon: 'lucideGithub',
-    },
-    {
-      label: 'Settings',
-      link: '/settings',
-      routerLinkActive: 'active',
-      icon: 'lucideSettings',
-    },
-  ];
-
-  clusterItems: SidebarNavItem[] = [
-    {
-      label: 'Clusters',
-      link: '/cluster',
-      routerLinkActive: 'active',
-      icon: 'lucideBoxes',
-    },
-  ];
-
-  onNavigate(route: string) {
-    // Navigation logic here
-    console.log('Navigating to:', route);
-  }
 }

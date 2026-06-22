@@ -23,6 +23,27 @@ export const managementRoutes: Routes = [
     title: 'Manage Provider - flui.cloud',
   },
   {
+    path: 'access',
+    redirectTo: 'access/grants',
+    pathMatch: 'full',
+  },
+  {
+    path: 'access/:tab',
+    loadComponent: () =>
+      import('./features/components/access/access.component').then(
+        (m) => m.AccessComponent,
+      ),
+    title: 'Access - flui.cloud',
+  },
+  {
+    path: 'projects',
+    loadComponent: () =>
+      import('./features/components/projects/projects.component').then(
+        (m) => m.ProjectsComponent,
+      ),
+    title: 'Projects - flui.cloud',
+  },
+  {
     path: 'backup',
     children: [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
