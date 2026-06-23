@@ -12,6 +12,7 @@ import {
   lucideShieldCheck,
   lucideShieldPlus,
   lucideInfo,
+  lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import {
   HlmCardDirective,
@@ -56,6 +57,7 @@ const FIELD =
       lucideShieldCheck,
       lucideShieldPlus,
       lucideInfo,
+      lucideTriangleAlert,
     }),
   ],
   templateUrl: './people-tab.component.html',

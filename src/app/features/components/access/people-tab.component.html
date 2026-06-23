@@ -165,6 +165,14 @@
     </div>
   }
 
+  @if (iam.usersError(); as err) {
+    <div hlmCard class="border-destructive/40">
+      <div hlmCardContent class="flex items-start gap-2 pt-5 text-sm text-destructive">
+        <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
+        <span>Couldn’t load users — {{ err }}</span>
+      </div>
+    </div>
+  } @else {
   <div hlmCard>
     <div hlmCardContent class="pt-5">
       <div class="overflow-x-auto">
@@ -235,11 +243,19 @@
                 </td>
               </tr>
             }
+            @if (!iam.users().length) {
+              <tr>
+                <td colspan="5" class="py-6 text-center text-sm text-muted-foreground">
+                  No users yet.
+                </td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
     </div>
   </div>
+  }
 
   <app-confirmation-dialog
     #adminDialog

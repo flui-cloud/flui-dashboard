@@ -89,6 +89,9 @@ export class IamService {
   private readonly _users = signal<UserRecord[]>([]);
   readonly users = this._users.asReadonly();
 
+  private readonly _usersError = signal<string | null>(null);
+  readonly usersError = this._usersError.asReadonly();
+
   private readonly _lastInvite = signal<InviteResult | null>(null);
   readonly lastInvite = this._lastInvite.asReadonly();
 
@@ -187,11 +190,15 @@ export class IamService {
   }
 
   private loadUsers(): void {
+    this._usersError.set(null);
     this.http
       .get<IdentityUserDto[]>(`${this.appConfig.apiBaseUrl}/api/v1/auth/users`)
       .subscribe({
         next: (rows) => this._users.set(rows.map((u) => toUserRecord(u))),
-        error: () => this._users.set([]),
+        error: (e) => {
+          this._users.set([]);
+          this._usersError.set(this.errorMessage(e));
+        },
       });
   }
 
@@ -406,11 +413,15 @@ export class IamService {
     this._groups.update((gs) => gs.map((x) => (x.name === rec.name ? rec : x)));
   }
 
-  private fail(action: string, err: unknown): void {
+  private errorMessage(err: unknown): string {
     const e = err as { error?: { message?: string }; message?: string };
+    return e?.error?.message ?? e?.message ?? 'Unexpected error';
+  }
+
+  private fail(action: string, err: unknown): void {
     this.notify.add({
       title: `Couldn't ${action}`,
-      body: e?.error?.message ?? e?.message,
+      body: this.errorMessage(err),
       type: 'error',
       source: 'manual',
     });
