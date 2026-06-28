@@ -6,7 +6,10 @@ import { InfrastructureOperationsService } from '../../core/api/api/infrastructu
 import { VirtualInstancesService } from '../../core/api/api/virtualInstances.service';
 import { ProviderManagementService } from '../../core/api/api/providerManagement.service';
 import { CreateClusterDto, UpdateClusterVNetDto, ProviderDefinitionDto, ClusterResponseDto } from '../../core/api/model/models';
-import { InstanceWithLabels } from '../model/instance.models';
+import {
+  InstanceWithLabels,
+  mapClusterNodeToInstance,
+} from '../model/instance.models';
 import { InfrastructureWebSocketService } from './infrastructure-websocket.service';
 
 export interface ProviderInfo {
@@ -37,16 +40,14 @@ export class ClusterService {
   private readonly currentStepIndex = signal<number>(0);
   private readonly totalSteps = signal<number>(0);
   private readonly currentStepProgress = signal<number>(0);
-  private readonly stepMessages: Set<string> = new Set(); // Track unique step identifiers for dynamic steps
+  private readonly stepMessages: Set<string> = new Set();
   private readonly operationStatus = signal<OperationStatus | null>(null);
 
-  // Cluster list management signals
   private readonly clustersList = signal<ClusterInfo[]>([]);
   private readonly selectedClusterId = signal<string | null>(null);
   private readonly listLoading = signal<boolean>(false);
   private readonly listError = signal<string | null>(null);
 
-  // Provider management signals
   private readonly providersList = signal<ProviderInfo[]>([]);
   private readonly providersLoading = signal<boolean>(false);
   private readonly providersError = signal<string | null>(null);
@@ -62,11 +63,9 @@ export class ClusterService {
   readonly stepProgress = this.currentStepProgress.asReadonly();
   readonly operation = this.operationStatus.asReadonly();
 
-  // Deletion progress: map of clusterId → percentage (0–100), present while deleting
   private readonly deletionProgressMap = signal<Record<string, number>>({});
   readonly deletionProgress = this.deletionProgressMap.asReadonly();
 
-  // Attach-VNet operation state
   private readonly attachVNetInProgress = signal<boolean>(false);
   private readonly attachVNetProgressSig = signal<number>(0);
   private readonly attachVNetMessageSig = signal<string>('');
@@ -80,18 +79,15 @@ export class ClusterService {
   readonly attachVNetTotalSteps = this.attachVNetTotalStepsSig.asReadonly();
   readonly attachVNetError = this.attachVNetErrorSig.asReadonly();
 
-  // Cluster list readonly signals
   readonly clusters = this.clustersList.asReadonly();
   readonly selectedId = this.selectedClusterId.asReadonly();
   readonly listIsLoading = this.listLoading.asReadonly();
   readonly listErrorMessage = this.listError.asReadonly();
 
-  // Provider readonly signals
   readonly providers = this.providersList.asReadonly();
   readonly providersIsLoading = this.providersLoading.asReadonly();
   readonly providersErrorMessage = this.providersError.asReadonly();
 
-  // Cluster nodes state
   private readonly clusterNodes = signal<InstanceWithLabels[]>([]);
   readonly nodes = this.clusterNodes.asReadonly();
   private readonly nodesLoading = signal<boolean>(false);
@@ -113,7 +109,6 @@ export class ClusterService {
     return this.clustersList().find(c => c.id === id) || null;
   });
 
-  // Provider computed signals
   readonly hasConfiguredProviders = computed(() =>
     this.providersList().some(p => p.configured && p.enabled)
   );
@@ -124,25 +119,21 @@ export class ClusterService {
     this.providersList().filter(p => p.enabled)
   );
 
-  // Provider-related methods
   async loadProviders(): Promise<void> {
     this.providersLoading.set(true);
     this.providersError.set(null);
 
     try {
-      // First, get list of available providers
       const availableProviders = await firstValueFrom(
         this.providersApi.managementControllerGetAvailableProviders()
       );
 
-      // Then, for each provider, check if it's configured
       const providersWithConfig: ProviderInfo[] = await Promise.all(
         availableProviders.map(async (provider: ProviderDefinitionDto) => {
           const providerId = provider.id;
           let isConfigured = false;
 
           try {
-            // Check if provider has configuration
             const config = await firstValueFrom(
               this.providersApi.managementControllerGetProviderConfiguration(providerId)
             );
@@ -180,13 +171,11 @@ export class ClusterService {
     return this.providersList().filter(p => p.configured && p.enabled);
   }
 
-  // Cluster lifecycle methods
   async loadClusterInfo(): Promise<ClusterInfo> {
     this.isLoading.set(true);
     this.error.set(null);
 
     try {
-      // Simulate API call
       await this.delay(800);
 
       const cluster = this.clusterInfo();
@@ -203,13 +192,28 @@ export class ClusterService {
     }
   }
 
+  async updateSshTarget(
+    clusterId: string,
+    target: { host?: string; port: number; user: string },
+  ): Promise<void> {
+    const byos: Record<string, string | number> = {
+      port: target.port,
+      user: target.user,
+    };
+    if (target.host) byos['host'] = target.host;
+    await firstValueFrom(
+      this.clustersApi.clustersControllerUpdateClusterMetadata(clusterId, {
+        metadata: { byos },
+      }),
+    );
+  }
+
   async createCluster(config: ClusterConfiguration): Promise<{ operationId: string; clusterId: string }> {
     this.isLoading.set(true);
     this.error.set(null);
     this.creationProgress.set(0);
     this.creationMessage.set('Initializing cluster creation...');
 
-    // Reset dynamic steps tracking
     this.stepMessages.clear();
     this.creationSteps.set([]);
     this.currentStepIndex.set(0);
@@ -217,7 +221,6 @@ export class ClusterService {
     this.currentStepProgress.set(0);
 
     try {
-      // Prepare API request
       const createClusterDto: CreateClusterDto = {
         name: config.name,
         provider: config.provider as CreateClusterDto.ProviderEnum,
@@ -279,10 +282,6 @@ export class ClusterService {
     }
   }
 
-  /**
-   * Add or update dynamic step based on new API structure
-   * Uses currentStep identifier instead of message for tracking
-   */
   private addDynamicStep(
     currentStepId: string,
     stepDescription: string,
@@ -329,7 +328,7 @@ export class ClusterService {
 
   private async pollOperationStatus(operationId: string, clusterId: string, operationType: 'create' | 'delete' | 'stop' | 'start' = 'create'): Promise<void> {
     const POLL_INTERVAL = 3000;
-    const MAX_POLLS = 600; // 30 minutes
+    const MAX_POLLS = 600;
     let pollCount = 0;
 
     const operationMessages = {
@@ -371,7 +370,6 @@ export class ClusterService {
       pollCount++;
 
       try {
-        // Fetch operation status
         const statusResponse = await firstValueFrom(
           this.operationsApi.infrastructureOperationsControllerGetOperationStatus(operationId)
         );
@@ -394,7 +392,6 @@ export class ClusterService {
           this.creationMessage.set(stepDescription);
         }
 
-        // Create dynamic step based on currentStep identifier
         this.addDynamicStep(
           status.currentStep,
           stepDescription,
@@ -404,35 +401,14 @@ export class ClusterService {
           status.progress
         );
 
-        // Check operation status
         if (status.status === 'COMPLETED') {
           this.creationProgress.set(100);
           this.creationMessage.set(messages.success);
-
-          // Mark last step as completed
-          const steps = this.creationSteps();
-          if (steps.length > 0) {
-            const lastStep = steps.at(-1)!;
-            if (lastStep.status === 'running') {
-              this.updateCreationStep(lastStep.id, {
-                status: 'completed',
-                completedAt: new Date(),
-              });
-            }
-          }
-
-          // Add final completion step
-          const finalStep: ClusterCreationStep = {
-            id: `step-final-${Date.now()}`,
-            title: messages.success,
-            description: operationType === 'create' ? 'Your cluster is ready to use' : 'Operation completed',
-            status: 'completed',
-            startedAt: new Date(),
-            completedAt: new Date(),
-          };
-          this.creationSteps.update((currentSteps) => [...currentSteps, finalStep]);
-
-          // Fetch final cluster details
+          this.completeLastRunningStep();
+          this.appendFinalStep(
+            messages.success,
+            operationType === 'create' ? 'Your cluster is ready to use' : 'Operation completed'
+          );
           await this.fetchClusterDetails(clusterId);
           return;
         } else if (status.status === 'FAILED') {
@@ -440,20 +416,8 @@ export class ClusterService {
           console.error(`❌ ${messages.failed}:`, errorMsg);
           this.error.set(errorMsg);
           this.creationMessage.set(errorMsg);
+          this.failLastRunningStep(errorMsg);
 
-          // Mark last step as error
-          const steps = this.creationSteps();
-          if (steps.length > 0) {
-            const lastStep = steps.at(-1)!;
-            if (lastStep.status === 'running') {
-              this.updateCreationStep(lastStep.id, {
-                status: 'error',
-                details: errorMsg,
-              });
-            }
-          }
-
-          // Update cluster status to error only for create/delete operations
           if (operationType === 'create' || operationType === 'delete') {
             this.clusterInfo.update((cluster) =>
               cluster ? { ...cluster, status: ClusterStatus.ERROR } : null
@@ -461,24 +425,17 @@ export class ClusterService {
           }
           return;
         } else {
-          // Still IN_PROGRESS or PENDING, continue polling
           setTimeout(() => poll(), POLL_INTERVAL);
         }
       } catch (error: any) {
         console.error('❌ Error polling operation status:', error);
-        // Continue polling even on error, might be temporary network issue
         setTimeout(() => poll(), POLL_INTERVAL);
       }
     };
 
-    // Start polling
     poll();
   }
 
-  /**
-   * Public method to start polling for an operation by operationId only
-   * (used by progress tracker route)
-   */
   async trackOperation(operationId: string): Promise<void> {
     const POLL_INTERVAL = 3000;
     const MAX_POLLS = 600;
@@ -502,12 +459,10 @@ export class ClusterService {
         const status = statusResponse as OperationStatus;
         this.operationStatus.set(status);
 
-        // Try to extract clusterId from metadata or from the status itself
         if (!clusterId && status.metadata?.['clusterId']) {
           clusterId = status.metadata['clusterId'];
         }
 
-        // Update progress
         this.creationProgress.set(status.progress);
         this.currentStepIndex.set(status.currentStepIndex);
         this.totalSteps.set(status.totalSteps);
@@ -522,7 +477,6 @@ export class ClusterService {
           this.creationMessage.set(stepDescription);
         }
 
-        // Create dynamic step
         this.addDynamicStep(
           status.currentStep,
           stepDescription,
@@ -532,35 +486,12 @@ export class ClusterService {
           status.progress
         );
 
-        // Check completion
         if (status.status === 'COMPLETED') {
           this.creationProgress.set(100);
           this.creationMessage.set('Operation completed successfully!');
+          this.completeLastRunningStep();
+          this.appendFinalStep('Operation completed successfully!', 'Your cluster is ready to use');
 
-          // Mark last step as completed
-          const steps = this.creationSteps();
-          if (steps.length > 0) {
-            const lastStep = steps.at(-1)!;
-            if (lastStep.status === 'running') {
-              this.updateCreationStep(lastStep.id, {
-                status: 'completed',
-                completedAt: new Date(),
-              });
-            }
-          }
-
-          // Add final completion step
-          const finalStep: ClusterCreationStep = {
-            id: `step-final-${Date.now()}`,
-            title: 'Operation completed successfully!',
-            description: 'Your cluster is ready to use',
-            status: 'completed',
-            startedAt: new Date(),
-            completedAt: new Date(),
-          };
-          this.creationSteps.update((currentSteps) => [...currentSteps, finalStep]);
-
-          // Fetch cluster details if we have clusterId
           if (clusterId) {
             await this.fetchClusterDetails(clusterId);
           }
@@ -570,20 +501,8 @@ export class ClusterService {
           console.error('❌ Operation failed:', errorMsg);
           this.error.set(errorMsg);
           this.creationMessage.set(errorMsg);
+          this.failLastRunningStep(errorMsg);
 
-          // Mark last step as error
-          const steps = this.creationSteps();
-          if (steps.length > 0) {
-            const lastStep = steps.at(-1)!;
-            if (lastStep.status === 'running') {
-              this.updateCreationStep(lastStep.id, {
-                status: 'error',
-                details: errorMsg,
-              });
-            }
-          }
-
-          // Update cluster status to error if we have clusterId
           if (clusterId) {
             this.clusterInfo.update((cluster) =>
               cluster ? { ...cluster, status: ClusterStatus.ERROR } : null
@@ -591,7 +510,6 @@ export class ClusterService {
           }
           return;
         } else {
-          // Continue polling
           setTimeout(() => poll(), POLL_INTERVAL);
         }
       } catch (error: any) {
@@ -600,20 +518,55 @@ export class ClusterService {
       }
     };
 
-    // Start polling
     poll();
   }
 
-  /**
-   * Fetch cluster details after creation completes
-   */
+  private completeLastRunningStep(): void {
+    const steps = this.creationSteps();
+    if (steps.length === 0) {
+      return;
+    }
+    const lastStep = steps.at(-1)!;
+    if (lastStep.status === 'running') {
+      this.updateCreationStep(lastStep.id, {
+        status: 'completed',
+        completedAt: new Date(),
+      });
+    }
+  }
+
+  private failLastRunningStep(errorMsg: string): void {
+    const steps = this.creationSteps();
+    if (steps.length === 0) {
+      return;
+    }
+    const lastStep = steps.at(-1)!;
+    if (lastStep.status === 'running') {
+      this.updateCreationStep(lastStep.id, {
+        status: 'error',
+        details: errorMsg,
+      });
+    }
+  }
+
+  private appendFinalStep(title: string, description: string): void {
+    const finalStep: ClusterCreationStep = {
+      id: `step-final-${Date.now()}`,
+      title,
+      description,
+      status: 'completed',
+      startedAt: new Date(),
+      completedAt: new Date(),
+    };
+    this.creationSteps.update((currentSteps) => [...currentSteps, finalStep]);
+  }
+
   private async fetchClusterDetails(clusterId: string): Promise<void> {
     try {
       const clusterResponse = await firstValueFrom(
         this.clustersApi.clustersControllerGetCluster(clusterId)
       );
 
-      // Update cluster info with actual data
       const updatedCluster: ClusterInfo = {
         id: clusterResponse.id,
         name: clusterResponse.name,
@@ -640,25 +593,72 @@ export class ClusterService {
     }
   }
 
-  /**
-   * Load cluster nodes (instances)
-   */
+  isByosCluster(): boolean {
+    return String(this.clusterInfo()?.provider ?? '').toLowerCase() === 'byos';
+  }
+
+  async issueJoinToken(
+    clusterId: string,
+    opts: { masterIp?: string; nodeNetwork?: string },
+  ): Promise<{
+    token: string;
+    command: string;
+    expiresAt: string;
+    masterIp: string;
+    nodeNetwork?: string;
+    serverName: string;
+  }> {
+    return firstValueFrom(
+      this.clustersApi.clustersControllerIssueJoinToken(clusterId, opts),
+    );
+  }
+
+  async ensureByosVNet(
+    clusterId: string,
+    ipRange?: string,
+  ): Promise<{
+    vnetId: string;
+    subnetId: string;
+    ipRange: string;
+    attachedNodes: number;
+    warnings: string[];
+  }> {
+    return firstValueFrom(
+      this.clustersApi.clustersControllerEnsureByosVNet(
+        clusterId,
+        ipRange ? { ipRange } : {},
+      ),
+    );
+  }
+
   async loadClusterNodes(clusterId: string): Promise<void> {
     this.nodesLoading.set(true);
     this.nodesError.set(null);
 
     try {
+      if (this.isByosCluster()) {
+        const nodes = await firstValueFrom(
+          this.clustersApi.clustersControllerGetClusterNodes(clusterId)
+        );
+        this.clusterNodes.set(
+          (Array.isArray(nodes) ? nodes : []).map((n) =>
+            mapClusterNodeToInstance(n, clusterId)
+          )
+        );
+        return;
+      }
+
       const response = await firstValueFrom(
         this.instancesApi.instancesControllerFindAll(
-          undefined, // type
-          undefined, // status
-          undefined, // provider
-          undefined, // region
-          undefined, // dataCenter
-          undefined, // search
-          clusterId, // clusterId - filter by cluster ID
-          undefined, // ownership
-          true       // skipCache - always fetch fresh data from providers
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          clusterId,
+          undefined,
+          true
         )
       );
 
@@ -666,7 +666,6 @@ export class ClusterService {
         console.warn('Partial errors loading nodes:', response.partialErrors);
       }
 
-      // InstanceDto already matches InstanceWithLabels structure
       this.clusterNodes.set(response.data as InstanceWithLabels[]);
     } catch (error: any) {
       console.error('❌ Failed to load cluster nodes:', error);
@@ -678,18 +677,12 @@ export class ClusterService {
     }
   }
 
-  /**
-   * Clear cluster nodes data
-   */
   clearClusterNodes(): void {
     this.clusterNodes.set([]);
     this.nodesError.set(null);
   }
 
 
-  /**
-   * Map API status to internal ClusterStatus enum
-   */
   private mapApiStatusToClusterStatus(apiStatus: string): ClusterStatus {
     switch (apiStatus.toLowerCase()) {
       case 'creating':
@@ -715,9 +708,6 @@ export class ClusterService {
     }
   }
 
-  /**
-   * Load all clusters for the current user
-   */
   async loadClusters(): Promise<void> {
     this.listLoading.set(true);
     this.listError.set(null);
@@ -727,7 +717,6 @@ export class ClusterService {
         this.clustersApi.clustersControllerListClusters()
       );
 
-      // Map API response to ClusterInfo array
       const clusters: ClusterInfo[] = response.map((cluster: ClusterResponseDto) => ({
         id: cluster.id,
         name: cluster.name,
@@ -758,9 +747,6 @@ export class ClusterService {
     }
   }
 
-  /**
-   * Select a cluster and load its details
-   */
   async selectCluster(clusterId: string): Promise<void> {
     this.isLoading.set(true);
     this.error.set(null);
@@ -792,7 +778,6 @@ export class ClusterService {
 
       this.clusterInfo.set(clusterDetails);
 
-      // Update in list if present
       this.clustersList.update(clusters =>
         clusters.map(c => c.id === clusterId ? clusterDetails : c)
       );
@@ -806,14 +791,10 @@ export class ClusterService {
     }
   }
 
-  /**
-   * Delete a cluster with optional force flag
-   */
   async deleteCluster(clusterId: string, force: boolean = false): Promise<{ operationId: string }> {
     this.isLoading.set(true);
     this.error.set(null);
 
-    // Subscribe by resource ID before DELETE so we catch all events
     this.infrastructureWs.subscribeToResource(clusterId, {
       onProgress: (dto) => {
         this.deletionProgressMap.update(map => ({ ...map, [clusterId]: dto.percentage }));
@@ -849,7 +830,6 @@ export class ClusterService {
         this.clustersApi.clustersControllerDeleteCluster(clusterId, force)
       );
 
-      // Mark as deleting in UI immediately
       this.clustersList.update(clusters =>
         clusters.map(c =>
           c.id === clusterId ? { ...c, status: ClusterStatus.DELETING } : c
@@ -865,7 +845,6 @@ export class ClusterService {
 
       const operationId = response.operation_id || '';
 
-      // Fallback: also poll via HTTP in case WebSocket is unavailable
       this.pollDeletion(operationId, clusterId);
 
       return { operationId };
@@ -885,21 +864,16 @@ export class ClusterService {
     }
   }
 
-  /**
-   * HTTP polling fallback for cluster deletion.
-   * Stops automatically once the WebSocket marks the cluster as completed/failed.
-   */
   private async pollDeletion(operationId: string, clusterId: string): Promise<void> {
     if (!operationId) return;
 
     const POLL_INTERVAL = 5000;
-    const MAX_POLLS = 360; // 30 minutes
+    const MAX_POLLS = 360;
     let polls = 0;
 
     const poll = async (): Promise<void> => {
-      // Stop if WebSocket already resolved this deletion
       const currentCluster = this.clustersList().find(c => c.id === clusterId);
-      if (!currentCluster) return; // already removed by WebSocket
+      if (!currentCluster) return;
 
       if (polls >= MAX_POLLS) {
         return;
@@ -912,7 +886,6 @@ export class ClusterService {
         ) as OperationStatus;
 
         const pct = status.progress ?? 0;
-        // Never go backwards: only update if polling reports a higher value
         this.deletionProgressMap.update(map => {
           const current = map[clusterId] ?? 0;
           return pct > current ? { ...map, [clusterId]: pct } : map;
@@ -944,7 +917,6 @@ export class ClusterService {
           setTimeout(() => poll(), POLL_INTERVAL);
         }
       } catch {
-        // Transient error — keep polling
         setTimeout(() => poll(), POLL_INTERVAL);
       }
     };
@@ -952,9 +924,6 @@ export class ClusterService {
     setTimeout(() => poll(), POLL_INTERVAL);
   }
 
-  /**
-   * Download kubeconfig for a cluster
-   */
   async downloadKubeconfig(clusterId: string): Promise<string> {
     this.isLoading.set(true);
     this.error.set(null);
@@ -975,9 +944,6 @@ export class ClusterService {
     }
   }
 
-  /**
-   * Helper to download kubeconfig file
-   */
   downloadKubeconfigFile(kubeconfig: string, clusterName: string): void {
     const blob = new Blob([kubeconfig], { type: 'text/yaml' });
     const url = globalThis.window.URL.createObjectURL(blob);
@@ -986,7 +952,7 @@ export class ClusterService {
     link.download = `kubeconfig-${clusterName}.yaml`;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
     globalThis.window.URL.revokeObjectURL(url);
   }
 
@@ -1007,7 +973,6 @@ export class ClusterService {
           : null
       );
 
-      // Simulate scaling process
       await this.delay(5000);
 
       this.clusterInfo.update((cluster) =>
@@ -1028,8 +993,6 @@ export class ClusterService {
     }
   }
 
-  // Creation steps management - now handled dynamically via addDynamicStep()
-
   private updateCreationStep(
     stepId: string,
     updates: Partial<ClusterCreationStep>
@@ -1039,7 +1002,6 @@ export class ClusterService {
     );
   }
 
-  // Metrics and monitoring
   getClusterMetrics(): Observable<ClusterMetrics> {
     return interval(5000).pipe(
       map(() => ({
@@ -1055,7 +1017,6 @@ export class ClusterService {
     );
   }
 
-  // Auto-scaling configuration
   async updateAutoScalingConfig(config: AutoScalingConfig): Promise<void> {
     this.isLoading.set(true);
 
@@ -1083,7 +1044,6 @@ export class ClusterService {
     }
   }
 
-  // Utility methods
   getProviderDisplayName(provider?: ProviderType): string {
     switch (provider) {
       case ProviderType.HETZNER:
@@ -1100,10 +1060,6 @@ export class ClusterService {
   }
 
 
-  /**
-   * Stop a cluster (power off all servers)
-   * Returns operation_id for tracking async operation
-   */
   async stopCluster(clusterId: string): Promise<{ operationId: string }> {
     this.isLoading.set(true);
     this.error.set(null);
@@ -1113,7 +1069,6 @@ export class ClusterService {
         this.clustersApi.clustersControllerStopCluster(clusterId)
       );
 
-      // Update cluster status to STOPPING
       this.clustersList.update(clusters =>
         clusters.map(c =>
           c.id === clusterId ? { ...c, status: ClusterStatus.STOPPING } : c
@@ -1127,7 +1082,6 @@ export class ClusterService {
         );
       }
 
-      // Start polling operation status
       if (response.operation_id) {
         this.pollOperationStatus(response.operation_id, clusterId, 'stop');
       }
@@ -1143,10 +1097,6 @@ export class ClusterService {
     }
   }
 
-  /**
-   * Start a cluster (power on all servers)
-   * Returns operation_id for tracking async operation
-   */
   async startCluster(clusterId: string): Promise<{ operationId: string }> {
     this.isLoading.set(true);
     this.error.set(null);
@@ -1156,7 +1106,6 @@ export class ClusterService {
         this.clustersApi.clustersControllerStartCluster(clusterId)
       );
 
-      // Update cluster status to STARTING
       this.clustersList.update(clusters =>
         clusters.map(c =>
           c.id === clusterId ? { ...c, status: ClusterStatus.STARTING } : c
@@ -1170,7 +1119,6 @@ export class ClusterService {
         );
       }
 
-      // Start polling operation status
       if (response.operation_id) {
         this.pollOperationStatus(response.operation_id, clusterId, 'start');
       }
@@ -1186,11 +1134,6 @@ export class ClusterService {
     }
   }
 
-  /**
-   * Reconcile cluster status with provider
-   * Detects if servers were stopped/started manually outside Flui
-   * Optional autoFix will align server states to match DB
-   */
   async reconcileClusterStatus(clusterId: string, autoFix: boolean = false): Promise<any> {
     try {
       const response = await firstValueFrom(
@@ -1200,7 +1143,6 @@ export class ClusterService {
         )
       );
 
-      // Update cluster status if it changed
       if (response.new_status && response.new_status !== response.previous_status) {
         const newStatus = this.mapApiStatusToClusterStatus(response.new_status);
 
@@ -1227,7 +1169,6 @@ export class ClusterService {
     }
   }
 
-  // Test helpers - for development only
   setClusterStatus(status: ClusterStatus): void {
     this.clusterInfo.update((cluster) =>
       cluster ? { ...cluster, status } : { status }
@@ -1251,12 +1192,6 @@ export class ClusterService {
     this.attachVNetErrorSig.set(null);
   }
 
-  /**
-   * Attach an existing cluster to a VNet/subnet.
-   * Resolves to the operation id once the API accepts the request; the
-   * Promise additionally settles when the WebSocket reports completion or
-   * failure (via the returned `done` promise).
-   */
   attachVNet(
     clusterId: string,
     payload: { vnetId: string; subnetId?: string; autoAssignIp?: boolean },
@@ -1296,7 +1231,6 @@ export class ClusterService {
             this.infrastructureWs.unsubscribeFromOperation(operationId);
             this.attachVNetProgressSig.set(100);
             this.attachVNetInProgress.set(false);
-            // Refresh cluster details so vnetId/vnetName populate
             void this.fetchClusterDetails(clusterId).finally(() => resolveDone());
           },
           onFailed: (event) => {

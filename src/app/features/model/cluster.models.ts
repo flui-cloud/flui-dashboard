@@ -24,7 +24,8 @@ export enum ProviderType {
   HETZNER = 'hetzner',
   CONTABO = 'contabo',
   SCALEWAY = 'scaleway',
-  OVH = 'ovh'
+  OVH = 'ovh',
+  BYOS = 'byos'
 }
 
 export enum ClusterViewMode {
@@ -41,9 +42,8 @@ export enum ClusterType {
   OBSERVABILITY = 'observability'
 }
 
-/** True for the control cluster, accepting both the new and legacy enum values. */
 export function isControlClusterType(type?: ClusterType | string | null): boolean {
-  return type === ClusterType.CONTROL || type === ClusterType.OBSERVABILITY;
+  return type === ClusterType.CONTROL || type === 'observability';
 }
 
 export interface ClusterInfo {
@@ -75,16 +75,15 @@ export interface ClusterConfiguration {
   name: string;
   provider: ProviderType;
   region: string;
-  nodeTypeId: string; // ID del tipo di nodo (es. 'cx11', 'cx21')
+  nodeTypeId: string;
   minNodes: number;
   maxNodes: number;
   autoScalingEnabled: boolean;
-  // Optional autoscale threshold overrides (50–95 for %, 60–3600 for cooldown)
   scaleUpMemoryPct?: number;
   scaleUpCpuPct?: number;
   cooldownSeconds?: number;
-  sshKeys?: string[]; // Array of SSH key IDs
-  diskSizeGb?: number; // Required for storageType=network nodes
+  sshKeys?: string[];
+  diskSizeGb?: number;
   networkType?: 'public' | 'private';
   firewallRules?: Array<{
     description: string;
@@ -111,7 +110,7 @@ export interface ClusterCreationStep {
   status: 'pending' | 'running' | 'completed' | 'error';
   startedAt?: Date;
   completedAt?: Date;
-  estimatedDuration?: number; // in seconds
+  estimatedDuration?: number;
   details?: string;
 }
 
@@ -132,11 +131,10 @@ export interface AutoScalingConfig {
   maxNodes: number;
   targetCpuUtilization: number;
   targetMemoryUtilization: number;
-  scaleUpCooldown: number; // in seconds
-  scaleDownCooldown: number; // in seconds
+  scaleUpCooldown: number;
+  scaleDownCooldown: number;
 }
 
-// Wizard-specific models
 export interface WizardStep {
   id: string;
   title: string;
@@ -155,7 +153,7 @@ export interface ProviderRegion {
 }
 
 export interface NodeSizeOption {
-  id: string; // ID univoco dal provider (es. 'cx11', 'cx21', 'cx31')
+  id: string;
   name: string;
   vcpu: number;
   ram: number;
@@ -172,14 +170,12 @@ export interface ProviderOption {
   comingSoon?: boolean;
 }
 
-// Operation Step with weight
 export interface OperationStep {
   step: string;
   description: string;
   weight: number;
 }
 
-// API Response models
 export interface OperationStatus {
   id: string;
   operationType: string;
@@ -190,20 +186,18 @@ export interface OperationStatus {
   provider?: string;
   userId?: string | null;
 
-  // Progress tracking
-  progress: number; // Overall progress 0-100
-  currentStep: string; // Step identifier (e.g., "cluster_create_workers")
-  currentStepIndex: number; // Current step index (0-based)
-  totalSteps: number; // Total number of steps
-  currentStepProgress: number; // Progress within current step 0-100
+  progress: number;
+  currentStep: string;
+  currentStepIndex: number;
+  totalSteps: number;
+  currentStepProgress: number;
 
-  // Metadata with step details
   metadata: {
-    stepDescription?: string; // Human-readable step description
-    stepWeight?: number; // Weight of current step
-    estimatedDurationInSeconds?: number; // Total estimated duration
-    operationSteps?: OperationStep[]; // Array of operation steps with weights
-    [key: string]: any; // Allow additional dynamic properties
+    stepDescription?: string;
+    stepWeight?: number;
+    estimatedDurationInSeconds?: number;
+    operationSteps?: OperationStep[];
+    [key: string]: any;
   };
 
   errorMessage?: string | null;

@@ -17,6 +17,7 @@ import { InstanceWithLabels, getClusterInfo, getClusterNodeId } from '../../mode
 import { InstanceRowComponent } from '../compute/instance-row.component';
 import { AddWorkerDialogComponent } from './add-worker-dialog.component';
 import { RemoveWorkerDialogComponent } from './remove-worker-dialog.component';
+import { ByosConnectNodeDialogComponent } from './byos-connect-node-dialog.component';
 
 interface NodeRowMeta {
   node: InstanceWithLabels;
@@ -35,6 +36,7 @@ interface NodeRowMeta {
     InstanceRowComponent,
     AddWorkerDialogComponent,
     RemoveWorkerDialogComponent,
+    ByosConnectNodeDialogComponent,
   ],
   providers: [
     provideIcons({
@@ -72,12 +74,11 @@ interface NodeRowMeta {
               class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-              Add worker
+              {{ isByos() ? 'Connect node' : 'Add worker' }}
             </button>
           </div>
         </div>
 
-        <!-- Loading State -->
         @if (nodesIsLoading() && clusterNodes().length === 0) {
           <div class="animate-pulse flex flex-col gap-2">
             @for (i of [1,2,3,4]; track i) {
@@ -93,7 +94,6 @@ interface NodeRowMeta {
           </div>
         }
 
-        <!-- Error State -->
         @if (nodesError() && !nodesIsLoading() && clusterNodes().length === 0) {
           <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div class="flex items-center gap-3">
@@ -106,7 +106,6 @@ interface NodeRowMeta {
           </div>
         }
 
-        <!-- Empty State -->
         @if (!nodesIsLoading() && clusterNodes().length === 0 && !nodesError()) {
           <div class="text-center py-12">
             <ng-icon name="lucideServer" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
@@ -117,7 +116,6 @@ interface NodeRowMeta {
           </div>
         }
 
-        <!-- Nodes List -->
         @if (clusterNodes().length > 0) {
           <div class="flex flex-col gap-2">
             @for (row of nodeRows(); track row.node.id) {
@@ -153,11 +151,20 @@ interface NodeRowMeta {
       />
     }
 
+    @if (showByosDialog() && cluster()?.id; as cid) {
+      <app-byos-connect-node-dialog
+        [clusterId]="cid"
+        [masterIp]="cluster()?.masterIpAddress"
+        (closed)="showByosDialog.set(false); refreshNodes()"
+      />
+    }
+
     @if (removeTarget(); as target) {
       <app-remove-worker-dialog
         [clusterId]="cluster()!.id!"
         [nodeId]="resolveNodeId(target)"
         [workerName]="target.displayName || target.name || target.id || ''"
+        [isByos]="isByos()"
         (closed)="removeTarget.set(null)"
       />
     }
@@ -173,7 +180,10 @@ export class ClusterNodesTabComponent implements OnInit {
   nodesError = this.clusterService.nodesErrorMessage;
 
   protected showAddDialog = signal<boolean>(false);
+  protected showByosDialog = signal<boolean>(false);
   protected removeTarget = signal<InstanceWithLabels | null>(null);
+
+  protected isByos = computed(() => this.clusterService.isByosCluster());
 
   protected nodeRows = computed<NodeRowMeta[]>(() => {
     const nodes = this.clusterNodes();
@@ -216,6 +226,7 @@ export class ClusterNodesTabComponent implements OnInit {
   protected canAddWorker = computed(() => {
     const c = this.cluster();
     if (c?.status !== ClusterStatus.ACTIVE) return false;
+    if (this.isByos()) return true;
     const max = this.maxNodes();
     if (max != null && this.workerCount() >= max) return false;
     return true;
@@ -225,6 +236,7 @@ export class ClusterNodesTabComponent implements OnInit {
     const c = this.cluster();
     if (!c) return '';
     if (c.status !== ClusterStatus.ACTIVE) return `Cluster must be active (current: ${c.status}).`;
+    if (this.isByos()) return 'Connect an existing Linux host as a worker (over SSH).';
     const max = this.maxNodes();
     if (max != null && this.workerCount() >= max) {
       return `maxNodes=${max} reached: raise the limit from the Autoscaling tab first.`;
@@ -237,8 +249,6 @@ export class ClusterNodesTabComponent implements OnInit {
       const cluster = this.cluster();
       if (cluster?.id && cluster.status === ClusterStatus.ACTIVE) {
         await this.clusterService.loadClusterNodes(cluster.id);
-        // Pull autoscale status so min/max guards are accurate without
-        // depending on the parent dashboard having polled first.
         void this.autoscaleService.getStatus(cluster.id).catch(() => undefined);
       }
     })();
@@ -256,6 +266,10 @@ export class ClusterNodesTabComponent implements OnInit {
   }
 
   openAddWorker(): void {
+    if (this.isByos()) {
+      this.showByosDialog.set(true);
+      return;
+    }
     if (this.canAddWorker()) this.showAddDialog.set(true);
   }
 

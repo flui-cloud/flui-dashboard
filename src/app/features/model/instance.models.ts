@@ -1,8 +1,5 @@
 import { InstanceDto } from '../../core/api';
 
-/**
- * Flui-cloud managed instance labels
- */
 export interface FluiLabels {
   'managed-by'?: string;
   'flui-cluster-id'?: string;
@@ -14,29 +11,18 @@ export interface FluiLabels {
   [key: string]: string | undefined;
 }
 
-/**
- * Extended InstanceDto with labels support
- */
 export interface InstanceWithLabels extends InstanceDto {
   metadata?: {
     labels?: FluiLabels;
   };
 }
 
-/**
- * Check if an instance is managed by flui-cloud platform
- */
 export function isManagedByFlui(instance: InstanceWithLabels): boolean {
   return instance.metadata?.labels?.['managed-by'] === 'flui-cloud';
 }
 
 export type InstanceOwnership = 'self' | 'other-flui' | 'unmanaged';
 
-/**
- * Ownership relative to the installation this dashboard is connected to.
- * Prefers the server-computed `ownership` field; falls back to the managed-by
- * label for older API responses (which cannot tell self from other-flui).
- */
 export function getOwnership(instance: InstanceWithLabels): InstanceOwnership {
   const ownership = instance.ownership;
   if (
@@ -49,9 +35,6 @@ export function getOwnership(instance: InstanceWithLabels): InstanceOwnership {
   return isManagedByFlui(instance) ? 'self' : 'unmanaged';
 }
 
-/**
- * Get cluster information from instance labels
- */
 export function getClusterInfo(instance: InstanceWithLabels): {
   clusterId?: string;
   clusterName?: string;
@@ -69,22 +52,51 @@ export function getClusterInfo(instance: InstanceWithLabels): {
   };
 }
 
-/**
- * Resolve the Cluster node ID for a worker instance.
- * The DELETE /clusters/:id/workers/:nodeId endpoint expects the
- * cluster-node UUID (not the underlying server/instance id), which
- * Flui exposes as the `flui-node-id` label.
- */
 export function getClusterNodeId(instance: InstanceWithLabels): string | null {
   const labelId = instance.metadata?.labels?.['flui-node-id'];
   if (labelId) return labelId;
   return instance.id ?? null;
 }
 
-/**
- * Map ServerResponseDto to InstanceWithLabels
- * Used to display cluster nodes from servers API
- */
+export function mapClusterNodeToInstance(
+  node: any,
+  clusterId: string,
+): InstanceWithLabels {
+  const ip: string | undefined = node.ipAddress || node.privateIp;
+  return {
+    id: node.id,
+    userId: '',
+    name: node.serverName,
+    displayName: node.serverName,
+    type: 'virtual' as any,
+    provider: 'byos' as any,
+    providerId: node.providerResourceId || node.id,
+    status: node.status,
+    dataCenter: 'byos',
+    region: 'byos',
+    regionName: 'byos',
+    cpuCores: 0,
+    ramMb: 0,
+    diskMb: 0,
+    osType: 'linux',
+    ipConfig: {
+      v4: ip ? { ip, gateway: '', netmaskCidr: 24 } : undefined,
+    },
+    createdAt: node.createdAt || new Date().toISOString(),
+    updatedAt: node.updatedAt || node.createdAt || new Date().toISOString(),
+    ownership: 'self' as any,
+    metadata: {
+      labels: {
+        'managed-by': 'flui-cloud',
+        'flui-cluster-id': clusterId,
+        'flui-resource-type': 'cluster-node',
+        'flui-node-id': node.id,
+        'flui-node-type': node.nodeType,
+      },
+    },
+  };
+}
+
 export function mapServerToInstance(server: any): InstanceWithLabels {
   return {
     id: server.id,

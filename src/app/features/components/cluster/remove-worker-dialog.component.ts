@@ -33,7 +33,6 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
     <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="onCancel()">
       <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4">
         <div class="card-surface p-5 space-y-4" (click)="$event.stopPropagation()">
-          <!-- Header -->
           <div class="flex items-start justify-between">
             <div class="flex items-center gap-2.5">
               <div class="h-9 w-9 rounded-full bg-destructive/10 flex items-center justify-center">
@@ -42,7 +41,7 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
               <div>
                 <h2 class="text-lg font-semibold text-foreground">Remove worker</h2>
                 <p class="text-xs text-muted-foreground mt-0.5">
-                  Moves apps off the node and removes it from the provider.
+                  {{ subtitle() }}
                 </p>
               </div>
             </div>
@@ -67,6 +66,12 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
                 Apps will be moved to other nodes when possible. Apps with strict availability
                 rules may be stopped without a graceful shutdown.
               </p>
+              @if (isByos()) {
+                <p class="mt-1">
+                  Flui drains the node and uninstalls k3s over SSH. The server itself
+                  stays — it's yours — so you can repurpose or reconnect it later.
+                </p>
+              }
             </div>
 
             <div class="space-y-1.5">
@@ -186,8 +191,15 @@ export class RemoveWorkerDialogComponent {
   clusterId = input.required<string>();
   nodeId = input.required<string>();
   workerName = input.required<string>();
+  isByos = input<boolean>(false);
 
   closed = output<void>();
+
+  protected subtitle = computed(() =>
+    this.isByos()
+      ? 'Drains apps and uninstalls k3s over SSH. The server stays — Flui never owned it.'
+      : 'Moves apps off the node and removes it from the provider.',
+  );
 
   protected phase = signal<'configure' | 'tracking'>('configure');
   protected typed = signal<string>('');
@@ -218,8 +230,6 @@ export class RemoveWorkerDialogComponent {
   );
 
   constructor() {
-    // Surface warnings as toasts as soon as the operation completes,
-    // even if the user has already dismissed the dialog.
     effect(() => {
       const t = this.tracking();
       if (t.status !== 'completed' || this.warningsEmitted()) return;
@@ -282,6 +292,17 @@ export class RemoveWorkerDialogComponent {
         this.toast.showInfo({
           title: 'Worker removed',
           message: `${w.code === 'DRAIN_SKIPPED' ? 'App migration' : 'Node lockdown'} skipped: ${w.reason}`,
+        });
+        break;
+      case 'UNINSTALL_FAILED':
+      case 'UNINSTALL_SKIPPED':
+      case 'UNINSTALL_UNCONFIRMED':
+        this.toast.showWarning({
+          title: 'Node removed — finish cleanup on the host',
+          message:
+            'k3s may still be installed on the server. SSH in and run ' +
+            '`k3s-agent-uninstall.sh` to fully decommission it.',
+          persistent: true,
         });
         break;
     }

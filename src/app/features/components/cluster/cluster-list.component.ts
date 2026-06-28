@@ -22,7 +22,8 @@ import {
   lucideCircleCheck,
   lucideCircle,
   lucidePause,
-  lucidePlay
+  lucidePlay,
+  lucideInfo
 } from '@ng-icons/lucide';
 
 import { ClusterService } from '../../service/cluster.service';
@@ -60,12 +61,12 @@ interface FilterState {
       lucideCircleCheck,
       lucideCircle,
       lucidePause,
-      lucidePlay
+      lucidePlay,
+      lucideInfo
     }),
   ],
   template: `
     <div class="space-y-6 p-6">
-      <!-- Header with Actions -->
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold text-foreground">
@@ -86,7 +87,9 @@ interface FilterState {
           </button>
           <button
             (click)="createNewCluster()"
-            class="inline-flex items-center gap-2 px-3.5 py-2 bg-blue-600 dark:bg-blue-500/20 text-white dark:text-blue-400 border border-transparent dark:border-blue-500/40 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500/30 transition-colors text-sm font-medium"
+            [disabled]="isByosDeployment()"
+            [title]="createTooltip()"
+            class="inline-flex items-center gap-2 px-3.5 py-2 bg-blue-600 dark:bg-blue-500/20 text-white dark:text-blue-400 border border-transparent dark:border-blue-500/40 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500/30 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 dark:disabled:hover:bg-blue-500/20"
           >
             <ng-icon name="lucidePlus" class="h-4 w-4" />
             <span>Create Cluster</span>
@@ -94,10 +97,22 @@ interface FilterState {
         </div>
       </div>
 
-      <!-- Filters -->
+      @if (isByosDeployment()) {
+        <div class="card-inner border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 rounded-lg p-4 flex items-start gap-3">
+          <ng-icon name="lucideInfo" class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p class="text-sm font-medium text-foreground">Adding more clusters — coming soon</p>
+            <p class="text-sm text-sub mt-0.5">
+              Self-hosted (BYOS) installs run on the server you connected, so creating
+              additional clusters from the dashboard isn't supported yet. You can still
+              scale this cluster's nodes from its <span class="font-medium text-foreground">Nodes</span> tab.
+            </p>
+          </div>
+        </div>
+      }
+
       <div class="card-inner border border-border rounded-lg p-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <!-- Search -->
           <div class="relative">
             <ng-icon
               name="lucideSearch"
@@ -112,7 +127,6 @@ interface FilterState {
             />
           </div>
 
-          <!-- Provider Filter -->
           <select
             [ngModel]="filtersState().provider"
             (ngModelChange)="updateFilter('provider', $event)"
@@ -124,7 +138,6 @@ interface FilterState {
             }
           </select>
 
-          <!-- Status Filter -->
           <select
             [ngModel]="filtersState().status"
             (ngModelChange)="updateFilter('status', $event)"
@@ -138,7 +151,6 @@ interface FilterState {
             <option value="error">Error</option>
           </select>
 
-          <!-- Region Filter -->
           <input
             type="text"
             [ngModel]="filtersState().region"
@@ -148,7 +160,6 @@ interface FilterState {
           />
         </div>
 
-        <!-- Active Filters Count -->
         @if (activeFiltersCount() > 0) {
           <div class="mt-3 flex items-center justify-between">
             <span class="text-sm text-sub">
@@ -164,7 +175,6 @@ interface FilterState {
         }
       </div>
 
-      <!-- Loading State -->
       @if (isLoading()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (i of [1,2,3]; track i) {
@@ -197,7 +207,6 @@ interface FilterState {
         </div>
       }
 
-      <!-- Error State -->
       @if (errorMessage() && !isLoading()) {
         <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <div class="flex items-center gap-3">
@@ -210,14 +219,12 @@ interface FilterState {
         </div>
       }
 
-      <!-- Clusters Grid -->
       @if (!isLoading() && !errorMessage()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (cluster of filteredClusters(); track cluster.id) {
             <div class="relative card-surface overflow-hidden hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300 border-l-4"
                  [class]="getStatusBorderClass(cluster.status)">
 
-              <!-- Deleting overlay -->
               @if (cluster.status === ClusterStatus.DELETING) {
                 <div class="absolute inset-0 bg-background/70 dark:bg-background/80 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-lg">
                   <ng-icon name="lucideLoader" class="h-8 w-8 text-muted-foreground animate-spin" />
@@ -231,9 +238,7 @@ interface FilterState {
                 </div>
               }
 
-              <!-- Body -->
               <div class="p-6">
-                <!-- Cluster name with status badge -->
                 <div class="flex items-start justify-between mb-3">
                   <h3 class="text-xl font-bold text-foreground truncate flex-1">
                     {{ cluster.name }}
@@ -251,13 +256,11 @@ interface FilterState {
                   </span>
                 </div>
 
-                <!-- Provider info -->
                 <div class="flex items-center gap-2 text-muted-foreground mb-4">
                   <ng-icon [name]="getProviderIcon(cluster.provider)" class="h-4 w-4" />
                   <span class="text-sm font-medium">{{ getProviderLabel(cluster.provider) }}</span>
                 </div>
 
-                <!-- Info con icone - Riga 1 -->
                 <div class="flex items-center flex-wrap gap-3 text-sm text-sub mb-2">
                   <span class="flex items-center gap-1">
                     <ng-icon name="lucideMapPin" class="h-4 w-4" />
@@ -277,7 +280,6 @@ interface FilterState {
                   }
                 </div>
 
-                <!-- Info con icone - Riga 2 -->
                 <div class="flex items-center flex-wrap gap-3 text-sm text-sub">
                   <span class="flex items-center gap-1">
                     <ng-icon name="lucideTag" class="h-4 w-4" />
@@ -293,7 +295,6 @@ interface FilterState {
                 </div>
               </div>
 
-              <!-- Actions -->
               <div class="px-6 pb-6 flex items-center gap-3">
                 <button
                   (click)="viewCluster(cluster.id!)"
@@ -323,28 +324,50 @@ interface FilterState {
             </div>
           }
 
-          <!-- Create Cluster Card - Sempre visibile quando ci sono cluster -->
           @if (filteredClusters().length > 0) {
-            <div
-              (click)="createNewCluster()"
-              class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
-            >
-              <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
-                <ng-icon name="lucidePlus" class="h-10 w-10 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+            @if (isByosDeployment()) {
+              <div
+                [title]="createTooltip()"
+                class="card-surface border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-8 min-h-full opacity-60 cursor-not-allowed"
+              >
+                <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <ng-icon name="lucidePlus" class="h-10 w-10 text-muted-foreground" />
+                </div>
+
+                <h3 class="text-lg font-semibold text-foreground mb-2">
+                  Create New Cluster
+                </h3>
+
+                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground mb-2">
+                  Coming soon
+                </span>
+
+                <p class="text-sm text-sub text-center max-w-xs">
+                  Self-hosted installs don't provision extra clusters yet — scale
+                  this cluster's nodes from its Nodes tab.
+                </p>
               </div>
+            } @else {
+              <div
+                (click)="createNewCluster()"
+                class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
+              >
+                <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
+                  <ng-icon name="lucidePlus" class="h-10 w-10 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+                </div>
 
-              <h3 class="text-lg font-semibold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                Create New Cluster
-              </h3>
+                <h3 class="text-lg font-semibold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  Create New Cluster
+                </h3>
 
-              <p class="text-sm text-sub text-center max-w-xs">
-                Click to configure and deploy a new Kubernetes cluster
-              </p>
-            </div>
+                <p class="text-sm text-sub text-center max-w-xs">
+                  Click to configure and deploy a new Kubernetes cluster
+                </p>
+              </div>
+            }
           }
 
           @if (filteredClusters().length === 0) {
-            <!-- Empty State -->
             <div class="col-span-full flex flex-col items-center justify-center py-12">
               <ng-icon name="lucideServer" class="h-16 w-16 text-muted-foreground mb-4" />
               <h3 class="text-lg font-semibold text-foreground mb-2">
@@ -378,7 +401,6 @@ interface FilterState {
         </div>
       }
 
-      <!-- Results Count -->
       @if (filteredClusters().length > 0) {
         <div class="text-center text-sm text-sub">
           Showing {{ filteredClusters().length }} of {{ allClusters().length }} cluster(s)
@@ -386,7 +408,6 @@ interface FilterState {
       }
     </div>
 
-    <!-- Delete Confirmation Modal -->
     @if (showDeleteModal()) {
       <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div class="card-surface rounded-lg max-w-md w-full p-6 shadow-xl">
@@ -405,7 +426,6 @@ interface FilterState {
                 This action cannot be undone and will permanently remove all cluster resources.
               </p>
 
-              <!-- Force Delete Option -->
               <label class="flex items-center gap-2 mb-4 cursor-pointer">
                 <input
                   type="checkbox"
@@ -453,11 +473,9 @@ export class ClusterListComponent implements OnInit {
 
   readonly availableProviders = computed(() => this.providersService.availableProviders());
 
-  // Expose enums to template
   ClusterStatus = ClusterStatus;
   ClusterType = ClusterType;
 
-  // State signals
   filtersState = signal<FilterState>({
     search: '',
     provider: '',
@@ -469,19 +487,26 @@ export class ClusterListComponent implements OnInit {
   forceDelete = false;
   isDeleting = signal<boolean>(false);
 
-  // Data from service
   allClusters = this.clusterService.clusters;
   isLoading = this.clusterService.listIsLoading;
   errorMessage = this.clusterService.listErrorMessage;
   deletionProgress = this.clusterService.deletionProgress;
 
-  // Computed signals
+  readonly isByosDeployment = computed(() =>
+    this.allClusters().some((c) => c.provider === ProviderType.BYOS),
+  );
+
+  protected readonly createTooltip = computed(() =>
+    this.isByosDeployment()
+      ? "Coming soon — self-hosted installs can't create additional clusters yet. Scale this cluster's nodes from its Nodes tab instead."
+      : 'Create a new Kubernetes cluster',
+  );
+
   filteredClusters = computed(() => {
     const clusters = this.allClusters();
     const filters = this.filtersState();
 
     return clusters.filter((cluster) => {
-      // Search filter
       if (
         filters.search &&
         !cluster.name?.toLowerCase().includes(filters.search.toLowerCase())
@@ -489,17 +514,14 @@ export class ClusterListComponent implements OnInit {
         return false;
       }
 
-      // Provider filter
       if (filters.provider && cluster.provider !== filters.provider) {
         return false;
       }
 
-      // Status filter
       if (filters.status && cluster.status !== filters.status) {
         return false;
       }
 
-      // Region filter
       if (
         filters.region &&
         !cluster.region?.toLowerCase().includes(filters.region.toLowerCase())
@@ -592,8 +614,6 @@ export class ClusterListComponent implements OnInit {
       this.showDeleteModal.set(false);
       this.clusterToDelete.set(null);
       this.forceDelete = false;
-      // Cluster will be removed from list automatically by ClusterService
-      // when socket/polling confirms completion
     } catch (error) {
       console.error('Failed to delete cluster:', error);
     } finally {
@@ -602,10 +622,10 @@ export class ClusterListComponent implements OnInit {
   }
 
   createNewCluster() {
+    if (this.isByosDeployment()) return;
     this.router.navigate(['/cluster/new']);
   }
 
-  // Helper methods
   getStatusBadgeClass(status?: ClusterStatus): string {
     const baseClasses = 'text-xs px-2 py-1 rounded font-medium';
 
@@ -673,9 +693,8 @@ export class ClusterListComponent implements OnInit {
     return new Date(date).toLocaleDateString();
   }
 
-  // Provider styling helpers
   getProviderIcon(provider?: ProviderType): string {
-    return 'lucideCloud'; // Using same icon for all providers
+    return 'lucideCloud';
   }
 
   getStatusBorderClass(status?: ClusterStatus): string {

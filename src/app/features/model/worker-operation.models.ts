@@ -7,7 +7,14 @@ export type OperationWarning =
   | { code: 'CORDON_FAILED'; reason: string }
   | { code: 'CORDON_SKIPPED'; reason: string }
   | { code: 'DRAIN_FAILED'; reason: string; details?: { nodeName: string } }
-  | { code: 'DRAIN_SKIPPED'; reason: string };
+  | { code: 'DRAIN_SKIPPED'; reason: string }
+  | { code: 'K3S_NODE_DELETE_FAILED'; reason: string; details?: { nodeName: string } }
+  | { code: 'K3S_NODE_DELETE_SKIPPED'; reason: string }
+  | { code: 'UNINSTALL_FAILED'; reason: string; details?: Record<string, unknown> }
+  | { code: 'UNINSTALL_SKIPPED'; reason: string }
+  | { code: 'UNINSTALL_UNCONFIRMED'; reason: string; details?: Record<string, unknown> }
+  | { code: 'FIREWALL_RECONCILE_FAILED'; reason: string }
+  | { code: 'VNET_DETACH_FAILED'; reason: string };
 
 export interface WorkerOperationEnvelope {
   operationId: string;

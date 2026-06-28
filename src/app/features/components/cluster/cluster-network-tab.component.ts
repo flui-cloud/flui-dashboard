@@ -8,6 +8,8 @@ import {
   lucideExternalLink,
   lucideLoader,
   lucidePlus,
+  lucideInfo,
+  lucideShieldCheck,
 } from '@ng-icons/lucide';
 
 import { ClusterService } from '../../service/cluster.service';
@@ -26,19 +28,39 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
       lucideExternalLink,
       lucideLoader,
       lucidePlus,
+      lucideInfo,
+      lucideShieldCheck,
     }),
   ],
   template: `
     <div class="card-surface p-6">
       <div class="flex items-center justify-end mb-6">
-        <button
-          (click)="navigateToVNetManagement()"
-          class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted transition-colors"
-        >
-          <span>Manage VNets</span>
-          <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-        </button>
+        @if (!isByos()) {
+          <button
+            (click)="navigateToVNetManagement()"
+            class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted transition-colors"
+          >
+            <span>Manage VNets</span>
+            <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
+          </button>
+        }
       </div>
+
+      @if (isByos() && clusterVNet()) {
+        <div class="card-inner border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3 mb-4 flex items-start gap-2.5">
+          <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <span class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+              Registered (self-hosted)
+            </span>
+            <p class="text-sm text-sub mt-1">
+              Flui doesn't provision this network — it's the private network your nodes
+              already share. Flui registers its CIDR (the host firewall opens it for
+              node-to-node traffic) and validates that each node belongs to it.
+            </p>
+          </div>
+        </div>
+      }
 
       @if (isLoading()) {
         <div class="animate-pulse space-y-4">
@@ -63,7 +85,6 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
       } @else if (clusterVNet()) {
         <div class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- VNet Name -->
             <div class="card-inner p-4">
               <div class="flex items-center gap-2 mb-2">
                 <ng-icon name="lucideNetwork" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -72,7 +93,6 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
               <p class="text-lg font-bold text-value">{{ clusterVNet()!.name }}</p>
             </div>
 
-            <!-- IP Range -->
             <div class="card-inner p-4">
               <div class="flex items-center gap-2 mb-2">
                 <ng-icon name="lucideGlobe" class="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -82,7 +102,6 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
             </div>
           </div>
 
-          <!-- Subnets -->
           @if (clusterVNet()!.subnets && clusterVNet()!.subnets.length > 0) {
             <div class="mt-4">
               <h3 class="text-sm font-semibold text-foreground mb-3">Subnets</h3>
@@ -103,6 +122,31 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
                 }
               </div>
             </div>
+          }
+        </div>
+      } @else if (isByos()) {
+        <div class="text-center py-8">
+          <ng-icon name="lucideNetwork" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+          <p class="text-sm text-sub">No private network registered yet.</p>
+          <p class="text-xs text-sub mt-1 max-w-md mx-auto">
+            Flui registers the private network your nodes share (it isn't provisioned).
+            Register it to open the host firewall for node-to-node traffic and enable
+            multi-node scaling.
+          </p>
+          <button
+            (click)="registerByosNetwork()"
+            [disabled]="registering()"
+            class="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            @if (registering()) {
+              <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+            } @else {
+              <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
+            }
+            <span>Register private network</span>
+          </button>
+          @if (registerError()) {
+            <p class="text-xs status-error mt-2">{{ registerError() }}</p>
           }
         </div>
       } @else {
@@ -143,10 +187,31 @@ export class ClusterNetworkTabComponent implements OnInit {
   clusterVNet = signal<VNetInfo | null>(null);
   isLoading = signal<boolean>(false);
   showAttachDialog = signal<boolean>(false);
+  registering = signal<boolean>(false);
+  registerError = signal<string | null>(null);
 
   clusterId = (): string | null => this.clusterService.cluster()?.id ?? null;
   clusterProvider = (): string => this.clusterService.cluster()?.provider ?? '';
-  canAttach = (): boolean => !!this.clusterId() && !!this.clusterProvider();
+  isByos = (): boolean => this.clusterService.isByosCluster();
+  canAttach = (): boolean =>
+    !this.isByos() && !!this.clusterId() && !!this.clusterProvider();
+
+  async registerByosNetwork(): Promise<void> {
+    const clusterId = this.clusterId();
+    if (!clusterId) return;
+    this.registering.set(true);
+    this.registerError.set(null);
+    try {
+      await this.clusterService.ensureByosVNet(clusterId);
+      await this.loadClusterVNet('byos', clusterId);
+    } catch (e: any) {
+      this.registerError.set(
+        e?.error?.message || e?.message || 'Failed to register the private network',
+      );
+    } finally {
+      this.registering.set(false);
+    }
+  }
 
   openAttachVNet(): void {
     this.showAttachDialog.set(true);
