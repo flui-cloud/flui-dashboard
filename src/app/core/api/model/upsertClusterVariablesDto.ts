@@ -9,10 +9,14 @@
  */
 
 
-export interface UpsertClusterVariablesDto { 
+export interface UpsertClusterVariablesDto {
     /**
      * Key-value pairs to store
      */
     data: { [key: string]: string; };
+    /**
+     * Keys to remove from the set. Deletion is explicit: omitting a key never removes it.
+     */
+    deleteKeys?: Array<string>;
 }
 
