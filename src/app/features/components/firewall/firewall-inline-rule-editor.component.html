@@ -1,5 +1,4 @@
 <div class="firewall-inline-editor">
-  <!-- Header with Add Button -->
   <div class="flex items-center justify-between mb-4">
     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
       Firewall Rules ({{ workingRules().length }})
@@ -13,7 +12,6 @@
     </button>
   </div>
 
-  <!-- Add New Rule Form (appears at top when active) -->
   @if (isAddingNew()) {
     <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/10 border-2 border-blue-300 dark:border-blue-700 rounded-lg shadow-md">
       <div class="flex items-center justify-between mb-3">
@@ -36,7 +34,6 @@
         </div>
       </div>
 
-      <!-- Validation Errors -->
       @if (newRuleErrors().length > 0) {
         <div class="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm">
           <ul class="list-disc list-inside text-red-700 dark:text-red-400">
@@ -47,7 +44,6 @@
         </div>
       }
 
-      <!-- Compact Form -->
       <div class="grid grid-cols-2 gap-3">
         <input
           type="text"
@@ -95,7 +91,6 @@
             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           />
 
-          <!-- Compact IP Helpers -->
           <div class="mt-1 flex flex-wrap gap-1">
             @if (newRuleForm().direction === 'in') {
               <button type="button" (click)="detectCurrentIp(true)" [disabled]="detectingIp()"
@@ -119,7 +114,6 @@
     </div>
   }
 
-  <!-- Rules List -->
   <div class="space-y-2">
     @if (workingRules().length === 0) {
       <div class="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -134,7 +128,6 @@
             'rule-card'"
           [class.rule-card--dirty]="isRuleModified($index)"
         >
-          <!-- Collapsed View -->
           @if (expandedIndex() !== $index) {
             <div class="flex items-center justify-between p-3">
               <button type="button" class="flex-1 text-left" (click)="expandRule($index)">
@@ -153,25 +146,34 @@
               </button>
 
               <div class="flex items-center gap-1">
-                <button
-                  (click)="expandRule($index)"
-                  class="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
-                  title="Edit"
-                >
-                  ✎
-                </button>
-                <button
-                  (click)="deleteRule($index)"
-                  class="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                  title="Delete"
-                >
-                  ✕
-                </button>
+                @if (ruleBadge(rule); as badge) {
+                  <span
+                    class="text-[10px] uppercase tracking-wide px-1.5 py-0.5 mr-1 rounded-full border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 cursor-help"
+                    [title]="badgeTitle(rule)"
+                  >{{ badge }}</span>
+                }
+                @if (!isManagedSshRule(rule)) {
+                  <button
+                    (click)="expandRule($index)"
+                    class="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                    title="Edit"
+                  >
+                    ✎
+                  </button>
+                }
+                @if (!isManagedSshRule(rule) && !isRequiredIngress(rule)) {
+                  <button
+                    (click)="deleteRule($index)"
+                    class="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                    title="Delete"
+                  >
+                    ✕
+                  </button>
+                }
               </div>
             </div>
           }
 
-          <!-- Expanded Edit View -->
           @if (expandedIndex() === $index) {
             <div class="p-4">
               <div class="flex items-center justify-between mb-3">
@@ -197,7 +199,6 @@
                 </div>
               </div>
 
-              <!-- Validation Errors -->
               @if (ruleErrors().has($index)) {
                 <div class="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm">
                   <ul class="list-disc list-inside text-red-700 dark:text-red-400">
@@ -208,7 +209,6 @@
                 </div>
               }
 
-              <!-- Compact Edit Form -->
               <div class="grid grid-cols-2 gap-3">
                 <input
                   type="text"
@@ -256,7 +256,6 @@
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   />
 
-                  <!-- Compact IP Helpers -->
                   <div class="mt-1 flex flex-wrap gap-1">
                     @if (rule.direction === 'in') {
                       <button type="button" (click)="detectCurrentIp(false)" [disabled]="detectingIp()"
@@ -284,7 +283,6 @@
     }
   </div>
 
-  <!-- Sticky Bottom Save Bar -->
   @if (isDirty()) {
     <div class="sticky bottom-0 left-0 right-0 mt-6 p-4 bg-white dark:bg-gray-800 border-t-2 border-orange-500 shadow-lg rounded-t-lg">
       <div class="flex items-center justify-between">

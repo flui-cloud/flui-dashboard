@@ -1,10 +1,3 @@
-/**
- * Firewall V2 Service - Desired-State Management
- *
- * This service manages cluster firewalls using the new v2 API with desired-state reconciliation.
- * It replaces the old template/attachment-based approach with direct rule management.
- */
-
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { FirewallsService } from '../../core/api/api/firewalls.service';
@@ -32,7 +25,6 @@ import {
 export class FirewallV2Service {
   private readonly firewallsService = inject(FirewallsService);
 
-  // State signals
   private readonly firewallsData = signal<FirewallResponseDto[]>([]);
   private readonly loadingData = signal<boolean>(false);
   private readonly errorData = signal<string | null>(null);
@@ -44,7 +36,6 @@ export class FirewallV2Service {
     clusterId: undefined
   });
 
-  // Public readonly signals
   readonly firewalls = this.firewallsData.asReadonly();
   readonly loading = this.loadingData.asReadonly();
   readonly error = this.errorData.asReadonly();
@@ -52,7 +43,6 @@ export class FirewallV2Service {
   readonly reconciliationStatus = this.reconciliationStatusData.asReadonly();
   readonly filter = this.filterData.asReadonly();
 
-  // Computed signals
   readonly filteredFirewalls = computed(() => {
     const firewalls = this.firewallsData();
     const filter = this.filterData();
@@ -96,9 +86,6 @@ export class FirewallV2Service {
   readonly hasError = computed(() => !!this.errorData());
   readonly isLoading = computed(() => this.loadingData());
 
-  /**
-   * Load all firewalls with optional filters
-   */
   async loadFirewalls(filters?: { clusterId?: string; status?: ReconciliationStatus }): Promise<void> {
     this.loadingData.set(true);
     this.errorData.set(null);
@@ -120,9 +107,6 @@ export class FirewallV2Service {
     }
   }
 
-  /**
-   * Get firewall by ID
-   */
   async getFirewall(id: string): Promise<FirewallResponseDto | null> {
     this.loadingData.set(true);
     this.errorData.set(null);
@@ -143,9 +127,6 @@ export class FirewallV2Service {
     }
   }
 
-  /**
-   * Get firewall by cluster ID
-   */
   async getFirewallByCluster(clusterId: string): Promise<FirewallResponseDto | null> {
     this.loadingData.set(true);
     this.errorData.set(null);
@@ -160,7 +141,6 @@ export class FirewallV2Service {
     } catch (error: any) {
       console.error('Error loading firewall by cluster:', error);
 
-      // 404 is expected if cluster has no firewall
       if (error?.status === 404) {
         this.selectedFirewallData.set(null);
         return null;
@@ -173,10 +153,6 @@ export class FirewallV2Service {
     }
   }
 
-  /**
-   * Update desired firewall rules (does not apply to provider)
-   * This will set the firewall status to DRIFT if rules differ from applied
-   */
   async updateDesiredRules(id: string, rules: FirewallRuleFormData[]): Promise<FirewallResponseDto | null> {
     this.loadingData.set(true);
     this.errorData.set(null);
@@ -204,9 +180,28 @@ export class FirewallV2Service {
     }
   }
 
-  /**
-   * Trigger reconciliation - applies desired state to provider
-   */
+  async enableForCluster(clusterId: string): Promise<FirewallResponseDto | null> {
+    this.loadingData.set(true);
+    this.errorData.set(null);
+
+    try {
+      const firewall = await firstValueFrom(
+        this.firewallsService.clusterFirewallsControllerEnableForCluster(clusterId)
+      );
+
+      this.selectedFirewallData.set(firewall);
+      this.updateFirewallInList(firewall);
+
+      return firewall;
+    } catch (error: any) {
+      console.error('Error enabling firewall for cluster:', error);
+      this.errorData.set(error?.message || 'Failed to enable firewall');
+      return null;
+    } finally {
+      this.loadingData.set(false);
+    }
+  }
+
   async reconcile(id: string): Promise<FirewallResponseDto | null> {
     this.loadingData.set(true);
     this.errorData.set(null);
@@ -229,9 +224,6 @@ export class FirewallV2Service {
     }
   }
 
-  /**
-   * Get reconciliation status (lightweight endpoint)
-   */
   async getReconciliationStatus(id: string): Promise<ReconciliationStatusDto | null> {
     try {
       const status = await firstValueFrom(
@@ -246,10 +238,6 @@ export class FirewallV2Service {
     }
   }
 
-  /**
-   * Delete firewall
-   * Warning: This will leave the cluster unprotected
-   */
   async deleteFirewall(id: string): Promise<boolean> {
     this.loadingData.set(true);
     this.errorData.set(null);
@@ -276,9 +264,6 @@ export class FirewallV2Service {
     }
   }
 
-  /**
-   * Update filter
-   */
   updateFilter(filter: Partial<FirewallFilterState>): void {
     this.filterData.update(current => ({
       ...current,
@@ -286,9 +271,6 @@ export class FirewallV2Service {
     }));
   }
 
-  /**
-   * Clear filter
-   */
   clearFilter(): void {
     this.filterData.set({
       search: '',
@@ -298,24 +280,15 @@ export class FirewallV2Service {
     });
   }
 
-  /**
-   * Clear selected firewall
-   */
   clearSelectedFirewall(): void {
     this.selectedFirewallData.set(null);
     this.reconciliationStatusData.set(null);
   }
 
-  /**
-   * Clear error
-   */
   clearError(): void {
     this.errorData.set(null);
   }
 
-  /**
-   * Reload current firewall
-   */
   async reloadSelectedFirewall(): Promise<void> {
     const current = this.selectedFirewallData();
     if (current) {
@@ -323,13 +296,9 @@ export class FirewallV2Service {
     }
   }
 
-  /**
-   * Poll reconciliation status until complete or timeout
-   * Returns true if reconciliation completed successfully
-   */
   async pollReconciliation(id: string, timeoutMs: number = 60000): Promise<boolean> {
     const startTime = Date.now();
-    const pollInterval = 2000; // 2 seconds
+    const pollInterval = 2000;
 
     while (Date.now() - startTime < timeoutMs) {
       const status = await this.getReconciliationStatus(id);
@@ -338,32 +307,22 @@ export class FirewallV2Service {
         return false;
       }
 
-      // Check if reconciliation is complete
       if (status.status === ReconciliationStatus.IN_SYNC) {
-        // Reload full firewall data
         await this.getFirewall(id);
         return true;
       }
 
       if (status.status === ReconciliationStatus.ERROR) {
-        // Reload full firewall data to get error message
         await this.getFirewall(id);
         return false;
       }
 
-      // Still reconciling, wait and poll again
       await this.delay(pollInterval);
     }
 
-    // Timeout reached
     return false;
   }
 
-  // Private helper methods
-
-  /**
-   * Update a firewall in the list
-   */
   private updateFirewallInList(updatedFirewall: FirewallResponseDto): void {
     this.firewallsData.update(firewalls => {
       const index = firewalls.findIndex(fw => fw.id === updatedFirewall.id);
@@ -372,14 +331,10 @@ export class FirewallV2Service {
         updated[index] = updatedFirewall;
         return updated;
       }
-      // If not found, add it
       return [...firewalls, updatedFirewall];
     });
   }
 
-  /**
-   * Extend firewall with computed UI fields
-   */
   private extendFirewall(firewall: FirewallResponseDto): FirewallExtended {
     const status = firewall.reconciliationStatus as ReconciliationStatus;
 
@@ -391,9 +346,6 @@ export class FirewallV2Service {
     };
   }
 
-  /**
-   * Delay helper for polling
-   */
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }

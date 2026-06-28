@@ -78,6 +78,26 @@ export class ProvidersService {
     return this.providers().find((p) => p.id === id);
   }
 
+  private readonly providerDefs = signal<Record<string, ProviderDefinitionDto>>(
+    {},
+  );
+
+  loadProviderDefinition(id: string): void {
+    if (!id || this.getProviderById(id) || this.providerDefs()[id]) return;
+    this.providerManagementService
+      .managementControllerGetProvider(id as 'hetzner')
+      .pipe(catchError(() => of(null)))
+      .subscribe({
+        next: (def) => {
+          if (def) this.providerDefs.update((m) => ({ ...m, [id]: def }));
+        },
+      });
+  }
+
+  getProviderDefinition(id: string): ProviderDefinitionDto | undefined {
+    return this.getProviderById(id) ?? this.providerDefs()[id];
+  }
+
   getConfigurationByProvider(
     providerId: string
   ): ProviderConfigurationDto | undefined {
@@ -134,7 +154,6 @@ export class ProvidersService {
         .subscribe({
           next: (newConfig) => {
             if (newConfig) {
-              // Update the local configurations
               this.configurations.update((configs) => [...configs, newConfig]);
               resolve(newConfig);
             } else {
@@ -233,13 +252,17 @@ export class ProvidersService {
         )
         .subscribe({
           next: () => {
-            this.configurations.update((configs) =>
-              configs.filter((c) => c.provider !== providerId)
-            );
+            this.dropProviderFromState(providerId);
             resolve();
           },
         });
     });
+  }
+
+  private dropProviderFromState(providerId: string): void {
+    this.configurations.update((configs) =>
+      configs.filter((c) => c.provider !== providerId)
+    );
   }
 
   getProviderHealth(providerId: string): Promise<HealthStatus> {

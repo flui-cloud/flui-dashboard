@@ -6,10 +6,6 @@ import {
   validateFirewallRule
 } from '../../model/firewall-v2.models';
 
-/**
- * Inline Rule Editor Component - Progressive Disclosure Pattern
- * Allows editing firewall rules inline without modals or separate forms
- */
 @Component({
   selector: 'app-firewall-inline-rule-editor',
   standalone: true,
@@ -25,16 +21,17 @@ export class FirewallInlineRuleEditorComponent {
     }
   }
 
+  @Input() supportsSshAllowlist = true;
+  @Input() isHostFirewall = false;
+
   @Output() save = new EventEmitter<FirewallRuleFormData[]>();
   @Output() cancelled = new EventEmitter<void>();
 
-  // Three-level state management
   private readonly originalRules = signal<FirewallRuleFormData[]>([]);
   workingRules = signal<FirewallRuleFormData[]>([]);
   expandedIndex = signal<number | null>(null);
   isAddingNew = signal(false);
 
-  // New rule form
   newRuleForm = signal<FirewallRuleFormData>({
     description: '',
     direction: 'in',
@@ -44,18 +41,14 @@ export class FirewallInlineRuleEditorComponent {
     destinationIps: []
   });
 
-  // Validation
   ruleErrors = signal<Map<number, string[]>>(new Map());
   newRuleErrors = signal<string[]>([]);
 
-  // IP text fields (for editing)
   sourceIpsText = signal('');
   destinationIpsText = signal('');
 
-  // IP Detection
   detectingIp = signal(false);
 
-  // Computed
   isDirty = computed(() => {
     return JSON.stringify(this.originalRules()) !== JSON.stringify(this.workingRules());
   });
@@ -81,23 +74,15 @@ export class FirewallInlineRuleEditorComponent {
     return this.ruleErrors().size > 0;
   });
 
-  /**
-   * Check if rule is modified
-   */
   isRuleModified(index: number): boolean {
     const original = this.originalRules()[index];
     const working = this.workingRules()[index];
     return original && working && JSON.stringify(original) !== JSON.stringify(working);
   }
 
-  /**
-   * Start adding a new rule
-   */
   startAddNewRule() {
-    // Close any expanded rule
     this.expandedIndex.set(null);
 
-    // Reset form
     this.newRuleForm.set({
       description: '',
       direction: 'in',
@@ -113,21 +98,14 @@ export class FirewallInlineRuleEditorComponent {
     this.isAddingNew.set(true);
   }
 
-  /**
-   * Cancel adding new rule
-   */
   cancelAddNew() {
     this.isAddingNew.set(false);
     this.newRuleErrors.set([]);
   }
 
-  /**
-   * Add new rule to working list
-   */
   addNewRule() {
     const form = this.newRuleForm();
 
-    // Parse IPs
     if (form.direction === 'in' && this.sourceIpsText()) {
       form.sourceIps = this.parseIps(this.sourceIpsText());
     }
@@ -136,28 +114,22 @@ export class FirewallInlineRuleEditorComponent {
       form.destinationIps = this.parseIps(this.destinationIpsText());
     }
 
-    // Validate
     const errors = validateFirewallRule(form);
     if (errors.length > 0) {
       this.newRuleErrors.set(errors);
       return;
     }
 
-    // Add to working rules
     this.workingRules.update(rules => [{ ...form }, ...rules]);
     this.isAddingNew.set(false);
   }
 
-  /**
-   * Expand rule for editing
-   */
   expandRule(index: number) {
-    // Close add new if open
+    const rule = this.workingRules()[index];
+    if (rule && this.isManagedSshRule(rule)) return;
+
     this.isAddingNew.set(false);
 
-    const rule = this.workingRules()[index];
-
-    // Set IP text fields
     if (rule.sourceIps && rule.sourceIps.length > 0) {
       this.sourceIpsText.set(rule.sourceIps.join(', '));
     } else {
@@ -173,11 +145,7 @@ export class FirewallInlineRuleEditorComponent {
     this.expandedIndex.set(index);
   }
 
-  /**
-   * Collapse rule (cancel editing)
-   */
   collapseRule(index: number) {
-    // Revert to original if not yet saved locally
     const original = this.originalRules()[index];
     if (original) {
       this.workingRules.update(rules => {
@@ -194,13 +162,9 @@ export class FirewallInlineRuleEditorComponent {
     });
   }
 
-  /**
-   * Save edited rule (local save to working state)
-   */
   saveEditedRule(index: number) {
     const rule = { ...this.workingRules()[index] };
 
-    // Parse IPs from text fields
     if (rule.direction === 'in' && this.sourceIpsText()) {
       rule.sourceIps = this.parseIps(this.sourceIpsText());
     } else if (rule.direction === 'in') {
@@ -213,7 +177,6 @@ export class FirewallInlineRuleEditorComponent {
       rule.destinationIps = [];
     }
 
-    // Validate
     const errors = validateFirewallRule(rule);
     if (errors.length > 0) {
       this.ruleErrors.update(map => {
@@ -223,14 +186,12 @@ export class FirewallInlineRuleEditorComponent {
       return;
     }
 
-    // Update working rules with new reference to trigger signal detection
     this.workingRules.update(rules => {
       const newRules = [...rules];
       newRules[index] = rule;
       return newRules;
     });
 
-    // Clear errors and collapse
     this.ruleErrors.update(map => {
       map.delete(index);
       return new Map(map);
@@ -238,23 +199,74 @@ export class FirewallInlineRuleEditorComponent {
     this.expandedIndex.set(null);
   }
 
-  /**
-   * Delete rule
-   */
+  private static readonly REQUIRED_INGRESS_PORTS = ['80', '443'];
+
+  isRequiredIngress(rule: FirewallRuleFormData): boolean {
+    return (
+      rule.direction === 'in' &&
+      rule.protocol === 'tcp' &&
+      FirewallInlineRuleEditorComponent.REQUIRED_INGRESS_PORTS.includes(
+        rule.port ?? '',
+      )
+    );
+  }
+
+  isManagedSshRule(rule: FirewallRuleFormData): boolean {
+    return (
+      !this.supportsSshAllowlist &&
+      rule.direction === 'in' &&
+      rule.protocol === 'tcp' &&
+      rule.port === '22'
+    );
+  }
+
+  isUnenforcedEgress(rule: FirewallRuleFormData): boolean {
+    return this.isHostFirewall && rule.direction === 'out';
+  }
+
+  ruleBadge(rule: FirewallRuleFormData): string | null {
+    if (this.isManagedSshRule(rule)) return 'Always open';
+    if (this.isRequiredIngress(rule)) return 'Required';
+    if (this.isUnenforcedEgress(rule)) return 'Not enforced';
+    return null;
+  }
+
+  badgeTitle(rule: FirewallRuleFormData): string {
+    if (this.isManagedSshRule(rule)) {
+      return 'SSH stays open and CA-protected on a host firewall (no out-of-band recovery). Managed by Flui — cannot be edited or removed.';
+    }
+    if (this.isRequiredIngress(rule)) {
+      return `Port ${rule.port} is required (HTTPS ingress / ACME) — you can restrict its source IPs but not remove it.`;
+    }
+    if (this.isUnenforcedEgress(rule)) {
+      return 'Outbound traffic is not restricted on a host firewall (egress stays open). This rule is informational.';
+    }
+    return '';
+  }
+
   deleteRule(index: number) {
+    const rule = this.workingRules()[index];
+    if (rule && this.isRequiredIngress(rule)) {
+      const why =
+        rule.port === '443'
+          ? "the dashboard, API and apps over HTTPS (Traefik)"
+          : 'ACME HTTP-01 cert renewal and the HTTP→HTTPS redirect';
+      alert(
+        `Port ${rule.port} can't be removed — it serves ${why}. ` +
+          `Removing it would lock you out of the cluster. ` +
+          `You can restrict its source IPs instead (edit the rule).`,
+      );
+      return;
+    }
     if (confirm('Delete this firewall rule?')) {
       this.workingRules.update(rules => rules.filter((_, i) => i !== index));
 
-      // If this was expanded, close it
       if (this.expandedIndex() === index) {
         this.expandedIndex.set(null);
       }
     }
   }
 
-  /**
-   * Update rule field
-   */
   updateRuleField<K extends keyof FirewallRuleFormData>(
     index: number,
     field: K,
@@ -267,9 +279,6 @@ export class FirewallInlineRuleEditorComponent {
     });
   }
 
-  /**
-   * Update new rule form field
-   */
   updateNewRuleField<K extends keyof FirewallRuleFormData>(
     field: K,
     value: FirewallRuleFormData[K]
@@ -278,16 +287,28 @@ export class FirewallInlineRuleEditorComponent {
     this.newRuleErrors.set([]);
   }
 
-  /**
-   * Save all changes to server
-   */
   saveAllChanges() {
-    this.save.emit(this.workingRules());
+    const rules = this.workingRules();
+    const missing = FirewallInlineRuleEditorComponent.REQUIRED_INGRESS_PORTS.filter(
+      (port) =>
+        !rules.some(
+          (r) =>
+            r.direction === 'in' && r.protocol === 'tcp' && r.port === port,
+        ),
+    );
+    if (missing.length > 0) {
+      alert(
+        `Can't save: inbound TCP ${missing.join(' and ')} must stay open — ` +
+          `443 serves the dashboard/API/apps over HTTPS and 80 serves ACME HTTP-01 ` +
+          `cert renewal + the HTTP→HTTPS redirect. Removing them would make the ` +
+          `cluster unreachable. You can restrict the source IPs, but the ports must ` +
+          `stay present.`,
+      );
+      return;
+    }
+    this.save.emit(rules);
   }
 
-  /**
-   * Discard all changes
-   */
   discardAllChanges() {
     if (confirm('Discard all unsaved changes?')) {
       this.workingRules.set([...this.originalRules()]);
@@ -297,9 +318,6 @@ export class FirewallInlineRuleEditorComponent {
     }
   }
 
-  /**
-   * Cancel editing (go back)
-   */
   cancelEditing() {
     if (this.isDirty() && !confirm('You have unsaved changes. Discard them?')) {
       return;
@@ -307,9 +325,6 @@ export class FirewallInlineRuleEditorComponent {
     this.cancelled.emit();
   }
 
-  /**
-   * Detect current IP
-   */
   async detectCurrentIp(isForNewRule: boolean = false) {
     this.detectingIp.set(true);
     try {
@@ -326,9 +341,6 @@ export class FirewallInlineRuleEditorComponent {
     }
   }
 
-  /**
-   * Set IP preset
-   */
   setIpPreset(preset: string, isForNewRule: boolean = false) {
     const direction = isForNewRule ? this.newRuleForm().direction :
                       this.workingRules()[this.expandedIndex()!]?.direction;
@@ -342,9 +354,6 @@ export class FirewallInlineRuleEditorComponent {
     }
   }
 
-  /**
-   * Clear IP field
-   */
   clearIpField(isForNewRule: boolean = false) {
     const direction = isForNewRule ? this.newRuleForm().direction :
                       this.workingRules()[this.expandedIndex()!]?.direction;
@@ -356,16 +365,10 @@ export class FirewallInlineRuleEditorComponent {
     }
   }
 
-  /**
-   * Parse IPs from comma-separated text
-   */
   private parseIps(text: string): string[] {
     return text.split(',').map(ip => ip.trim()).filter(ip => ip.length > 0);
   }
 
-  /**
-   * Get rule summary for collapsed view
-   */
   getRuleSummary(rule: FirewallRuleFormData): string {
     const dir = rule.direction === 'in' ? 'Inbound' : 'Outbound';
     const proto = rule.protocol.toUpperCase();

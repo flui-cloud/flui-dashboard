@@ -13,7 +13,6 @@
     </div>
   } @else {
     @if (firewall(); as fw) {
-    <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-4">
         <button
@@ -61,7 +60,6 @@
       </div>
     </div>
 
-    <!-- Status Card -->
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         Status Information
@@ -111,16 +109,15 @@
       }
     </div>
 
-    <!-- Rules Section -->
     @if (editMode()) {
-      <!-- Edit Mode: Show Inline Rule Editor -->
       <app-firewall-inline-rule-editor
         [initialRules]="desiredRules()"
+        [supportsSshAllowlist]="supportsSshAllowlist()"
+        [isHostFirewall]="isHostFirewall()"
         (save)="saveRules($event)"
         (cancelled)="cancelEdit()"
       />
     } @else {
-      <!-- View Mode: Show Rules List -->
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -151,7 +148,6 @@
           [showHashComparison]="true"
         />
       } @else {
-        <!-- Simple Rules List -->
         <div class="space-y-3">
           <h3 class="text-md font-medium text-gray-900 dark:text-gray-100">
             Desired Rules ({{ fw.desiredRules.length || 0 }})
@@ -182,7 +178,6 @@
       </div>
     }
 
-    <!-- Metadata Section -->
     @if (fw.metadata) {
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
