@@ -31,7 +31,8 @@ export namespace CreateSSHKeyDto {
     export const ProvidersEnum = {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
-        Scaleway: 'scaleway'
+        Scaleway: 'scaleway',
+        Byos: 'byos'
     } as const;
     export type ProvidersEnum = typeof ProvidersEnum[keyof typeof ProvidersEnum];
 }

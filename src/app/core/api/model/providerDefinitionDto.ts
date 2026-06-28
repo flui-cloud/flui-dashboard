@@ -36,7 +36,8 @@ export namespace ProviderDefinitionDto {
     export const IdEnum = {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
-        Scaleway: 'scaleway'
+        Scaleway: 'scaleway',
+        Byos: 'byos'
     } as const;
     export type IdEnum = typeof IdEnum[keyof typeof IdEnum];
 }

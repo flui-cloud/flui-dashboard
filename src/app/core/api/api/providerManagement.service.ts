@@ -63,10 +63,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerClearNodeSizesCache(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public managementControllerClearNodeSizesCache(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public managementControllerClearNodeSizesCache(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public managementControllerClearNodeSizesCache(provider: 'contabo' | 'hetzner' | 'scaleway', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerClearNodeSizesCache(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public managementControllerClearNodeSizesCache(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public managementControllerClearNodeSizesCache(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public managementControllerClearNodeSizesCache(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerClearNodeSizesCache.');
         }
@@ -98,7 +98,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/cache/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/node-sizes`;
+        let localVarPath = `/api/v1/management/cache/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/node-sizes`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
             {
@@ -122,10 +122,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerConfigureProvider(provider: 'contabo' | 'hetzner' | 'scaleway', configureProviderDto: ConfigureProviderDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
-    public managementControllerConfigureProvider(provider: 'contabo' | 'hetzner' | 'scaleway', configureProviderDto: ConfigureProviderDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
-    public managementControllerConfigureProvider(provider: 'contabo' | 'hetzner' | 'scaleway', configureProviderDto: ConfigureProviderDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
-    public managementControllerConfigureProvider(provider: 'contabo' | 'hetzner' | 'scaleway', configureProviderDto: ConfigureProviderDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerConfigureProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', configureProviderDto: ConfigureProviderDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
+    public managementControllerConfigureProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', configureProviderDto: ConfigureProviderDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
+    public managementControllerConfigureProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', configureProviderDto: ConfigureProviderDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
+    public managementControllerConfigureProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', configureProviderDto: ConfigureProviderDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerConfigureProvider.');
         }
@@ -170,7 +170,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/configure`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/configure`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProviderConfigurationDto>('post', `${basePath}${localVarPath}`,
             {
@@ -195,10 +195,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerEnableProvider(provider: 'contabo' | 'hetzner' | 'scaleway', enableProviderDto: EnableProviderDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
-    public managementControllerEnableProvider(provider: 'contabo' | 'hetzner' | 'scaleway', enableProviderDto: EnableProviderDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
-    public managementControllerEnableProvider(provider: 'contabo' | 'hetzner' | 'scaleway', enableProviderDto: EnableProviderDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
-    public managementControllerEnableProvider(provider: 'contabo' | 'hetzner' | 'scaleway', enableProviderDto: EnableProviderDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerEnableProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', enableProviderDto: EnableProviderDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
+    public managementControllerEnableProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', enableProviderDto: EnableProviderDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
+    public managementControllerEnableProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', enableProviderDto: EnableProviderDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
+    public managementControllerEnableProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', enableProviderDto: EnableProviderDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerEnableProvider.');
         }
@@ -243,7 +243,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/enable`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/enable`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProviderConfigurationDto>('put', `${basePath}${localVarPath}`,
             {
@@ -376,10 +376,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerGetProvider(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderDefinitionDto>;
-    public managementControllerGetProvider(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderDefinitionDto>>;
-    public managementControllerGetProvider(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderDefinitionDto>>;
-    public managementControllerGetProvider(provider: 'contabo' | 'hetzner' | 'scaleway', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerGetProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderDefinitionDto>;
+    public managementControllerGetProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderDefinitionDto>>;
+    public managementControllerGetProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderDefinitionDto>>;
+    public managementControllerGetProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerGetProvider.');
         }
@@ -412,7 +412,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProviderDefinitionDto>('get', `${basePath}${localVarPath}`,
             {
@@ -435,10 +435,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerGetProviderConfiguration(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
-    public managementControllerGetProviderConfiguration(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
-    public managementControllerGetProviderConfiguration(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
-    public managementControllerGetProviderConfiguration(provider: 'contabo' | 'hetzner' | 'scaleway', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerGetProviderConfiguration(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
+    public managementControllerGetProviderConfiguration(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
+    public managementControllerGetProviderConfiguration(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
+    public managementControllerGetProviderConfiguration(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerGetProviderConfiguration.');
         }
@@ -471,7 +471,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/configurations/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}`;
+        let localVarPath = `/api/v1/management/configurations/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProviderConfigurationDto>('get', `${basePath}${localVarPath}`,
             {
@@ -494,10 +494,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerGetProviderHealth(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HealthStatusDto>;
-    public managementControllerGetProviderHealth(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<HealthStatusDto>>;
-    public managementControllerGetProviderHealth(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<HealthStatusDto>>;
-    public managementControllerGetProviderHealth(provider: 'contabo' | 'hetzner' | 'scaleway', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerGetProviderHealth(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HealthStatusDto>;
+    public managementControllerGetProviderHealth(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<HealthStatusDto>>;
+    public managementControllerGetProviderHealth(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<HealthStatusDto>>;
+    public managementControllerGetProviderHealth(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerGetProviderHealth.');
         }
@@ -530,7 +530,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/health`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/health`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<HealthStatusDto>('get', `${basePath}${localVarPath}`,
             {
@@ -553,10 +553,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerGetProviderInstanceTypes(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<object>>;
-    public managementControllerGetProviderInstanceTypes(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<object>>>;
-    public managementControllerGetProviderInstanceTypes(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<object>>>;
-    public managementControllerGetProviderInstanceTypes(provider: 'contabo' | 'hetzner' | 'scaleway', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerGetProviderInstanceTypes(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<object>>;
+    public managementControllerGetProviderInstanceTypes(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<object>>>;
+    public managementControllerGetProviderInstanceTypes(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<object>>>;
+    public managementControllerGetProviderInstanceTypes(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerGetProviderInstanceTypes.');
         }
@@ -589,7 +589,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/instance-types`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/instance-types`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<object>>('get', `${basePath}${localVarPath}`,
             {
@@ -612,10 +612,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerGetProviderLogo(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public managementControllerGetProviderLogo(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public managementControllerGetProviderLogo(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public managementControllerGetProviderLogo(provider: 'contabo' | 'hetzner' | 'scaleway', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerGetProviderLogo(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public managementControllerGetProviderLogo(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public managementControllerGetProviderLogo(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public managementControllerGetProviderLogo(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerGetProviderLogo.');
         }
@@ -647,7 +647,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/logo`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/logo`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {
@@ -672,10 +672,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerGetProviderNodeSizes(provider: 'contabo' | 'hetzner' | 'scaleway', region?: string, skipCache?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<NodeSizeOptionDto>>;
-    public managementControllerGetProviderNodeSizes(provider: 'contabo' | 'hetzner' | 'scaleway', region?: string, skipCache?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<NodeSizeOptionDto>>>;
-    public managementControllerGetProviderNodeSizes(provider: 'contabo' | 'hetzner' | 'scaleway', region?: string, skipCache?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<NodeSizeOptionDto>>>;
-    public managementControllerGetProviderNodeSizes(provider: 'contabo' | 'hetzner' | 'scaleway', region?: string, skipCache?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerGetProviderNodeSizes(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', region?: string, skipCache?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<NodeSizeOptionDto>>;
+    public managementControllerGetProviderNodeSizes(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', region?: string, skipCache?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<NodeSizeOptionDto>>>;
+    public managementControllerGetProviderNodeSizes(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', region?: string, skipCache?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<NodeSizeOptionDto>>>;
+    public managementControllerGetProviderNodeSizes(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', region?: string, skipCache?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerGetProviderNodeSizes.');
         }
@@ -728,7 +728,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/node-sizes`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/node-sizes`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<NodeSizeOptionDto>>('get', `${basePath}${localVarPath}`,
             {
@@ -755,10 +755,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerGetProviderPricing(provider: 'contabo' | 'hetzner' | 'scaleway', region?: string, nodeSize?: string, skipCache?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<PricingResponseDto>;
-    public managementControllerGetProviderPricing(provider: 'contabo' | 'hetzner' | 'scaleway', region?: string, nodeSize?: string, skipCache?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<PricingResponseDto>>;
-    public managementControllerGetProviderPricing(provider: 'contabo' | 'hetzner' | 'scaleway', region?: string, nodeSize?: string, skipCache?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<PricingResponseDto>>;
-    public managementControllerGetProviderPricing(provider: 'contabo' | 'hetzner' | 'scaleway', region?: string, nodeSize?: string, skipCache?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerGetProviderPricing(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', region?: string, nodeSize?: string, skipCache?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<PricingResponseDto>;
+    public managementControllerGetProviderPricing(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', region?: string, nodeSize?: string, skipCache?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<PricingResponseDto>>;
+    public managementControllerGetProviderPricing(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', region?: string, nodeSize?: string, skipCache?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<PricingResponseDto>>;
+    public managementControllerGetProviderPricing(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', region?: string, nodeSize?: string, skipCache?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerGetProviderPricing.');
         }
@@ -820,7 +820,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/pricing`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/pricing`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<PricingResponseDto>('get', `${basePath}${localVarPath}`,
             {
@@ -844,10 +844,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<object>>;
-    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<object>>>;
-    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<object>>>;
-    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<object>>;
+    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<object>>>;
+    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<object>>>;
+    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerGetProviderRegions.');
         }
@@ -880,7 +880,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/regions`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/regions`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<object>>('get', `${basePath}${localVarPath}`,
             {
@@ -905,10 +905,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerGetUserProviderConfigurations(provider?: 'contabo' | 'hetzner' | 'scaleway', status?: 'not_configured' | 'configuring' | 'validating' | 'active' | 'error' | 'disabled', isActive?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ProviderConfigurationDto>>;
-    public managementControllerGetUserProviderConfigurations(provider?: 'contabo' | 'hetzner' | 'scaleway', status?: 'not_configured' | 'configuring' | 'validating' | 'active' | 'error' | 'disabled', isActive?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ProviderConfigurationDto>>>;
-    public managementControllerGetUserProviderConfigurations(provider?: 'contabo' | 'hetzner' | 'scaleway', status?: 'not_configured' | 'configuring' | 'validating' | 'active' | 'error' | 'disabled', isActive?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ProviderConfigurationDto>>>;
-    public managementControllerGetUserProviderConfigurations(provider?: 'contabo' | 'hetzner' | 'scaleway', status?: 'not_configured' | 'configuring' | 'validating' | 'active' | 'error' | 'disabled', isActive?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerGetUserProviderConfigurations(provider?: 'contabo' | 'hetzner' | 'scaleway' | 'byos', status?: 'not_configured' | 'configuring' | 'validating' | 'active' | 'error' | 'disabled', isActive?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ProviderConfigurationDto>>;
+    public managementControllerGetUserProviderConfigurations(provider?: 'contabo' | 'hetzner' | 'scaleway' | 'byos', status?: 'not_configured' | 'configuring' | 'validating' | 'active' | 'error' | 'disabled', isActive?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ProviderConfigurationDto>>>;
+    public managementControllerGetUserProviderConfigurations(provider?: 'contabo' | 'hetzner' | 'scaleway' | 'byos', status?: 'not_configured' | 'configuring' | 'validating' | 'active' | 'error' | 'disabled', isActive?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ProviderConfigurationDto>>>;
+    public managementControllerGetUserProviderConfigurations(provider?: 'contabo' | 'hetzner' | 'scaleway' | 'byos', status?: 'not_configured' | 'configuring' | 'validating' | 'active' | 'error' | 'disabled', isActive?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
 
@@ -1050,10 +1050,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerRotateProviderCredentials(provider: 'contabo' | 'hetzner' | 'scaleway', providerCredentialsDto: ProviderCredentialsDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
-    public managementControllerRotateProviderCredentials(provider: 'contabo' | 'hetzner' | 'scaleway', providerCredentialsDto: ProviderCredentialsDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
-    public managementControllerRotateProviderCredentials(provider: 'contabo' | 'hetzner' | 'scaleway', providerCredentialsDto: ProviderCredentialsDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
-    public managementControllerRotateProviderCredentials(provider: 'contabo' | 'hetzner' | 'scaleway', providerCredentialsDto: ProviderCredentialsDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerRotateProviderCredentials(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', providerCredentialsDto: ProviderCredentialsDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
+    public managementControllerRotateProviderCredentials(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', providerCredentialsDto: ProviderCredentialsDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
+    public managementControllerRotateProviderCredentials(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', providerCredentialsDto: ProviderCredentialsDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
+    public managementControllerRotateProviderCredentials(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', providerCredentialsDto: ProviderCredentialsDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerRotateProviderCredentials.');
         }
@@ -1098,7 +1098,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/credentials`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/credentials`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProviderConfigurationDto>('put', `${basePath}${localVarPath}`,
             {
@@ -1123,10 +1123,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerUpdateProviderCredentialsExpiry(provider: 'contabo' | 'hetzner' | 'scaleway', updateCredentialsExpiryDto: UpdateCredentialsExpiryDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
-    public managementControllerUpdateProviderCredentialsExpiry(provider: 'contabo' | 'hetzner' | 'scaleway', updateCredentialsExpiryDto: UpdateCredentialsExpiryDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
-    public managementControllerUpdateProviderCredentialsExpiry(provider: 'contabo' | 'hetzner' | 'scaleway', updateCredentialsExpiryDto: UpdateCredentialsExpiryDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
-    public managementControllerUpdateProviderCredentialsExpiry(provider: 'contabo' | 'hetzner' | 'scaleway', updateCredentialsExpiryDto: UpdateCredentialsExpiryDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerUpdateProviderCredentialsExpiry(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', updateCredentialsExpiryDto: UpdateCredentialsExpiryDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
+    public managementControllerUpdateProviderCredentialsExpiry(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', updateCredentialsExpiryDto: UpdateCredentialsExpiryDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
+    public managementControllerUpdateProviderCredentialsExpiry(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', updateCredentialsExpiryDto: UpdateCredentialsExpiryDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
+    public managementControllerUpdateProviderCredentialsExpiry(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', updateCredentialsExpiryDto: UpdateCredentialsExpiryDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerUpdateProviderCredentialsExpiry.');
         }
@@ -1171,7 +1171,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/credentials/expiry`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/credentials/expiry`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProviderConfigurationDto>('patch', `${basePath}${localVarPath}`,
             {
@@ -1196,10 +1196,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerUpdateProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway', updateProviderRegionsDto: UpdateProviderRegionsDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
-    public managementControllerUpdateProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway', updateProviderRegionsDto: UpdateProviderRegionsDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
-    public managementControllerUpdateProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway', updateProviderRegionsDto: UpdateProviderRegionsDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
-    public managementControllerUpdateProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway', updateProviderRegionsDto: UpdateProviderRegionsDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerUpdateProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', updateProviderRegionsDto: UpdateProviderRegionsDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderConfigurationDto>;
+    public managementControllerUpdateProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', updateProviderRegionsDto: UpdateProviderRegionsDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderConfigurationDto>>;
+    public managementControllerUpdateProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', updateProviderRegionsDto: UpdateProviderRegionsDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderConfigurationDto>>;
+    public managementControllerUpdateProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', updateProviderRegionsDto: UpdateProviderRegionsDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerUpdateProviderRegions.');
         }
@@ -1244,7 +1244,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/regions`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/regions`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProviderConfigurationDto>('put', `${basePath}${localVarPath}`,
             {
@@ -1269,10 +1269,10 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway', providerCredentialsDto: ProviderCredentialsDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ValidationResultDto>;
-    public managementControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway', providerCredentialsDto: ProviderCredentialsDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ValidationResultDto>>;
-    public managementControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway', providerCredentialsDto: ProviderCredentialsDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ValidationResultDto>>;
-    public managementControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway', providerCredentialsDto: ProviderCredentialsDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public managementControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', providerCredentialsDto: ProviderCredentialsDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ValidationResultDto>;
+    public managementControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', providerCredentialsDto: ProviderCredentialsDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ValidationResultDto>>;
+    public managementControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', providerCredentialsDto: ProviderCredentialsDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ValidationResultDto>>;
+    public managementControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', providerCredentialsDto: ProviderCredentialsDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerValidateProvider.');
         }
@@ -1317,7 +1317,7 @@ export class ProviderManagementService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/validate`;
+        let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/validate`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ValidationResultDto>('post', `${basePath}${localVarPath}`,
             {

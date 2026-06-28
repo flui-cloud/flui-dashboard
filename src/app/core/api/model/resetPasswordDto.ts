@@ -11,7 +11,7 @@
 
 export interface ResetPasswordDto { 
     /**
-     * When true triggers an invite email (requires SMTP). When false a fresh temp password is generated and returned.
+     * When true returns a copyable invite link to re-initialize the account. When false a fresh temp password is generated and returned.
      */
     sendInvite: boolean;
 }

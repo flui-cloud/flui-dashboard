@@ -10,6 +10,7 @@
 import { ProviderRegionDto } from './providerRegionDto';
 import { VNetTopologyDto } from './vNetTopologyDto';
 import { ProviderFeaturesDto } from './providerFeaturesDto';
+import { ProviderFirewallDto } from './providerFirewallDto';
 import { ProviderPricingDto } from './providerPricingDto';
 
 
@@ -18,6 +19,10 @@ export interface ProviderCapabilitiesDto {
     supportedRegions: Array<ProviderRegionDto>;
     credentialType: ProviderCapabilitiesDto.CredentialTypeEnum;
     features: ProviderFeaturesDto;
+    /**
+     * How the node firewall is enforced for this provider
+     */
+    firewall: ProviderFirewallDto;
     pricing: ProviderPricingDto;
     /**
      * VNet topology info — null when privateNetworking is false
@@ -35,8 +40,10 @@ export interface ProviderCapabilitiesDto {
 export namespace ProviderCapabilitiesDto {
     export const CredentialTypeEnum = {
         ApiKey: 'api_key',
+        AccessKeySecret: 'access_key_secret',
         BearerToken: 'bearer_token',
-        UserPassword: 'user_password'
+        UserPassword: 'user_password',
+        Ssh: 'ssh'
     } as const;
     export type CredentialTypeEnum = typeof CredentialTypeEnum[keyof typeof CredentialTypeEnum];
 }

@@ -63,7 +63,8 @@ export namespace ProviderConfigurationDto {
     export const ProviderEnum = {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
-        Scaleway: 'scaleway'
+        Scaleway: 'scaleway',
+        Byos: 'byos'
     } as const;
     export type ProviderEnum = typeof ProviderEnum[keyof typeof ProviderEnum];
     export const StatusEnum = {

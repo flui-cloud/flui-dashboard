@@ -177,10 +177,10 @@ export class InfrastructureServersService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public serversControllerDeleteServer(id: string, provider: 'contabo' | 'hetzner' | 'scaleway', force?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<DeleteServerResponseDto>;
-    public serversControllerDeleteServer(id: string, provider: 'contabo' | 'hetzner' | 'scaleway', force?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<DeleteServerResponseDto>>;
-    public serversControllerDeleteServer(id: string, provider: 'contabo' | 'hetzner' | 'scaleway', force?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<DeleteServerResponseDto>>;
-    public serversControllerDeleteServer(id: string, provider: 'contabo' | 'hetzner' | 'scaleway', force?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public serversControllerDeleteServer(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', force?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<DeleteServerResponseDto>;
+    public serversControllerDeleteServer(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', force?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<DeleteServerResponseDto>>;
+    public serversControllerDeleteServer(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', force?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<DeleteServerResponseDto>>;
+    public serversControllerDeleteServer(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', force?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling serversControllerDeleteServer.');
         }
@@ -262,10 +262,10 @@ export class InfrastructureServersService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public serversControllerGetServerDetails(id: string, provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ServerResponseDto>;
-    public serversControllerGetServerDetails(id: string, provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ServerResponseDto>>;
-    public serversControllerGetServerDetails(id: string, provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ServerResponseDto>>;
-    public serversControllerGetServerDetails(id: string, provider: 'contabo' | 'hetzner' | 'scaleway', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public serversControllerGetServerDetails(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ServerResponseDto>;
+    public serversControllerGetServerDetails(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ServerResponseDto>>;
+    public serversControllerGetServerDetails(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ServerResponseDto>>;
+    public serversControllerGetServerDetails(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling serversControllerGetServerDetails.');
         }
@@ -338,10 +338,10 @@ export class InfrastructureServersService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public serversControllerListServers(clusterId?: string, provider?: 'contabo' | 'hetzner' | 'scaleway', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ServerResponseDto>>;
-    public serversControllerListServers(clusterId?: string, provider?: 'contabo' | 'hetzner' | 'scaleway', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ServerResponseDto>>>;
-    public serversControllerListServers(clusterId?: string, provider?: 'contabo' | 'hetzner' | 'scaleway', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ServerResponseDto>>>;
-    public serversControllerListServers(clusterId?: string, provider?: 'contabo' | 'hetzner' | 'scaleway', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public serversControllerListServers(clusterId?: string, provider?: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ServerResponseDto>>;
+    public serversControllerListServers(clusterId?: string, provider?: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ServerResponseDto>>>;
+    public serversControllerListServers(clusterId?: string, provider?: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ServerResponseDto>>>;
+    public serversControllerListServers(clusterId?: string, provider?: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
 

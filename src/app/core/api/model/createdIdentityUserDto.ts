@@ -17,6 +17,14 @@ export interface CreatedIdentityUserDto {
      * Returned only when sendInvite=false. Shown once — not persisted.
      */
     tempPassword?: string;
+    /**
+     * Returned when sendInvite=true. Copyable link the user opens to set up their account (no email required). Path is configurable via OIDC_INVITE_LINK_TEMPLATE.
+     */
+    inviteLink?: string;
+    /**
+     * Returned when sendInvite=true. Raw provider invite code — authoritative fallback if the link path needs adjusting.
+     */
+    inviteCode?: string;
 }
 export namespace CreatedIdentityUserDto {
     export const RoleEnum = {

@@ -345,10 +345,10 @@ export class InferenceService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public inferenceControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ValidationResultDto>;
-    public inferenceControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ValidationResultDto>>;
-    public inferenceControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ValidationResultDto>>;
-    public inferenceControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public inferenceControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ValidationResultDto>;
+    public inferenceControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ValidationResultDto>>;
+    public inferenceControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ValidationResultDto>>;
+    public inferenceControllerValidateProvider(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling inferenceControllerValidateProvider.');
         }
@@ -381,7 +381,7 @@ export class InferenceService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/inference/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/validate`;
+        let localVarPath = `/api/v1/inference/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/validate`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ValidationResultDto>('post', `${basePath}${localVarPath}`,
             {

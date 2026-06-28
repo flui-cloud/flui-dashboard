@@ -31,13 +31,15 @@ export namespace UpdateSSHKeyDto {
     export const SyncProvidersEnum = {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
-        Scaleway: 'scaleway'
+        Scaleway: 'scaleway',
+        Byos: 'byos'
     } as const;
     export type SyncProvidersEnum = typeof SyncProvidersEnum[keyof typeof SyncProvidersEnum];
     export const UnsyncProvidersEnum = {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
-        Scaleway: 'scaleway'
+        Scaleway: 'scaleway',
+        Byos: 'byos'
     } as const;
     export type UnsyncProvidersEnum = typeof UnsyncProvidersEnum[keyof typeof UnsyncProvidersEnum];
 }

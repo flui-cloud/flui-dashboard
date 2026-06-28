@@ -46,10 +46,10 @@ export class ProviderFirewallsService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public providerFirewallsControllerDeleteFirewall(provider: 'contabo' | 'hetzner' | 'scaleway', id: string, confirm: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public providerFirewallsControllerDeleteFirewall(provider: 'contabo' | 'hetzner' | 'scaleway', id: string, confirm: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public providerFirewallsControllerDeleteFirewall(provider: 'contabo' | 'hetzner' | 'scaleway', id: string, confirm: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public providerFirewallsControllerDeleteFirewall(provider: 'contabo' | 'hetzner' | 'scaleway', id: string, confirm: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public providerFirewallsControllerDeleteFirewall(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', id: string, confirm: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public providerFirewallsControllerDeleteFirewall(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', id: string, confirm: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public providerFirewallsControllerDeleteFirewall(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', id: string, confirm: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public providerFirewallsControllerDeleteFirewall(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', id: string, confirm: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling providerFirewallsControllerDeleteFirewall.');
         }
@@ -98,7 +98,7 @@ export class ProviderFirewallsService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/firewalls/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        let localVarPath = `/api/v1/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/firewalls/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
             {
@@ -124,10 +124,10 @@ export class ProviderFirewallsService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public providerFirewallsControllerGetFirewall(provider: 'contabo' | 'hetzner' | 'scaleway', id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderFirewallResponseDto>;
-    public providerFirewallsControllerGetFirewall(provider: 'contabo' | 'hetzner' | 'scaleway', id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderFirewallResponseDto>>;
-    public providerFirewallsControllerGetFirewall(provider: 'contabo' | 'hetzner' | 'scaleway', id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderFirewallResponseDto>>;
-    public providerFirewallsControllerGetFirewall(provider: 'contabo' | 'hetzner' | 'scaleway', id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public providerFirewallsControllerGetFirewall(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderFirewallResponseDto>;
+    public providerFirewallsControllerGetFirewall(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderFirewallResponseDto>>;
+    public providerFirewallsControllerGetFirewall(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderFirewallResponseDto>>;
+    public providerFirewallsControllerGetFirewall(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling providerFirewallsControllerGetFirewall.');
         }
@@ -163,7 +163,7 @@ export class ProviderFirewallsService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/firewalls/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        let localVarPath = `/api/v1/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/firewalls/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProviderFirewallResponseDto>('get', `${basePath}${localVarPath}`,
             {
@@ -191,10 +191,10 @@ export class ProviderFirewallsService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public providerFirewallsControllerListFirewalls(provider: 'contabo' | 'hetzner' | 'scaleway', labelSelector?: string, name?: string, clusterId?: string, includeNonFlui?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ProviderFirewallResponseDto>>;
-    public providerFirewallsControllerListFirewalls(provider: 'contabo' | 'hetzner' | 'scaleway', labelSelector?: string, name?: string, clusterId?: string, includeNonFlui?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ProviderFirewallResponseDto>>>;
-    public providerFirewallsControllerListFirewalls(provider: 'contabo' | 'hetzner' | 'scaleway', labelSelector?: string, name?: string, clusterId?: string, includeNonFlui?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ProviderFirewallResponseDto>>>;
-    public providerFirewallsControllerListFirewalls(provider: 'contabo' | 'hetzner' | 'scaleway', labelSelector?: string, name?: string, clusterId?: string, includeNonFlui?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public providerFirewallsControllerListFirewalls(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', labelSelector?: string, name?: string, clusterId?: string, includeNonFlui?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ProviderFirewallResponseDto>>;
+    public providerFirewallsControllerListFirewalls(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', labelSelector?: string, name?: string, clusterId?: string, includeNonFlui?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ProviderFirewallResponseDto>>>;
+    public providerFirewallsControllerListFirewalls(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', labelSelector?: string, name?: string, clusterId?: string, includeNonFlui?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ProviderFirewallResponseDto>>>;
+    public providerFirewallsControllerListFirewalls(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', labelSelector?: string, name?: string, clusterId?: string, includeNonFlui?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling providerFirewallsControllerListFirewalls.');
         }
@@ -265,7 +265,7 @@ export class ProviderFirewallsService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway'", dataFormat: undefined})}/firewalls`;
+        let localVarPath = `/api/v1/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}/firewalls`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<ProviderFirewallResponseDto>>('get', `${basePath}${localVarPath}`,
             {

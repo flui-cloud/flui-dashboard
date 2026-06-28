@@ -84,13 +84,15 @@ export namespace SSHKeyDto {
         Local: 'local',
         Contabo: 'contabo',
         Hetzner: 'hetzner',
-        Scaleway: 'scaleway'
+        Scaleway: 'scaleway',
+        Byos: 'byos'
     } as const;
     export type SourceEnum = typeof SourceEnum[keyof typeof SourceEnum];
     export const AvailableOnProviderEnum = {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
-        Scaleway: 'scaleway'
+        Scaleway: 'scaleway',
+        Byos: 'byos'
     } as const;
     export type AvailableOnProviderEnum = typeof AvailableOnProviderEnum[keyof typeof AvailableOnProviderEnum];
 }

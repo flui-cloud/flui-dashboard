@@ -108,6 +108,10 @@ export interface CreateApplicationDto {
      */
     startCommand?: string;
     /**
+     * Exec-form entrypoint override (full argv, run without a shell). Takes precedence over startCommand. Required for distroless images with no /bin/sh (e.g. Garage), where the shell-wrapped startCommand would fail.
+     */
+    command?: Array<string>;
+    /**
      * Pod/container security settings (fsGroup, runAsUser/runAsGroup, runAsNonRoot, hardened). Emitted into the workload only for the fields that are set. Used so non-root images can write a persistent volume (fsGroup).
      */
     securityContext?: object;

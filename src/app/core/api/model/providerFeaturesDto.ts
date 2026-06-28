@@ -16,5 +16,9 @@ export interface ProviderFeaturesDto {
     snapshots: boolean;
     backups: boolean;
     dnsZones: boolean;
+    /**
+     * Whether Flui can add/remove nodes via this provider API (false for BYOS)
+     */
+    nodeProvisioning: boolean;
 }
 

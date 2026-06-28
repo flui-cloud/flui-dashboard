@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { AppCpuMetricsDto } from './appCpuMetricsDto';
+import { AppVolumeMetricsDto } from './appVolumeMetricsDto';
 import { AppStatusMetricsDto } from './appStatusMetricsDto';
 import { AppMemoryMetricsDto } from './appMemoryMetricsDto';
 import { AppNetworkMetricsDto } from './appNetworkMetricsDto';
@@ -32,6 +33,10 @@ export interface AppMetricsDto {
     cpu: AppCpuMetricsDto;
     memory: AppMemoryMetricsDto;
     network: AppNetworkMetricsDto;
+    /**
+     * Persistent volume (disk) usage + near-full alert. Null for apps without a PVC.
+     */
+    volume?: AppVolumeMetricsDto | null;
     status: AppStatusMetricsDto;
     /**
      * Pod counts by phase

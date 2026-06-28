@@ -2307,4 +2307,47 @@ export class InfrastructureClustersService extends BaseService {
         );
     }
 
+    /**
+     * Issue a BYOS worker join token. Hand-added; a future api:generate from the
+     * backend swagger reproduces the same operationId.
+     */
+    public clustersControllerIssueJoinToken(id: string, body: { masterIp?: string; nodeNetwork?: string }): Observable<any> {
+        let localVarHeaders = this.defaultHeaders;
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+        localVarHeaders = localVarHeaders.set('Accept', 'application/json');
+        localVarHeaders = localVarHeaders.set('Content-Type', 'application/json');
+        const localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/join-tokens`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                body: body,
+                headers: localVarHeaders,
+                observe: 'body',
+                ...(withCredentials ? { withCredentials } : {}),
+            }
+        );
+    }
+
+    /**
+     * Register/ensure the private network (VNet) of a BYOS cluster.
+     * @param id Cluster ID
+     * @param body Optional ipRange (derived from the cluster when omitted)
+     */
+    public clustersControllerEnsureByosVNet(id: string, body: { ipRange?: string } = {}): Observable<any> {
+        let localVarHeaders = this.defaultHeaders;
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+        localVarHeaders = localVarHeaders.set('Accept', 'application/json');
+        localVarHeaders = localVarHeaders.set('Content-Type', 'application/json');
+        const localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/byos-vnet`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                body: body,
+                headers: localVarHeaders,
+                observe: 'body',
+                ...(withCredentials ? { withCredentials } : {}),
+            }
+        );
+    }
+
 }

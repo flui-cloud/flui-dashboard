@@ -14,5 +14,13 @@ export interface ResetPasswordResultDto {
      * Returned only when sendInvite=false. Shown once.
      */
     tempPassword?: string;
+    /**
+     * Returned when sendInvite=true. Copyable link to re-initialize the account (no email required).
+     */
+    inviteLink?: string;
+    /**
+     * Returned when sendInvite=true. Raw provider invite code.
+     */
+    inviteCode?: string;
 }
 

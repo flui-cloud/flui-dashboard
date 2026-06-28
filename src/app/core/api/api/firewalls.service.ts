@@ -494,6 +494,66 @@ export class FirewallsService extends BaseService {
     }
 
     /**
+     * Enable firewall for a cluster
+     * Idempotently ensure a firewall exists for the cluster, then apply it. Seeds the default rules for the cluster type when none exists.
+     * @endpoint post /api/v1/firewalls/cluster/{clusterId}/enable
+     * @param clusterId Cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<FirewallResponseDto>;
+    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<FirewallResponseDto>>;
+    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<FirewallResponseDto>>;
+    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterFirewallsControllerEnableForCluster.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/firewalls/cluster/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/enable`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<FirewallResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Update and apply firewall rules
      * Updates the desired firewall rules and immediately applies them to the cloud provider. Changes are atomic: if provider application fails, the database is not updated.
      * @endpoint put /api/v1/firewalls/{id}/desired-rules
