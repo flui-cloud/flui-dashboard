@@ -89,6 +89,7 @@ export * from './catalogCapacityPreviewDto';
 export * from './catalogClientResponseDto';
 export * from './catalogClusterCapabilitiesDto';
 export * from './catalogDependencyDto';
+export * from './catalogDefaultCredentialsDto';
 export * from './catalogDetailResponseDto';
 export * from './catalogDomainSpecDto';
 export * from './catalogEditableEnvDto';

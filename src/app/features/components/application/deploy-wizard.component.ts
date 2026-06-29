@@ -2366,6 +2366,7 @@ export class DeployWizardComponent implements OnInit {
     if (sub === 'marketplace') {
       const detail = this.state.catalogDetail();
       const hasPrompts = (detail?.userInputPrompts?.length ?? 0) > 0;
+      const hasDefaultCredentials = !!detail?.defaultCredentials;
       const hasEditableEnv = (detail?.editableEnv?.length ?? 0) > 0;
 
       const marketplaceSteps: WizardStepperStep[] = [
@@ -2379,7 +2380,7 @@ export class DeployWizardComponent implements OnInit {
         },
       ];
 
-      if (hasPrompts) {
+      if (hasPrompts || hasDefaultCredentials) {
         marketplaceSteps.push({
           id: 'catalog-inputs',
           title: 'Configuration',

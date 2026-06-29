@@ -21,6 +21,36 @@ import { CatalogUserInputPromptDto } from '../../../../core/api/model/catalogUse
         </p>
       </div>
 
+      @if (defaultCredentials(); as creds) {
+        <div class="space-y-3 rounded-md border border-input bg-muted/40 p-4">
+          <div class="flex items-center gap-2">
+            <ng-icon name="lucideKey" class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <span class="text-sm font-medium">Default login</span>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            This app ships with a built-in account — Flui does not set it. Use these credentials to sign in.
+          </p>
+          @if (creds.username) {
+            <div>
+              <label class="mb-1 block text-sm font-medium">Username</label>
+              <input type="text" [value]="creds.username" disabled [class]="readonlyInputClass" />
+            </div>
+          }
+          @if (creds.password) {
+            <div>
+              <label class="mb-1 block text-sm font-medium">Password</label>
+              <input type="text" [value]="creds.password" disabled [class]="readonlyInputClass" />
+            </div>
+          }
+          @if (creds.changeNote) {
+            <p class="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+              <ng-icon name="lucideCircleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              {{ creds.changeNote }}
+            </p>
+          }
+        </div>
+      }
+
       @for (prompt of prompts(); track prompt.name) {
         @let fieldError = errorFor(prompt.name);
         @let visible = revealed().has(prompt.name);
@@ -107,6 +137,13 @@ export class CatalogInputsStepComponent {
   protected readonly prompts = computed(
     () => this.state.catalogDetail()?.userInputPrompts ?? [],
   );
+
+  protected readonly defaultCredentials = computed(
+    () => this.state.catalogDetail()?.defaultCredentials ?? null,
+  );
+
+  protected readonly readonlyInputClass =
+    'h-10 w-full rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground cursor-not-allowed';
 
   /** Names of prompts currently shown in plaintext (password-type only). */
   private readonly revealedSet = signal<Set<string>>(new Set());

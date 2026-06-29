@@ -14,6 +14,7 @@ import { CatalogEditableEnvDto } from './catalogEditableEnvDto';
 import { CatalogUserInputPromptDto } from './catalogUserInputPromptDto';
 import { CatalogOptionDto } from './catalogOptionDto';
 import { CatalogResourcesDto } from './catalogResourcesDto';
+import { CatalogDefaultCredentialsDto } from './catalogDefaultCredentialsDto';
 
 
 export interface CatalogDetailResponseDto { 
@@ -81,6 +82,10 @@ export interface CatalogDetailResponseDto {
      * Manifest-declared install-time feature toggles (spec.options). Present only for composed apps that declare options (e.g. Nextcloud → \"office\"/Collabora); omitted otherwise. Each toggle the user enables is sent back as InstallCatalogAppDto.options[key] = true.
      */
     options?: Array<CatalogOptionDto>;
+    /**
+     * Built-in login the app ships with (e.g. admin/umami); shown read-only at install. Flui does not set or rotate it.
+     */
+    defaultCredentials?: CatalogDefaultCredentialsDto;
     /**
      * How this catalog app is reached once installed. `public` (default) creates Ingress + Certificate + DNS on a public hostname. `internal` skips all public exposure: the app lives only on a ClusterIP Service and is reachable only from the Flui dashboard via the ForwardAuth proxy on a wildcard internal hostname. Building blocks are always reported as `internal` regardless of their manifest.
      */
