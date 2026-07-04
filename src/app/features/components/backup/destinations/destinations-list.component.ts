@@ -22,11 +22,28 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
         </div>
         <a
           routerLink="/management/backup/destinations/new"
-          class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          class="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
         >
-          New destination
+          Add external S3
         </a>
       </header>
+
+      <div class="rounded-lg border border-primary/30 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <p class="text-sm font-medium">⚡ One-click Scaleway backups</p>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            Pick a cluster and Flui provisions the destination, schedule, Velero and first backup
+            automatically — using your existing Scaleway credentials. Most users don't need to add a
+            destination by hand.
+          </p>
+        </div>
+        <a
+          routerLink="/management/backup"
+          class="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 text-center"
+        >
+          Enable backups →
+        </a>
+      </div>
 
       @if (backup.error()) {
       <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
@@ -37,7 +54,8 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
       } @else if (backup.destinations().length === 0) {
       <div class="rounded-lg border border-dashed border-border p-8 text-center">
         <p class="text-sm text-muted-foreground">
-          No destinations yet. Create one to start backing up clusters.
+          No destinations yet. Use <span class="font-medium text-foreground">one-click Scaleway backups</span>
+          above, or add an external S3 bucket manually.
         </p>
       </div>
       } @else {

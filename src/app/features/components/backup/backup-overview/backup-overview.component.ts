@@ -6,6 +6,7 @@ import { BackupService } from '../../../service/backup.service';
 import { ClusterService } from '../../../service/cluster.service';
 import { formatBytes } from '../../../model/backup.models';
 import { EnableBackupsModalComponent } from '../enable-backups/enable-backups-modal.component';
+import { PlatformBackupCardComponent } from '../platform/platform-backup-card.component';
 
 interface OverviewCard {
   title: string;
@@ -22,6 +23,7 @@ interface OverviewCard {
     FormsModule,
     RouterLink,
     EnableBackupsModalComponent,
+    PlatformBackupCardComponent,
   ],
   template: `
     <div class="p-6 space-y-6">
@@ -100,6 +102,9 @@ interface OverviewCard {
           </div>
         </div>
       </section>
+
+      <!-- Platform resilience (control-plane DR) -->
+      <app-platform-backup-card />
 
       <!-- Section cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

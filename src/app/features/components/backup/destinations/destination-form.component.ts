@@ -23,14 +23,25 @@ import { CreateBackupDestinationDto } from '../../../../core/api/model/createBac
       </header>
 
       <p class="text-sm text-muted-foreground">
-        Add any S3-compatible object storage as a backup destination — AWS, Wasabi, Backblaze B2,
-        Cloudflare R2, IDrive E2, MinIO, or any other endpoint that speaks the S3 API.
+        Add an <strong class="text-foreground">external</strong> S3-compatible bucket as a backup
+        destination — AWS, Wasabi, Backblaze B2, Cloudflare R2, IDrive E2, MinIO, or any other
+        endpoint that speaks the S3 API. On Scaleway you don't need this form.
       </p>
 
-      <div class="rounded-md border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-        <strong class="text-foreground">Tip.</strong> Flui natively supports backups on
-        Scaleway Object Storage with 1-click setup when Scaleway is enabled as a provider —
-        <a routerLink="/management/providers" class="text-primary hover:underline">manage providers</a>.
+      <div class="rounded-md border border-primary/30 bg-primary/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="text-sm">
+          <p class="font-medium">⚡ Using Scaleway? Skip this form.</p>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            Flui sets up the destination, schedule and first backup for a cluster in one click —
+            no bucket or keys to copy.
+          </p>
+        </div>
+        <a
+          routerLink="/management/backup"
+          class="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 text-center"
+        >
+          Enable backups →
+        </a>
       </div>
 
       <form (ngSubmit)="onSubmit()" #f="ngForm" class="space-y-5">

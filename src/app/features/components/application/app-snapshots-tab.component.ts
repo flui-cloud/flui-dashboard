@@ -23,6 +23,7 @@ import {
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationSnapshotsService } from '../../service/application-snapshots.service';
 import { DbLogicalBackupComponent } from './db-logical-backup.component';
+import { DbPitrComponent } from './db-pitr.component';
 import { SnapshotCreateDialogComponent } from './snapshot-create-dialog.component';
 import { SnapshotDeleteDialogComponent } from './snapshot-delete-dialog.component';
 import { SnapshotRestoreDialogComponent } from './snapshot-restore-dialog.component';
@@ -54,6 +55,7 @@ type StatusFilter = 'all' | SnapshotStatus;
     FormsModule,
     NgIconComponent,
     DbLogicalBackupComponent,
+    DbPitrComponent,
     SnapshotCreateDialogComponent,
     SnapshotDeleteDialogComponent,
     SnapshotRestoreDialogComponent,
@@ -73,6 +75,9 @@ type StatusFilter = 'all' | SnapshotStatus;
     <div class="space-y-6">
       <!-- Logical (engine-native) backup — renders only for supported DB apps -->
       <app-db-logical-backup [appId]="appId()" />
+
+      <!-- Point-in-time recovery — renders only when continuous backup is on -->
+      <app-db-pitr [appId]="appId()" />
 
       <!-- Toolbar -->
       <div class="flex flex-wrap items-center justify-between gap-3">

@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { BackupPolicy } from '../../../model/backup.models';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupProgressModalComponent } from '../shared/progress-modal.component';
@@ -23,15 +24,32 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
             <span class="ml-2 capitalize">{{ p.profile }} profile</span>
           </p>
         </div>
-        <button
-          type="button"
-          class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          [disabled]="running()"
-          (click)="onRunNow(p.id)"
-        >
-          {{ running() ? 'Starting…' : 'Run now' }}
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+            [disabled]="toggling()"
+            (click)="onToggle(p)"
+          >
+            {{ toggling() ? '…' : (p.status === 'paused' ? 'Resume' : 'Pause') }}
+          </button>
+          <button
+            type="button"
+            class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            [disabled]="running()"
+            (click)="onRunNow(p.id)"
+          >
+            {{ running() ? 'Starting…' : 'Run now' }}
+          </button>
+        </div>
       </header>
+
+      @if (p.status === 'paused') {
+      <div class="rounded border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+        Policy is paused — scheduled backups won't run until you resume it. A
+        database policy keeps shipping WAL for point-in-time recovery until deleted.
+      </div>
+      }
 
       @if (p.status === 'degraded') {
       <div class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
@@ -96,11 +114,13 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
 })
 export class PolicyDetailComponent implements OnInit {
   private readonly backup = inject(BackupService);
+  private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   protected readonly policy = signal<BackupPolicy | null>(null);
   protected readonly running = signal(false);
+  protected readonly toggling = signal(false);
   protected readonly activeOpId = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -116,6 +136,21 @@ export class PolicyDetailComponent implements OnInit {
     const result = await this.backup.runOnDemand(policyId);
     this.running.set(false);
     if (result?.operationId) this.activeOpId.set(result.operationId);
+  }
+
+  async onToggle(p: BackupPolicy): Promise<void> {
+    const paused = p.status === 'paused';
+    this.toggling.set(true);
+    const updated = paused
+      ? await this.backup.resumePolicy(p.id)
+      : await this.backup.pausePolicy(p.id);
+    this.toggling.set(false);
+    if (updated) {
+      this.policy.set(updated);
+      this.toast.showSuccess(paused ? 'Policy resumed' : 'Policy paused');
+    } else {
+      this.toast.showError('Could not update the policy');
+    }
   }
 
   async onDelete(p: BackupPolicy): Promise<void> {

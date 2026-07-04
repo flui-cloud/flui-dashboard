@@ -1,5 +1,7 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { AppConfigService } from '../../core/services/app-config.service';
 import { BackupsService } from '../../core/api/api/backups.service';
 import { CreateBackupDestinationDto } from '../../core/api/model/createBackupDestinationDto';
 import { CreateBackupPolicyDto } from '../../core/api/model/createBackupPolicyDto';
@@ -8,7 +10,6 @@ import { RestorePreviewDto } from '../../core/api/model/restorePreviewDto';
 import { QuickSetupDto } from '../../core/api/model/quickSetupDto';
 import {
   ActiveOperation,
-  BackupArtifact,
   BackupDestination,
   BackupJob,
   BackupPolicy,
@@ -38,6 +39,8 @@ export interface CreateRestoreResult {
 export class BackupService {
   private readonly api = inject(BackupsService);
   private readonly ws = inject(InfrastructureWebSocketService);
+  private readonly http = inject(HttpClient);
+  private readonly appConfig = inject(AppConfigService);
 
   private readonly _destinations = signal<BackupDestination[]>([]);
   private readonly _policies = signal<BackupPolicy[]>([]);
@@ -236,6 +239,36 @@ export class BackupService {
     } catch (err: any) {
       this._error.set(err?.error?.message ?? 'Failed to delete policy');
       return false;
+    }
+  }
+
+  async pausePolicy(id: string): Promise<BackupPolicy | null> {
+    return this.togglePolicy(id, 'pause');
+  }
+
+  async resumePolicy(id: string): Promise<BackupPolicy | null> {
+    return this.togglePolicy(id, 'resume');
+  }
+
+  // Endpoints not in the generated client: call directly (auth + base URL come
+  // from the interceptor / AppConfigService).
+  private async togglePolicy(
+    id: string,
+    action: 'pause' | 'resume',
+  ): Promise<BackupPolicy | null> {
+    try {
+      const res = await firstValueFrom(
+        this.http.post<BackupPolicy>(
+          `${this.appConfig.apiBaseUrl}/api/v1/backup-policies/${id}/${action}`,
+          {},
+        ),
+      );
+      this._policies.update((list) => list.map((p) => (p.id === id ? res : p)));
+      if (this._selectedPolicy()?.id === id) this._selectedPolicy.set(res);
+      return res;
+    } catch (err: any) {
+      this._error.set(err?.error?.message ?? `Failed to ${action} policy`);
+      return null;
     }
   }
 
@@ -469,4 +502,4 @@ export class BackupService {
   }
 }
 
-export type { BackupArtifact };
+export type { BackupArtifact } from '../model/backup.models';
