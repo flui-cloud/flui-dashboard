@@ -38,6 +38,7 @@ import {
   lucideHammer,
   lucideStore,
   lucideArchive,
+  lucideArrowRightLeft,
   lucideGithub,
 } from '@ng-icons/lucide';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
@@ -143,6 +144,7 @@ import {
       lucideHammer,
       lucideStore,
       lucideArchive,
+      lucideArrowRightLeft,
       lucideGithub,
     }),
   ],

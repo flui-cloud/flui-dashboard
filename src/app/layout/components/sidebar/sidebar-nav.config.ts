@@ -5,6 +5,7 @@ export const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
 export const MANAGEMENT_SECTION_BY_LABEL: Record<string, string> = {
   Providers: 'providers',
   Backup: 'backup',
+  Migrations: 'backup',
   'GitHub Setup': 'providers',
   Access: 'access',
   Projects: 'projects',
@@ -101,6 +102,12 @@ export const ALL_MANAGEMENT_ITEMS: SidebarNavItem[] = [
     link: '/management/backup',
     routerLinkActive: 'active',
     icon: 'lucideArchive',
+  },
+  {
+    label: 'Migrations',
+    link: '/management/migrations',
+    routerLinkActive: 'active',
+    icon: 'lucideArrowRightLeft',
   },
   {
     label: 'GitHub Setup',

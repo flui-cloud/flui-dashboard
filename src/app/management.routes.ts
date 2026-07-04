@@ -44,6 +44,14 @@ export const managementRoutes: Routes = [
     title: 'Projects - flui.cloud',
   },
   {
+    path: 'migrations',
+    loadComponent: () =>
+      import(
+        './features/components/migration/migrations-list.component'
+      ).then((m) => m.MigrationsListComponent),
+    title: 'Migrations - flui.cloud',
+  },
+  {
     path: 'backup',
     children: [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
