@@ -42,6 +42,12 @@ export class ClusterDnsZoneService {
   readonly hasAssignment = computed(() => this.assignmentsData().length > 0);
   readonly issuersConfigured = computed(() => this.issuersData().length > 0);
   readonly issuersReady = computed(() => this.issuersData().some(i => i.ready));
+  /** True when a DNS-01-capable issuer is Ready in cert-manager — the live gate for wildcard certs. */
+  readonly wildcardIssuersReady = computed(() =>
+    this.issuersData().some(
+      i => i.ready && (i.solverType === 'dns01' || i.solverType === 'combined')
+    )
+  );
   readonly reconciliationStatus = computed(
     () => this.assignment()?.reconciliationStatus ?? null
   );

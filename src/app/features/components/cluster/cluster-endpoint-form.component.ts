@@ -406,7 +406,7 @@ export interface AppOption {
             (click)="onCertChallengeChange('dns-01')"
             [disabled]="!canUseDns01()"
             [class]="modeCardClass(form.certChallenge === 'dns-01', !canUseDns01())"
-            [title]="!canUseDns01() ? 'Available when a managed DNS zone with wildcard support is configured' : ''"
+            [title]="wildcardButtonTooltip()"
           >
             <span class="text-xs font-medium">Wildcard</span>
             <p class="mt-1 text-[11px] text-muted-foreground">
@@ -414,6 +414,20 @@ export interface AppOption {
             </p>
           </button>
         </div>
+        @if (wildcardIssuersMissing()) {
+          <div class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300">
+            <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <div class="flex-1 space-y-1">
+              <div class="font-medium">Wildcard issuers not ready on this cluster</div>
+              <div>The zone is wildcard-enabled, but the DNS-01 certificate issuers are not configured in cert-manager yet.</div>
+              <button
+                type="button"
+                (click)="configureWildcardIssuers.emit()"
+                class="underline hover:no-underline font-medium"
+              >Configure wildcard issuers →</button>
+            </div>
+          </div>
+        }
       </div>
       } <!-- end @if hostnameMode === 'domain' -->
 
@@ -590,6 +604,8 @@ export class ClusterEndpointFormComponent implements OnChanges {
   masterIp = input<string>('');
   /** Whether at least one certificate issuer is ready on this cluster. */
   issuersReady = input<boolean>(true);
+  /** Whether a DNS-01-capable (wildcard) issuer is Ready in cert-manager. Gates the Wildcard option. */
+  wildcardIssuersReady = input<boolean>(false);
   /** Initial endpoint type when creating — `internal` if the app is private, `public` otherwise. Ignored in edit mode. */
   defaultEndpointType = input<EndpointType>('public');
   /** True when the cluster supports internal hosting (DNS zone + wildcard issuer). Gates the "Internal" option. */
@@ -604,6 +620,8 @@ export class ClusterEndpointFormComponent implements OnChanges {
   save = output<{ clusterId: string; dto: CreateAppEndpointDto } | { id: string; dto: UpdateAppEndpointDto }>();
   cancelled = output<void>();
   configureIssuers = output<void>();
+  /** Fired when the user clicks "Configure wildcard issuers" on the DNS-01 missing banner. */
+  configureWildcardIssuers = output<void>();
   /** Fired when the user clicks "Configure now" on the missing-prereqs banner. */
   configureInternalHosting = output<void>();
   /** Fired when the user clicks "Install Auth Proxy". */
@@ -696,7 +714,13 @@ export class ClusterEndpointFormComponent implements OnChanges {
 
   protected canUseDns01 = computed(() => {
     const zone = this.effectiveAssignment();
-    return !!zone && !!zone.wildcardCertificate;
+    return !!zone && !!zone.wildcardCertificate && this.wildcardIssuersReady();
+  });
+
+  /** Zone is wildcard-enabled but the cluster has no ready DNS-01 issuer — setup missing. */
+  protected wildcardIssuersMissing = computed(() => {
+    const zone = this.effectiveAssignment();
+    return !!zone && !!zone.wildcardCertificate && !this.wildcardIssuersReady();
   });
 
   protected ipDashed = computed(() => this.masterIp().replaceAll('.',  '-'));
@@ -732,6 +756,14 @@ export class ClusterEndpointFormComponent implements OnChanges {
   protected onCertChallengeChange(c: 'http-01' | 'dns-01'): void {
     if (c === 'dns-01' && !this.canUseDns01()) return;
     this.form.certChallenge = c;
+  }
+
+  protected wildcardButtonTooltip(): string {
+    if (this.canUseDns01()) return '';
+    if (this.wildcardIssuersMissing()) {
+      return 'Wildcard issuers are not configured on this cluster yet';
+    }
+    return 'Available when a managed DNS zone with wildcard support is configured';
   }
 
   protected isEditMode = computed(() => !!this.endpoint());
@@ -1097,7 +1129,8 @@ export class ClusterEndpointFormComponent implements OnChanges {
   private emptyForm() {
     const zone = this.effectiveAssignment();
     const defaultHostname: 'ip' | 'domain' = zone ? 'domain' : 'ip';
-    const defaultChallenge: 'http-01' | 'dns-01' = zone?.wildcardCertificate ? 'dns-01' : 'http-01';
+    const defaultChallenge: 'http-01' | 'dns-01' =
+      zone?.wildcardCertificate && this.wildcardIssuersReady() ? 'dns-01' : 'http-01';
     return {
       applicationId: '',
       fqdn: '',

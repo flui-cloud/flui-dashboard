@@ -85,12 +85,19 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
 
           @if (a.certificateProvider) {
             <div class="flex items-center gap-1.5 text-xs text-sub">
-              <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5 text-green-500" />
+              @if (wildcardPending(a)) {
+                <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 text-amber-500" />
+              } @else {
+                <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5 text-green-500" />
+              }
               TLS: {{ certLabel(a.certificateProvider) }}
               @if (a.wildcardCertificate) {
                 <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs">wildcard</span>
               }
               @if (a.acmeEmail) { &bull; {{ a.acmeEmail }} }
+              @if (wildcardPending(a)) {
+                <span class="px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-xs">issuers not configured</span>
+              }
             </div>
           }
 
@@ -247,6 +254,8 @@ export class ClusterDnsZoneSectionComponent {
   assignments = input.required<ClusterDnsZoneResponseDto[]>();
   availableZones = input.required<DnsZoneResponseDto[]>();
   clusterId = input<string | null>(null);
+  /** Live cert-manager state: a DNS-01-capable issuer is Ready on the cluster. */
+  wildcardIssuersReady = input<boolean>(false);
 
   assignZone = output<AssignDnsZoneDto>();
   /** Emits the assignment id to remove */
@@ -283,6 +292,11 @@ export class ClusterDnsZoneSectionComponent {
 
   protected needsRec(a: ClusterDnsZoneResponseDto): boolean {
     return a.reconciliationStatus ? needsReconciliation(a.reconciliationStatus) : false;
+  }
+
+  /** Wildcard TLS is intended on the assignment but no DNS-01 issuer is Ready yet. */
+  protected wildcardPending(a: ClusterDnsZoneResponseDto): boolean {
+    return !!a.wildcardCertificate && !this.wildcardIssuersReady() && !this.localIssuersReady();
   }
 
   protected onIssuersReadyChange(ready: boolean): void {
@@ -344,7 +358,7 @@ export class ClusterDnsZoneSectionComponent {
     this.removeZone.emit(assignmentId);
   }
 
-  protected openDnsIssuerSetupForm(): void {
+  openDnsIssuerSetupForm(): void {
     this.dnsIssuerSetup?.openForm();
   }
 }

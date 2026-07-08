@@ -149,6 +149,7 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
               [fixedAppSlug]="appSlug()"
               [masterIp]="masterIp()"
               [issuersReady]="clusterDnsZoneService.issuersReady()"
+              [wildcardIssuersReady]="clusterDnsZoneService.wildcardIssuersReady()"
               [defaultEndpointType]="isInternalApp() ? 'internal' : 'public'"
               [internalHostingAvailable]="internalHostingAvailable()"
               [internalHostingMissing]="internalHostingMissing()"
@@ -157,6 +158,7 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
               (save)="onSaveEndpoint($event)"
               (cancelled)="closeEndpointForm()"
               (configureIssuers)="onConfigureIssuers()"
+              (configureWildcardIssuers)="onConfigureWildcardIssuers()"
               (configureInternalHosting)="onConfigureInternalHosting()"
               (installAuthz)="onInstallAuthz()"
             />
@@ -266,6 +268,11 @@ export class AppDnsTabComponent implements OnInit {
   }
 
   protected onConfigureInternalHosting(): void {
+    this.router.navigate(['/cluster', this.clusterId(), 'dns']);
+  }
+
+  protected onConfigureWildcardIssuers(): void {
+    this.closeEndpointForm();
     this.router.navigate(['/cluster', this.clusterId(), 'dns']);
   }
 

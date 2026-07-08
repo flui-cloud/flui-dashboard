@@ -85,9 +85,11 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
 
         <!-- Section 1: DNS Zone + Issuer setup (STEP 1-4) -->
         <app-cluster-dns-zone-section
+          #zoneSection
           [assignments]="clusterDnsZoneService.assignments()"
           [availableZones]="dnsZonesService.zones()"
           [clusterId]="clusterId()"
+          [wildcardIssuersReady]="clusterDnsZoneService.wildcardIssuersReady()"
           (assignZone)="onAssignZone($event)"
           (removeZone)="onRemoveZone($event)"
           (reconcile)="onReconcileZone($event)"
@@ -141,9 +143,11 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
               [applications]="clusterApps()"
               [masterIp]="masterIp()"
               [issuersReady]="clusterDnsZoneService.issuersReady()"
+              [wildcardIssuersReady]="clusterDnsZoneService.wildcardIssuersReady()"
               (save)="onSaveEndpoint($event)"
               (cancelled)="closeEndpointForm()"
               (configureIssuers)="onConfigureIssuers()"
+              (configureWildcardIssuers)="onConfigureWildcardIssuers()"
             />
           }
 
@@ -188,6 +192,7 @@ export class ClusterDnsTabComponent implements OnInit {
 
   @ViewChild('deleteEndpointDialog') deleteEndpointDialog!: ConfirmationDialogComponent;
   @ViewChild('issuersSection') issuersSection!: ClusterCertificateIssuersComponent;
+  @ViewChild('zoneSection') zoneSection!: ClusterDnsZoneSectionComponent;
 
   protected clusterId = computed(() => this.clusterService.cluster()?.id ?? '');
   protected masterIp = computed(() => this.clusterService.cluster()?.masterIpAddress ?? '');
@@ -230,8 +235,12 @@ export class ClusterDnsTabComponent implements OnInit {
   }
 
   protected onIssuersReadyChange(ready: boolean): void {
-    // Keep service signal in sync so other parts of the tab (endpoint form, system ingress) react
-    if (ready) this.clusterDnsZoneService.loadIssuers(this.clusterId());
+    // Keep service signals in sync so other parts of the tab (endpoint form,
+    // system ingress, zone reconciliation badges) react
+    if (ready) {
+      this.clusterDnsZoneService.loadIssuers(this.clusterId());
+      this.clusterDnsZoneService.loadAssignment(this.clusterId());
+    }
   }
 
   protected async onRemoveZone(assignmentId: string): Promise<void> {
@@ -265,6 +274,11 @@ export class ClusterDnsTabComponent implements OnInit {
   protected onConfigureIssuers(): void {
     this.closeEndpointForm();
     this.issuersSection.openForm();
+  }
+
+  protected onConfigureWildcardIssuers(): void {
+    this.closeEndpointForm();
+    this.zoneSection.openDnsIssuerSetupForm();
   }
 
   protected closeEndpointForm(): void {
