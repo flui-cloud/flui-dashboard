@@ -172,10 +172,12 @@ export class DnsZonesService {
 
     const results = await Promise.allSettled(
       clusters.filter(c => !!c.id).map(async c => {
-        const assignment = await firstValueFrom(
-          this.clusterDnsApi.clusterDnsZoneControllerGetZoneAssignment(c.id)
-        ).catch(() => null);
-        return assignment?.dnsZoneId === zoneId ? { clusterId: c.id, clusterName: c.name } : null;
+        const assignments = await firstValueFrom(
+          this.clusterDnsApi.clusterDnsZoneControllerListZoneAssignments(c.id)
+        ).catch(() => []);
+        return assignments.some(a => a.dnsZoneId === zoneId)
+          ? { clusterId: c.id, clusterName: c.name }
+          : null;
       })
     );
 

@@ -270,9 +270,22 @@ export interface AppOption {
             >
               <ng-icon name="lucideWand2" class="h-3.5 w-3.5" />
             </button>
-            <span class="inline-flex items-center px-3 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none">
-              .{{ zoneSuffix() }}
-            </span>
+            @if (assignments().length > 1) {
+              <select
+                [ngModel]="selectedAssignment()?.id"
+                (ngModelChange)="onZoneSelect($event)"
+                class="px-2 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                title="Choose the DNS zone for this endpoint"
+              >
+                @for (a of assignments(); track a.id) {
+                  <option [value]="a.id">.{{ a.dnsZone.zoneName }}</option>
+                }
+              </select>
+            } @else {
+              <span class="inline-flex items-center px-3 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none">
+                .{{ zoneSuffix() }}
+              </span>
+            }
           </div>
           @if (subdomainError()) {
             <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ subdomainError() }}</p>
@@ -332,11 +345,14 @@ export interface AppOption {
           <button
             type="button"
             (click)="toggleByodOverride()"
-            [disabled]="isEditMode()"
-            class="mt-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+            class="mt-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline"
           >
             @if (byodOverride()) {
-              ← Use the cluster zone ({{ assignment()!.dnsZone.zoneName }})
+              @if (assignments().length > 1) {
+                ← Use a cluster zone
+              } @else {
+                ← Use the cluster zone ({{ assignment()!.dnsZone.zoneName }})
+              }
             } @else {
               Use a different domain (BYOD) →
             }
@@ -562,7 +578,7 @@ export interface AppOption {
 })
 export class ClusterEndpointFormComponent implements OnChanges {
   clusterId = input.required<string>();
-  assignment = input<ClusterDnsZoneResponseDto | null>(null);
+  assignments = input<ClusterDnsZoneResponseDto[]>([]);
   endpoint = input<AppEndpointResponseDto | undefined>(undefined);
   /** When provided, a select is shown to pick the target application. */
   applications = input<AppOption[]>([]);
@@ -602,8 +618,15 @@ export class ClusterEndpointFormComponent implements OnChanges {
 
   // Declared above `form`: emptyForm() reads effectiveAssignment().
   protected byodOverride = signal(false);
+  /** Assignment id of the zone this endpoint is placed under; '' falls back to the primary zone. */
+  protected selectedZoneId = signal('');
+  /** Primary (first-assigned) zone — internal endpoints and cluster-wide hints use it. */
+  protected assignment = computed(() => this.assignments()[0] ?? null);
+  protected selectedAssignment = computed(() =>
+    this.assignments().find(a => a.id === this.selectedZoneId()) ?? this.assignment(),
+  );
   protected effectiveAssignment = computed(() =>
-    this.byodOverride() ? null : this.assignment(),
+    this.byodOverride() ? null : this.selectedAssignment(),
   );
 
   protected form = this.emptyForm();
@@ -750,7 +773,6 @@ export class ClusterEndpointFormComponent implements OnChanges {
   });
 
   protected toggleByodOverride(): void {
-    if (this.isEditMode()) return;
     const next = !this.byodOverride();
     this.byodOverride.set(next);
     this.form.fqdn = '';
@@ -761,6 +783,27 @@ export class ClusterEndpointFormComponent implements OnChanges {
     this.dnsChecking.set(false);
     // BYOD can't use DNS-01 wildcard — fall back to HTTP-01.
     if (next && this.form.certChallenge === 'dns-01') {
+      this.form.certChallenge = 'http-01';
+    }
+    if (!next) this.prefillZoneFromExistingFqdn();
+  }
+
+  // Entering zone mode: when the current FQDN already sits under an assigned
+  // zone, preselect that zone (longest suffix) and keep the prefix.
+  private prefillZoneFromExistingFqdn(): void {
+    const fqdn = (this.endpoint()?.fqdn ?? '').toLowerCase();
+    const match = this.assignments()
+      .filter(a => fqdn === a.dnsZone.zoneName || fqdn.endsWith('.' + a.dnsZone.zoneName))
+      .sort((x, y) => y.dnsZone.zoneName.length - x.dnsZone.zoneName.length)[0];
+    if (!match) return;
+    this.selectedZoneId.set(match.id);
+    const zn = match.dnsZone.zoneName;
+    this.form.subdomainPrefix = fqdn === zn ? '' : fqdn.slice(0, fqdn.length - zn.length - 1);
+  }
+
+  protected onZoneSelect(zoneId: string): void {
+    this.selectedZoneId.set(zoneId);
+    if (this.form.certChallenge === 'dns-01' && !this.canUseDns01()) {
       this.form.certChallenge = 'http-01';
     }
   }
@@ -783,9 +826,10 @@ export class ClusterEndpointFormComponent implements OnChanges {
       this.selectedAppId.set(ep.applicationId ?? this.fixedApplicationId());
       // Endpoint type is immutable on edit — read it from the persisted row.
       this.endpointType.set((ep.endpointType as EndpointType) ?? 'public');
-      // If the cluster has a zone but the existing endpoint isn't tied to it,
+      // If the cluster has zones but the existing endpoint isn't tied to one,
       // it was created in BYOD mode — preserve that on edit.
-      this.byodOverride.set(!!this.assignment() && !ep.clusterDnsZoneId);
+      this.byodOverride.set(this.assignments().length > 0 && !ep.clusterDnsZoneId);
+      this.selectedZoneId.set(ep.clusterDnsZoneId ?? '');
       const zone = this.effectiveAssignment();
       let prefix = '';
       let fqdn = ep.fqdn;
@@ -809,7 +853,6 @@ export class ClusterEndpointFormComponent implements OnChanges {
         fqdn,
         subdomainPrefix: prefix,
         ipSlugOverride,
-        clusterDnsZoneId: ep.clusterDnsZoneId ?? '',
         certificateRequired: ep.certificateRequired,
         certificateProvider: ep.certificateProvider ?? 'lets_encrypt',
         hostnameMode: (ep.hostnameMode as 'ip' | 'domain') ?? (zone ? 'domain' : 'ip'),
@@ -821,6 +864,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
       // can opt into BYOD via the toggle. Reset here so reusing the modal
       // doesn't carry a previous selection.
       this.byodOverride.set(false);
+      this.selectedZoneId.set('');
       // For new endpoints, honor parent's defaultEndpointType — but downgrade
       // to "public" if the cluster cannot host internal endpoints, so the user
       // never starts on a disabled option.
@@ -969,69 +1013,85 @@ export class ClusterEndpointFormComponent implements OnChanges {
   protected submit(): void {
     if (!this.isValid()) return;
     const ep = this.endpoint();
-    const applicationId = this.fixedApplicationId() || this.form.applicationId;
-    const zone = this.effectiveAssignment();
-
-    let resolvedFqdn: string | undefined;
-    if (this.form.hostnameMode === 'ip') {
-      const slugOverride = this.form.ipSlugOverride.trim();
-      const ip = this.masterIp();
-      resolvedFqdn = (slugOverride && ip)
-        ? `${slugOverride}.${ip.replaceAll('.',  '-')}.nip.io`
-        : undefined;
-    } else if (zone) {
-      const prefix = this.form.subdomainPrefix.trim();
-      resolvedFqdn = prefix ? `${prefix}.${this.zoneSuffix()}` : undefined;
-    } else {
-      resolvedFqdn = this.form.fqdn.trim() || undefined;
-    }
-
-    // Skip clusterDnsZoneId in BYOD-override mode so the backend treats this
-    // endpoint as fully external (no DNS/cert auto-management under the zone).
-    const sendZoneId =
-      this.form.hostnameMode === 'domain' &&
-      !this.byodOverride() &&
-      this.form.clusterDnsZoneId;
 
     if (ep) {
-      const providerForSubmit = (this.form.certificateRequired && this.promoteToProd())
-        ? 'lets_encrypt'
-        : this.form.certificateProvider;
-      const dto: UpdateAppEndpointDto = {
-        ...(resolvedFqdn ? { fqdn: resolvedFqdn } : {}),
-        ...(sendZoneId ? { clusterDnsZoneId: this.form.clusterDnsZoneId } : {}),
-        certificateRequired: this.form.certificateRequired,
-        ...(this.form.certificateRequired
-          ? { certificateProvider: providerForSubmit as UpdateAppEndpointDto.CertificateProviderEnum }
-          : {}),
-        hostnameMode: this.form.hostnameMode as UpdateAppEndpointDto.HostnameModeEnum,
-        certChallenge: this.form.certChallenge as UpdateAppEndpointDto.CertChallengeEnum,
-      };
-      this.save.emit({ id: ep.id, dto });
+      this.save.emit({ id: ep.id, dto: this.buildUpdateDto(ep) });
     } else if (this.endpointType() === 'internal') {
       // The backend derives fqdn (`<slug>.internal.<zone>`), provisions the
       // cert via the cluster wildcard issuer, and ignores per-endpoint
       // domain / cert fields. Just send the type + applicationId.
       const dto: CreateAppEndpointDto = {
-        applicationId,
+        applicationId: this.fixedApplicationId() || this.form.applicationId,
         endpointType: 'internal' as CreateAppEndpointDto.EndpointTypeEnum,
       };
       this.save.emit({ clusterId: this.clusterId(), dto });
     } else {
-      const dto: CreateAppEndpointDto = {
-        applicationId,
-        endpointType: 'public' as CreateAppEndpointDto.EndpointTypeEnum,
-        ...(resolvedFqdn ? { fqdn: resolvedFqdn } : {}),
-        ...(sendZoneId ? { clusterDnsZoneId: this.form.clusterDnsZoneId } : {}),
-        certificateRequired: this.form.certificateRequired,
-        ...(this.form.certificateRequired
-          ? { certificateProvider: this.form.certificateProvider as CreateAppEndpointDto.CertificateProviderEnum }
-          : {}),
-        hostnameMode: this.form.hostnameMode as CreateAppEndpointDto.HostnameModeEnum,
-        certChallenge: this.form.certChallenge as CreateAppEndpointDto.CertChallengeEnum,
-      };
-      this.save.emit({ clusterId: this.clusterId(), dto });
+      this.save.emit({ clusterId: this.clusterId(), dto: this.buildCreateDto() });
     }
+  }
+
+  private resolveFqdn(): string | undefined {
+    if (this.form.hostnameMode === 'ip') {
+      const slugOverride = this.form.ipSlugOverride.trim();
+      const ip = this.masterIp();
+      return (slugOverride && ip)
+        ? `${slugOverride}.${ip.replaceAll('.',  '-')}.nip.io`
+        : undefined;
+    }
+    if (this.effectiveAssignment()) {
+      const prefix = this.form.subdomainPrefix.trim();
+      return prefix ? `${prefix}.${this.zoneSuffix()}` : undefined;
+    }
+    return this.form.fqdn.trim() || undefined;
+  }
+
+  // In BYOD-override or ip mode no zone is linked, so the backend treats
+  // this endpoint as fully external (no DNS/cert auto-management).
+  private zoneForSubmit(): ClusterDnsZoneResponseDto | null {
+    return this.form.hostnameMode === 'domain' ? this.effectiveAssignment() : null;
+  }
+
+  private buildUpdateDto(ep: AppEndpointResponseDto): UpdateAppEndpointDto {
+    const resolvedFqdn = this.resolveFqdn();
+    const zone = this.zoneForSubmit();
+    const providerForSubmit = (this.form.certificateRequired && this.promoteToProd())
+      ? 'lets_encrypt'
+      : this.form.certificateProvider;
+    // Explicit null detaches a previously linked zone (generated client
+    // still types the field as string — backend accepts null for BYOD).
+    let zoneIdUpdate: Partial<UpdateAppEndpointDto> = {};
+    if (zone) {
+      zoneIdUpdate = { clusterDnsZoneId: zone.id };
+    } else if (ep.clusterDnsZoneId) {
+      zoneIdUpdate = { clusterDnsZoneId: null as unknown as string };
+    }
+    return {
+      ...(resolvedFqdn ? { fqdn: resolvedFqdn } : {}),
+      ...zoneIdUpdate,
+      certificateRequired: this.form.certificateRequired,
+      ...(this.form.certificateRequired
+        ? { certificateProvider: providerForSubmit as UpdateAppEndpointDto.CertificateProviderEnum }
+        : {}),
+      hostnameMode: this.form.hostnameMode as UpdateAppEndpointDto.HostnameModeEnum,
+      certChallenge: this.form.certChallenge as UpdateAppEndpointDto.CertChallengeEnum,
+    };
+  }
+
+  private buildCreateDto(): CreateAppEndpointDto {
+    const resolvedFqdn = this.resolveFqdn();
+    const zone = this.zoneForSubmit();
+    return {
+      applicationId: this.fixedApplicationId() || this.form.applicationId,
+      endpointType: 'public' as CreateAppEndpointDto.EndpointTypeEnum,
+      ...(resolvedFqdn ? { fqdn: resolvedFqdn } : {}),
+      ...(zone ? { clusterDnsZoneId: zone.id } : {}),
+      certificateRequired: this.form.certificateRequired,
+      ...(this.form.certificateRequired
+        ? { certificateProvider: this.form.certificateProvider as CreateAppEndpointDto.CertificateProviderEnum }
+        : {}),
+      hostnameMode: this.form.hostnameMode as CreateAppEndpointDto.HostnameModeEnum,
+      certChallenge: this.form.certChallenge as CreateAppEndpointDto.CertChallengeEnum,
+    };
   }
 
   private emptyForm() {
@@ -1043,7 +1103,6 @@ export class ClusterEndpointFormComponent implements OnChanges {
       fqdn: '',
       subdomainPrefix: '',
       ipSlugOverride: '',
-      clusterDnsZoneId: zone?.id ?? '',
       certificateRequired: false,
       certificateProvider: (this.startsInStaging ? 'lets_encrypt_staging' : 'lets_encrypt') as string,
       hostnameMode: defaultHostname,

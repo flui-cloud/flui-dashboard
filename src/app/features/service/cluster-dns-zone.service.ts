@@ -24,47 +24,50 @@ export type IssuerApiType = 'http' | 'dns';
 export class ClusterDnsZoneService {
   private readonly apiService = inject(ClusterDNSZoneService);
 
-  private readonly assignmentData = signal<ClusterDnsZoneResponseDto | null>(null);
+  private readonly assignmentsData = signal<ClusterDnsZoneResponseDto[]>([]);
   private readonly loadingData = signal(false);
   private readonly errorData = signal<string | null>(null);
   private readonly issuersData = signal<ClusterDnsZoneControllerGetIssuers200ResponseInner[]>([]);
   private readonly internalHostingStatusData = signal<InternalHostingStatus | null>(null);
   private readonly internalHostingLoadingData = signal(false);
 
-  readonly assignment = this.assignmentData.asReadonly();
+  readonly assignments = this.assignmentsData.asReadonly();
+  /** Primary (first-assigned) zone — cluster-wide setup paths use this one. */
+  readonly assignment = computed(() => this.assignmentsData()[0] ?? null);
   readonly loading = this.loadingData.asReadonly();
   readonly error = this.errorData.asReadonly();
   readonly issuers = this.issuersData.asReadonly();
   readonly internalHostingStatus = this.internalHostingStatusData.asReadonly();
   readonly internalHostingLoading = this.internalHostingLoadingData.asReadonly();
-  readonly hasAssignment = computed(() => !!this.assignmentData());
+  readonly hasAssignment = computed(() => this.assignmentsData().length > 0);
   readonly issuersConfigured = computed(() => this.issuersData().length > 0);
   readonly issuersReady = computed(() => this.issuersData().some(i => i.ready));
   readonly reconciliationStatus = computed(
-    () => this.assignmentData()?.reconciliationStatus ?? null
+    () => this.assignment()?.reconciliationStatus ?? null
   );
-  readonly needsReconciliation = computed(() => {
-    const status = this.assignmentData()?.reconciliationStatus;
-    return status === DnsReconciliationStatus.PENDING
-      || status === DnsReconciliationStatus.DRIFT
-      || status === DnsReconciliationStatus.ERROR;
-  });
+  readonly needsReconciliation = computed(() =>
+    this.assignmentsData().some(a =>
+      a.reconciliationStatus === DnsReconciliationStatus.PENDING
+      || a.reconciliationStatus === DnsReconciliationStatus.DRIFT
+      || a.reconciliationStatus === DnsReconciliationStatus.ERROR
+    )
+  );
 
   async loadAssignment(clusterId: string): Promise<void> {
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerGetZoneAssignment(clusterId)
+        this.apiService.clusterDnsZoneControllerListZoneAssignments(clusterId)
       );
-      this.assignmentData.set(result ?? null);
+      this.assignmentsData.set(result ?? []);
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;
       if (status === 404) {
         // No zone assigned — not an error condition
-        this.assignmentData.set(null);
+        this.assignmentsData.set([]);
       } else {
-        this.errorData.set(this.extractErrorMessage(err, 'Failed to load DNS zone assignment'));
+        this.errorData.set(this.extractErrorMessage(err, 'Failed to load DNS zone assignments'));
       }
     } finally {
       this.loadingData.set(false);
@@ -81,7 +84,7 @@ export class ClusterDnsZoneService {
       const result = await firstValueFrom(
         this.apiService.clusterDnsZoneControllerAssignZone(clusterId, dto)
       );
-      this.assignmentData.set(result);
+      this.assignmentsData.update(list => [...list, result]);
       return result;
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to assign DNS zone'));
@@ -91,9 +94,12 @@ export class ClusterDnsZoneService {
     }
   }
 
-  async updateCertConfig(clusterId: string): Promise<ClusterDnsZoneResponseDto | null> {
-    const assignmentId = this.assignmentData()?.id;
-    if (!assignmentId) {
+  async updateCertConfig(
+    clusterId: string,
+    assignmentId?: string
+  ): Promise<ClusterDnsZoneResponseDto | null> {
+    const targetId = assignmentId ?? this.assignment()?.id;
+    if (!targetId) {
       this.errorData.set('No DNS zone assignment to update');
       return null;
     }
@@ -101,9 +107,9 @@ export class ClusterDnsZoneService {
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerUpdateCertConfig(assignmentId, clusterId)
+        this.apiService.clusterDnsZoneControllerUpdateCertConfig(targetId, clusterId)
       );
-      this.assignmentData.set(result);
+      this.assignmentsData.update(list => list.map(a => (a.id === result.id ? result : a)));
       return result;
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to update certificate config'));
@@ -113,14 +119,22 @@ export class ClusterDnsZoneService {
     }
   }
 
-  async removeAssignment(clusterId: string): Promise<boolean> {
+  /** Removes one assignment when `assignmentId` is given, otherwise every zone on the cluster. */
+  async removeAssignment(clusterId: string, assignmentId?: string): Promise<boolean> {
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
-      await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerRemoveZone(clusterId)
-      );
-      this.assignmentData.set(null);
+      if (assignmentId) {
+        await firstValueFrom(
+          this.apiService.clusterDnsZoneControllerRemoveAssignment(assignmentId, clusterId)
+        );
+        this.assignmentsData.update(list => list.filter(a => a.id !== assignmentId));
+      } else {
+        await firstValueFrom(
+          this.apiService.clusterDnsZoneControllerRemoveZone(clusterId)
+        );
+        this.assignmentsData.set([]);
+      }
       return true;
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to remove DNS zone assignment'));
@@ -247,7 +261,7 @@ export class ClusterDnsZoneService {
   }
 
   clearAssignment(): void {
-    this.assignmentData.set(null);
+    this.assignmentsData.set([]);
   }
 
   private extractErrorMessage(err: unknown, fallback: string): string {

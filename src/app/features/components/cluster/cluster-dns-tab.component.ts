@@ -85,12 +85,12 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
 
         <!-- Section 1: DNS Zone + Issuer setup (STEP 1-4) -->
         <app-cluster-dns-zone-section
-          [assignment]="clusterDnsZoneService.assignment()"
+          [assignments]="clusterDnsZoneService.assignments()"
           [availableZones]="dnsZonesService.zones()"
           [clusterId]="clusterId()"
           (assignZone)="onAssignZone($event)"
-          (removeZone)="onRemoveZone()"
-          (reconcile)="onReconcileZone()"
+          (removeZone)="onRemoveZone($event)"
+          (reconcile)="onReconcileZone($event)"
           (issuersReadyChange)="onIssuersReadyChange($event)"
         />
 
@@ -136,7 +136,7 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
           @if (showEndpointForm()) {
             <app-cluster-endpoint-form
               [clusterId]="clusterId()"
-              [assignment]="clusterDnsZoneService.assignment()"
+              [assignments]="clusterDnsZoneService.assignments()"
               [endpoint]="editingEndpoint()"
               [applications]="clusterApps()"
               [masterIp]="masterIp()"
@@ -234,14 +234,14 @@ export class ClusterDnsTabComponent implements OnInit {
     if (ready) this.clusterDnsZoneService.loadIssuers(this.clusterId());
   }
 
-  protected async onRemoveZone(): Promise<void> {
+  protected async onRemoveZone(assignmentId: string): Promise<void> {
     const id = this.clusterId();
-    if (id) await this.clusterDnsZoneService.removeAssignment(id);
+    if (id) await this.clusterDnsZoneService.removeAssignment(id, assignmentId);
   }
 
-  protected async onReconcileZone(): Promise<void> {
+  protected async onReconcileZone(assignmentId: string): Promise<void> {
     const id = this.clusterId();
-    if (id) await this.clusterDnsZoneService.updateCertConfig(id);
+    if (id) await this.clusterDnsZoneService.updateCertConfig(id, assignmentId);
   }
 
   protected async refreshEndpoints(): Promise<void> {

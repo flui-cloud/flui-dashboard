@@ -260,6 +260,9 @@ import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-bac
                 <div class="space-y-2 flex-1">
                   <p class="font-medium text-foreground truncate text-sm" [title]="dnsZoneService.assignment()?.dnsZone?.zoneName">
                     {{ dnsZoneService.assignment()?.dnsZone?.zoneName }}
+                    @if (dnsZoneService.assignments().length > 1) {
+                      <span class="text-xs text-muted-foreground font-normal">+{{ dnsZoneService.assignments().length - 1 }} more</span>
+                    }
                   </p>
                   <div class="text-xs font-medium" [class]="reconciliationClass()">
                     {{ dnsZoneService.reconciliationStatus() ?? 'PENDING' }}

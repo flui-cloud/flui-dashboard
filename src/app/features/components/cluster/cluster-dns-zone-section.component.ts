@@ -30,7 +30,7 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
     <div class="space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white">DNS Zone</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white">DNS Zones</h3>
           <a
             routerLink="/infrastructure/domains"
             class="inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -40,164 +40,82 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
             Manage
           </a>
         </div>
-        @if (assignment()) {
-          <button
-            (click)="showRemoveConfirm.set(true)"
-            [disabled]="showRemoveConfirm()"
-            class="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-50"
-          >
-            Remove
-          </button>
-        }
       </div>
 
-      @if (!assignment()) {
-        @if (!showAssignForm()) {
-          <div class="p-4 border border-dashed border-border rounded-lg text-center">
-            <ng-icon name="lucideGlobe" class="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p class="text-sm text-sub">No DNS zone assigned</p>
-            <button
-              (click)="showAssignForm.set(true)"
-              class="mt-2 inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
-              Assign DNS Zone
-            </button>
-          </div>
-        } @else {
-          <div class="border border-border rounded-lg p-4 space-y-3">
-            <div>
-              <label class="block text-xs font-medium text-muted-foreground mb-1">DNS Zone</label>
-              @if (availableZones().length === 0) {
-                <p class="text-sm text-sub">
-                  No registered zones available.
-                  <a routerLink="/infrastructure/domains/register" class="text-blue-600 dark:text-blue-400 hover:underline">Register one first.</a>
-                </p>
-              } @else {
-                <select
-                  [(ngModel)]="assignForm.dnsZoneId"
-                  class="w-full px-3 py-2 border border-border rounded-md bg-background text-sm text-foreground"
-                >
-                  <option value="">Select zone...</option>
-                  @for (zone of availableZones(); track zone.id) {
-                    <option [value]="zone.id">{{ getZoneDisplay(zone) }}</option>
-                  }
-                </select>
-              }
-            </div>
+      @if (assignments().length === 0 && !showAssignForm()) {
+        <div class="p-4 border border-dashed border-border rounded-lg text-center">
+          <ng-icon name="lucideGlobe" class="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+          <p class="text-sm text-sub">No DNS zone assigned</p>
+          <button
+            (click)="showAssignForm.set(true)"
+            class="mt-2 inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
+            Assign DNS Zone
+          </button>
+        </div>
+      }
 
-            <!-- TLS setup — wildcard first -->
-            <div class="space-y-2">
-              <label class="block text-xs font-medium text-muted-foreground">TLS Certificate</label>
-              <label class="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                <input type="checkbox" [(ngModel)]="assignForm.enableTls" class="rounded" />
-                Enable Let's Encrypt TLS
-              </label>
-              @if (assignForm.enableTls) {
-                <div class="ml-6 space-y-3">
-                  <label class="flex items-start gap-2 text-xs text-foreground cursor-pointer">
-                    <input type="checkbox" [(ngModel)]="assignForm.wildcardCertificate" class="rounded mt-0.5" />
-                    <div>
-                      <span class="font-medium">Wildcard certificate (recommended)</span>
-                      <p class="text-xs text-sub mt-0.5">
-                        Uses DNS-01 challenge to cover all subdomains (*.zone). Requires Hetzner DNS.
-                      </p>
-                    </div>
-                  </label>
-                  <div>
-                    <label class="block text-xs font-medium text-muted-foreground mb-1">Provider</label>
-                    <select
-                      [(ngModel)]="assignForm.certificateProvider"
-                      class="w-full px-3 py-2 border border-border rounded-md bg-background text-sm text-foreground"
-                    >
-                      <option [value]="certProviders.LETS_ENCRYPT_STAGING">Let's Encrypt Staging (start here)</option>
-                      <option [value]="certProviders.LETS_ENCRYPT">Let's Encrypt Production</option>
-                    </select>
-                    <p class="text-xs text-muted-foreground mt-0.5">
-                      Use staging first — no rate limits. Switch to production when verified.
-                    </p>
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-muted-foreground mb-1">ACME Email</label>
-                    <input
-                      type="email"
-                      [(ngModel)]="assignForm.acmeEmail"
-                      placeholder="admin@example.com"
-                      class="w-full px-3 py-2 border border-border rounded-md bg-background text-sm text-foreground"
-                    />
-                  </div>
-                </div>
-              }
-            </div>
-
-            <div class="flex gap-2 justify-end">
-              <button
-                (click)="showAssignForm.set(false)"
-                class="px-3 py-1.5 text-xs border border-border rounded-md text-foreground hover:bg-muted transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                (click)="submitAssign()"
-                [disabled]="!assignForm.dnsZoneId"
-                class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Assign
-              </button>
-            </div>
-          </div>
-        }
-      } @else {
+      @for (a of assignments(); track a.id) {
         <!-- Zone info card -->
         <div class="p-4 border border-border rounded-lg space-y-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-500" />
               <span class="text-sm font-medium text-foreground font-mono">
-                {{ assignment()!.dnsZone.zoneName }}
+                {{ a.dnsZone.zoneName }}
               </span>
               <span class="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                {{ assignment()!.dnsZone.dnsProvider }}
+                {{ a.dnsZone.dnsProvider }}
               </span>
             </div>
-            <span class="text-xs px-2 py-0.5 rounded font-medium" [class]="getStatusClass(assignment()!.reconciliationStatus)">
-              {{ getStatusLabel(assignment()!.reconciliationStatus) }}
-            </span>
+            <div class="flex items-center gap-3">
+              <span class="text-xs px-2 py-0.5 rounded font-medium" [class]="getStatusClass(a.reconciliationStatus)">
+                {{ getStatusLabel(a.reconciliationStatus) }}
+              </span>
+              <button
+                (click)="removeConfirmId.set(a.id)"
+                [disabled]="removeConfirmId() === a.id"
+                class="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-50"
+              >
+                Remove
+              </button>
+            </div>
           </div>
 
-          @if (assignment()!.certificateProvider) {
+          @if (a.certificateProvider) {
             <div class="flex items-center gap-1.5 text-xs text-sub">
               <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5 text-green-500" />
-              TLS: {{ certLabel(assignment()!.certificateProvider) }}
-              @if (assignment()!.wildcardCertificate) {
+              TLS: {{ certLabel(a.certificateProvider) }}
+              @if (a.wildcardCertificate) {
                 <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs">wildcard</span>
               }
-              @if (assignment()!.acmeEmail) { &bull; {{ assignment()!.acmeEmail }} }
+              @if (a.acmeEmail) { &bull; {{ a.acmeEmail }} }
             </div>
           }
 
-          @if (assignment()!.lastReconciliationAt) {
+          @if (a.lastReconciliationAt) {
             <div class="text-xs text-muted-foreground">
-              Last reconciled: {{ timeSince(assignment()!.lastReconciliationAt!) }}
+              Last reconciled: {{ timeSince(a.lastReconciliationAt!) }}
             </div>
           }
 
-          @if (assignment()!.errorMessage) {
+          @if (a.errorMessage) {
             <div class="flex items-start gap-1.5 text-xs text-red-600 dark:text-red-400">
               <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-              {{ assignment()!.errorMessage }}
+              {{ a.errorMessage }}
             </div>
           }
 
-          @if (isNeedsReconciliation()) {
-            <button (click)="reconcile.emit()" class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
+          @if (needsRec(a)) {
+            <button (click)="reconcile.emit(a.id)" class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
               <ng-icon name="lucideRefreshCw" class="h-3 w-3" />
               Reconcile now
             </button>
           }
 
           <!-- Switch to production when staging is active and issuers are ready -->
-          @if (assignment()!.certificateProvider === certProviders.LETS_ENCRYPT_STAGING && localIssuersReady()) {
+          @if (a.certificateProvider === certProviders.LETS_ENCRYPT_STAGING && localIssuersReady()) {
             <div class="pt-1.5 border-t border-border mt-1">
               <button (click)="openDnsIssuerSetupForm()" class="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1">
                 <ng-icon name="lucideArrowUpCircle" class="h-3.5 w-3.5" />
@@ -205,45 +123,141 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
               </button>
             </div>
           }
+
+          <!-- Inline remove confirmation -->
+          @if (removeConfirmId() === a.id) {
+            <div class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs">
+              <span class="text-red-700 dark:text-red-400 flex-1">Remove DNS zone {{ a.dnsZone.zoneName }}? Endpoints on this zone will lose DNS management.</span>
+              <button (click)="executeRemove(a.id)" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium">Remove</button>
+              <button (click)="removeConfirmId.set(null)" class="px-2 py-1 text-muted-foreground hover:text-foreground text-xs">Cancel</button>
+            </div>
+          }
         </div>
+      }
 
-        <!-- Inline remove confirmation -->
-        @if (showRemoveConfirm()) {
-          <div class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs">
-            <span class="text-red-700 dark:text-red-400 flex-1">Remove DNS zone? Endpoints will lose DNS management.</span>
-            <button (click)="executeRemove()" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium">Remove</button>
-            <button (click)="showRemoveConfirm.set(false)" class="px-2 py-1 text-muted-foreground hover:text-foreground text-xs">Cancel</button>
-          </div>
-        }
+      @if (assignments().length > 0 && !showAssignForm() && unassignedZones().length > 0) {
+        <button
+          (click)="showAssignForm.set(true)"
+          class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
+          Assign another zone
+        </button>
+      }
 
-        <!-- STEP 3+4: Issuer setup inline — shown whenever zone is assigned with wildcard -->
-        @if (assignment()!.wildcardCertificate && clusterId()) {
-          <div class="border border-border rounded-lg p-4 card-inner">
-            <app-cluster-issuer-setup
-              #dnsIssuerSetup
-              [clusterId]="clusterId()!"
-              [openFormOnInit]="justAssigned()"
-              (issuersReadyChange)="onIssuersReadyChange($event)"
-            />
+      @if (showAssignForm()) {
+        <div class="border border-border rounded-lg p-4 space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-muted-foreground mb-1">DNS Zone</label>
+            @if (unassignedZones().length === 0) {
+              <p class="text-sm text-sub">
+                No registered zones available.
+                <a routerLink="/infrastructure/domains/register" class="text-blue-600 dark:text-blue-400 hover:underline">Register one first.</a>
+              </p>
+            } @else {
+              <select
+                [(ngModel)]="assignForm.dnsZoneId"
+                class="w-full px-3 py-2 border border-border rounded-md bg-background text-sm text-foreground"
+              >
+                <option value="">Select zone...</option>
+                @for (zone of unassignedZones(); track zone.id) {
+                  <option [value]="zone.id">{{ getZoneDisplay(zone) }}</option>
+                }
+              </select>
+            }
           </div>
-        }
+
+          <!-- TLS setup — wildcard first -->
+          <div class="space-y-2">
+            <label class="block text-xs font-medium text-muted-foreground">TLS Certificate</label>
+            <label class="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+              <input type="checkbox" [(ngModel)]="assignForm.enableTls" class="rounded" />
+              Enable Let's Encrypt TLS
+            </label>
+            @if (assignForm.enableTls) {
+              <div class="ml-6 space-y-3">
+                <label class="flex items-start gap-2 text-xs text-foreground cursor-pointer">
+                  <input type="checkbox" [(ngModel)]="assignForm.wildcardCertificate" class="rounded mt-0.5" />
+                  <div>
+                    <span class="font-medium">Wildcard certificate (recommended)</span>
+                    <p class="text-xs text-sub mt-0.5">
+                      Uses DNS-01 challenge to cover all subdomains (*.zone). Requires Hetzner DNS.
+                    </p>
+                  </div>
+                </label>
+                <div>
+                  <label class="block text-xs font-medium text-muted-foreground mb-1">Provider</label>
+                  <select
+                    [(ngModel)]="assignForm.certificateProvider"
+                    class="w-full px-3 py-2 border border-border rounded-md bg-background text-sm text-foreground"
+                  >
+                    <option [value]="certProviders.LETS_ENCRYPT_STAGING">Let's Encrypt Staging (start here)</option>
+                    <option [value]="certProviders.LETS_ENCRYPT">Let's Encrypt Production</option>
+                  </select>
+                  <p class="text-xs text-muted-foreground mt-0.5">
+                    Use staging first — no rate limits. Switch to production when verified.
+                  </p>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-muted-foreground mb-1">ACME Email</label>
+                  <input
+                    type="email"
+                    [(ngModel)]="assignForm.acmeEmail"
+                    placeholder="admin@example.com"
+                    class="w-full px-3 py-2 border border-border rounded-md bg-background text-sm text-foreground"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="flex gap-2 justify-end">
+            <button
+              (click)="showAssignForm.set(false)"
+              class="px-3 py-1.5 text-xs border border-border rounded-md text-foreground hover:bg-muted transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              (click)="submitAssign()"
+              [disabled]="!assignForm.dnsZoneId"
+              class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Assign
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- STEP 3+4: Issuer setup inline — shown whenever a wildcard zone is assigned -->
+      @if (hasWildcardAssignment() && clusterId()) {
+        <div class="border border-border rounded-lg p-4 card-inner">
+          <app-cluster-issuer-setup
+            #dnsIssuerSetup
+            [clusterId]="clusterId()!"
+            [openFormOnInit]="justAssigned()"
+            (issuersReadyChange)="onIssuersReadyChange($event)"
+          />
+        </div>
       }
     </div>
   `,
 })
 export class ClusterDnsZoneSectionComponent {
-  assignment = input.required<ClusterDnsZoneResponseDto | null>();
+  assignments = input.required<ClusterDnsZoneResponseDto[]>();
   availableZones = input.required<DnsZoneResponseDto[]>();
   clusterId = input<string | null>(null);
 
   assignZone = output<AssignDnsZoneDto>();
-  removeZone = output<void>();
-  reconcile = output<void>();
+  /** Emits the assignment id to remove */
+  removeZone = output<string>();
+  /** Emits the assignment id to reconcile */
+  reconcile = output<string>();
   /** Emitted when issuer ready state changes (for parent to sync) */
   issuersReadyChange = output<boolean>();
 
   protected showAssignForm = signal(false);
-  protected showRemoveConfirm = signal(false);
+  protected removeConfirmId = signal<string | null>(null);
   protected localIssuersReady = signal(false);
   /** True immediately after the user assigns a new zone — forces configure-issuer form open */
   protected justAssigned = signal(false);
@@ -258,10 +272,18 @@ export class ClusterDnsZoneSectionComponent {
     wildcardCertificate: true,
   };
 
-  protected isNeedsReconciliation = computed(() => {
-    const s = this.assignment()?.reconciliationStatus;
-    return s ? needsReconciliation(s) : false;
+  protected unassignedZones = computed(() => {
+    const assignedIds = new Set(this.assignments().map(a => a.dnsZoneId));
+    return this.availableZones().filter(z => !assignedIds.has(z.id));
   });
+
+  protected hasWildcardAssignment = computed(() =>
+    this.assignments().some(a => a.wildcardCertificate)
+  );
+
+  protected needsRec(a: ClusterDnsZoneResponseDto): boolean {
+    return a.reconciliationStatus ? needsReconciliation(a.reconciliationStatus) : false;
+  }
 
   protected onIssuersReadyChange(ready: boolean): void {
     this.localIssuersReady.set(ready);
@@ -316,10 +338,10 @@ export class ClusterDnsZoneSectionComponent {
     this.assignForm = { dnsZoneId: '', enableTls: false, certificateProvider: CertificateProvider.LETS_ENCRYPT_STAGING, acmeEmail: '', wildcardCertificate: true };
   }
 
-  protected executeRemove(): void {
-    this.showRemoveConfirm.set(false);
+  protected executeRemove(assignmentId: string): void {
+    this.removeConfirmId.set(null);
     this.justAssigned.set(false);
-    this.removeZone.emit();
+    this.removeZone.emit(assignmentId);
   }
 
   protected openDnsIssuerSetupForm(): void {

@@ -72,14 +72,16 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
             <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-600" />
             DNS Zone
           </h3>
-          @if (clusterDnsZoneService.assignment(); as zone) {
-            <div class="flex items-center gap-2">
-              <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-              <span class="text-sm text-gray-700 dark:text-gray-300 font-mono">{{ zone.dnsZone.zoneName }}</span>
-              <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                {{ zone.dnsZone.dnsProvider }}
-              </span>
-            </div>
+          @if (clusterDnsZoneService.hasAssignment()) {
+            @for (zone of clusterDnsZoneService.assignments(); track zone.id) {
+              <div class="flex items-center gap-2">
+                <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <span class="text-sm text-gray-700 dark:text-gray-300 font-mono">{{ zone.dnsZone.zoneName }}</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                  {{ zone.dnsZone.dnsProvider }}
+                </span>
+              </div>
+            }
           } @else {
             <p class="text-sm text-gray-500 dark:text-gray-400">
               No DNS zone assigned to this cluster.
@@ -141,7 +143,7 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
           >
             <app-cluster-endpoint-form
               [clusterId]="clusterId()"
-              [assignment]="clusterDnsZoneService.assignment()"
+              [assignments]="clusterDnsZoneService.assignments()"
               [endpoint]="editingEndpoint()"
               [fixedApplicationId]="appId()"
               [fixedAppSlug]="appSlug()"
