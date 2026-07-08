@@ -171,8 +171,20 @@ import { DnsSetupWizardService } from './dns-setup-wizard.service';
             </p>
             <ul class="text-xs text-amber-700 dark:text-amber-400 space-y-0.5 list-disc list-inside">
               <li>Purchase a domain directly on <span class="font-semibold">{{ wiz.dnsZonesService.providers()[0] }}</span> — it will appear here automatically.</li>
-              <li>Transfer an existing domain to <span class="font-semibold">{{ wiz.dnsZonesService.providers()[0] }}</span> by updating its nameservers at your current registrar.</li>
+              <li>Bring an existing domain by updating its NS records at your registrar to point to <span class="font-semibold">{{ wiz.dnsZonesService.providers()[0] }}</span>'s nameservers.</li>
             </ul>
+            @if (firstProviderDelegation; as delegation) {
+              <div class="pt-1 border-t border-amber-200 dark:border-amber-700">
+                <a
+                  [href]="delegation.delegationGuideUrl"
+                  target="_blank"
+                  class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 underline"
+                >
+                  View official delegation guide
+                  <ng-icon name="lucideExternalLink" class="h-3 w-3" />
+                </a>
+              </div>
+            }
           } @else {
             <p class="text-xs text-amber-700 dark:text-amber-400">
               No DNS provider is configured yet. Go to DNS zones to set one up first.
@@ -185,4 +197,11 @@ import { DnsSetupWizardService } from './dns-setup-wizard.service';
 })
 export class DnsWizardZoneStepComponent {
   protected wiz = inject(DnsSetupWizardService);
+
+  get firstProviderDelegation() {
+    const first = this.wiz.dnsZonesService.providers()[0];
+    if (!first) return undefined;
+    return this.wiz.dnsZonesService.dnsCapableProviders().find((p) => p.id === first)
+      ?.dnsZoneDelegation;
+  }
 }

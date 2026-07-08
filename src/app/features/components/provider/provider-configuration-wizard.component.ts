@@ -7,6 +7,8 @@ import {
   signal,
   OnInit,
 } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -30,7 +32,7 @@ import {
   lucideInfo,
 } from '@ng-icons/lucide';
 import { ProvidersService } from '../../service/providers.service';
-import { AppConfigService } from '../../../core/services/app-config.service';
+import { ProviderLogoService } from '../../../shared/services/provider-logo.service';
 import { ProviderDefinitionDto, ProviderCredentialsDto } from '../../../core/api';
 interface CredentialFieldDefinition {
   key: string;
@@ -443,14 +445,14 @@ interface WizardStep {
 export class ProviderConfigurationWizardComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly providersService = inject(ProvidersService);
-  private readonly appConfig = inject(AppConfigService);
+  private readonly providerLogo = inject(ProviderLogoService);
 
-  readonly logoUrl = computed(() => {
-    const url = this.provider().logoUrl;
-    if (!url) return null;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return `${this.appConfig.apiBaseUrl}${url}`;
-  });
+  readonly logoUrl = toSignal(
+    toObservable(computed(() => this.provider()?.logoUrl ?? null)).pipe(
+      switchMap((url) => this.providerLogo.resolve(url)),
+    ),
+    { initialValue: null as string | null },
+  );
 
   provider = input.required<ProviderDefinitionDto>();
   completeOutput = output<{ success: boolean; configuration?: any; error?: string }>();

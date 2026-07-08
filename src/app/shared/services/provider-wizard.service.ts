@@ -8,7 +8,7 @@ import {
   NodeSizeOptionDto,
   SSHKeyDto,
 } from '../../core/api/model/models';
-import { AppConfigService } from '../../core/services/app-config.service';
+import { ProviderLogoService } from './provider-logo.service';
 
 /**
  * Provider Option - Simplified provider info for selection
@@ -50,6 +50,7 @@ export interface ServerTypeOption {
   managedFirewall: boolean;
   supportsHourlyBilling: boolean;
   blockStoragePricePerGbMonthly: number | null; // €/GB/month, null if local storage
+  availableRegionIds?: string[];
 }
 
 /**
@@ -62,7 +63,7 @@ export interface ServerTypeOption {
 export class ProviderWizardService {
   private readonly providerManagementService = inject(ProviderManagementService);
   private readonly accessManagementService = inject(AccessManagementService);
-  private readonly appConfigService = inject(AppConfigService);
+  private readonly providerLogo = inject(ProviderLogoService);
 
   // === State Signals ===
 
@@ -83,6 +84,7 @@ export class ProviderWizardService {
   private readonly serverTypes = signal<Record<string, ServerTypeOption[]>>({});
   private readonly isLoadingServerTypes = signal<boolean>(false);
   private readonly serverTypesError = signal<string | null>(null);
+  private readonly allRegionsLoadedFor = new Set<string>();
 
   // SSH Keys
   private readonly sshKeys = signal<SSHKeyDto[]>([]);
@@ -133,12 +135,14 @@ export class ProviderWizardService {
       providersDto.forEach(p => { if (p.id) defsMap[p.id] = p; });
       this.providerDefinitions.set(defsMap);
 
-      // Map provider definitions first (region count = 0 initially for enabled providers)
-      const mappedProviders: ProviderOption[] = providersDto.map((provider) => ({
+      const logoUrls = await Promise.all(
+        providersDto.map((provider) => this.providerLogo.resolveUrl(provider.logoUrl))
+      );
+      const mappedProviders: ProviderOption[] = providersDto.map((provider, index) => ({
         id: provider.id || '',
         name: provider.displayName || provider.name || '',
         displayName: provider.displayName || provider.name || '',
-        logoUrl: this.resolveLogoUrl(provider.logoUrl),
+        logoUrl: logoUrls[index],
         regions: 0,
         comingSoon: !(provider.enabled ?? false),
       }));
@@ -180,12 +184,6 @@ export class ProviderWizardService {
     } finally {
       this.isLoadingProviders.set(false);
     }
-  }
-
-  private resolveLogoUrl(logoUrl?: string | null): string | null {
-    if (!logoUrl) return null;
-    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) return logoUrl;
-    return `${this.appConfigService.apiBaseUrl}${logoUrl}`;
   }
 
   /**
@@ -346,6 +344,61 @@ export class ProviderWizardService {
     return this.serverTypes()[cacheKey] || [];
   }
 
+  async loadServerTypesAllRegions(provider: string): Promise<ProviderRegion[]> {
+    const regions = await this.loadRegions(provider);
+
+    if (this.allRegionsLoadedFor.has(provider)) {
+      return regions;
+    }
+
+    this.isLoadingServerTypes.set(true);
+    this.serverTypesError.set(null);
+
+    try {
+      let anyFailure = false;
+      const perRegion = await Promise.all(
+        regions.map((region) =>
+          this.loadServerTypes(provider, region.id).then(
+            (list) => ({ region, list }),
+            () => {
+              anyFailure = true;
+              return { region, list: [] as ServerTypeOption[] };
+            }
+          )
+        )
+      );
+
+      const regionIdsByType: Record<string, string[]> = {};
+      for (const { region, list } of perRegion) {
+        for (const serverType of list) {
+          (regionIdsByType[serverType.id] ??= []).push(region.id);
+        }
+      }
+
+      const updates: Record<string, ServerTypeOption[]> = {};
+      for (const { region, list } of perRegion) {
+        updates[`${provider}:${region.id}`] = list.map((serverType) => ({
+          ...serverType,
+          availableRegionIds: regionIdsByType[serverType.id] ?? [region.id],
+        }));
+      }
+
+      this.serverTypes.update((current) => ({ ...current, ...updates }));
+
+      const hasAnyData = perRegion.some((entry) => entry.list.length > 0);
+      if (anyFailure && !hasAnyData) {
+        this.serverTypesError.set('Failed to load server types. Please try again.');
+      } else {
+        this.serverTypesError.set(null);
+        this.allRegionsLoadedFor.add(provider);
+      }
+
+      return regions;
+    } finally {
+      this.isLoadingServerTypes.set(false);
+    }
+  }
+
   /**
    * Map NodeSizeOptionDto to ServerTypeOption
    */
@@ -477,6 +530,7 @@ export class ProviderWizardService {
     this.providers.set([]);
     this.regions.set({});
     this.serverTypes.set({});
+    this.allRegionsLoadedFor.clear();
     this.sshKeys.set([]);
     console.log('🗑️ [ProviderWizardService] Cache cleared');
   }
@@ -500,6 +554,8 @@ export class ProviderWizardService {
       });
       return filtered;
     });
+
+    this.allRegionsLoadedFor.delete(provider);
 
     console.log(`🗑️ [ProviderWizardService] Cache cleared for provider: ${provider}`);
   }

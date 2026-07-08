@@ -113,15 +113,13 @@ const DEFAULT_LABELS: OperationLabels = {
       <app-operation-progress-bar
         [title]="mergedLabels().progressTitle || 'Progress'"
         [progress]="trackerService.getOverallProgress()"
-        [completedSteps]="trackerService.getCompletedStepsCount()"
         [totalSteps]="trackerService.stepsTotal()"
         [currentStep]="trackerService.stepIndex() + 1"
         [startedTime]="getFormattedStartTime()"
-        [estimatedCompletion]="getEstimatedCompletion()"
         [isFailed]="isOperationFailed()"
+        [isCompleted]="isOperationCompleted()"
       />
 
-      <!-- Detailed Steps -->
       <div class="space-y-4">
         @for (step of trackerService.steps(); track step.id) {
           <app-operation-step-card
@@ -225,18 +223,6 @@ const DEFAULT_LABELS: OperationLabels = {
               </button>
             }
           </div>
-        </div>
-      } @else {
-        <!-- Cancel Button (only show if not completed and not failed) -->
-        <div class="text-center pt-4">
-          <button
-            class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
-            disabled
-          >
-            <ng-icon name="lucideX" class="h-4 w-4 mr-2" />
-            Cancel Operation
-            <span class="text-xs text-muted-foreground ml-2">(Coming Soon)</span>
-          </button>
         </div>
       }
     </div>
@@ -352,34 +338,6 @@ export class OperationProgressTrackerComponent implements OnInit, OnDestroy {
 
     const date = new Date(op.startedAt);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  getEstimatedCompletion(): string {
-    const op = this.trackerService.operation();
-
-    // Hide when completed or failed
-    if (op?.status === 'COMPLETED' || op?.status === 'FAILED') {
-      return '';
-    }
-
-    const steps = this.trackerService.steps();
-    const runningStep = steps.find(s => s.status === 'running');
-
-    if (!runningStep) return 'Calculating...';
-
-    const pendingSteps = steps.filter(s => s.status === 'pending');
-    const totalRemainingTime = pendingSteps.reduce((sum, step) => sum + (step.estimatedDuration || 0), 0);
-
-    let currentStepRemaining = 0;
-    if (runningStep.startedAt && runningStep.estimatedDuration) {
-      const elapsed = (Date.now() - runningStep.startedAt.getTime()) / 1000;
-      currentStepRemaining = Math.max(0, runningStep.estimatedDuration - elapsed);
-    }
-
-    const totalSeconds = totalRemainingTime + currentStepRemaining;
-    const completionTime = new Date(Date.now() + totalSeconds * 1000);
-
-    return completionTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   getCurrentStepProgressForStep(stepId: string): number | undefined {

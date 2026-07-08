@@ -1,9 +1,11 @@
 import { Component, computed, input, output, signal, inject } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { PricingService } from '../../../shared/services/pricing.service';
-import { AppConfigService } from '../../../core/services/app-config.service';
+import { ProviderLogoService } from '../../../shared/services/provider-logo.service';
 import {
   lucideSettings,
   lucideCheck,
@@ -287,7 +289,7 @@ import { ProviderStatus } from '../../model/provider.models';
 })
 export class ProviderCardComponent {
   private readonly pricingService = inject(PricingService);
-  private readonly appConfigService = inject(AppConfigService);
+  private readonly providerLogo = inject(ProviderLogoService);
 
   configuration = input<ProviderConfigurationDto>();
   provider = input<ProviderDefinitionDto>();
@@ -297,12 +299,12 @@ export class ProviderCardComponent {
 
   readonly isConfigured = computed(() => !!this.configuration());
 
-  readonly logoUrl = computed(() => {
-    const url = this.getProvider().logoUrl;
-    if (!url) return null;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return `${this.appConfigService.apiBaseUrl}${url}`;
-  });
+  readonly logoUrl = toSignal(
+    toObservable(computed(() => this.provider()?.logoUrl ?? null)).pipe(
+      switchMap((url) => this.providerLogo.resolve(url)),
+    ),
+    { initialValue: null as string | null },
+  );
 
   readonly getProvider = computed(() => {
     return this.provider()!;

@@ -41,7 +41,6 @@ import { ClusterService } from '../../service/cluster.service';
       [labels]="customLabels()"
       [successRoute]="successRoute()"
       [failureRoute]="'/cluster'"
-      [retryRoute]="'/cluster/create'"
       [showSuccessModal]="false"
       (operationCompleted)="onOperationCompleted()"
       (operationFailed)="onOperationFailed($event)"
@@ -111,8 +110,7 @@ export class ClusterProgressTrackerComponent implements OnInit {
       successTitle: 'Cluster Created Successfully!',
       successMessage: `"${name}" is now ready to use`,
       failureTitle: 'Cluster Creation Failed',
-      failureMessage: `The cluster "${name}" could not be created. Please review the error details below.`,
-      retryButtonText: 'Retry Creation',
+      failureMessage: `The cluster "${name}" could not be created. Delete it from the list and create a new one.`,
       backButtonText: 'Back to Clusters',
       viewDetailsButtonText: 'Go to Cluster',
     };

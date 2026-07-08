@@ -301,7 +301,10 @@ export class DnsSetupWizardService {
     this.zoneRegPhase.set('loading');
     this.zoneRegError.set(null);
     try {
-      await this.dnsZonesService.loadProviders();
+      await Promise.all([
+        this.dnsZonesService.loadProviders(),
+        this.dnsZonesService.loadDnsCapableProviders(),
+      ]);
       const providers = this.dnsZonesService.providers();
       this.zoneRegProviders.set(providers);
       if (providers.length === 0) {

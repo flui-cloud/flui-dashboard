@@ -1,17 +1,20 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { AppConfigService } from '../../../core/services/app-config.service';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs/operators';
+import { ProviderLogoService } from '../../../shared/services/provider-logo.service';
 
 @Component({
   selector: 'app-provider-badge',
   standalone: true,
   template: `
     <div class="inline-flex items-center gap-1.5">
-      <img
-        [src]="logoUrl()"
-        [alt]="displayName()"
-        class="w-4 h-4 object-contain"
-        (error)="onImgError($event)"
-      />
+      @if (logoUrl()) {
+        <img
+          [src]="logoUrl()"
+          [alt]="displayName()"
+          class="w-4 h-4 object-contain"
+        />
+      }
       <span class="text-sm font-medium capitalize">{{ displayName() }}</span>
     </div>
   `,
@@ -19,10 +22,13 @@ import { AppConfigService } from '../../../core/services/app-config.service';
 export class ProviderBadgeComponent {
   provider = input.required<string>();
 
-  private readonly appConfig = inject(AppConfigService);
+  private readonly providerLogo = inject(ProviderLogoService);
 
-  readonly logoUrl = computed(() =>
-    `${this.appConfig.apiBaseUrl}/api/v1/management/providers/${this.provider()}/logo`
+  readonly logoUrl = toSignal(
+    toObservable(
+      computed(() => `/api/v1/management/providers/${this.provider()}/logo`),
+    ).pipe(switchMap((url) => this.providerLogo.resolve(url))),
+    { initialValue: null as string | null },
   );
 
   displayName(): string {
@@ -38,9 +44,5 @@ export class ProviderBadgeComponent {
       case 'azure':      return 'Azure';
       default:           return this.provider();
     }
-  }
-
-  onImgError(event: Event): void {
-    (event.target as HTMLImageElement).style.display = 'none';
   }
 }

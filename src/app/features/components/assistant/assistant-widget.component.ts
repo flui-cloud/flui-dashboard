@@ -255,25 +255,27 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
       </div>
       }
 
-      <!-- Toggle button -->
       @if (!isFull()) {
-      <button type="button" (click)="toggle()"
-        class="relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 pointer-events-auto"
-        [class]="expanded()
-          ? 'bg-gradient-to-br from-blue-500 to-blue-700 shadow-blue-500/30 hover:shadow-blue-500/40 hover:shadow-xl'
-          : 'bg-card border border-border shadow-black/10 hover:shadow-black/20'"
-      >
-        @if (!expanded()) {
-          <div class="absolute inset-0 rounded-full bg-blue-500 animate-ping opacity-10"></div>
-          @if (imgOk()) {
-            <img src="icons/assistant.png" class="h-9 w-9 object-contain" alt="Flui Assistant" (error)="imgOk.set(false)" />
-          } @else {
-            <ng-icon name="lucideBot" class="h-6 w-6 text-blue-600" />
-          }
+        @if (expanded()) {
+          <button type="button" (click)="toggle()"
+            class="relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 pointer-events-auto bg-gradient-to-br from-blue-500 to-blue-700 shadow-blue-500/30 hover:shadow-blue-500/40 hover:shadow-xl"
+          >
+            <ng-icon name="lucideX" class="h-6 w-6 text-white" />
+          </button>
         } @else {
-          <ng-icon name="lucideX" class="h-6 w-6 text-white" />
+          <button type="button" (click)="toggle()" aria-label="Open Flui Assistant"
+            class="group fixed top-1/2 right-0 z-50 flex -translate-y-1/2 items-center rounded-l-xl border border-r-0 border-border bg-card py-3 pl-1.5 pr-1 opacity-40 shadow-lg shadow-black/10 transition-all duration-300 hover:pl-2.5 hover:pr-1.5 hover:opacity-100 hover:shadow-black/20 pointer-events-auto"
+          >
+            <ng-icon name="lucideChevronLeft" class="h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:-translate-x-0.5" />
+            <span class="inline-flex w-0 items-center overflow-hidden opacity-0 transition-all duration-300 group-hover:ml-1 group-hover:w-5 group-hover:opacity-100">
+              @if (imgOk()) {
+                <img src="icons/assistant.png" class="h-5 w-5 max-w-none object-contain" alt="Flui Assistant" (error)="imgOk.set(false)" />
+              } @else {
+                <ng-icon name="lucideBot" class="h-5 w-5 max-w-none text-blue-600" />
+              }
+            </span>
+          </button>
         }
-      </button>
       }
 
     </div>

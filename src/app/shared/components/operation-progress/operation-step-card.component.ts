@@ -76,7 +76,7 @@ import { ClusterCreationStep } from '../../../features/model/cluster.models';
                   <span>~{{ getRemainingTime() }}</span>
                 </div>
               }
-              @if (step().status === 'completed' && step().completedAt && step().startedAt) {
+              @if (step().status === 'completed' && getStepDurationSeconds() >= 1) {
                 <div class="flex items-center text-green-600">
                   <ng-icon name="lucideCheck" class="h-4 w-4 mr-1" />
                   <span>{{ getDuration(step().startedAt!, step().completedAt!) }}</span>
@@ -229,6 +229,12 @@ export class OperationStepCardComponent {
 
     if (remaining < 60) return `${Math.ceil(remaining)}s`;
     return `${Math.ceil(remaining / 60)}m`;
+  }
+
+  getStepDurationSeconds(): number {
+    const step = this.step();
+    if (!step.startedAt || !step.completedAt) return 0;
+    return (step.completedAt.getTime() - step.startedAt.getTime()) / 1000;
   }
 
   getDuration(start: Date, end: Date): string {

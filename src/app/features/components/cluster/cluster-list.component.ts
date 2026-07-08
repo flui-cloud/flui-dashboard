@@ -70,10 +70,10 @@ interface FilterState {
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold text-foreground">
-            Kubernetes Clusters
+            Clusters
           </h1>
           <p class="mt-2 text-sm text-sub">
-            Manage your K3s clusters across multiple providers
+            Manage your clusters across multiple providers
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -87,9 +87,8 @@ interface FilterState {
           </button>
           <button
             (click)="createNewCluster()"
-            [disabled]="isByosDeployment()"
-            [title]="createTooltip()"
-            class="inline-flex items-center gap-2 px-3.5 py-2 bg-blue-600 dark:bg-blue-500/20 text-white dark:text-blue-400 border border-transparent dark:border-blue-500/40 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500/30 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 dark:disabled:hover:bg-blue-500/20"
+            title="Create a new cluster"
+            class="inline-flex items-center gap-2 px-3.5 py-2 bg-blue-600 dark:bg-blue-500/20 text-white dark:text-blue-400 border border-transparent dark:border-blue-500/40 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500/30 transition-colors text-sm font-medium"
           >
             <ng-icon name="lucidePlus" class="h-4 w-4" />
             <span>Create Cluster</span>
@@ -97,21 +96,7 @@ interface FilterState {
         </div>
       </div>
 
-      @if (isByosDeployment()) {
-        <div class="card-inner border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 rounded-lg p-4 flex items-start gap-3">
-          <ng-icon name="lucideInfo" class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p class="text-sm font-medium text-foreground">Adding more clusters — coming soon</p>
-            <p class="text-sm text-sub mt-0.5">
-              Self-hosted (BYOS) installs run on the server you connected, so creating
-              additional clusters from the dashboard isn't supported yet. You can still
-              scale this cluster's nodes from its <span class="font-medium text-foreground">Nodes</span> tab.
-            </p>
-          </div>
-        </div>
-      }
-
-      <div class="card-inner border border-border rounded-lg p-4">
+<div class="card-inner border border-border rounded-lg p-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div class="relative">
             <ng-icon
@@ -325,46 +310,22 @@ interface FilterState {
           }
 
           @if (filteredClusters().length > 0) {
-            @if (isByosDeployment()) {
-              <div
-                [title]="createTooltip()"
-                class="card-surface border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-8 min-h-full opacity-60 cursor-not-allowed"
-              >
-                <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <ng-icon name="lucidePlus" class="h-10 w-10 text-muted-foreground" />
-                </div>
-
-                <h3 class="text-lg font-semibold text-foreground mb-2">
-                  Create New Cluster
-                </h3>
-
-                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground mb-2">
-                  Coming soon
-                </span>
-
-                <p class="text-sm text-sub text-center max-w-xs">
-                  Self-hosted installs don't provision extra clusters yet — scale
-                  this cluster's nodes from its Nodes tab.
-                </p>
+            <div
+              (click)="createNewCluster()"
+              class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
+            >
+              <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
+                <ng-icon name="lucidePlus" class="h-10 w-10 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
               </div>
-            } @else {
-              <div
-                (click)="createNewCluster()"
-                class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
-              >
-                <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
-                  <ng-icon name="lucidePlus" class="h-10 w-10 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
-                </div>
 
-                <h3 class="text-lg font-semibold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  Create New Cluster
-                </h3>
+              <h3 class="text-lg font-semibold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                Create New Cluster
+              </h3>
 
-                <p class="text-sm text-sub text-center max-w-xs">
-                  Click to configure and deploy a new Kubernetes cluster
-                </p>
-              </div>
-            }
+              <p class="text-sm text-sub text-center max-w-xs">
+                Click to configure and deploy a new cluster
+              </p>
+            </div>
           }
 
           @if (filteredClusters().length === 0) {
@@ -377,7 +338,7 @@ interface FilterState {
                 @if (activeFiltersCount() > 0) {
                   Try adjusting your filters or clear them to see all clusters
                 } @else {
-                  Get started by creating your first Kubernetes cluster
+                  Get started by creating your first cluster
                 }
               </p>
               @if (activeFiltersCount() > 0) {
@@ -491,16 +452,6 @@ export class ClusterListComponent implements OnInit {
   isLoading = this.clusterService.listIsLoading;
   errorMessage = this.clusterService.listErrorMessage;
   deletionProgress = this.clusterService.deletionProgress;
-
-  readonly isByosDeployment = computed(() =>
-    this.allClusters().some((c) => c.provider === ProviderType.BYOS),
-  );
-
-  protected readonly createTooltip = computed(() =>
-    this.isByosDeployment()
-      ? "Coming soon — self-hosted installs can't create additional clusters yet. Scale this cluster's nodes from its Nodes tab instead."
-      : 'Create a new Kubernetes cluster',
-  );
 
   filteredClusters = computed(() => {
     const clusters = this.allClusters();
@@ -622,7 +573,6 @@ export class ClusterListComponent implements OnInit {
   }
 
   createNewCluster() {
-    if (this.isByosDeployment()) return;
     this.router.navigate(['/cluster/new']);
   }
 

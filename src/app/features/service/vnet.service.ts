@@ -6,9 +6,11 @@
  */
 
 import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { VNetsService } from '../../core/api/api/vNets.service';
 import { SubnetsService } from '../../core/api/api/subnets.service';
+import { AppConfigService } from '../../core/services/app-config.service';
 import {
   VNetResponseDto,
   VNetListResponseDto,
@@ -38,6 +40,29 @@ import {
 export class VNetService {
   private readonly vnetApi = inject(VNetsService);
   private readonly subnetsApi = inject(SubnetsService);
+  private readonly http = inject(HttpClient);
+  private readonly appConfig = inject(AppConfigService);
+
+  /**
+   * Subnet CIDRs a new VNet must avoid on this provider (read live from the
+   * provider). Empty for isolated-network providers (e.g. Hetzner); for
+   * shared-VPC providers (Scaleway) it lists ranges already in use in the region.
+   */
+  async getOccupiedSubnets(provider: string, region?: string): Promise<string[]> {
+    try {
+      let params = new HttpParams().set('provider', provider);
+      if (region) params = params.set('region', region);
+      const res = await firstValueFrom(
+        this.http.get<{ provider: string; cidrs: string[] }>(
+          `${this.appConfig.apiBaseUrl}/api/v1/vnets/occupied-subnets`,
+          { params },
+        ),
+      );
+      return res?.cidrs ?? [];
+    } catch {
+      return [];
+    }
+  }
 
   private readonly vnetsList = signal<VNetInfo[]>([]);
   private readonly selectedVNetInfo = signal<VNetInfo | null>(null);

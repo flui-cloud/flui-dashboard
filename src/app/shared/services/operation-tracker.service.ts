@@ -63,8 +63,11 @@ export class OperationTrackerService {
   });
 
   readonly getCompletedStepsCount = computed(() => {
-    // Count only steps with status 'completed'
-    return this.creationSteps().filter(step => step.status === 'completed').length;
+    // Count only steps with status 'completed', capped at the backend total so the
+    // synthetic final step and reconstructed steps can never push it past totalSteps.
+    const completed = this.creationSteps().filter(step => step.status === 'completed').length;
+    const total = this.totalSteps();
+    return total > 0 ? Math.min(completed, total) : completed;
   });
 
   /**

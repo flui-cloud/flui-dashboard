@@ -1,4 +1,6 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -17,7 +19,7 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { ProvidersService } from '../../service/providers.service';
-import { AppConfigService } from '../../../core/services/app-config.service';
+import { ProviderLogoService } from '../../../shared/services/provider-logo.service';
 import { ProviderConfigurationDto, ProviderDefinitionDto } from '../../../core/api';
 import { HealthStatus } from '../../model/provider.models';
 import { ProviderCredentialsPanelComponent } from './provider-credentials-panel.component';
@@ -280,7 +282,7 @@ export class ProviderManageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly providersService = inject(ProvidersService);
-  private readonly appConfig = inject(AppConfigService);
+  private readonly providerLogo = inject(ProviderLogoService);
 
   protected providerId = signal<string>('');
   protected isLoading = signal<boolean>(true);
@@ -299,12 +301,12 @@ export class ProviderManageComponent implements OnInit {
     this.providersService.configuredProviders().find((c) => c.provider === this.providerId()),
   );
 
-  protected logoUrl = computed(() => {
-    const url = this.provider()?.logoUrl;
-    if (!url) return null;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return `${this.appConfig.apiBaseUrl}${url}`;
-  });
+  protected logoUrl = toSignal(
+    toObservable(computed(() => this.provider()?.logoUrl ?? null)).pipe(
+      switchMap((url) => this.providerLogo.resolve(url)),
+    ),
+    { initialValue: null as string | null },
+  );
 
   protected statusLabel = computed(() =>
     (this.configuration()?.status ?? 'not_configured').replaceAll('_',  ' '),

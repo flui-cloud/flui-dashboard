@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject } from '@angular/core';
+import { Component, signal, computed, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -23,7 +23,7 @@ import {
 import { forkJoin, map } from 'rxjs';
 import { SSHKeyDto, CreateSSHKeyDto, UpdateSSHKeyDto, AccessManagementService } from '../../core/api';
 
-import { AppConfigService } from '../../core/services/app-config.service';
+import { ProviderLogoService } from '../../shared/services/provider-logo.service';
 import { ProvidersService } from '../service/providers.service';
 
 type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway';
@@ -703,8 +703,10 @@ export class SshKeysComponent {
   addKeyForm: FormGroup;
   protected readonly accessManagementService = inject(AccessManagementService);
 
-  private readonly appConfigService = inject(AppConfigService);
+  private readonly providerLogo = inject(ProviderLogoService);
   private readonly providersService = inject(ProvidersService);
+
+  private readonly providerLogos = signal<Record<string, string | null>>({});
 
   sshKeys = signal<SSHKeyDto[]>([]);
   isLoading = signal(true);
@@ -743,6 +745,16 @@ export class SshKeysComponent {
   );
 
   constructor(private readonly fb: FormBuilder) {
+    effect(() => {
+      for (const def of this.providersService.availableProviders()) {
+        if (!def.id) continue;
+        const id = def.id;
+        this.providerLogo.resolveUrl(def.logoUrl).then((url) => {
+          this.providerLogos.update((map) => ({ ...map, [id]: url }));
+        });
+      }
+    });
+
     this.addKeyForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       userName: ['', [Validators.required]],
@@ -783,13 +795,10 @@ export class SshKeysComponent {
     const mappings = key.providerKeyMappings as Record<string, string> | undefined;
     const errors = key.syncErrors as Record<string, string> | undefined;
     const definitions = this.providersService.availableProviders();
+    const logos = this.providerLogos();
     return this.providersService.activeProviders().map(config => {
       const def = definitions.find(d => d.id === config.provider);
-      const raw = def?.logoUrl;
-      let logoUrl: string | null;
-      if (!raw) logoUrl = null;
-      else if (raw.startsWith('http')) logoUrl = raw;
-      else logoUrl = `${this.appConfigService.apiBaseUrl}${raw}`;
+      const logoUrl = logos[config.provider] ?? null;
       const synced = !!mappings?.[config.provider];
       const error = (!synced && errors?.[config.provider]) ? errors[config.provider] : null;
       return { id: config.provider, displayName: def?.displayName ?? config.provider, logoUrl, synced, error };

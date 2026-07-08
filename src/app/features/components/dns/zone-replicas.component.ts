@@ -15,6 +15,7 @@ import {
   lucideChevronDown,
   lucideChevronRight,
   lucideCircleCheck,
+  lucideExternalLink,
   lucideInfo,
   lucideLoader,
   lucidePlay,
@@ -37,6 +38,7 @@ import {
   ReplicaProvider,
   ReplicaStatus,
 } from '../../service/dns-replica.service';
+import { DnsZonesService } from '../../service/dns-zones.service';
 
 const ALL_PROVIDERS: ReplicaProvider[] = ['hetzner', 'scaleway'];
 
@@ -74,6 +76,7 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
       lucideChevronDown,
       lucideChevronRight,
       lucideCircleCheck,
+      lucideExternalLink,
       lucideInfo,
       lucideLoader,
       lucidePlay,
@@ -154,6 +157,29 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
               }
               Register
             </button>
+          </div>
+
+          <div class="space-y-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-800 dark:bg-amber-900/20">
+            <p class="text-xs font-medium text-amber-800 dark:text-amber-300">Don't see your domain?</p>
+            <p class="text-xs text-amber-700 dark:text-amber-400">
+              The zone is discovered directly in your
+              <span class="font-semibold">{{ secondaryLabel() }}</span> account —
+              <span class="font-mono">{{ zone().zoneName }}</span> must already exist there.
+              Once registered, update the domain's NS records at your registrar to include
+              <span class="font-semibold">{{ secondaryLabel() }}</span>'s nameservers.
+            </p>
+            @if (secondaryDelegation(); as delegation) {
+              <div class="border-t border-amber-200 pt-1 dark:border-amber-700">
+                <a
+                  [href]="delegation.delegationGuideUrl"
+                  target="_blank"
+                  class="inline-flex items-center gap-1 text-xs text-amber-700 underline hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-200"
+                >
+                  View official delegation guide
+                  <ng-icon name="lucideExternalLink" class="h-3 w-3" />
+                </a>
+              </div>
+            }
           </div>
         </div>
       }
@@ -313,6 +339,7 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
 })
 export class ZoneReplicasComponent {
   private readonly service = inject(DnsReplicaService);
+  private readonly dnsZonesService = inject(DnsZonesService);
   private readonly toast = inject(ToastService);
 
   readonly zone = input.required<DnsZone>();
@@ -341,7 +368,26 @@ export class ZoneReplicasComponent {
 
   readonly canAddMore = computed(() => this.availableProviders().length > 0);
 
-  // ── Rendering helpers ──────────────────────────────────────────────────────
+  /** Selected secondary provider, falling back to the only available one. */
+  private readonly effectiveSecondary = computed<ReplicaProvider | ''>(() => {
+    const chosen = this.newProvider();
+    if (chosen) return chosen;
+    const available = this.availableProviders();
+    return available.length === 1 ? available[0] : '';
+  });
+
+  readonly secondaryLabel = computed(() => {
+    const provider = this.effectiveSecondary();
+    return provider ? this.providerLabel(provider) : 'the secondary provider';
+  });
+
+  readonly secondaryDelegation = computed(() => {
+    const provider = this.effectiveSecondary();
+    if (!provider) return undefined;
+    return this.dnsZonesService.dnsCapableProviders().find((p) => p.id === provider)
+      ?.dnsZoneDelegation;
+  });
+
   providerLabel(provider: string): string {
     return PROVIDER_LABEL[provider as ReplicaProvider] ?? provider;
   }
@@ -386,6 +432,8 @@ export class ZoneReplicasComponent {
     if (!this.adding()) {
       this.newProvider.set('');
       this.newProviderZoneId.set('');
+    } else if (this.dnsZonesService.dnsCapableProviders().length === 0) {
+      void this.dnsZonesService.loadDnsCapableProviders();
     }
   }
 

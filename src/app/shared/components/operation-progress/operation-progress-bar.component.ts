@@ -16,15 +16,13 @@ import { CommonModule } from '@angular/common';
     <div class="bg-card border border-border rounded-lg p-6 mb-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold">{{ title() }}</h2>
-        <!-- Clear message showing completed steps and current step in progress -->
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <span class="flex items-center gap-1">
-            <span class="text-green-600 font-medium">{{ completedSteps() }}</span>
-            <span>/</span>
-            <span>{{ totalSteps() }} steps</span>
-          </span>
-          @if (currentStep() <= totalSteps()) {
-            <span class="text-blue-600">• Step {{ currentStep() }} in progress</span>
+        <div class="text-sm font-medium">
+          @if (isCompleted()) {
+            <span class="text-green-600">Completed · {{ totalSteps() }}/{{ totalSteps() }} steps</span>
+          } @else if (isFailed()) {
+            <span class="text-red-600">Failed</span>
+          } @else if (totalSteps() > 0) {
+            <span class="text-muted-foreground">Step <span class="text-blue-600">{{ currentStep() }}</span> of {{ totalSteps() }}</span>
           }
         </div>
       </div>
@@ -39,30 +37,19 @@ import { CommonModule } from '@angular/common';
         ></div>
       </div>
 
-      <!-- Time Information - Dynamic layout, hides "Estimated completion" when empty -->
-      <div [class]="estimatedCompletion() ? 'grid grid-cols-2 gap-4 text-sm' : 'text-sm'">
-        <div>
-          <span class="text-muted-foreground">Started:</span>
-          <span class="font-medium ml-2">{{ startedTime() || 'Unknown' }}</span>
-        </div>
-        @if (estimatedCompletion()) {
-          <div>
-            <span class="text-muted-foreground">Estimated completion:</span>
-            <span class="font-medium ml-2">{{ estimatedCompletion() }}</span>
-          </div>
-        }
+      <div class="text-sm">
+        <span class="text-muted-foreground">Started:</span>
+        <span class="font-medium ml-2">{{ startedTime() || 'Unknown' }}</span>
       </div>
     </div>
   `,
 })
 export class OperationProgressBarComponent {
-  // Inputs
   title = input<string>('Deployment Progress');
   progress = input.required<number>();
-  completedSteps = input.required<number>();
   totalSteps = input.required<number>();
-  currentStep = input.required<number>(); // NEW: Current step number (1-indexed)
+  currentStep = input.required<number>(); // Current step number (1-indexed)
   startedTime = input<string>();
-  estimatedCompletion = input<string>();
   isFailed = input<boolean>(false);
+  isCompleted = input<boolean>(false);
 }

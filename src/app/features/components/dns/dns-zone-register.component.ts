@@ -110,11 +110,23 @@ type Step = 1 | 2 | 3;
                 </p>
                 <ul class="text-sm text-amber-700 dark:text-amber-400 space-y-1 list-disc list-inside">
                   <li><span class="font-medium">Purchase a domain</span> directly on <span class="font-semibold">{{ selectedProvider }}</span> — it will appear here automatically once active.</li>
-                  <li><span class="font-medium">Transfer an existing domain</span> to <span class="font-semibold">{{ selectedProvider }}</span> by updating the nameservers at your current registrar.</li>
+                  <li><span class="font-medium">Bring an existing domain</span> by updating its NS records at your registrar to point to <span class="font-semibold">{{ selectedProvider }}</span>'s nameservers.</li>
                 </ul>
                 <p class="text-xs text-amber-600 dark:text-amber-500">
                   Once the zone is active in <span class="font-semibold">{{ selectedProvider }}</span>, come back and refresh this step.
                 </p>
+                @if (selectedProviderInfo?.dnsZoneDelegation; as delegation) {
+                  <div class="pt-1 border-t border-amber-200 dark:border-amber-700">
+                    <a
+                      [href]="delegation.delegationGuideUrl"
+                      target="_blank"
+                      class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 underline"
+                    >
+                      View official delegation guide
+                      <ng-icon name="lucideExternalLink" class="h-3 w-3" />
+                    </a>
+                  </div>
+                }
               </div>
             } @else {
               <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md p-2">
@@ -154,7 +166,7 @@ type Step = 1 | 2 | 3;
               <div class="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5 space-y-1.5">
                 <p class="text-xs font-medium text-amber-800 dark:text-amber-300">Don't see your domain?</p>
                 <p class="text-xs text-amber-700 dark:text-amber-400">
-                  These zones are read directly from your <span class="font-semibold">{{ selectedProvider }}</span> account. To add a missing domain, either purchase it on <span class="font-semibold">{{ selectedProvider }}</span> or transfer it by updating its nameservers at your current registrar. Then come back and refresh.
+                  These zones are read directly from your <span class="font-semibold">{{ selectedProvider }}</span> account. To add a missing domain, update its NS records at your registrar to point to <span class="font-semibold">{{ selectedProvider }}</span>'s nameservers, then come back and refresh.
                 </p>
                 @if (selectedProviderInfo?.dnsZoneDelegation; as delegation) {
                   <div class="pt-1 border-t border-amber-200 dark:border-amber-700">

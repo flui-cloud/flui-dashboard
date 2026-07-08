@@ -14,6 +14,7 @@ import {
   FormBuilder,
   FormGroup,
   FormArray,
+  FormsModule,
   ReactiveFormsModule,
   Validators,
   AsyncValidatorFn,
@@ -38,18 +39,21 @@ import {
   lucideWand,
   lucideNetwork,
   lucideHardDrive,
+  lucidePlus,
+  lucideX,
 } from '@ng-icons/lucide';
-import { WizardStep, NodeSizeOption, ClusterConfiguration, ProviderType, ClusterType as ClusterEntityType, isControlClusterType } from '../../model/cluster.models';
+import { WizardStep, NodeSizeOption, ClusterConfiguration, ProviderType, isControlClusterType } from '../../model/cluster.models';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 import { AutoscaleDefaults } from '../../model/autoscale.models';
 import { AccessManagementService } from '../../../core/api/api/accessManagement.service';
-import { VNetInfo } from '../../model/vnet.models';
+import { VNetInfo, AddSubnetConfiguration } from '../../model/vnet.models';
+import { VNetService } from '../../service/vnet.service';
 import { firstValueFrom } from 'rxjs';
 
-// Import shared components
 import { WizardShellComponent } from '../../../shared/components/wizard-shell/wizard-shell.component';
 import { ProviderRegionSelectorComponent } from '../../../shared/components/provider-region-selector/provider-region-selector.component';
+import { RegionServerSelectorComponent } from '../../../shared/components/region-server-selector/region-server-selector.component';
 import { SshKeySelectorComponent } from '../../../shared/components/ssh-key-selector/ssh-key-selector.component';
 import { VNetSelectorComponent } from '../../../shared/components/vnet-selector/vnet-selector.component';
 import { ProviderWizardService } from '../../../shared/services/provider-wizard.service';
@@ -81,9 +85,11 @@ import {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     NgIcon,
     WizardShellComponent,
     ProviderRegionSelectorComponent,
+    RegionServerSelectorComponent,
     SshKeySelectorComponent,
     VNetSelectorComponent,
   ],
@@ -105,6 +111,8 @@ import {
       lucideWand,
       lucideNetwork,
       lucideHardDrive,
+      lucidePlus,
+      lucideX,
     }),
   ],
   template: `
@@ -223,40 +231,21 @@ import {
                   (serverTypeSelected)="onServerTypeSelected($event)"
                 />
               </div>
+              <p class="mt-3 text-xs text-muted-foreground max-w-4xl">
+                You'll choose the region and node size together in the next step, where prices and
+                availability are shown per region.
+              </p>
             </div>
-
-            <!-- Region (only shown after provider selected) -->
-            @if (selectedProvider()) {
-              <div>
-                <label class="text-sm font-bold mb-4 block">
-                  Region <span class="text-red-500">*</span>
-                </label>
-                <div class="max-w-4xl">
-                  <app-provider-region-selector
-                    [currentStep]="2"
-                    [selectedProvider]="selectedProvider()"
-                    [selectedRegion]="selectedRegion()"
-                    [selectedServerTypeId]="selectedServerTypeId()"
-                    (providerSelected)="onProviderSelected($event)"
-                    (regionSelected)="onRegionSelected($event)"
-                    (serverTypeSelected)="onServerTypeSelected($event)"
-                  />
-                </div>
-              </div>
-            }
           </div>
         }
 
         <!-- Step 1: Resources (Server Type + Auto-scaling) -->
         @case (1) {
           <div class="space-y-6">
-            <!-- Server Type Selection -->
-            <app-provider-region-selector
-              [currentStep]="3"
+            <app-region-server-selector
               [selectedProvider]="selectedProvider()"
               [selectedRegion]="selectedRegion()"
               [selectedServerTypeId]="selectedServerTypeId()"
-              (providerSelected)="onProviderSelected($event)"
               (regionSelected)="onRegionSelected($event)"
               (serverTypeSelected)="onServerTypeSelected($event)"
             />
@@ -573,10 +562,20 @@ import {
                     <div class="flex items-start gap-2">
                       <ng-icon name="lucideInfo" size="18" class="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5"></ng-icon>
                       <div class="text-sm text-yellow-800 dark:text-yellow-200">
-                        <strong>Warning:</strong> This VNet has no subnets. Please add a subnet to the VNet before proceeding, or select a different VNet.
+                        <strong>Warning:</strong> This VNet has no subnets. Add one below before proceeding, or select a different VNet.
                       </div>
                     </div>
                   </div>
+                  @if (!showAddSubnetForm()) {
+                    <button
+                      type="button"
+                      (click)="openAddSubnetForm()"
+                      class="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <ng-icon name="lucidePlus" size="16"></ng-icon>
+                      Add Subnet
+                    </button>
+                  }
                 } @else {
                   <div class="space-y-2">
                     @for (subnet of selectedVNetData()!.subnets; track subnet.id) {
@@ -614,6 +613,88 @@ import {
                         </div>
                       </div>
                     }
+                  </div>
+                  @if (!showAddSubnetForm()) {
+                    <button
+                      type="button"
+                      (click)="openAddSubnetForm()"
+                      class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                    >
+                      <ng-icon name="lucidePlus" size="14"></ng-icon>
+                      Add another subnet
+                    </button>
+                  }
+                }
+
+                @if (showAddSubnetForm()) {
+                  <div class="mt-3 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50/40 dark:bg-blue-900/10 space-y-4">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <ng-icon name="lucideNetwork" size="18" class="text-blue-600 dark:text-blue-400"></ng-icon>
+                        <h4 class="font-semibold text-slate-900 dark:text-white">Add subnet to {{ selectedVNetData()?.name }}</h4>
+                      </div>
+                      <button type="button" (click)="closeAddSubnetForm()" class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <ng-icon name="lucideX" size="18"></ng-icon>
+                      </button>
+                    </div>
+
+                    @if (addSubnetError()) {
+                      <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">
+                        <ng-icon name="lucideInfo" size="18" class="flex-shrink-0 mt-0.5"></ng-icon>
+                        <span>{{ addSubnetError() }}</span>
+                      </div>
+                    }
+
+                    @if (addSubnetZones().length > 0) {
+                      <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          Network Zone <span class="text-red-500">*</span>
+                        </label>
+                        <select
+                          [(ngModel)]="addSubnetZone"
+                          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          @for (zone of addSubnetZones(); track zone.id) {
+                            <option [value]="zone.id">{{ zone.displayName }}</option>
+                          }
+                        </select>
+                      </div>
+                    }
+
+                    <div>
+                      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Subnet IP Range (CIDR) <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        [(ngModel)]="addSubnetIpRange"
+                        placeholder="e.g., 10.0.0.0/24"
+                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        [class.border-red-500]="addSubnetIpRange && !isValidAddSubnetCidr()"
+                      />
+                      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Must fall within the VNet range {{ selectedVNetData()?.ipRange }}.
+                      </p>
+                    </div>
+
+                    <div class="flex gap-2">
+                      <button
+                        type="button"
+                        (click)="submitAddSubnet()"
+                        [disabled]="addingSubnet() || !isAddSubnetValid()"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {{ addingSubnet() ? 'Adding…' : 'Add & select' }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="closeAddSubnetForm()"
+                        [disabled]="addingSubnet()"
+                        class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 }
 
@@ -715,6 +796,51 @@ import {
               </label>
             </div>
 
+            @if (managedFirewallRules().length > 0) {
+              <div class="p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                <div class="flex items-start gap-2 mb-3">
+                  <ng-icon name="lucideShield" class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h5 class="font-medium text-sm">Required rules — managed by Flui</h5>
+                    <p class="text-xs text-muted-foreground mt-0.5">
+                      Your control cluster runs on a different provider ({{ controlClusterProvider() }}),
+                      so it reaches this cluster over the public network. Flui opens these ports for your
+                      control cluster's address automatically and keeps them in sync — they can't be edited or removed.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  @for (rule of managedFirewallRules(); track rule.port) {
+                    <div class="p-3 rounded-lg border bg-muted/40 opacity-90">
+                      <div class="grid grid-cols-5 gap-3 text-sm items-center">
+                        <div class="col-span-2 flex items-center gap-2">
+                          <ng-icon name="lucideShield" class="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                          <span class="font-medium">{{ rule.description }}</span>
+                        </div>
+                        <div>
+                          <span class="text-muted-foreground">Proto/Port:</span>
+                          <span class="ml-1 font-medium">{{ rule.protocol }} {{ rule.port }}</span>
+                        </div>
+                        <div>
+                          <span class="text-muted-foreground">Dir:</span>
+                          <span class="ml-1 font-medium">{{ rule.direction }}</span>
+                        </div>
+                        <div class="text-right">
+                          <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                            Locked
+                          </span>
+                        </div>
+                      </div>
+                      <p class="text-xs text-muted-foreground mt-1.5">
+                        Source: {{ rule.source }} (public IP resolved by Flui)
+                      </p>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
             @if (firewallConfigForm.get('enabled')?.value) {
               <!-- Firewall Rules Configuration -->
               <div class="p-4 rounded-lg border bg-card">
@@ -730,7 +856,7 @@ import {
 
                 <!-- Firewall Rules -->
                 <div class="space-y-3">
-                  <h5 class="font-medium text-sm">Inbound Rules</h5>
+                  <h5 class="font-medium text-sm">Inbound &amp; Outbound Rules</h5>
 
                   <div
                     *ngFor="let ruleControl of getFirewallRulesArray().controls; let i = index"
@@ -738,32 +864,86 @@ import {
                     class="p-4 rounded-lg border bg-muted/30 space-y-3"
                   >
                     <!-- Rule Header -->
-                    <div class="grid grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span class="text-muted-foreground">Description:</span>
-                        <span class="ml-2 font-medium">{{ ruleControl.get('description')?.value }}</span>
+                    @if (ruleControl.get('isCustom')?.value) {
+                      <div class="flex items-start gap-3">
+                        <div class="grid grid-cols-4 gap-3 text-sm flex-1">
+                          <div>
+                            <label class="text-xs text-muted-foreground">Description</label>
+                            <input
+                              formControlName="description"
+                              type="text"
+                              placeholder="Custom rule"
+                              class="mt-1 w-full rounded-md border px-2 py-1 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label class="text-xs text-muted-foreground">Protocol</label>
+                            <select
+                              formControlName="protocol"
+                              class="mt-1 w-full rounded-md border px-2 py-1 text-sm bg-background"
+                            >
+                              <option value="tcp">TCP</option>
+                              <option value="udp">UDP</option>
+                              <option value="icmp">ICMP</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label class="text-xs text-muted-foreground">Port</label>
+                            <input
+                              formControlName="port"
+                              type="text"
+                              placeholder="6443"
+                              class="mt-1 w-full rounded-md border px-2 py-1 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label class="text-xs text-muted-foreground">Direction</label>
+                            <select
+                              formControlName="direction"
+                              (change)="onCustomRuleDirectionChange(i)"
+                              class="mt-1 w-full rounded-md border px-2 py-1 text-sm bg-background"
+                            >
+                              <option value="in">IN</option>
+                              <option value="out">OUT</option>
+                            </select>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          (click)="removeRule(i)"
+                          class="mt-5 inline-flex items-center justify-center w-7 h-7 rounded-md border text-muted-foreground hover:text-destructive hover:border-destructive transition-colors flex-shrink-0"
+                          title="Remove this rule"
+                        >
+                          <ng-icon name="lucideX" class="w-4 h-4" />
+                        </button>
                       </div>
-                      <div>
-                        <span class="text-muted-foreground">Protocol:</span>
-                        <span class="ml-2 font-medium uppercase">{{ ruleControl.get('protocol')?.value }}</span>
+                    } @else {
+                      <div class="grid grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span class="text-muted-foreground">Description:</span>
+                          <span class="ml-2 font-medium">{{ ruleControl.get('description')?.value }}</span>
+                        </div>
+                        <div>
+                          <span class="text-muted-foreground">Protocol:</span>
+                          <span class="ml-2 font-medium uppercase">{{ ruleControl.get('protocol')?.value }}</span>
+                        </div>
+                        <div>
+                          <span class="text-muted-foreground">Port:</span>
+                          <span class="ml-2 font-medium">{{ ruleControl.get('port')?.value }}</span>
+                        </div>
+                        <div>
+                          <span class="text-muted-foreground">Direction:</span>
+                          <span class="ml-2 font-medium uppercase">{{ ruleControl.get('direction')?.value }}</span>
+                        </div>
                       </div>
-                      <div>
-                        <span class="text-muted-foreground">Port:</span>
-                        <span class="ml-2 font-medium">{{ ruleControl.get('port')?.value }}</span>
-                      </div>
-                      <div>
-                        <span class="text-muted-foreground">Direction:</span>
-                        <span class="ml-2 font-medium uppercase">{{ ruleControl.get('direction')?.value }}</span>
-                      </div>
-                    </div>
+                    }
 
-                    <!-- Source IPs Field -->
-                    <div>
-                      <div class="flex items-center justify-between mb-2">
-                        <label class="text-sm font-medium">
-                          Source CIDRs <span class="text-red-500">*</span>
-                        </label>
-                        <div class="flex items-center gap-2">
+                    @if (ruleControl.get('direction')?.value === 'out') {
+                      <div>
+                        <div class="flex items-center justify-between mb-2">
+                          <label class="text-sm font-medium">
+                            Destination CIDRs <span class="text-red-500">*</span>
+                          </label>
                           <button
                             type="button"
                             class="text-xs text-blue-600 hover:underline"
@@ -771,56 +951,104 @@ import {
                           >
                             Reset to defaults
                           </button>
-                          <button
-                            type="button"
-                            hlmBtn
-                            variant="ghost"
-                            size="sm"
-                            (click)="detectAndSetIP(i)"
-                            [disabled]="ipDetectionService.isDetecting()"
-                            class="gap-2 text-xs"
-                          >
-                            <ng-icon
-                              name="lucideRefreshCw"
-                              [class]="ipDetectionService.isDetecting() ? 'w-3 h-3 animate-spin' : 'w-3 h-3'"
-                            />
-                            Detect My IP
-                          </button>
                         </div>
+
+                        <textarea
+                          formControlName="destinationIps"
+                          rows="2"
+                          placeholder="0.0.0.0/0"
+                          class="w-full rounded-md border px-3 py-2 text-sm font-mono resize-none"
+                          [class.border-destructive]="ruleControl.get('destinationIps')?.invalid && ruleControl.get('destinationIps')?.touched"
+                        ></textarea>
+
+                        <p class="text-xs text-muted-foreground mt-1">
+                          Where this cluster may send traffic. Use 0.0.0.0/0 to allow all destinations.
+                        </p>
+
+                        @if (ruleControl.get('destinationIps')?.errors?.['required'] && ruleControl.get('destinationIps')?.touched) {
+                          <p class="text-xs text-destructive mt-1">
+                            Destination CIDRs are required
+                          </p>
+                        }
+
+                        @if (ruleControl.get('destinationIps')?.errors?.['invalidCidrs']) {
+                          <p class="text-xs text-destructive mt-1">
+                            Invalid CIDR format: {{ ruleControl.get('destinationIps')?.errors?.['invalidCidrs'].join(', ') }}
+                            (must include /32 for single IP or /24 for subnet)
+                          </p>
+                        }
                       </div>
+                    } @else {
+                      <div>
+                        <div class="flex items-center justify-between mb-2">
+                          <label class="text-sm font-medium">
+                            Source CIDRs <span class="text-red-500">*</span>
+                          </label>
+                          <div class="flex items-center gap-2">
+                            <button
+                              type="button"
+                              class="text-xs text-blue-600 hover:underline"
+                              (click)="resetRuleIPs(i)"
+                            >
+                              Reset to defaults
+                            </button>
+                            <button
+                              type="button"
+                              (click)="detectAndSetIP(i)"
+                              [disabled]="ipDetectionService.isDetecting()"
+                              class="inline-flex items-center gap-2 text-xs text-blue-600 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <ng-icon
+                                name="lucideRefreshCw"
+                                [class]="ipDetectionService.isDetecting() ? 'w-3 h-3 animate-spin' : 'w-3 h-3'"
+                              />
+                              Detect My IP
+                            </button>
+                          </div>
+                        </div>
 
-                      <textarea
-                        formControlName="sourceIps"
-                        rows="2"
-                        placeholder="203.0.113.0/24, 198.51.100.42/32"
-                        class="w-full rounded-md border px-3 py-2 text-sm font-mono resize-none"
-                        [class.border-destructive]="ruleControl.get('sourceIps')?.invalid && ruleControl.get('sourceIps')?.touched"
-                      ></textarea>
+                        <textarea
+                          formControlName="sourceIps"
+                          rows="2"
+                          placeholder="203.0.113.0/24, 198.51.100.42/32"
+                          class="w-full rounded-md border px-3 py-2 text-sm font-mono resize-none"
+                          [class.border-destructive]="ruleControl.get('sourceIps')?.invalid && ruleControl.get('sourceIps')?.touched"
+                        ></textarea>
 
-                      <p class="text-xs text-muted-foreground mt-1">
-                        Comma-separated CIDR ranges (e.g., 192.168.1.0/24, 10.0.0.5/32)
-                      </p>
-
-                      @if (ruleControl.get('sourceIps')?.errors?.['required'] && ruleControl.get('sourceIps')?.touched) {
-                        <p class="text-xs text-destructive mt-1">
-                          Source CIDRs are required
+                        <p class="text-xs text-muted-foreground mt-1">
+                          Who may reach this cluster. Comma-separated CIDR ranges (e.g., 192.168.1.0/24, 10.0.0.5/32).
                         </p>
-                      }
 
-                      @if (ruleControl.get('sourceIps')?.errors?.['invalidCidrs']) {
-                        <p class="text-xs text-destructive mt-1">
-                          Invalid CIDR format: {{ ruleControl.get('sourceIps')?.errors?.['invalidCidrs'].join(', ') }}
-                          (must include /32 for single IP or /24 for subnet)
-                        </p>
-                      }
+                        @if (ruleControl.get('sourceIps')?.errors?.['required'] && ruleControl.get('sourceIps')?.touched) {
+                          <p class="text-xs text-destructive mt-1">
+                            Source CIDRs are required
+                          </p>
+                        }
 
-                      @if (ipDetectionService.userPublicIP() && ruleControl.get('port')?.value === '22') {
-                        <p class="text-xs text-blue-600 mt-1">
-                          Your detected IP: {{ ipDetectionService.userPublicIP() }}
-                        </p>
-                      }
-                    </div>
+                        @if (ruleControl.get('sourceIps')?.errors?.['invalidCidrs']) {
+                          <p class="text-xs text-destructive mt-1">
+                            Invalid CIDR format: {{ ruleControl.get('sourceIps')?.errors?.['invalidCidrs'].join(', ') }}
+                            (must include /32 for single IP or /24 for subnet)
+                          </p>
+                        }
+
+                        @if (ipDetectionService.userPublicIP() && ruleControl.get('port')?.value === '22') {
+                          <p class="text-xs text-blue-600 mt-1">
+                            Your detected IP: {{ ipDetectionService.userPublicIP() }}
+                          </p>
+                        }
+                      </div>
+                    }
                   </div>
+
+                  <button
+                    type="button"
+                    (click)="addCustomRule()"
+                    class="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md border border-dashed hover:border-solid hover:bg-muted/40 transition-colors"
+                  >
+                    <ng-icon name="lucidePlus" class="w-4 h-4" />
+                    Add custom rule
+                  </button>
                 </div>
               </div>
             } @else {
@@ -1059,6 +1287,7 @@ export class ClusterCreationWizardComponent implements OnInit {
   private readonly clusterService = inject(ClusterService);
   private readonly autoscaleService = inject(ClusterAutoscaleService);
   private readonly wizardService = inject(ProviderWizardService);
+  private readonly vnetService = inject(VNetService);
   private readonly accessManagementService = inject(AccessManagementService);
   private readonly router = inject(Router);
   public pricingService = inject(PricingService);
@@ -1083,7 +1312,12 @@ export class ClusterCreationWizardComponent implements OnInit {
   selectedSubnetId = signal<string | null>(null);
   selectedVNetData = signal<VNetInfo | null>(null);
 
-  // Scaling configuration
+  showAddSubnetForm = signal<boolean>(false);
+  addingSubnet = signal<boolean>(false);
+  addSubnetError = signal<string | null>(null);
+  addSubnetZone = '';
+  addSubnetIpRange = '';
+
   autoScalingEnabled = signal<boolean>(false);
   minNodes = signal<number>(1);
   maxNodes = signal<number>(3);
@@ -1147,15 +1381,44 @@ export class ClusterCreationWizardComponent implements OnInit {
   readonly lockedProvider = computed<string | null>(() => {
     const control = this.controlClusterProvider();
     if (!control) return null;
-    const crossAllowed =
-      this.wizardService.getProviderDefinition(control)?.capabilities?.crossClusterAllowed ?? false;
-    return crossAllowed ? null : control;
+    const def = this.wizardService.getProviderDefinition(control);
+    // Control provider not in the provisionable set (e.g. BYOS): don't lock
+    // client-side — the backend authoritatively gates cross-provider creation.
+    if (!def) return null;
+    return def.capabilities?.crossClusterAllowed ? null : control;
   });
 
   readonly vnetRequired = computed<boolean>(() => {
     const provider = this.selectedProvider();
     if (!provider) return false;
     return this.wizardService.getProviderDefinition(provider)?.capabilities?.vnetRequired ?? false;
+  });
+
+  private readonly controlCluster = computed(() =>
+    this.clusterService.clusters().find(c => isControlClusterType(c.clusterType)) ?? null,
+  );
+
+  /** A workload on a different provider than the control reaches it over the
+   *  public interface, so Flui opens a fixed set of ports for the control's IP. */
+  readonly isCrossProviderWorkload = computed<boolean>(() => {
+    const control = this.controlClusterProvider();
+    const workload = this.selectedProvider();
+    return !!control && !!workload && control !== workload;
+  });
+
+  /** Non-editable rules Flui applies automatically for cross-provider reachability.
+   *  Display-only — the control's real source IP is resolved and enforced server-side. */
+  readonly managedFirewallRules = computed(() => {
+    if (!this.isCrossProviderWorkload()) return [];
+    return [
+      {
+        description: 'Kubernetes API — control-plane access',
+        protocol: 'TCP',
+        port: '6443',
+        direction: 'IN',
+        source: this.controlCluster()?.name ?? 'control cluster',
+      },
+    ];
   });
 
   constructor() {
@@ -1175,18 +1438,18 @@ export class ClusterCreationWizardComponent implements OnInit {
       {
         id: 'infrastructure',
         title: 'Infrastructure',
-        description: 'Configure name, provider and region',
+        description: 'Configure name and provider',
         icon: 'lucideSettings',
-        isValid: this.formValid() && !!this.selectedProvider() && !!this.selectedRegion(),
-        isCompleted: currentIndex > 0 && this.formValid() && !!this.selectedProvider() && !!this.selectedRegion(),
+        isValid: this.formValid() && !!this.selectedProvider(),
+        isCompleted: currentIndex > 0 && this.formValid() && !!this.selectedProvider(),
       },
       {
         id: 'resources',
         title: 'Resources',
-        description: 'Configure node size and scaling',
+        description: 'Choose region, node size and scaling',
         icon: 'lucideServer',
-        isValid: !!this.selectedServerTypeId(),
-        isCompleted: currentIndex > 1 && !!this.selectedServerTypeId(),
+        isValid: !!this.selectedRegion() && !!this.selectedServerTypeId(),
+        isCompleted: currentIndex > 1 && !!this.selectedRegion() && !!this.selectedServerTypeId(),
       },
       {
         id: 'ssh-keys',
@@ -1358,7 +1621,8 @@ export class ClusterCreationWizardComponent implements OnInit {
             destinationIps.join(', '),
             rule.direction === 'out' ? [Validators.required, cidrListValidator()] : []
           ],
-          originalSourceIps: [sourceIps.join(', ')], // For reset functionality
+          originalSourceIps: [sourceIps.join(', ')],
+          originalDestinationIps: [destinationIps.join(', ')],
         });
 
         rulesArray.push(ruleFormGroup);
@@ -1374,6 +1638,9 @@ export class ClusterCreationWizardComponent implements OnInit {
     this.selectedProvider.set(providerId);
     this.selectedRegion.set('');
     this.selectedServerTypeId.set('');
+    if (providerId) {
+      void this.wizardService.loadServerTypesAllRegions(providerId).catch(() => undefined);
+    }
   }
 
   onRegionSelected(regionId: string): void {
@@ -1393,8 +1660,9 @@ export class ClusterCreationWizardComponent implements OnInit {
     if (vnet) {
       this.selectedVNetId.set(vnet.id);
       this.selectedVNetData.set(vnet);
-      // Reset subnet selection when VNet changes
-      this.selectedSubnetId.set(null);
+      // Auto-select the sole subnet (e.g. a freshly-created VNet) so the step
+      // needs no extra click; otherwise require an explicit pick.
+      this.selectedSubnetId.set(vnet.subnets.length === 1 ? vnet.subnets[0].id : null);
     } else {
       this.selectedVNetId.set(null);
       this.selectedVNetData.set(null);
@@ -1404,6 +1672,87 @@ export class ClusterCreationWizardComponent implements OnInit {
 
   selectSubnet(subnetId: string): void {
     this.selectedSubnetId.set(subnetId);
+  }
+
+
+  private readonly providerVnetTopology = computed(() =>
+    this.wizardService.getProviderDefinition(this.selectedProvider())?.capabilities?.vnetTopology ?? null,
+  );
+  readonly addSubnetZones = computed(() => this.providerVnetTopology()?.zones ?? []);
+  private readonly addSubnetConstraints = computed(() => this.providerVnetTopology()?.subnetIpRange ?? null);
+
+  /** Derive a concrete subnet CIDR from the VNet range (provider drops empty ones). */
+  private deriveSubnetCidr(vnetIpRange: string): string | undefined {
+    const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/(\d{1,2})$/.exec(vnetIpRange);
+    if (!m) return undefined;
+    const vnetPrefix = Number.parseInt(m[5], 10);
+    const c = this.addSubnetConstraints();
+    let prefix = Math.max(24, vnetPrefix);
+    if (c) prefix = Math.min(Math.max(prefix, c.minPrefix), c.maxPrefix);
+    // Step the third octet by existing subnet count to avoid overlap on "add another".
+    const idx = prefix >= 24 ? (this.selectedVNetData()?.subnets.length ?? 0) : 0;
+    return `${m[1]}.${m[2]}.${idx}.0/${prefix}`;
+  }
+
+  private isValidCidr(value: string, constraints: { minPrefix: number; maxPrefix: number } | null): boolean {
+    const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/(\d{1,2})$/;
+    if (!cidrRegex.test(value)) return false;
+    const prefix = Number.parseInt(value.split('/')[1], 10);
+    if (prefix < 0 || prefix > 32) return false;
+    if (constraints && (prefix < constraints.minPrefix || prefix > constraints.maxPrefix)) return false;
+    return true;
+  }
+
+  isValidAddSubnetCidr(): boolean {
+    if (!this.addSubnetIpRange) return true; // falls back to derived default
+    return this.isValidCidr(this.addSubnetIpRange, this.addSubnetConstraints());
+  }
+
+  isAddSubnetValid(): boolean {
+    if (this.addSubnetZones().length > 0 && !this.addSubnetZone) return false;
+    return this.isValidAddSubnetCidr();
+  }
+
+  openAddSubnetForm(): void {
+    const vnet = this.selectedVNetData();
+    const zones = this.addSubnetZones();
+    this.addSubnetZone = vnet?.subnets[0]?.networkZone || zones[0]?.id || '';
+    this.addSubnetIpRange = vnet ? (this.deriveSubnetCidr(vnet.ipRange) ?? '') : '';
+    this.addSubnetError.set(null);
+    this.showAddSubnetForm.set(true);
+  }
+
+  closeAddSubnetForm(): void {
+    this.showAddSubnetForm.set(false);
+    this.addSubnetError.set(null);
+  }
+
+  async submitAddSubnet(): Promise<void> {
+    const vnet = this.selectedVNetData();
+    if (!vnet || !this.isAddSubnetValid()) return;
+    this.addingSubnet.set(true);
+    this.addSubnetError.set(null);
+    const existingIds = new Set(vnet.subnets.map(s => s.id));
+
+    const config: AddSubnetConfiguration = {
+      networkZone: this.addSubnetZone,
+      ipRange: this.addSubnetIpRange || this.deriveSubnetCidr(vnet.ipRange),
+    };
+
+    try {
+      const updated = await this.vnetService.addSubnet(vnet.id, config);
+      this.selectedVNetData.set(updated);
+      const added = updated.subnets.find(s => !existingIds.has(s.id))
+        ?? updated.subnets[updated.subnets.length - 1];
+      if (added) {
+        this.selectedSubnetId.set(added.id);
+      }
+      this.showAddSubnetForm.set(false);
+    } catch (error: any) {
+      this.addSubnetError.set(error?.error?.message || 'Failed to add subnet');
+    } finally {
+      this.addingSubnet.set(false);
+    }
   }
 
   getSubnetCardClass(subnetId: string): string {
@@ -1580,8 +1929,57 @@ export class ClusterCreationWizardComponent implements OnInit {
 
   resetRuleIPs(ruleIndex: number): void {
     const ruleControl = this.getFirewallRulesArray().at(ruleIndex);
-    const originalIPs = ruleControl.get('originalSourceIps')?.value;
-    ruleControl.patchValue({ sourceIps: originalIPs });
+    if (ruleControl.get('direction')?.value === 'out') {
+      ruleControl.patchValue({ destinationIps: ruleControl.get('originalDestinationIps')?.value });
+    } else {
+      ruleControl.patchValue({ sourceIps: ruleControl.get('originalSourceIps')?.value });
+    }
+  }
+
+  /** Append a blank, fully-editable rule the user can shape (e.g. open :6443 to a
+   *  specific IP). Defaults to an inbound TCP rule; buildFirewallRules() picks it
+   *  up like any other. */
+  addCustomRule(): void {
+    const ruleFormGroup = this.fb.group({
+      description: ['Custom rule', Validators.required],
+      direction: ['in', Validators.required],
+      protocol: ['tcp', Validators.required],
+      port: [''],
+      sourceIps: ['', [Validators.required, cidrListValidator()]],
+      destinationIps: [''],
+      originalSourceIps: [''],
+      originalDestinationIps: [''],
+      isCustom: [true],
+    });
+    this.getFirewallRulesArray().push(ruleFormGroup);
+  }
+
+  /** Only user-added custom rules can be removed; the default template rules are
+   *  protected (the backend also re-injects 80/443 if omitted). */
+  removeRule(ruleIndex: number): void {
+    const rulesArray = this.getFirewallRulesArray();
+    if (!rulesArray.at(ruleIndex)?.get('isCustom')?.value) return;
+    rulesArray.removeAt(ruleIndex);
+  }
+
+  /** Swap the required-CIDR validator between source/destination when a custom
+   *  rule flips direction, so the field the template hides never blocks submit. */
+  onCustomRuleDirectionChange(ruleIndex: number): void {
+    const ruleControl = this.getFirewallRulesArray().at(ruleIndex);
+    const sourceIps = ruleControl.get('sourceIps');
+    const destinationIps = ruleControl.get('destinationIps');
+    if (ruleControl.get('direction')?.value === 'out') {
+      sourceIps?.clearValidators();
+      sourceIps?.setValue('');
+      destinationIps?.setValidators([Validators.required, cidrListValidator()]);
+      if (!destinationIps?.value) destinationIps?.setValue('0.0.0.0/0');
+    } else {
+      destinationIps?.clearValidators();
+      destinationIps?.setValue('');
+      sourceIps?.setValidators([Validators.required, cidrListValidator()]);
+    }
+    sourceIps?.updateValueAndValidity();
+    destinationIps?.updateValueAndValidity();
   }
 
   getTotalCustomCIDRs(): number {
