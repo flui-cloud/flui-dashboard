@@ -5,7 +5,7 @@ import { InfrastructureClustersService } from '../../core/api/api/infrastructure
 import { InfrastructureOperationsService } from '../../core/api/api/infrastructureOperations.service';
 import { VirtualInstancesService } from '../../core/api/api/virtualInstances.service';
 import { ProviderManagementService } from '../../core/api/api/providerManagement.service';
-import { CreateClusterDto, UpdateClusterVNetDto, ProviderDefinitionDto, ClusterResponseDto } from '../../core/api/model/models';
+import { CreateClusterDto, UpdateClusterVNetDto, ProviderDefinitionDto, ClusterResponseDto, FirewallRuleDto } from '../../core/api/model/models';
 import {
   InstanceWithLabels,
   mapClusterNodeToInstance,
@@ -236,7 +236,7 @@ export class ClusterService {
         sshKeys: config.sshKeys,
         diskSizeGb: config.diskSizeGb,
         vnetConfig: config.vnetConfig,
-        firewallRules: config.firewallRules as Array<object> | undefined,
+        firewallRules: config.firewallRules as Array<FirewallRuleDto> | undefined,
         endpointHostnameMode: config.endpointHostnameMode,
         sharedStorageEnabled: config.sharedStorageEnabled,
         sharedStorageVolumeSizeGb: config.sharedStorageVolumeSizeGb,
