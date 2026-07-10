@@ -10,8 +10,8 @@
 import { ProviderRegionDto } from './providerRegionDto';
 import { VNetTopologyDto } from './vNetTopologyDto';
 import { ProviderFeaturesDto } from './providerFeaturesDto';
-import { ProviderFirewallDto } from './providerFirewallDto';
 import { ProviderPricingDto } from './providerPricingDto';
+import { ProviderFirewallCapabilityDto } from './providerFirewallCapabilityDto';
 
 
 export interface ProviderCapabilitiesDto { 
@@ -19,10 +19,7 @@ export interface ProviderCapabilitiesDto {
     supportedRegions: Array<ProviderRegionDto>;
     credentialType: ProviderCapabilitiesDto.CredentialTypeEnum;
     features: ProviderFeaturesDto;
-    /**
-     * How the node firewall is enforced for this provider
-     */
-    firewall: ProviderFirewallDto;
+    firewall: ProviderFirewallCapabilityDto;
     pricing: ProviderPricingDto;
     /**
      * VNet topology info — null when privateNetworking is false

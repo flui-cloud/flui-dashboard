@@ -9,10 +9,10 @@
  */
 
 
-export interface UpsertVariablesDto { 
+export interface EnsureByosVNetDto { 
     /**
-     * Key-value pairs to store
+     * CIDR of the private network the nodes share. Omit to derive it from the cluster (existing declaration, or the /24 of the master private IP).
      */
-    data: { [key: string]: string; };
+    ipRange?: string;
 }
 

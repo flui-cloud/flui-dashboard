@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { VNetConfigDto } from './vNetConfigDto';
+import { FirewallRuleDto } from './firewallRuleDto';
 
 
 export interface CreateClusterDto { 
@@ -74,7 +75,7 @@ export interface CreateClusterDto {
     /**
      * Firewall rules for the cluster (desired state). If not provided, cluster will be created with empty firewall (deny-all). Provide an array of firewall rules to define the cluster firewall protection.
      */
-    firewallRules?: Array<object>;
+    firewallRules?: Array<FirewallRuleDto>;
     /**
      * Disk size in GB for each node. Required for node types with network storage (storageType=network, e.g. Scaleway PRO2, ENT1). For local SSD types the value is ignored. Minimum recommended: 20 GB.
      */

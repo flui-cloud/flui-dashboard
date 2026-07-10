@@ -16,6 +16,10 @@ export interface CreateRestoreJobDto {
     targetKind: CreateRestoreJobDto.TargetKindEnum;
     targetSelector?: object;
     strategy?: CreateRestoreJobDto.StrategyEnum;
+    /**
+     * PG_PITR only: ISO-8601 instant to recover to; omit for latest (end of WAL).
+     */
+    recoveryTargetTime?: string;
 }
 export namespace CreateRestoreJobDto {
     export const TargetKindEnum = {
@@ -23,12 +27,14 @@ export namespace CreateRestoreJobDto {
         Namespace: 'namespace',
         Application: 'application',
         Control: 'control',
-        Observability: 'observability'
+        Observability: 'observability',
+        Database: 'database'
     } as const;
     export type TargetKindEnum = typeof TargetKindEnum[keyof typeof TargetKindEnum];
     export const StrategyEnum = {
         VeleroRebuild: 'velero_rebuild',
-        OsSnapshot: 'os_snapshot'
+        OsSnapshot: 'os_snapshot',
+        PgPitr: 'pg_pitr'
     } as const;
     export type StrategyEnum = typeof StrategyEnum[keyof typeof StrategyEnum];
 }

@@ -25,6 +25,10 @@ import { FirewallResponseDto } from '../model/firewallResponseDto';
 // @ts-ignore
 import { ImportFirewallDto } from '../model/importFirewallDto';
 // @ts-ignore
+import { ProviderFirewallDto } from '../model/providerFirewallDto';
+// @ts-ignore
+import { ProviderUpdateFirewallRulesDto } from '../model/providerUpdateFirewallRulesDto';
+// @ts-ignore
 import { ReconciliationStatusDto } from '../model/reconciliationStatusDto';
 // @ts-ignore
 import { UpdateFirewallRulesDto } from '../model/updateFirewallRulesDto';
@@ -92,6 +96,66 @@ export class FirewallsService extends BaseService {
         let localVarPath = `/api/v1/firewalls/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Enable firewall for a cluster
+     * Idempotently ensure a firewall exists for the cluster, then apply it. Seeds the default rules for the cluster type when none exists (the primary way a host-firewall / nftables cluster gets a firewall generated and applied, since there is no managed-edge resource to import). Re-applies the desired state when one already exists.
+     * @endpoint post /api/v1/firewalls/cluster/{clusterId}/enable
+     * @param clusterId Cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<FirewallResponseDto>;
+    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<FirewallResponseDto>>;
+    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<FirewallResponseDto>>;
+    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterFirewallsControllerEnableForCluster.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/firewalls/cluster/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/enable`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<FirewallResponseDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -494,66 +558,6 @@ export class FirewallsService extends BaseService {
     }
 
     /**
-     * Enable firewall for a cluster
-     * Idempotently ensure a firewall exists for the cluster, then apply it. Seeds the default rules for the cluster type when none exists.
-     * @endpoint post /api/v1/firewalls/cluster/{clusterId}/enable
-     * @param clusterId Cluster ID
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<FirewallResponseDto>;
-    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<FirewallResponseDto>>;
-    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<FirewallResponseDto>>;
-    public clusterFirewallsControllerEnableForCluster(clusterId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (clusterId === null || clusterId === undefined) {
-            throw new Error('Required parameter clusterId was null or undefined when calling clusterFirewallsControllerEnableForCluster.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (bearer) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/v1/firewalls/cluster/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/enable`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<FirewallResponseDto>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
      * Update and apply firewall rules
      * Updates the desired firewall rules and immediately applies them to the cloud provider. Changes are atomic: if provider application fails, the database is not updated.
      * @endpoint put /api/v1/firewalls/{id}/desired-rules
@@ -767,9 +771,9 @@ export class FirewallsService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public firewallsControllerGetFirewall(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<object>;
-    public firewallsControllerGetFirewall(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<object>>;
-    public firewallsControllerGetFirewall(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<object>>;
+    public firewallsControllerGetFirewall(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderFirewallDto>;
+    public firewallsControllerGetFirewall(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderFirewallDto>>;
+    public firewallsControllerGetFirewall(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderFirewallDto>>;
     public firewallsControllerGetFirewall(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling firewallsControllerGetFirewall.');
@@ -805,7 +809,7 @@ export class FirewallsService extends BaseService {
 
         let localVarPath = `/api/v1/infrastructure/firewalls/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<object>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ProviderFirewallDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -828,9 +832,9 @@ export class FirewallsService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public firewallsControllerListFirewalls(provider?: string, clusterId?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<object>>;
-    public firewallsControllerListFirewalls(provider?: string, clusterId?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<object>>>;
-    public firewallsControllerListFirewalls(provider?: string, clusterId?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<object>>>;
+    public firewallsControllerListFirewalls(provider?: string, clusterId?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ProviderFirewallDto>>;
+    public firewallsControllerListFirewalls(provider?: string, clusterId?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ProviderFirewallDto>>>;
+    public firewallsControllerListFirewalls(provider?: string, clusterId?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ProviderFirewallDto>>>;
     public firewallsControllerListFirewalls(provider?: string, clusterId?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
@@ -883,7 +887,7 @@ export class FirewallsService extends BaseService {
 
         let localVarPath = `/api/v1/infrastructure/firewalls`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Array<object>>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<ProviderFirewallDto>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 params: localVarQueryParameters.toHttpParams(),
@@ -961,20 +965,20 @@ export class FirewallsService extends BaseService {
      * Update the rules for an existing firewall. Rules must include at least SSH access (port 22) and outbound traffic to prevent lockout.
      * @endpoint patch /api/v1/infrastructure/firewalls/{id}/rules
      * @param id 
-     * @param body 
+     * @param providerUpdateFirewallRulesDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public firewallsControllerUpdateFirewallRules(id: string, body: object, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<object>;
-    public firewallsControllerUpdateFirewallRules(id: string, body: object, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<object>>;
-    public firewallsControllerUpdateFirewallRules(id: string, body: object, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<object>>;
-    public firewallsControllerUpdateFirewallRules(id: string, body: object, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public firewallsControllerUpdateFirewallRules(id: string, providerUpdateFirewallRulesDto: ProviderUpdateFirewallRulesDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderFirewallDto>;
+    public firewallsControllerUpdateFirewallRules(id: string, providerUpdateFirewallRulesDto: ProviderUpdateFirewallRulesDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderFirewallDto>>;
+    public firewallsControllerUpdateFirewallRules(id: string, providerUpdateFirewallRulesDto: ProviderUpdateFirewallRulesDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderFirewallDto>>;
+    public firewallsControllerUpdateFirewallRules(id: string, providerUpdateFirewallRulesDto: ProviderUpdateFirewallRulesDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling firewallsControllerUpdateFirewallRules.');
         }
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling firewallsControllerUpdateFirewallRules.');
+        if (providerUpdateFirewallRulesDto === null || providerUpdateFirewallRulesDto === undefined) {
+            throw new Error('Required parameter providerUpdateFirewallRulesDto was null or undefined when calling firewallsControllerUpdateFirewallRules.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -1016,10 +1020,10 @@ export class FirewallsService extends BaseService {
 
         let localVarPath = `/api/v1/infrastructure/firewalls/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/rules`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<object>('patch', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ProviderFirewallDto>('patch', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: body,
+                body: providerUpdateFirewallRulesDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

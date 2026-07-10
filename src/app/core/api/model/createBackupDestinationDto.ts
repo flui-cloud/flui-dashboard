@@ -36,7 +36,8 @@ export namespace CreateBackupDestinationDto {
     export const EncryptionModeEnum = {
         FluiManaged: 'flui_managed',
         ByoPassphrase: 'byo_passphrase',
-        None: 'none'
+        None: 'none',
+        Operator: 'operator'
     } as const;
     export type EncryptionModeEnum = typeof EncryptionModeEnum[keyof typeof EncryptionModeEnum];
 }

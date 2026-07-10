@@ -14,7 +14,7 @@ export interface UpdateAppEndpointDto {
     /**
      * Reassign to a different DNS zone, or pass null to switch to BYOD mode.
      */
-    clusterDnsZoneId?: string;
+    clusterDnsZoneId?: string | null;
     /**
      * Override the certificate provider for this endpoint. Set to LETS_ENCRYPT to promote from staging to production.
      */

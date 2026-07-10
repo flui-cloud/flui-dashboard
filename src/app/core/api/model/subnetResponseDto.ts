@@ -59,7 +59,8 @@ export namespace SubnetResponseDto {
     export const TypeEnum = {
         Cloud: 'cloud',
         Server: 'server',
-        Vswitch: 'vswitch'
+        Vswitch: 'vswitch',
+        Manual: 'manual'
     } as const;
     export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
 }

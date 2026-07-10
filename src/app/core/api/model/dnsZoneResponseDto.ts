@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { DnsZoneReplicaResponseDto } from './dnsZoneReplicaResponseDto';
 
 
 export interface DnsZoneResponseDto { 
@@ -15,6 +16,14 @@ export interface DnsZoneResponseDto {
     zoneName: string;
     dnsProvider: DnsZoneResponseDto.DnsProviderEnum;
     description?: string;
+    /**
+     * TTL applied to records Flui writes into this zone (seconds).
+     */
+    recordTtlSeconds: number;
+    /**
+     * Redundancy replicas of this zone on additional DNS providers.
+     */
+    replicas: Array<DnsZoneReplicaResponseDto>;
     createdAt: string;
     updatedAt: string;
 }

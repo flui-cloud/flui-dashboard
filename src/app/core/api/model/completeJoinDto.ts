@@ -9,10 +9,8 @@
  */
 
 
-export interface UpsertVariablesDto { 
-    /**
-     * Key-value pairs to store
-     */
-    data: { [key: string]: string; };
+export interface CompleteJoinDto { 
+    serverName?: string;
+    privateIp?: string;
 }
 

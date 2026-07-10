@@ -10,11 +10,11 @@
 import { CatalogDomainSpecDto } from './catalogDomainSpecDto';
 import { CatalogAuthSpecDto } from './catalogAuthSpecDto';
 import { CatalogDependencyDto } from './catalogDependencyDto';
+import { CatalogDefaultCredentialsDto } from './catalogDefaultCredentialsDto';
 import { CatalogEditableEnvDto } from './catalogEditableEnvDto';
 import { CatalogUserInputPromptDto } from './catalogUserInputPromptDto';
 import { CatalogOptionDto } from './catalogOptionDto';
 import { CatalogResourcesDto } from './catalogResourcesDto';
-import { CatalogDefaultCredentialsDto } from './catalogDefaultCredentialsDto';
 
 
 export interface CatalogDetailResponseDto { 

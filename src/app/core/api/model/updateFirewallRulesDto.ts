@@ -7,12 +7,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { FirewallRuleDto } from './firewallRuleDto';
 
 
 export interface UpdateFirewallRulesDto { 
     /**
      * Complete desired firewall rules (full replacement)
      */
-    desiredRules: Array<object>;
+    desiredRules: Array<FirewallRuleDto>;
 }
 

@@ -29,6 +29,10 @@ export interface VNetTopologyDto {
      */
     subnetPerZone: boolean;
     /**
+     * Whether all VNets share one address space (a VPC) so ranges across different VNets must not overlap (Scaleway=true). Isolated-network providers (Hetzner) may reuse ranges across VNets → false/omitted.
+     */
+    sharedAddressSpace?: boolean;
+    /**
      * Whether the provider supports explicit routing tables on VNets
      */
     supportsRoutes: boolean;

@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { FirewallRuleDto } from './firewallRuleDto';
 import { FirewallClusterInfoDto } from './firewallClusterInfoDto';
 
 
@@ -26,11 +27,11 @@ export interface FirewallResponseDto {
     /**
      * Desired firewall rules
      */
-    desiredRules: Array<object>;
+    desiredRules: Array<FirewallRuleDto>;
     /**
      * Last successfully applied rules
      */
-    lastAppliedRules?: Array<object>;
+    lastAppliedRules?: Array<FirewallRuleDto>;
     /**
      * Canonical hash of desired rules
      */

@@ -14,6 +14,7 @@ export interface CreateBackupPolicyDto {
     name: string;
     clusterId: string;
     scope: CreateBackupPolicyDto.ScopeEnum;
+    engineClass?: CreateBackupPolicyDto.EngineClassEnum;
     scopeSelector?: object;
     includePvcs?: boolean;
     includeEtcdL1?: boolean;
@@ -31,6 +32,12 @@ export namespace CreateBackupPolicyDto {
         LabelSelector: 'label_selector'
     } as const;
     export type ScopeEnum = typeof ScopeEnum[keyof typeof ScopeEnum];
+    export const EngineClassEnum = {
+        Volume: 'volume',
+        Database: 'database',
+        Platform: 'platform'
+    } as const;
+    export type EngineClassEnum = typeof EngineClassEnum[keyof typeof EngineClassEnum];
     export const ProfileEnum = {
         Single: 'single',
         Mirrored: 'mirrored',

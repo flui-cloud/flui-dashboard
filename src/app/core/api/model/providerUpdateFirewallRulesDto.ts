@@ -7,12 +7,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { FirewallRuleDto } from './firewallRuleDto';
 
 
-export interface UpsertVariablesDto { 
+export interface ProviderUpdateFirewallRulesDto { 
     /**
-     * Key-value pairs to store
+     * Provider firewall ID to update.
      */
-    data: { [key: string]: string; };
+    firewallId: string;
+    rules: Array<FirewallRuleDto>;
 }
 

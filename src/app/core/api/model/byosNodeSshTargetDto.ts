@@ -9,10 +9,12 @@
  */
 
 
-export interface UpsertVariablesDto { 
+export interface ByosNodeSshTargetDto { 
     /**
-     * Key-value pairs to store
+     * SSH host for this node (the operator-reachable address). Omit to use the node IP.
      */
-    data: { [key: string]: string; };
+    host?: string;
+    port?: number;
+    user?: string;
 }
 

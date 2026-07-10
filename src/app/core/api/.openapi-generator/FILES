@@ -6,6 +6,7 @@ api/accessManagement.service.ts
 api/api.ts
 api/appBuilds.service.ts
 api/appEndpoints.service.ts
+api/appMigration.service.ts
 api/applicationLogs.service.ts
 api/applicationManagement.service.ts
 api/applicationMetrics.service.ts
@@ -25,12 +26,17 @@ api/clusterHealth.service.ts
 api/clusterMetricsLogs.service.ts
 api/controlCluster.service.ts
 api/credentials.service.ts
+api/dBLifecycle.service.ts
+api/dNSZoneReplicas.service.ts
 api/dNSZones.service.ts
+api/databaseConsole.service.ts
 api/dbBackup.service.ts
 api/dbConsole.service.ts
 api/dbDisk.service.ts
+api/demo.service.ts
 api/documentConsole.service.ts
 api/firewalls.service.ts
+api/fullMigration.service.ts
 api/fulltextConsole.service.ts
 api/gitHubOAuth.service.ts
 api/gitHubSetup.service.ts
@@ -147,6 +153,7 @@ model/buildPodInfoDto.ts
 model/buildResourceCheckDto.ts
 model/buildResourcesResponseDto.ts
 model/buildScoresDto.ts
+model/byosNodeSshTargetDto.ts
 model/cAControllerGenerateTestCertificate200Response.ts
 model/cAControllerGetEnrollmentScript200Response.ts
 model/cAPublicKeyDto.ts
@@ -162,6 +169,7 @@ model/catalogAuthSpecDto.ts
 model/catalogCapacityPreviewDto.ts
 model/catalogClientResponseDto.ts
 model/catalogClusterCapabilitiesDto.ts
+model/catalogDefaultCredentialsDto.ts
 model/catalogDependencyDto.ts
 model/catalogDetailResponseDto.ts
 model/catalogDomainSpecDto.ts
@@ -209,6 +217,7 @@ model/clustersControllerDeleteCluster202Response.ts
 model/clustersControllerGetKubeconfig200Response.ts
 model/clustersControllerRefreshGrafanaDatasources200Response.ts
 model/clustersControllerUpdateNodeMetadata200Response.ts
+model/completeJoinDto.ts
 model/configureAuthModeDto.ts
 model/configureAuthModeResultDto.ts
 model/configureIssuerDto.ts
@@ -230,6 +239,7 @@ model/createApiKeyDto.ts
 model/createApiKeyResultDto.ts
 model/createApiTokenDto.ts
 model/createAppEndpointDto.ts
+model/createAppMigrationDto.ts
 model/createApplicationDto.ts
 model/createApplicationResponseDto.ts
 model/createBackupDestinationDto.ts
@@ -238,7 +248,9 @@ model/createBackupPolicyDto.ts
 model/createBearerTokenDto.ts
 model/createClusterDto.ts
 model/createClusterResponseDto.ts
+model/createDbMigrationDto.ts
 model/createDnsZoneDto.ts
+model/createFullMigrationDto.ts
 model/createIdentityUserDto.ts
 model/createInferenceConnectionDto.ts
 model/createRestoreJobDto.ts
@@ -250,6 +262,7 @@ model/createVNetDto.ts
 model/createVNetRouteDto.ts
 model/createVNetSubnetDto.ts
 model/createdIdentityUserDto.ts
+model/dbPitrRestoreDto.ts
 model/deleteApplicationResponseDto.ts
 model/deleteServerResponseDto.ts
 model/dependencyChoiceDto.ts
@@ -268,11 +281,13 @@ model/distributionNodeDto.ts
 model/distributionTotalsDto.ts
 model/dnsLookupResponseDto.ts
 model/dnsZoneDelegationDto.ts
+model/dnsZoneReplicaResponseDto.ts
 model/dnsZoneResponseDto.ts
 model/dockerHubSearchResultDto.ts
 model/dockerHubTagDto.ts
 model/dockerfileAnalysisDto.ts
 model/enableProviderDto.ts
+model/ensureByosVNetDto.ts
 model/envVarCandidateDto.ts
 model/envVarDetectionResultDto.ts
 model/envVarDto.ts
@@ -285,6 +300,7 @@ model/firewallClusterInfoDto.ts
 model/firewallNodeInfoDto.ts
 model/firewallReconciliationDetail.ts
 model/firewallResponseDto.ts
+model/firewallRuleDto.ts
 model/firewallRuleResponseDto.ts
 model/fulltextAssistDto.ts
 model/fulltextRawDto.ts
@@ -320,6 +336,8 @@ model/inviteLinkResultDto.ts
 model/ipAddressConfigDto.ts
 model/ipConfigurationDto.ts
 model/ipRangeConstraintsDto.ts
+model/issueJoinTokenDto.ts
+model/issuedJoinTokenResponseDto.ts
 model/kafkaAssistDto.ts
 model/kafkaRunDto.ts
 model/labelDto.ts
@@ -371,10 +389,13 @@ model/providerCredentialsDto.ts
 model/providerDefinitionDto.ts
 model/providerErrorDto.ts
 model/providerFeaturesDto.ts
+model/providerFirewallCapabilityDto.ts
+model/providerFirewallDto.ts
 model/providerFirewallResponseDto.ts
 model/providerPricingDto.ts
 model/providerRefreshTokenDto.ts
 model/providerRegionDto.ts
+model/providerUpdateFirewallRulesDto.ts
 model/publicRepoBranchDto.ts
 model/publicRepoSearchResultDto.ts
 model/publicRepositoryAnalyzeDto.ts
@@ -394,10 +415,12 @@ model/redeployPlatformComponentResponseDto.ts
 model/refreshCacheBreakdownResponseDto.ts
 model/refreshResponseDto.ts
 model/refreshTokenDto.ts
+model/registerByosNodeDto.ts
 model/registerCADto.ts
 model/registerCAResponseDto.ts
 model/registerClusterDto.ts
 model/registerClusterResponseDto.ts
+model/registerDnsReplicaDto.ts
 model/registerDto.ts
 model/registerResponseDto.ts
 model/removeWorkerResponseDto.ts
@@ -409,8 +432,11 @@ model/replicaMetricsDto.ts
 model/replicaNetworkMetricsDto.ts
 model/replicaStatusDto.ts
 model/replicaStatusMetricsDto.ts
+model/replicateDto.ts
 model/repositoryAnalysisDto.ts
 model/repositoryFrameworkInfoDto.ts
+model/repositoryManifestEntryDto.ts
+model/repositoryManifestsDto.ts
 model/resetPasswordDto.ts
 model/resetPasswordResultDto.ts
 model/resourceAmountDto.ts
@@ -446,6 +472,7 @@ model/serverMetricsDto.ts
 model/serverMetricsHistoryDto.ts
 model/serverResponseDto.ts
 model/serverTypePricingDto.ts
+model/setPlatformConfigDto.ts
 model/singleAppMetricsHistoryResponseDto.ts
 model/singleAppMetricsResponseDto.ts
 model/subnetListResponseDto.ts

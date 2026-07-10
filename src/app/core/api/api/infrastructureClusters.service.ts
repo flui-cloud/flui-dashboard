@@ -47,11 +47,21 @@ import { ClustersControllerRefreshGrafanaDatasources200Response } from '../model
 // @ts-ignore
 import { ClustersControllerUpdateNodeMetadata200Response } from '../model/clustersControllerUpdateNodeMetadata200Response';
 // @ts-ignore
+import { CompleteJoinDto } from '../model/completeJoinDto';
+// @ts-ignore
 import { CreateClusterDto } from '../model/createClusterDto';
 // @ts-ignore
 import { CreateClusterResponseDto } from '../model/createClusterResponseDto';
 // @ts-ignore
+import { EnsureByosVNetDto } from '../model/ensureByosVNetDto';
+// @ts-ignore
 import { ExpandSharedVolumeDto } from '../model/expandSharedVolumeDto';
+// @ts-ignore
+import { IssueJoinTokenDto } from '../model/issueJoinTokenDto';
+// @ts-ignore
+import { IssuedJoinTokenResponseDto } from '../model/issuedJoinTokenResponseDto';
+// @ts-ignore
+import { ProviderFirewallDto } from '../model/providerFirewallDto';
 // @ts-ignore
 import { ReconcileFirewallsDto } from '../model/reconcileFirewallsDto';
 // @ts-ignore
@@ -64,6 +74,8 @@ import { ReconcileStatusResponseDto } from '../model/reconcileStatusResponseDto'
 import { ReconcileTagsDto } from '../model/reconcileTagsDto';
 // @ts-ignore
 import { ReconcileTagsResponseDto } from '../model/reconcileTagsResponseDto';
+// @ts-ignore
+import { RegisterByosNodeDto } from '../model/registerByosNodeDto';
 // @ts-ignore
 import { RegisterClusterDto } from '../model/registerClusterDto';
 // @ts-ignore
@@ -348,6 +360,83 @@ export class InfrastructureClustersService extends BaseService {
     }
 
     /**
+     * Register a node that joined via a join token (called by the script)
+     * Token-authenticated callback the join script makes after the host joins. Records the node so the dashboard lists it and the firewall can enforce on it.
+     * @endpoint post /api/v1/infrastructure/clusters/{id}/join/{token}/complete
+     * @param id Cluster ID
+     * @param token Join token
+     * @param completeJoinDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clustersControllerCompleteJoin(id: string, token: string, completeJoinDto: CompleteJoinDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public clustersControllerCompleteJoin(id: string, token: string, completeJoinDto: CompleteJoinDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public clustersControllerCompleteJoin(id: string, token: string, completeJoinDto: CompleteJoinDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public clustersControllerCompleteJoin(id: string, token: string, completeJoinDto: CompleteJoinDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling clustersControllerCompleteJoin.');
+        }
+        if (token === null || token === undefined) {
+            throw new Error('Required parameter token was null or undefined when calling clustersControllerCompleteJoin.');
+        }
+        if (completeJoinDto === null || completeJoinDto === undefined) {
+            throw new Error('Required parameter completeJoinDto was null or undefined when calling clustersControllerCompleteJoin.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/join/${this.configuration.encodeParam({name: "token", value: token, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/complete`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: completeJoinDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Create a new K3s cluster
      * Initiates K3s cluster creation via async queue. Returns operation ID for tracking progress.
      * @endpoint post /api/v1/infrastructure/clusters
@@ -543,6 +632,76 @@ export class InfrastructureClustersService extends BaseService {
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Register/ensure the private network (VNet) of a BYOS cluster
+     * Registers the operator-wired private network as a first-class VNet (no provisioning — register + validate), points the cluster at it (metadata.vnetConfig) and attaches every node whose private IP belongs to the CIDR. Idempotent; also backfills clusters created before VNets existed. Body.ipRange is optional (derived from the cluster when omitted). 400 if the cluster is not BYOS.
+     * @endpoint post /api/v1/infrastructure/clusters/{id}/byos-vnet
+     * @param id Cluster ID
+     * @param ensureByosVNetDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clustersControllerEnsureByosVNet(id: string, ensureByosVNetDto?: EnsureByosVNetDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public clustersControllerEnsureByosVNet(id: string, ensureByosVNetDto?: EnsureByosVNetDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public clustersControllerEnsureByosVNet(id: string, ensureByosVNetDto?: EnsureByosVNetDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public clustersControllerEnsureByosVNet(id: string, ensureByosVNetDto?: EnsureByosVNetDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling clustersControllerEnsureByosVNet.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/byos-vnet`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: ensureByosVNetDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -1004,9 +1163,9 @@ export class InfrastructureClustersService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public clustersControllerGetClusterFirewall(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<object>;
-    public clustersControllerGetClusterFirewall(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<object>>;
-    public clustersControllerGetClusterFirewall(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<object>>;
+    public clustersControllerGetClusterFirewall(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderFirewallDto>;
+    public clustersControllerGetClusterFirewall(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderFirewallDto>>;
+    public clustersControllerGetClusterFirewall(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderFirewallDto>>;
     public clustersControllerGetClusterFirewall(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling clustersControllerGetClusterFirewall.');
@@ -1042,7 +1201,7 @@ export class InfrastructureClustersService extends BaseService {
 
         let localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/firewall`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<object>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ProviderFirewallDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -1175,6 +1334,69 @@ export class InfrastructureClustersService extends BaseService {
     }
 
     /**
+     * Fetch the host-pull join script for a join token (single-use)
+     * Returns the bash script the new host runs. Authenticated by the token in the path (no bearer). Consumes the token. Intended for &#x60;curl … | sudo bash&#x60;.
+     * @endpoint get /api/v1/infrastructure/clusters/{id}/join/{token}
+     * @param id Cluster ID
+     * @param token Join token
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clustersControllerGetJoinScript(id: string, token: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public clustersControllerGetJoinScript(id: string, token: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public clustersControllerGetJoinScript(id: string, token: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public clustersControllerGetJoinScript(id: string, token: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling clustersControllerGetJoinScript.');
+        }
+        if (token === null || token === undefined) {
+            throw new Error('Required parameter token was null or undefined when calling clustersControllerGetJoinScript.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/join/${this.configuration.encodeParam({name: "token", value: token, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Download cluster kubeconfig
      * Returns the kubeconfig YAML for accessing the K3s cluster with kubectl
      * @endpoint get /api/v1/infrastructure/clusters/{id}/kubeconfig
@@ -1224,6 +1446,77 @@ export class InfrastructureClustersService extends BaseService {
         return this.httpClient.request<ClustersControllerGetKubeconfig200Response>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Issue a short-lived worker join token for a BYOS cluster
+     * Returns an opaque single-use token (~30 min) + a one-liner to run on the new host. The host fetches the join material over TLS, runs the worker bootstrap, self-applies the firewall and registers itself — no SSH key leaves the operator. Also pre-authorises the host firewall so the new node can reach the master.
+     * @endpoint post /api/v1/infrastructure/clusters/{id}/join-tokens
+     * @param id Cluster ID (BYOS)
+     * @param issueJoinTokenDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clustersControllerIssueJoinToken(id: string, issueJoinTokenDto?: IssueJoinTokenDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<IssuedJoinTokenResponseDto>;
+    public clustersControllerIssueJoinToken(id: string, issueJoinTokenDto?: IssueJoinTokenDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<IssuedJoinTokenResponseDto>>;
+    public clustersControllerIssueJoinToken(id: string, issueJoinTokenDto?: IssueJoinTokenDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<IssuedJoinTokenResponseDto>>;
+    public clustersControllerIssueJoinToken(id: string, issueJoinTokenDto?: IssueJoinTokenDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling clustersControllerIssueJoinToken.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/join-tokens`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<IssuedJoinTokenResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: issueJoinTokenDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -1677,6 +1970,79 @@ export class InfrastructureClustersService extends BaseService {
         return this.httpClient.request<ClustersControllerRefreshGrafanaDatasources200Response>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Register a node joined to a BYOS cluster out-of-band
+     * Records a node that the operator joined via &#x60;flui node connect&#x60; (the worker bootstrap runs over the operator SSH key — the in-cluster API cannot reach a host that does not yet trust the Flui CA, so the join is operator-driven). No provisioning happens. Idempotent per (cluster, serverName). Returns the node. 400 if the cluster is not BYOS (use POST /workers for provisioned providers).
+     * @endpoint post /api/v1/infrastructure/clusters/{id}/byos-nodes
+     * @param id Cluster ID
+     * @param registerByosNodeDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clustersControllerRegisterByosNode(id: string, registerByosNodeDto: RegisterByosNodeDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public clustersControllerRegisterByosNode(id: string, registerByosNodeDto: RegisterByosNodeDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public clustersControllerRegisterByosNode(id: string, registerByosNodeDto: RegisterByosNodeDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public clustersControllerRegisterByosNode(id: string, registerByosNodeDto: RegisterByosNodeDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling clustersControllerRegisterByosNode.');
+        }
+        if (registerByosNodeDto === null || registerByosNodeDto === undefined) {
+            throw new Error('Required parameter registerByosNodeDto was null or undefined when calling clustersControllerRegisterByosNode.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/byos-nodes`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: registerByosNodeDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -2303,49 +2669,6 @@ export class InfrastructureClustersService extends BaseService {
                 observe: observe,
                 ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
                 reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Issue a BYOS worker join token. Hand-added; a future api:generate from the
-     * backend swagger reproduces the same operationId.
-     */
-    public clustersControllerIssueJoinToken(id: string, body: { masterIp?: string; nodeNetwork?: string }): Observable<any> {
-        let localVarHeaders = this.defaultHeaders;
-        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
-        localVarHeaders = localVarHeaders.set('Accept', 'application/json');
-        localVarHeaders = localVarHeaders.set('Content-Type', 'application/json');
-        const localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/join-tokens`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
-            {
-                body: body,
-                headers: localVarHeaders,
-                observe: 'body',
-                ...(withCredentials ? { withCredentials } : {}),
-            }
-        );
-    }
-
-    /**
-     * Register/ensure the private network (VNet) of a BYOS cluster.
-     * @param id Cluster ID
-     * @param body Optional ipRange (derived from the cluster when omitted)
-     */
-    public clustersControllerEnsureByosVNet(id: string, body: { ipRange?: string } = {}): Observable<any> {
-        let localVarHeaders = this.defaultHeaders;
-        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
-        localVarHeaders = localVarHeaders.set('Accept', 'application/json');
-        localVarHeaders = localVarHeaders.set('Content-Type', 'application/json');
-        const localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/byos-vnet`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
-            {
-                body: body,
-                headers: localVarHeaders,
-                observe: 'body',
-                ...(withCredentials ? { withCredentials } : {}),
             }
         );
     }
