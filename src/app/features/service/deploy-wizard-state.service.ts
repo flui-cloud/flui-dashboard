@@ -7,8 +7,7 @@ import { TemplateResponseDto } from '../../core/api/model/templateResponseDto';
 import { CreateApplicationDto } from '../../core/api/model/createApplicationDto';
 import { ApplicationsService } from '../../core/api/api/applications.service';
 import { ApplicationService, GenerateWorkflowParams } from './application.service';
-import { AppVariablesService } from './app-variables.service';
-import { RepositoryService } from './repository.service';
+import { RepositoryService, RepositoryFluiManifest } from './repository.service';
 import { TemplateService } from './template.service';
 import { CatalogService } from './catalog.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -82,7 +81,7 @@ export interface GhaRuntimeConfig {
 
 export type FlowSubtype = 'image' | 'template' | 'existing-repo' | 'marketplace' | null;
 
-export type DefaultsSource = 'template' | 'dockerfile-analysis' | 'manual';
+export type DefaultsSource = 'template' | 'manifest' | 'dockerfile-analysis' | 'manual';
 
 export type TemplateOrchestrationPhase =
   | 'idle'
@@ -122,7 +121,6 @@ const DOTNET_FRAMEWORKS = new Set(['aspnet-core', 'aspnetcore']);
 export class DeployWizardStateService {
   private readonly applicationsApi = inject(ApplicationsService);
   private readonly appService = inject(ApplicationService);
-  private readonly appVariablesService = inject(AppVariablesService);
   private readonly repositoryService = inject(RepositoryService);
   private readonly templateService = inject(TemplateService);
   private readonly catalogService = inject(CatalogService);
@@ -143,7 +141,9 @@ export class DeployWizardStateService {
 
   // ========== Flow C (existing repo) state ==========
   readonly repositoryId = signal<string>('');
+  readonly repoFullName = signal<string>('');
   readonly branch = signal<string>('');
+  readonly manifestResult = signal<RepositoryFluiManifest | null>(null);
   readonly analysisResult = signal<RepositoryAnalysisDto | null>(null);
   readonly dockerfileAnalysis = signal<DockerfileAnalysisDto | null>(null);
   readonly confirmedFramework = signal<string>('');
@@ -445,6 +445,7 @@ export class DeployWizardStateService {
 
   readonly defaultsSource = computed<DefaultsSource>(() => {
     if (this.flowSubtype() === 'template' && this.selectedTemplate()) return 'template';
+    if (this.manifestResult()?.valid) return 'manifest';
     if (this.dockerfileAnalysis()?.port) return 'dockerfile-analysis';
     return 'manual';
   });
@@ -516,6 +517,47 @@ export class DeployWizardStateService {
   }
 
   /**
+   * Initialize from a repository flui.yaml manifest (Flow C, manifest-first).
+   * The manifest IS the source of truth for port/healthcheck/resources/scaling —
+   * mirror of the CLI `flui deploy` flow. No framework detection, no Dockerfile
+   * analysis: the Dockerfile is just the build recipe referenced by the manifest.
+   */
+  initializeFromManifest(
+    repositoryId: string,
+    repoFullName: string,
+    branch: string,
+    manifest: RepositoryFluiManifest,
+    clusterId: string,
+  ): void {
+    this.flowSubtype.set('existing-repo');
+    this.sourceType.set('git_build');
+    this.repositoryId.set(repositoryId);
+    this.repoFullName.set(repoFullName);
+    this.branch.set(branch);
+    this.manifestResult.set(manifest);
+    this.clusterId.set(clusterId);
+
+    const spec = manifest.manifest;
+    if (!spec) return;
+
+    this.deployConfig.set({
+      port: spec.deploy.port,
+      healthcheckPath: spec.deploy.healthcheck?.path ?? '/health',
+      resourceProfile: spec.deploy.resources?.profile ?? 'small',
+      minReplicas: spec.deploy.scaling?.min ?? 1,
+      maxReplicas: spec.deploy.scaling?.max ?? 1,
+    });
+
+    if (spec.deploy.exposure) {
+      this.exposureMode.set(
+        spec.deploy.exposure === 'internal'
+          ? CreateApplicationDto.ExposureEnum.Internal
+          : CreateApplicationDto.ExposureEnum.Public,
+      );
+    }
+  }
+
+  /**
    * Initialize from a Flui template (Flow B). The template IS the source of truth
    * for port/healthcheck/resources/runtime. Template repos always ship with a
    * Flui-managed Dockerfile so isFluiManaged is always true for this flow.
@@ -558,7 +600,9 @@ export class DeployWizardStateService {
     this.importedRepositoryId.set(null);
 
     this.repositoryId.set('');
+    this.repoFullName.set('');
     this.branch.set('');
+    this.manifestResult.set(null);
     this.analysisResult.set(null);
     this.dockerfileAnalysis.set(null);
     this.confirmedFramework.set('');
@@ -1071,13 +1115,16 @@ export class DeployWizardStateService {
   // ========== Orchestration - Flow C (existing repo) ==========
 
   /**
-   * Create a git_build application for an existing repository and generate the
-   * V3 workflow. Passes dockerfileAnalysis.isFluiManaged to the backend so it
-   * knows whether to trust the repo Dockerfile as-is.
+   * Deploy an existing repository from its flui.yaml manifest (manifest-first,
+   * same pipeline as `flui deploy`): the raw manifest is submitted to
+   * applications/deploy-from-yaml, which creates/updates the app, commits the
+   * V3 workflow and triggers the build. Env vars edited in the wizard are sent
+   * as envOverrides on top of the manifest's deploy.env.
    */
   async orchestrateExistingRepoFlow(): Promise<string | null> {
-    if (!this.repositoryId() || !this.clusterId()) {
-      this.orchestrationError.set('Missing repository or cluster');
+    const manifest = this.manifestResult();
+    if (!this.repositoryId() || !this.clusterId() || !this.repoFullName() || !manifest?.content || !manifest.valid) {
+      this.orchestrationError.set('Missing repository, cluster or flui.yaml manifest');
       this.orchestrationPhase.set('error');
       return null;
     }
@@ -1086,67 +1133,24 @@ export class DeployWizardStateService {
     this.orchestrationPhase.set('creating-app');
 
     try {
-      let appId = this.applicationId();
-
-      if (!appId) {
-        const config = this.deployConfig();
-        const envVars = this.envVars();
-        const response = await firstValueFrom(
-          this.applicationsApi.applicationsControllerCreate(this.clusterId(), {
-            name: `${this.confirmedFramework() || 'app'}-${this.branch()}`.toLowerCase().replaceAll(/[^a-z0-9-]/g, '-'),
-            category: CreateApplicationDto.CategoryEnum.User,
-            sourceType: CreateApplicationDto.SourceTypeEnum.GitBuild,
-            sourceConfig: {
-              type: 'git_build',
-              repositoryId: this.repositoryId(),
-              branch: this.branch(),
-              framework: this.confirmedFramework(),
-            },
-            port: config.port,
-            replicas: config.minReplicas,
-            resourceProfile: config.resourceProfile as CreateApplicationDto.ResourceProfileEnum,
-            exposure: this.exposureMode(),
-            env: envVars
-              .filter(v => v.key && v.value)
-              .map(v => ({ name: v.key, value: v.value, secret: v.isSecret })),
-            healthProbe: {
-              type: 'http',
-              httpPath: config.healthcheckPath,
-              httpPort: config.port,
-            },
-            autoDeploy: false,
-          } as any)
-        );
-        appId = response.application.id;
-        this.applicationId.set(appId);
+      const envOverrides: Record<string, string> = {};
+      for (const v of this.envVars()) {
+        if (v.key && v.value !== '') envOverrides[v.key] = v.value;
       }
 
-      const envVars = this.envVars();
-      if (envVars.length > 0) {
-        const plain: Record<string, string> = {};
-        const sensitive: Record<string, string> = {};
-        for (const v of envVars) {
-          if (v.value !== '') {
-            if (v.isSecret) sensitive[v.key] = v.value;
-            else plain[v.key] = v.value;
-          }
-        }
-        if (Object.keys(plain).length > 0) {
-          await this.appVariablesService.upsertPlain(appId, plain);
-        }
-        if (Object.keys(sensitive).length > 0) {
-          await this.appVariablesService.upsertSensitive(appId, sensitive);
-        }
-      }
+      const response = await firstValueFrom(
+        this.applicationsApi.applicationsControllerDeployFromYaml({
+          yaml: manifest.content,
+          clusterId: this.clusterId(),
+          repoFullName: this.repoFullName(),
+          branch: this.branch() || undefined,
+          envOverrides: Object.keys(envOverrides).length > 0 ? envOverrides : undefined,
+        })
+      );
 
-      this.orchestrationPhase.set('generating-workflow');
-      await this.appService.generateWorkflowV3(appId, {
-        branch: this.branch(),
-        isFluiManaged: this.isFluiManaged(),
-      });
-
+      this.applicationId.set(response.applicationId);
       this.orchestrationPhase.set('done');
-      return appId;
+      return response.applicationId;
     } catch (e: any) {
       this.orchestrationPhase.set('error');
       const msg = internalHostingErrorMessage(e) || e?.error?.message || e?.message || 'Failed to deploy';

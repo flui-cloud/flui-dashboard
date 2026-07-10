@@ -12,6 +12,87 @@ import { PublicRepoSearchResultDto } from '../../core/api/model/publicRepoSearch
 import { RepositoryAnalysisDto } from '../../core/api/model/repositoryAnalysisDto';
 import { ExtractedEnvVarDto } from '../../core/api/model/extractedEnvVarDto';
 
+export interface ManifestEnvVar {
+  name: string;
+  value?: string;
+  valueFrom?: {
+    generate?: 'secret';
+    length?: number;
+    format?: string;
+    secretRef?: string;
+    userInput?: {
+      label?: string;
+      default?: string;
+      sensitive?: boolean;
+      placeholder?: string;
+      format?: 'email' | 'url' | 'password' | 'text';
+    };
+  };
+  userEditable?: boolean;
+  description?: string;
+}
+
+export interface ApplicationManifest {
+  kind: 'Application';
+  // Canonical flui.cloud/v1beta1; flui/v1 accepted as a legacy alias.
+  apiVersion: 'flui.cloud/v1beta1' | 'flui/v1';
+  metadata: { name: string };
+  build?: {
+    strategy?: 'dockerfile' | 'auto';
+    dockerfile?: string;
+    context?: string;
+  };
+  deploy: {
+    port: number;
+    exposure?: 'public' | 'internal';
+    healthcheck?: { path: string; port?: number };
+    resources?: {
+      profile?: 'nano' | 'small' | 'medium' | 'large' | 'xlarge';
+      requests?: { cpu?: string; memory?: string };
+      limits?: { cpu?: string; memory?: string };
+    };
+    scaling?: { min?: number; max?: number };
+    domain?: {
+      auto?: boolean;
+      tls?: boolean;
+      fqdn?: string;
+      hostnameMode?: 'ip' | 'domain';
+      userCustomizable?: boolean;
+    };
+    env?: ManifestEnvVar[];
+    volumes?: { name: string; mountPath: string; size?: string }[];
+    startCommand?: string;
+  };
+}
+
+export interface RepositoryFluiManifest {
+  present: boolean;
+  branch: string;
+  /** Manifest path relative to the repo root (monorepo: e.g. api/flui.yaml). */
+  path?: string;
+  content?: string;
+  valid?: boolean;
+  validationError?: string;
+  manifest?: ApplicationManifest;
+}
+
+/** One flui.yaml discovered in the repository (root or subdirectory). */
+export interface RepositoryManifestEntry {
+  path: string;
+  valid: boolean;
+  kind?: string;
+  name?: string;
+  port?: number;
+  validationError?: string;
+  content: string;
+  manifest?: ApplicationManifest;
+}
+
+export interface RepositoryFluiManifests {
+  branch: string;
+  manifests: RepositoryManifestEntry[];
+}
+
 interface ImportedRepositoryDto {
   id: string;
   repositoryName: string;
@@ -411,6 +492,25 @@ export class RepositoryService {
     } catch (error: any) {
       const errorMessage = error?.error?.message || error?.message || 'Failed to check Dockerfile presence';
       console.error('Failed to check Dockerfile:', error);
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Discover flui.yaml manifests in the repository — root and subdirectories
+   * (monorepo: one manifest per deployable). Manifest-first flow.
+   * The generated `manifest` field is typed `object`; we cast the entries to
+   * the richer ApplicationManifest shape the wizard consumes.
+   */
+  async getFluiManifests(repositoryId: string, branch?: string): Promise<RepositoryFluiManifests> {
+    try {
+      const result = await firstValueFrom(
+        this.repositoriesApi.repositoriesControllerGetManifests(repositoryId, branch)
+      );
+      return result as unknown as RepositoryFluiManifests;
+    } catch (error: any) {
+      const errorMessage = error?.error?.message || error?.message || 'Failed to read flui.yaml manifests';
+      console.error('Failed to read flui.yaml manifests:', error);
       throw new Error(errorMessage);
     }
   }
