@@ -55,14 +55,13 @@ export class ClusterVariablesService {
     namespace: string,
     name: string,
     data: Record<string, string>,
-    type: 'plain' | 'sensitive',
-    deleteKeys: string[] = []
+    type: 'plain' | 'sensitive'
   ): Promise<AppVariablesResponseDto | null> {
     this.savingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.variablesControllerUpsertClusterVariables(clusterId, namespace, name, { data, deleteKeys }, type)
+        this.api.variablesControllerUpsertClusterVariables(clusterId, namespace, name, { data }, type)
       );
       this.selectedSetData.set(result ?? null);
       await this.loadSets(clusterId, namespace);

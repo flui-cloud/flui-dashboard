@@ -200,6 +200,6 @@ export class ClusterVariablesTabComponent implements OnInit {
   ): Promise<void> {
     const id = this.clusterId();
     if (!id) return;
-    await this.variablesService.upsertSet(id, this.namespace, set.name, payload.data, type, payload.deleteKeys);
+    await this.variablesService.upsertSet(id, this.namespace, set.name, payload.data, type);
   }
 }

@@ -128,14 +128,14 @@ export class AppConfigurationTabComponent implements OnInit {
   protected async onSavePlain(payload: VariablesSavePayload): Promise<void> {
     const app = this.app();
     if (app?.id) {
-      await this.variablesService.upsertPlain(app.id, payload.data, payload.deleteKeys);
+      await this.variablesService.upsertPlain(app.id, payload.data);
     }
   }
 
   protected async onSaveSensitive(payload: VariablesSavePayload): Promise<void> {
     const app = this.app();
     if (app?.id) {
-      await this.variablesService.upsertSensitive(app.id, payload.data, payload.deleteKeys);
+      await this.variablesService.upsertSensitive(app.id, payload.data);
     }
   }
 }

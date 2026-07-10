@@ -52,12 +52,12 @@ export class AppVariablesService {
     }
   }
 
-  async upsertPlain(appId: string, data: Record<string, string>, deleteKeys: string[] = []): Promise<AppVariablesCombinedResponseDto | null> {
+  async upsertPlain(appId: string, data: Record<string, string>): Promise<AppVariablesCombinedResponseDto | null> {
     this.savingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.variablesControllerUpsertAppVariables(appId, { data, deleteKeys }, 'plain')
+        this.api.variablesControllerUpsertAppVariables(appId, { data }, 'plain')
       );
       this.combinedData.set(result ?? null);
       return result ?? null;
@@ -69,12 +69,12 @@ export class AppVariablesService {
     }
   }
 
-  async upsertSensitive(appId: string, data: Record<string, string>, deleteKeys: string[] = []): Promise<AppVariablesCombinedResponseDto | null> {
+  async upsertSensitive(appId: string, data: Record<string, string>): Promise<AppVariablesCombinedResponseDto | null> {
     this.savingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.variablesControllerUpsertAppVariables(appId, { data, deleteKeys }, 'sensitive')
+        this.api.variablesControllerUpsertAppVariables(appId, { data }, 'sensitive')
       );
       this.combinedData.set(result ?? null);
       return result ?? null;
