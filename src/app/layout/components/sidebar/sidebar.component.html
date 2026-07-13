@@ -171,6 +171,22 @@
     }
   </hlm-sidebar-nav>
 
+  @if (_version(); as v) {
+    <div
+      class="px-3 py-1 text-[11px] text-muted-foreground"
+      [title]="
+        'API ' +
+        v.components.fluiApi +
+        ' · Web ' +
+        v.components.fluiWeb +
+        ' · Authz ' +
+        v.components.fluiAuthz
+      "
+    >
+      Flui v{{ v.version }}
+    </div>
+  }
+
   <hlm-sidebar-footer
     [title]="_userDisplayName()"
     [subtitle]="_userEmail()"

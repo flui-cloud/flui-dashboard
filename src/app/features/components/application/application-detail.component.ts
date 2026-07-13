@@ -23,6 +23,7 @@ import {
   lucideHammer,
   lucideRocket,
   lucideCamera,
+  lucideClock,
   lucidePlug,
   lucideShieldAlert,
   lucideBug,
@@ -79,6 +80,7 @@ interface TabItem {
       lucideHammer,
   lucideRocket,
   lucideCamera,
+  lucideClock,
       lucidePlug,
       lucideShieldAlert,
       lucideBug,
@@ -530,6 +532,15 @@ export class ApplicationDetailComponent implements OnDestroy {
       { label: 'Releases', route: 'releases', icon: 'lucideRocket' },
       { label: 'Snapshots', route: 'snapshots', icon: 'lucideCamera' },
     );
+    // Scheduled jobs (cron) run the app's own command/image — not relevant for
+    // building-block databases/caches (fixed server processes).
+    if (!isDatabase) {
+      baseTabs.push({
+        label: 'Schedules',
+        route: 'schedules',
+        icon: 'lucideClock',
+      });
+    }
     return baseTabs;
   });
 

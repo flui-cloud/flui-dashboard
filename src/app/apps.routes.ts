@@ -133,6 +133,13 @@ export const appsRoutes: Routes = [
               ),
           },
           {
+            path: 'schedules',
+            loadComponent: () =>
+              import('./features/components/application/app-schedules-tab.component').then(
+                (m) => m.AppSchedulesTabComponent
+              ),
+          },
+          {
             path: 'diagnoses',
             loadComponent: () =>
               import(

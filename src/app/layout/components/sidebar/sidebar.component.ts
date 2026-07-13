@@ -72,6 +72,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApplicationService } from '../../../features/service/application.service';
 import { PermissionService } from '../../../core/services/permission.service';
+import { PlatformVersionService } from '../../../features/service/platform-version.service';
 import {
   ALL_MANAGEMENT_ITEMS,
   CLUSTER_ITEMS,
@@ -160,6 +161,9 @@ export class SidebarComponent {
   private readonly _router = inject(Router);
   private readonly _appService = inject(ApplicationService);
   private readonly _perms = inject(PermissionService);
+  private readonly _platformVersion = inject(PlatformVersionService);
+
+  protected readonly _version = this._platformVersion.version;
 
   readonly infrastructureItems = INFRASTRUCTURE_ITEMS;
   readonly firewallItems = FIREWALL_ITEMS;
@@ -169,6 +173,7 @@ export class SidebarComponent {
 
   constructor() {
     this._perms.load();
+    void this._platformVersion.load();
   }
 
   canSee(section: string): boolean {
