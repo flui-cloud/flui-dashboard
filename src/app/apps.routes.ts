@@ -140,6 +140,13 @@ export const appsRoutes: Routes = [
               ),
           },
           {
+            path: 'gateway',
+            loadComponent: () =>
+              import('./features/components/application/app-gateway-tab.component').then(
+                (m) => m.AppGatewayTabComponent
+              ),
+          },
+          {
             path: 'diagnoses',
             loadComponent: () =>
               import(

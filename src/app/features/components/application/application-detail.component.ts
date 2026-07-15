@@ -24,6 +24,7 @@ import {
   lucideRocket,
   lucideCamera,
   lucideClock,
+  lucideNetwork,
   lucidePlug,
   lucideShieldAlert,
   lucideBug,
@@ -81,6 +82,7 @@ interface TabItem {
   lucideRocket,
   lucideCamera,
   lucideClock,
+      lucideNetwork,
       lucidePlug,
       lucideShieldAlert,
       lucideBug,
@@ -539,6 +541,11 @@ export class ApplicationDetailComponent implements OnDestroy {
         label: 'Schedules',
         route: 'schedules',
         icon: 'lucideClock',
+      });
+      baseTabs.push({
+        label: 'Gateway',
+        route: 'gateway',
+        icon: 'lucideNetwork',
       });
     }
     return baseTabs;
