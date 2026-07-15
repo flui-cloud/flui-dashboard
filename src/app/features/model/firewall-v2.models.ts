@@ -169,13 +169,13 @@ export const CONTROL_DEFAULT_RULES: FirewallRuleFormData[] = [
     description: 'Allow All Outbound',
     direction: 'out',
     protocol: 'tcp',
-    destinationIps: ['0.0.0.0/0']
+    destinationIps: ['0.0.0.0/0', '::/0']
   },
   {
     description: 'Allow UDP Outbound',
     direction: 'out',
     protocol: 'udp',
-    destinationIps: ['0.0.0.0/0']
+    destinationIps: ['0.0.0.0/0', '::/0']
   }
 ];
 
@@ -186,6 +186,11 @@ export const CONTROL_DEFAULT_RULES: FirewallRuleFormData[] = [
  * and will re-add them if omitted. The K3s API (6443) is not exposed here — the
  * API scopes it internally to the VNet/subnet CIDR, or to the control cluster's
  * public IP for cross-provider workloads.
+ *
+ * Every world-open rule names ::/0 alongside 0.0.0.0/0: nodes are dual-stack, and
+ * the provider drops what its rules don't match rather than refusing it — so an
+ * IPv4-only wildcard blackholes IPv6 instead of failing fast. The API completes
+ * these server-side too; keeping both here means the wizard shows what is applied.
  */
 export const WORKLOAD_DEFAULT_RULES: FirewallRuleFormData[] = [
   {
@@ -200,26 +205,26 @@ export const WORKLOAD_DEFAULT_RULES: FirewallRuleFormData[] = [
     direction: 'in',
     protocol: 'tcp',
     port: '80',
-    sourceIps: ['0.0.0.0/0']
+    sourceIps: ['0.0.0.0/0', '::/0']
   },
   {
     description: 'HTTPS (Traefik)',
     direction: 'in',
     protocol: 'tcp',
     port: '443',
-    sourceIps: ['0.0.0.0/0']
+    sourceIps: ['0.0.0.0/0', '::/0']
   },
   {
     description: 'Allow All Outbound',
     direction: 'out',
     protocol: 'tcp',
-    destinationIps: ['0.0.0.0/0']
+    destinationIps: ['0.0.0.0/0', '::/0']
   },
   {
     description: 'Allow UDP Outbound',
     direction: 'out',
     protocol: 'udp',
-    destinationIps: ['0.0.0.0/0']
+    destinationIps: ['0.0.0.0/0', '::/0']
   }
 ];
 
