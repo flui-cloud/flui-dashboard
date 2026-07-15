@@ -49,6 +49,9 @@ import { AutoscaleDefaults } from '../../model/autoscale.models';
 import { AccessManagementService } from '../../../core/api/api/accessManagement.service';
 import { VNetInfo, AddSubnetConfiguration } from '../../model/vnet.models';
 import { VNetService } from '../../service/vnet.service';
+import { DnsZonesService } from '../../service/dns-zones.service';
+import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
+import { DnsZoneResponseDto } from '../../../core/api/model/dnsZoneResponseDto';
 import { firstValueFrom } from 'rxjs';
 
 import { WizardShellComponent } from '../../../shared/components/wizard-shell/wizard-shell.component';
@@ -752,24 +755,86 @@ import {
                   <span class="font-medium">Custom domains</span>
                 </div>
                 <p class="mt-2 text-xs text-muted-foreground">
-                  Use domains you own (e.g. <code class="font-mono">example.com</code>).
-                  You'll connect your DNS provider after the cluster is ready.
+                  Use a DNS zone you've registered in Flui (e.g. <code class="font-mono">example.com</code>).
                 </p>
                 <p class="mt-2 text-[11px] text-muted-foreground">
-                  Optional wildcard certificate covering all subdomains.
+                  Wildcard certificate covering all subdomains.
                 </p>
               </button>
             </div>
 
             @if (endpointHostnameMode() === 'domain') {
-              <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg max-w-3xl">
-                <div class="flex items-start gap-2">
-                  <ng-icon name="lucideInfo" class="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                  <p class="text-xs text-amber-800 dark:text-amber-300">
-                    Until you connect a domain, apps will be reachable on test addresses.
-                    Built-in services (auth, web, monitoring) currently always use test addresses.
-                  </p>
-                </div>
+              <div class="space-y-3 max-w-3xl">
+                @if (dnsZonesService.loading()) {
+                  <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
+                    Loading your DNS zones…
+                  </div>
+                } @else if (dnsZones().length === 0) {
+                  <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <div class="flex items-start gap-2">
+                      <ng-icon name="lucideInfo" class="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                      <p class="text-xs text-amber-800 dark:text-amber-300">
+                        No DNS zones registered yet. Register one under
+                        <strong>Infrastructure → Domains</strong>, then create this cluster —
+                        or pick <strong>Test addresses</strong> to get started now and attach a domain later.
+                      </p>
+                    </div>
+                  </div>
+                } @else {
+                  <div>
+                    <label class="text-sm font-medium">Which zone?</label>
+                    <p class="text-xs text-muted-foreground">
+                      Apps you deploy to this cluster get their addresses under this zone.
+                    </p>
+                  </div>
+
+                  <div class="space-y-2">
+                    @for (zone of dnsZones(); track zone.id) {
+                      <button
+                        type="button"
+                        (click)="selectedDnsZoneId.set(zone.id)"
+                        [class]="zoneCardClass(selectedDnsZoneId() === zone.id)"
+                      >
+                        <div class="flex items-center gap-2">
+                          <ng-icon name="lucideNetwork" class="h-4 w-4 text-primary" />
+                          <span class="font-mono text-sm font-medium">{{ zone.zoneName }}</span>
+                          <span class="px-2 py-0.5 rounded text-[11px] bg-muted text-muted-foreground">
+                            {{ zone.dnsProvider }}
+                          </span>
+                        </div>
+                        @if (selectedDnsZoneId() === zone.id) {
+                          <ng-icon name="lucideCheck" class="h-4 w-4 text-primary" />
+                        }
+                      </button>
+                    }
+                  </div>
+
+                  @if (selectedZone(); as zone) {
+                    <div class="p-3 bg-muted/40 border border-border rounded-lg">
+                      <p class="text-xs text-muted-foreground mb-2">Apps will be reachable at:</p>
+                      <ul class="space-y-1">
+                        @for (host of endpointPreview(); track host) {
+                          <li class="font-mono text-xs">{{ host }}</li>
+                        }
+                      </ul>
+                      <p class="text-[11px] text-muted-foreground mt-2">
+                        Flui creates each record in <span class="font-mono">{{ zone.zoneName }}</span>
+                        when you deploy the app.
+                      </p>
+                    </div>
+                  }
+
+                  <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <div class="flex items-start gap-2">
+                      <ng-icon name="lucideInfo" class="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                      <p class="text-xs text-amber-800 dark:text-amber-300">
+                        Built-in services (auth, web, API) start on test addresses regardless of this choice.
+                        Move them onto your domain with the DNS setup wizard once the cluster is ready.
+                      </p>
+                    </div>
+                  </div>
+                }
               </div>
             }
           </div>
@@ -1032,7 +1097,18 @@ import {
                           </p>
                         }
 
-                        @if (ipDetectionService.userPublicIP() && ruleControl.get('port')?.value === '22') {
+                        @if (ruleControl.get('port')?.value === '22' && ruleControl.get('direction')?.value === 'in') {
+                          <p class="text-xs text-muted-foreground mt-1">
+                            Flui adds your control cluster's own address here automatically —
+                            it manages this cluster over SSH, and removing it would stall the
+                            install. Everything else is up to you.
+                          </p>
+                          @if (ipDetectionService.userPublicIP()) {
+                            <p class="text-xs text-blue-600 mt-1">
+                              Your detected IP: {{ ipDetectionService.userPublicIP() }}
+                            </p>
+                          }
+                        } @else if (ipDetectionService.userPublicIP()) {
                           <p class="text-xs text-blue-600 mt-1">
                             Your detected IP: {{ ipDetectionService.userPublicIP() }}
                           </p>
@@ -1205,9 +1281,16 @@ import {
                   </span>
                 </div>
                 @if (endpointHostnameMode() === 'domain') {
-                  <p class="text-xs text-muted-foreground mt-2">
-                    Connect a domain to the cluster after creation to start using it.
-                  </p>
+                  @if (selectedZone(); as zone) {
+                    <div class="text-sm flex items-center justify-between mt-2">
+                      <span class="text-muted-foreground">DNS zone:</span>
+                      <span class="font-mono text-xs font-medium">{{ zone.zoneName }}</span>
+                    </div>
+                  } @else {
+                    <p class="text-xs text-muted-foreground mt-2">
+                      No zone selected — attach one to the cluster after creation.
+                    </p>
+                  }
                 }
               </div>
 
@@ -1289,7 +1372,9 @@ export class ClusterCreationWizardComponent implements OnInit {
   private readonly wizardService = inject(ProviderWizardService);
   private readonly vnetService = inject(VNetService);
   private readonly accessManagementService = inject(AccessManagementService);
+  private readonly clusterDnsZoneService = inject(ClusterDnsZoneService);
   private readonly router = inject(Router);
+  readonly dnsZonesService = inject(DnsZonesService);
   public pricingService = inject(PricingService);
   readonly ipDetectionService = inject(IpDetectionService);
 
@@ -1339,12 +1424,35 @@ export class ClusterCreationWizardComponent implements OnInit {
 
   // Endpoint hostname source (cluster default for app endpoints + system services)
   endpointHostnameMode = signal<'ip' | 'domain'>('ip');
+  selectedDnsZoneId = signal<string | null>(null);
+
+  readonly dnsZones = computed(() => this.dnsZonesService.zones());
+
+  readonly selectedZone = computed<DnsZoneResponseDto | null>(() => {
+    const id = this.selectedDnsZoneId();
+    return id ? this.dnsZones().find(z => z.id === id) ?? null : null;
+  });
 
   endpointModeCardClass(active: boolean): string {
     const base = 'flex flex-col items-start rounded-lg border p-4 text-left transition w-full hover:bg-accent/40';
     return active
       ? `${base} border-primary bg-primary/5`
       : `${base} border-border`;
+  }
+
+  zoneCardClass(active: boolean): string {
+    const base = 'flex items-center justify-between rounded-lg border p-3 text-left transition w-full hover:bg-accent/40';
+    return active
+      ? `${base} border-primary bg-primary/5`
+      : `${base} border-border`;
+  }
+
+  // Mirrors the backend default FQDN: {slug}.{clusterName}.{zoneName}
+  endpointPreview(): string[] {
+    const zone = this.selectedZone();
+    if (!zone) return [];
+    const cluster = this.getClusterName() || '<cluster-name>';
+    return ['myapp', 'docs'].map(slug => `${slug}.${cluster}.${zone.zoneName}`);
   }
 
   // Computed: selected server type object
@@ -1472,7 +1580,7 @@ export class ClusterCreationWizardComponent implements OnInit {
       {
         id: 'endpoint',
         title: 'Endpoint',
-        description: 'Choose hostname source (nip.io vs domain)',
+        description: 'Test addresses or your own domain',
         icon: 'lucideZap',
         isValid: !!this.endpointHostnameMode(),
         isCompleted: currentIndex > 4,
@@ -1514,8 +1622,14 @@ export class ClusterCreationWizardComponent implements OnInit {
       await Promise.all([
         this.clusterService.loadClusters(),
         this.wizardService.loadProviders(),
+        this.dnsZonesService.loadZones(),
       ]);
-  
+
+      const zones = this.dnsZones();
+      if (zones.length === 1) {
+        this.selectedDnsZoneId.set(zones[0].id);
+      }
+
       // Track form validity changes with signal
       this.basicConfigForm.statusChanges.subscribe(() => {
         this.formValid.set(this.basicConfigForm.valid);
@@ -1596,7 +1710,9 @@ export class ClusterCreationWizardComponent implements OnInit {
 
       // Populate FormArray with default rules
       for (const rule of defaultRules) {
-        // For SSH rule, use only detected IP (no fallback to 0.0.0.0/0)
+        // SSH is restricted to the operator. The control plane's own address is
+        // added server-side — the browser can't know it, and it moves with the
+        // control cluster — so it deliberately isn't listed here.
         const isSSH = rule.port === '22' && rule.direction === 'in';
         const sourceIps = isSSH && userIP
           ? [`${userIP}/32`]  // Add /32 CIDR suffix to detected IP
@@ -2136,6 +2252,8 @@ export class ClusterCreationWizardComponent implements OnInit {
         await this.updateSshKeyTagsWithClusterId(result.clusterId, this.selectedSshKeyId()!);
       }
 
+      await this.attachSelectedDnsZone(result.clusterId);
+
       // Navigate to progress tracker
       if (result.operationId) {
         this.router.navigate(['/cluster/create', result.operationId]);
@@ -2162,6 +2280,19 @@ export class ClusterCreationWizardComponent implements OnInit {
       });
     } finally {
       this.isCreating.set(false);
+    }
+  }
+
+  // The cluster is already created at this point, so a failure here must not fail the
+  // whole flow — the zone stays attachable from the cluster's DNS tab.
+  private async attachSelectedDnsZone(clusterId: string): Promise<void> {
+    if (this.endpointHostnameMode() !== 'domain') return;
+    const zoneId = this.selectedDnsZoneId();
+    if (!zoneId || !clusterId) return;
+
+    const assigned = await this.clusterDnsZoneService.assignZone(clusterId, { dnsZoneId: zoneId });
+    if (!assigned) {
+      console.error('Cluster created but DNS zone assignment failed:', this.clusterDnsZoneService.error());
     }
   }
 
