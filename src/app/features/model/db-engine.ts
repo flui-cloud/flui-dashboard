@@ -28,10 +28,18 @@ export type DbEngineFamily =
   | 'streaming'
   | 'fulltext';
 
+/** Label the installer stamps from the catalog manifest's declared `engine`. */
+export const DB_ENGINE_LABEL = 'flui.cloud/db-engine';
+
 export interface DbEngineDescriptor {
   engine: DbEngine;
   family: DbEngineFamily;
   label: string;
+  /**
+   * Legacy fallback only — matched against the image NAME (see `imageNameOf`) when an install
+   * predates the `flui.cloud/db-engine` label. Anchored on purpose: a substring match turns
+   * companions like opensearch-dashboards or redis-commander into databases.
+   */
   imagePattern: RegExp;
   tunnelPort: number;
   defaultPort: number;
@@ -48,8 +56,9 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'postgres',
     family: 'sql',
     label: 'PostgreSQL',
-    // pgvector ships as pgvector/pgvector (Postgres + vector ext) — same wire/console.
-    imagePattern: /postgres|pgvector/i,
+    // pgvector (Postgres + vector ext) and flui-postgres (our BB) speak the same wire/console;
+    // postgres-documentdb is FerretDB's Postgres store.
+    imagePattern: /^(flui-)?postgres(ql|-documentdb)?$|^pgvector$/i,
     tunnelPort: 55432,
     defaultPort: 5432,
     urlScheme: 'postgresql',
@@ -60,7 +69,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'mariadb',
     family: 'sql',
     label: 'MariaDB',
-    imagePattern: /maria|mysql/i,
+    imagePattern: /^(mariadb|mysql)$/i,
     tunnelPort: 53306,
     defaultPort: 3306,
     urlScheme: 'mysql',
@@ -71,7 +80,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'valkey',
     family: 'keyvalue',
     label: 'Valkey',
-    imagePattern: /valkey/i,
+    imagePattern: /^valkey$/i,
     tunnelPort: 56379,
     defaultPort: 6379,
     urlScheme: 'redis',
@@ -81,7 +90,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'redis',
     family: 'keyvalue',
     label: 'Redis',
-    imagePattern: /redis/i,
+    imagePattern: /^redis$/i,
     tunnelPort: 56379,
     defaultPort: 6379,
     urlScheme: 'redis',
@@ -91,7 +100,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'ferretdb',
     family: 'document',
     label: 'FerretDB',
-    imagePattern: /ferretdb/i,
+    imagePattern: /^ferretdb$/i,
     tunnelPort: 57017,
     defaultPort: 27017,
     urlScheme: 'mongodb',
@@ -101,7 +110,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'garage',
     family: 'object-storage',
     label: 'Garage',
-    imagePattern: /garage/i,
+    imagePattern: /^garage$/i,
     tunnelPort: 53900,
     defaultPort: 3900,
     urlScheme: 's3',
@@ -111,7 +120,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'opensearch',
     family: 'search',
     label: 'OpenSearch',
-    imagePattern: /opensearch/i,
+    imagePattern: /^opensearch$/i,
     tunnelPort: 59200,
     defaultPort: 9200,
     urlScheme: 'https',
@@ -121,7 +130,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'nats',
     family: 'messaging',
     label: 'NATS',
-    imagePattern: /nats/i,
+    imagePattern: /^nats$/i,
     tunnelPort: 54222,
     defaultPort: 4222,
     urlScheme: 'nats',
@@ -131,7 +140,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'rabbitmq',
     family: 'messaging',
     label: 'RabbitMQ',
-    imagePattern: /rabbitmq/i,
+    imagePattern: /^rabbitmq$/i,
     tunnelPort: 55672,
     defaultPort: 5672,
     urlScheme: 'amqp',
@@ -141,7 +150,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'memcached',
     family: 'cache',
     label: 'Memcached',
-    imagePattern: /memcached/i,
+    imagePattern: /^memcached$/i,
     tunnelPort: 51211,
     defaultPort: 11211,
     urlScheme: 'memcached',
@@ -151,7 +160,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'openbao',
     family: 'secrets',
     label: 'OpenBao',
-    imagePattern: /openbao/i,
+    imagePattern: /^openbao$/i,
     tunnelPort: 58200,
     defaultPort: 8200,
     urlScheme: 'http',
@@ -161,7 +170,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'kafka',
     family: 'streaming',
     label: 'Apache Kafka',
-    imagePattern: /(^|\/)kafka(-native)?(:|$)|apache\/kafka/i,
+    imagePattern: /^kafka(-native)?$/i,
     tunnelPort: 59092,
     defaultPort: 9092,
     urlScheme: 'kafka',
@@ -171,7 +180,7 @@ export const DB_ENGINES: readonly DbEngineDescriptor[] = [
     engine: 'meilisearch',
     family: 'fulltext',
     label: 'Meilisearch',
-    imagePattern: /meilisearch|getmeili/i,
+    imagePattern: /^meilisearch$/i,
     tunnelPort: 57700,
     defaultPort: 7700,
     urlScheme: 'http',
@@ -187,12 +196,28 @@ export function engineDescriptor(engine: DbEngine): DbEngineDescriptor {
   return d;
 }
 
+/**
+ * The image name alone — registry, org and tag stripped. Patterns must never see the tag or the
+ * org: umami ships as `umami-software/umami:postgresql-v2.20.2`, which reads as Postgres on a
+ * full-ref match.
+ */
+export function imageNameOf(imageRef: string | null | undefined): string {
+  const ref = (imageRef ?? '').split('@')[0];
+  const lastSlash = ref.lastIndexOf('/');
+  const lastColon = ref.lastIndexOf(':');
+  const repository = lastColon > lastSlash ? ref.slice(0, lastColon) : ref;
+  return repository.slice(repository.lastIndexOf('/') + 1);
+}
+
 export function databaseEngineOf(
   app: ApplicationResponseDto | null | undefined,
 ): DbEngine | null {
   if (!app || (!isBuildingBlock(app) && !isComposedComponent(app))) return null;
-  const ref = app.imageRef ?? '';
-  return DB_ENGINES.find((d) => d.imagePattern.test(ref))?.engine ?? null;
+  const labels = (app.labels ?? {}) as Record<string, string>;
+  const declared = labels[DB_ENGINE_LABEL] as DbEngine | undefined;
+  if (declared && BY_ENGINE.has(declared)) return declared;
+  const name = imageNameOf(app.imageRef);
+  return DB_ENGINES.find((d) => d.imagePattern.test(name))?.engine ?? null;
 }
 
 export function engineFamilyOf(
