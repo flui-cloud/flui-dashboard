@@ -68,11 +68,19 @@ export interface AppGroupView {
   catalogSlug?: string;
   catalogInstallId?: string;
   primaryComponentId?: string;
+  projectId?: string | null;
   createdAt: string;
   components: Application[];
 }
 
 // ===== HELPER FUNCTIONS =====
+
+export function getGroupKind(group: AppGroupView): ApplicationKind {
+  const primary =
+    group.components.find((c) => c.id === group.primaryComponentId) ??
+    group.components[0];
+  return primary?.kind ?? ApplicationKindEnum.Application;
+}
 
 export function getStatusLabel(status: ApplicationStatus): string {
   const labels: Record<string, string> = {

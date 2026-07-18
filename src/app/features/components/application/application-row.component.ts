@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleCheck,
@@ -16,11 +16,13 @@ import {
   ApplicationStatusEnum,
   getStatusLabel,
 } from '../../model/application.models';
+import { ProjectsService } from '../../service/projects.service';
+import { ProjectBadgeComponent } from '../projects/project-badge.component';
 
 @Component({
   selector: 'app-application-row',
   standalone: true,
-  imports: [NgIconComponent],
+  imports: [NgIconComponent, ProjectBadgeComponent],
   providers: [
     provideIcons({
       lucideCircleCheck,
@@ -46,6 +48,10 @@ import {
         <span class="text-sm font-medium text-gray-900 dark:text-white truncate block">{{ app().name }}</span>
         <span class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate block">{{ app().slug }}</span>
       </div>
+
+      @if (showProject() && project()) {
+        <app-project-badge [project]="project()" class="flex-shrink-0 hidden md:inline-flex" />
+      }
 
       <!-- Category badge -->
       <span [class]="getCategoryBadgeClass(app().category)" class="flex-shrink-0">
@@ -105,9 +111,18 @@ import {
 export class ApplicationRowComponent {
   app = input.required<Application>();
   refreshing = input<boolean>(false);
+  showProject = input<boolean>(true);
 
   view = output<string>();
   delete = output<Application>();
+
+  private readonly projectsService = inject(ProjectsService);
+
+  readonly project = computed(() => {
+    const projectId = this.app().projectId;
+    if (!projectId) return null;
+    return this.projectsService.projects().find((p) => p.id === projectId) ?? null;
+  });
 
   onDelete(event: Event) {
     event.stopPropagation();

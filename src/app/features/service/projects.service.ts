@@ -52,6 +52,27 @@ export class ProjectsService {
     });
   }
 
+  update(
+    id: string,
+    input: { name?: string; description?: string | null; color?: string | null },
+    onSettled?: () => void,
+  ): void {
+    this.http.patch<Project>(this.base(`/${id}`), input).subscribe({
+      next: (p) => {
+        this._projects.update((list) =>
+          list
+            .map((it) => (it.id === id ? p : it))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        );
+        onSettled?.();
+      },
+      error: (e) => {
+        this.fail('update project', e);
+        onSettled?.();
+      },
+    });
+  }
+
   remove(id: string): void {
     this.http.delete<void>(this.base(`/${id}`)).subscribe({
       next: () => {

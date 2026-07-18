@@ -135,6 +135,8 @@ export class ApplicationService {
     const groups: Array<AppGroupView & { _sort: number }> = [];
     for (const [installId, components] of byInstall) {
       const m = meta[installId];
+      const primary =
+        components.find((c) => c.id === m.primaryComponentId) ?? components[0];
       groups.push({
         id: installId,
         type: ApplicationGroupTypeEnum.Composed,
@@ -146,6 +148,7 @@ export class ApplicationService {
         catalogSlug: m.catalogSlug,
         catalogInstallId: installId,
         primaryComponentId: m.primaryComponentId,
+        projectId: primary?.projectId ?? null,
         createdAt: m.createdAt,
         components,
         _sort: new Date(m.createdAt).getTime(),
@@ -161,6 +164,7 @@ export class ApplicationService {
         clusterId: app.clusterId,
         catalogSlug: app.catalogSlug,
         catalogInstallId: app.catalogInstallId,
+        projectId: app.projectId ?? null,
         createdAt: app.createdAt,
         components: [app],
         _sort: new Date(app.createdAt).getTime(),
@@ -171,6 +175,13 @@ export class ApplicationService {
       .sort((a, b) => b._sort - a._sort)
       .map(({ _sort, ...g }) => g);
   });
+
+  patchApplicationProject(appIds: string[], projectId: string | null): void {
+    const ids = new Set(appIds);
+    this.applicationsList.update((list) =>
+      list.map((a) => (ids.has(a.id) ? { ...a, projectId } : a)),
+    );
+  }
 
   readonly selectedApplication = computed(() => this.selectedApplicationSignal());
 

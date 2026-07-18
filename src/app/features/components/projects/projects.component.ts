@@ -4,6 +4,7 @@ import {
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -21,6 +22,7 @@ import { ProjectsService } from '../../service/projects.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Project } from '../../model/project.model';
 import { AppAttributes } from '../../model/iam.model';
+import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
 
 const FIELD =
   'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
@@ -33,6 +35,7 @@ const FIELD =
     HlmCardDirective,
     HlmCardContentDirective,
     HlmBadgeDirective,
+    DeleteConfirmationDialogComponent,
   ],
   providers: [provideIcons({ lucideFolders, lucidePlus, lucideTrash2, lucideX })],
   template: `
@@ -118,7 +121,7 @@ const FIELD =
                   }
                 </div>
                 @if (canManage()) {
-                  <button type="button" (click)="projects.remove(p.id)"
+                  <button type="button" (click)="askDelete(p)"
                     class="text-muted-foreground hover:text-destructive shrink-0" title="Delete project">
                     <ng-icon name="lucideTrash2" class="h-4 w-4" />
                   </button>
@@ -160,6 +163,12 @@ const FIELD =
         }
       </div>
     </div>
+
+    <app-delete-confirmation-dialog
+      #deleteDialog
+      (confirmed)="confirmDelete()"
+      (cancelled)="pendingDelete.set(null)"
+    />
   `,
 })
 export class ProjectsComponent implements OnInit {
@@ -182,6 +191,10 @@ export class ProjectsComponent implements OnInit {
     const c = this.newColor();
     return /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#6366f1';
   }
+
+  readonly pendingDelete = signal<Project | null>(null);
+  private readonly deleteDialog =
+    viewChild.required<DeleteConfirmationDialogComponent>('deleteDialog');
 
   readonly showCreate = signal(false);
   readonly newName = signal('');
@@ -218,6 +231,25 @@ export class ProjectsComponent implements OnInit {
     this.newDesc.set('');
     this.newColor.set('');
     this.showCreate.set(false);
+  }
+
+  askDelete(p: Project): void {
+    this.pendingDelete.set(p);
+    this.deleteDialog().open({
+      title: 'Delete project',
+      description:
+        'The project is removed, but its apps keep running and become unassigned.',
+      itemName: p.name,
+      itemDescription: p.slug,
+      confirmButtonText: 'Delete project',
+    });
+  }
+
+  confirmDelete(): void {
+    const p = this.pendingDelete();
+    if (p) this.projects.remove(p.id);
+    this.pendingDelete.set(null);
+    this.deleteDialog().close();
   }
 
   onAssign(projectId: string, e: Event): void {

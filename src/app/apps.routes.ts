@@ -7,6 +7,14 @@ export const appsRoutes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'projects',
+    loadComponent: () =>
+      import(
+        './features/components/projects/project-workloads.component'
+      ).then((m) => m.ProjectWorkloadsComponent),
+    title: 'Projects - flui.cloud',
+  },
+  {
     path: 'databases',
     loadComponent: () =>
       import(

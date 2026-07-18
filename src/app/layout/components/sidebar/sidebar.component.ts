@@ -73,6 +73,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ApplicationService } from '../../../features/service/application.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { PlatformVersionService } from '../../../features/service/platform-version.service';
+import { ProjectsService } from '../../../features/service/projects.service';
 import {
   ALL_MANAGEMENT_ITEMS,
   CLUSTER_ITEMS,
@@ -162,6 +163,7 @@ export class SidebarComponent {
   private readonly _appService = inject(ApplicationService);
   private readonly _perms = inject(PermissionService);
   private readonly _platformVersion = inject(PlatformVersionService);
+  private readonly _projects = inject(ProjectsService);
 
   protected readonly _version = this._platformVersion.version;
 
@@ -174,6 +176,7 @@ export class SidebarComponent {
   constructor() {
     this._perms.load();
     void this._platformVersion.load();
+    this._projects.loadProjects();
   }
 
   canSee(section: string): boolean {
@@ -242,8 +245,15 @@ export class SidebarComponent {
     const appCount = this._appService.applicationsCount();
     const toolCount = this._appService.toolsCount();
     const sysCount = this._appService.systemKindCount();
+    const projectCount = this._projects.projects().length;
 
     const items: SidebarNavItem[] = [
+      {
+        label: projectCount > 0 ? `Projects (${projectCount})` : 'Projects',
+        link: '/apps/projects',
+        routerLinkActive: 'active',
+        icon: 'lucideFolders',
+      },
       {
         label: dbCount > 0 ? `Databases (${dbCount})` : 'Databases',
         link: '/apps/databases',

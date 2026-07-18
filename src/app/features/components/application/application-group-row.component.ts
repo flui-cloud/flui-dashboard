@@ -98,6 +98,7 @@ import { ApplicationRowComponent } from './application-row.component';
       <app-application-row
         [app]="group().components[0]"
         [refreshing]="refreshing()"
+        [showProject]="showProject()"
         (view)="open.emit($event)"
         (delete)="delete.emit($event)"
       />
@@ -107,6 +108,7 @@ import { ApplicationRowComponent } from './application-row.component';
 export class ApplicationGroupRowComponent {
   group = input.required<AppGroupView>();
   refreshing = input<boolean>(false);
+  showProject = input<boolean>(true);
 
   open = output<string>();
   delete = output<Application>();
