@@ -9,10 +9,14 @@
  */
 
 
-export interface UpsertVariablesDto { 
+export interface UpsertVariablesDto {
     /**
      * Key-value pairs to store
      */
     data: { [key: string]: string; };
+    /**
+     * Keys to remove. Deletion is explicit: a key missing from `data` is left untouched, so a partial or stale payload can never erase stored config.
+     */
+    deleteKeys?: Array<string>;
 }
 
