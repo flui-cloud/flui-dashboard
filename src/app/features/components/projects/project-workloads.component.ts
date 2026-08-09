@@ -244,34 +244,13 @@ const SELECT =
             @if (!isCollapsed(key)) {
               <div class="space-y-2 border-t border-border p-3">
                 @for (group of section.groups; track group.id) {
-                  <div class="flex items-center gap-2">
-                    <div class="min-w-0 flex-1">
-                      <app-application-group-row
-                        [group]="group"
-                        [refreshing]="isRefreshing()"
-                        [showProject]="false"
-                        (open)="openRecap($event)"
-                        (delete)="askDeleteApp($event)"
-                      />
-                    </div>
-                    @if (canManage()) {
-                      <select
-                        [class]="selectClass + ' shrink-0'"
-                        [disabled]="movingGroupId() === group.id"
-                        (change)="onMove(group, $event)"
-                      >
-                        <option value="">Move to…</option>
-                        @if (group.projectId) {
-                          <option value="__none">No project</option>
-                        }
-                        @for (p of projects(); track p.id) {
-                          @if (p.id !== group.projectId) {
-                            <option [value]="p.id">{{ p.name }}</option>
-                          }
-                        }
-                      </select>
-                    }
-                  </div>
+                  <app-application-group-row
+                    [group]="group"
+                    [refreshing]="isRefreshing()"
+                    [showProject]="false"
+                    (open)="openRecap($event)"
+                    (delete)="askDeleteApp($event)"
+                  />
                 } @empty {
                   <p class="px-2 py-4 text-center text-sm text-muted-foreground">
                     No workloads here.
@@ -329,7 +308,6 @@ export class ProjectWorkloadsComponent implements OnInit {
   protected readonly showCreate = signal(false);
   protected readonly editingId = signal<string | null>(null);
   protected readonly busyProjectId = signal<string | null>(null);
-  protected readonly movingGroupId = signal<string | null>(null);
   protected readonly pendingProjectDelete = signal<Project | null>(null);
   protected readonly pendingAppDelete = signal<Application | null>(null);
 
@@ -454,35 +432,6 @@ export class ProjectWorkloadsComponent implements OnInit {
         this.editingId.set(null);
       },
     );
-  }
-
-  protected onMove(group: AppGroupView, e: Event): void {
-    const select = e.target as HTMLSelectElement;
-    const choice = select.value;
-    select.value = '';
-    if (!choice) return;
-
-    const target = choice === '__none' ? null : choice;
-    const appIds = group.components.map((c) => c.id);
-    const previous = group.projectId ?? null;
-    if (target === previous) return;
-
-    this.movingGroupId.set(group.id);
-    this.appService.patchApplicationProject(appIds, target);
-
-    let pending = appIds.length;
-    const settled = (): void => {
-      if (--pending === 0) this.movingGroupId.set(null);
-    };
-    for (const appId of appIds) {
-      if (target) {
-        this.projectsService.assignApp(target, appId, settled);
-      } else if (previous) {
-        this.projectsService.unassignApp(previous, appId, settled);
-      } else {
-        settled();
-      }
-    }
   }
 
   protected askDeleteProject(project: Project): void {

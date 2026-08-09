@@ -42,12 +42,17 @@ export class ProjectsService {
       });
   }
 
-  create(input: { name: string; description?: string; color?: string }): void {
+  create(
+    input: { name: string; description?: string; color?: string },
+    onCreated?: (project: Project) => void,
+  ): void {
     this.http.post<Project>(this.base(), input).subscribe({
-      next: (p) =>
+      next: (p) => {
         this._projects.update((list) =>
           [...list, p].sort((a, b) => a.name.localeCompare(b.name)),
-        ),
+        );
+        onCreated?.(p);
+      },
       error: (e) => this.fail('create project', e),
     });
   }
