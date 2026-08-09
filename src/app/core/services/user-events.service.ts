@@ -8,6 +8,17 @@ export interface GithubConnectedEvent {
   installationId: string | null;
 }
 
+export interface AlertTransitionEvent {
+  id: string;
+  kind: 'fired' | 'resolved';
+  alertname: string;
+  severity: string;
+  summary: string;
+  applicationId: string | null;
+  applicationSlug: string | null;
+  startsAt: string;
+}
+
 /**
  * WebSocket client for the `/user` gateway. Lets the dashboard receive events
  * scoped to the current Flui user (e.g. after the GitHub App install/authorize
@@ -25,6 +36,7 @@ export class UserEventsService implements OnDestroy {
 
   private githubConnectedListeners: Array<(e: GithubConnectedEvent) => void> =
     [];
+  private alertListeners: Array<(e: AlertTransitionEvent) => void> = [];
 
   connect(userId: string): void {
     if (this.socket && this.subscribedUserId === userId) return;
@@ -56,6 +68,9 @@ export class UserEventsService implements OnDestroy {
     this.socket.on('github:connected', (payload: GithubConnectedEvent) => {
       this.githubConnectedListeners.forEach((cb) => cb(payload));
     });
+    this.socket.on('alert:transition', (payload: AlertTransitionEvent) => {
+      this.alertListeners.forEach((cb) => cb(payload));
+    });
   }
 
   disconnect(): void {
@@ -78,6 +93,13 @@ export class UserEventsService implements OnDestroy {
       this.githubConnectedListeners = this.githubConnectedListeners.filter(
         (fn) => fn !== cb,
       );
+    };
+  }
+
+  onAlert(cb: (e: AlertTransitionEvent) => void): () => void {
+    this.alertListeners.push(cb);
+    return () => {
+      this.alertListeners = this.alertListeners.filter((fn) => fn !== cb);
     };
   }
 

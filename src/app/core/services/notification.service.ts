@@ -20,6 +20,7 @@ export type NotificationCategory =
   | 'cluster-scaling'
   | 'snapshot'
   | 'backup'
+  | 'alert'
   | 'general';
 
 export interface NotificationLink {
@@ -220,6 +221,31 @@ export class NotificationService implements OnDestroy {
         category: 'general',
       });
     });
+    this.userEvents.onAlert((payload) => {
+      const firing = payload.kind === 'fired';
+      const where = payload.applicationSlug ? `${payload.applicationSlug}: ` : '';
+      this.add({
+        title: firing
+          ? `${where}${payload.alertname}`
+          : `${where}${payload.alertname} resolved`,
+        body: payload.summary,
+        link: payload.applicationId
+          ? {
+              label: 'View application',
+              route: `/apps/applications/${payload.applicationId}`,
+            }
+          : undefined,
+        type: firing ? this.alertType(payload.severity) : 'success',
+        source: 'websocket',
+        category: 'alert',
+      });
+    });
+  }
+
+  private alertType(severity: string): NotificationType {
+    if (severity === 'critical') return 'error';
+    if (severity === 'warning') return 'warning';
+    return 'info';
   }
 
   // ── Action registry ───────────────────────────────────────
