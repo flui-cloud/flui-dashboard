@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { UserEventsService } from '../../../core/services/user-events.service';
 import { firstValueFrom } from 'rxjs';
 import {
   GradeGaugeComponent,
@@ -16,9 +17,16 @@ import {
 import { ApplicationMonitoringService } from '../../service/application-monitoring.service';
 import { ApplicationMetricsService } from '../../../core/api/api/applicationMetrics.service';
 import { DbDiskUsageComponent } from './db-disk-usage.component';
+import {
+  AppTrafficSectionComponent,
+  TrafficRange,
+} from './app-traffic-section.component';
+import { AppAlertsSectionComponent } from './app-alerts-section.component';
 import type { SingleAppMetricsHistoryResponseDto } from '../../model/application.models';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert, lucideHeartPulse } from '@ng-icons/lucide';
+
+type MonitoringTimeRange = '1h' | '2h' | '3h' | '6h' | '1d';
 
 @Component({
   selector: 'app-monitoring-tab',
@@ -30,6 +38,8 @@ import { lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert
     TimeSeriesLineComponent,
     MultiStatCardComponent,
     DbDiskUsageComponent,
+    AppTrafficSectionComponent,
+    AppAlertsSectionComponent,
   ],
   providers: [
     provideIcons({ lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert, lucideHeartPulse }),
@@ -54,8 +64,23 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   readonly canRetry = this.monitoring.canRetry;
 
   // Time series state (local to this tab)
-  private readonly selectedTimeRange = signal<'1h' | '2h' | '3h' | '6h' | '1d'>('3h');
+  private readonly selectedTimeRange = signal<MonitoringTimeRange>('3h');
   readonly timeRange = this.selectedTimeRange.asReadonly();
+
+  private readonly refreshTick = signal(0);
+
+  private readonly userEvents = inject(UserEventsService);
+  private unsubscribeAlerts: (() => void) | null = null;
+
+  private readonly alertsRefreshTick = signal(0);
+  readonly alertsRefreshKey = computed(
+    () => this.refreshTick() + this.alertsRefreshTick(),
+  );
+
+  readonly trafficRange = computed<TrafficRange>(() => {
+    this.refreshTick();
+    return this.resolveRange(this.selectedTimeRange());
+  });
   private readonly isLoadingHistory = signal(false);
   readonly loadingHistory = this.isLoadingHistory.asReadonly();
 
@@ -188,19 +213,44 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.monitoring.startPolling(this.appId());
     this.loadMetricsHistory();
+    this.unsubscribeAlerts = this.userEvents.onAlert((event) => {
+      if (event.applicationId === this.appId()) {
+        this.alertsRefreshTick.update((tick) => tick + 1);
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.monitoring.stopPolling();
+    this.unsubscribeAlerts?.();
+    this.unsubscribeAlerts = null;
   }
 
   async refreshMetrics(): Promise<void> {
     await this.monitoring.refreshMetrics();
+    this.refreshTick.update((tick) => tick + 1);
+    await this.loadMetricsHistory();
   }
 
-  setTimeRange(range: '1h' | '2h' | '3h' | '6h' | '1d'): void {
+  setTimeRange(range: MonitoringTimeRange): void {
     this.selectedTimeRange.set(range);
     this.loadMetricsHistory();
+  }
+
+  private resolveRange(range: MonitoringTimeRange): TrafficRange {
+    const end = new Date();
+    const start = new Date();
+    let step: string;
+
+    switch (range) {
+      case '1h': start.setHours(start.getHours() - 1); step = '30s'; break;
+      case '2h': start.setHours(start.getHours() - 2); step = '1m'; break;
+      case '3h': start.setHours(start.getHours() - 3); step = '1m'; break;
+      case '6h': start.setHours(start.getHours() - 6); step = '2m'; break;
+      case '1d': start.setDate(start.getDate() - 1); step = '5m'; break;
+    }
+
+    return { start, end, step };
   }
 
   private async loadMetricsHistory(): Promise<void> {
@@ -209,17 +259,7 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
 
     try {
       this.isLoadingHistory.set(true);
-      const end = new Date();
-      const start = new Date();
-      let step: string;
-
-      switch (this.selectedTimeRange()) {
-        case '1h': start.setHours(start.getHours() - 1); step = '30s'; break;
-        case '2h': start.setHours(start.getHours() - 2); step = '1m'; break;
-        case '3h': start.setHours(start.getHours() - 3); step = '1m'; break;
-        case '6h': start.setHours(start.getHours() - 6); step = '2m'; break;
-        case '1d': start.setDate(start.getDate() - 1); step = '5m'; break;
-      }
+      const { start, end, step } = this.resolveRange(this.selectedTimeRange());
 
       const response = await firstValueFrom(
         this.metricsApi.applicationMetricsControllerGetAppMetricsHistory(

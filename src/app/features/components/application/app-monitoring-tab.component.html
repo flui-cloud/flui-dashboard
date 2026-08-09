@@ -392,6 +392,16 @@
     }
   </div>
 
+  <!-- Traffic -->
+  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+    <app-traffic-section [appId]="appId()" [range]="trafficRange()" />
+  </div>
+
+  <!-- Alerts -->
+  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+    <app-alerts-section [appId]="appId()" [refreshKey]="alertsRefreshKey()" />
+  </div>
+
   <!-- Empty state -->
   @if (!metrics() && !isLoading() && !error()) {
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12">
