@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationLogsService } from '../../service/application-logs.service';
 import { AppLogsViewerComponent } from './app-logs-viewer.component';
@@ -21,15 +22,28 @@ import { AppLogsViewerComponent } from './app-logs-viewer.component';
 export class AppLogsTabComponent implements OnInit, OnDestroy {
   private readonly appService  = inject(ApplicationService);
   private readonly logsService = inject(ApplicationLogsService);
+  private readonly route       = inject(ActivatedRoute);
 
   ngOnInit() {
     const app = this.appService.selectedApplication();
     if (!app) return;
-    this.logsService.init({
-      clusterId: app.clusterId,
-      namespace: app.k8sNamespace,
-      app:       app.slug,
-    });
+    this.logsService.init(
+      {
+        clusterId: app.clusterId,
+        namespace: app.k8sNamespace,
+        app:       app.slug,
+      },
+      this.rangeFromQueryParams(),
+    );
+  }
+
+  private rangeFromQueryParams(): { start: string; end: string } | undefined {
+    const params = this.route.snapshot.queryParamMap;
+    const start = params.get('start');
+    const end = params.get('end');
+    if (!start || !end) return undefined;
+    if (Number.isNaN(Date.parse(start)) || Number.isNaN(Date.parse(end))) return undefined;
+    return { start, end };
   }
 
   ngOnDestroy() {

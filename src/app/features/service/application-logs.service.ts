@@ -211,8 +211,16 @@ export class ApplicationLogsService {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-  init(ctx: { clusterId: string; namespace: string; app: string }) {
+  init(
+    ctx: { clusterId: string; namespace: string; app: string },
+    range?: LogCustomRange,
+  ) {
     this._appContext.set(ctx);
+    if (range) {
+      this._selectedRange.set('custom');
+      this._customRange.set(range);
+      this._brushRange.set(null);
+    }
     this._refreshAll();
   }
 
