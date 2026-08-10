@@ -33,6 +33,7 @@ import {
   lucideCircleX,
   lucideChevronDown,
   lucideChevronUp,
+  lucideDownload,
   lucideGithub,
   lucideRocket,
   lucideStore,
@@ -126,6 +127,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
       lucideCircleX,
       lucideChevronDown,
       lucideChevronUp,
+      lucideDownload,
       lucideAlertCircle,
       lucideBox,
       lucideGithub,
@@ -582,6 +584,15 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                           </p>
                         }
                       </div>
+                      <button
+                        type="button"
+                        (click)="downloadManifest()"
+                        class="ml-auto shrink-0 inline-flex items-center gap-1 text-xs text-green-800 dark:text-green-300 hover:underline"
+                        title="Download this flui.yaml"
+                      >
+                        <ng-icon name="lucideDownload" class="h-3.5 w-3.5" />
+                        Download
+                      </button>
                     </div>
 
                     @if (validManifests().length > 1) {
@@ -1398,6 +1409,47 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                             </div>
                           </div>
                         }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Install overrides (manifest-first only) -->
+                  @if (flowSubtype() === 'existing-repo' && state.manifestResult()?.manifest) {
+                    <div>
+                      <h3 class="text-base font-semibold mb-1">Install overrides</h3>
+                      <p class="text-xs text-muted-foreground mb-3">
+                        Leave untouched to use <span class="font-mono">flui.yaml</span> as-is. Anything you change here is
+                        remembered for this install and keeps winning over the manifest on later deploys.
+                      </p>
+                      <div class="grid gap-3 md:grid-cols-2">
+                        <div>
+                          <label class="block text-xs font-medium text-muted-foreground mb-1">Release name</label>
+                          <input
+                            type="text"
+                            [value]="state.overrideName()"
+                            (input)="state.overrideName.set($any($event.target).value)"
+                            class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-mono"
+                          />
+                          @if (installNameChanged()) {
+                            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                              A different name installs this repository a second time, next to
+                              <span class="font-mono">{{ state.manifestResult()!.manifest!.metadata.name }}</span>.
+                            </p>
+                          }
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-muted-foreground mb-1">Custom domain</label>
+                          <input
+                            type="text"
+                            [value]="state.overrideFqdn()"
+                            (input)="state.overrideFqdn.set($any($event.target).value)"
+                            placeholder="app.example.com"
+                            class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-mono"
+                          />
+                          <p class="text-xs text-muted-foreground mt-1">
+                            Empty = the cluster's DNS zone assigns one. The TLS certificate follows this hostname.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   }
@@ -2947,6 +2999,27 @@ export class DeployWizardComponent implements OnInit {
   /** Monorepo: pick which deployable (flui.yaml) this wizard run deploys. */
   selectManifest(path: string): void {
     this.selectedManifestPath.set(path);
+  }
+
+  protected installNameChanged = computed(() => {
+    const declared = this.state.manifestResult()?.manifest?.metadata.name;
+    const chosen = this.state.overrideName().trim();
+    return !!declared && !!chosen && declared !== chosen;
+  });
+
+  protected downloadManifest(): void {
+    const manifest = this.manifestForSelector();
+    if (!manifest?.content) return;
+    const url = URL.createObjectURL(
+      new Blob([manifest.content], { type: 'application/yaml' })
+    );
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = manifest.manifest?.metadata.name
+      ? `${manifest.manifest.metadata.name}.flui.yaml`
+      : 'flui.yaml';
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   /**

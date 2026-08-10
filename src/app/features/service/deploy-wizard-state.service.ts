@@ -5,6 +5,7 @@ import { DockerfileAnalysisDto } from '../../core/api/model/dockerfileAnalysisDt
 import { ExtractedEnvVarDto } from '../../core/api/model/extractedEnvVarDto';
 import { TemplateResponseDto } from '../../core/api/model/templateResponseDto';
 import { CreateApplicationDto } from '../../core/api/model/createApplicationDto';
+import { DeployFromYamlDto } from '../../core/api/model/deployFromYamlDto';
 import { ApplicationsService } from '../../core/api/api/applications.service';
 import { ApplicationService, GenerateWorkflowParams } from './application.service';
 import { RepositoryService, RepositoryFluiManifest } from './repository.service';
@@ -34,6 +35,13 @@ import {
   ResourceAvailabilityResponseDto,
   ResourceOverridesDto,
 } from '../../core/api/model/models';
+
+/** Not yet in the generated client model for POST /applications/deploy-from-yaml. */
+interface DeployOverridesPayload {
+  name?: string;
+  exposure?: 'public' | 'internal';
+  domain?: { fqdn?: string; tls?: boolean };
+}
 
 export interface DependencyChoiceState {
   mode: DependencyChoiceDto.ModeEnum;
@@ -157,6 +165,9 @@ export class DeployWizardStateService {
   readonly exposureMode = signal<CreateApplicationDto.ExposureEnum>(
     CreateApplicationDto.ExposureEnum.Public,
   );
+  /** Manifest-first install overrides — prefilled from the manifest, sent only when edited. */
+  readonly overrideName = signal('');
+  readonly overrideFqdn = signal('');
   readonly deployConfig = signal<GhaDeployConfig>({
     port: 3000,
     healthcheckPath: '/health',
@@ -547,6 +558,9 @@ export class DeployWizardStateService {
       minReplicas: spec.deploy.scaling?.min ?? 1,
       maxReplicas: spec.deploy.scaling?.max ?? 1,
     });
+
+    this.overrideName.set(spec.metadata.name);
+    this.overrideFqdn.set(spec.deploy.domain?.fqdn ?? '');
 
     if (spec.deploy.exposure) {
       this.exposureMode.set(
@@ -1145,7 +1159,8 @@ export class DeployWizardStateService {
           repoFullName: this.repoFullName(),
           branch: this.branch() || undefined,
           envOverrides: Object.keys(envOverrides).length > 0 ? envOverrides : undefined,
-        })
+          overrides: this.buildInstallOverrides(manifest.manifest),
+        } as DeployFromYamlDto)
       );
 
       this.applicationId.set(response.applicationId);
@@ -1157,6 +1172,27 @@ export class DeployWizardStateService {
       this.orchestrationError.set(msg);
       return null;
     }
+  }
+
+  /** Diff against the manifest: the backend pins any override permanently, so an
+   *  unchanged value would take that field away from flui.yaml for good. */
+  private buildInstallOverrides(
+    spec: RepositoryFluiManifest['manifest']
+  ): DeployOverridesPayload | undefined {
+    if (!spec) return undefined;
+    const overrides: DeployOverridesPayload = {};
+
+    const name = this.overrideName().trim();
+    if (name && name !== spec.metadata.name) overrides.name = name;
+
+    const exposure =
+      this.exposureMode() === CreateApplicationDto.ExposureEnum.Internal ? 'internal' : 'public';
+    if (exposure !== (spec.deploy.exposure ?? 'public')) overrides.exposure = exposure;
+
+    const fqdn = this.overrideFqdn().trim();
+    if (fqdn && fqdn !== spec.deploy.domain?.fqdn) overrides.domain = { fqdn };
+
+    return Object.keys(overrides).length > 0 ? overrides : undefined;
   }
 
   // ========== Orchestration - Flow D (marketplace) ==========
