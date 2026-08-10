@@ -120,6 +120,7 @@ AGENTS.md
 
 # ---------- Sonar (local-only analysis — CI uses SonarCloud) ----------
 .sonar/
+.scannerwork/
 sonar-project.properties
 
 # ---------- Internal / private docs ----------
