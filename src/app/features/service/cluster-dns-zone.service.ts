@@ -1,5 +1,7 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { BASE_PATH } from '../../core/api/variables';
 import { ClusterDNSZoneService } from '../../core/api/api/clusterDNSZone.service';
 import { ClusterDnsZoneResponseDto } from '../../core/api/model/clusterDnsZoneResponseDto';
 import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../../core/api/model/clusterDnsZoneControllerGetIssuers200ResponseInner';
@@ -23,6 +25,8 @@ export type IssuerApiType = 'http' | 'dns';
 @Injectable({ providedIn: 'root' })
 export class ClusterDnsZoneService {
   private readonly apiService = inject(ClusterDNSZoneService);
+  private readonly http = inject(HttpClient);
+  private readonly basePath = inject(BASE_PATH, { optional: true }) ?? '';
 
   private readonly assignmentsData = signal<ClusterDnsZoneResponseDto[]>([]);
   private readonly loadingData = signal(false);
@@ -100,25 +104,23 @@ export class ClusterDnsZoneService {
     }
   }
 
-  async updateCertConfig(
+  /** Raw HttpClient: the reconcile endpoint is not in the generated client yet. */
+  async reconcileAssignment(
     clusterId: string,
-    assignmentId?: string
+    assignmentId: string
   ): Promise<ClusterDnsZoneResponseDto | null> {
-    const targetId = assignmentId ?? this.assignment()?.id;
-    if (!targetId) {
-      this.errorData.set('No DNS zone assignment to update');
-      return null;
-    }
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
+      const url = `${this.basePath}/api/v1/clusters/${encodeURIComponent(clusterId)}`
+        + `/dns-zone/${encodeURIComponent(assignmentId)}/reconcile`;
       const result = await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerUpdateCertConfig(targetId, clusterId)
+        this.http.post<ClusterDnsZoneResponseDto>(url, {})
       );
       this.assignmentsData.update(list => list.map(a => (a.id === result.id ? result : a)));
       return result;
     } catch (err: unknown) {
-      this.errorData.set(this.extractErrorMessage(err, 'Failed to update certificate config'));
+      this.errorData.set(this.extractErrorMessage(err, 'Failed to reconcile the DNS zone'));
       return null;
     } finally {
       this.loadingData.set(false);

@@ -230,6 +230,8 @@ export class ClusterIssuerSetupComponent implements OnInit, OnDestroy {
   refreshTrigger = input<number>(0);
   /** When true, opens the form automatically on init (e.g. after fresh zone assignment) */
   openFormOnInit = input<boolean>(false);
+  /** ACME email already stored on the zone assignment — used when no issuer carries one yet */
+  fallbackAcmeEmail = input<string>('');
   /** Emitted when issuer ready-state changes */
   issuersReadyChange = output<boolean>();
 
@@ -292,7 +294,7 @@ export class ClusterIssuerSetupComponent implements OnInit, OnDestroy {
   
       // Pre-fill email
       const existingEmail = loaded.find(i => this.isDnsIssuer(i) && i.email)?.email;
-      this.formEmail = existingEmail ?? '';
+      this.formEmail = existingEmail ?? this.fallbackAcmeEmail();
   
       // Open form when: explicitly requested (new assignment), no issuers yet, or issuers are http01
       const needsConfigure = !loaded.some(i => this.isDnsIssuer(i)) || loaded.some(i => !this.isDnsIssuer(i) && i.solverType === SolverType.Http01);
@@ -309,7 +311,7 @@ export class ClusterIssuerSetupComponent implements OnInit, OnDestroy {
 
   openForm(): void {
     const existing = this.dnsIssuers().find(i => i.email);
-    this.formEmail = existing?.email ?? '';
+    this.formEmail = existing?.email ?? this.fallbackAcmeEmail();
     this.formError.set(null);
     this.deleteError.set(null);
     this.showForm.set(true);

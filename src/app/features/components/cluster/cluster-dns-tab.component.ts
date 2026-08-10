@@ -90,6 +90,8 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
           [availableZones]="dnsZonesService.zones()"
           [clusterId]="clusterId()"
           [wildcardIssuersReady]="clusterDnsZoneService.wildcardIssuersReady()"
+          [assigning]="assigningZone()"
+          [reconcilingId]="reconcilingZoneId()"
           (assignZone)="onAssignZone($event)"
           (removeZone)="onRemoveZone($event)"
           (reconcile)="onReconcileZone($event)"
@@ -188,6 +190,8 @@ export class ClusterDnsTabComponent implements OnInit {
   protected editingEndpoint = signal<AppEndpointResponseDto | undefined>(undefined);
   protected refreshingEndpoints = signal(false);
   protected reconcilingId = signal<string | null>(null);
+  protected assigningZone = signal(false);
+  protected reconcilingZoneId = signal<string | null>(null);
   protected endpointToDelete = signal<AppEndpointResponseDto | null>(null);
 
   @ViewChild('deleteEndpointDialog') deleteEndpointDialog!: ConfirmationDialogComponent;
@@ -231,7 +235,13 @@ export class ClusterDnsTabComponent implements OnInit {
   protected async onAssignZone(dto: AssignDnsZoneDto): Promise<void> {
     const id = this.clusterId();
     if (!id) return;
-    await this.clusterDnsZoneService.assignZone(id, dto);
+    this.assigningZone.set(true);
+    try {
+      await this.clusterDnsZoneService.assignZone(id, dto);
+      await this.clusterDnsZoneService.loadIssuers(id);
+    } finally {
+      this.assigningZone.set(false);
+    }
   }
 
   protected onIssuersReadyChange(ready: boolean): void {
@@ -250,7 +260,14 @@ export class ClusterDnsTabComponent implements OnInit {
 
   protected async onReconcileZone(assignmentId: string): Promise<void> {
     const id = this.clusterId();
-    if (id) await this.clusterDnsZoneService.updateCertConfig(id, assignmentId);
+    if (!id) return;
+    this.reconcilingZoneId.set(assignmentId);
+    try {
+      await this.clusterDnsZoneService.reconcileAssignment(id, assignmentId);
+      await this.clusterDnsZoneService.loadIssuers(id);
+    } finally {
+      this.reconcilingZoneId.set(null);
+    }
   }
 
   protected async refreshEndpoints(): Promise<void> {

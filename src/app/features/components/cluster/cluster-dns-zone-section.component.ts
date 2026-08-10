@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideGlobe, lucideRefreshCw,
+  lucideGlobe, lucideRefreshCw, lucideLoader,
   lucideCheckCircle, lucideAlertCircle, lucidePlusCircle,
   lucideArrowUpCircle, lucideExternalLink
 } from '@ng-icons/lucide';
@@ -13,7 +13,7 @@ import { AssignDnsZoneDto } from '../../../core/api/model/assignDnsZoneDto';
 import {
   getReconciliationBadgeColor, getReconciliationBadgeLabel,
   formatTimeSince, needsReconciliation,
-  CertificateProvider, getZoneDisplayName
+  CertificateProvider, DnsReconciliationStatus, getZoneDisplayName
 } from '../../model/dns.models';
 import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
 
@@ -22,7 +22,7 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
   standalone: true,
   imports: [FormsModule, RouterLink, NgIconComponent, ClusterIssuerSetupComponent],
   providers: [provideIcons({
-    lucideGlobe, lucideRefreshCw,
+    lucideGlobe, lucideRefreshCw, lucideLoader,
     lucideCheckCircle, lucideAlertCircle, lucidePlusCircle,
     lucideArrowUpCircle, lucideExternalLink
   })],
@@ -42,7 +42,7 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
         </div>
       </div>
 
-      @if (assignments().length === 0 && !showAssignForm()) {
+      @if (assignments().length === 0 && !showAssignForm() && !assigning()) {
         <div class="p-4 border border-dashed border-border rounded-lg text-center">
           <ng-icon name="lucideGlobe" class="h-8 w-8 mx-auto text-muted-foreground mb-2" />
           <p class="text-sm text-sub">No DNS zone assigned</p>
@@ -58,10 +58,15 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
 
       @for (a of assignments(); track a.id) {
         <!-- Zone info card -->
-        <div class="p-4 border border-border rounded-lg space-y-2">
+        <div class="border rounded-lg overflow-hidden" [class]="cardClass(a)">
+        <div class="p-4 space-y-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-500" />
+              <ng-icon
+                [name]="isBusy(a) ? 'lucideLoader' : 'lucideGlobe'"
+                class="h-4 w-4 text-blue-500"
+                [class.animate-spin]="isBusy(a)"
+              />
               <span class="text-sm font-medium text-foreground font-mono">
                 {{ a.dnsZone.zoneName }}
               </span>
@@ -70,12 +75,12 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
               </span>
             </div>
             <div class="flex items-center gap-3">
-              <span class="text-xs px-2 py-0.5 rounded font-medium" [class]="getStatusClass(a.reconciliationStatus)">
-                {{ getStatusLabel(a.reconciliationStatus) }}
+              <span class="text-xs px-2 py-0.5 rounded font-medium" [class]="badgeClass(a)">
+                {{ isBusy(a) ? 'Reconciling...' : getStatusLabel(a.reconciliationStatus) }}
               </span>
               <button
                 (click)="removeConfirmId.set(a.id)"
-                [disabled]="removeConfirmId() === a.id"
+                [disabled]="removeConfirmId() === a.id || isBusy(a)"
                 class="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-50"
               >
                 Remove
@@ -114,11 +119,17 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
             </div>
           }
 
-          @if (needsRec(a)) {
+          @if (needsRec(a) && !isBusy(a)) {
             <button (click)="reconcile.emit(a.id)" class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
               <ng-icon name="lucideRefreshCw" class="h-3 w-3" />
               Reconcile now
             </button>
+          }
+
+          @if (isBusy(a)) {
+            <p class="text-xs text-blue-600 dark:text-blue-400">
+              Applying DNS-01 credentials and wildcard issuers...
+            </p>
           }
 
           <!-- Switch to production when staging is active and issuers are ready -->
@@ -140,9 +151,38 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
             </div>
           }
         </div>
+        @if (isBusy(a)) {
+          <div class="h-1 w-full bg-blue-100 dark:bg-blue-900/40 overflow-hidden">
+            <div class="h-1 w-1/3 bg-blue-500 dark:bg-blue-400 rounded-full animate-indeterminate"></div>
+          </div>
+        }
+        </div>
       }
 
-      @if (assignments().length > 0 && !showAssignForm() && unassignedZones().length > 0) {
+      <!-- Pending card: the assign POST applies cluster state, so it is not instantaneous -->
+      @if (assigning()) {
+        <div class="border rounded-lg overflow-hidden bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
+          <div class="p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <ng-icon name="lucideLoader" class="h-4 w-4 text-blue-500 animate-spin" />
+                <span class="text-sm font-medium text-foreground font-mono">{{ assigningZoneName() }}</span>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                Assigning...
+              </span>
+            </div>
+            <p class="text-xs text-blue-600 dark:text-blue-400">
+              Applying DNS-01 credentials and wildcard issuers...
+            </p>
+          </div>
+          <div class="h-1 w-full bg-blue-100 dark:bg-blue-900/40 overflow-hidden">
+            <div class="h-1 w-1/3 bg-blue-500 dark:bg-blue-400 rounded-full animate-indeterminate"></div>
+          </div>
+        </div>
+      }
+
+      @if (assignments().length > 0 && !showAssignForm() && !assigning() && unassignedZones().length > 0) {
         <button
           (click)="showAssignForm.set(true)"
           class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
@@ -243,6 +283,7 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
             #dnsIssuerSetup
             [clusterId]="clusterId()!"
             [openFormOnInit]="justAssigned()"
+            [fallbackAcmeEmail]="wildcardAcmeEmail()"
             (issuersReadyChange)="onIssuersReadyChange($event)"
           />
         </div>
@@ -256,6 +297,10 @@ export class ClusterDnsZoneSectionComponent {
   clusterId = input<string | null>(null);
   /** Live cert-manager state: a DNS-01-capable issuer is Ready on the cluster. */
   wildcardIssuersReady = input<boolean>(false);
+  /** A zone assignment is in flight — shows the pending card. */
+  assigning = input<boolean>(false);
+  /** Id of the assignment currently being reconciled, if any. */
+  reconcilingId = input<string | null>(null);
 
   assignZone = output<AssignDnsZoneDto>();
   /** Emits the assignment id to remove */
@@ -267,6 +312,7 @@ export class ClusterDnsZoneSectionComponent {
 
   protected showAssignForm = signal(false);
   protected removeConfirmId = signal<string | null>(null);
+  protected submittedZoneId = signal<string | null>(null);
   protected localIssuersReady = signal(false);
   /** True immediately after the user assigns a new zone — forces configure-issuer form open */
   protected justAssigned = signal(false);
@@ -290,9 +336,37 @@ export class ClusterDnsZoneSectionComponent {
     this.assignments().some(a => a.wildcardCertificate)
   );
 
+  /** ACME email the operator already gave on a zone — no reason to ask twice. */
+  protected wildcardAcmeEmail = computed(() =>
+    this.assignments().find(a => a.wildcardCertificate && a.acmeEmail)?.acmeEmail
+      ?? this.assignments().find(a => a.acmeEmail)?.acmeEmail
+      ?? ''
+  );
+
   protected needsRec(a: ClusterDnsZoneResponseDto): boolean {
     return a.reconciliationStatus ? needsReconciliation(a.reconciliationStatus) : false;
   }
+
+  /** In flight locally, or reconciling server-side (issuer still registering with ACME). */
+  protected isBusy(a: ClusterDnsZoneResponseDto): boolean {
+    return this.reconcilingId() === a.id
+      || a.reconciliationStatus === DnsReconciliationStatus.RECONCILING;
+  }
+
+  protected cardClass(a: ClusterDnsZoneResponseDto): string {
+    return this.isBusy(a)
+      ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
+      : 'border-border';
+  }
+
+  protected badgeClass(a: ClusterDnsZoneResponseDto): string {
+    if (this.isBusy(a)) return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+    return this.getStatusClass(a.reconciliationStatus);
+  }
+
+  protected assigningZoneName = computed(() =>
+    this.availableZones().find(z => z.id === this.submittedZoneId())?.zoneName ?? 'DNS zone'
+  );
 
   /** Wildcard TLS is intended on the assignment but no DNS-01 issuer is Ready yet. */
   protected wildcardPending(a: ClusterDnsZoneResponseDto): boolean {
@@ -346,6 +420,7 @@ export class ClusterDnsZoneSectionComponent {
           }
         : {}),
     };
+    this.submittedZoneId.set(dto.dnsZoneId);
     this.assignZone.emit(dto);
     this.showAssignForm.set(false);
     if (dto.wildcardCertificate) this.justAssigned.set(true);
