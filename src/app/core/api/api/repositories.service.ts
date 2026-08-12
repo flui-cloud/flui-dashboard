@@ -518,7 +518,7 @@ export class RepositoriesService extends BaseService {
 
     /**
      * Discover flui.yaml manifests in the repository (root + subdirs)
-     * Lightweight discovery via GitHub API — no clone. Returns every flui.yaml found at the repository root and in subdirectories (monorepo: one manifest per deployable), each validated as a kind: Application flui/v1 manifest. Drives the manifest-first deploy flow.
+     * Lightweight discovery via GitHub API — no clone. Returns every flui.yaml found at the repository root and in subdirectories (monorepo: one manifest per deployable), each validated as a kind: Application flui.cloud/v1beta1 manifest. Drives the manifest-first deploy flow.
      * @endpoint get /api/v1/repositories/{id}/manifests
      * @param id 
      * @param branch Git ref to read from (defaults to the default branch)

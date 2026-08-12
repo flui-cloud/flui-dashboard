@@ -20,5 +20,9 @@ export interface DeployFromYamlResponseDto {
      * Set when skipBuild=true — track via /operations/:id
      */
     operationId?: string;
+    /**
+     * The manifest actually applied, with the branch environment and the install-time overrides baked in. Returned on validateOnly requests — use it to preview or download what a deploy would produce.
+     */
+    effectiveYaml?: string;
 }
 

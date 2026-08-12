@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { DeployOverridesDto } from './deployOverridesDto';
 
 
 export interface DeployFromYamlDto { 
@@ -31,7 +32,11 @@ export interface DeployFromYamlDto {
      */
     envOverrides?: object;
     /**
-     * Validate manifest without triggering a deploy
+     * Install-time overrides of manifest fields that belong to the installation rather than to the code (release name, exposure, endpoint/domain). Persisted on the application and re-applied on every later manifest deploy, so an install never silently reverts to the manifest value. Combine with a distinct name to deploy the same repo twice on one cluster.
+     */
+    overrides?: DeployOverridesDto;
+    /**
+     * Validate manifest without triggering a deploy. Returns the effective manifest (overrides and branch environment applied) in effectiveYaml.
      */
     validateOnly?: boolean;
     /**

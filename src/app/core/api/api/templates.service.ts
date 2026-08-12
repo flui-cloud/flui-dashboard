@@ -114,7 +114,7 @@ export class TemplatesService extends BaseService {
 
     /**
      * List all templates
-     * List all available framework templates with metadata
+     * List all available framework templates with metadata. Callable without a token; &#x60;repo&#x60; and &#x60;repoUrl&#x60; are included only for authenticated callers.
      * @endpoint get /api/v1/templates
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.

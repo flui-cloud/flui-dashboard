@@ -55,6 +55,10 @@ export interface UpdateApplicationDto {
      * Switch the app between public and internal exposure. Moving to \"internal\" requires that the app has no AppEndpoint attached (delete the endpoint first). Moving to \"public\" does NOT automatically create an endpoint — call POST /clusters/:id/app-endpoints afterwards to attach one.
      */
     exposure?: UpdateApplicationDto.ExposureEnum;
+    /**
+     * Enable/disable continuous auto-deploy on push for this git_build app. When true, a successful CI build on a new commit automatically rolls out the new image; when false, images are only recorded for manual deploy.
+     */
+    deployOnPush?: boolean;
 }
 export namespace UpdateApplicationDto {
     export const ExposureEnum = {

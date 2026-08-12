@@ -15,7 +15,7 @@ export interface RepositoryManifestEntryDto {
      */
     path: string;
     /**
-     * Whether the manifest is a valid kind: Application flui/v1 manifest (deployable from this flow)
+     * Whether the manifest is a valid kind: Application flui.cloud/v1beta1 manifest (deployable from this flow)
      */
     valid: boolean;
     /**
@@ -34,6 +34,10 @@ export interface RepositoryManifestEntryDto {
      * Validation error when not valid
      */
     validationError?: string;
+    /**
+     * Non-fatal advisories for a valid manifest: fields the spec accepts but the runtime does not yet apply (x-flui-status: planned). Omitted when none.
+     */
+    warnings?: Array<string>;
     /**
      * Raw flui.yaml content
      */

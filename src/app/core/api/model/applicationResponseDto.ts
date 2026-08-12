@@ -50,6 +50,10 @@ export interface ApplicationResponseDto {
      */
     autoDeploy: boolean;
     /**
+     * Continuous auto-deploy policy (git_build apps): when true, a successful CI build on a new commit automatically rolls out the new image.
+     */
+    deployOnPush: boolean;
+    /**
      * How the app is reached. \"public\" exposes the app via Ingress + Certificate + DNS on a public hostname (external endpoint with its own domain). \"internal\" means no public exposure: only Deployment + Service ClusterIP exist, and the app is reachable only from the Flui dashboard through the ForwardAuth proxy. Frontend should hide the DNS / domain / certificate tabs when this is \"internal\".
      */
     exposure: ApplicationResponseDto.ExposureEnum;
@@ -57,6 +61,14 @@ export interface ApplicationResponseDto {
      * Fully-qualified public access URL for a `public` app, composed from the app endpoint hostname as `https://<fqdn><entrypointPath>`. This is the real, authoritative link — consumers (dashboard \"Open\" button, the assistant) MUST use it verbatim and never reconstruct it from the slug. Undefined for internal apps (use `internalUrl`) and for public apps whose endpoint is not provisioned yet.
      */
     url?: string;
+    /**
+     * Reconciliation state of the public endpoint that backs `url` — whether the DNS record, the Ingress and the certificate were actually applied. \"IN_SYNC\" is the only state in which `url` is populated; in any other state the hostname exists but nothing serves it yet, so treat the app as not publicly reachable and show this instead of a link. Undefined for internal apps and for apps with no endpoint.
+     */
+    endpointStatus?: ApplicationResponseDto.EndpointStatusEnum;
+    /**
+     * Why the public endpoint is not serving, when `endpointStatus` is ERROR — e.g. a missing DNS-01 ClusterIssuer or an unreachable DNS provider. Safe to show to the user verbatim; it names the misconfiguration to fix.
+     */
+    endpointError?: string;
     /**
      * Fully-qualified URL the dashboard should use for the \"Open\" button when this is an internal app. Composed as `https://<slug>.internal.<clusterZone><entrypointPath>`. Populated only on detail responses (GET /applications/:id and after-create/after-update flows) and only when the cluster currently supports internal hosting (capabilities.hasInternalHosting === true). Undefined for public apps and for internal apps on clusters that do not yet have internal hosting configured — in the latter case the FE must keep the button disabled.
      */
@@ -178,6 +190,14 @@ export namespace ApplicationResponseDto {
         Cluster: 'cluster'
     } as const;
     export type ExposureEnum = typeof ExposureEnum[keyof typeof ExposureEnum];
+    export const EndpointStatusEnum = {
+        Pending: 'PENDING',
+        InSync: 'IN_SYNC',
+        Drift: 'DRIFT',
+        Reconciling: 'RECONCILING',
+        Error: 'ERROR'
+    } as const;
+    export type EndpointStatusEnum = typeof EndpointStatusEnum[keyof typeof EndpointStatusEnum];
     export const WorkloadKindEnum = {
         Deployment: 'Deployment',
         StatefulSet: 'StatefulSet',

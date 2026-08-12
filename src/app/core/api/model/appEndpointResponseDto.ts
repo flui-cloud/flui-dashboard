@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { GatewayConfigDto } from './gatewayConfigDto';
 
 
 export interface AppEndpointResponseDto { 
@@ -44,6 +45,10 @@ export interface AppEndpointResponseDto {
     lastReconciliationAt?: string;
     errorMessage?: string;
     metadata?: object;
+    /**
+     * Per-route gateway policies (auth/rateLimit/allowIps/path). Null = default behavior (plain route, no policies).
+     */
+    gatewayConfig?: GatewayConfigDto;
     createdAt: string;
     updatedAt: string;
 }

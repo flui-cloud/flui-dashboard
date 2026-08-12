@@ -17,6 +17,10 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
+import { AlertmanagerWebhookDto } from '../model/alertmanagerWebhookDto';
+// @ts-ignore
+import { AlertsWebhookResultDto } from '../model/alertsWebhookResultDto';
+// @ts-ignore
 import { GitHubActionsWebhookDto } from '../model/gitHubActionsWebhookDto';
 
 // @ts-ignore
@@ -33,6 +37,94 @@ export class WebhooksService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
+    }
+
+    /**
+     * Receive Alertmanager notifications
+     * Called in-cluster by Alertmanager after grouping, deduplication and inhibition. Flui resolves each alert to its application or node. Authenticated via X-Flui-Token.
+     * @endpoint post /api/v1/webhooks/alerts
+     * @param xFluiToken 
+     * @param authorization 
+     * @param xFluiToken2 Shared secret configured as ALERTS_WEBHOOK_TOKEN
+     * @param alertmanagerWebhookDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public webhooksControllerHandleAlerts(xFluiToken: string, authorization: string, xFluiToken2: string, alertmanagerWebhookDto: AlertmanagerWebhookDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<AlertsWebhookResultDto>;
+    public webhooksControllerHandleAlerts(xFluiToken: string, authorization: string, xFluiToken2: string, alertmanagerWebhookDto: AlertmanagerWebhookDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<AlertsWebhookResultDto>>;
+    public webhooksControllerHandleAlerts(xFluiToken: string, authorization: string, xFluiToken2: string, alertmanagerWebhookDto: AlertmanagerWebhookDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<AlertsWebhookResultDto>>;
+    public webhooksControllerHandleAlerts(xFluiToken: string, authorization: string, xFluiToken2: string, alertmanagerWebhookDto: AlertmanagerWebhookDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (xFluiToken === null || xFluiToken === undefined) {
+            throw new Error('Required parameter xFluiToken was null or undefined when calling webhooksControllerHandleAlerts.');
+        }
+        if (authorization === null || authorization === undefined) {
+            throw new Error('Required parameter authorization was null or undefined when calling webhooksControllerHandleAlerts.');
+        }
+        if (xFluiToken2 === null || xFluiToken2 === undefined) {
+            throw new Error('Required parameter xFluiToken2 was null or undefined when calling webhooksControllerHandleAlerts.');
+        }
+        if (alertmanagerWebhookDto === null || alertmanagerWebhookDto === undefined) {
+            throw new Error('Required parameter alertmanagerWebhookDto was null or undefined when calling webhooksControllerHandleAlerts.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+        if (xFluiToken !== undefined && xFluiToken !== null) {
+            localVarHeaders = localVarHeaders.set('x-flui-token', String(xFluiToken));
+        }
+        if (authorization !== undefined && authorization !== null) {
+            localVarHeaders = localVarHeaders.set('authorization', String(authorization));
+        }
+        if (xFluiToken2 !== undefined && xFluiToken2 !== null) {
+            localVarHeaders = localVarHeaders.set('X-Flui-Token', String(xFluiToken2));
+        }
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/webhooks/alerts`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<AlertsWebhookResultDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: alertmanagerWebhookDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**

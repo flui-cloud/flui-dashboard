@@ -120,6 +120,10 @@ export interface CreateApplicationDto {
      */
     autoDeploy?: boolean;
     /**
+     * Continuous auto-deploy policy (git_build apps). When true, a successful CI build on a new commit automatically rolls out the new image. When false (default) the image is only recorded and a deploy must be triggered manually. Does not affect the very first deploy. Distinct from autoDeploy, which is a one-shot deploy right after creation.
+     */
+    deployOnPush?: boolean;
+    /**
      * How the app is reached. \"public\" (default) creates Ingress + Certificate + DNS on a public hostname. \"internal\" skips all public exposure: only Deployment + Service ClusterIP are created, and the app is reachable only from the Flui dashboard through the ForwardAuth proxy.
      */
     exposure?: CreateApplicationDto.ExposureEnum;

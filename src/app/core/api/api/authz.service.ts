@@ -38,54 +38,453 @@ export class AuthzService extends BaseService {
     }
 
     /**
-     * ForwardAuth decision for internal apps
-     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
-     * @endpoint delete /api/v1/authz/internal-app
+     * ForwardAuth decision for gateway SSO routes
+     * Called by Traefik on every request to a route whose gateway config enables SSO. Validates the Flui session (JWT in cookie or Bearer), resolves the route from the forwarded host and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application.
+     * @endpoint delete /api/v1/authz/gateway
      * @param xForwardedHost 
-     * @param xForwardedUri 
-     * @param xForwardedMethod 
-     * @param xOriginalUrl 
-     * @param userAgent 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authzControllerInternalAppDelete(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authzControllerInternalAppDelete(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authzControllerInternalAppDelete(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authzControllerInternalAppDelete(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public authzControllerGatewayDelete(xForwardedHost: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayDelete(xForwardedHost: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayDelete(xForwardedHost: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayDelete(xForwardedHost: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (xForwardedHost === null || xForwardedHost === undefined) {
-            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerInternalAppDelete.');
-        }
-        if (xForwardedUri === null || xForwardedUri === undefined) {
-            throw new Error('Required parameter xForwardedUri was null or undefined when calling authzControllerInternalAppDelete.');
-        }
-        if (xForwardedMethod === null || xForwardedMethod === undefined) {
-            throw new Error('Required parameter xForwardedMethod was null or undefined when calling authzControllerInternalAppDelete.');
-        }
-        if (xOriginalUrl === null || xOriginalUrl === undefined) {
-            throw new Error('Required parameter xOriginalUrl was null or undefined when calling authzControllerInternalAppDelete.');
-        }
-        if (userAgent === null || userAgent === undefined) {
-            throw new Error('Required parameter userAgent was null or undefined when calling authzControllerInternalAppDelete.');
+            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerGatewayDelete.');
         }
 
         let localVarHeaders = this.defaultHeaders;
         if (xForwardedHost !== undefined && xForwardedHost !== null) {
             localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
         }
-        if (xForwardedUri !== undefined && xForwardedUri !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-uri', String(xForwardedUri));
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
-        if (xForwardedMethod !== undefined && xForwardedMethod !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-method', String(xForwardedMethod));
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
         }
-        if (xOriginalUrl !== undefined && xOriginalUrl !== null) {
-            localVarHeaders = localVarHeaders.set('x-original-url', String(xOriginalUrl));
+
+        let localVarPath = `/api/v1/authz/gateway`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for gateway SSO routes
+     * Called by Traefik on every request to a route whose gateway config enables SSO. Validates the Flui session (JWT in cookie or Bearer), resolves the route from the forwarded host and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application.
+     * @endpoint get /api/v1/authz/gateway
+     * @param xForwardedHost 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayGet(xForwardedHost: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayGet(xForwardedHost: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayGet(xForwardedHost: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayGet(xForwardedHost: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (xForwardedHost === null || xForwardedHost === undefined) {
+            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerGatewayGet.');
         }
-        if (userAgent !== undefined && userAgent !== null) {
-            localVarHeaders = localVarHeaders.set('user-agent', String(userAgent));
+
+        let localVarHeaders = this.defaultHeaders;
+        if (xForwardedHost !== undefined && xForwardedHost !== null) {
+            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
         }
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for gateway SSO routes
+     * Called by Traefik on every request to a route whose gateway config enables SSO. Validates the Flui session (JWT in cookie or Bearer), resolves the route from the forwarded host and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application.
+     * @endpoint head /api/v1/authz/gateway
+     * @param xForwardedHost 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayHead(xForwardedHost: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayHead(xForwardedHost: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayHead(xForwardedHost: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayHead(xForwardedHost: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (xForwardedHost === null || xForwardedHost === undefined) {
+            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerGatewayHead.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+        if (xForwardedHost !== undefined && xForwardedHost !== null) {
+            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
+        }
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('head', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for gateway SSO routes
+     * Called by Traefik on every request to a route whose gateway config enables SSO. Validates the Flui session (JWT in cookie or Bearer), resolves the route from the forwarded host and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application.
+     * @endpoint options /api/v1/authz/gateway
+     * @param xForwardedHost 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayOptions(xForwardedHost: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayOptions(xForwardedHost: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayOptions(xForwardedHost: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayOptions(xForwardedHost: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (xForwardedHost === null || xForwardedHost === undefined) {
+            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerGatewayOptions.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+        if (xForwardedHost !== undefined && xForwardedHost !== null) {
+            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
+        }
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('options', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for gateway SSO routes
+     * Called by Traefik on every request to a route whose gateway config enables SSO. Validates the Flui session (JWT in cookie or Bearer), resolves the route from the forwarded host and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application.
+     * @endpoint patch /api/v1/authz/gateway
+     * @param xForwardedHost 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayPatch(xForwardedHost: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayPatch(xForwardedHost: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayPatch(xForwardedHost: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayPatch(xForwardedHost: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (xForwardedHost === null || xForwardedHost === undefined) {
+            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerGatewayPatch.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+        if (xForwardedHost !== undefined && xForwardedHost !== null) {
+            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
+        }
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('patch', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for gateway SSO routes
+     * Called by Traefik on every request to a route whose gateway config enables SSO. Validates the Flui session (JWT in cookie or Bearer), resolves the route from the forwarded host and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application.
+     * @endpoint post /api/v1/authz/gateway
+     * @param xForwardedHost 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayPost(xForwardedHost: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayPost(xForwardedHost: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayPost(xForwardedHost: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayPost(xForwardedHost: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (xForwardedHost === null || xForwardedHost === undefined) {
+            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerGatewayPost.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+        if (xForwardedHost !== undefined && xForwardedHost !== null) {
+            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
+        }
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for gateway SSO routes
+     * Called by Traefik on every request to a route whose gateway config enables SSO. Validates the Flui session (JWT in cookie or Bearer), resolves the route from the forwarded host and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application.
+     * @endpoint put /api/v1/authz/gateway
+     * @param xForwardedHost 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayPut(xForwardedHost: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayPut(xForwardedHost: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayPut(xForwardedHost: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayPut(xForwardedHost: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (xForwardedHost === null || xForwardedHost === undefined) {
+            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerGatewayPut.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+        if (xForwardedHost !== undefined && xForwardedHost !== null) {
+            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
+        }
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('put', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for internal apps
+     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
+     * @endpoint delete /api/v1/authz/internal-app
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerInternalAppDelete(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerInternalAppDelete(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerInternalAppDelete(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerInternalAppDelete(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
 
         // authentication (bearer) required
         localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
@@ -131,51 +530,16 @@ export class AuthzService extends BaseService {
      * ForwardAuth decision for internal apps
      * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
      * @endpoint get /api/v1/authz/internal-app
-     * @param xForwardedHost 
-     * @param xForwardedUri 
-     * @param xForwardedMethod 
-     * @param xOriginalUrl 
-     * @param userAgent 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authzControllerInternalAppGet(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authzControllerInternalAppGet(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authzControllerInternalAppGet(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authzControllerInternalAppGet(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (xForwardedHost === null || xForwardedHost === undefined) {
-            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerInternalAppGet.');
-        }
-        if (xForwardedUri === null || xForwardedUri === undefined) {
-            throw new Error('Required parameter xForwardedUri was null or undefined when calling authzControllerInternalAppGet.');
-        }
-        if (xForwardedMethod === null || xForwardedMethod === undefined) {
-            throw new Error('Required parameter xForwardedMethod was null or undefined when calling authzControllerInternalAppGet.');
-        }
-        if (xOriginalUrl === null || xOriginalUrl === undefined) {
-            throw new Error('Required parameter xOriginalUrl was null or undefined when calling authzControllerInternalAppGet.');
-        }
-        if (userAgent === null || userAgent === undefined) {
-            throw new Error('Required parameter userAgent was null or undefined when calling authzControllerInternalAppGet.');
-        }
+    public authzControllerInternalAppGet(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerInternalAppGet(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerInternalAppGet(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerInternalAppGet(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
-        if (xForwardedHost !== undefined && xForwardedHost !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
-        }
-        if (xForwardedUri !== undefined && xForwardedUri !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-uri', String(xForwardedUri));
-        }
-        if (xForwardedMethod !== undefined && xForwardedMethod !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-method', String(xForwardedMethod));
-        }
-        if (xOriginalUrl !== undefined && xOriginalUrl !== null) {
-            localVarHeaders = localVarHeaders.set('x-original-url', String(xOriginalUrl));
-        }
-        if (userAgent !== undefined && userAgent !== null) {
-            localVarHeaders = localVarHeaders.set('user-agent', String(userAgent));
-        }
 
         // authentication (bearer) required
         localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
@@ -221,51 +585,16 @@ export class AuthzService extends BaseService {
      * ForwardAuth decision for internal apps
      * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
      * @endpoint head /api/v1/authz/internal-app
-     * @param xForwardedHost 
-     * @param xForwardedUri 
-     * @param xForwardedMethod 
-     * @param xOriginalUrl 
-     * @param userAgent 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authzControllerInternalAppHead(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authzControllerInternalAppHead(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authzControllerInternalAppHead(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authzControllerInternalAppHead(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (xForwardedHost === null || xForwardedHost === undefined) {
-            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerInternalAppHead.');
-        }
-        if (xForwardedUri === null || xForwardedUri === undefined) {
-            throw new Error('Required parameter xForwardedUri was null or undefined when calling authzControllerInternalAppHead.');
-        }
-        if (xForwardedMethod === null || xForwardedMethod === undefined) {
-            throw new Error('Required parameter xForwardedMethod was null or undefined when calling authzControllerInternalAppHead.');
-        }
-        if (xOriginalUrl === null || xOriginalUrl === undefined) {
-            throw new Error('Required parameter xOriginalUrl was null or undefined when calling authzControllerInternalAppHead.');
-        }
-        if (userAgent === null || userAgent === undefined) {
-            throw new Error('Required parameter userAgent was null or undefined when calling authzControllerInternalAppHead.');
-        }
+    public authzControllerInternalAppHead(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerInternalAppHead(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerInternalAppHead(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerInternalAppHead(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
-        if (xForwardedHost !== undefined && xForwardedHost !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
-        }
-        if (xForwardedUri !== undefined && xForwardedUri !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-uri', String(xForwardedUri));
-        }
-        if (xForwardedMethod !== undefined && xForwardedMethod !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-method', String(xForwardedMethod));
-        }
-        if (xOriginalUrl !== undefined && xOriginalUrl !== null) {
-            localVarHeaders = localVarHeaders.set('x-original-url', String(xOriginalUrl));
-        }
-        if (userAgent !== undefined && userAgent !== null) {
-            localVarHeaders = localVarHeaders.set('user-agent', String(userAgent));
-        }
 
         // authentication (bearer) required
         localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
@@ -311,51 +640,16 @@ export class AuthzService extends BaseService {
      * ForwardAuth decision for internal apps
      * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
      * @endpoint options /api/v1/authz/internal-app
-     * @param xForwardedHost 
-     * @param xForwardedUri 
-     * @param xForwardedMethod 
-     * @param xOriginalUrl 
-     * @param userAgent 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authzControllerInternalAppOptions(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authzControllerInternalAppOptions(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authzControllerInternalAppOptions(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authzControllerInternalAppOptions(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (xForwardedHost === null || xForwardedHost === undefined) {
-            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerInternalAppOptions.');
-        }
-        if (xForwardedUri === null || xForwardedUri === undefined) {
-            throw new Error('Required parameter xForwardedUri was null or undefined when calling authzControllerInternalAppOptions.');
-        }
-        if (xForwardedMethod === null || xForwardedMethod === undefined) {
-            throw new Error('Required parameter xForwardedMethod was null or undefined when calling authzControllerInternalAppOptions.');
-        }
-        if (xOriginalUrl === null || xOriginalUrl === undefined) {
-            throw new Error('Required parameter xOriginalUrl was null or undefined when calling authzControllerInternalAppOptions.');
-        }
-        if (userAgent === null || userAgent === undefined) {
-            throw new Error('Required parameter userAgent was null or undefined when calling authzControllerInternalAppOptions.');
-        }
+    public authzControllerInternalAppOptions(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerInternalAppOptions(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerInternalAppOptions(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerInternalAppOptions(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
-        if (xForwardedHost !== undefined && xForwardedHost !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
-        }
-        if (xForwardedUri !== undefined && xForwardedUri !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-uri', String(xForwardedUri));
-        }
-        if (xForwardedMethod !== undefined && xForwardedMethod !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-method', String(xForwardedMethod));
-        }
-        if (xOriginalUrl !== undefined && xOriginalUrl !== null) {
-            localVarHeaders = localVarHeaders.set('x-original-url', String(xOriginalUrl));
-        }
-        if (userAgent !== undefined && userAgent !== null) {
-            localVarHeaders = localVarHeaders.set('user-agent', String(userAgent));
-        }
 
         // authentication (bearer) required
         localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
@@ -401,51 +695,16 @@ export class AuthzService extends BaseService {
      * ForwardAuth decision for internal apps
      * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
      * @endpoint patch /api/v1/authz/internal-app
-     * @param xForwardedHost 
-     * @param xForwardedUri 
-     * @param xForwardedMethod 
-     * @param xOriginalUrl 
-     * @param userAgent 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authzControllerInternalAppPatch(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authzControllerInternalAppPatch(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authzControllerInternalAppPatch(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authzControllerInternalAppPatch(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (xForwardedHost === null || xForwardedHost === undefined) {
-            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerInternalAppPatch.');
-        }
-        if (xForwardedUri === null || xForwardedUri === undefined) {
-            throw new Error('Required parameter xForwardedUri was null or undefined when calling authzControllerInternalAppPatch.');
-        }
-        if (xForwardedMethod === null || xForwardedMethod === undefined) {
-            throw new Error('Required parameter xForwardedMethod was null or undefined when calling authzControllerInternalAppPatch.');
-        }
-        if (xOriginalUrl === null || xOriginalUrl === undefined) {
-            throw new Error('Required parameter xOriginalUrl was null or undefined when calling authzControllerInternalAppPatch.');
-        }
-        if (userAgent === null || userAgent === undefined) {
-            throw new Error('Required parameter userAgent was null or undefined when calling authzControllerInternalAppPatch.');
-        }
+    public authzControllerInternalAppPatch(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerInternalAppPatch(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerInternalAppPatch(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerInternalAppPatch(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
-        if (xForwardedHost !== undefined && xForwardedHost !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
-        }
-        if (xForwardedUri !== undefined && xForwardedUri !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-uri', String(xForwardedUri));
-        }
-        if (xForwardedMethod !== undefined && xForwardedMethod !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-method', String(xForwardedMethod));
-        }
-        if (xOriginalUrl !== undefined && xOriginalUrl !== null) {
-            localVarHeaders = localVarHeaders.set('x-original-url', String(xOriginalUrl));
-        }
-        if (userAgent !== undefined && userAgent !== null) {
-            localVarHeaders = localVarHeaders.set('user-agent', String(userAgent));
-        }
 
         // authentication (bearer) required
         localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
@@ -491,51 +750,16 @@ export class AuthzService extends BaseService {
      * ForwardAuth decision for internal apps
      * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
      * @endpoint post /api/v1/authz/internal-app
-     * @param xForwardedHost 
-     * @param xForwardedUri 
-     * @param xForwardedMethod 
-     * @param xOriginalUrl 
-     * @param userAgent 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authzControllerInternalAppPost(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authzControllerInternalAppPost(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authzControllerInternalAppPost(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authzControllerInternalAppPost(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (xForwardedHost === null || xForwardedHost === undefined) {
-            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerInternalAppPost.');
-        }
-        if (xForwardedUri === null || xForwardedUri === undefined) {
-            throw new Error('Required parameter xForwardedUri was null or undefined when calling authzControllerInternalAppPost.');
-        }
-        if (xForwardedMethod === null || xForwardedMethod === undefined) {
-            throw new Error('Required parameter xForwardedMethod was null or undefined when calling authzControllerInternalAppPost.');
-        }
-        if (xOriginalUrl === null || xOriginalUrl === undefined) {
-            throw new Error('Required parameter xOriginalUrl was null or undefined when calling authzControllerInternalAppPost.');
-        }
-        if (userAgent === null || userAgent === undefined) {
-            throw new Error('Required parameter userAgent was null or undefined when calling authzControllerInternalAppPost.');
-        }
+    public authzControllerInternalAppPost(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerInternalAppPost(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerInternalAppPost(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerInternalAppPost(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
-        if (xForwardedHost !== undefined && xForwardedHost !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
-        }
-        if (xForwardedUri !== undefined && xForwardedUri !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-uri', String(xForwardedUri));
-        }
-        if (xForwardedMethod !== undefined && xForwardedMethod !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-method', String(xForwardedMethod));
-        }
-        if (xOriginalUrl !== undefined && xOriginalUrl !== null) {
-            localVarHeaders = localVarHeaders.set('x-original-url', String(xOriginalUrl));
-        }
-        if (userAgent !== undefined && userAgent !== null) {
-            localVarHeaders = localVarHeaders.set('user-agent', String(userAgent));
-        }
 
         // authentication (bearer) required
         localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
@@ -581,51 +805,16 @@ export class AuthzService extends BaseService {
      * ForwardAuth decision for internal apps
      * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
      * @endpoint put /api/v1/authz/internal-app
-     * @param xForwardedHost 
-     * @param xForwardedUri 
-     * @param xForwardedMethod 
-     * @param xOriginalUrl 
-     * @param userAgent 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authzControllerInternalAppPut(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authzControllerInternalAppPut(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authzControllerInternalAppPut(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authzControllerInternalAppPut(xForwardedHost: string, xForwardedUri: string, xForwardedMethod: string, xOriginalUrl: string, userAgent: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (xForwardedHost === null || xForwardedHost === undefined) {
-            throw new Error('Required parameter xForwardedHost was null or undefined when calling authzControllerInternalAppPut.');
-        }
-        if (xForwardedUri === null || xForwardedUri === undefined) {
-            throw new Error('Required parameter xForwardedUri was null or undefined when calling authzControllerInternalAppPut.');
-        }
-        if (xForwardedMethod === null || xForwardedMethod === undefined) {
-            throw new Error('Required parameter xForwardedMethod was null or undefined when calling authzControllerInternalAppPut.');
-        }
-        if (xOriginalUrl === null || xOriginalUrl === undefined) {
-            throw new Error('Required parameter xOriginalUrl was null or undefined when calling authzControllerInternalAppPut.');
-        }
-        if (userAgent === null || userAgent === undefined) {
-            throw new Error('Required parameter userAgent was null or undefined when calling authzControllerInternalAppPut.');
-        }
+    public authzControllerInternalAppPut(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerInternalAppPut(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerInternalAppPut(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerInternalAppPut(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
-        if (xForwardedHost !== undefined && xForwardedHost !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-host', String(xForwardedHost));
-        }
-        if (xForwardedUri !== undefined && xForwardedUri !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-uri', String(xForwardedUri));
-        }
-        if (xForwardedMethod !== undefined && xForwardedMethod !== null) {
-            localVarHeaders = localVarHeaders.set('x-forwarded-method', String(xForwardedMethod));
-        }
-        if (xOriginalUrl !== undefined && xOriginalUrl !== null) {
-            localVarHeaders = localVarHeaders.set('x-original-url', String(xOriginalUrl));
-        }
-        if (userAgent !== undefined && userAgent !== null) {
-            localVarHeaders = localVarHeaders.set('user-agent', String(userAgent));
-        }
 
         // authentication (bearer) required
         localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');

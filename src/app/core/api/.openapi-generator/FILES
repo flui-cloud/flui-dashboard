@@ -3,6 +3,7 @@ README.md
 api.base.service.ts
 api.module.ts
 api/accessManagement.service.ts
+api/alerts.service.ts
 api/api.ts
 api/appBuilds.service.ts
 api/appEndpoints.service.ts
@@ -10,6 +11,7 @@ api/appMigration.service.ts
 api/applicationLogs.service.ts
 api/applicationManagement.service.ts
 api/applicationMetrics.service.ts
+api/applicationTraffic.service.ts
 api/applications.service.ts
 api/assistant.service.ts
 api/auth.service.ts
@@ -38,6 +40,7 @@ api/documentConsole.service.ts
 api/firewalls.service.ts
 api/fullMigration.service.ts
 api/fulltextConsole.service.ts
+api/gateway.service.ts
 api/gitHubOAuth.service.ts
 api/gitHubSetup.service.ts
 api/githubAppOauth.service.ts
@@ -64,6 +67,7 @@ api/providerFirewalls.service.ts
 api/providerManagement.service.ts
 api/repositories.service.ts
 api/sANCertificates.service.ts
+api/scheduledJobs.service.ts
 api/searchConsole.service.ts
 api/secretsConsole.service.ts
 api/subnets.service.ts
@@ -81,6 +85,7 @@ index.ts
 model/acmeChallengeInfoDto.ts
 model/acmeOrderInfoDto.ts
 model/addFluiTagDto.ts
+model/addGatewayRouteDto.ts
 model/addSubnetDto.ts
 model/addWorkerDto.ts
 model/addWorkerResponseDto.ts
@@ -88,6 +93,11 @@ model/advisorChoiceOptionDto.ts
 model/advisorUserChoiceDto.ts
 model/agentMessageDto.ts
 model/agentRequestDto.ts
+model/alertEventDto.ts
+model/alertEventsResponseDto.ts
+model/alertmanagerAlertDto.ts
+model/alertmanagerWebhookDto.ts
+model/alertsWebhookResultDto.ts
 model/analyzeRepositoryDto.ts
 model/apiDomainSyncResultDto.ts
 model/apiKeyResponseDto.ts
@@ -122,6 +132,7 @@ model/applicationReleaseListDto.ts
 model/applicationResourcesDto.ts
 model/applicationResponseDto.ts
 model/applicationScalingDto.ts
+model/applicationTrafficDto.ts
 model/appliedServerDto.ts
 model/assignDnsZoneDto.ts
 model/assistantRecommendationsDto.ts
@@ -193,6 +204,7 @@ model/chatMessageDto.ts
 model/cleanupBuildNamespaceDto.ts
 model/clearBuildCacheResponseDto.ts
 model/clusterAppDistributionDto.ts
+model/clusterAppTrafficSummaryDto.ts
 model/clusterAppsMetricsHistoryResponseDto.ts
 model/clusterAppsMetricsResponseDto.ts
 model/clusterBillingResponseDto.ts
@@ -201,6 +213,7 @@ model/clusterDnsZoneControllerGetIssuers200ResponseInner.ts
 model/clusterDnsZoneResponseDto.ts
 model/clusterFirewallsControllerImportFirewall200Response.ts
 model/clusterFirewallsControllerImportFirewall201Response.ts
+model/clusterGatewayRouteDto.ts
 model/clusterHealthHistoryResponseDto.ts
 model/clusterHealthResponseDto.ts
 model/clusterHealthSummaryDto.ts
@@ -213,11 +226,15 @@ model/clusterStorageNfsDto.ts
 model/clusterStoragePvcSummaryDto.ts
 model/clusterStorageStatusDto.ts
 model/clusterStorageVolumeDto.ts
+model/clusterTrafficResponseDto.ts
 model/clustersControllerDeleteCluster202Response.ts
 model/clustersControllerGetKubeconfig200Response.ts
 model/clustersControllerRefreshGrafanaDatasources200Response.ts
 model/clustersControllerUpdateNodeMetadata200Response.ts
+model/compiledGatewayMiddlewareDto.ts
+model/compiledGatewayRouteDto.ts
 model/completeJoinDto.ts
+model/componentImageTagsDto.ts
 model/configureAuthModeDto.ts
 model/configureAuthModeResultDto.ts
 model/configureIssuerDto.ts
@@ -256,6 +273,7 @@ model/createInferenceConnectionDto.ts
 model/createRestoreJobDto.ts
 model/createSSHKeyDto.ts
 model/createSanCertificateDto.ts
+model/createScheduledJobDto.ts
 model/createServerDto.ts
 model/createServerResponseDto.ts
 model/createVNetDto.ts
@@ -267,9 +285,11 @@ model/deleteApplicationResponseDto.ts
 model/deleteServerResponseDto.ts
 model/dependencyChoiceDto.ts
 model/deployApplicationDto.ts
+model/deployDomainOverrideDto.ts
 model/deployFromYamlDto.ts
 model/deployFromYamlResponseDto.ts
 model/deployOperationDto.ts
+model/deployOverridesDto.ts
 model/deprecationInfoDto.ts
 model/detachServerFromSubnetDto.ts
 model/detectedEnvVarDto.ts
@@ -305,6 +325,11 @@ model/firewallRuleResponseDto.ts
 model/fulltextAssistDto.ts
 model/fulltextRawDto.ts
 model/fulltextSearchDto.ts
+model/gatewayAuthPolicyDto.ts
+model/gatewayConfigDto.ts
+model/gatewayRateLimitPolicyDto.ts
+model/gatewayRouteDto.ts
+model/gatewayStatusDto.ts
 model/ghcrTagDto.ts
 model/gitHubActionsWebhookDto.ts
 model/gitHubAppManifestStartDto.ts
@@ -457,6 +482,9 @@ model/sanCertificateResponseDto.ts
 model/saveGhcrPatDto.ts
 model/scaleNodeDto.ts
 model/scalingConfigDto.ts
+model/scheduledJobDto.ts
+model/scheduledJobRunDto.ts
+model/scheduledJobRunLogsDto.ts
 model/searchAssistDto.ts
 model/searchCountDto.ts
 model/searchIndexRefDto.ts
@@ -472,9 +500,12 @@ model/serverMetricsDto.ts
 model/serverMetricsHistoryDto.ts
 model/serverResponseDto.ts
 model/serverTypePricingDto.ts
+model/setGatewayPolicyDto.ts
 model/setPlatformConfigDto.ts
 model/singleAppMetricsHistoryResponseDto.ts
 model/singleAppMetricsResponseDto.ts
+model/singleAppTrafficHistoryResponseDto.ts
+model/singleAppTrafficResponseDto.ts
 model/subnetListResponseDto.ts
 model/subnetResponseDto.ts
 model/supportedRegionDto.ts
@@ -496,9 +527,16 @@ model/topologyResponseDto.ts
 model/topologyServerDto.ts
 model/topologyServerSpecsDto.ts
 model/topologyStatsDto.ts
+model/trafficHistoryPointDto.ts
 model/trafficInfoDto.ts
+model/trafficLatencyDto.ts
+model/trafficMethodBreakdownDto.ts
+model/trafficRateDto.ts
+model/trafficStatusCodeBreakdownDto.ts
+model/trafficStatusDto.ts
 model/triggerBuildDto.ts
 model/triggerBuildResponseDto.ts
+model/triggerScheduledJobResponseDto.ts
 model/triggerStandaloneBuildDto.ts
 model/updateAppEndpointDto.ts
 model/updateApplicationDto.ts
@@ -515,6 +553,7 @@ model/updateProviderRegionsDto.ts
 model/updateReplicasDto.ts
 model/updateResourcesDto.ts
 model/updateSSHKeyDto.ts
+model/updateScheduledJobDto.ts
 model/upsertClusterVariablesDto.ts
 model/upsertVariablesDto.ts
 model/useTemplateDto.ts
@@ -533,6 +572,7 @@ model/vNetZoneDto.ts
 model/validatePatDto.ts
 model/validationResultDto.ts
 model/variableSetSummaryDto.ts
+model/versionResponseDto.ts
 model/volumeMonthToDateDto.ts
 model/webDomainSyncResultDto.ts
 param.ts

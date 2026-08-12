@@ -9,7 +9,7 @@
  */
 
 
-export interface UpsertVariablesDto {
+export interface UpsertVariablesDto { 
     /**
      * Key-value pairs to store
      */

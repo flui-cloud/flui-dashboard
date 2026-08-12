@@ -983,6 +983,70 @@ export class ClusterDNSZoneService extends BaseService {
     }
 
     /**
+     * Reconcile one DNS zone assignment
+     * Re-applies the cluster state the zone needs (DNS-01 credential Secrets and the wildcard ClusterIssuer solvers covering every assigned zone) and recomputes the reconciliation status of the assignment. Returns immediately with the assignment in RECONCILING — the cluster work runs in the background. Poll this assignment until it leaves RECONCILING: a zone that cannot be reconciled lands in ERROR with the reason in errorMessage.
+     * @endpoint post /api/v1/clusters/{clusterId}/dns-zone/{assignmentId}/reconcile
+     * @param assignmentId Assignment ID
+     * @param clusterId Cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterDnsZoneControllerReconcileAssignment(assignmentId: string, clusterId: any, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClusterDnsZoneResponseDto>;
+    public clusterDnsZoneControllerReconcileAssignment(assignmentId: string, clusterId: any, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClusterDnsZoneResponseDto>>;
+    public clusterDnsZoneControllerReconcileAssignment(assignmentId: string, clusterId: any, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClusterDnsZoneResponseDto>>;
+    public clusterDnsZoneControllerReconcileAssignment(assignmentId: string, clusterId: any, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (assignmentId === null || assignmentId === undefined) {
+            throw new Error('Required parameter assignmentId was null or undefined when calling clusterDnsZoneControllerReconcileAssignment.');
+        }
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerReconcileAssignment.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}/dns-zone/${this.configuration.encodeParam({name: "assignmentId", value: assignmentId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/reconcile`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ClusterDnsZoneResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Remove a single DNS zone assignment from a cluster
      * Remove one DNS zone assignment. Endpoints that were matching this zone will become BYOD (user manages DNS externally).
      * @endpoint delete /api/v1/clusters/{clusterId}/dns-zone/{assignmentId}
