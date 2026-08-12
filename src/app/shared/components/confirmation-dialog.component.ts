@@ -64,6 +64,23 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
                   <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
                     {{ message }}
                   </p>
+
+                  @if (details?.length) {
+                    <button
+                      type="button"
+                      (click)="detailsOpen.set(!detailsOpen())"
+                      class="mt-2 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      {{ detailsOpen() ? 'Hide details' : 'What exactly happens' }}
+                    </button>
+                    @if (detailsOpen()) {
+                      <ul class="mt-2 space-y-1.5 border-l-2 border-gray-200 pl-3 dark:border-gray-700">
+                        @for (line of details; track line) {
+                          <li class="text-xs text-gray-600 dark:text-gray-400">{{ line }}</li>
+                        }
+                      </ul>
+                    }
+                  }
                 </div>
               </div>
               <button
@@ -102,7 +119,7 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
               >
                 @if (isProcessing()) {
                   <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                  {{ confirmText }}ing...
+                  {{ processingText ?? confirmText }}
                 } @else {
                   {{ confirmText }}
                 }
@@ -115,6 +132,11 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
   `,
 })
 export class ConfirmationDialogComponent {
+  @Input() processingText?: string;
+  @Input() details?: string[];
+
+  protected readonly detailsOpen = signal(false);
+
   @Input() title = 'Confirm Action';
   @Input() message = 'Are you sure you want to proceed?';
   @Input() confirmText = 'Confirm';
@@ -147,6 +169,7 @@ export class ConfirmationDialogComponent {
   open() {
     this.isOpen.set(true);
     this.isProcessing.set(false);
+    this.detailsOpen.set(false);
   }
 
   close() {
