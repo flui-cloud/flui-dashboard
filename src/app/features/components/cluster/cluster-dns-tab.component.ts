@@ -14,6 +14,7 @@ import { ClusterCertificateIssuersComponent } from './cluster-certificate-issuer
 import { ClusterSystemIngressFormComponent } from './cluster-system-ingress-form.component';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { AssignDnsZoneDto } from '../../../core/api/model/assignDnsZoneDto';
+import { ClusterDnsZoneResponseDto } from '../../../core/api/model/clusterDnsZoneResponseDto';
 import { AppEndpointResponseDto } from '../../../core/api/model/appEndpointResponseDto';
 import { CreateAppEndpointDto } from '../../../core/api/model/createAppEndpointDto';
 import { UpdateAppEndpointDto } from '../../../core/api/model/updateAppEndpointDto';
@@ -236,11 +237,19 @@ export class ClusterDnsTabComponent implements OnInit {
     const id = this.clusterId();
     if (!id) return;
     this.assigningZone.set(true);
+    let assignment: ClusterDnsZoneResponseDto | null = null;
     try {
-      await this.clusterDnsZoneService.assignZone(id, dto);
-      await this.clusterDnsZoneService.loadIssuers(id);
+      assignment = await this.clusterDnsZoneService.assignZone(id, dto);
     } finally {
       this.assigningZone.set(false);
+    }
+    if (!assignment) return;
+    this.reconcilingZoneId.set(assignment.id);
+    try {
+      await this.clusterDnsZoneService.pollAssignmentReconciliation(id, assignment.id);
+      await this.clusterDnsZoneService.loadIssuers(id);
+    } finally {
+      this.reconcilingZoneId.set(null);
     }
   }
 
@@ -263,7 +272,10 @@ export class ClusterDnsTabComponent implements OnInit {
     if (!id) return;
     this.reconcilingZoneId.set(assignmentId);
     try {
-      await this.clusterDnsZoneService.reconcileAssignment(id, assignmentId);
+      const started = await this.clusterDnsZoneService.reconcileAssignment(id, assignmentId);
+      if (started) {
+        await this.clusterDnsZoneService.pollAssignmentReconciliation(id, assignmentId);
+      }
       await this.clusterDnsZoneService.loadIssuers(id);
     } finally {
       this.reconcilingZoneId.set(null);

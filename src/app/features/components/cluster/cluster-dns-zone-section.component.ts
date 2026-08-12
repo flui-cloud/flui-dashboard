@@ -119,7 +119,7 @@ import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
             </div>
           }
 
-          @if (needsRec(a) && !isBusy(a)) {
+          @if (canReconcile(a)) {
             <button (click)="reconcile.emit(a.id)" class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
               <ng-icon name="lucideRefreshCw" class="h-3 w-3" />
               Reconcile now
@@ -343,14 +343,18 @@ export class ClusterDnsZoneSectionComponent {
       ?? ''
   );
 
-  protected needsRec(a: ClusterDnsZoneResponseDto): boolean {
-    return a.reconciliationStatus ? needsReconciliation(a.reconciliationStatus) : false;
-  }
-
   /** In flight locally, or reconciling server-side (issuer still registering with ACME). */
   protected isBusy(a: ClusterDnsZoneResponseDto): boolean {
     return this.reconcilingId() === a.id
       || a.reconciliationStatus === DnsReconciliationStatus.RECONCILING;
+  }
+
+  protected canReconcile(a: ClusterDnsZoneResponseDto): boolean {
+    if (this.reconcilingId() === a.id) return false;
+    return (
+      needsReconciliation(a.reconciliationStatus ?? '') ||
+      a.reconciliationStatus === DnsReconciliationStatus.RECONCILING
+    );
   }
 
   protected cardClass(a: ClusterDnsZoneResponseDto): string {

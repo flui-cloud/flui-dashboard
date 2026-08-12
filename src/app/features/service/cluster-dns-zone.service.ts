@@ -127,6 +127,22 @@ export class ClusterDnsZoneService {
     }
   }
 
+  async pollAssignmentReconciliation(
+    clusterId: string,
+    assignmentId: string,
+    timeoutMs = 180000
+  ): Promise<void> {
+    const start = Date.now();
+    const interval = 4000;
+    while (Date.now() - start < timeoutMs) {
+      await new Promise(resolve => setTimeout(resolve, interval));
+      await this.loadAssignment(clusterId);
+      const assignment = this.assignmentsData().find(a => a.id === assignmentId);
+      if (!assignment) return;
+      if (assignment.reconciliationStatus !== DnsReconciliationStatus.RECONCILING) return;
+    }
+  }
+
   /** Removes one assignment when `assignmentId` is given, otherwise every zone on the cluster. */
   async removeAssignment(clusterId: string, assignmentId?: string): Promise<boolean> {
     this.loadingData.set(true);
