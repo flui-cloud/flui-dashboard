@@ -6,6 +6,7 @@ export const MANAGEMENT_SECTION_BY_LABEL: Record<string, string> = {
   Providers: 'providers',
   Backup: 'backup',
   Migrations: 'backup',
+  Mail: 'mail',
   'GitHub Setup': 'providers',
   Access: 'access',
   Projects: 'projects',
@@ -108,6 +109,12 @@ export const ALL_MANAGEMENT_ITEMS: SidebarNavItem[] = [
     link: '/management/migrations',
     routerLinkActive: 'active',
     icon: 'lucideArrowRightLeft',
+  },
+  {
+    label: 'Mail',
+    link: '/management/mail',
+    routerLinkActive: 'active',
+    icon: 'lucideMail',
   },
   {
     label: 'GitHub Setup',

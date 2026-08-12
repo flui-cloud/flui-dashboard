@@ -1,6 +1,11 @@
 import { Routes } from '@angular/router';
+import { mailRoutes } from './mail.routes';
 
 export const managementRoutes: Routes = [
+  {
+    path: 'mail',
+    children: mailRoutes,
+  },
   {
     path: '',
     redirectTo: 'providers',
