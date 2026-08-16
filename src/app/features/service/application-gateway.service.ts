@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { BASE_PATH } from '../../core/api/variables';
+import { AppConfigService } from '../../core/services/app-config.service';
 import {
   AddGatewayRouteRequest,
   GatewayRoute,
@@ -15,7 +15,11 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ApplicationGatewayService {
   private readonly http = inject(HttpClient);
-  private readonly basePath = inject(BASE_PATH, { optional: true }) ?? '';
+  private readonly appConfig = inject(AppConfigService);
+  // Read per call: correct only once config.json has loaded.
+  private get basePath(): string {
+    return this.appConfig.apiBaseUrl;
+  }
 
   private readonly routesData = signal<GatewayRoute[]>([]);
   private readonly loadingData = signal<boolean>(false);

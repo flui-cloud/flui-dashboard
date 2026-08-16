@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { BASE_PATH } from '../../core/api/variables';
+import { AppConfigService } from '../../core/services/app-config.service';
 import { ClusterDNSZoneService } from '../../core/api/api/clusterDNSZone.service';
 import { ClusterDnsZoneResponseDto } from '../../core/api/model/clusterDnsZoneResponseDto';
 import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../../core/api/model/clusterDnsZoneControllerGetIssuers200ResponseInner';
@@ -26,7 +26,11 @@ export type IssuerApiType = 'http' | 'dns';
 export class ClusterDnsZoneService {
   private readonly apiService = inject(ClusterDNSZoneService);
   private readonly http = inject(HttpClient);
-  private readonly basePath = inject(BASE_PATH, { optional: true }) ?? '';
+  private readonly appConfig = inject(AppConfigService);
+  // Read per call: correct only once config.json has loaded.
+  private get basePath(): string {
+    return this.appConfig.apiBaseUrl;
+  }
 
   private readonly assignmentsData = signal<ClusterDnsZoneResponseDto[]>([]);
   private readonly loadingData = signal(false);

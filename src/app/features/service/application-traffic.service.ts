@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { BASE_PATH } from '../../core/api/variables';
+import { AppConfigService } from '../../core/services/app-config.service';
 import {
   AppTrafficHistoryResponse,
   AppTrafficResponse,
@@ -11,7 +11,11 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ApplicationTrafficService {
   private readonly http = inject(HttpClient);
-  private readonly basePath = inject(BASE_PATH, { optional: true }) ?? '';
+  private readonly appConfig = inject(AppConfigService);
+  // Read per call: correct only once config.json has loaded.
+  private get basePath(): string {
+    return this.appConfig.apiBaseUrl;
+  }
 
   private readonly currentData = signal<AppTrafficResponse | null>(null);
   private readonly historyData = signal<TrafficHistoryPoint[]>([]);
