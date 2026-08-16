@@ -16,6 +16,8 @@ export interface AccessSelector {
   provider?: string;
   project?: string;
   tags?: string[];
+  // Follows the resource rather than its location, so a grant covers what its holder creates next.
+  owner?: string;
 }
 
 export type AccessScope =
@@ -54,6 +56,8 @@ export interface AppAttributes {
   provider: string;
   project?: string;
   tags: string[];
+  // Null when the app belongs to nobody: system apps, API-key installs.
+  owner?: string | null;
 }
 
 export interface ClusterOption {

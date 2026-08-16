@@ -152,6 +152,9 @@ export function toUserRecord(u: IdentityUserDto): UserRecord {
 }
 
 export function matchesSelector(a: AppAttributes, s: AccessSelector): boolean {
+  // Must mirror PolicyEngineService.matchesSelector on the API side.
+  if (s.owner && (!a.owner || a.owner !== s.owner)) return false;
+
   const equality: Array<[string | undefined, string | undefined]> = [
     [s.type, a.type],
     [s.kind, a.kind],
