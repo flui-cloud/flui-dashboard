@@ -50,6 +50,7 @@ import {
 import { isActionAvailable } from '../../model/app-status-actions';
 import { isBuildingBlock } from '../../model/app-exposure';
 import { databaseEngineOf } from '../../model/db-engine';
+import { accessOf, allowsTab } from '../../model/app-access';
 
 interface TabItem {
   label: string;
@@ -318,6 +319,30 @@ interface TabItem {
           </div>
         </div>
 
+        @if (access(); as acc) {
+          @if (acc.showcase) {
+            <div
+              class="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-200"
+            >
+              <span class="font-medium">
+                A Flui project@if (acc.readOnly) { — read-only for you}.
+              </span>
+              <span class="opacity-80">
+                We run this one ourselves and leave it on display.
+                @if (acc.readOnly) {
+                  Everything else you can see in this instance is only yours.
+                }
+              </span>
+            </div>
+          } @else if (acc.readOnly) {
+            <div
+              class="mb-4 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-foreground/80"
+            >
+              You have read-only access to this application.
+            </div>
+          }
+        }
+
         <!-- Tab Navigation -->
         <div class="bg-white dark:bg-gray-800 border rounded-lg">
           <div class="border-b border-gray-200 dark:border-gray-700 relative flex items-stretch">
@@ -537,19 +562,16 @@ export class ApplicationDetailComponent implements OnDestroy {
     // Scheduled jobs (cron) run the app's own command/image — not relevant for
     // building-block databases/caches (fixed server processes).
     if (!isDatabase) {
-      baseTabs.push({
-        label: 'Schedules',
-        route: 'schedules',
-        icon: 'lucideClock',
-      });
-      baseTabs.push({
-        label: 'Gateway',
-        route: 'gateway',
-        icon: 'lucideNetwork',
-      });
+      baseTabs.push(
+        { label: 'Schedules', route: 'schedules', icon: 'lucideClock' },
+        { label: 'Gateway', route: 'gateway', icon: 'lucideNetwork' },
+      );
     }
-    return baseTabs;
+    const access = accessOf(app);
+    return baseTabs.filter((t) => allowsTab(access, t.route));
   });
+
+  readonly access = computed(() => accessOf(this.application()));
 
   ngOnDestroy(): void {
     if (this.pollingAppId) {
