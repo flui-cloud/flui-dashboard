@@ -24,6 +24,14 @@ export const routes: Routes = [
     title: 'Auth - flui.cloud',
   },
   {
+    path: 'try',
+    loadComponent: () =>
+      import('./features/components/sandbox/sandbox-claim.component').then(
+        (m) => m.SandboxClaimComponent
+      ),
+    title: 'Open a live Flui',
+  },
+  {
     path: 'repositories',
     redirectTo: '/apps/repositories',
     pathMatch: 'prefix',

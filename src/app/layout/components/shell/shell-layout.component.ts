@@ -23,6 +23,8 @@ import { QuickSshDockComponent } from '../../../features/components/ssh/quick-ss
 import { ToastContainerComponent } from '../../../shared/components/toast-container.component';
 import { AssistantWidgetComponent } from '../../../features/components/assistant/assistant-widget.component';
 import { FluiBackdropComponent } from '../../../shared/components/flui-backdrop/flui-backdrop.component';
+import { SandboxBannerComponent } from './sandbox-banner.component';
+import { SandboxService } from '../../../core/services/sandbox.service';
 
 @Component({
   selector: 'app-shell-layout',
@@ -39,6 +41,7 @@ import { FluiBackdropComponent } from '../../../shared/components/flui-backdrop/
     UniverseMapComponent,
     AssistantWidgetComponent,
     FluiBackdropComponent,
+    SandboxBannerComponent,
   ],
   providers: [
     BrnSidebarService,
@@ -83,6 +86,7 @@ import { FluiBackdropComponent } from '../../../shared/components/flui-backdrop/
       >
       </sidebar>
       <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <app-sandbox-banner class="flex-shrink-0" />
         <hlm-sidebar-content-header class="flex-shrink-0">
           <hlm-sidebar-trigger />
           <div class="h-3 w-[1px] bg-foreground/20 ml-2 mr-2"></div>
@@ -115,6 +119,12 @@ export class ShellLayoutComponent {
   protected readonly themeService = inject(ThemeService);
   protected readonly universeOverlay = inject(UniverseOverlayService);
   private readonly router = inject(Router);
+  private readonly sandbox = inject(SandboxService);
+
+  constructor() {
+    // A guest returning to an open tab has the cookie but not the session state.
+    this.sandbox.refresh();
+  }
 
   // Routes that ship their own assistant — hide the global floating one there.
   private static readonly OWN_ASSISTANT = [

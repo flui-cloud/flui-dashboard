@@ -6,11 +6,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { LocalAuthService } from '../services/local-auth.service';
 import { AppConfigService } from '../services/app-config.service';
+import { SandboxService } from '../services/sandbox.service';
 
 export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
   const local = inject(LocalAuthService);
   const cfg = inject(AppConfigService);
+  const sandbox = inject(SandboxService);
   const router = inject(Router);
 
   // If already authenticated, allow through immediately
@@ -22,15 +24,19 @@ export const authGuard: CanActivateFn = (_route, state) => {
   const loginUrl = () =>
     router.createUrlTree(['/login'], { queryParams: { redirect: state.url } });
 
-  // OIDC: no silent refresh here — redirect to login
+  // A sandbox guest holds no token: the session is a cookie this browser cannot read.
+  const orSandbox = (fallback: () => ReturnType<typeof loginUrl>) =>
+    sandbox.probe().pipe(map((inSandbox) => (inSandbox ? true : fallback())));
+
+  // OIDC: no silent refresh here — redirect to login, unless this is a guest.
   if (cfg.authMode === 'oidc') {
-    return loginUrl();
+    return orSandbox(loginUrl);
   }
 
   // Local mode: try to refresh the access token silently
   const refreshToken = local.getRefreshToken();
   if (!refreshToken) {
-    return loginUrl();
+    return orSandbox(loginUrl);
   }
 
   return local.refresh().pipe(

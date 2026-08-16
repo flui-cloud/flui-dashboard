@@ -29,7 +29,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   if (cfg.authMode === 'oidc') {
     const token = auth.getToken();
-    const outReq = token ? withBearer(req, token) : req;
+    const outReq = token ? withBearer(req, token) : withSessionCookie(req);
     return next(outReq).pipe(
       catchError((err: unknown) => {
         if (!(err instanceof HttpErrorResponse) || err.status !== 401) {
@@ -42,7 +42,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const token = auth.getToken();
   const isRefreshCall = req.url.includes('/auth/refresh');
-  const outReq = (token && !isRefreshCall) ? withBearer(req, token) : req;
+  const outReq =
+    token && !isRefreshCall ? withBearer(req, token) : withSessionCookie(req);
 
   return next(outReq).pipe(
     catchError((err: unknown) => {
@@ -59,6 +60,11 @@ function withBearer(
   token: string,
 ): HttpRequest<unknown> {
   return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+}
+
+// With no token the caller may still be a sandbox guest, whose credential is a cookie.
+function withSessionCookie(req: HttpRequest<unknown>): HttpRequest<unknown> {
+  return req.clone({ withCredentials: true });
 }
 
 function tryRefresh(

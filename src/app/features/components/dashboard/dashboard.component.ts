@@ -10,6 +10,7 @@ import { DashboardCertsComponent } from './dashboard-certs.component';
 import { DashboardActivityComponent } from './dashboard-activity.component';
 import { DashboardBackupsComponent } from './dashboard-backups.component';
 import { DashboardCredentialsBannerComponent } from './dashboard-credentials-banner.component';
+import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,6 +25,7 @@ import { DashboardCredentialsBannerComponent } from './dashboard-credentials-ban
     DashboardActivityComponent,
     DashboardBackupsComponent,
     DashboardCredentialsBannerComponent,
+    SandboxGuideCardComponent,
   ],
   template: `
     <div class="flex flex-col gap-4 p-4 md:p-6 min-h-full">
@@ -33,6 +35,9 @@ import { DashboardCredentialsBannerComponent } from './dashboard-credentials-ban
 
       <!-- Credentials status banner (only shown when something needs attention) -->
       <app-dashboard-credentials-banner />
+
+      <!-- Renders itself only inside a sandbox tenancy -->
+      <app-sandbox-guide-card />
 
       @if (isInitializing()) {
 
