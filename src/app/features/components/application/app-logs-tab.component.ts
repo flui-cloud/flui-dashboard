@@ -29,9 +29,7 @@ export class AppLogsTabComponent implements OnInit, OnDestroy {
     if (!app) return;
     this.logsService.init(
       {
-        clusterId: app.clusterId,
-        namespace: app.k8sNamespace,
-        app:       app.slug,
+        appId: app.id,
       },
       this.rangeFromQueryParams(),
     );

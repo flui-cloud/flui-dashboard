@@ -1,6 +1,7 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { ApplicationLogsService as ApiLogsService } from '../../core/api/api/applicationLogs.service';
+import { AppConfigService } from '../../core/services/app-config.service';
 import type { AppLogEntryDto } from '../../core/api/model/appLogEntryDto';
 import type { AppLogVolumeResponseDto } from '../../core/api/model/appLogVolumeResponseDto';
 
@@ -26,9 +27,7 @@ export type LogTimeRangeValue = typeof LOG_TIME_RANGES[number]['value'];
 export interface LogCustomRange { start: string; end: string; }
 
 export interface LogQueryParams {
-  clusterId: string;
-  namespace: string;
-  app: string;
+  appId: string;
   level?: string;
   search?: string;
   tail?: number;
@@ -62,7 +61,11 @@ function presetToIso(rangeValue: LogTimeRangeValue): LogCustomRange {
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationLogsService {
-  private readonly api = inject(ApiLogsService);
+  private readonly http = inject(HttpClient);
+  private readonly appConfig = inject(AppConfigService);
+  private get basePath(): string {
+    return this.appConfig.apiBaseUrl;
+  }
 
   // ── Remote data ──────────────────────────────────────────────────────────
   private readonly _logs          = signal<AppLogEntryDto[]>([]);
@@ -100,7 +103,7 @@ export class ApplicationLogsService {
   });
 
   // ── Query state ───────────────────────────────────────────────────────────
-  private readonly _appContext  = signal<{ clusterId: string; namespace: string; app: string } | null>(null);
+  private readonly _appContext  = signal<{ appId: string } | null>(null);
   private readonly _search      = signal('');
   private readonly _levelActive = signal<Record<string, boolean>>(
     Object.fromEntries(ALL_LOG_LEVELS.map(l => [l, true]))
@@ -212,7 +215,7 @@ export class ApplicationLogsService {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   init(
-    ctx: { clusterId: string; namespace: string; app: string },
+    ctx: { appId: string },
     range?: LogCustomRange,
   ) {
     this._appContext.set(ctx);
@@ -251,7 +254,7 @@ export class ApplicationLogsService {
     const vRange = this.volumeIsoRange();
     const step   = rangeToStep(vRange.start, vRange.end);
     // Volume (badges/histogram) always covers the full range & all levels — load it first.
-    this._loadVolume(ctx.clusterId, ctx.namespace, ctx.app, vRange.start, vRange.end, step);
+    this._loadVolume(ctx.appId, vRange.start, vRange.end, step);
     this._refreshLogs();
   }
 
@@ -272,22 +275,18 @@ export class ApplicationLogsService {
     this._error.set(null);
     try {
       const response = await firstValueFrom(
-        this.api.applicationLogsControllerGetAppLogs(
-          params.clusterId,
-          params.namespace,
-          // The log shipper indexes the unique workload identity in the `container` label
-          // (= the app/component slug). The `app` label holds the install base, which for a
-          // composed install is shared by all components — so filter by container, not app.
-          undefined, // app
-          params.app, // container == app/component slug
-          undefined, // pod
-          undefined, // stream
-          params.level || undefined,
-          params.search || undefined,
-          params.tail ?? 500,
-          params.start,
-          params.end,
-        )
+        this.http.get<{ logs?: AppLogEntryDto[]; queried_at?: string }>(
+          this.appLogsPath(params.appId),
+          {
+            params: this.queryParams({
+              level: params.level,
+              search: params.search,
+              tail: params.tail ?? 500,
+              start: params.start,
+              end: params.end,
+            }),
+          },
+        ),
       );
       this._logs.set(response.logs ?? []);
       this._queriedAt.set(response.queried_at ?? null);
@@ -300,9 +299,7 @@ export class ApplicationLogsService {
   }
 
   private async _loadVolume(
-    clusterId: string,
-    namespace: string,
-    app: string,
+    appId: string,
     start: string,
     end: string,
     step?: string,
@@ -310,10 +307,9 @@ export class ApplicationLogsService {
     this._volumeLoading.set(true);
     try {
       const response = await firstValueFrom(
-        this.api.applicationLogsControllerGetAppLogVolume(
-          // Filter by `container` (= app/component slug), not `app` (install base). See _loadLogs.
-          clusterId, start, end, namespace, undefined, app, undefined, step,
-        )
+        this.http.get<AppLogVolumeResponseDto>(`${this.appLogsPath(appId)}/volume`, {
+          params: this.queryParams({ start, end, step }),
+        }),
       );
       this._volume.set(response);
     } catch {
@@ -321,5 +317,21 @@ export class ApplicationLogsService {
     } finally {
       this._volumeLoading.set(false);
     }
+  }
+
+  private appLogsPath(appId: string): string {
+    return `${this.basePath}/api/v1/observability/applications/${encodeURIComponent(appId)}/logs`;
+  }
+
+  private queryParams(
+    values: Record<string, string | number | undefined>,
+  ): HttpParams {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(values)) {
+      if (value !== undefined && value !== '') {
+        params = params.set(key, String(value));
+      }
+    }
+    return params;
   }
 }
