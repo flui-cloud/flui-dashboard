@@ -1,11 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { BASE_PATH } from '../../core/api/variables';
+import { AppConfigService } from '../../core/services/app-config.service';
 import { ApplicationsService } from '../../core/api/api/applications.service';
 import {
   ApplicationSnapshot,
   CreateSnapshotRequest,
+  SnapshotCapability,
+  SnapshotListResponse,
 } from '../model/volume-management.models';
 
 const PENDING_POLL_MS = 3_000;
@@ -15,13 +17,18 @@ const PENDING_POLL_TIMEOUT_MS = 5 * 60_000;
 export class ApplicationSnapshotsService {
   private readonly applicationsApi = inject(ApplicationsService);
   private readonly http = inject(HttpClient);
-  private readonly basePath = inject(BASE_PATH, { optional: true }) ?? '';
+  private readonly appConfig = inject(AppConfigService);
+  // Read per call: correct only once config.json has loaded.
+  private get basePath(): string {
+    return this.appConfig.apiBaseUrl;
+  }
 
   private readonly snapshotsData = signal<ApplicationSnapshot[]>([]);
   private readonly loadingData = signal<boolean>(false);
   private readonly creatingData = signal<boolean>(false);
   private readonly deletingIdData = signal<string | null>(null);
   private readonly errorData = signal<string | null>(null);
+  private readonly capabilityData = signal<SnapshotCapability | null>(null);
 
   private pollingHandle: ReturnType<typeof setTimeout> | null = null;
   private pollingStartedAt = 0;
@@ -32,6 +39,7 @@ export class ApplicationSnapshotsService {
   readonly creating = this.creatingData.asReadonly();
   readonly deletingId = this.deletingIdData.asReadonly();
   readonly error = this.errorData.asReadonly();
+  readonly capability = this.capabilityData.asReadonly();
 
   readonly hasPending = computed(() =>
     this.snapshotsData().some((s) => !s.ready || s.deleting),
@@ -40,11 +48,17 @@ export class ApplicationSnapshotsService {
   async loadForApp(appId: string): Promise<void> {
     this.loadingData.set(true);
     this.errorData.set(null);
+    this.capabilityData.set(null);
     try {
       const data = (await firstValueFrom(
         this.applicationsApi.applicationsControllerListSnapshotsForApp(appId),
-      )) as ApplicationSnapshot[] | { snapshots: ApplicationSnapshot[] };
-      this.snapshotsData.set(this.normalizeList(data));
+      )) as SnapshotListResponse | ApplicationSnapshot[];
+      const response = this.normalizeAppList(data);
+      this.capabilityData.set({
+        supported: response.supported,
+        reason: response.reason,
+      });
+      this.snapshotsData.set(response.items);
       this.pollContext = { kind: 'app', id: appId };
       this.maybeStartPolling();
     } catch (error: any) {
@@ -58,6 +72,7 @@ export class ApplicationSnapshotsService {
   async loadForCluster(clusterId: string): Promise<void> {
     this.loadingData.set(true);
     this.errorData.set(null);
+    this.capabilityData.set(null);
     try {
       const data = (await firstValueFrom(
         this.applicationsApi.applicationsControllerListSnapshotsForCluster(clusterId),
@@ -208,6 +223,7 @@ export class ApplicationSnapshotsService {
     this.stopPolling();
     this.snapshotsData.set([]);
     this.errorData.set(null);
+    this.capabilityData.set(null);
     this.pollContext = null;
   }
 
@@ -217,6 +233,19 @@ export class ApplicationSnapshotsService {
     if (!raw) return [];
     if (Array.isArray(raw)) return raw;
     return raw.snapshots ?? [];
+  }
+
+  private normalizeAppList(
+    raw: SnapshotListResponse | ApplicationSnapshot[],
+  ): SnapshotListResponse {
+    if (Array.isArray(raw)) {
+      return { supported: true, items: raw };
+    }
+    return {
+      supported: raw.supported,
+      reason: raw.reason,
+      items: raw.items ?? [],
+    };
   }
 
   private maybeStartPolling(): void {
@@ -248,9 +277,27 @@ export class ApplicationSnapshotsService {
         ? this.applicationsApi.applicationsControllerListSnapshotsForApp(ctx.id)
         : this.applicationsApi.applicationsControllerListSnapshotsForCluster(ctx.id);
       const data = (await firstValueFrom(obs)) as
+        | SnapshotListResponse
         | ApplicationSnapshot[]
         | { snapshots: ApplicationSnapshot[] };
-      this.snapshotsData.set(this.normalizeList(data));
+      if (ctx.kind === 'app') {
+        const response = this.normalizeAppList(
+          data as SnapshotListResponse | ApplicationSnapshot[],
+        );
+        this.capabilityData.set({
+          supported: response.supported,
+          reason: response.reason,
+        });
+        this.snapshotsData.set(response.items);
+      } else {
+        this.snapshotsData.set(
+          this.normalizeList(
+            data as
+              | ApplicationSnapshot[]
+              | { snapshots: ApplicationSnapshot[] },
+          ),
+        );
+      }
     } catch (error) {
       console.error('Error polling snapshots:', error);
     }

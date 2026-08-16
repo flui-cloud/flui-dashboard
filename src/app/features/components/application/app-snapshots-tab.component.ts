@@ -114,14 +114,16 @@ type StatusFilter = 'all' | SnapshotStatus;
             />
             Refresh
           </button>
-          <button
-            (click)="openCreateDialog()"
-            [disabled]="!appId() || creating()"
-            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-            Create snapshot
-          </button>
+          @if (snapshotCapability()?.supported) {
+            <button
+              (click)="openCreateDialog()"
+              [disabled]="!appId() || creating()"
+              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
+              Create snapshot
+            </button>
+          }
         </div>
       </div>
 
@@ -133,10 +135,19 @@ type StatusFilter = 'all' | SnapshotStatus;
             <p class="text-sm text-red-700 dark:text-red-300">{{ errorMessage() }}</p>
           </div>
         </div>
-      }
-
-      <!-- Loading -->
-      @if (isLoading() && snapshots().length === 0) {
+      } @else if (snapshotCapability()?.supported === false) {
+        <div class="card-surface p-4 border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10">
+          <div class="flex items-start gap-3">
+            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+            <div>
+              <p class="text-sm font-medium text-amber-800 dark:text-amber-200">Snapshots are not available on this cluster</p>
+              <p class="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                {{ snapshotCapability()?.reason }}
+              </p>
+            </div>
+          </div>
+        </div>
+      } @else if (isLoading() && snapshots().length === 0) {
         <div class="animate-pulse space-y-2">
           @for (i of [1,2,3]; track i) {
             <div class="skeleton h-12 rounded-lg"></div>
@@ -267,6 +278,7 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
   readonly creating = this.snapshotsService.creating;
   readonly deletingId = this.snapshotsService.deletingId;
   readonly errorMessage = this.snapshotsService.error;
+  readonly snapshotCapability = this.snapshotsService.capability;
 
   readonly filter = signal<StatusFilter>('all');
   readonly createOpen = signal(false);

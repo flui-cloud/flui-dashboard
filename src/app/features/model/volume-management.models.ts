@@ -7,7 +7,7 @@
  * GET /applications/:id/snapshots.
  */
 
-export type SnapshotProvider = 'hetzner' | 'scaleway' | 'contabo';
+export type SnapshotProvider = 'hetzner' | 'scaleway' | 'contabo' | 'byos';
 
 export type SnapshotSink = 'pvc-clone' | 's3-archive';
 
@@ -40,6 +40,15 @@ export interface ApplicationSnapshot {
   labels: Record<string, string>;
   /** Client-only flag set while a delete is in flight. */
   deleting?: boolean;
+}
+
+export interface SnapshotCapability {
+  supported: boolean;
+  reason?: string;
+}
+
+export interface SnapshotListResponse extends SnapshotCapability {
+  items: ApplicationSnapshot[];
 }
 
 export interface CreateSnapshotRequest {
