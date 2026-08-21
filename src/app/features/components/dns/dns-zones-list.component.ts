@@ -8,11 +8,12 @@ import { DnsReplicaService, DnsZone } from '../../service/dns-replica.service';
 import { DnsZoneResponseDto } from '../../../core/api/model/dnsZoneResponseDto';
 import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
 import { ZoneReplicasComponent } from './zone-replicas.component';
+import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 
 @Component({
   selector: 'app-dns-zones-list',
   standalone: true,
-  imports: [NgIconComponent, RouterLink, DeleteConfirmationDialogComponent, ZoneReplicasComponent],
+  imports: [ReadOnlySectionDirective, NgIconComponent, RouterLink, DeleteConfirmationDialogComponent, ZoneReplicasComponent],
   providers: [provideIcons({ lucideTrash2, lucideGlobe, lucideAlertCircle, lucideRefreshCw, lucidePlus, lucideServer, lucideChevronDown, lucideChevronRight, lucideClock, lucideRadioTower })],
   template: `
     <div class="space-y-4">
@@ -27,6 +28,7 @@ import { ZoneReplicasComponent } from './zone-replicas.component';
           Refresh
         </button>
         <a
+          appReadOnlySection="infrastructure"
           routerLink="../register"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
         >
@@ -82,7 +84,7 @@ import { ZoneReplicasComponent } from './zone-replicas.component';
             </thead>
             <tbody>
               @for (zone of dnsZonesService.zones(); track zone.id) {
-                @let clusters = assignmentsMap()[zone.id];
+                @let clusters = assignmentsMap()[zone.id] ?? [];
                 @let isLoading = loadingAssignments();
 
                 <!-- Zone row -->
@@ -211,7 +213,9 @@ export class DnsZonesListComponent implements OnInit {
 
   protected deletingId = signal<string | null>(null);
   protected loadingAssignments = signal(false);
-  protected assignmentsMap = signal<Record<string, ZoneClusterAssignment[]>>({});
+  protected assignmentsMap = signal<
+    Record<string, ZoneClusterAssignment[] | undefined>
+  >({});
   protected enrichedMap = signal<Record<string, DnsZone>>({});
   protected expandedZoneId = signal<string | null>(null);
 

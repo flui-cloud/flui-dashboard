@@ -22,6 +22,14 @@ export interface InternalHostingStatus {
 
 export type IssuerApiType = 'http' | 'dns';
 
+export interface ClusterWildcard {
+  status: 'published' | 'absent' | 'foreign' | 'unknown' | 'unavailable';
+  fqdn: string | null;
+  hostnamePattern: string | null;
+  expectedValue: string | null;
+  actualValue: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ClusterDnsZoneService {
   private readonly apiService = inject(ClusterDNSZoneService);
@@ -129,6 +137,46 @@ export class ClusterDnsZoneService {
     } finally {
       this.loadingData.set(false);
     }
+  }
+
+  async getClusterWildcard(
+    clusterId: string,
+    assignmentId: string
+  ): Promise<ClusterWildcard | null> {
+    try {
+      return await firstValueFrom(
+        this.http.get<ClusterWildcard>(this.wildcardUrl(clusterId, assignmentId))
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  async publishClusterWildcard(
+    clusterId: string,
+    assignmentId: string
+  ): Promise<ClusterWildcard | null> {
+    this.errorData.set(null);
+    try {
+      return await firstValueFrom(
+        this.http.post<ClusterWildcard>(
+          this.wildcardUrl(clusterId, assignmentId),
+          {}
+        )
+      );
+    } catch (err: unknown) {
+      this.errorData.set(
+        this.extractErrorMessage(err, 'Failed to publish the wildcard record')
+      );
+      return null;
+    }
+  }
+
+  private wildcardUrl(clusterId: string, assignmentId: string): string {
+    return (
+      `${this.basePath}/api/v1/clusters/${encodeURIComponent(clusterId)}` +
+      `/dns-zone/${encodeURIComponent(assignmentId)}/wildcard`
+    );
   }
 
   async pollAssignmentReconciliation(
