@@ -25,11 +25,12 @@ import { HealthStatus } from '../../model/provider.models';
 import { ProviderCredentialsPanelComponent } from './provider-credentials-panel.component';
 import { ProviderRegionsPanelComponent } from './provider-regions-panel.component';
 import { ProviderInferencePanelComponent } from './provider-inference-panel.component';
+import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 
 @Component({
   selector: 'provider-manage',
   standalone: true,
-  imports: [CommonModule, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent, ProviderInferencePanelComponent],
+  imports: [ReadOnlySectionDirective, CommonModule, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent, ProviderInferencePanelComponent],
   providers: [
     provideIcons({
       lucideActivity,
@@ -137,7 +138,7 @@ import { ProviderInferencePanelComponent } from './provider-inference-panel.comp
                 <header class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2">
                   <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-muted-foreground" />
                   <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Health</h2>
-                  <button
+                  <button appReadOnlySection="providers"
                     type="button"
                     (click)="refreshHealth()"
                     [disabled]="isCheckingHealth()"
@@ -180,7 +181,7 @@ import { ProviderInferencePanelComponent } from './provider-inference-panel.comp
                   <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Quick actions</h2>
                 </header>
                 <div class="p-3 space-y-1">
-                  <button
+                  <button appReadOnlySection="providers"
                     type="button"
                     (click)="toggleEnabled()"
                     [disabled]="isToggling()"
@@ -193,7 +194,7 @@ import { ProviderInferencePanelComponent } from './provider-inference-panel.comp
                     }
                     {{ configuration()!.isActive ? 'Disable provider' : 'Enable provider' }}
                   </button>
-                  <button
+                  <button appReadOnlySection="providers"
                     type="button"
                     (click)="refreshHealth()"
                     [disabled]="isCheckingHealth()"
@@ -204,7 +205,7 @@ import { ProviderInferencePanelComponent } from './provider-inference-panel.comp
                   </button>
                 </div>
                 <div class="p-3 pt-0 border-t border-border mt-1">
-                  <button
+                  <button appReadOnlySection="providers"
                     type="button"
                     (click)="confirmRemove.set(true)"
                     class="w-full inline-flex items-center px-3 py-2.5 rounded-md text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"

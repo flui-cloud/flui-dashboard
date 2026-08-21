@@ -10,11 +10,12 @@ import {
 } from '../../../model/backup.models';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
+import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 
 @Component({
   selector: 'app-destination-detail',
   standalone: true,
-  imports: [CommonModule, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  imports: [ReadOnlySectionDirective, CommonModule, BackupStatusBadgeComponent, BackupBackLinkComponent],
   template: `
     <div class="p-6 space-y-4 max-w-3xl">
       <app-backup-back-link link="/management/backup/destinations" label="Back to destinations" />
@@ -26,10 +27,10 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
           <p class="text-sm text-muted-foreground mt-1">{{ providerLabel(d.provider) }}</p>
         </div>
         <div class="flex gap-2">
-          <button class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" (click)="onTest()">
+          <button appReadOnlySection="backup" class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" (click)="onTest()">
             Test connection
           </button>
-          <button class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" (click)="onRefresh()">
+          <button appReadOnlySection="backup" class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" (click)="onRefresh()">
             Refresh usage
           </button>
         </div>
@@ -78,7 +79,7 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
       </div>
 
       <div class="flex justify-end">
-        <button
+        <button appReadOnlySection="backup"
           type="button"
           class="text-sm text-red-600 hover:underline"
           (click)="onDelete(d)"

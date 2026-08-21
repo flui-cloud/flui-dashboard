@@ -30,12 +30,13 @@ import {
   MailRemoveResult,
 } from '../../model/mail-console.models';
 import { consoleError } from './mail-format';
+import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 
 @Component({
   selector: 'app-mail-domains',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [ReadOnlySectionDirective, 
     FormsModule,
     NgIcon,
     MailSectionNavComponent,
@@ -184,7 +185,7 @@ import { consoleError } from './mail-format';
                 } @else {
                   <span class="text-xs text-amber-700 dark:text-amber-400">Not verified yet</span>
                 }
-                <button
+                <button appReadOnlySection="mail"
                   type="button"
                   (click)="publish(d.domain)"
                   [disabled]="publishing()"
@@ -192,7 +193,7 @@ import { consoleError } from './mail-format';
                 >
                   Re-publish
                 </button>
-                <button
+                <button appReadOnlySection="mail"
                   type="button"
                   (click)="askRemove(d.domain)"
                   [disabled]="removing()"

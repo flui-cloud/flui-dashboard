@@ -11,6 +11,7 @@
     </div>
     <div class="flex items-center gap-3">
       <a
+        appReadOnlySection="firewall"
         routerLink="/infrastructure/firewall/provider-firewalls"
         class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline-offset-2 hover:underline"
         title="Inspect raw firewalls on each provider — debug only"
@@ -211,6 +212,7 @@
             <div class="relative z-10 flex items-center gap-2 ml-4">
               @if (firewall.hasDrift || firewall.reconciliationStatus === 'ERROR') {
                 <button
+                  appReadOnlySection="firewall"
                   (click)="reconcileFirewall(firewall.id, $event)"
                   [disabled]="isReconciling(firewall.id)"
                   class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"

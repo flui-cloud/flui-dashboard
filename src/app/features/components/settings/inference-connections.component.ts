@@ -13,6 +13,8 @@ import {
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
 import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
+import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { SandboxLevelNoticeComponent } from '../../../shared/components/sandbox-level-notice.component';
 
 interface ConnUiState {
   validating: boolean;
@@ -35,7 +37,7 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
 @Component({
   selector: 'app-inference-connections',
   standalone: true,
-  imports: [
+  imports: [ReadOnlySectionDirective, SandboxLevelNoticeComponent, 
     ReactiveFormsModule,
     NgIcon,
     HlmCardDirective,
@@ -50,6 +52,8 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
   providers: [provideIcons({ lucideCheck, lucideAlertCircle, lucideLoader, lucidePlus, lucideTrash2 })],
   template: `
     <div class="space-y-4">
+      <app-sandbox-level-notice area="models" />
+
       @if (service.connections().length > 0) {
         <div hlmCard>
           <div hlmCardContent class="pt-6">
@@ -74,6 +78,7 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
                     </div>
                     <div class="flex shrink-0 gap-1.5">
                       <button
+                        appReadOnlySection="models"
                         type="button"
                         (click)="validateConn(c.id)"
                         [disabled]="st.validating || st.deleting"
@@ -86,6 +91,7 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
                       </button>
                       @if (!service.isHosted()) {
                         <button
+                          appReadOnlySection="models"
                           type="button"
                           (click)="deleteConn(c.id)"
                           [disabled]="st.deleting || st.validating"
@@ -126,6 +132,7 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
       @if (!service.isHosted()) {
         @if (!showForm()) {
           <button
+            appReadOnlySection="models"
             type="button"
             (click)="showForm.set(true)"
             class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"

@@ -23,6 +23,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { ClusterService } from '../../service/cluster.service';
 import { MigrationRow, MigrationService } from '../../service/migration.service';
 import { MigrationLaunchModalComponent } from './migration-launch-modal.component';
+import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 
 type PendingAction = { kind: 'abort' | 'destroy'; row: MigrationRow };
 
@@ -44,7 +45,7 @@ const ABORTABLE = new Set([
   selector: 'app-migrations-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, ConfirmationDialogComponent, MigrationLaunchModalComponent],
+  imports: [ReadOnlySectionDirective, NgIcon, ConfirmationDialogComponent, MigrationLaunchModalComponent],
   providers: [
     provideIcons({
       lucideArrowRight,
@@ -84,6 +85,7 @@ const ABORTABLE = new Set([
             Refresh
           </button>
           <button
+            appReadOnlySection="backup"
             type="button"
             (click)="openLaunch()"
             class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
@@ -105,6 +107,7 @@ const ABORTABLE = new Set([
         <div class="rounded-lg border border-dashed border-border p-10 text-center">
           <p class="text-sm text-muted-foreground">No migrations yet.</p>
           <button
+            appReadOnlySection="backup"
             type="button"
             (click)="openLaunch()"
             class="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"

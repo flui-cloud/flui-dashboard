@@ -15,6 +15,7 @@ import {
 } from '@ng-icons/lucide';
 import { ProvidersService } from '../../service/providers.service';
 import { ProviderConfigurationDto, ProviderDefinitionDto, ProviderCredentialsDto } from '../../../core/api';
+import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 
 interface CredentialField {
   key: string;
@@ -28,7 +29,7 @@ interface CredentialField {
 @Component({
   selector: 'provider-credentials-panel',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgIcon],
+  imports: [ReadOnlySectionDirective, CommonModule, ReactiveFormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideCalendar,
@@ -91,7 +92,7 @@ interface CredentialField {
           }
 
           <!-- Update expiry form -->
-          <button
+          <button appReadOnlySection="providers"
             type="button"
             (click)="showExpiryForm.set(!showExpiryForm())"
             class="mt-2 inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors gap-1"
@@ -126,7 +127,7 @@ interface CredentialField {
 
         <!-- Rotate credentials -->
         <div class="pt-3 border-t border-border">
-          <button
+          <button appReadOnlySection="providers"
             type="button"
             (click)="showRotateForm.set(!showRotateForm())"
             class="inline-flex items-center gap-2 text-sm font-medium hover:text-foreground text-muted-foreground transition-colors"

@@ -7,11 +7,12 @@ import { BackupPolicy } from '../../../model/backup.models';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupProgressModalComponent } from '../shared/progress-modal.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
+import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 
 @Component({
   selector: 'app-policy-detail',
   standalone: true,
-  imports: [CommonModule, BackupStatusBadgeComponent, BackupProgressModalComponent, BackupBackLinkComponent],
+  imports: [ReadOnlySectionDirective, CommonModule, BackupStatusBadgeComponent, BackupProgressModalComponent, BackupBackLinkComponent],
   template: `
     <div class="p-6 max-w-3xl space-y-4">
       <app-backup-back-link link="/management/backup/policies" label="Back to policies" />
@@ -25,7 +26,7 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
           </p>
         </div>
         <div class="flex items-center gap-2">
-          <button
+          <button appReadOnlySection="backup"
             type="button"
             class="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
             [disabled]="toggling()"
@@ -33,7 +34,7 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
           >
             {{ toggling() ? '…' : (p.status === 'paused' ? 'Resume' : 'Pause') }}
           </button>
-          <button
+          <button appReadOnlySection="backup"
             type="button"
             class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             [disabled]="running()"
@@ -96,7 +97,7 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
       </div>
 
       <div class="flex justify-end">
-        <button type="button" class="text-sm text-red-600 hover:underline" (click)="onDelete(p)">
+        <button appReadOnlySection="backup" type="button" class="text-sm text-red-600 hover:underline" (click)="onDelete(p)">
           Delete policy
         </button>
       </div>

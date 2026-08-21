@@ -4,16 +4,42 @@ import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
 import { AppConfigService } from './app-config.service';
 
 export interface SandboxSession {
-  namespace: string;
-  email: string;
   expiresAt: string;
   secondsRemaining: number;
   ttlHours: number;
+  loginUrl: string;
 }
 
 export interface SandboxClaim extends SandboxSession {
   apiKey?: string;
-  loginUrl: string;
+  resumed: boolean;
+}
+
+export type SandboxLevel = 'full' | 'read-only' | 'stand-in' | 'closed';
+
+export interface SandboxArea {
+  key: string;
+  area: string;
+  level: SandboxLevel;
+  why: string;
+}
+
+interface SandboxLimits {
+  areas: SandboxArea[];
+}
+
+export const SANDBOX_LEVEL_LABEL: Record<SandboxLevel, string> = {
+  full: '',
+  'read-only': 'Read-only in the trial',
+  'stand-in': 'Example data',
+  closed: 'Not part of the trial',
+};
+
+export interface SandboxSaveResult {
+  sent: boolean;
+  reason?: string;
+  expiresAt?: string;
+  message?: string;
 }
 
 export type SandboxClaimFailure =
@@ -44,11 +70,13 @@ export class SandboxService {
   private readonly appConfig = inject(AppConfigService);
 
   private readonly _session = signal<SandboxSession | null>(null);
+  private readonly _areas = signal<SandboxArea[]>([]);
   // Counted down locally: the display moves every second, the server is asked rarely.
   private readonly _secondsRemaining = signal(0);
   private ticker?: ReturnType<typeof setInterval>;
 
   readonly session = this._session.asReadonly();
+  readonly areas = this._areas.asReadonly();
   readonly inSandbox = computed(() => this._session() !== null);
   readonly secondsRemaining = this._secondsRemaining.asReadonly();
 
@@ -76,6 +104,39 @@ export class SandboxService {
     this.probe().subscribe();
   }
 
+  save(email: string): Observable<SandboxSaveResult> {
+    return this.http
+      .post<SandboxSaveResult>(`${this.base}/save`, { email })
+      .pipe(
+        catchError((error: HttpErrorResponse) =>
+          throwError(() => ({
+            sent: false,
+            reason: 'failed',
+            message:
+              (error.error?.message as string) ||
+              'That did not go through. Try again in a moment.',
+          })),
+        ),
+      );
+  }
+
+  levelOf(key: string): SandboxLevel {
+    if (!this.inSandbox()) return 'full';
+    return this._areas().find((a) => a.key === key)?.level ?? 'full';
+  }
+
+  whyFor(key: string): string {
+    return this._areas().find((a) => a.key === key)?.why ?? '';
+  }
+
+  private loadAreas(): void {
+    if (this._areas().length > 0) return;
+    this.http
+      .get<SandboxLimits>(`${this.base}/limits`)
+      .pipe(catchError(() => of({ areas: [] as SandboxArea[] })))
+      .subscribe((limits) => this._areas.set(limits.areas ?? []));
+  }
+
   // Never errors: not being in a sandbox is an answer, not a failure.
   probe(): Observable<boolean> {
     return this.http.get<SandboxSession>(`${this.base}/session`).pipe(
@@ -92,6 +153,7 @@ export class SandboxService {
 
   private adopt(session: SandboxSession): void {
     this._session.set(session);
+    this.loadAreas();
     this._secondsRemaining.set(Math.max(0, session.secondsRemaining));
     this.startTicking();
   }
@@ -141,6 +203,11 @@ export class SandboxService {
       message: (error.error?.message as string) || MESSAGES[reason],
     };
   }
+}
+
+export function isSandboxRefusal(error: unknown): boolean {
+  const body = (error as { error?: { code?: string } } | null)?.error;
+  return body?.code === 'SANDBOX_ROUTE_FORBIDDEN';
 }
 
 export function formatCountdown(totalSeconds: number): string {

@@ -24,12 +24,14 @@ import { ToastContainerComponent } from '../../../shared/components/toast-contai
 import { AssistantWidgetComponent } from '../../../features/components/assistant/assistant-widget.component';
 import { FluiBackdropComponent } from '../../../shared/components/flui-backdrop/flui-backdrop.component';
 import { SandboxBannerComponent } from './sandbox-banner.component';
+import { SandboxSectionNoticeComponent } from './sandbox-section-notice.component';
 import { SandboxService } from '../../../core/services/sandbox.service';
 
 @Component({
   selector: 'app-shell-layout',
   standalone: true,
   imports: [
+    SandboxSectionNoticeComponent,
     SidebarComponent,
     HlmSidebarContentHeaderComponent,
     HlmSidebarTriggerComponent,
@@ -96,6 +98,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
         <div class="relative flex-1 overflow-hidden">
           <app-flui-backdrop placement="bottom-right" intensity="soft" />
           <div class="absolute inset-0 overflow-y-auto p-2 subtle-scroll">
+            <app-sandbox-section-notice />
             <router-outlet></router-outlet>
           </div>
         </div>

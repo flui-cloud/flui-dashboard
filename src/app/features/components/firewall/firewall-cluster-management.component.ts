@@ -7,6 +7,7 @@ import { ReconciliationStatusBadgeComponent } from './reconciliation-status-badg
 import { DriftIndicatorComponent } from './drift-indicator.component';
 import { ReconciliationStatus, CoverageStatus, getCoverageStatusLabel } from '../../model/firewall-v2.models';
 import { FirewallClusterInfoDto, FirewallNodeInfoDto } from '../../../core/api/model/models';
+import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 
 /**
  * Main component for listing and managing cluster firewalls
@@ -16,6 +17,7 @@ import { FirewallClusterInfoDto, FirewallNodeInfoDto } from '../../../core/api/m
   selector: 'app-firewall-cluster-management',
   standalone: true,
   imports: [
+    ReadOnlySectionDirective,
     CommonModule,
     FormsModule,
     RouterLink,

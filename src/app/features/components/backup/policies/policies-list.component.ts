@@ -6,11 +6,12 @@ import { BackupService } from '../../../service/backup.service';
 import { ClusterService } from '../../../service/cluster.service';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
+import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 
 @Component({
   selector: 'app-policies-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  imports: [ReadOnlySectionDirective, CommonModule, FormsModule, RouterLink, BackupStatusBadgeComponent, BackupBackLinkComponent],
   template: `
     <div class="p-6 space-y-4">
       <app-backup-back-link link="/management/backup" label="Back to Backup" />
@@ -22,6 +23,7 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
           </p>
         </div>
         <a
+          appReadOnlySection="backup"
           routerLink="/management/backup/policies/new"
           class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >

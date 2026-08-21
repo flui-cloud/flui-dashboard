@@ -5,11 +5,12 @@ import { BackupService } from '../../../service/backup.service';
 import { formatBytes, providerLabel } from '../../../model/backup.models';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
+import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 
 @Component({
   selector: 'app-destinations-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  imports: [ReadOnlySectionDirective, CommonModule, RouterLink, BackupStatusBadgeComponent, BackupBackLinkComponent],
   template: `
     <div class="p-6 space-y-4">
       <app-backup-back-link link="/management/backup" label="Back to Backup" />
@@ -21,6 +22,7 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
           </p>
         </div>
         <a
+          appReadOnlySection="backup"
           routerLink="/management/backup/destinations/new"
           class="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
         >
@@ -38,6 +40,7 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
           </p>
         </div>
         <a
+          appReadOnlySection="backup"
           routerLink="/management/backup"
           class="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 text-center"
         >

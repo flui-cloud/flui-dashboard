@@ -38,6 +38,7 @@ import {
   MailScope,
 } from '../../model/mail-console.models';
 import { consoleError } from './mail-format';
+import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 
 const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
   {
@@ -57,7 +58,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
   selector: 'app-mail-providers',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [ReadOnlySectionDirective, 
     FormsModule,
     NgIcon,
     MailSectionNavComponent,
@@ -210,7 +211,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                             {{ row.webhookNote }}
                           </p>
                         }
-                        <button
+                        <button appReadOnlySection="mail"
                           type="button"
                           (click)="retryWebhook(row)"
                           [disabled]="retrying() === row.id"
@@ -226,7 +227,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                   </div>
 
                   <div class="flex shrink-0 items-center gap-2">
-                    <button
+                    <button appReadOnlySection="mail"
                       type="button"
                       (click)="toggleTest(row)"
                       class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
@@ -235,7 +236,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                       {{ testing() === row.id ? 'Close' : 'Test' }}
                     </button>
                     @if (!row.implicit) {
-                      <button
+                      <button appReadOnlySection="mail"
                         type="button"
                         (click)="toggleAddDomain(row)"
                         class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
@@ -245,7 +246,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                       </button>
                     }
                     @if (!row.isActive) {
-                      <button
+                      <button appReadOnlySection="mail"
                         type="button"
                         (click)="activate(row)"
                         [disabled]="switching() === row.id"
@@ -258,7 +259,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                       </button>
                     }
                     @if (!row.implicit) {
-                      <button
+                      <button appReadOnlySection="mail"
                         type="button"
                         (click)="askDisconnect(row)"
                         class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
@@ -283,7 +284,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                             (domainChange)="newDomain.set($event)"
                           />
                         </div>
-                        <button
+                        <button appReadOnlySection="mail"
                           type="button"
                           (click)="addDomain(row)"
                           [disabled]="registering() || !newDomain().trim()"
@@ -323,7 +324,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
 
             @if (openSlot() !== slot.id) {
               <div class="px-4 pb-3">
-                <button
+                <button appReadOnlySection="mail"
                   type="button"
                   (click)="openFor(slot.id)"
                   class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-foreground hover:bg-muted"
@@ -532,7 +533,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                   }
 
                   <div class="mt-4 flex items-center gap-2">
-                    <button
+                    <button appReadOnlySection="mail"
                       type="button"
                       (click)="connect(slot.id)"
                       [disabled]="connecting() || !canConnect()"

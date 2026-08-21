@@ -7,6 +7,7 @@ import { ClusterService } from '../../../service/cluster.service';
 import { formatBytes } from '../../../model/backup.models';
 import { EnableBackupsModalComponent } from '../enable-backups/enable-backups-modal.component';
 import { PlatformBackupCardComponent } from '../platform/platform-backup-card.component';
+import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 
 interface OverviewCard {
   title: string;
@@ -18,7 +19,7 @@ interface OverviewCard {
 @Component({
   selector: 'app-backup-overview',
   standalone: true,
-  imports: [
+  imports: [ReadOnlySectionDirective, 
     CommonModule,
     FormsModule,
     RouterLink,
@@ -37,7 +38,7 @@ interface OverviewCard {
       </header>
 
       <!-- One-click activation -->
-      <section class="space-y-2">
+      <section class="space-y-2" appReadOnlySection="backup">
         <h2 class="text-sm font-semibold">Activate backups on a cluster</h2>
         <div class="rounded-lg border border-border bg-card p-5">
           @if (clusters().length === 0) {

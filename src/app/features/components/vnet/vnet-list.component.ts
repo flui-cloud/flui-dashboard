@@ -27,11 +27,12 @@ import {
   VNetStatus,
   getAllAttachedServerIds
 } from '../../model/vnet.models';
+import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 
 @Component({
   selector: 'vnet-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [ReadOnlySectionDirective, CommonModule, FormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideRefreshCw,
@@ -68,6 +69,7 @@ import {
             Refresh
           </button>
           <button
+            appReadOnlySection="infrastructure"
             (click)="createNewVNet()"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
