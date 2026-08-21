@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { LocalAuthService } from '../services/local-auth.service';
@@ -26,7 +26,13 @@ export const authGuard: CanActivateFn = (_route, state) => {
 
   // A sandbox guest holds no token: the session is a cookie this browser cannot read.
   const orSandbox = (fallback: () => ReturnType<typeof loginUrl>) =>
-    sandbox.probe().pipe(map((inSandbox) => (inSandbox ? true : fallback())));
+    sandbox.probe().pipe(
+      switchMap((inSandbox) =>
+        inSandbox
+          ? auth.loadCurrentUser().pipe(map(() => true as const))
+          : of(fallback()),
+      ),
+    );
 
   // OIDC: no silent refresh here — redirect to login, unless this is a guest.
   if (cfg.authMode === 'oidc') {

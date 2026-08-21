@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { LocalAuthService } from './local-auth.service';
 import { OidcAuthService } from './oidc-auth.service';
 import { AppConfigService } from './app-config.service';
+import { SandboxService } from './sandbox.service';
 
 const AUTH_ERROR_MARKERS = [
   'missing authentication token',
@@ -25,6 +26,7 @@ export class WebSocketAuthService {
   private readonly local = inject(LocalAuthService);
   private readonly oidc = inject(OidcAuthService);
   private readonly cfg = inject(AppConfigService);
+  private readonly sandbox = inject(SandboxService);
   private readonly router = inject(Router);
 
   private refreshInFlight: Promise<string | null> | null = null;
@@ -37,8 +39,8 @@ export class WebSocketAuthService {
    * Build socket.io options carrying the current JWT in `auth.token`.
    * Returns the same shape so callers can spread additional options.
    */
-  authOptions(): { auth: { token: string } } {
-    return { auth: { token: this.getToken() ?? '' } };
+  authOptions(): { auth: { token: string }; withCredentials: true } {
+    return { auth: { token: this.getToken() ?? '' }, withCredentials: true };
   }
 
   /**
@@ -91,6 +93,7 @@ export class WebSocketAuthService {
   }
 
   private redirectToLogin(): void {
+    if (this.sandbox.inSandbox()) return;
     if (this.cfg.authMode === 'oidc') {
       this.oidc.redirectToLogin();
       return;

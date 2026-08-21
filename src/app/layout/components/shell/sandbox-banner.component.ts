@@ -5,11 +5,12 @@ import {
   SandboxService,
   formatCountdown,
 } from '../../../core/services/sandbox.service';
+import { SandboxSaveActionComponent } from './sandbox-save-action.component';
 
 @Component({
   selector: 'app-sandbox-banner',
   standalone: true,
-  imports: [NgIcon],
+  imports: [NgIcon, SandboxSaveActionComponent],
   providers: [provideIcons({ lucideClock, lucideTriangleAlert })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -35,7 +36,12 @@ import {
           </span>
         }
 
-        <span class="ml-auto opacity-70 hidden sm:inline">
+        @if (!sandbox.expired()) {
+          <span class="ml-auto hidden sm:inline">
+            <app-sandbox-save-action />
+          </span>
+        }
+        <span class="opacity-70 hidden lg:inline" [class.ml-auto]="sandbox.expired()">
           Shared cluster, with quotas. Flui is alpha.
         </span>
       </div>

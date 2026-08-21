@@ -30,10 +30,12 @@ import { SandboxService } from '../../../core/services/sandbox.service';
         </div>
 
         <p class="text-sm text-muted-foreground leading-relaxed">
-          The app already running here was seeded by us, so you would not start
-          from an empty screen. The one worth watching is the one you choose:
-          it lands on a public URL with a real certificate, usually inside a
-          minute.
+          The application here started when this area did, a few minutes ago,
+          and it came with records already in its database — open the SQL
+          console and query them. Its graphs, though, begin at zero and fill in
+          as you watch, which is exactly what they do on a real instance. The
+          one worth watching is the one you choose: it lands on a public URL
+          with a real certificate, usually inside a minute.
         </p>
 
         <a
