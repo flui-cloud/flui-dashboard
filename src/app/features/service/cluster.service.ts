@@ -51,10 +51,12 @@ export class ClusterService {
   private readonly providersList = signal<ProviderInfo[]>([]);
   private readonly providersLoading = signal<boolean>(false);
   private readonly providersError = signal<string | null>(null);
+  private readonly errorCode = signal<string | null>(null);
 
   readonly cluster = this.clusterInfo.asReadonly();
   readonly loading = this.isLoading.asReadonly();
   readonly errorMessage = this.error.asReadonly();
+  readonly lastErrorCode = this.errorCode.asReadonly();
   readonly steps = this.creationSteps.asReadonly();
   readonly progress = this.creationProgress.asReadonly();
   readonly progressMessage = this.creationMessage.asReadonly();
@@ -169,6 +171,13 @@ export class ClusterService {
 
   getConfiguredProviders(): ProviderInfo[] {
     return this.providersList().filter(p => p.configured && p.enabled);
+  }
+
+  private setError(error: any, fallback: string): string {
+    const message = error?.error?.message || error?.message || fallback;
+    this.error.set(message);
+    this.errorCode.set(error?.error?.code ?? null);
+    return message;
   }
 
   async loadClusterInfo(): Promise<ClusterInfo> {
@@ -750,6 +759,7 @@ export class ClusterService {
   async selectCluster(clusterId: string): Promise<void> {
     this.isLoading.set(true);
     this.error.set(null);
+    this.errorCode.set(null);
     this.selectedClusterId.set(clusterId);
 
     try {
@@ -782,9 +792,8 @@ export class ClusterService {
         clusters.map(c => c.id === clusterId ? clusterDetails : c)
       );
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error.message || 'Failed to load cluster details';
       console.error('❌ Failed to load cluster details:', error);
-      this.error.set(errorMessage);
+      this.setError(error, 'Failed to load cluster details');
       throw error;
     } finally {
       this.isLoading.set(false);
@@ -922,38 +931,6 @@ export class ClusterService {
     };
 
     setTimeout(() => poll(), POLL_INTERVAL);
-  }
-
-  async downloadKubeconfig(clusterId: string): Promise<string> {
-    this.isLoading.set(true);
-    this.error.set(null);
-
-    try {
-      const response = await firstValueFrom(
-        this.clustersApi.clustersControllerGetKubeconfig(clusterId)
-      );
-
-      return response.kubeconfig || "";
-    } catch (error: any) {
-      const errorMessage = error?.error?.message || error.message || 'Failed to download kubeconfig';
-      console.error('❌ Failed to download kubeconfig:', error);
-      this.error.set(errorMessage);
-      throw error;
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  downloadKubeconfigFile(kubeconfig: string, clusterName: string): void {
-    const blob = new Blob([kubeconfig], { type: 'text/yaml' });
-    const url = globalThis.window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `kubeconfig-${clusterName}.yaml`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    globalThis.window.URL.revokeObjectURL(url);
   }
 
   async scaleCluster(nodeCount: number): Promise<void> {
@@ -1162,9 +1139,8 @@ export class ClusterService {
 
       return response;
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error.message || 'Failed to reconcile cluster status';
       console.error('❌ Cluster reconciliation failed:', error);
-      this.error.set(errorMessage);
+      this.setError(error, 'Failed to reconcile cluster status');
       throw error;
     }
   }

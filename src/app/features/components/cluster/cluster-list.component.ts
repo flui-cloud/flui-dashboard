@@ -8,7 +8,6 @@ import {
   lucideSearch,
   lucideServer,
   lucideTrash2,
-  lucideDownload,
   lucideEye,
   lucideX,
   lucideCircleAlert,
@@ -29,6 +28,7 @@ import {
 import { ClusterService } from '../../service/cluster.service';
 import { ProvidersService } from '../../service/providers.service';
 import { ClusterInfo, ClusterStatus, ClusterType, ProviderType } from '../../model/cluster.models';
+import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 
 interface FilterState {
   search: string;
@@ -40,14 +40,13 @@ interface FilterState {
 @Component({
   selector: 'cluster-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent],
+  imports: [ReadOnlySectionDirective, CommonModule, FormsModule, NgIconComponent],
   providers: [
     provideIcons({
       lucideRefreshCw,
       lucideSearch,
       lucideServer,
       lucideTrash2,
-      lucideDownload,
       lucideEye,
       lucideX,
       lucideCircleAlert,
@@ -86,6 +85,7 @@ interface FilterState {
             <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
           </button>
           <button
+            [appReadOnlySection]="CLUSTER_SECTION_KEYS"
             (click)="createNewCluster()"
             title="Create a new cluster"
             class="inline-flex items-center gap-2 px-3.5 py-2 bg-blue-600 dark:bg-blue-500/20 text-white dark:text-blue-400 border border-transparent dark:border-blue-500/40 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500/30 transition-colors text-sm font-medium"
@@ -290,14 +290,7 @@ interface FilterState {
                   View
                 </button>
                 <button
-                  (click)="downloadKubeconfig(cluster.id!, cluster.name!)"
-                  [disabled]="cluster.status !== ClusterStatus.ACTIVE"
-                  class="h-10 w-10 inline-flex items-center justify-center border border-border text-muted-foreground rounded-md hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Download Kubeconfig"
-                >
-                  <ng-icon name="lucideDownload" class="h-4 w-4" />
-                </button>
-                <button
+                  [appReadOnlySection]="CLUSTER_SECTION_KEYS"
                   (click)="confirmDelete(cluster)"
                   [disabled]="cluster.status === ClusterStatus.DELETING || (cluster.clusterType === ClusterType.CONTROL || cluster.clusterType === ClusterType.OBSERVABILITY)"
                   class="h-10 w-10 inline-flex items-center justify-center border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -311,6 +304,7 @@ interface FilterState {
 
           @if (filteredClusters().length > 0) {
             <div
+              [appReadOnlySection]="CLUSTER_SECTION_KEYS"
               (click)="createNewCluster()"
               class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
             >
@@ -437,6 +431,8 @@ export class ClusterListComponent implements OnInit {
   ClusterStatus = ClusterStatus;
   ClusterType = ClusterType;
 
+  protected readonly CLUSTER_SECTION_KEYS = ['clusters', 'cluster'] as const;
+
   filtersState = signal<FilterState>({
     search: '',
     provider: '',
@@ -531,15 +527,6 @@ export class ClusterListComponent implements OnInit {
 
   viewCluster(clusterId: string) {
     this.router.navigate(['/cluster', clusterId]);
-  }
-
-  async downloadKubeconfig(clusterId: string, clusterName: string) {
-    try {
-      const kubeconfig = await this.clusterService.downloadKubeconfig(clusterId);
-      this.clusterService.downloadKubeconfigFile(kubeconfig, clusterName);
-    } catch (error) {
-      console.error('Failed to download kubeconfig:', error);
-    }
   }
 
   confirmDelete(cluster: ClusterInfo) {

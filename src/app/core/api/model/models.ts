@@ -144,7 +144,6 @@ export * from './clusterStorageStatusDto';
 export * from './clusterStorageVolumeDto';
 export * from './clusterTrafficResponseDto';
 export * from './clustersControllerDeleteCluster202Response';
-export * from './clustersControllerGetKubeconfig200Response';
 export * from './clustersControllerRefreshGrafanaDatasources200Response';
 export * from './clustersControllerUpdateNodeMetadata200Response';
 export * from './compiledGatewayMiddlewareDto';

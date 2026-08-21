@@ -228,7 +228,6 @@ model/clusterStorageStatusDto.ts
 model/clusterStorageVolumeDto.ts
 model/clusterTrafficResponseDto.ts
 model/clustersControllerDeleteCluster202Response.ts
-model/clustersControllerGetKubeconfig200Response.ts
 model/clustersControllerRefreshGrafanaDatasources200Response.ts
 model/clustersControllerUpdateNodeMetadata200Response.ts
 model/compiledGatewayMiddlewareDto.ts

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
@@ -29,6 +29,7 @@ import {
 } from '@ng-icons/lucide';
 
 import { ClusterService } from '../../service/cluster.service';
+import { SandboxService } from '../../../core/services/sandbox.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 import { ClusterStatus, ClusterType } from '../../model/cluster.models';
 
@@ -110,7 +111,7 @@ interface TabItem {
       }
 
       <!-- Error State -->
-      @if (errorMessage() && !isLoading()) {
+      @if (errorMessage() && !isLoading() && !refusedBySandbox()) {
         <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <div class="flex items-center gap-3">
             <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400" />
@@ -171,7 +172,7 @@ interface TabItem {
               />
               Refresh
             </button>
-            @if (clusterData.status === ClusterStatus.ACTIVE || clusterData.status === ClusterStatus.STOPPING) {
+            @if (!readOnly() && (clusterData.status === ClusterStatus.ACTIVE || clusterData.status === ClusterStatus.STOPPING)) {
               <button
                 (click)="stopCluster()"
                 [disabled]="clusterData.status !== ClusterStatus.ACTIVE || isControlCluster(clusterData.clusterType)"
@@ -182,7 +183,7 @@ interface TabItem {
                 Stop
               </button>
             }
-            @if (clusterData.status === ClusterStatus.STOPPED || clusterData.status === ClusterStatus.STARTING) {
+            @if (!readOnly() && (clusterData.status === ClusterStatus.STOPPED || clusterData.status === ClusterStatus.STARTING)) {
               <button
                 (click)="startCluster()"
                 [disabled]="clusterData.status !== ClusterStatus.STOPPED || isControlCluster(clusterData.clusterType)"
@@ -193,6 +194,7 @@ interface TabItem {
                 Start
               </button>
             }
+            @if (!readOnly()) {
             <div class="w-px h-4 bg-border mx-1"></div>
             <button
               (click)="confirmDelete()"
@@ -203,6 +205,7 @@ interface TabItem {
               <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
               Delete
             </button>
+            }
           </div>
         </div>
 
@@ -335,6 +338,16 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
   cluster = this.clusterService.cluster;
   isLoading = this.clusterService.loading;
   errorMessage = this.clusterService.errorMessage;
+
+  private readonly sandbox = inject(SandboxService);
+
+  protected readonly readOnly = computed(
+    () => this.sandbox.levelOf('cluster') !== 'full',
+  );
+
+  protected readonly refusedBySandbox = computed(
+    () => this.clusterService.lastErrorCode() === 'SANDBOX_ROUTE_FORBIDDEN',
+  );
 
   powerAlert = signal<{ type: 'error' | 'success' | 'warning'; message: string } | null>(null);
   showDeleteModal = signal(false);

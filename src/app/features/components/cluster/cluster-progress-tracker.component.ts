@@ -5,7 +5,7 @@
  * Customized for cluster creation with specific labels and routing.
  *
  * REFACTORED: Reduced from ~720 lines to ~200 lines by using shared components
- * Custom success state with cluster-specific actions (Go to Cluster, Download Kubeconfig)
+ * Custom success state with cluster-specific actions (Go to Cluster)
  */
 
 import { Component, OnInit, inject, computed, signal } from '@angular/core';
