@@ -1,0 +1,13 @@
+{
+  "name": "flui-dashboard-e2e-local",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Local-only browser tour of the dashboard. Deliberately NOT part of the dashboard's pnpm project: it has its own package.json and its own node_modules, so it never enters pnpm-lock.yaml and never reaches the Docker build.",
+  "scripts": {
+    "tour": "node guest-tour.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
