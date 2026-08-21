@@ -9,6 +9,7 @@ interface MePermissionsResponse {
 
 interface MeSectionsResponse {
   sections: string[];
+  readOnlySections?: string[];
   isAdmin: boolean;
 }
 
@@ -19,6 +20,7 @@ export class PermissionService {
 
   private readonly _permissions = signal<Set<string>>(new Set());
   private readonly _sections = signal<Set<string>>(new Set());
+  private readonly _readOnlySections = signal<Set<string>>(new Set());
   private readonly _isAdmin = signal(false);
   private readonly _loaded = signal(false);
   private readonly _sectionsLoaded = signal(false);
@@ -38,7 +40,11 @@ export class PermissionService {
   }
 
   hasSection(key: string): boolean {
-    return this._isAdmin() || this._sections().has(key);
+    return this._sections().has(key);
+  }
+
+  isSectionReadOnly(key: string): boolean {
+    return this._readOnlySections().has(key);
   }
 
   load(): void {
@@ -68,11 +74,13 @@ export class PermissionService {
       .subscribe({
         next: (res) => {
           this._sections.set(new Set(res.sections));
+          this._readOnlySections.set(new Set(res.readOnlySections ?? []));
           this._isAdmin.set(res.isAdmin);
           this._sectionsLoaded.set(true);
         },
         error: () => {
           this._sections.set(new Set());
+          this._readOnlySections.set(new Set());
           this._sectionsLoaded.set(true);
         },
       });

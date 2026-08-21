@@ -134,6 +134,16 @@ export class PeopleTabComponent {
     return this.pendingGlobals()[u.id] ?? this.currentGlobal(u);
   }
 
+  canEditGlobal(u: UserRecord): boolean {
+    const current = this.currentGlobal(u);
+    return current === 'none' || this.iam.isGrantable(current);
+  }
+
+  globalRoleName(u: UserRecord): string {
+    const current = this.currentGlobal(u);
+    return current === 'none' ? 'No global access' : this.iam.roleName(current);
+  }
+
   isDirty(u: UserRecord): boolean {
     const p = this.pendingGlobals()[u.id];
     return p != null && p !== this.currentGlobal(u);

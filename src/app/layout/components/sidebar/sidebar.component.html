@@ -112,15 +112,15 @@
     </div>
     }
 
-    @if (canSee('infrastructure') || canSee('firewall')) {
+    @if (infrastructureItems().length || canSee('firewall')) {
     <div hlmSidebarSectionTitle>Infrastructure</div>
 
     <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1 space-y-1">
-      @if (canSee('infrastructure')) {
+      @if (infrastructureItems().length) {
       <hlm-sidebar-group>
         <hlm-sidebar-group-label
           [label]="'Infrastructure'"
-          [items]="infrastructureItems"
+          [items]="infrastructureItems()"
         >
           <ng-icon
             hlm
@@ -128,7 +128,7 @@
             class="h-4 w-4 text-primary"
           />
         </hlm-sidebar-group-label>
-        <hlm-sidebar-group-content [items]="infrastructureItems" />
+        <hlm-sidebar-group-content [items]="infrastructureItems()" />
       </hlm-sidebar-group>
       }
 

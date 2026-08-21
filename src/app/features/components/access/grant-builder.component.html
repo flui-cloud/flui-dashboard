@@ -16,7 +16,7 @@
       <div class="flex-1 min-w-0">
         <label for="gb-role" class="block text-xs font-medium text-muted-foreground mb-1">Role</label>
         <select id="gb-role" [class]="selectClass" (change)="onRole($event)">
-          @for (r of iam.roles(); track r.key) {
+          @for (r of iam.grantableRoles(); track r.key) {
             <option [value]="r.key" [selected]="role() === r.key">{{ r.name }}</option>
           }
         </select>

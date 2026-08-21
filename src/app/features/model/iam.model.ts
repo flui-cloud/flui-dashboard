@@ -1,4 +1,4 @@
-export type AccessRole = 'viewer' | 'editor' | 'manager';
+export type AccessRole = 'viewer' | 'editor' | 'manager' | 'owner';
 
 export type AccessPrincipalType = 'user' | 'group' | 'service_account';
 
@@ -43,6 +43,9 @@ export interface RoleDef {
   name: string;
   description: string;
   permissions: string[];
+  assignable: boolean;
+  grantable: boolean;
+  revocable: boolean;
 }
 
 export interface AppAttributes {
@@ -115,6 +118,7 @@ export const SECTION_LABELS: Record<string, string> = {
   firewall: 'Firewall',
   providers: 'Providers',
   backup: 'Backup',
+  mail: 'Mail',
   projects: 'Projects',
   access: 'Access',
   settings: 'Settings',
@@ -137,6 +141,7 @@ export function sectionsForPermissions(
     keys.add('firewall');
     keys.add('providers');
     keys.add('backup');
+    keys.add('mail');
   }
   if (global('iam:assign-role')) {
     keys.add('projects');

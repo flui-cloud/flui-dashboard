@@ -51,7 +51,7 @@
             <div>
               <label for="pt-role" class="block text-xs font-medium text-muted-foreground mb-1">Role</label>
               <select id="pt-role" [class]="selectClass" (change)="onRoleSelect($event)">
-                @for (r of iam.roles(); track r.key) {
+                @for (r of iam.grantableRoles(); track r.key) {
                   <option [value]="r.key" [selected]="role() === r.key">{{ r.name }}</option>
                 }
               </select>
@@ -197,20 +197,26 @@
                       <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5" /> Platform admin
                     </span>
                   } @else {
-                    <div class="flex items-center gap-2">
-                      <select *fluiCan="'iam:assign-role'" [class]="rowSelectClass" (change)="onRowGlobalChange(u.id, $event)">
-                        <option value="none" [selected]="pendingGlobal(u) === 'none'">No global access</option>
-                        @for (r of iam.roles(); track r.key) {
-                          <option [value]="r.key" [selected]="pendingGlobal(u) === r.key">{{ r.name }} (global)</option>
+                    @if (!canEditGlobal(u)) {
+                      <span class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5" /> {{ globalRoleName(u) }} (global)
+                      </span>
+                    } @else {
+                      <div class="flex items-center gap-2">
+                        <select *fluiCan="'iam:assign-role'" [id]="'global-role-' + u.id" [attr.aria-label]="'Global role for ' + u.email" [class]="rowSelectClass" (change)="onRowGlobalChange(u.id, $event)">
+                          <option value="none" [selected]="pendingGlobal(u) === 'none'">No global access</option>
+                          @for (r of iam.grantableRoles(); track r.key) {
+                            <option [value]="r.key" [selected]="pendingGlobal(u) === r.key">{{ r.name }} (global)</option>
+                          }
+                        </select>
+                        @if (isDirty(u)) {
+                          <button *fluiCan="'iam:assign-role'" type="button" (click)="saveGlobal(u)"
+                            class="shrink-0 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                            Save
+                          </button>
                         }
-                      </select>
-                      @if (isDirty(u)) {
-                        <button *fluiCan="'iam:assign-role'" type="button" (click)="saveGlobal(u)"
-                          class="shrink-0 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90">
-                          Save
-                        </button>
-                      }
-                    </div>
+                      </div>
+                    }
                   }
                 </td>
                 <td class="py-2.5 pr-4">
@@ -224,11 +230,13 @@
                 <td class="py-2.5">
                   <div class="flex items-center justify-end gap-1.5">
                     @if (perms.isAdmin() && !u.isBootstrapAdmin && !u.isSystemUser) {
-                      <button type="button" (click)="toggleAdmin(u)"
-                        class="text-muted-foreground hover:text-foreground"
-                        [title]="u.isAdmin ? 'Revoke platform admin' : 'Make platform admin'">
-                        <ng-icon [name]="u.isAdmin ? 'lucideShield' : 'lucideShieldPlus'" class="h-4 w-4" />
-                      </button>
+                      @if (u.isAdmin) {
+                        <button type="button" (click)="toggleAdmin(u)"
+                          class="text-muted-foreground hover:text-foreground"
+                          title="Revoke platform admin">
+                          <ng-icon name="lucideShield" class="h-4 w-4" />
+                        </button>
+                      }
                       <button type="button" (click)="iam.createInviteLink(u.id, u.email)"
                         class="text-muted-foreground hover:text-foreground" title="Generate invite link">
                         <ng-icon name="lucideLink" class="h-4 w-4" />

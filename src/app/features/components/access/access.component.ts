@@ -82,8 +82,9 @@ interface TabDef {
         <div hlmCard class="border-primary/30">
           <div hlmCardContent class="pt-5 text-sm text-muted-foreground space-y-2">
             <p><span class="font-medium text-foreground">Deny by default.</span> A member starts with no access. They reach a resource only through an explicit <span class="font-medium text-foreground">grant</span> — given to them directly or via a group.</p>
-            <p><span class="font-medium text-foreground">A grant = role × scope.</span> The <span class="font-medium text-foreground">role</span> (Viewer / Editor / Manager) is <em>what</em> they can do; the <span class="font-medium text-foreground">scope</span> (a project, a cluster, or everything) is <em>where</em>.</p>
-            <p><span class="font-medium text-foreground">Platform admin is separate.</span> It is not a role — it's an allow-all owner of the whole installation: clusters &amp; infrastructure, cloud providers, backups, and other users. It sits above the role system and outside the grant graph, so a bad policy can't lock you out. Grant it sparingly, from the People tab.</p>
+            <p><span class="font-medium text-foreground">A grant = role × scope.</span> The <span class="font-medium text-foreground">role</span> (Viewer / Editor / Manager / Owner) is <em>what</em> they can do; the <span class="font-medium text-foreground">scope</span> (a project, a cluster, or everything) is <em>where</em>.</p>
+            <p><span class="font-medium text-foreground">Owner is the top of the ladder.</span> It carries everything, everywhere — including who else may run this installation — and only an owner may confer or revoke it. A manager can hand out the other three and no more.</p>
+            <p><span class="font-medium text-foreground">Platform admin is a separate flag,</span> older than the roles and outside the grant graph. It still governs a handful of screens — creating and disabling accounts, projects — so it is what those buttons check. It is not a grant and does not appear in the list below.</p>
           </div>
         </div>
       }
@@ -109,11 +110,11 @@ interface TabDef {
           <div class="space-y-5">
             <!-- Builder (gated) -->
             <app-grant-builder *fluiCan="'iam:assign-role'" />
-            @if (!canManage()) {
+            @if (!canManage() && !readOnly()) {
               <div hlmCard>
                 <div hlmCardContent class="pt-6">
                   <p class="text-sm text-muted-foreground">
-                    You don't have <span class="font-mono text-xs">iam:assign-role</span> at this scope, so you can't create grants. (This block is hidden by the real builder via <span class="font-mono text-xs">*fluiCan</span>.)
+                    You can see who has access here, but not change it.
                   </p>
                 </div>
               </div>
@@ -146,10 +147,12 @@ interface TabDef {
                             {{ g.binding.scope.type === 'section' ? 'portal section' : matchCount(g.binding) + ' app' + (matchCount(g.binding) === 1 ? '' : 's') }}
                           </td>
                           <td class="py-2.5">
-                            <button type="button" (click)="iam.removeGrant(g.id)" *fluiCan="'iam:assign-role'"
-                              class="text-muted-foreground hover:text-destructive" title="Remove grant">
-                              <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                            </button>
+                            @if (iam.isRevocable(g.binding.role)) {
+                              <button type="button" (click)="iam.removeGrant(g.id)" *fluiCan="'iam:assign-role'"
+                                class="text-muted-foreground hover:text-destructive" title="Remove grant">
+                                <ng-icon name="lucideTrash2" class="h-4 w-4" />
+                              </button>
+                            }
                           </td>
                         </tr>
                       } @empty {
@@ -200,6 +203,9 @@ export class AccessComponent implements OnInit {
 
   readonly showHelp = signal(false);
   readonly canManage = computed(() => this.perms.can('iam:assign-role'));
+  protected readonly readOnly = computed(() =>
+    this.perms.isSectionReadOnly('access'),
+  );
 
   selectTab(id: TabId): void {
     this.router.navigate(['/management/access', id]);

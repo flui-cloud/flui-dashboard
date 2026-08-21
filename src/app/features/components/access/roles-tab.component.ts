@@ -16,7 +16,14 @@ import { IamService } from '../../service/iam.service';
         <div hlmCard>
           <div hlmCardContent class="pt-5 space-y-3">
             <div>
-              <h3 class="text-base font-semibold text-foreground">{{ r.name }}</h3>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-semibold text-foreground">{{ r.name }}</h3>
+                @if (!r.grantable) {
+                  <span hlmBadge variant="outline" class="text-[10px] uppercase tracking-wide">
+                    {{ r.assignable ? 'not yours to grant' : 'assigned by the platform' }}
+                  </span>
+                }
+              </div>
               <p class="text-sm text-muted-foreground">{{ r.description }}</p>
             </div>
             <div class="flex flex-wrap gap-1.5">
@@ -30,6 +37,8 @@ import { IamService } from '../../service/iam.service';
     </div>
     <p class="mt-4 text-xs text-muted-foreground">
       Built-in roles are read-only. Custom roles are not available at launch.
+      Two of these come with a sandbox tenancy and are never granted by hand;
+      <span class="font-medium">Owner</span> is conferred only by another owner.
     </p>
   `,
 })

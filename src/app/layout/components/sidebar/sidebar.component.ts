@@ -80,7 +80,9 @@ import {
   CLUSTER_ITEMS,
   DEPLOY_ITEMS,
   FIREWALL_ITEMS,
+  FULL_ACCESS_ONLY_LABELS,
   INFRASTRUCTURE_ITEMS,
+  INFRASTRUCTURE_SECTION_BY_LABEL,
   MANAGEMENT_SECTION_BY_LABEL,
   SHOW_SYSTEM_APPS_KEY,
 } from './sidebar-nav.config';
@@ -169,7 +171,6 @@ export class SidebarComponent {
 
   protected readonly _version = this._platformVersion.version;
 
-  readonly infrastructureItems = INFRASTRUCTURE_ITEMS;
   readonly firewallItems = FIREWALL_ITEMS;
   readonly deployItems = DEPLOY_ITEMS;
   readonly clusterItems = CLUSTER_ITEMS;
@@ -185,11 +186,25 @@ export class SidebarComponent {
     return this._perms.hasSection(section);
   }
 
+  private shows(item: SidebarNavItem, section: string | undefined): boolean {
+    if (!section) return true;
+    if (!this.canSee(section)) return false;
+    return (
+      !FULL_ACCESS_ONLY_LABELS.has(item.label) ||
+      !this._perms.isSectionReadOnly(section)
+    );
+  }
+
   readonly visibleManagementItems = computed<SidebarNavItem[]>(() =>
-    this.allManagementItems.filter((item) => {
-      const section = MANAGEMENT_SECTION_BY_LABEL[item.label];
-      return section ? this.canSee(section) : true;
-    }),
+    this.allManagementItems.filter((item) =>
+      this.shows(item, MANAGEMENT_SECTION_BY_LABEL[item.label]),
+    ),
+  );
+
+  readonly infrastructureItems = computed<SidebarNavItem[]>(() =>
+    INFRASTRUCTURE_ITEMS.filter((item) =>
+      this.shows(item, INFRASTRUCTURE_SECTION_BY_LABEL[item.label]),
+    ),
   );
 
   protected readonly showSystemApps = signal<boolean>(this._readShowSystemApps());

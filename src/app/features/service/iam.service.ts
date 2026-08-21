@@ -74,11 +74,20 @@ export class IamService {
     ),
   );
 
-  readonly roles = signal<RoleDef[]>([
-    { key: 'viewer', name: 'Viewer', description: 'Read-only across everything in scope.', permissions: ['app:read', 'cluster:read'] },
-    { key: 'editor', name: 'Editor', description: 'View, modify, deploy and operate apps. Cannot manage access.', permissions: ['app:read', 'app:write', 'app:deploy', 'app:create', 'scale:execute', 'migration:execute'] },
-    { key: 'manager', name: 'Manager', description: 'Editor + manage access at this scope and below.', permissions: ['app:read', 'app:write', 'app:deploy', 'app:create', 'app:delete', 'scale:execute', 'migration:execute', 'cluster:read', 'cluster:manage', 'iam:assign-role'] },
-  ]);
+  readonly roles = signal<RoleDef[]>([]);
+
+  readonly grantableRoles = computed(() =>
+    this.roles().filter((r) => r.grantable),
+  );
+
+  isGrantable(role: string): boolean {
+    return this.roles().some((r) => r.key === role && r.grantable);
+  }
+
+  isRevocable(role: string): boolean {
+    const def = this.roles().find((r) => r.key === role);
+    return def ? def.revocable : true;
+  }
 
   private readonly _grants = signal<GrantRecord[]>([]);
   readonly grants = this._grants.asReadonly();
@@ -118,12 +127,8 @@ export class IamService {
 
   private loadRoles(): void {
     this.http.get<RoleDef[]>(`${this.iamBase}/roles`).subscribe({
-      next: (roles) => {
-        if (roles.length) this.roles.set(roles);
-      },
-      error: () => {
-        /* keep built-in seed */
-      },
+      next: (roles) => this.roles.set(roles),
+      error: () => this.roles.set([]),
     });
   }
 

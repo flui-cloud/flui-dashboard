@@ -13,6 +13,20 @@ export const MANAGEMENT_SECTION_BY_LABEL: Record<string, string> = {
   Settings: 'settings',
 };
 
+export const FULL_ACCESS_ONLY_LABELS: ReadonlySet<string> = new Set([
+  'SSH Keys',
+  'Platform',
+  'GitHub Setup',
+]);
+
+export const INFRASTRUCTURE_SECTION_BY_LABEL: Record<string, string> = {
+  Compute: 'infrastructure',
+  'Virtual Networks': 'infrastructure',
+  'SSH Keys': 'infrastructure',
+  Domains: 'infrastructure',
+  Platform: 'infrastructure',
+};
+
 export const CLUSTER_ITEMS: SidebarNavItem[] = [
   {
     label: 'Clusters',
