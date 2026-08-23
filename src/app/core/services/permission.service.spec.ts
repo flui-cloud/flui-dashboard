@@ -72,6 +72,13 @@ describe('PermissionService', () => {
     expect(perms.isSectionReadOnly('home')).toBeFalse();
   });
 
+  it('refuses a permission the API did not list, flag or no flag', () => {
+    load({ isAdmin: true, permissions: ['iam:assign-role'] });
+    expect(perms.can('iam:assign-role')).toBeTrue();
+    expect(perms.can('iam:manage-users')).toBeFalse();
+    expect(perms.can('cluster:destroy')).toBeFalse();
+  });
+
   it('still carries the legacy platform-admin flag', () => {
     load({ isAdmin: true, sections: ['home'] });
     expect(perms.isAdmin()).toBeTrue();

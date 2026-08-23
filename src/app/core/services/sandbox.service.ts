@@ -205,9 +205,47 @@ export class SandboxService {
   }
 }
 
+export const SANDBOX_ROUTE_AREAS: ReadonlyArray<readonly [string, string]> = [
+  ['/infrastructure/compute', 'providers'],
+  ['/infrastructure/vnet', 'providers'],
+  ['/infrastructure/firewall', 'firewall'],
+  ['/infrastructure/domains', 'dns-zones'],
+  ['/infrastructure/keys', 'keys'],
+  ['/infrastructure/platform-components', 'platform-config'],
+  ['/management/providers', 'providers'],
+  ['/management/backup', 'backups'],
+  ['/management/access', 'access'],
+  ['/management/migrations', 'migrations'],
+  ['/management/mail', 'mail'],
+  ['/mail', 'mail'],
+  ['/cluster', 'cluster'],
+];
+
+export function sandboxAreaForUrl(url: string): string | null {
+  const match = SANDBOX_ROUTE_AREAS.filter(([prefix]) =>
+    url.startsWith(prefix),
+  ).sort((a, b) => b[0].length - a[0].length)[0];
+  return match ? match[1] : null;
+}
+
+export function isSandboxRefusalCode(code: unknown): boolean {
+  return typeof code === 'string' && code.startsWith('SANDBOX_');
+}
+
+export function sandboxRefusalCode(error: unknown): string | null {
+  const code = (error as { error?: { code?: unknown } } | null)?.error?.code;
+  return isSandboxRefusalCode(code) ? (code as string) : null;
+}
+
 export function isSandboxRefusal(error: unknown): boolean {
-  const body = (error as { error?: { code?: string } } | null)?.error;
-  return body?.code === 'SANDBOX_ROUTE_FORBIDDEN';
+  return sandboxRefusalCode(error) !== null;
+}
+
+export function sandboxFailureMessage(
+  error: unknown,
+  fallback: string,
+): string | null {
+  return isSandboxRefusal(error) ? null : fallback;
 }
 
 export function formatCountdown(totalSeconds: number): string {

@@ -51,7 +51,7 @@ export class ApplicationSnapshotsService {
     this.capabilityData.set(null);
     try {
       const data = (await firstValueFrom(
-        this.applicationsApi.applicationsControllerListSnapshotsForApp(appId),
+        this.applicationsApi.applicationSnapshotsControllerListSnapshotsForApp(appId),
       )) as SnapshotListResponse | ApplicationSnapshot[];
       const response = this.normalizeAppList(data);
       this.capabilityData.set({
@@ -75,7 +75,7 @@ export class ApplicationSnapshotsService {
     this.capabilityData.set(null);
     try {
       const data = (await firstValueFrom(
-        this.applicationsApi.applicationsControllerListSnapshotsForCluster(clusterId),
+        this.applicationsApi.applicationSnapshotsControllerListSnapshotsForCluster(clusterId),
       )) as ApplicationSnapshot[] | { snapshots: ApplicationSnapshot[] };
       this.snapshotsData.set(this.normalizeList(data));
       this.pollContext = { kind: 'cluster', id: clusterId };
@@ -121,7 +121,7 @@ export class ApplicationSnapshotsService {
     this.errorData.set(null);
     try {
       await firstValueFrom(
-        this.applicationsApi.applicationsControllerDeleteSnapshot(appId, snapshotId),
+        this.applicationsApi.applicationSnapshotsControllerDeleteSnapshot(appId, snapshotId),
       );
       this.snapshotsData.update((list) =>
         list.map((s) => (s.exportId === snapshotId ? { ...s, deleting: true } : s)),
@@ -274,8 +274,8 @@ export class ApplicationSnapshotsService {
 
     try {
       const obs = ctx.kind === 'app'
-        ? this.applicationsApi.applicationsControllerListSnapshotsForApp(ctx.id)
-        : this.applicationsApi.applicationsControllerListSnapshotsForCluster(ctx.id);
+        ? this.applicationsApi.applicationSnapshotsControllerListSnapshotsForApp(ctx.id)
+        : this.applicationsApi.applicationSnapshotsControllerListSnapshotsForCluster(ctx.id);
       const data = (await firstValueFrom(obs)) as
         | SnapshotListResponse
         | ApplicationSnapshot[]

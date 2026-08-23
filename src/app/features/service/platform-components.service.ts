@@ -4,6 +4,7 @@ import { InfrastructurePlatformComponentsService } from '../../core/api/api/infr
 import { PlatformComponentResponseDto } from '../../core/api/model/platformComponentResponseDto';
 import { RedeployPlatformComponentResponseDto } from '../../core/api/model/redeployPlatformComponentResponseDto';
 import { PlatformComponentLogsResponseDto } from '../../core/api/model/platformComponentLogsResponseDto';
+import { isSandboxRefusal } from '../../core/services/sandbox.service';
 
 export interface ClusterComponentsEntry {
   clusterId: string;
@@ -11,6 +12,7 @@ export interface ClusterComponentsEntry {
   components: PlatformComponentResponseDto[];
   loading: boolean;
   error: string | null;
+  refused: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -53,6 +55,7 @@ export class PlatformComponentsService {
       components: [],
       loading: true,
       error: null,
+      refused: false,
     }));
     this.entriesData.set(initial);
 
@@ -65,11 +68,18 @@ export class PlatformComponentsService {
   async loadForCluster(clusterId: string, clusterName: string): Promise<void> {
     const existing = this.entriesData().find(e => e.clusterId === clusterId);
     if (existing) {
-      this._patchEntry(clusterId, { loading: true, error: null });
+      this._patchEntry(clusterId, { loading: true, error: null, refused: false });
     } else {
       this.entriesData.update(entries => [
         ...entries,
-        { clusterId, clusterName, components: [], loading: true, error: null },
+        {
+          clusterId,
+          clusterName,
+          components: [],
+          loading: true,
+          error: null,
+          refused: false,
+        },
       ]);
     }
     await this._loadForCluster(clusterId, clusterName);
@@ -117,11 +127,19 @@ export class PlatformComponentsService {
       const components = await firstValueFrom(
         this.api.platformComponentsControllerListComponents(clusterId)
       );
-      this._patchEntry(clusterId, { components, loading: false, error: null });
+      this._patchEntry(clusterId, {
+        components,
+        loading: false,
+        error: null,
+        refused: false,
+      });
     } catch (err: any) {
       this._patchEntry(clusterId, {
         loading: false,
-        error: err?.message ?? 'Failed to load platform components',
+        refused: isSandboxRefusal(err),
+        error:
+          (err?.error?.message as string) ??
+          'Platform components could not be loaded.',
       });
     }
   }

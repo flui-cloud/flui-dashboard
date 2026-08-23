@@ -29,7 +29,11 @@ import {
 } from '@ng-icons/lucide';
 
 import { ClusterService } from '../../service/cluster.service';
-import { SandboxService } from '../../../core/services/sandbox.service';
+import {
+  SandboxService,
+  isSandboxRefusalCode,
+} from '../../../core/services/sandbox.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 import { ClusterStatus, ClusterType } from '../../model/cluster.models';
 
@@ -194,7 +198,7 @@ interface TabItem {
                 Start
               </button>
             }
-            @if (!readOnly()) {
+            @if (!readOnly() && perms.can('cluster:destroy')) {
             <div class="w-px h-4 bg-border mx-1"></div>
             <button
               (click)="confirmDelete()"
@@ -340,13 +344,14 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
   errorMessage = this.clusterService.errorMessage;
 
   private readonly sandbox = inject(SandboxService);
+  protected readonly perms = inject(PermissionService);
 
   protected readonly readOnly = computed(
     () => this.sandbox.levelOf('cluster') !== 'full',
   );
 
-  protected readonly refusedBySandbox = computed(
-    () => this.clusterService.lastErrorCode() === 'SANDBOX_ROUTE_FORBIDDEN',
+  protected readonly refusedBySandbox = computed(() =>
+    isSandboxRefusalCode(this.clusterService.lastErrorCode()),
   );
 
   powerAlert = signal<{ type: 'error' | 'success' | 'warning'; message: string } | null>(null);

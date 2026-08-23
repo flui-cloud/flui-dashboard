@@ -185,7 +185,7 @@ export class ProjectsComponent implements OnInit {
     '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#64748b',
   ];
 
-  readonly canManage = computed(() => this.perms.isAdmin());
+  readonly canManage = computed(() => this.perms.hasSection('projects'));
 
   colorOrDefault(): string {
     const c = this.newColor();

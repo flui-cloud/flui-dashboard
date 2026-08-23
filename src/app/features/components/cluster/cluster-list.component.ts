@@ -29,6 +29,7 @@ import { ClusterService } from '../../service/cluster.service';
 import { ProvidersService } from '../../service/providers.service';
 import { ClusterInfo, ClusterStatus, ClusterType, ProviderType } from '../../model/cluster.models';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { CanDirective } from '../../../core/directives/can.directive';
 
 interface FilterState {
   search: string;
@@ -40,7 +41,13 @@ interface FilterState {
 @Component({
   selector: 'cluster-list',
   standalone: true,
-  imports: [ReadOnlySectionDirective, CommonModule, FormsModule, NgIconComponent],
+  imports: [
+    ReadOnlySectionDirective,
+    CanDirective,
+    CommonModule,
+    FormsModule,
+    NgIconComponent,
+  ],
   providers: [
     provideIcons({
       lucideRefreshCw,
@@ -290,6 +297,7 @@ interface FilterState {
                   View
                 </button>
                 <button
+                  *fluiCan="'cluster:destroy'"
                   [appReadOnlySection]="CLUSTER_SECTION_KEYS"
                   (click)="confirmDelete(cluster)"
                   [disabled]="cluster.status === ClusterStatus.DELETING || (cluster.clusterType === ClusterType.CONTROL || cluster.clusterType === ClusterType.OBSERVABILITY)"

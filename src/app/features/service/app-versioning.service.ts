@@ -61,7 +61,7 @@ export class AppVersioningService {
     this.errorSig.set(null);
     try {
       const response = await firstValueFrom(
-        this.applicationsApi.applicationsControllerGetAvailableVersions(appId, 1, limit),
+        this.applicationsApi.applicationReleasesControllerGetAvailableVersions(appId, 1, limit),
       );
       this.stateSig.set({
         sourceType: response.sourceType,
@@ -84,7 +84,7 @@ export class AppVersioningService {
     this.errorSig.set(null);
     try {
       const response = await firstValueFrom(
-        this.applicationsApi.applicationsControllerGetAvailableVersions(appId, next, limit),
+        this.applicationsApi.applicationReleasesControllerGetAvailableVersions(appId, next, limit),
       );
       this.stateSig.update((prev) => ({
         sourceType: response.sourceType ?? prev.sourceType,

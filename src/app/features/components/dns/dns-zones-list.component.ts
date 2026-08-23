@@ -134,6 +134,7 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
                         Redundancy
                       </button>
                       <button
+                        appReadOnlySection
                         (click)="confirmDeleteZone(zone)"
                         [disabled]="deletingId() === zone.id || isLoading || clusters.length > 0"
                         [title]="clusters.length > 0 ? 'Remove cluster assignments before deleting' : 'Delete zone'"

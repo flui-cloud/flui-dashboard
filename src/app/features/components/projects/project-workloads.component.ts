@@ -299,7 +299,7 @@ export class ProjectWorkloadsComponent implements OnInit {
   protected readonly isLoading = this.appService.loading;
   protected readonly isRefreshing = this.appService.backgroundRefreshing;
 
-  protected readonly canManage = computed(() => this.perms.isAdmin());
+  protected readonly canManage = computed(() => this.perms.hasSection('projects'));
 
   protected readonly search = signal('');
   protected readonly kindFilter = signal('');

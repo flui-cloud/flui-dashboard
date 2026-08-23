@@ -6,6 +6,7 @@ import {
   lucideRefreshCw,
   lucideLoader,
   lucideAlertCircle,
+  lucideInfo,
   lucideChevronDown,
   lucideChevronRight,
   lucidePackage,
@@ -32,6 +33,7 @@ import { PlatformComponentDetailPanelComponent } from './platform-component-deta
       lucideRefreshCw,
       lucideLoader,
       lucideAlertCircle,
+      lucideInfo,
       lucideChevronDown,
       lucideChevronRight,
       lucidePackage,
@@ -192,8 +194,17 @@ import { PlatformComponentDetailPanelComponent } from './platform-component-deta
                 }
               </div>
               @if (entry.error) {
-                <span class="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
-                  <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5" />
+                <span
+                  class="text-xs flex items-center gap-1"
+                  [class.text-red-600]="!entry.refused"
+                  [class.dark:text-red-400]="!entry.refused"
+                  [class.text-gray-500]="entry.refused"
+                  [class.dark:text-gray-400]="entry.refused"
+                >
+                  <ng-icon
+                    [name]="entry.refused ? 'lucideInfo' : 'lucideAlertCircle'"
+                    class="h-3.5 w-3.5"
+                  />
                   {{ entry.error }}
                 </span>
               }

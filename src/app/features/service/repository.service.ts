@@ -11,6 +11,7 @@ import { GitHubSetupHealthResponseDto } from '../../core/api/model/gitHubSetupHe
 import { PublicRepoSearchResultDto } from '../../core/api/model/publicRepoSearchResultDto';
 import { RepositoryAnalysisDto } from '../../core/api/model/repositoryAnalysisDto';
 import { ExtractedEnvVarDto } from '../../core/api/model/extractedEnvVarDto';
+import { isSandboxRefusal } from '../../core/services/sandbox.service';
 
 export interface ManifestEnvVar {
   name: string;
@@ -152,6 +153,7 @@ export class RepositoryService {
   private readonly selectedRepositoryId = signal<string | null>(null);
   private readonly githubSetupStatus = signal<GitHubSetupStatusResponseDto | null>(null);
   private readonly githubSetupHealth = signal<GitHubSetupHealthResponseDto | null>(null);
+  private readonly githubSetupRefused = signal(false);
 
   // Public readonly signals
   readonly repositories = this.repositoriesList.asReadonly();
@@ -162,6 +164,7 @@ export class RepositoryService {
   readonly selectedId = this.selectedRepositoryId.asReadonly();
   readonly setupStatus = this.githubSetupStatus.asReadonly();
   readonly setupHealth = this.githubSetupHealth.asReadonly();
+  readonly setupRefused = this.githubSetupRefused.asReadonly();
 
   // Computed signals
   readonly hasRepositories = computed(() => this.repositoriesList().length > 0);
@@ -239,10 +242,12 @@ export class RepositoryService {
         this.gitHubSetupApi.gitHubSetupControllerGetStatus()
       );
       this.githubSetupStatus.set(status);
+      this.githubSetupRefused.set(false);
       return status;
     } catch (error: any) {
       const fallback: GitHubSetupStatusResponseDto = { configured: false, authMethod: null };
       this.githubSetupStatus.set(fallback);
+      this.githubSetupRefused.set(isSandboxRefusal(error));
       return fallback;
     }
   }

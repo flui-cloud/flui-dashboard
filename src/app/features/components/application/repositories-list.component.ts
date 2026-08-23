@@ -40,6 +40,7 @@ import { GithubAppOAuthService, PackagesPatStatus } from '../../../core/services
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationResponseDto } from '../../../core/api/model/applicationResponseDto';
 import { RepoDeployChoiceModalComponent } from './repo-deploy-choice-modal.component';
+import { PermissionService } from '../../../core/services/permission.service';
 
 @Component({
   selector: 'app-repositories-list',
@@ -195,6 +196,22 @@ import { RepoDeployChoiceModalComponent } from './repo-deploy-choice-modal.compo
         @case ('initializing') {
           <div class="flex items-center justify-center py-16">
             <ng-icon name="lucideLoader" class="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        }
+
+        @case ('refused') {
+          <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-12 text-center">
+            <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4">
+              <ng-icon name="lucideGithub" class="h-8 w-8 text-slate-500 dark:text-slate-400" />
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              Not part of the trial
+            </h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+              Connecting a source repository belongs to the instance, not to a
+              tenancy. Deploy from a container image here — your own
+              applications are real and yours to change.
+            </p>
           </div>
         }
 
@@ -934,6 +951,7 @@ import { RepoDeployChoiceModalComponent } from './repo-deploy-choice-modal.compo
 })
 export class RepositoriesListComponent implements OnInit {
   private readonly repoService = inject(RepositoryService);
+  private readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly appService = inject(ApplicationService);
@@ -956,16 +974,18 @@ export class RepositoriesListComponent implements OnInit {
   isGitLabConnected = this.repoService.isGitLabConnected;
   connectedCount = this.repoService.connectedCount;
   setupStatus = this.repoService.setupStatus;
+  setupRefused = this.repoService.setupRefused;
 
-  private readonly isAdmin = signal(true);
+  private readonly isAdmin = computed(() => this.permissions.isAdmin());
 
   // Funnel page state
   readonly isInitializing = signal(true);
 
   readonly setupHealth = this.repoService.setupHealth;
 
-  readonly pageState = computed<'initializing' | 'not-configured-admin' | 'not-configured-user' | 'misconfigured-admin' | 'misconfigured-user' | 'not-connected' | 'connected'>(() => {
+  readonly pageState = computed<'initializing' | 'refused' | 'not-configured-admin' | 'not-configured-user' | 'misconfigured-admin' | 'misconfigured-user' | 'not-connected' | 'connected'>(() => {
     if (this.isInitializing()) return 'initializing';
+    if (this.setupRefused()) return 'refused';
     const setup = this.setupStatus();
     if (!setup?.configured) {
       return this.isAdmin() ? 'not-configured-admin' : 'not-configured-user';

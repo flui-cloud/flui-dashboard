@@ -44,7 +44,7 @@ export class AppRevisionsService {
     this.revisionsErrorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.applicationsControllerGetRevisions(appId)
+        this.api.applicationReleasesControllerGetRevisions(appId)
       );
       this.revisionsData.set(result ?? []);
     } catch (err: unknown) {

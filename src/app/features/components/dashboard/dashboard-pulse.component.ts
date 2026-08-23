@@ -19,6 +19,7 @@ import {
 import { DashboardService } from '../../service/dashboard.service';
 import { DashboardMetricsService, ClusterMetricsSummary, getSeverity } from '../../service/dashboard-metrics.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { AutoscaleWarningLevel } from '../../model/autoscale.models';
 
 const PAGE_SIZE = 3;
@@ -248,6 +249,7 @@ export class DashboardPulseComponent implements OnInit, OnDestroy {
   private readonly dashboardService = inject(DashboardService);
   private readonly metricsService = inject(DashboardMetricsService);
   private readonly autoscaleService = inject(ClusterAutoscaleService);
+  private readonly permissions = inject(PermissionService);
 
   pulse = this.dashboardService.pulseSummary;
   hasActiveClusters = computed(() => this.dashboardService.activeClusters() > 0);
@@ -304,7 +306,12 @@ export class DashboardPulseComponent implements OnInit, OnDestroy {
     return TEXT_CLASS[getSeverity(value, warn, danger)];
   }
 
+  private mayReadAutoscale(): boolean {
+    return this.permissions.hasSection('clusters');
+  }
+
   ngOnInit(): void {
+    this.permissions.loadSections();
     void this.refreshAutoscaleWarnings();
     this.autoscalePollHandle = setInterval(() => {
       void this.refreshAutoscaleWarnings();
@@ -319,6 +326,7 @@ export class DashboardPulseComponent implements OnInit, OnDestroy {
   }
 
   private async refreshAutoscaleWarnings(): Promise<void> {
+    if (!this.mayReadAutoscale()) return;
     const ids = this.allClusters().map(c => c.clusterId);
     if (ids.length === 0) return;
     const results = await Promise.allSettled(

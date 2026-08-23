@@ -30,7 +30,7 @@ export class AppReleaseService {
   async loadCurrent(appId: string): Promise<void> {
     try {
       const release = await firstValueFrom(
-        this.applicationsApi.applicationsControllerGetCurrentRelease(appId),
+        this.applicationsApi.applicationReleasesControllerGetCurrentRelease(appId),
       );
       this.currentReleaseSignal.set(release ?? null);
     } catch {
@@ -42,7 +42,7 @@ export class AppReleaseService {
     this.loadingSignal.set(true);
     try {
       const res = await firstValueFrom(
-        this.applicationsApi.applicationsControllerListReleases(appId),
+        this.applicationsApi.applicationReleasesControllerListReleases(appId),
       );
       this.historySignal.set(res?.releases ?? []);
     } catch {

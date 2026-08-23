@@ -25,6 +25,8 @@ import { SSHKeyDto, CreateSSHKeyDto, UpdateSSHKeyDto, AccessManagementService } 
 
 import { ProviderLogoService } from '../../shared/services/provider-logo.service';
 import { ProvidersService } from '../service/providers.service';
+import { ReadOnlySectionDirective } from '../../shared/directives/read-only-section.directive';
+import { sandboxFailureMessage } from '../../core/services/sandbox.service';
 
 type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway';
 
@@ -35,7 +37,8 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    NgIcon
+    NgIcon,
+    ReadOnlySectionDirective
   ],
   providers: [
     provideIcons({
@@ -74,6 +77,7 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway';
             <ng-icon name="lucideRefreshCw" class="w-4 h-4" [class.animate-spin]="isLoading()"></ng-icon>
           </button>
           <button
+            appReadOnlySection
             (click)="showAddModal = true"
             class="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
@@ -880,7 +884,9 @@ export class SshKeysComponent {
       },
       error: (err) => {
         console.error('Error loading SSH keys:', err);
-        this.error.set('Failed to load SSH keys. Please try again.');
+        this.error.set(
+          sandboxFailureMessage(err, 'Failed to load SSH keys. Please try again.'),
+        );
         this.isLoading.set(false);
       }
     });

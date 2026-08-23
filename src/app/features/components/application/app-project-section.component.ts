@@ -77,7 +77,7 @@ export class AppProjectSectionComponent {
   }>();
 
   protected readonly allProjects = this.projects.projects;
-  readonly canManage = computed(() => this.perms.isAdmin());
+  readonly canManage = computed(() => this.perms.hasSection('projects'));
   readonly busy = signal(false);
   readonly creating = signal(false);
 

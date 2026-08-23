@@ -9,12 +9,12 @@ import { ApplicationSnapshotsService } from './application-snapshots.service';
 describe('ApplicationSnapshotsService', () => {
   let service: ApplicationSnapshotsService;
   let applicationsApi: {
-    applicationsControllerListSnapshotsForApp: jasmine.Spy;
+    applicationSnapshotsControllerListSnapshotsForApp: jasmine.Spy;
   };
 
   beforeEach(() => {
     applicationsApi = {
-      applicationsControllerListSnapshotsForApp: jasmine.createSpy(),
+      applicationSnapshotsControllerListSnapshotsForApp: jasmine.createSpy(),
     };
     TestBed.configureTestingModule({
       providers: [
@@ -31,7 +31,7 @@ describe('ApplicationSnapshotsService', () => {
   afterEach(() => service.reset());
 
   it('exposes the unavailable reason without inventing an empty snapshot state', async () => {
-    applicationsApi.applicationsControllerListSnapshotsForApp.and.returnValue(
+    applicationsApi.applicationSnapshotsControllerListSnapshotsForApp.and.returnValue(
       of({
         supported: false,
         reason:
