@@ -16,8 +16,36 @@ export interface CreateApiKeyResultDto {
     createdAt: string;
     expiresAt?: string;
     /**
+     * Granted scopes. Null means unscoped — the issuer\'s full weight.
+     */
+    scopes?: Array<string>;
+    /**
+     * The permission groups this key carries, derived from its scopes and not stored: the deepest group held in each area. Null when the key is unscoped. Empty when the scopes match no group, in which case `ungroupedScopes` says what it does carry.
+     */
+    groups?: Array<CreateApiKeyResultDto.GroupsEnum>;
+    /**
+     * Scopes no listed group accounts for. Normally empty; non-empty means the key was assembled scope by scope and the groups alone do not describe it.
+     */
+    ungroupedScopes?: Array<string>;
+    /**
      * Plaintext API key — shown only once at creation time.
      */
     key: string;
 }
+export namespace CreateApiKeyResultDto {
+    export const GroupsEnum = {
+        AppsLook: 'apps:look',
+        AppsChange: 'apps:change',
+        AppsDestroy: 'apps:destroy',
+        ObservabilityLook: 'observability:look',
+        BackupsLook: 'backups:look',
+        BackupsChange: 'backups:change',
+        MigrationsLook: 'migrations:look',
+        MigrationsChange: 'migrations:change',
+        MigrationsDestroy: 'migrations:destroy',
+        MailLook: 'mail:look'
+    } as const;
+    export type GroupsEnum = typeof GroupsEnum[keyof typeof GroupsEnum];
+}
+
 

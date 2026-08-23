@@ -45,7 +45,7 @@ export class VariablesService extends BaseService {
 
     /**
      * Read application variables
-     * Returns the variables for an application discovered from the K8s Deployment spec. type&#x3D;all (default): plain values + sensitive keys masked as \&quot;****\&quot;. type&#x3D;plain: only ConfigMap values. type&#x3D;sensitive: only Secret keys masked as \&quot;****\&quot;.
+     * Returns the variables for an application discovered from the K8s Deployment spec. type&#x3D;all (default): plain values + sensitive keys masked as \&quot;****\&quot;. type&#x3D;plain: only ConfigMap values. type&#x3D;sensitive: only Secret keys masked as \&quot;****\&quot;. Sensitive keys declared but not yet delivered come back in &#x60;pendingKeys&#x60; and appear in neither &#x60;data&#x60; nor &#x60;sensitiveKeys&#x60;: this read says WHICH keys are configured and which are still missing, never what any of them is.
      * @endpoint get /api/v1/variables/applications/{appId}
      * @param appId Application ID
      * @param type Variable type (default: all)
@@ -286,7 +286,7 @@ export class VariablesService extends BaseService {
 
     /**
      * Upsert application variables
-     * Replaces variables for an application directly on K8s (full replace — keys not in the payload are removed). type&#x3D;plain → ConfigMap (&lt;slug&gt;-config); type&#x3D;sensitive → Secret (&lt;slug&gt;-secrets, values base64-encoded). Returns the combined view after the upsert.
+     * Writes variables to &#x60;applications.env&#x60; (the source of truth) and re-renders the cluster resource. Merge, not replace: a key absent from &#x60;data&#x60; is left alone, and removal is explicit via &#x60;deleteKeys&#x60;. type&#x3D;plain → ConfigMap (&lt;slug&gt;-config); type&#x3D;sensitive → Secret (&lt;slug&gt;-secrets, values base64-encoded). &#x60;requestKeys&#x60; (type&#x3D;sensitive only) declares a key as AWAITING a value without carrying one — the agent-safe half of a secret hand-off. Returns the combined view, which never echoes a value back.
      * @endpoint put /api/v1/variables/applications/{appId}
      * @param appId Application ID
      * @param upsertVariablesDto 

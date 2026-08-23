@@ -201,8 +201,8 @@ export class ApplicationMetricsService extends BaseService {
     }
 
     /**
-     * Get metrics for all applications in a cluster
-     * Returns instant metrics for every application in the cluster. Fetches the app list from the database, then queries Prometheus for each app in parallel.
+     * Get metrics for readable applications in a cluster
+     * Returns instant metrics for applications in the cluster that the caller may read. Fetches the app list from the database, then queries Prometheus for each app in parallel.
      * @endpoint get /api/v1/observability/clusters/{clusterId}/applications/metrics
      * @param clusterId Cluster ID (UUID)
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -261,8 +261,8 @@ export class ApplicationMetricsService extends BaseService {
     }
 
     /**
-     * Get metrics history for all applications in a cluster
-     * Returns historical metrics for every application in the cluster over a time range.
+     * Get metrics history for readable applications in a cluster
+     * Returns historical metrics for applications in the cluster that the caller may read.
      * @endpoint get /api/v1/observability/clusters/{clusterId}/applications/metrics/history
      * @param clusterId Cluster ID (UUID)
      * @param start Start time in ISO 8601 format

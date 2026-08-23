@@ -34,7 +34,7 @@ export class McpService extends BaseService {
     }
 
     /**
-     * MCP Streamable HTTP endpoint (session end)
+     * MCP Streamable HTTP endpoint (no sessions: 405)
      * @endpoint delete /api/v1/mcp
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -88,7 +88,7 @@ export class McpService extends BaseService {
     }
 
     /**
-     * MCP Streamable HTTP endpoint (stream / 405 stateless)
+     * MCP Streamable HTTP endpoint (no stream: 405)
      * @endpoint get /api/v1/mcp
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.

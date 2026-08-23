@@ -10,7 +10,7 @@
 
 
 export interface ResourceAmountDto { 
-    request: string;
-    limit: string;
+    cpu: string;
+    memory: string;
 }
 

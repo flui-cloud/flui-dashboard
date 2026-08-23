@@ -18,6 +18,10 @@ export interface UpdateApplicationDto {
      */
     name?: string;
     /**
+     * Labels this application can be selected by in access grants. Administrators only: a tag decides who can see the application, which makes it an access decision rather than a configuration one. `showcase` puts it on display, read-only, to everyone shown the shared showcase.
+     */
+    tags?: Array<string>;
+    /**
      * Updated description
      */
     description?: string;

@@ -9,8 +9,10 @@
  */
 
 
-export interface RegisterResponseDto { 
-    access_token: string;
-    user: object;
+export interface SandboxSaveRequestDto { 
+    /**
+     * Where to send the way back. Kept for nothing else, and gone with the tenancy.
+     */
+    email: string;
 }
 

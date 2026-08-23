@@ -15,5 +15,41 @@ export interface ApiKeyResponseDto {
     revoked: boolean;
     createdAt: string;
     expiresAt?: string;
+    /**
+     * Last time this key authenticated a request, recorded at most once a minute. Null means not seen since this column existed, not never used.
+     */
+    lastUsedAt?: string;
+    /**
+     * Granted scopes. Null means unscoped — the issuer\'s full weight.
+     */
+    scopes?: Array<string>;
+    /**
+     * The permission groups this key carries, derived from its scopes and not stored: the deepest group held in each area. Null when the key is unscoped. Empty when the scopes match no group, in which case `ungroupedScopes` says what it does carry.
+     */
+    groups?: Array<ApiKeyResponseDto.GroupsEnum>;
+    /**
+     * Scopes no listed group accounts for. Normally empty; non-empty means the key was assembled scope by scope and the groups alone do not describe it.
+     */
+    ungroupedScopes?: Array<string>;
+    /**
+     * True for the key that authenticated this request. Revoking that one ends the caller's own session.
+     */
+    current: boolean;
 }
+export namespace ApiKeyResponseDto {
+    export const GroupsEnum = {
+        AppsLook: 'apps:look',
+        AppsChange: 'apps:change',
+        AppsDestroy: 'apps:destroy',
+        ObservabilityLook: 'observability:look',
+        BackupsLook: 'backups:look',
+        BackupsChange: 'backups:change',
+        MigrationsLook: 'migrations:look',
+        MigrationsChange: 'migrations:change',
+        MigrationsDestroy: 'migrations:destroy',
+        MailLook: 'mail:look'
+    } as const;
+    export type GroupsEnum = typeof GroupsEnum[keyof typeof GroupsEnum];
+}
+
 

@@ -10,11 +10,13 @@
 
 
 export interface UpdateIdentityRoleDto { 
+    /**
+     * Platform admin is not conferrable here — see POST /auth/users.
+     */
     role: UpdateIdentityRoleDto.RoleEnum;
 }
 export namespace UpdateIdentityRoleDto {
     export const RoleEnum = {
-        Admin: 'admin',
         User: 'user',
         Readonly: 'readonly'
     } as const;

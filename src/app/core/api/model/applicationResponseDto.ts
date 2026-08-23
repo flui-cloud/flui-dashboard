@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { ApplicationAccessDto } from './applicationAccessDto';
 import { AppOperationResponseDto } from './appOperationResponseDto';
 
 
@@ -139,6 +140,10 @@ export interface ApplicationResponseDto {
      * Set only within a composed-app group response: the bundle display name (e.g. \"Nextcloud\") this component belongs to. Undefined in flat listings.
      */
     composedAppName?: string;
+    /**
+     * Present on the read paths the interface drives (one application, and a cluster’s list). Absent elsewhere rather than guessed.
+     */
+    access?: ApplicationAccessDto;
     createdAt: string;
     updatedAt: string;
 }

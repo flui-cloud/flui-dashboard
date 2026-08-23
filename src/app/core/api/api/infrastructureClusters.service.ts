@@ -41,7 +41,6 @@ import { ClusterStorageStatusDto } from '../model/clusterStorageStatusDto';
 // @ts-ignore
 import { ClustersControllerDeleteCluster202Response } from '../model/clustersControllerDeleteCluster202Response';
 // @ts-ignore
-// @ts-ignore
 import { ClustersControllerRefreshGrafanaDatasources200Response } from '../model/clustersControllerRefreshGrafanaDatasources200Response';
 // @ts-ignore
 import { ClustersControllerUpdateNodeMetadata200Response } from '../model/clustersControllerUpdateNodeMetadata200Response';
@@ -75,10 +74,6 @@ import { ReconcileTagsDto } from '../model/reconcileTagsDto';
 import { ReconcileTagsResponseDto } from '../model/reconcileTagsResponseDto';
 // @ts-ignore
 import { RegisterByosNodeDto } from '../model/registerByosNodeDto';
-// @ts-ignore
-import { RegisterClusterDto } from '../model/registerClusterDto';
-// @ts-ignore
-import { RegisterClusterResponseDto } from '../model/registerClusterResponseDto';
 // @ts-ignore
 import { RemoveWorkerResponseDto } from '../model/removeWorkerResponseDto';
 // @ts-ignore
@@ -1982,76 +1977,6 @@ export class InfrastructureClustersService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: registerByosNodeDto,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Register an existing cluster
-     * Registers an existing cluster (e.g., control cluster) into the database without creating new infrastructure. This enables metrics monitoring via the API.
-     * @endpoint post /api/v1/infrastructure/clusters/register
-     * @param registerClusterDto 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public clustersControllerRegisterCluster(registerClusterDto: RegisterClusterDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RegisterClusterResponseDto>;
-    public clustersControllerRegisterCluster(registerClusterDto: RegisterClusterDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RegisterClusterResponseDto>>;
-    public clustersControllerRegisterCluster(registerClusterDto: RegisterClusterDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RegisterClusterResponseDto>>;
-    public clustersControllerRegisterCluster(registerClusterDto: RegisterClusterDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (registerClusterDto === null || registerClusterDto === undefined) {
-            throw new Error('Required parameter registerClusterDto was null or undefined when calling clustersControllerRegisterCluster.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (bearer) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-            'application/json'
-        ];
-        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
-        if (httpContentTypeSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
-        }
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/v1/infrastructure/clusters/register`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<RegisterClusterResponseDto>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                body: registerClusterDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

@@ -9,9 +9,12 @@
  */
 
 
-export interface RegisterDto { 
-    email: string;
-    password: string;
-    name?: string;
+export interface MailWebhookResultDto { 
+    registered: boolean;
+    url?: string;
+    /**
+     * Why not, in the words shown on the console.
+     */
+    reason?: string;
 }
 

@@ -32,6 +32,10 @@ export interface ApplicationGroupDto {
      */
     url?: string;
     /**
+     * Internal URL of the primary component, for a group exposed only inside the cluster.
+     */
+    internalUrl?: string;
+    /**
      * Catalog slug for catalog-installed groups.
      */
     catalogSlug?: string;

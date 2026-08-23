@@ -35,7 +35,7 @@ export class InfrastructureOperationsService extends BaseService {
 
     /**
      * Get infrastructure operation status
-     * Returns status and progress of any infrastructure operation (servers, clusters, etc.)
+     * Returns status and progress of an infrastructure operation you started (servers, clusters, deploys). Operators who hold the infrastructure section at its full level see every operation on the instance.
      * @endpoint get /api/v1/infrastructure/operations/{operationId}
      * @param operationId Operation ID returned from create/delete operations
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

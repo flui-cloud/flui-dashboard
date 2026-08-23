@@ -29,6 +29,8 @@ import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../model/clu
 // @ts-ignore
 import { ClusterDnsZoneResponseDto } from '../model/clusterDnsZoneResponseDto';
 // @ts-ignore
+import { ClusterWildcardResponseDto } from '../model/clusterWildcardResponseDto';
+// @ts-ignore
 import { ConfigureIssuerDto } from '../model/configureIssuerDto';
 // @ts-ignore
 import { ConfigureSystemIngressDto } from '../model/configureSystemIngressDto';
@@ -863,6 +865,70 @@ export class ClusterDNSZoneService extends BaseService {
     }
 
     /**
+     * Whether one record covers every application on this cluster
+     * Applications are published at &#x60;&lt;slug&gt;.&lt;cluster&gt;.&lt;zone&gt;&#x60; and all point at the same address, so a single &#x60;*.&lt;cluster&gt;&#x60; record covers every one of them — including the ones that do not exist yet. That is what makes a newly deployed application reachable immediately instead of waiting for a brand-new name to propagate. Read live from the DNS provider, so a record removed by hand shows as missing here.
+     * @endpoint get /api/v1/clusters/{clusterId}/dns-zone/{assignmentId}/wildcard
+     * @param assignmentId Assignment ID
+     * @param clusterId Cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterDnsZoneControllerGetWildcard(assignmentId: string, clusterId: any, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClusterWildcardResponseDto>;
+    public clusterDnsZoneControllerGetWildcard(assignmentId: string, clusterId: any, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClusterWildcardResponseDto>>;
+    public clusterDnsZoneControllerGetWildcard(assignmentId: string, clusterId: any, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClusterWildcardResponseDto>>;
+    public clusterDnsZoneControllerGetWildcard(assignmentId: string, clusterId: any, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (assignmentId === null || assignmentId === undefined) {
+            throw new Error('Required parameter assignmentId was null or undefined when calling clusterDnsZoneControllerGetWildcard.');
+        }
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerGetWildcard.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}/dns-zone/${this.configuration.encodeParam({name: "assignmentId", value: assignmentId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/wildcard`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ClusterWildcardResponseDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Get the primary (first-assigned) DNS zone for a cluster
      * Backward-compat endpoint returning the cluster\&#39;s first DNS zone assignment. Use GET /list to retrieve all assigned zones.
      * @endpoint get /api/v1/clusters/{clusterId}/dns-zone
@@ -983,8 +1049,72 @@ export class ClusterDNSZoneService extends BaseService {
     }
 
     /**
+     * Publish the record that covers every application on this cluster
+     * Creates &#x60;*.&lt;cluster&gt;&#x60; pointing at the cluster. Never overwrites: a wildcard already pointing somewhere else is left exactly as it is and comes back as &#x60;foreign&#x60; — those applications keep getting their own per-app records, which still work, only slower. A full zone reconcile does this as well; this is the narrow version, for when that one record is the only thing missing.
+     * @endpoint post /api/v1/clusters/{clusterId}/dns-zone/{assignmentId}/wildcard
+     * @param assignmentId Assignment ID
+     * @param clusterId Cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterDnsZoneControllerPublishWildcard(assignmentId: string, clusterId: any, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClusterWildcardResponseDto>;
+    public clusterDnsZoneControllerPublishWildcard(assignmentId: string, clusterId: any, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClusterWildcardResponseDto>>;
+    public clusterDnsZoneControllerPublishWildcard(assignmentId: string, clusterId: any, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClusterWildcardResponseDto>>;
+    public clusterDnsZoneControllerPublishWildcard(assignmentId: string, clusterId: any, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (assignmentId === null || assignmentId === undefined) {
+            throw new Error('Required parameter assignmentId was null or undefined when calling clusterDnsZoneControllerPublishWildcard.');
+        }
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerPublishWildcard.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}/dns-zone/${this.configuration.encodeParam({name: "assignmentId", value: assignmentId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/wildcard`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ClusterWildcardResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Reconcile one DNS zone assignment
-     * Re-applies the cluster state the zone needs (DNS-01 credential Secrets and the wildcard ClusterIssuer solvers covering every assigned zone) and recomputes the reconciliation status of the assignment. Returns immediately with the assignment in RECONCILING — the cluster work runs in the background. Poll this assignment until it leaves RECONCILING: a zone that cannot be reconciled lands in ERROR with the reason in errorMessage.
+     * Re-applies the cluster state the zone needs (DNS-01 credential Secrets and the wildcard ClusterIssuer solvers covering every assigned zone), publishes the &#x60;*.&lt;cluster&gt;&#x60; record so applications resolve the moment they are created rather than a minute later, and recomputes the reconciliation status of the assignment. Returns immediately with the assignment in RECONCILING — the cluster work runs in the background. Poll this assignment until it leaves RECONCILING: a zone that cannot be reconciled lands in ERROR with the reason in errorMessage.
      * @endpoint post /api/v1/clusters/{clusterId}/dns-zone/{assignmentId}/reconcile
      * @param assignmentId Assignment ID
      * @param clusterId Cluster ID

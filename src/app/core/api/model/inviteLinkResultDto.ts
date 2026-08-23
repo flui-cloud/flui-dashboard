@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { InviteDeliveryDto } from './inviteDeliveryDto';
 
 
 export interface InviteLinkResultDto { 
@@ -20,5 +21,9 @@ export interface InviteLinkResultDto {
     inviteCode: string;
     userId: string;
     organizationId?: string;
+    /**
+     * What became of the email, when one was asked for. Reported rather than thrown: the link above works pasted into a chat window, so losing it to a mailer problem would be worse.
+     */
+    delivery?: InviteDeliveryDto;
 }
 

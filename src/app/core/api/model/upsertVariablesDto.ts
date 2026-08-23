@@ -11,12 +11,16 @@
 
 export interface UpsertVariablesDto { 
     /**
-     * Key-value pairs to store
+     * Key-value pairs to store. Optional: the handler already ignores it when empty — a payload that only declares has nothing to write to the cluster — so requiring it made a declare-only or delete-only call answer 400 for a field it was about to throw away (decision 48).
      */
-    data: { [key: string]: string; };
+    data?: { [key: string]: string; };
     /**
      * Keys to remove. Deletion is explicit: a key missing from `data` is left untouched, so a partial or stale payload can never erase stored config.
      */
     deleteKeys?: Array<string>;
+    /**
+     * Sensitive keys declared as AWAITING a value (type=sensitive only). No value travels with this field and none is invented: the key is recorded as missing until a person delivers it (`flui app env set`, or the browser form). A key that already holds a value is left untouched.
+     */
+    requestKeys?: Array<string>;
 }
 

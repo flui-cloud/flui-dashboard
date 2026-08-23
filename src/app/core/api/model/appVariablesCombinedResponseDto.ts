@@ -25,6 +25,10 @@ export interface AppVariablesCombinedResponseDto {
      * Keys whose values are masked (come from Secrets)
      */
     sensitiveKeys: Array<string>;
+    /**
+     * Sensitive keys declared but NOT yet delivered — the \"missing a value\" state. They are absent from `data` and from `sensitiveKeys` on purpose: a key here is not configured, and nothing about it is masked because there is nothing to mask. This is a state, not an error.
+     */
+    pendingKeys: Array<string>;
     sources: AppVariableSourcesDto;
     /**
      * resourceVersion per ogni ConfigMap/Secret letto

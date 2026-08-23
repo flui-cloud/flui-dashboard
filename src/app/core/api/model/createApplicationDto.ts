@@ -32,10 +32,6 @@ export interface CreateApplicationDto {
     kind?: CreateApplicationDto.KindEnum;
     sourceType: CreateApplicationDto.SourceTypeEnum;
     /**
-     * Kubernetes namespace
-     */
-    k8sNamespace?: string;
-    /**
      * Polymorphic source configuration based on sourceType
      */
     sourceConfig: object;

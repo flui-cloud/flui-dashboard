@@ -15,5 +15,48 @@ export interface CreateApiKeyDto {
      * ISO 8601 expiry date. Omit for no expiry.
      */
     expiresAt?: string;
+    /**
+     * Permission groups granted to this key — the unit a person switches on when connecting an agent. Each expands to the scopes it names; a group holding one scope the issuer does not is refused whole, never trimmed. May be combined with `scopes`, in which case the two are unioned and the same ceiling applies to the result.
+     */
+    groups?: Array<CreateApiKeyDto.GroupsEnum>;
+    /**
+     * Scopes granted to this key. Every scope must be one the issuer already holds the permission for, or the request is refused. Combine with `groups` or use either alone; for a key with no ceiling at all, say `unscoped: true` instead — omitting all three is refused.
+     */
+    scopes?: Array<CreateApiKeyDto.ScopesEnum>;
+    /**
+     * Issue a key with no scope ceiling, carrying the full weight of the issuer. Mutually exclusive with `scopes` and `groups`; one of the three is required, because an empty request used to mean this one silently.
+     */
+    unscoped?: boolean;
 }
+export namespace CreateApiKeyDto {
+    export const GroupsEnum = {
+        AppsLook: 'apps:look',
+        AppsChange: 'apps:change',
+        AppsDestroy: 'apps:destroy',
+        ObservabilityLook: 'observability:look',
+        BackupsLook: 'backups:look',
+        BackupsChange: 'backups:change',
+        MigrationsLook: 'migrations:look',
+        MigrationsChange: 'migrations:change',
+        MigrationsDestroy: 'migrations:destroy',
+        MailLook: 'mail:look'
+    } as const;
+    export type GroupsEnum = typeof GroupsEnum[keyof typeof GroupsEnum];
+    export const ScopesEnum = {
+        McpCatalogRead: 'mcp:catalog:read',
+        McpAppRead: 'mcp:app:read',
+        McpObsRead: 'mcp:obs:read',
+        McpBackupRead: 'mcp:backup:read',
+        McpMigrationRead: 'mcp:migration:read',
+        McpMailRead: 'mcp:mail:read',
+        McpSpecValidate: 'mcp:spec:validate',
+        McpAppWrite: 'mcp:app:write',
+        McpBackupWrite: 'mcp:backup:write',
+        McpMigrationWrite: 'mcp:migration:write',
+        McpAppDestructive: 'mcp:app:destructive',
+        McpMigrationDestructive: 'mcp:migration:destructive'
+    } as const;
+    export type ScopesEnum = typeof ScopesEnum[keyof typeof ScopesEnum];
+}
+
 
