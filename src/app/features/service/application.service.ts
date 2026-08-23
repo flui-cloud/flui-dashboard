@@ -19,6 +19,31 @@ import { AppRuntimeWebSocketService, OperationProgressEvent } from './app-runtim
 import { NotificationService } from '../../core/services/notification.service';
 import { AppConfigService } from '../../core/services/app-config.service';
 
+export interface RemovalPreviewVolume {
+  name: string;
+  namespace: string;
+  applicationId: string;
+  applicationName: string;
+  requested: string | null;
+  requestedBytes: number;
+  sizeLabel: string;
+  storageClass: string | null;
+  phase: string | null;
+  attributedBy: string;
+}
+
+export interface RemovalPreview {
+  removes: 'catalog-install' | 'application';
+  label: string;
+  applications: { id: string; name: string; slug: string }[];
+  volumes: RemovalPreviewVolume[];
+  totalBytes: number;
+  totalLabel: string;
+  volumesKnown: boolean;
+  dataWarning: string | null;
+  note?: string;
+}
+
 export interface GenerateWorkflowParams {
   branch: string;
   framework: string;
@@ -708,6 +733,11 @@ export class ApplicationService {
       if (!matches(e)) return;
       this._updateAppStatus(appId, ApplicationStatusEnum.Failed);
     });
+  }
+
+  async getRemovalPreview(applicationId: string): Promise<RemovalPreview> {
+    const url = `${this.appConfig.apiBaseUrl}/api/v1/applications/${applicationId}/removal-preview`;
+    return firstValueFrom(this.http.get<RemovalPreview>(url));
   }
 
   /** @deprecated Use generateWorkflowV3 for V3 Dockerfile-first flow */

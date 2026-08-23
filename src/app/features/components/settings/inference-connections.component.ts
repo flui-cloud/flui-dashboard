@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideAlertCircle, lucideLoader, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
@@ -15,6 +15,7 @@ import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
 import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { SandboxLevelNoticeComponent } from '../../../shared/components/sandbox-level-notice.component';
+import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
 
 interface ConnUiState {
   validating: boolean;
@@ -37,7 +38,8 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
 @Component({
   selector: 'app-inference-connections',
   standalone: true,
-  imports: [ReadOnlySectionDirective, SandboxLevelNoticeComponent, 
+  imports: [ReadOnlySectionDirective, SandboxLevelNoticeComponent,
+    DeleteConfirmationDialogComponent,
     ReactiveFormsModule,
     NgIcon,
     HlmCardDirective,
@@ -93,7 +95,7 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
                         <button
                           appReadOnlySection="models"
                           type="button"
-                          (click)="deleteConn(c.id)"
+                          (click)="confirmDeleteConn(c)"
                           [disabled]="st.deleting || st.validating"
                           class="inline-flex items-center gap-1 rounded-md border border-destructive/50 bg-background px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -247,12 +249,23 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
         }
       }
     </div>
+
+    <app-delete-confirmation-dialog
+      #deleteDialog
+      [deleting]="connState(pendingId() ?? '').deleting"
+      (confirmed)="onDeleteConfirmed()"
+      (cancelled)="onDeleteCancelled()"
+    />
   `,
 })
 export class InferenceConnectionsComponent implements OnInit {
   protected readonly service = inject(InferenceSettingsService);
   private readonly fb = inject(FormBuilder);
   private readonly states = signal<Record<string, ConnUiState>>({});
+
+  private readonly deleteDialog =
+    viewChild.required<DeleteConfirmationDialogComponent>('deleteDialog');
+  protected readonly pendingId = signal<string | null>(null);
 
   readonly showForm = signal(false);
   readonly creating = signal(false);
@@ -316,15 +329,42 @@ export class InferenceConnectionsComponent implements OnInit {
     });
   }
 
-  deleteConn(id: string): void {
+  confirmDeleteConn(conn: { id: string; label: string; baseUrl: string }): void {
+    this.pendingId.set(conn.id);
+    this.deleteDialog().open({
+      title: 'Delete LLM connection',
+      description: 'This action cannot be undone.',
+      itemName: conn.label,
+      itemDescription: conn.baseUrl,
+      warningMessage:
+        'The stored API key is deleted with it, and anything using this ' +
+        'connection stops working.',
+    });
+  }
+
+  onDeleteConfirmed(): void {
+    const id = this.pendingId();
+    if (!id) return;
     this.patchConn(id, { deleting: true });
     this.service.deleteConnection(id).subscribe({
-      error: (err) =>
+      next: () => {
+        this.patchConn(id, { deleting: false });
+        this.pendingId.set(null);
+        this.deleteDialog().close();
+      },
+      error: (err) => {
         this.patchConn(id, {
           deleting: false,
           validation: { ok: false, message: err?.error?.message ?? 'Delete failed' },
-        }),
+        });
+        this.pendingId.set(null);
+        this.deleteDialog().close();
+      },
     });
+  }
+
+  onDeleteCancelled(): void {
+    this.pendingId.set(null);
   }
 
   submitForm(): void {

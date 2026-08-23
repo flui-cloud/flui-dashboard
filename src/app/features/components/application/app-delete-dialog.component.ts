@@ -12,7 +12,10 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideTrash2, lucideTriangleAlert } from '@ng-icons/lucide';
-import { ApplicationService } from '../../service/application.service';
+import {
+  ApplicationService,
+  RemovalPreview,
+} from '../../service/application.service';
 import { CatalogService } from '../../service/catalog.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AppGroupView, Application } from '../../model/application.models';
@@ -83,6 +86,42 @@ import { AppGroupView, Application } from '../../model/application.models';
             </div>
           </div>
 
+          <div class="mt-4" data-testid="data-impact">
+            @if (loadingPreview()) {
+              <p class="flex items-center gap-2 text-xs text-muted-foreground">
+                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+                Checking what this removes…
+              </p>
+            } @else {
+              @let p = preview();
+              @if (!p || !p.volumesKnown) {
+                <p class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800
+                          dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+                  The volumes this would delete could not be read from the cluster.
+                  Assume data will be lost — it is not known to be none.
+                </p>
+              } @else if (p.volumes.length) {
+                <div class="rounded-md border border-red-300 bg-red-50 px-3 py-2 dark:border-red-900/50 dark:bg-red-950/30">
+                  <p class="text-xs font-semibold text-red-700 dark:text-red-400" data-testid="data-warning">
+                    {{ p.dataWarning }}
+                  </p>
+                  <ul class="mt-1.5 space-y-0.5">
+                    @for (v of p.volumes; track v.namespace + '/' + v.name) {
+                      <li class="flex items-center justify-between gap-2 text-xs text-red-700/90 dark:text-red-400/90">
+                        <span class="truncate font-mono">{{ v.name }}</span>
+                        <span class="shrink-0 font-semibold">{{ v.sizeLabel }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              } @else {
+                <p class="text-xs text-muted-foreground">
+                  No persistent volume is attached — there is no stored data to lose.
+                </p>
+              }
+            }
+          </div>
+
           <div class="mt-4 space-y-1.5">
             <label class="block text-xs text-muted-foreground">
               Type
@@ -151,6 +190,8 @@ export class AppDeleteDialogComponent {
   protected readonly confirmInput = signal('');
   protected readonly isDeleting = signal(false);
   protected readonly deleteError = signal<string | null>(null);
+  protected readonly preview = signal<RemovalPreview | null>(null);
+  protected readonly loadingPreview = signal(false);
 
   protected readonly isComposed = computed(() => this.group()?.type === 'composed');
   protected readonly deleteTargets = computed(() => this.group()?.components ?? []);
@@ -196,7 +237,22 @@ export class AppDeleteDialogComponent {
   protected openDelete(): void {
     this.confirmInput.set('');
     this.deleteError.set(null);
+    this.preview.set(null);
     this.showModal.set(true);
+    void this.loadPreview();
+  }
+
+  private async loadPreview(): Promise<void> {
+    const p = this.primary();
+    if (!p) return;
+    this.loadingPreview.set(true);
+    try {
+      this.preview.set(await this.appService.getRemovalPreview(p.id));
+    } catch {
+      this.preview.set(null);
+    } finally {
+      this.loadingPreview.set(false);
+    }
   }
 
   protected closeDelete(): void {

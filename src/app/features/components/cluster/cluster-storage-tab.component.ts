@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -19,6 +19,7 @@ import {
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterStorageService } from '../../service/cluster-storage.service';
 import { ApplicationSnapshotsService } from '../../service/application-snapshots.service';
+import { ClusterOrphanedVolumesComponent } from './cluster-orphaned-volumes.component';
 import { ClusterStorageStatusDto } from '../../../core/api/model/clusterStorageStatusDto';
 import {
   ApplicationSnapshot,
@@ -73,7 +74,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
 @Component({
   selector: 'cluster-storage-tab',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgIconComponent],
+  imports: [CommonModule, RouterModule, NgIconComponent, ClusterOrphanedVolumesComponent],
   providers: [
     provideIcons({
       lucideHardDrive,
@@ -412,6 +413,8 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
           </div>
         </div>
       }
+
+      <cluster-orphaned-volumes [clusterId]="clusterId()" />
     </div>
   `,
 })
@@ -430,6 +433,9 @@ export class ClusterStorageTabComponent implements OnInit {
 
   readonly snapshots = this.snapshotsService.snapshots;
   readonly snapshotsLoading = this.snapshotsService.loading;
+
+  readonly clusterId = computed(() => this.clusterService.cluster()?.id ?? null);
+  private readonly orphanedVolumes = viewChild(ClusterOrphanedVolumesComponent);
 
   readonly nfsOpen = signal(false);
   readonly snapshotsOpen = signal(false);
@@ -466,6 +472,7 @@ export class ClusterStorageTabComponent implements OnInit {
     const id = this.clusterService.cluster()?.id;
     if (!id) return;
     await this.storageService.load(id, true);
+    await this.orphanedVolumes()?.reload();
     if (this.snapshotsOpen()) {
       await this.snapshotsService.loadForCluster(id);
     }

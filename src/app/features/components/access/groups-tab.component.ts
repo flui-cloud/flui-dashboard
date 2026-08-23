@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideUsersRound,
@@ -14,6 +14,7 @@ import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { IamService } from '../../service/iam.service';
 import { CanDirective } from '../../../core/directives/can.directive';
 import { GroupRecord, UserRecord } from '../../model/iam.model';
+import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
 
 const FIELD =
   'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
@@ -27,6 +28,7 @@ const FIELD =
     HlmCardContentDirective,
     HlmBadgeDirective,
     CanDirective,
+    DeleteConfirmationDialogComponent,
   ],
   providers: [provideIcons({ lucideUsersRound, lucidePlus, lucideTrash2, lucideX })],
   template: `
@@ -81,7 +83,7 @@ const FIELD =
                     <p class="text-sm text-muted-foreground mt-0.5">{{ g.description }}</p>
                   }
                 </div>
-                <button *fluiCan="'iam:assign-role'" type="button" (click)="iam.removeGroup(g.name)"
+                <button *fluiCan="'iam:assign-role'" type="button" (click)="confirmRemoveGroup(g)"
                   class="text-muted-foreground hover:text-destructive shrink-0" title="Delete group">
                   <ng-icon name="lucideTrash2" class="h-4 w-4" />
                 </button>
@@ -116,12 +118,22 @@ const FIELD =
         }
       </div>
     </div>
+
+    <app-delete-confirmation-dialog
+      #deleteDialog
+      (confirmed)="onRemoveConfirmed()"
+      (cancelled)="pendingGroup.set(null)"
+    />
   `,
 })
 export class GroupsTabComponent {
   protected readonly iam = inject(IamService);
   protected readonly fieldClass = FIELD;
   protected readonly selectClass = FIELD + ' h-9 pr-8 appearance-none';
+
+  private readonly deleteDialog =
+    viewChild.required<DeleteConfirmationDialogComponent>('deleteDialog');
+  protected readonly pendingGroup = signal<GroupRecord | null>(null);
 
   readonly showCreate = signal(false);
   readonly newName = signal('');
@@ -145,6 +157,27 @@ export class GroupsTabComponent {
     this.newName.set('');
     this.newDesc.set('');
     this.showCreate.set(false);
+  }
+
+  confirmRemoveGroup(g: GroupRecord): void {
+    this.pendingGroup.set(g);
+    this.deleteDialog().open({
+      title: 'Delete group',
+      description: 'This action cannot be undone.',
+      itemName: g.name,
+      itemDescription: g.description || undefined,
+      warningMessage: g.members.length
+        ? `${g.members.length} member(s) lose whatever this group granted them.`
+        : 'Any access policy bound to this group stops applying.',
+    });
+  }
+
+  onRemoveConfirmed(): void {
+    const g = this.pendingGroup();
+    if (!g) return;
+    this.iam.removeGroup(g.name);
+    this.pendingGroup.set(null);
+    this.deleteDialog().close();
   }
 
   addMember(group: string, e: Event): void {
