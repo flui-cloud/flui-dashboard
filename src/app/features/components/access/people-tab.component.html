@@ -1,7 +1,7 @@
 <div class="space-y-4">
   <div class="flex items-center justify-between">
     <p class="text-sm text-muted-foreground">{{ iam.users().length }} people</p>
-    @if (perms.isAdmin()) {
+    @if (perms.can('iam:manage-users')) {
       <button type="button" (click)="showInvite.set(!showInvite())"
         class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
         <ng-icon name="lucideUserPlus" class="h-4 w-4" /> Invite user
@@ -210,7 +210,7 @@
                           }
                         </select>
                         @if (isDirty(u)) {
-                          <button *fluiCan="'iam:assign-role'" type="button" (click)="saveGlobal(u)"
+                          <button *fluiCan="'iam:assign-role'" type="button" (click)="askSaveGlobal(u)"
                             class="shrink-0 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90">
                             Save
                           </button>
@@ -229,7 +229,7 @@
                 </td>
                 <td class="py-2.5">
                   <div class="flex items-center justify-end gap-1.5">
-                    @if (perms.isAdmin() && !u.isBootstrapAdmin && !u.isSystemUser) {
+                    @if (perms.can('iam:manage-users') && !u.isBootstrapAdmin && !u.isSystemUser) {
                       @if (u.isAdmin) {
                         <button type="button" (click)="toggleAdmin(u)"
                           class="text-muted-foreground hover:text-foreground"
@@ -264,6 +264,17 @@
     </div>
   </div>
   }
+
+  <app-confirmation-dialog
+    #roleDialog
+    title="Change global access"
+    confirmText="Apply"
+    [variant]="roleDialogVariant()"
+    [message]="roleDialogMessage()"
+    [details]="roleDialogDetails()"
+    (confirmed)="onRoleChangeConfirmed()"
+    (cancelled)="onRoleChangeCancelled()"
+  />
 
   <app-confirmation-dialog
     #adminDialog

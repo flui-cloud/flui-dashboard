@@ -23,11 +23,13 @@ import { IamService } from '../../service/iam.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { CanDirective } from '../../../core/directives/can.directive';
 import {
+  AccessDelta,
   AccessRole,
   ALL_SECTION_KEYS,
   SECTION_LABELS,
   UserRecord,
   UserStatus,
+  accessDeltaLines,
   sectionsForPermissions,
 } from '../../model/iam.model';
 
@@ -199,6 +201,66 @@ export class PeopleTabComponent {
   onRowGlobalChange(id: string, e: Event): void {
     const value = this.value(e) as 'none' | AccessRole;
     this.pendingGlobals.update((m) => ({ ...m, [id]: value }));
+  }
+
+  @ViewChild('roleDialog')
+  private readonly roleDialog!: ConfirmationDialogComponent;
+
+  readonly pendingRoleUser = signal<UserRecord | null>(null);
+  private readonly roleDelta = signal<AccessDelta | null>(null);
+  private readonly roleUnknown = signal(false);
+
+  readonly roleDialogMessage = computed(() => {
+    if (this.roleUnknown()) {
+      return 'What this person reaches could not be read, so what this change takes away is not known. Do not read that as "nothing".';
+    }
+    return this.roleDelta()?.summary ?? 'Working out what this changes…';
+  });
+
+  readonly roleDialogDetails = computed(() => {
+    const delta = this.roleDelta();
+    return delta ? accessDeltaLines(delta) : [];
+  });
+
+  readonly roleDialogVariant = computed<'danger' | 'info'>(() =>
+    this.roleDelta()?.losesNothing && !this.roleUnknown() ? 'info' : 'danger',
+  );
+
+  askSaveGlobal(u: UserRecord): void {
+    const value = this.pendingGlobals()[u.id];
+    if (value == null || value === this.currentGlobal(u)) return;
+    this.pendingRoleUser.set(u);
+    this.roleDelta.set(null);
+    this.roleUnknown.set(false);
+    this.roleDialog.open();
+
+    const existing = this.iam.globalGrantOf(u.email);
+    this.iam
+      .accessPreview({
+        principalType: 'user',
+        principalRef: u.email,
+        removeGrantIds: existing ? [existing.id] : [],
+        add:
+          value === 'none'
+            ? []
+            : [{ role: value, scopeType: 'global' }],
+      })
+      .subscribe((delta) => {
+        if (this.pendingRoleUser()?.id !== u.id) return;
+        this.roleDelta.set(delta);
+        this.roleUnknown.set(!delta);
+      });
+  }
+
+  onRoleChangeConfirmed(): void {
+    const u = this.pendingRoleUser();
+    if (u) this.saveGlobal(u);
+    this.roleDialog.close();
+    this.pendingRoleUser.set(null);
+  }
+
+  onRoleChangeCancelled(): void {
+    this.pendingRoleUser.set(null);
   }
 
   saveGlobal(u: UserRecord): void {

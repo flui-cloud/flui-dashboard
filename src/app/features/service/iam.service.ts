@@ -4,6 +4,7 @@ import { AppConfigService } from '../../core/services/app-config.service';
 import { NotificationService } from '../../core/services/notification.service';
 import {
   AccessBinding,
+  AccessDelta,
   AccessRole,
   AccessScope,
   AppAttributes,
@@ -17,6 +18,8 @@ import {
   UserStatus,
 } from '../model/iam.model';
 import { ProjectOption } from '../model/project.model';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import {
   ApiGroup,
   ApiRoleBinding,
@@ -180,7 +183,10 @@ export class IamService {
 
   addGrant(binding: AccessBinding): void {
     this.http
-      .post<ApiRoleBinding>(`${this.iamBase}/grants`, toCreateBody(binding))
+      .post<ApiRoleBinding & { delta?: AccessDelta }>(
+        `${this.iamBase}/grants`,
+        toCreateBody(binding),
+      )
       .subscribe({
         next: (row) => this._grants.update((g) => [toGrantRecord(row), ...g]),
         error: (e) => this.fail('create grant', e),
@@ -188,10 +194,34 @@ export class IamService {
   }
 
   removeGrant(id: string): void {
-    this.http.delete<void>(`${this.iamBase}/grants/${id}`).subscribe({
-      next: () => this._grants.update((g) => g.filter((x) => x.id !== id)),
-      error: (e) => this.fail('remove grant', e),
-    });
+    this.http
+      .delete<{ delta?: AccessDelta }>(`${this.iamBase}/grants/${id}`)
+      .subscribe({
+        next: () => this._grants.update((g) => g.filter((x) => x.id !== id)),
+        error: (e) => this.fail('remove grant', e),
+      });
+  }
+
+  revocationPreview(id: string): Observable<AccessDelta | null> {
+    return this.http
+      .get<AccessDelta>(`${this.iamBase}/grants/${id}/revocation-preview`)
+      .pipe(catchError(() => of(null)));
+  }
+
+  accessPreview(body: {
+    principalType: string;
+    principalRef: string;
+    add?: Array<{
+      role: string;
+      scopeType: string;
+      scopeRef?: string;
+      selector?: Record<string, unknown>;
+    }>;
+    removeGrantIds?: string[];
+  }): Observable<AccessDelta | null> {
+    return this.http
+      .post<AccessDelta>(`${this.iamBase}/access-preview`, body)
+      .pipe(catchError(() => of(null)));
   }
 
   private loadUsers(): void {

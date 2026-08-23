@@ -149,3 +149,84 @@ export function sectionsForPermissions(
   }
   return ALL_SECTION_KEYS.filter((k) => keys.has(k));
 }
+
+export interface AccessDeltaApp {
+  id: string;
+  name: string;
+  slug: string;
+  clusterName: string;
+}
+
+export interface AccessDelta {
+  principal: { type: string; ref: string };
+  summary: string;
+  losesNothing: boolean;
+  losesEverything: boolean;
+  principalIsPlatformAdmin: boolean;
+  sectionsClosed: { key: string }[];
+  sectionsDowngraded: { key: string }[];
+  sectionsOpened: { key: string }[];
+  coverage: 'exact' | 'snapshot' | 'unknown';
+  applicationsLost: AccessDeltaApp[];
+  applicationsLostCount: number;
+  applicationsGained: AccessDeltaApp[];
+  applicationsGainedCount: number;
+  permissionsLost: string[];
+  permissionsGained: string[];
+  note?: string;
+}
+
+const plural = (n: number): string => (n === 1 ? '' : 's');
+
+const sectionNames = (sections: { key: string }[]): string =>
+  sections.map((s) => SECTION_LABELS[s.key] ?? s.key).join(', ');
+
+function applicationsLostLine(d: AccessDelta): string {
+  const listed = d.applicationsLost.map((a) => a.slug).join(', ');
+  const hidden = d.applicationsLostCount - d.applicationsLost.length;
+  const more = hidden > 0 ? `, and ${hidden} more` : '';
+  return `Loses ${d.applicationsLostCount} application${plural(d.applicationsLostCount)}: ${listed}${more}`;
+}
+
+function unknownCoverageLines(d: AccessDelta): string[] {
+  return [
+    d.note ??
+      'The application inventory could not be read, so what this takes away is not known.',
+    'Do not read the empty list as "nothing".',
+  ];
+}
+
+export function accessDeltaLines(d: AccessDelta): string[] {
+  if (d.coverage === 'unknown') return unknownCoverageLines(d);
+
+  const lines: string[] = [];
+  if (d.applicationsLostCount > 0) {
+    lines.push(applicationsLostLine(d));
+    if (d.coverage === 'snapshot') {
+      lines.push(
+        'That list is today’s: the scope is a standing rule, so it also covers whatever matches later.',
+      );
+    }
+  }
+  if (d.sectionsClosed.length) {
+    lines.push('Sections that close: ' + sectionNames(d.sectionsClosed));
+  }
+  if (d.sectionsDowngraded.length) {
+    lines.push(
+      'Sections that become read-only: ' + sectionNames(d.sectionsDowngraded),
+    );
+  }
+  if (d.permissionsLost.length) {
+    lines.push('Permissions given up: ' + d.permissionsLost.join(', '));
+  }
+  if (d.applicationsGainedCount > 0) {
+    lines.push(
+      `Gains ${d.applicationsGainedCount} application${plural(d.applicationsGainedCount)}.`,
+    );
+  }
+  if (d.sectionsOpened.length) {
+    lines.push('Sections that open: ' + sectionNames(d.sectionsOpened));
+  }
+  if (d.losesEverything) lines.push('They are left with no access at all.');
+  return lines;
+}

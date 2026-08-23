@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
@@ -20,11 +20,18 @@ import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { IamService } from '../../service/iam.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { CanDirective } from '../../../core/directives/can.directive';
+import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { GrantBuilderComponent } from './grant-builder.component';
 import { PeopleTabComponent } from './people-tab.component';
 import { GroupsTabComponent } from './groups-tab.component';
 import { RolesTabComponent } from './roles-tab.component';
-import { AccessBinding, AccessSelector } from '../../model/iam.model';
+import {
+  AccessBinding,
+  AccessDelta,
+  AccessSelector,
+  GrantRecord,
+  accessDeltaLines,
+} from '../../model/iam.model';
 
 type TabId = 'grants' | 'people' | 'groups' | 'roles';
 
@@ -43,6 +50,7 @@ interface TabDef {
     HlmCardContentDirective,
     HlmBadgeDirective,
     CanDirective,
+    ConfirmationDialogComponent,
     GrantBuilderComponent,
     PeopleTabComponent,
     GroupsTabComponent,
@@ -148,7 +156,7 @@ interface TabDef {
                           </td>
                           <td class="py-2.5">
                             @if (iam.isRevocable(g.binding.role)) {
-                              <button type="button" (click)="iam.removeGrant(g.id)" *fluiCan="'iam:assign-role'"
+                              <button type="button" (click)="askRemove(g)" *fluiCan="'iam:assign-role'"
                                 class="text-muted-foreground hover:text-destructive" title="Remove grant">
                                 <ng-icon name="lucideTrash2" class="h-4 w-4" />
                               </button>
@@ -175,6 +183,17 @@ interface TabDef {
           <app-roles-tab />
         }
       }
+
+      <app-confirmation-dialog
+        #revokeDialog
+        title="Remove this grant"
+        variant="danger"
+        confirmText="Remove"
+        [message]="revokeMessage()"
+        [details]="revokeDetails()"
+        (confirmed)="onRemoveConfirmed()"
+        (cancelled)="onRemoveCancelled()"
+      />
     </div>
   `,
 })
@@ -244,5 +263,47 @@ export class AccessComponent implements OnInit {
 
   matchCount(b: AccessBinding): number {
     return this.iam.matchApps(b.scope).length;
+  }
+
+  @ViewChild('revokeDialog')
+  private readonly revokeDialog!: ConfirmationDialogComponent;
+
+  readonly pendingRevoke = signal<GrantRecord | null>(null);
+  private readonly revokeDelta = signal<AccessDelta | null>(null);
+  private readonly revokeUnknown = signal(false);
+
+  readonly revokeMessage = computed(() => {
+    if (this.revokeUnknown()) {
+      return 'What this grant reaches could not be read, so what its holder loses is not known. Do not read that as "nothing".';
+    }
+    return this.revokeDelta()?.summary ?? 'Checking what this takes away…';
+  });
+
+  readonly revokeDetails = computed(() => {
+    const delta = this.revokeDelta();
+    return delta ? accessDeltaLines(delta) : [];
+  });
+
+  askRemove(grant: GrantRecord): void {
+    this.pendingRevoke.set(grant);
+    this.revokeDelta.set(null);
+    this.revokeUnknown.set(false);
+    this.revokeDialog.open();
+    this.iam.revocationPreview(grant.id).subscribe((delta) => {
+      if (this.pendingRevoke()?.id !== grant.id) return;
+      this.revokeDelta.set(delta);
+      this.revokeUnknown.set(!delta);
+    });
+  }
+
+  onRemoveConfirmed(): void {
+    const grant = this.pendingRevoke();
+    if (grant) this.iam.removeGrant(grant.id);
+    this.revokeDialog.close();
+    this.pendingRevoke.set(null);
+  }
+
+  onRemoveCancelled(): void {
+    this.pendingRevoke.set(null);
   }
 }
