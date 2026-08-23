@@ -15,6 +15,7 @@ import {
   lucideShield,
   lucideShieldPlus,
   lucideNetwork,
+  lucideBot,
 } from '@ng-icons/lucide';
 import { AuthService } from '../../../core/services/auth.service';
 import { AppConfigService } from '../../../core/services/app-config.service';
@@ -27,8 +28,14 @@ import { ProfileTabComponent } from './profile-tab.component';
 import { SecurityTabComponent } from './security-tab.component';
 import { InfrastructureAuthProxyComponent } from '../infrastructure/infrastructure-auth-proxy.component';
 import { InferenceConnectionsComponent } from './inference-connections.component';
+import { AgentKeysComponent } from './agent-keys/agent-keys.component';
 
-type SectionId = 'profile' | 'security' | 'auth-proxy' | 'inference-connections';
+type SectionId =
+  | 'profile'
+  | 'security'
+  | 'agent-keys'
+  | 'auth-proxy'
+  | 'inference-connections';
 
 interface SectionDef {
   id: SectionId;
@@ -49,9 +56,16 @@ interface SectionDef {
     SecurityTabComponent,
     InfrastructureAuthProxyComponent,
     InferenceConnectionsComponent,
+    AgentKeysComponent,
   ],
   providers: [
-    provideIcons({ lucideUser, lucideShield, lucideShieldPlus, lucideNetwork }),
+    provideIcons({
+      lucideUser,
+      lucideShield,
+      lucideShieldPlus,
+      lucideNetwork,
+      lucideBot,
+    }),
   ],
   template: `
     <div class="p-6 max-w-6xl mx-auto space-y-6">
@@ -121,6 +135,17 @@ interface SectionDef {
               <app-security-tab />
             </section>
           }
+          @case ('agent-keys') {
+            <section class="space-y-3">
+              <header>
+                <h3 class="text-lg font-semibold text-foreground">Agent keys</h3>
+                <p class="text-sm text-muted-foreground">
+                  Hand a coding agent a key of your own, see what each one can do, and take it back.
+                </p>
+              </header>
+              <app-agent-keys />
+            </section>
+          }
           @case ('auth-proxy') {
             <section class="space-y-3">
               <header>
@@ -165,6 +190,12 @@ export class SettingsComponent implements OnInit {
       label: 'Security',
       icon: 'lucideShield',
       visible: () => this._authMode() === 'local',
+    },
+    {
+      id: 'agent-keys',
+      label: 'Agent keys',
+      icon: 'lucideBot',
+      visible: () => true,
     },
     {
       id: 'auth-proxy',
