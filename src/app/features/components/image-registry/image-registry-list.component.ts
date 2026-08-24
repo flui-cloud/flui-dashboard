@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucideLoader, lucideSearch, lucideRocket,
-  lucideTrash, lucideCircleCheck, lucideTriangleAlert, lucideImage,
+  lucideTrash, lucideCircleCheck, lucideTriangleAlert, lucideImage, lucideInfo,
 } from '@ng-icons/lucide';
 import { ImageRegistryFeatureService } from '../../service/image-registry.service';
 import { ImageResponseDto } from '../../../core/api/model/imageResponseDto';
@@ -16,7 +16,7 @@ import { FluiTagManagerComponent } from './flui-tag-manager.component';
   imports: [CommonModule, FormsModule, NgIcon, FluiTagManagerComponent],
   providers: [provideIcons({
     lucideRefreshCw, lucideLoader, lucideSearch, lucideRocket,
-    lucideTrash, lucideCircleCheck, lucideTriangleAlert, lucideImage,
+    lucideTrash, lucideCircleCheck, lucideTriangleAlert, lucideImage, lucideInfo,
   })],
   template: `
     <div class="space-y-6 p-6">
@@ -124,9 +124,23 @@ import { FluiTagManagerComponent } from './flui-tag-manager.component';
         }
       }
 
+      <!-- A refusal, said in the fence's own words and not painted as a fault -->
+      @if (service.refused()) {
+        <div
+          data-testid="image-registry-refused"
+          class="flex items-start gap-2 p-3 rounded-md border border-border bg-muted/40 text-sm text-muted-foreground"
+        >
+          <ng-icon name="lucideInfo" class="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <span>{{ service.refusalMessage() ?? 'This is not part of the trial.' }}</span>
+        </div>
+      }
+
       <!-- Error -->
       @if (service.errorMessage()) {
-        <div class="p-3 rounded-md border border-destructive/20 bg-destructive/5 text-sm text-destructive">
+        <div
+          data-testid="image-registry-error"
+          class="p-3 rounded-md border border-destructive/20 bg-destructive/5 text-sm text-destructive"
+        >
           {{ service.errorMessage() }}
         </div>
       }

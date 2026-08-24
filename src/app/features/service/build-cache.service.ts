@@ -4,6 +4,7 @@ import { BuildNamespaceService } from '../../core/api/api/buildNamespace.service
 import { BuildCacheInfoResponseDto } from '../../core/api/model/buildCacheInfoResponseDto';
 import { BuildCacheBreakdownResponseDto } from '../../core/api/model/buildCacheBreakdownResponseDto';
 import { InfrastructureWebSocketService } from './infrastructure-websocket.service';
+import { isSandboxRefusal } from '../../core/services/sandbox.service';
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +17,12 @@ export class BuildCacheService implements OnDestroy {
   private readonly cacheStatusData = signal<BuildCacheInfoResponseDto | null>(null);
   private readonly isLoadingStatusData = signal(false);
   private readonly statusErrorData = signal<string | null>(null);
+  /**
+   * The build cache belongs to the instance, not to a tenancy, so a guest of
+   * the demo is refused here by design. Kept apart from the failures because a
+   * red banner over a deliberate limit reads as a broken product.
+   */
+  private readonly refusalData = signal<string | null>(null);
 
   // Cache clear state (WebSocket-driven)
   private readonly isClearingCacheData = signal(false);
@@ -41,6 +48,7 @@ export class BuildCacheService implements OnDestroy {
   readonly cacheStatus = this.cacheStatusData.asReadonly();
   readonly isLoadingStatus = this.isLoadingStatusData.asReadonly();
   readonly statusError = this.statusErrorData.asReadonly();
+  readonly refusal = this.refusalData.asReadonly();
 
   readonly isClearingCache = this.isClearingCacheData.asReadonly();
   readonly clearProgress = this.clearProgressData.asReadonly();
@@ -57,6 +65,20 @@ export class BuildCacheService implements OnDestroy {
   readonly refreshSkipped = this.refreshSkippedData.asReadonly();
   readonly refreshSkippedReason = this.refreshSkippedReasonData.asReadonly();
 
+  /**
+   * One place decides whether what just happened was a no or a fault. Returns
+   * the failure text for the red banner, or null when it was a refusal — which
+   * is recorded once, on its own signal, for the screen to say plainly.
+   */
+  private note(e: unknown, fallback: string): string | null {
+    const server = (e as { error?: { message?: string } })?.error?.message;
+    if (isSandboxRefusal(e)) {
+      this.refusalData.set(server ?? 'This is not part of the trial.');
+      return null;
+    }
+    return server ?? fallback;
+  }
+
   async loadCacheStatus(clusterId: string): Promise<void> {
     this.isLoadingStatusData.set(true);
     this.statusErrorData.set(null);
@@ -66,7 +88,7 @@ export class BuildCacheService implements OnDestroy {
       );
       this.cacheStatusData.set(data);
     } catch (e: any) {
-      this.statusErrorData.set(e?.error?.message ?? 'Failed to load cache status');
+      this.statusErrorData.set(this.note(e, 'Failed to load cache status'));
       this.cacheStatusData.set(null);
     } finally {
       this.isLoadingStatusData.set(false);
@@ -114,7 +136,7 @@ export class BuildCacheService implements OnDestroy {
         },
       });
     } catch (e: any) {
-      this.clearErrorData.set(e?.error?.message ?? 'Failed to initiate cache clear');
+      this.clearErrorData.set(this.note(e, 'Failed to initiate cache clear'));
       this.clearResultData.set('failed');
       this.isClearingCacheData.set(false);
     }
@@ -133,7 +155,7 @@ export class BuildCacheService implements OnDestroy {
         this.startBreakdownPolling(clusterId);
       }
     } catch (e: any) {
-      this.breakdownErrorData.set(e?.error?.message ?? 'Failed to load cache breakdown');
+      this.breakdownErrorData.set(this.note(e, 'Failed to load cache breakdown'));
     } finally {
       this.isLoadingBreakdownData.set(false);
     }
@@ -156,7 +178,7 @@ export class BuildCacheService implements OnDestroy {
       }
       this.startBreakdownPolling(clusterId);
     } catch (e: any) {
-      this.breakdownErrorData.set(e?.error?.message ?? 'Failed to start cache scan');
+      this.breakdownErrorData.set(this.note(e, 'Failed to start cache scan'));
       this.isRefreshingBreakdownData.set(false);
     }
   }
@@ -190,7 +212,7 @@ export class BuildCacheService implements OnDestroy {
       } catch (e: any) {
         this.stopBreakdownPolling();
         this.isRefreshingBreakdownData.set(false);
-        this.breakdownErrorData.set(e?.error?.message ?? 'Failed to poll breakdown');
+        this.breakdownErrorData.set(this.note(e, 'Failed to poll breakdown'));
       }
     }, 3000);
   }

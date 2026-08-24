@@ -10,6 +10,7 @@ import {
   lucideX,
   lucideLoader,
   lucideBarChart2,
+  lucideInfo,
 } from '@ng-icons/lucide';
 import { BuildCacheService } from '../../service/build-cache.service';
 import { BuildCacheInfoResponseDto } from '../../../core/api/model/buildCacheInfoResponseDto';
@@ -32,6 +33,7 @@ function getCachePhaseClass(phase: BuildCacheInfoResponseDto.PhaseEnum | null): 
     provideIcons({
       lucideDatabase, lucideRefreshCw, lucideTrash2,
       lucideCheck, lucideTriangleAlert, lucideX, lucideLoader, lucideBarChart2,
+      lucideInfo,
     }),
   ],
   template: `
@@ -49,6 +51,17 @@ function getCachePhaseClass(phase: BuildCacheInfoResponseDto.PhaseEnum | null): 
           Refresh
         </button>
       </div>
+
+      <!-- A refusal, said plainly and not painted as a fault -->
+      @if (refusal()) {
+        <div
+          data-testid="build-cache-refused"
+          class="flex items-center gap-2 text-sm text-muted-foreground"
+        >
+          <ng-icon name="lucideInfo" class="h-4 w-4 flex-shrink-0" />
+          {{ refusal() }}
+        </div>
+      }
 
       <!-- Status error -->
       @if (statusError()) {
@@ -278,6 +291,7 @@ export class BuildCachePanelComponent implements OnDestroy {
   readonly clearResult         = this.cacheService.clearResult;
   readonly clearError          = this.cacheService.clearError;
   readonly statusError         = this.cacheService.statusError;
+  readonly refusal             = this.cacheService.refusal;
   readonly breakdown           = this.cacheService.breakdown;
   readonly isLoadingBreakdown  = this.cacheService.isLoadingBreakdown;
   readonly isRefreshingBreakdown = this.cacheService.isRefreshingBreakdown;

@@ -14,6 +14,7 @@ import {
   lucidePackage,
   lucideCpu,
   lucideServer,
+  lucideInfo,
 } from '@ng-icons/lucide';
 import { BuildNamespaceService } from '../../../core/api/api/buildNamespace.service';
 import { BuildCachePanelComponent } from './build-cache-panel.component';
@@ -23,6 +24,7 @@ import { BuildNamespaceCleanupResultDto } from '../../../core/api/model/buildNam
 import { BuildJobInfoDto } from '../../../core/api/model/buildJobInfoDto';
 import { QueuedBuildInfoDto } from '../../../core/api/model/queuedBuildInfoDto';
 import { ClusterResponseDto } from '../../../core/api/model/clusterResponseDto';
+import { isSandboxRefusal } from '../../../core/services/sandbox.service';
 
 function formatAge(minutes: number): string {
   if (minutes < 60) return `${Math.floor(minutes)}m`;
@@ -84,6 +86,7 @@ function getPodPhaseClass(phase: string): string {
     provideIcons({
       lucideHammer, lucideLoader, lucideRefreshCw, lucideTriangleAlert,
       lucideCheck, lucideTrash2, lucideX, lucidePackage, lucideCpu, lucideServer,
+      lucideInfo,
     }),
   ],
   template: `
@@ -145,9 +148,20 @@ function getPodPhaseClass(phase: string): string {
         }
       </div>
 
+      <!-- A refusal, said in the fence's own words and not painted as a fault -->
+      @if (refusal()) {
+        <div
+          data-testid="build-namespace-refused"
+          class="flex items-center gap-3 p-4 bg-muted/40 border border-border rounded-lg text-sm text-muted-foreground"
+        >
+          <ng-icon name="lucideInfo" class="h-4 w-4 flex-shrink-0" />
+          {{ refusal() }}
+        </div>
+      }
+
       <!-- Error -->
       @if (error()) {
-        <div class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+        <div data-testid="build-namespace-error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
           {{ error() }}
         </div>
@@ -399,6 +413,12 @@ export class BuildNamespaceComponent implements OnInit {
   isLoadingClusters = signal(false);
   isLoadingResources = signal(false);
   error = signal<string | null>(null);
+  /**
+   * A refusal kept apart from the failures. The build queue belongs to the
+   * instance, not to a tenancy, so a guest is refused here by design — and the
+   * fence's own sentence says so far better than a red banner does.
+   */
+  refusal = signal<string | null>(null);
   cleanupPreview = signal<BuildNamespaceCleanupResultDto | null>(null);
   isRunningCleanup = signal(false);
   showCleanupPanel = signal(false);
@@ -421,7 +441,7 @@ export class BuildNamespaceComponent implements OnInit {
           await this.loadResources();
         }
       } catch (e: any) {
-        this.error.set(e?.error?.message ?? 'Failed to load clusters');
+        this.note(e, 'Failed to load clusters');
       } finally {
         this.isLoadingClusters.set(false);
       }
@@ -447,7 +467,7 @@ export class BuildNamespaceComponent implements OnInit {
       );
       this.resources.set(data);
     } catch (e: any) {
-      this.error.set(e?.error?.message ?? 'Failed to load build resources');
+      this.note(e, 'Failed to load build resources');
     } finally {
       this.isLoadingResources.set(false);
     }
@@ -467,7 +487,7 @@ export class BuildNamespaceComponent implements OnInit {
       );
       this.cleanupPreview.set(result);
     } catch (e: any) {
-      this.error.set(e?.error?.message ?? 'Failed to run preview');
+      this.note(e, 'Failed to run preview');
     } finally {
       this.isRunningCleanup.set(false);
     }
@@ -488,10 +508,25 @@ export class BuildNamespaceComponent implements OnInit {
       this.showCleanupPanel.set(false);
       await this.loadResources();
     } catch (e: any) {
-      this.error.set(e?.error?.message ?? 'Failed to clean up stale builds');
+      this.note(e, 'Failed to clean up stale builds');
     } finally {
       this.isRunningCleanup.set(false);
     }
+  }
+
+  /**
+   * One place decides whether what just happened was a no or a fault, so no
+   * caller has to remember to ask.
+   */
+  private note(e: unknown, fallback: string): void {
+    const server = (e as { error?: { message?: string } })?.error?.message;
+    if (isSandboxRefusal(e)) {
+      this.refusal.set(server ?? 'This is not part of the trial.');
+      this.error.set(null);
+      return;
+    }
+    this.refusal.set(null);
+    this.error.set(server ?? fallback);
   }
 
   cancelCleanup(): void {

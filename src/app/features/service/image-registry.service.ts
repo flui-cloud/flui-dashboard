@@ -3,6 +3,10 @@ import { firstValueFrom } from 'rxjs';
 import { ImageRegistryService } from '../../core/api/api/imageRegistry.service';
 import { ImageResponseDto } from '../../core/api/model/imageResponseDto';
 import { GhcrTagDto } from '../../core/api/model/ghcrTagDto';
+import {
+  isSandboxRefusal,
+  sandboxFailureMessage,
+} from '../../core/services/sandbox.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,10 +18,22 @@ export class ImageRegistryFeatureService {
   private readonly imagesList = signal<ImageResponseDto[]>([]);
   private readonly isLoading = signal<boolean>(false);
   private readonly error = signal<string | null>(null);
+  /**
+   * The refusal, kept apart from the failures.
+   *
+   * A guest of the demo cannot reach the registry at all, and the fence says so
+   * in a sentence written for a person. Painting that sentence red — with the
+   * same border a broken cluster gets — teaches the guest that Flui is broken
+   * rather than that this is not part of the trial.
+   */
+  private readonly refusedSignal = signal(false);
+  private readonly refusalMessageSignal = signal<string | null>(null);
 
   readonly images = this.imagesList.asReadonly();
   readonly loading = this.isLoading.asReadonly();
   readonly errorMessage = this.error.asReadonly();
+  readonly refused = this.refusedSignal.asReadonly();
+  readonly refusalMessage = this.refusalMessageSignal.asReadonly();
 
   // GHCR registry enrichment signals
   private readonly ghcrTagsList = signal<GhcrTagDto[]>([]);
@@ -30,14 +46,14 @@ export class ImageRegistryFeatureService {
 
   async loadImages(appId?: string, tag?: string): Promise<void> {
     this.isLoading.set(true);
-    this.error.set(null);
+    this.clearError();
     try {
       const images = await firstValueFrom(
         this.api.imageRegistryControllerListImages(appId, tag, 1, 100)
       );
       this.imagesList.set(images);
     } catch (error: any) {
-      this.error.set(error?.error?.message || error?.message || 'Failed to load images');
+      this.noteFailure(error, 'Failed to load images');
       throw error;
     } finally {
       this.isLoading.set(false);
@@ -46,14 +62,14 @@ export class ImageRegistryFeatureService {
 
   async loadImagesByApp(appId: string): Promise<void> {
     this.isLoading.set(true);
-    this.error.set(null);
+    this.clearError();
     try {
       const images = await firstValueFrom(
         this.api.imageRegistryControllerListImagesByApp(appId)
       );
       this.imagesList.set(images);
     } catch (error: any) {
-      this.error.set(error?.error?.message || error?.message || 'Failed to load images');
+      this.noteFailure(error, 'Failed to load images');
       throw error;
     } finally {
       this.isLoading.set(false);
@@ -91,6 +107,32 @@ export class ImageRegistryFeatureService {
 
   clearError(): void {
     this.error.set(null);
+    this.refusedSignal.set(false);
+    this.refusalMessageSignal.set(null);
+  }
+
+  /**
+   * One place decides whether what just happened was a no or a fault.
+   * `sandboxFailureMessage` returns null on a refusal, which is what keeps the
+   * red banner empty without a second branch at the call site.
+   */
+  private noteFailure(error: unknown, fallback: string): void {
+    const refused = isSandboxRefusal(error);
+    this.refusedSignal.set(refused);
+    this.refusalMessageSignal.set(
+      refused
+        ? ((error as { error?: { message?: string } })?.error?.message ?? null)
+        : null,
+    );
+    this.error.set(
+      sandboxFailureMessage(
+        error,
+        (error as { error?: { message?: string }; message?: string })?.error
+          ?.message ||
+          (error as { message?: string })?.message ||
+          fallback,
+      ),
+    );
   }
 
   // --- GHCR Registry Methods ---
