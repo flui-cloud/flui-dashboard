@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideAlertCircle, lucideLoader, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
@@ -16,6 +23,7 @@ import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { SandboxLevelNoticeComponent } from '../../../shared/components/sandbox-level-notice.component';
 import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
+import { PermissionService } from '../../../core/services/permission.service';
 
 interface ConnUiState {
   validating: boolean;
@@ -91,7 +99,7 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
                         }
                         Validate
                       </button>
-                      @if (!service.isHosted()) {
+                      @if (!service.isHosted() && mayManage()) {
                         <button
                           appReadOnlySection="models"
                           type="button"
@@ -131,7 +139,7 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
         <p class="text-sm text-muted-foreground">No LLM connections configured yet.</p>
       }
 
-      @if (!service.isHosted()) {
+      @if (!service.isHosted() && mayManage()) {
         @if (!showForm()) {
           <button
             appReadOnlySection="models"
@@ -261,7 +269,21 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
 export class InferenceConnectionsComponent implements OnInit {
   protected readonly service = inject(InferenceSettingsService);
   private readonly fb = inject(FormBuilder);
+  private readonly perms = inject(PermissionService);
   private readonly states = signal<Record<string, ConnUiState>>({});
+
+  /**
+   * A connection is the installation's own credential to a model provider, not
+   * anybody's personal setting: plugging one in spends somebody's account for
+   * everybody, and unplugging it takes the assistant away from everybody. The
+   * API now says so on both halves — `POST /inference/connections` and
+   * `DELETE /inference/connections/:id` ask for `integration:manage` — and this
+   * hides the controls rather than letting them answer 403, which reads as a
+   * fault instead of as a limit.
+   */
+  protected readonly mayManage = computed(
+    () => this.perms.isAdmin() || this.perms.can('integration:manage'),
+  );
 
   private readonly deleteDialog =
     viewChild.required<DeleteConfirmationDialogComponent>('deleteDialog');
