@@ -20,8 +20,8 @@ const ROLES: RoleDef[] = [
     revocable: true,
   },
   {
-    key: 'manager',
-    name: 'Manager',
+    key: 'maintainer',
+    name: 'Maintainer',
     description: '',
     permissions: [],
     assignable: true,
@@ -75,7 +75,7 @@ describe('IamService role pickers', () => {
     iam.roles.set(ROLES);
     expect(iam.grantableRoles().map((r) => r.key)).toEqual([
       'viewer',
-      'manager',
+      'maintainer',
     ]);
     expect(iam.isGrantable('owner')).toBeFalse();
     expect(iam.isRevocable('sandbox')).toBeTrue();

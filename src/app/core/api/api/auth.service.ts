@@ -1625,7 +1625,7 @@ export class AuthService extends BaseService {
 
     /**
      * Change role for an identity user (requires iam:assign-role)
-     * Confers &#x60;user&#x60; or &#x60;readonly&#x60; only. Platform admin is not conferrable here: &#x60;iam:assign-role&#x60; is held by the &#x60;manager&#x60; role, so accepting &#x60;admin&#x60; would let a manager promote anyone — itself included. Create an admin account with POST /auth/users instead, which is admin-only.
+     * Confers &#x60;user&#x60; or &#x60;readonly&#x60; only. Platform admin is not conferrable here: &#x60;iam:assign-role&#x60; is held by the &#x60;maintainer&#x60; role, so accepting &#x60;admin&#x60; would let a maintainer promote anyone — itself included. Create an admin account with POST /auth/users instead, which is admin-only.
      * @endpoint patch /api/v1/auth/users/{id}/role
      * @param id 
      * @param updateIdentityRoleDto 

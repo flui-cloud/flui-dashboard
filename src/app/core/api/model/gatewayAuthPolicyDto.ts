@@ -22,11 +22,9 @@ export interface GatewayAuthPolicyDto {
 export namespace GatewayAuthPolicyDto {
     export const MinRoleEnum = {
         Viewer: 'viewer',
-        Editor: 'editor',
-        Manager: 'manager',
-        Owner: 'owner',
-        Sandbox: 'sandbox',
-        ShowcaseViewer: 'showcase_viewer'
+        Operator: 'operator',
+        Maintainer: 'maintainer',
+        Owner: 'owner'
     } as const;
     export type MinRoleEnum = typeof MinRoleEnum[keyof typeof MinRoleEnum];
 }

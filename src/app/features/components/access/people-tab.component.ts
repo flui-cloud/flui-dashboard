@@ -21,6 +21,7 @@ import {
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { IamService } from '../../service/iam.service';
 import { PermissionService } from '../../../core/services/permission.service';
+import { AppConfigService } from '../../../core/services/app-config.service';
 import { CanDirective } from '../../../core/directives/can.directive';
 import {
   AccessDelta,
@@ -67,6 +68,10 @@ const FIELD =
 export class PeopleTabComponent {
   protected readonly iam = inject(IamService);
   protected readonly perms = inject(PermissionService);
+  private readonly appConfig = inject(AppConfigService);
+
+  /** Decision 111 — see the note on the same signal in AccessComponent. */
+  protected readonly identityProvider = this.appConfig.authMode === 'oidc';
   protected readonly fieldClass = FIELD;
   protected readonly selectClass = FIELD + ' pr-8 appearance-none';
   protected readonly rowSelectClass =
@@ -219,7 +224,9 @@ export class PeopleTabComponent {
 
   readonly roleDialogDetails = computed(() => {
     const delta = this.roleDelta();
-    return delta ? accessDeltaLines(delta) : [];
+    return delta
+      ? accessDeltaLines(delta, { identityProvider: this.identityProvider })
+      : [];
   });
 
   readonly roleDialogVariant = computed<'danger' | 'info'>(() =>

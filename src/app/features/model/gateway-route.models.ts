@@ -1,4 +1,4 @@
-export type GatewayMinRole = 'viewer' | 'editor' | 'manager';
+export type GatewayMinRole = 'viewer' | 'operator' | 'maintainer';
 
 export interface GatewayAuthPolicy {
   sso: boolean;

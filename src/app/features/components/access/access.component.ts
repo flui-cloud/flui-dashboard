@@ -19,6 +19,7 @@ import {
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { IamService } from '../../service/iam.service';
 import { PermissionService } from '../../../core/services/permission.service';
+import { AppConfigService } from '../../../core/services/app-config.service';
 import { CanDirective } from '../../../core/directives/can.directive';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { GrantBuilderComponent } from './grant-builder.component';
@@ -90,8 +91,11 @@ interface TabDef {
         <div hlmCard class="border-primary/30">
           <div hlmCardContent class="pt-5 text-sm text-muted-foreground space-y-2">
             <p><span class="font-medium text-foreground">Deny by default.</span> A member starts with no access. They reach a resource only through an explicit <span class="font-medium text-foreground">grant</span> — given to them directly or via a group.</p>
-            <p><span class="font-medium text-foreground">A grant = role × scope.</span> The <span class="font-medium text-foreground">role</span> (Viewer / Editor / Manager / Owner) is <em>what</em> they can do; the <span class="font-medium text-foreground">scope</span> (a project, a cluster, or everything) is <em>where</em>.</p>
-            <p><span class="font-medium text-foreground">Owner is the top of the ladder.</span> It carries everything, everywhere — including who else may run this installation — and only an owner may confer or revoke it. A manager can hand out the other three and no more.</p>
+            <p><span class="font-medium text-foreground">A grant = role × scope.</span> The <span class="font-medium text-foreground">role</span> (Viewer &lt; Operator &lt; Maintainer &lt; Owner) is <em>what</em> they can do, and each step contains the one below it; the <span class="font-medium text-foreground">scope</span> (a project, a cluster, or everything) is <em>where</em>.</p>
+            <p><span class="font-medium text-foreground">Owner is the top of the ladder.</span> It carries everything, everywhere — including who else may run this installation — and only an owner may confer or revoke it. A maintainer can hand out the other three and no more.</p>
+            @if (identityProvider) {
+              <p><span class="font-medium text-foreground">This list is what Flui grants.</span> A rung can also be conferred in your identity provider; it counts at sign-in but is held there, so it is neither listed nor revocable here — and a preview of what a change takes away cannot see it either.</p>
+            }
             <p><span class="font-medium text-foreground">Platform admin is a separate flag,</span> older than the roles and outside the grant graph. It still governs a handful of screens — creating and disabling accounts, projects — so it is what those buttons check. It is not a grant and does not appear in the list below.</p>
           </div>
         </div>
@@ -131,7 +135,14 @@ interface TabDef {
             <!-- Grants list -->
             <div hlmCard>
               <div hlmCardContent class="pt-6">
-                <h3 class="text-sm font-semibold text-foreground mb-3">Grants ({{ iam.grants().length }})</h3>
+                <div class="mb-3">
+                  <h3 class="text-sm font-semibold text-foreground">Grants made in Flui ({{ iam.grants().length }})</h3>
+                  @if (identityProvider) {
+                    <p class="mt-1 text-xs text-muted-foreground">
+                      Only the grants conferred here. A role conferred in your identity provider also grants access and is not listed.
+                    </p>
+                  }
+                </div>
                 <div class="overflow-x-auto">
                   <table class="w-full text-sm">
                     <thead>
@@ -202,6 +213,16 @@ export class AccessComponent implements OnInit {
   private readonly perms = inject(PermissionService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly appConfig = inject(AppConfigService);
+
+  /**
+   * Decision 111: the screen listed `iam_role_bindings` and read as exhaustive.
+   * It stops being exhaustive the moment a rung can arrive from the provider
+   * (decision 101), which only happens in `oidc` mode — both local strategies
+   * hand the guards an empty `roles` claim, so in `local` mode the list really
+   * is everything and the caveat would be noise.
+   */
+  protected readonly identityProvider = this.appConfig.authMode === 'oidc';
 
   ngOnInit(): void {
     this.perms.load();
@@ -281,7 +302,9 @@ export class AccessComponent implements OnInit {
 
   readonly revokeDetails = computed(() => {
     const delta = this.revokeDelta();
-    return delta ? accessDeltaLines(delta) : [];
+    return delta
+      ? accessDeltaLines(delta, { identityProvider: this.identityProvider })
+      : [];
   });
 
   askRemove(grant: GrantRecord): void {

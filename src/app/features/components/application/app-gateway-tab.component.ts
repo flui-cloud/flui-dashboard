@@ -246,8 +246,8 @@ import {
                             >
                               <option value="">Any authenticated user</option>
                               <option value="viewer">Viewer</option>
-                              <option value="editor">Editor</option>
-                              <option value="manager">Manager</option>
+                              <option value="operator">Operator</option>
+                              <option value="maintainer">Maintainer</option>
                             </select>
                           </label>
                         </div>

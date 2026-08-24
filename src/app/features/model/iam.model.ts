@@ -1,4 +1,4 @@
-export type AccessRole = 'viewer' | 'editor' | 'manager' | 'owner';
+export type AccessRole = 'viewer' | 'operator' | 'maintainer' | 'owner';
 
 export type AccessPrincipalType = 'user' | 'group' | 'service_account';
 
@@ -196,8 +196,40 @@ function unknownCoverageLines(d: AccessDelta): string[] {
   ];
 }
 
-export function accessDeltaLines(d: AccessDelta): string[] {
-  if (d.coverage === 'unknown') return unknownCoverageLines(d);
+/**
+ * The sentence that stops the preview from claiming to be the whole story.
+ *
+ * A delta is computed from the bindings this installation holds. Since a rung
+ * can also be conferred in the identity provider (decision 101) and the preview
+ * has no token to read for somebody who is not the caller, the count is of Flui
+ * grants only — so it can overstate a loss (they keep the rung) as easily as a
+ * gain (they had it already). Only for a person: a group or a service account
+ * has no provider claim behind it.
+ */
+const IDP_CAVEAT =
+  'Counted from grants made in Flui only. A role conferred in your identity provider is not read here, so this can overstate the change.';
+
+export interface AccessDeltaLineOptions {
+  /** The installation authenticates through an identity provider. */
+  identityProvider?: boolean;
+}
+
+function idpCaveatLines(
+  d: AccessDelta,
+  opts?: AccessDeltaLineOptions,
+): string[] {
+  return opts?.identityProvider && d.principal.type === 'user'
+    ? [IDP_CAVEAT]
+    : [];
+}
+
+export function accessDeltaLines(
+  d: AccessDelta,
+  opts?: AccessDeltaLineOptions,
+): string[] {
+  if (d.coverage === 'unknown') {
+    return [...unknownCoverageLines(d), ...idpCaveatLines(d, opts)];
+  }
 
   const lines: string[] = [];
   if (d.applicationsLostCount > 0) {
@@ -228,5 +260,6 @@ export function accessDeltaLines(d: AccessDelta): string[] {
     lines.push('Sections that open: ' + sectionNames(d.sectionsOpened));
   }
   if (d.losesEverything) lines.push('They are left with no access at all.');
+  lines.push(...idpCaveatLines(d, opts));
   return lines;
 }

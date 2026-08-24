@@ -65,8 +65,8 @@ export interface InviteLinkDto {
 }
 
 const IDENTITY_TO_ACCESS_ROLE: Record<string, AccessRole> = {
-  admin: 'manager',
-  user: 'editor',
+  admin: 'maintainer',
+  user: 'operator',
   readonly: 'viewer',
 };
 

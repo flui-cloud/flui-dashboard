@@ -31,12 +31,17 @@ export interface MintRequest {
   expiresAt?: string;
 }
 
+// One entry per area the API publishes. A missing one is not a crash — the
+// section falls back to the raw key — but it puts a lower-case machine word
+// where a heading belongs, which is how `access` read until the switches for
+// who-can-reach-what arrived under it.
 const AREA_LABEL: Record<string, string> = {
   apps: 'Applications',
   observability: 'Logs and health',
   backups: 'Backups',
   migrations: 'Migrations',
   mail: 'Mail',
+  access: 'Who has access',
 };
 
 const LIFETIMES: { id: string; label: string; days: number | null }[] = [

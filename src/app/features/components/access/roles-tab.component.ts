@@ -37,8 +37,9 @@ import { IamService } from '../../service/iam.service';
     </div>
     <p class="mt-4 text-xs text-muted-foreground">
       Built-in roles are read-only. Custom roles are not available at launch.
-      Two of these come with a sandbox tenancy and are never granted by hand;
-      <span class="font-medium">Owner</span> is conferred only by another owner.
+      The four are a ladder — each one carries everything the one before it
+      carries, and adds to it; <span class="font-medium">Owner</span> is
+      conferred only by another owner.
     </p>
   `,
 })
