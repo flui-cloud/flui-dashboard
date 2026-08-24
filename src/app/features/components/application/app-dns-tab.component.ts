@@ -21,6 +21,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
 import { CatalogClusterCapabilitiesDto } from '../../../core/api/model/catalogClusterCapabilitiesDto';
 import { CatalogService } from '../../../core/api/api/catalog.service';
 import { hasPublicEndpoint } from '../../model/app-exposure';
+import { accessOf } from '../../model/app-access';
 
 @Component({
   selector: 'app-app-dns-tab',
@@ -121,6 +122,7 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
             [endpoints]="filteredEndpoints()"
             [reconcilingId]="reconcilingId()"
             [certPollingId]="certPollingId()"
+            [writable]="!readOnly()"
             (editAction)="editEndpoint($event)"
             (reconcileAction)="reconcileEndpoint($event)"
             (deleteAction)="deleteEndpoint($event)"
@@ -214,6 +216,15 @@ export class AppDnsTabComponent implements OnInit {
   protected appSlug = computed(() => this.appService.selectedApplication()?.slug ?? '');
   protected isInternalApp = computed(
     () => !!this.appService.selectedApplication() && !hasPublicEndpoint(this.appService.selectedApplication()),
+  );
+
+  /**
+   * The application's own answer, not a guess. `application-detail` already
+   * writes "read-only for you" from this same summary and then left every tab's
+   * own commands switched on underneath the sentence.
+   */
+  protected readOnly = computed(
+    () => accessOf(this.appService.selectedApplication())?.readOnly === true,
   );
 
   protected masterIp = computed(() => {

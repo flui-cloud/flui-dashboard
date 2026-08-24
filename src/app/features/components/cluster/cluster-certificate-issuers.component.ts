@@ -8,6 +8,7 @@ import {
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
 import { ClusterIssuerWebSocketService, IssuerStatusEvent, IssuerConfiguredEvent, IssuerFailedEvent } from '../../service/cluster-issuer-websocket.service';
 import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../../../core/api/model/clusterDnsZoneControllerGetIssuers200ResponseInner';
+import { CanDirective } from '../../../core/directives/can.directive';
 
 type Issuer = ClusterDnsZoneControllerGetIssuers200ResponseInner;
 const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverTypeEnum;
@@ -15,7 +16,7 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
 @Component({
   selector: 'app-cluster-certificate-issuers',
   standalone: true,
-  imports: [NgIconComponent, FormsModule],
+  imports: [NgIconComponent, FormsModule, CanDirective],
   providers: [
     provideIcons({
       lucideShieldCheck, lucideShieldAlert, lucideShieldOff,
@@ -94,6 +95,8 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
               Reconfigure standard issuers
             </button>
             <button
+              *fluiCan="'cluster:manage'"
+              data-testid="http-issuers-delete"
               (click)="deleteConfirm.set(true)"
               [disabled]="deleting()"
               class="text-xs text-red-600 dark:text-red-400 hover:underline inline-flex items-center gap-1 disabled:opacity-50"

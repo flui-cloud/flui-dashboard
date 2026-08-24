@@ -50,6 +50,8 @@
             {{ isBusy(a) ? 'Reconciling...' : getStatusLabel(a.reconciliationStatus) }}
           </span>
           <button
+            *fluiCan="'cluster:manage'"
+            data-testid="zone-remove"
             (click)="removeConfirmId.set(a.id)"
             [disabled]="removeConfirmId() === a.id || isBusy(a)"
             class="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-50"
@@ -156,7 +158,7 @@
 
       <!-- Inline remove confirmation -->
       @if (removeConfirmId() === a.id) {
-        <div class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs">
+        <div data-testid="zone-remove-confirm" class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs">
           <span class="text-red-700 dark:text-red-400 flex-1">Remove DNS zone {{ a.dnsZone.zoneName }}? Endpoints on this zone will lose DNS management.</span>
           <button (click)="executeRemove(a.id)" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium">Remove</button>
           <button (click)="removeConfirmId.set(null)" class="px-2 py-1 text-muted-foreground hover:text-foreground text-xs">Cancel</button>

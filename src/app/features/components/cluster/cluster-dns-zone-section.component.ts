@@ -15,6 +15,7 @@ import {
   formatTimeSince, needsReconciliation,
   CertificateProvider, DnsReconciliationStatus, getZoneDisplayName
 } from '../../model/dns.models';
+import { CanDirective } from '../../../core/directives/can.directive';
 import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
 import {
   ClusterDnsZoneService,
@@ -25,7 +26,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
 @Component({
   selector: 'app-cluster-dns-zone-section',
   standalone: true,
-  imports: [FormsModule, RouterLink, NgIconComponent, ClusterIssuerSetupComponent],
+  imports: [FormsModule, RouterLink, NgIconComponent, CanDirective, ClusterIssuerSetupComponent],
   providers: [provideIcons({
     lucideGlobe, lucideRefreshCw, lucideLoader,
     lucideCheckCircle, lucideAlertCircle, lucidePlusCircle,

@@ -13,6 +13,7 @@ import {
   IssuerFailedEvent,
 } from '../../service/cluster-issuer-websocket.service';
 import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../../../core/api/model/clusterDnsZoneControllerGetIssuers200ResponseInner';
+import { CanDirective } from '../../../core/directives/can.directive';
 
 type Issuer = ClusterDnsZoneControllerGetIssuers200ResponseInner;
 const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverTypeEnum;
@@ -20,7 +21,7 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
 @Component({
   selector: 'app-cluster-issuer-setup',
   standalone: true,
-  imports: [FormsModule, NgIconComponent],
+  imports: [FormsModule, NgIconComponent, CanDirective],
   providers: [
     provideIcons({
       lucideShieldCheck, lucideShieldAlert, lucideShieldOff,
@@ -135,7 +136,7 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
               Reconfigure wildcard issuers
             </button>
             @if (dnsIssuers().length > 0) {
-              <button (click)="deleteConfirm.set(true)" [disabled]="deleting()" class="text-xs text-red-600 dark:text-red-400 hover:underline disabled:opacity-50 inline-flex items-center gap-1">
+              <button *fluiCan="'cluster:manage'" data-testid="dns-issuers-delete" (click)="deleteConfirm.set(true)" [disabled]="deleting()" class="text-xs text-red-600 dark:text-red-400 hover:underline disabled:opacity-50 inline-flex items-center gap-1">
                 <ng-icon name="lucideTrash2" class="h-3 w-3" />
                 Delete wildcard issuers
               </button>

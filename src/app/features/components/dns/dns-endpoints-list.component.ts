@@ -6,6 +6,7 @@ import {
   lucideFileText, lucideX, lucideDownload, lucidePencil, lucideTrash2, lucideRefreshCw
 } from '@ng-icons/lucide';
 import { AppEndpointResponseDto } from '../../../core/api/model/appEndpointResponseDto';
+import { CanDirective } from '../../../core/directives/can.directive';
 import {
   buildEndpointUrl,
   getReconciliationBadgeColor, getReconciliationBadgeLabel,
@@ -31,7 +32,7 @@ interface ParsedError {
 @Component({
   selector: 'app-dns-endpoints-list',
   standalone: true,
-  imports: [NgIconComponent],
+  imports: [NgIconComponent, CanDirective],
   providers: [provideIcons({
     lucideExternalLink, lucideLock, lucideLockOpen,
     lucideAlertTriangle, lucideCopy, lucideCheck, lucideShieldCheck, lucideShieldAlert,
@@ -157,15 +158,19 @@ interface ParsedError {
                   <ng-icon name="lucideRefreshCw" class="h-3 w-3" [class.animate-spin]="reconcilingId() === ep.id" />
                   Sync
                 </button>
-                <button
-                  type="button"
-                  (click)="deleteAction.emit(ep)"
-                  class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                  title="Delete endpoint"
-                >
-                  <ng-icon name="lucideTrash2" class="h-3 w-3" />
-                  Delete
-                </button>
+                @if (writable()) {
+                  <button
+                    *fluiCan="'app:write'"
+                    type="button"
+                    [attr.data-testid]="'endpoint-delete-' + ep.id"
+                    (click)="deleteAction.emit(ep)"
+                    class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    title="Delete endpoint"
+                  >
+                    <ng-icon name="lucideTrash2" class="h-3 w-3" />
+                    Delete
+                  </button>
+                }
               </div>
             </div>
 
@@ -305,6 +310,18 @@ export class DnsEndpointsListComponent {
   endpoints = input.required<AppEndpointResponseDto[]>();
   reconcilingId = input<string | null>(null);
   certPollingId = input<string | null>(null);
+  /**
+   * The half of the answer this list cannot know on its own.
+   *
+   * `DELETE /endpoints/:id` asks two questions — `app:write` on the principal,
+   * which `*fluiCan` reads from the same source that draws the sections, and
+   * ownership of the endpoint's application, which only the page holding that
+   * application can answer. The application's DNS tab binds this to the access
+   * summary the API already ships; the cluster's tab lists endpoints belonging
+   * to many applications and leaves it alone, because guessing which of them
+   * would be refused is exactly what this is not for.
+   */
+  writable = input<boolean>(true);
 
   editAction = output<AppEndpointResponseDto>();
   reconcileAction = output<AppEndpointResponseDto>();
