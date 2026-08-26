@@ -60,6 +60,36 @@ export interface GenerateWorkflowResult {
   committed: boolean;
   workflowUrl: string;
   runId?: string;
+  pullRequestUrl?: string;
+  buildStarted?: boolean;
+}
+
+export type WorkflowDelivery = 'push' | 'pull-request';
+
+export interface WorkflowWrite {
+  target: string;
+  what: string;
+}
+
+export interface WorkflowConsent {
+  repository: string;
+  branch: string;
+  delivery: WorkflowDelivery;
+  deliveryNote: string;
+  writes: WorkflowWrite[];
+  workflowYaml: string;
+  webhookSecretName: string | null;
+  webhookSecretNote: string | null;
+  usesYourActionsMinutes: boolean;
+  builtOnFluiMachines: boolean;
+}
+
+export interface BuildExpectation {
+  samples: number;
+  medianSeconds: number | null;
+  slowestSeconds: number | null;
+  source: 'this-application' | 'your-recent-builds' | 'none';
+  note: string;
 }
 
 export interface WorkflowStatusResult {
@@ -758,7 +788,10 @@ export class ApplicationService {
    * V3 workflow generation — Dockerfile-first, universal workflow.
    * Commits .github/workflows/flui.yml to the repo.
    */
-  async generateWorkflowV3(applicationId: string, params: { branch: string; isFluiManaged: boolean }): Promise<GenerateWorkflowResult> {
+  async generateWorkflowV3(
+    applicationId: string,
+    params: { branch: string; isFluiManaged: boolean; delivery?: WorkflowDelivery },
+  ): Promise<GenerateWorkflowResult> {
     try {
       const url = `${this.appConfig.apiBaseUrl}/api/v1/applications/${applicationId}/generate-workflow-v3`;
       const result = await firstValueFrom(
@@ -769,6 +802,19 @@ export class ApplicationService {
       const msg = error?.error?.message || error?.message || 'Failed to generate V3 workflow';
       throw new Error(msg);
     }
+  }
+
+  async previewWorkflowV3(
+    applicationId: string,
+    params: { branch: string; delivery?: WorkflowDelivery },
+  ): Promise<WorkflowConsent> {
+    const url = `${this.appConfig.apiBaseUrl}/api/v1/applications/${applicationId}/workflow-preview`;
+    return firstValueFrom(this.http.post<WorkflowConsent>(url, params));
+  }
+
+  async getBuildExpectation(applicationId: string): Promise<BuildExpectation> {
+    const url = `${this.appConfig.apiBaseUrl}/api/v1/applications/${applicationId}/build-expectation`;
+    return firstValueFrom(this.http.get<BuildExpectation>(url));
   }
 
   async getWorkflowStatus(applicationId: string): Promise<WorkflowStatusResult> {

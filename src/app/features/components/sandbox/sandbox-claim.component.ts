@@ -5,7 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
@@ -68,6 +68,21 @@ import {
               </a>
             </div>
           </div>
+        } @else if (gone()) {
+          <div class="space-y-5">
+            <h1 class="text-lg font-semibold">That sandbox is gone</h1>
+            <p class="text-sm text-muted-foreground leading-relaxed">
+              Sandboxes are deleted 24 hours after they are opened, and this one
+              has been. Nothing of it was kept. You can open a new one.
+            </p>
+            <button
+              type="button"
+              (click)="startFresh()"
+              class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              Open a new sandbox
+            </button>
+          </div>
         } @else {
           <div class="space-y-8">
             <div class="flex items-center gap-2.5 text-muted-foreground">
@@ -113,6 +128,7 @@ import {
 export class SandboxClaimComponent implements OnDestroy {
   private readonly sandbox = inject(SandboxService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly LINES = [
     {
@@ -132,9 +148,20 @@ export class SandboxClaimComponent implements OnDestroy {
   protected readonly step = signal(-1);
   protected readonly error = signal<SandboxClaimError | null>(null);
 
+  protected readonly gone = signal(false);
+
   private timers: ReturnType<typeof setTimeout>[] = [];
 
   constructor() {
+    if (this.route.snapshot.queryParamMap.has('expired')) {
+      this.gone.set(true);
+      return;
+    }
+    this.start();
+  }
+
+  protected startFresh(): void {
+    this.gone.set(false);
     this.start();
   }
 

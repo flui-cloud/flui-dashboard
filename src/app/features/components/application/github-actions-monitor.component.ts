@@ -14,7 +14,7 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
-import { ApplicationService } from '../../service/application.service';
+import { ApplicationService, BuildExpectation } from '../../service/application.service';
 import { AppRuntimeWebSocketService, BuildCompletedEvent, BuildFailedEvent, OperationProgressEvent, OperationFailedEvent } from '../../service/app-runtime-websocket.service';
 import { AppBuildsService } from '../../../core/api/api/appBuilds.service';
 import { AppBuildResponseDto } from '../../../core/api/model/appBuildResponseDto';
@@ -171,6 +171,15 @@ const BUILD_WARNING_MS = 25 * 60 * 1000;
           </div>
         }
 
+        <!-- What a build here has actually cost, measured. Never a countdown:
+             we do not know when this one finishes, and a bar that pretends to
+             is the thing this screen exists not to do. -->
+        @if (buildExpectation(); as e) {
+          @if (!['live', 'build_failed', 'deploy_failed'].includes(phase())) {
+            <p class="text-xs text-muted-foreground">{{ e.note }}</p>
+          }
+        }
+
         <!-- Build elapsed time + timeout warning -->
         @if ((phase() === 'queued' || phase() === 'building') && buildElapsedLabel(); as elapsed) {
           <div class="flex items-center gap-2 text-xs"
@@ -254,6 +263,7 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
   deployMessage = signal<string | null>(null);
   githubRunUrl = signal<string | null>(null);
   buildError = signal<string | null>(null);
+  buildExpectation = signal<BuildExpectation | null>(null);
 
   /** Latest application snapshot — single source of truth for the UI. */
   private readonly appSnapshot = signal<Application | null>(null);
@@ -342,6 +352,11 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
         },
       });
   
+      void this.appService
+        .getBuildExpectation(appId)
+        .then((e) => this.buildExpectation.set(e))
+        .catch(() => this.buildExpectation.set(null));
+
       // 1s ticker to keep elapsed-time display smooth (independent of poll cadence)
       this.tickInterval = setInterval(() => this.nowTick.set(Date.now()), 1_000);
   

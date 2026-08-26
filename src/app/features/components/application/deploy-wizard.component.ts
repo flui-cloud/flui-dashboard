@@ -811,6 +811,20 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                       </div>
                     }
                   </div>
+                  @if (state.workflowPullRequestUrl(); as prUrl) {
+                    <div class="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-1.5">
+                      <p class="text-sm">The workflow was proposed, not pushed. Nothing is building yet.</p>
+                      <a
+                        [href]="prUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                      >
+                        Review and merge the pull request on GitHub
+                      </a>
+                      <p class="text-xs text-muted-foreground">The first build starts when you merge it.</p>
+                    </div>
+                  }
                 }
               }
             </div>
@@ -1095,8 +1109,6 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                 <hr class="border-border" />
                 <h3 class="text-base font-semibold -mb-3">Environment Variables</h3>
               }
-
-
 
               <!-- Env detection panel — only for existing-repo flow (analyzes the live repo) -->
               @if (flowSubtype() === 'existing-repo') {
@@ -1889,7 +1901,6 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                   </div>
                 </div>
               </div>
-
 
               <!-- Runtime resource availability summary (all flows) -->
               @if (checkingAvailability()) {
@@ -3526,7 +3537,7 @@ export class DeployWizardComponent implements OnInit {
         this.state.envVars.set(this.envVars().map(v => ({ key: v.key, value: v.value, isSecret: v.isSecret })));
 
         const appId = await this.state.orchestrateTemplateFlow();
-        if (appId) {
+        if (appId && !this.state.workflowPullRequestUrl()) {
           // Small delay so the user can see the done state, then navigate to the monitor
           setTimeout(() => {
             this.router.navigate(['/apps/deploy/gha-build', appId]);

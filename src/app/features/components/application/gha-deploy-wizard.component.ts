@@ -16,7 +16,12 @@ import {
 } from '@ng-icons/lucide';
 import { WizardStepperComponent, WizardStepperStep } from '../../../shared/components/wizard-stepper/wizard-stepper.component';
 import { DeployWizardStateService } from '../../service/deploy-wizard-state.service';
-import { ApplicationService, GenerateWorkflowResult } from '../../service/application.service';
+import {
+  ApplicationService,
+  BuildExpectation,
+  GenerateWorkflowResult,
+  WorkflowConsent,
+} from '../../service/application.service';
 import { AppVariablesService } from '../../service/app-variables.service';
 import { ClusterService } from '../../service/cluster.service';
 import { ApplicationsService } from '../../../core/api/api/applications.service';
@@ -127,6 +132,9 @@ const WIZARD_STEPS: WizardStep[] = [
             @case ('workflow') {
               <app-generate-workflow-step
                 [generationState]="workflowState()"
+                [consent]="consent()"
+                [consentError]="consentError()"
+                [buildExpectation]="buildExpectation()"
                 [result]="workflowResult()"
                 [errorMessage]="workflowError()"
                 (confirm)="onGenerateWorkflow()"
@@ -184,6 +192,9 @@ export class GhaDeployWizardComponent implements OnInit {
   isLoadingClusters = signal(false);
   selectedClusterId = signal<string>('');
   workflowState = signal<WorkflowGenerationState>('idle');
+  consent = signal<WorkflowConsent | null>(null);
+  consentError = signal<string | null>(null);
+  buildExpectation = signal<BuildExpectation | null>(null);
   workflowResult = signal<GenerateWorkflowResult | null>(null);
   workflowError = signal<string | null>(null);
   globalError = signal<string | null>(null);
@@ -257,7 +268,71 @@ export class GhaDeployWizardComponent implements OnInit {
   nextStep(): void {
     if (this.currentStepIndex() < this.visibleSteps().length - 1) {
       this.currentStepIndex.update(i => i + 1);
+      if (this.currentStep().id === 'workflow') {
+        void this.enterWorkflowStep();
+      }
     }
+  }
+
+  private async enterWorkflowStep(): Promise<void> {
+    this.consent.set(null);
+    this.consentError.set(null);
+    try {
+      const appId = await this.ensureApplication();
+      const [consent, expectation] = await Promise.all([
+        this.appService.previewWorkflowV3(appId, { branch: this.state.branch() }),
+        this.appService
+          .getBuildExpectation(appId)
+          .catch((): BuildExpectation | null => null),
+      ]);
+      this.consent.set(consent);
+      this.buildExpectation.set(expectation);
+    } catch (e: any) {
+      this.consentError.set(
+        e?.error?.message ?? e?.message ?? 'Could not read what would be written to your repository.',
+      );
+    }
+  }
+
+  private async ensureApplication(): Promise<string> {
+    const config = this.state.deployConfig();
+    const existing = this.state.applicationId();
+    if (existing) {
+      await firstValueFrom(
+        this.applicationsApi.applicationsControllerUpdate(existing, {
+          port: config.port,
+          replicas: config.minReplicas,
+          resourceProfile: config.resourceProfile,
+        } as any),
+      );
+      return existing;
+    }
+
+    const response = await firstValueFrom(
+      this.applicationsApi.applicationsControllerCreate(this.state.clusterId(), {
+        name: `${this.state.confirmedFramework()}-${this.state.branch()}`.toLowerCase().replaceAll(/[^a-z0-9-]/g, '-'),
+        category: CreateApplicationDto.CategoryEnum.User,
+        sourceType: CreateApplicationDto.SourceTypeEnum.GitBuild,
+        sourceConfig: {
+          type: 'git_build',
+          repositoryId: this.state.repositoryId(),
+          branch: this.state.branch(),
+          framework: this.state.confirmedFramework(),
+        },
+        port: config.port,
+        replicas: config.minReplicas,
+        resourceProfile: config.resourceProfile as CreateApplicationDto.ResourceProfileEnum,
+        healthProbe: {
+          type: 'http',
+          httpPath: config.healthcheckPath,
+          httpPort: config.port,
+        },
+        autoDeploy: false,
+      } as any),
+    );
+    const appId = response.application.id;
+    this.state.applicationId.set(appId);
+    return appId;
   }
 
   prevStep(): void {
@@ -275,37 +350,8 @@ export class GhaDeployWizardComponent implements OnInit {
     this.workflowError.set(null);
 
     try {
-      // Step 1: Create application if not yet created
-      let appId = this.state.applicationId();
-
-      if (!appId) {
-        this.workflowState.set('generating');
-        const config = this.state.deployConfig();
-        const response = await firstValueFrom(
-          this.applicationsApi.applicationsControllerCreate(this.state.clusterId(), {
-            name: `${this.state.confirmedFramework()}-${this.state.branch()}`.toLowerCase().replaceAll(/[^a-z0-9-]/g, '-'),
-            category: CreateApplicationDto.CategoryEnum.User,
-            sourceType: CreateApplicationDto.SourceTypeEnum.GitBuild,
-            sourceConfig: {
-              type: 'git_build',
-              repositoryId: this.state.repositoryId(),
-              branch: this.state.branch(),
-              framework: this.state.confirmedFramework(),
-            },
-            port: config.port,
-            replicas: config.minReplicas,
-            resourceProfile: config.resourceProfile as CreateApplicationDto.ResourceProfileEnum,
-            healthProbe: {
-              type: 'http',
-              httpPath: config.healthcheckPath,
-              httpPort: config.port,
-            },
-            autoDeploy: false,
-          } as any)
-        );
-        appId = response.application.id;
-        this.state.applicationId.set(appId);
-      }
+      this.workflowState.set('generating');
+      const appId = await this.ensureApplication();
 
       // Step 2: Save env vars
       const envVars = this.state.envVars();
@@ -326,19 +372,19 @@ export class GhaDeployWizardComponent implements OnInit {
         }
       }
 
-      // Step 3: Generate V3 workflow (Dockerfile-first, universal)
       this.workflowState.set('committing');
       const result = await this.appService.generateWorkflowV3(appId, {
         branch: this.state.branch(),
         isFluiManaged: this.state.isFluiManaged(),
+        delivery: this.consent()?.delivery,
       });
       this.workflowResult.set(result);
 
       this.workflowState.set('waiting');
 
-      // Wait a moment then navigate to monitor
       setTimeout(() => {
         this.workflowState.set('done');
+        if (result.pullRequestUrl) return;
         setTimeout(() => {
           this.router.navigate(['/apps/deploy/gha-build', appId]);
         }, 1500);

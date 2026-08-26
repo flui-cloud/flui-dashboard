@@ -183,6 +183,7 @@ export class DeployWizardStateService {
   // ========== Template orchestration state ==========
   readonly orchestrationPhase = signal<TemplateOrchestrationPhase>('idle');
   readonly orchestrationError = signal<string | null>(null);
+  readonly workflowPullRequestUrl = signal<string | null>(null);
 
   // ========== Marketplace (catalog) state ==========
   readonly catalogSlug = signal<string | null>(null);
@@ -1111,10 +1112,11 @@ export class DeployWizardStateService {
       this.applicationId.set(appId);
 
       this.orchestrationPhase.set('generating-workflow');
-      await this.appService.generateWorkflowV3(appId, {
+      const workflow = await this.appService.generateWorkflowV3(appId, {
         branch: repo.defaultBranch,
         isFluiManaged: true,
       });
+      this.workflowPullRequestUrl.set(workflow.pullRequestUrl ?? null);
 
       this.orchestrationPhase.set('done');
       return appId;
