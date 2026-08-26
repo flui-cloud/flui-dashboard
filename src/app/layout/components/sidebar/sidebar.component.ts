@@ -41,6 +41,8 @@ import {
   lucideArrowRightLeft,
   lucideMail,
   lucideGithub,
+  lucideBot,
+  lucideBookOpen,
 } from '@ng-icons/lucide';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { BrnMenuTriggerDirective } from '@spartan-ng/brain/menu';
@@ -152,6 +154,8 @@ import {
       lucideArrowRightLeft,
       lucideMail,
       lucideGithub,
+      lucideBot,
+      lucideBookOpen,
     }),
   ],
   templateUrl: './sidebar.component.html',

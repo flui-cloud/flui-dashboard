@@ -149,6 +149,18 @@ export const ALL_MANAGEMENT_ITEMS: SidebarNavItem[] = [
     icon: 'lucideFolders',
   },
   {
+    label: 'How it is run',
+    link: '/management/operating-context',
+    routerLinkActive: 'active',
+    icon: 'lucideBookOpen',
+  },
+  {
+    label: 'Agents',
+    link: '/settings/agents',
+    routerLinkActive: 'active',
+    icon: 'lucideBot',
+  },
+  {
     label: 'Settings',
     link: '/settings',
     routerLinkActive: 'active',

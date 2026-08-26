@@ -219,6 +219,7 @@ export const SANDBOX_ROUTE_AREAS: ReadonlyArray<readonly [string, string]> = [
   ['/management/mail', 'mail'],
   ['/mail', 'mail'],
   ['/cluster', 'cluster'],
+  ['/management/operating-context', 'operating-context'],
 ];
 
 export function sandboxAreaForUrl(url: string): string | null {

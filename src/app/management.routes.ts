@@ -41,6 +41,14 @@ export const managementRoutes: Routes = [
     title: 'Access - flui.cloud',
   },
   {
+    path: 'operating-context',
+    loadComponent: () =>
+      import(
+        './features/components/operating-context/operating-context.component'
+      ).then((m) => m.OperatingContextComponent),
+    title: 'How this installation is run - flui.cloud',
+  },
+  {
     path: 'projects',
     loadComponent: () =>
       import('./features/components/projects/projects.component').then(
