@@ -26,6 +26,7 @@ import { sandboxFailureMessage } from '../../../../core/services/sandbox.service
 import { SandboxLevelNoticeComponent } from '../../../../shared/components/sandbox-level-notice.component';
 import { AgentKeyListComponent } from './agent-key-list.component';
 import { AgentKeyMintComponent, MintRequest } from './agent-key-mint.component';
+import { AgentSkill, AgentSkillService } from './agent-skill.service';
 
 @Component({
   selector: 'app-agent-keys',
@@ -95,6 +96,8 @@ import { AgentKeyMintComponent, MintRequest } from './agent-key-mint.component';
                 [minted]="minted()"
                 [busy]="minting()"
                 [error]="mintError()"
+                [skill]="skill()"
+                [skillError]="skillError()"
                 (create)="mintKey($event)"
                 (dismiss)="clearMinted()"
               />
@@ -114,6 +117,7 @@ import { AgentKeyMintComponent, MintRequest } from './agent-key-mint.component';
               [keys]="keys()"
               [catalogue]="catalogue()"
               [revoking]="revoking()"
+              [currentSkillVersion]="skill()?.version ?? null"
               (revoke)="revokeKey($event)"
             />
           </div>
@@ -125,6 +129,7 @@ import { AgentKeyMintComponent, MintRequest } from './agent-key-mint.component';
 export class AgentKeysComponent implements OnInit {
   private readonly api = inject(ApiAuthService);
   private readonly cfg = inject(AppConfigService);
+  private readonly skills = inject(AgentSkillService);
 
   private readonly mint = viewChild<AgentKeyMintComponent>('mint');
 
@@ -136,6 +141,8 @@ export class AgentKeysComponent implements OnInit {
   protected readonly minting = signal(false);
   protected readonly mintError = signal<string | null>(null);
   protected readonly revoking = signal<string | null>(null);
+  protected readonly skill = signal<AgentSkill | null>(null);
+  protected readonly skillError = signal<string | null>(null);
 
   protected readonly oidc = computed(() => this.cfg.authMode === 'oidc');
 
@@ -151,6 +158,23 @@ export class AgentKeysComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadSkill();
+  }
+
+  private loadSkill(): void {
+    this.skills.skill().subscribe({
+      next: (doc) => {
+        this.skill.set(doc);
+        this.skillError.set(null);
+      },
+      error: () => {
+        this.skill.set(null);
+        this.skillError.set(
+          'The instructions for agents could not be read from this instance. ' +
+            'The key above still works; the agent will be operating without them.',
+        );
+      },
+    });
   }
 
   private load(): void {

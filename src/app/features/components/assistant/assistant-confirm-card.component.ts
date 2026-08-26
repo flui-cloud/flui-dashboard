@@ -1,20 +1,33 @@
 import { Component, computed, input, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideAlertTriangle, lucideCheck, lucideX } from '@ng-icons/lucide';
-import { PendingAction } from '../../service/assistant.service';
+import {
+  lucideAlertTriangle,
+  lucideCheck,
+  lucideExternalLink,
+  lucideX,
+} from '@ng-icons/lucide';
+import { ChatActionRequest, PendingAction } from '../../service/assistant.service';
 
 interface ActionGroup {
   label: string;
   tier: 'write' | 'destructive';
   toolCallIds: string[];
   args: Record<string, unknown>;
+  requests: ChatActionRequest[];
 }
 
 @Component({
   selector: 'app-assistant-confirm-card',
   standalone: true,
   imports: [NgIcon],
-  providers: [provideIcons({ lucideAlertTriangle, lucideCheck, lucideX })],
+  providers: [
+    provideIcons({
+      lucideAlertTriangle,
+      lucideCheck,
+      lucideExternalLink,
+      lucideX,
+    }),
+  ],
   template: `
     <div class="mx-4 mb-3 rounded-xl border overflow-hidden text-sm"
       [class]="isDestructive()
@@ -59,6 +72,32 @@ interface ActionGroup {
                 }
               </div>
             }
+
+            @for (request of group.requests; track request) {
+              <div class="rounded-lg border border-border bg-background/70 px-3 py-2.5 space-y-2"
+                data-testid="cycle-request">
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Approving here answers this request
+                </p>
+                <p class="text-xs text-foreground" data-testid="cycle-sentence">
+                  {{ request.sentence }}
+                </p>
+                @if (request.estimateNote) {
+                  <p class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400"
+                    data-testid="cycle-estimate">
+                    {{ request.estimateNote }}
+                  </p>
+                }
+                @if (request.decideUrl) {
+                  <a [href]="request.decideUrl" target="_blank" rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:underline dark:text-blue-400"
+                    data-testid="cycle-decide-url">
+                    <ng-icon name="lucideExternalLink" class="h-3 w-3" />
+                    Open it on the requests page
+                  </a>
+                }
+              </div>
+            }
           </div>
         }
 
@@ -92,12 +131,14 @@ export class AssistantConfirmCardComponent {
       const existing = map.get(key);
       if (existing) {
         existing.toolCallIds.push(action.toolCallId);
+        if (action.request) existing.requests.push(action.request);
       } else {
         map.set(key, {
           label: action.label ?? this.fallbackLabel(action.name, action.arguments),
           tier: action.tier,
           toolCallIds: [action.toolCallId],
           args: action.arguments,
+          requests: action.request ? [action.request] : [],
         });
       }
     }

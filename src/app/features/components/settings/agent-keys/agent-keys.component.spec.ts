@@ -7,6 +7,16 @@ import { AppConfigService } from '../../../../core/services/app-config.service';
 import { ApiKeyResponseDto } from '../../../../core/api/model/apiKeyResponseDto';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
 import { AgentKeysComponent } from './agent-keys.component';
+import { AgentSkill, AgentSkillService } from './agent-skill.service';
+
+const SKILL: AgentSkill = {
+  version: '1.0.0',
+  digest: 'f62a7fd77a9f',
+  filename: 'SKILL.md',
+  mediaType: 'text/markdown',
+  mcpEndpoint: 'http://api.test/api/v1/mcp',
+  content: '---\nname: flui\n---\n\n# Working with Flui\n\nPOST http://api.test/api/v1/mcp\n',
+};
 
 const group = (
   key: string,
@@ -62,6 +72,19 @@ const OLD_KEY: ApiKeyResponseDto = {
   current: false,
 };
 
+const STALE_AGENT_KEY = {
+  id: 'k-stale',
+  name: 'release bot',
+  revoked: false,
+  createdAt: '2026-08-01T10:00:00.000Z',
+  lastUsedAt: new Date().toISOString(),
+  scopes: ['mcp:app:read'],
+  groups: ['apps:look'],
+  ungroupedScopes: [],
+  current: false,
+  skillVersion: '0.1.0',
+} as unknown as ApiKeyResponseDto;
+
 const SESSION_KEY: ApiKeyResponseDto = {
   id: 'k-session',
   name: 'sandbox-user-guest-abc',
@@ -81,6 +104,7 @@ describe('the agent keys screen', () => {
   const build = async (
     grants: string[],
     keys: ApiKeyResponseDto[] = [],
+    skill: AgentSkill | null = SKILL,
   ): Promise<void> => {
     api = jasmine.createSpyObj<ApiAuthService>('ApiAuthService', [
       'apiKeysControllerListPermissionGroups',
@@ -113,6 +137,13 @@ describe('the agent keys screen', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ApiAuthService, useValue: api },
+        {
+          provide: AgentSkillService,
+          useValue: {
+            skill: () =>
+              skill ? of(skill) : throwError(() => ({ status: 404 })),
+          },
+        },
         {
           provide: AppConfigService,
           useValue: { authMode: 'oidc', apiBaseUrl: 'http://api.test' },
@@ -281,4 +312,84 @@ describe('the agent keys screen', () => {
     expect(text('[data-testid="when-k-old"]')).toContain('no use recorded yet');
     expect(text('[data-testid="when-k-session"]')).toContain('in use right now');
   });
+
+  describe('handing over the instructions with the key', () => {
+    const mintOne = () => {
+      const name = el('[data-testid="key-name"]') as HTMLInputElement;
+      name.value = 'laptop';
+      name.dispatchEvent(new Event('input'));
+      (el('[data-testid="check-apps:change"]') as HTMLInputElement).click();
+      fixture.detectChanges();
+      (el('[data-testid="mint-key"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+    };
+
+    it('offers the skill beside the key, with the version it is', async () => {
+      await build(GUEST_GRANTS);
+      mintOne();
+
+      expect(el('[data-testid="skill-handoff"]')).not.toBeNull();
+      expect(text('[data-testid="skill-version"]')).toBe('skill 1.0.0');
+      expect(text('[data-testid="skill-handoff"]')).toContain('SKILL.md');
+    });
+
+    it('lets the instructions be read before they are taken', async () => {
+      await build(GUEST_GRANTS);
+      mintOne();
+
+      expect(el('[data-testid="skill-content"]')).toBeNull();
+      (el('[data-testid="show-skill"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(text('[data-testid="skill-content"]')).toContain(
+        'Working with Flui',
+      );
+    });
+
+    it('shows no credential inside the document', async () => {
+      await build(GUEST_GRANTS);
+      mintOne();
+      (el('[data-testid="show-skill"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(text('[data-testid="skill-content"]')).not.toContain('flui_test_value');
+    });
+
+    it('still hands over the key when the instructions cannot be read', async () => {
+      await build(GUEST_GRANTS, [], null);
+      mintOne();
+
+      expect(el('[data-testid="minted-key"]')).not.toBeNull();
+      expect(el('[data-testid="skill-handoff"]')).toBeNull();
+      expect(text('[data-testid="skill-missing"]')).toContain(
+        'operating without them',
+      );
+    });
+  });
+
+  describe('the state of the connection, on the row', () => {
+    it('says an agent has never spoken', async () => {
+      await build(GUEST_GRANTS, [OLD_KEY]);
+      const line = text('[data-testid="connection-k-old"]');
+      expect(line).toContain('Never spoken to this instance');
+      expect(line).toContain('never said which instructions it is working from');
+    });
+
+    it('names the version a busy agent is behind on', async () => {
+      await build(GUEST_GRANTS, [STALE_AGENT_KEY]);
+
+      expect(text('[data-testid="when-k-stale"]')).toContain('in use right now');
+      expect(text('[data-testid="connection-k-stale"]')).toContain(
+        'working from skill 0.1.0 — this instance publishes 1.0.0',
+      );
+    });
+
+    it('carries the last contact into the question that revokes it', async () => {
+      await build(GUEST_GRANTS, [OLD_KEY]);
+      (el('[data-testid="revoke-k-old"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('never used');
+    });
+  });
+
 });

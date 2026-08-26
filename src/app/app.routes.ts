@@ -5,6 +5,7 @@ import { infrastructureRoutes } from './infrastructure.routes';
 import { appsRoutes } from './apps.routes';
 import { managementRoutes } from './management.routes';
 import { clusterRoutes } from './cluster.routes';
+import { agentsRoutes } from './agents.routes';
 
 export const routes: Routes = [
   {
@@ -86,6 +87,10 @@ export const routes: Routes = [
         children: clusterRoutes,
       },
 
+      {
+        path: 'settings/agents',
+        children: agentsRoutes,
+      },
       {
         path: 'settings',
         loadComponent: () =>

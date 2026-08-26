@@ -9,12 +9,21 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideKeyRound, lucideTriangleAlert } from '@ng-icons/lucide';
+import {
+  lucideKeyRound,
+  lucidePlugZap,
+  lucideTriangleAlert,
+} from '@ng-icons/lucide';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { DeleteConfirmationDialogComponent } from '../../../../shared/components/delete-confirmation-dialog.component';
 import { ApiKeyResponseDto } from '../../../../core/api/model/apiKeyResponseDto';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
 import { KeySurface, readKeySurface, understatesItself } from './agent-key-surface';
+import {
+  ConnectedKey,
+  KeyConnection,
+  readKeyConnection,
+} from './agent-key-connection';
 
 interface KeyRow {
   key: ApiKeyResponseDto;
@@ -22,7 +31,7 @@ interface KeyRow {
   warn: boolean;
   expired: boolean;
   scopes: string;
-  seen: string;
+  connection: KeyConnection;
 }
 
 @Component({
@@ -34,7 +43,7 @@ interface KeyRow {
     HlmBadgeDirective,
     DeleteConfirmationDialogComponent,
   ],
-  providers: [provideIcons({ lucideKeyRound, lucideTriangleAlert })],
+  providers: [provideIcons({ lucideKeyRound, lucidePlugZap, lucideTriangleAlert })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (rows().length === 0) {
@@ -113,7 +122,21 @@ interface KeyRow {
               } @else {
                 · no expiry
               }
-              · {{ row.seen }}
+              · {{ row.connection.seen }}
+            </p>
+
+            <p
+              class="flex items-start gap-1.5 text-xs"
+              [class]="row.connection.outOfDate ? 'text-destructive' : 'text-muted-foreground'"
+              [attr.data-testid]="'connection-' + row.key.id"
+            >
+              <ng-icon name="lucidePlugZap" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                @if (!row.connection.everUsed) {
+                  Never spoken to this instance.
+                }
+                {{ row.connection.skill }}
+              </span>
             </p>
           </li>
         }
@@ -131,6 +154,7 @@ export class AgentKeyListComponent {
   readonly keys = input.required<ApiKeyResponseDto[]>();
   readonly catalogue = input.required<PermissionGroupDto[]>();
   readonly revoking = input<string | null>(null);
+  readonly currentSkillVersion = input<string | null>(null);
 
   readonly revoke = output<ApiKeyResponseDto>();
 
@@ -146,20 +170,29 @@ export class AgentKeyListComponent {
         warn: understatesItself(surface) || surface.shape === 'unscoped',
         expired: !!key.expiresAt && new Date(key.expiresAt).getTime() < Date.now(),
         scopes: key.scopes?.length ? key.scopes.join(' · ') : 'no scope list — unscoped',
-        seen: lastSeen(key.lastUsedAt),
+        connection: readKeyConnection(
+          key as ConnectedKey,
+          this.currentSkillVersion(),
+        ),
       };
     }),
   );
 
   protected ask(key: ApiKeyResponseDto): void {
     this.pending.set(key);
+    const connection = readKeyConnection(
+      key as ConnectedKey,
+      this.currentSkillVersion(),
+    );
     this.dialog().open({
       title: key.current ? 'Revoke the key you are using' : 'Revoke this key',
       description: key.current
         ? 'This is the credential this browser is signed in with. Revoking it ends your session here.'
         : 'The agent holding it stops working the moment you confirm.',
       itemName: key.name,
-      itemDescription: readKeySurface(key, this.catalogue()).headline,
+      itemDescription: `${readKeySurface(key, this.catalogue()).headline} · ${
+        connection.everUsed ? connection.seen : 'never used'
+      }`,
       warningMessage: key.current
         ? 'You will be signed out immediately, and there is no way back in with this credential. ' +
           'Anything already built stays where it is — only the credential goes.'
@@ -175,15 +208,4 @@ export class AgentKeyListComponent {
     this.dialog().close();
     if (key) this.revoke.emit(key);
   }
-}
-
-function lastSeen(lastUsedAt: string | undefined): string {
-  if (!lastUsedAt) return 'no use recorded yet';
-  const ms = Date.now() - new Date(lastUsedAt).getTime();
-  if (ms < 120_000) return 'in use right now';
-  const hours = Math.floor(ms / 3_600_000);
-  if (hours < 1) return `last used ${Math.floor(ms / 60_000)} minutes ago`;
-  if (hours < 24) return `last used ${hours} hour${hours === 1 ? '' : 's'} ago`;
-  const days = Math.floor(hours / 24);
-  return `last used ${days} day${days === 1 ? '' : 's'} ago`;
 }

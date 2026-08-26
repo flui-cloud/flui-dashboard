@@ -35,6 +35,13 @@ export interface AgentToolStep {
   result?: unknown;
 }
 
+export interface ChatActionRequest {
+  proposalId: string;
+  sentence: string;
+  estimateNote?: string;
+  decideUrl?: string;
+}
+
 export interface PendingAction {
   toolCallId: string;
   name: string;
@@ -42,6 +49,7 @@ export interface PendingAction {
   tier: 'write' | 'destructive';
   label?: string;
   groupKey?: string;
+  request?: ChatActionRequest;
 }
 
 export interface LogSourcesResult {

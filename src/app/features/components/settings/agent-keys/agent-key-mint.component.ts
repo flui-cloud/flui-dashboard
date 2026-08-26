@@ -14,6 +14,7 @@ import {
   lucideCopy,
   lucideEye,
   lucideEyeOff,
+  lucideBookOpen,
   lucideLoader,
   lucideLock,
   lucideTriangleAlert,
@@ -23,6 +24,7 @@ import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
 import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
 import { AppConfigService } from '../../../../core/services/app-config.service';
 import { CreateApiKeyResultDto } from '../../../../core/api/model/createApiKeyResultDto';
+import { AgentSkill } from './agent-skill.service';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
 
 export interface MintRequest {
@@ -63,6 +65,7 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
   ],
   providers: [
     provideIcons({
+      lucideBookOpen,
       lucideCheck,
       lucideCopy,
       lucideEye,
@@ -118,6 +121,52 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
           <p class="mt-1 font-mono text-xs text-foreground break-all">POST {{ mcpEndpoint() }}</p>
           <p class="font-mono text-xs text-muted-foreground break-all">Authorization: Bearer &lt;your key&gt;</p>
         </div>
+
+        @if (skill(); as doc) {
+          <div class="rounded-md border border-border bg-background px-3 py-2 space-y-2" data-testid="skill-handoff">
+            <div class="flex flex-wrap items-center gap-2">
+              <ng-icon name="lucideBookOpen" class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <span class="text-xs font-medium text-foreground">Take the instructions too</span>
+              <span hlmBadge variant="secondary" class="text-xs" data-testid="skill-version">
+                skill {{ doc.version }}
+              </span>
+            </div>
+            <p class="text-xs text-muted-foreground">
+              The key says what the agent may do; this says how work is done here. Save it as
+              <span class="font-mono">{{ doc.filename }}</span> where your agent keeps its skills.
+              It carries no credential, so it is safe to commit.
+            </p>
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                data-testid="copy-skill"
+                (click)="copySkill(doc.content)"
+                class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                <ng-icon [name]="skillCopied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
+                {{ skillCopied() ? 'Copied' : 'Copy ' + doc.filename }}
+              </button>
+              <button
+                type="button"
+                data-testid="show-skill"
+                (click)="skillOpen.set(!skillOpen())"
+                class="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              >
+                {{ skillOpen() ? 'Hide it' : 'Read it first' }}
+              </button>
+            </div>
+            @if (skillOpen()) {
+              <pre
+                data-testid="skill-content"
+                class="max-h-64 overflow-auto rounded-md border border-border bg-muted/40 p-3 font-mono text-[11px] leading-relaxed text-foreground whitespace-pre-wrap"
+              >{{ doc.content }}</pre>
+            }
+          </div>
+        } @else if (skillError()) {
+          <div class="rounded-md border border-border bg-background px-3 py-2" data-testid="skill-missing">
+            <p class="text-xs text-muted-foreground">{{ skillError() }}</p>
+          </div>
+        }
 
         <button
           type="button"
@@ -256,6 +305,8 @@ export class AgentKeyMintComponent {
   readonly busy = input(false);
   readonly disabled = input(false);
   readonly error = input<string | null>(null);
+  readonly skill = input<AgentSkill | null>(null);
+  readonly skillError = input<string | null>(null);
 
   readonly create = output<MintRequest>();
   readonly dismiss = output<void>();
@@ -268,6 +319,8 @@ export class AgentKeyMintComponent {
   protected readonly picked = signal<ReadonlySet<string>>(new Set());
   protected readonly shown = signal(false);
   protected readonly copied = signal(false);
+  protected readonly skillOpen = signal(false);
+  protected readonly skillCopied = signal(false);
 
   protected readonly mcpEndpoint = computed(
     () => `${this.cfg.apiBaseUrl}/api/v1/mcp`,
@@ -327,10 +380,22 @@ export class AgentKeyMintComponent {
     this.picked.set(new Set());
     this.shown.set(false);
     this.copied.set(false);
+    this.skillOpen.set(false);
+    this.skillCopied.set(false);
   }
 
   protected masked(value: string): string {
     return '•'.repeat(Math.min(value.length, 48));
+  }
+
+  protected copySkill(value: string): void {
+    void navigator.clipboard
+      ?.writeText(value)
+      .then(() => {
+        this.skillCopied.set(true);
+        setTimeout(() => this.skillCopied.set(false), 2_000);
+      })
+      .catch(() => this.skillOpen.set(true));
   }
 
   protected copy(value: string): void {
