@@ -59,15 +59,10 @@ import { SettingsListEditorComponent } from './settings-list-editor.component';
               </td>
               <td [class]="t.tdMuted">
                 @if (d().canProvision()) {
-                  Automatic buys through {{ provider() }}'s own API, up to what
-                  this installation granted. Manual means the group names the
-                  shape it would have bought and raises an alarm for a person to
-                  act on.
-                  @if (grantWithholds()) {
-                    <span class="mt-1.5 block text-foreground" data-testid="grant-note">
-                      {{ g().acts.says }}
-                    </span>
-                  }
+                  Automatic buys through {{ provider() }}'s own API without
+                  asking again, up to the ceilings below. Manual means the group
+                  names the shape it would have bought and raises an alarm for a
+                  person to act on.
                 } @else if (d().hasCatalogue()) {
                   Not a choice: {{ provider() }} publishes prices but no API to
                   create a server. Every purchase this group would make is a
@@ -433,7 +428,4 @@ export class GroupSettingsTableComponent {
   protected readonly g = computed(() => this.draft().group());
   protected readonly provider = computed(() => this.draft().provider());
 
-  protected readonly grantWithholds = computed(
-    () => this.g().provision === 'automatic' && !this.g().acts.acts,
-  );
 }

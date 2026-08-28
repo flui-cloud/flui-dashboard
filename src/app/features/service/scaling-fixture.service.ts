@@ -77,7 +77,7 @@ const ROWS: ClusterScalingRow[] = [
     openAlarm: null,
     lastDecisionAt: ago(0.05),
     needsPerson:
-      'Two pods cannot be placed and this group is set to buy, but nothing was granted to this installation — so it decided and stopped.',
+      'Two pods cannot be placed and this group only decides — it named the shape it would have bought and stopped.',
   },
   {
     clusterId: 'c-onprem',
@@ -162,8 +162,7 @@ const GROUPS: Record<string, SectionGroup> = {
     provision: 'automatic',
     acts: {
       acts: true,
-      says: 'This installation may commit up to €60 a month on its own, and only through groups set to buy automatically.',
-      monthlyEur: 60,
+      says: 'This group buys through the provider API on its own, up to €60 a month and 6 nodes.',
     },
     requirement: null,
     standingOrders: [
@@ -215,11 +214,10 @@ const GROUPS: Record<string, SectionGroup> = {
     strategy: 'roomiest',
     settleSeconds: 30,
     limits: { hourlyBillingOnly: false, maxMonthlyCost: 40 },
-    provision: 'automatic',
+    provision: 'manual',
     acts: {
       acts: false,
-      says: 'Nothing may be bought without being asked: no spending was granted to this installation. Set SCALING_CONCESSION_MONTHLY_EUR to the most it may commit to per month, and scaling groups set to buy automatically will act up to that figure.',
-      monthlyEur: null,
+      says: 'This group decides and does not act. Set it to buy automatically for anything it decides to reach a provider.',
     },
     requirement: null,
     standingOrders: [],
@@ -297,7 +295,7 @@ const DECISIONS: Record<string, ScalingDecision[]> = {
       outcome: 'added',
       saw: '1 pod(s) the scheduler could not place, waiting for 64s.',
       did: 'Bought a cx32 in fsn1 and set it to join.',
-      why: 'Would add a cx32 in fsn1 at €0.0074/h, about €5.4 a month. About €16.2 a month against the €60 granted.',
+      why: 'Would add a cx32 in fsn1 at €0.0074/h, about €5.4 a month. This group buys automatically, and the ladder chose within its ceilings.',
       shape: 'cx32',
       region: 'fsn1',
       hourlyEur: 0.0074,

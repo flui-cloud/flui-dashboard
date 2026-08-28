@@ -44,8 +44,8 @@ export interface ClusterScalingRow {
 
 export interface GroupActuation {
   acts: boolean;
+  /** What stands between this group and a purchase. The API owns the wording. */
   says: string;
-  monthlyEur: number | null;
 }
 
 export interface SectionGroup extends ScalingGroup {

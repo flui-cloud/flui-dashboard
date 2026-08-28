@@ -93,7 +93,6 @@ interface WireGroup {
 interface WireActuation {
   acts: boolean;
   says: string;
-  monthlyEur: number | null;
 }
 
 interface WireRow {

@@ -264,7 +264,7 @@ export class ScalingNowSummaryComponent {
       return `${stuck} — it would name ${chosen.shape} in ${chosen.region} and raise an alarm. Nothing here can buy it.${under}`;
     }
     if (this.withheld()) {
-      return `${stuck} — the ladder picks ${chosen.shape} in ${chosen.region} on rung ${chosen.step}, and stops there: this group buys nothing until the installation grants it.${under}`;
+      return `${stuck} — the ladder picks ${chosen.shape} in ${chosen.region} on rung ${chosen.step}, and stops there: this group is set to decide and not to act.${under}`;
     }
     return `${stuck} — urgency would buy ${chosen.shape} in ${chosen.region}, on rung ${chosen.step}.${under}`;
   });
