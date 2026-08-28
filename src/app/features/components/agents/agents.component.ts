@@ -85,10 +85,22 @@ import { AgentRevokeDialogComponent } from './agent-revoke-dialog.component';
         </div>
 
         @if (loading()) {
-          <p class="m-0 flex items-center gap-2 text-sm text-muted-foreground">
-            <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-            Reading what is waiting on you…
-          </p>
+          <div class="space-y-3" data-testid="waiting-loading" aria-busy="true">
+            @for (row of [1, 2]; track row) {
+              <div class="card-surface space-y-3 p-5">
+                <div class="flex items-center gap-2.5">
+                  <div class="skeleton h-5 w-64"></div>
+                  <div class="skeleton h-4 w-20"></div>
+                </div>
+                <div class="skeleton h-3 w-48"></div>
+                <div class="flex gap-2 pt-1">
+                  <div class="skeleton h-8 w-24"></div>
+                  <div class="skeleton h-8 w-24"></div>
+                  <div class="skeleton h-8 w-16"></div>
+                </div>
+              </div>
+            }
+          </div>
         } @else if (answered()) {
           <p class="m-0 text-sm text-muted-foreground" data-testid="already-answered">
             The request you followed here was already answered ({{ answered()?.status }}).
@@ -167,7 +179,7 @@ import { AgentRevokeDialogComponent } from './agent-revoke-dialog.component';
         [loading]="loadingRunning()"
         [busy]="revoking() === target.id"
         [error]="revokeError()"
-        (cancel)="closeRevoke()"
+        (dismissed)="closeRevoke()"
         (confirm)="confirmRevoke($event.alsoStop)"
       />
     }
@@ -246,7 +258,8 @@ export class AgentsComponent implements OnInit {
   protected readonly grantedNote = computed(() => {
     const count = standingConcessions(this.concessions()).length;
     if (!count) return 'none';
-    return `${count === 1 ? '1 grant' : `${count} grants`} · all revocable`;
+    const grants = count === 1 ? '1 grant' : `${count} grants`;
+    return `${grants} · all revocable`;
   });
 
   ngOnInit(): void {

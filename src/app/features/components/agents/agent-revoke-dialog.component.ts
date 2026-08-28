@@ -34,7 +34,7 @@ import {
   providers: [provideIcons({ lucideLoader, lucideTriangleAlert, lucideX })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="cancel.emit()">
+    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="dismissed.emit()">
       <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4">
         <div hlmCard (click)="$event.stopPropagation()" data-testid="revoke-dialog">
           <div hlmCardHeader>
@@ -45,7 +45,7 @@ import {
                 </div>
                 <h2 hlmCardTitle class="text-lg">Take this permission back</h2>
               </div>
-              <button hlmBtn variant="ghost" size="sm" class="h-8 w-8 p-0" (click)="cancel.emit()">
+              <button hlmBtn variant="ghost" size="sm" class="h-8 w-8 p-0" (click)="dismissed.emit()">
                 <ng-icon name="lucideX" class="h-4 w-4" />
               </button>
             </div>
@@ -60,10 +60,10 @@ import {
             </p>
 
             @if (loading()) {
-              <p class="m-0 flex items-center gap-2 text-sm text-muted-foreground" data-testid="running-loading">
-                <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                Checking what is still running under it…
-              </p>
+              <div class="space-y-2" data-testid="running-loading" aria-busy="true">
+                <div class="skeleton h-4 w-52"></div>
+                <div class="skeleton h-4 w-40"></div>
+              </div>
             } @else {
               <div
                 class="rounded-md border px-3.5 py-3"
@@ -130,7 +130,7 @@ import {
           </div>
 
           <div class="flex justify-end gap-2 px-6 pb-6">
-            <button hlmBtn variant="outline" size="sm" type="button" (click)="cancel.emit()">
+            <button hlmBtn variant="outline" size="sm" type="button" (click)="dismissed.emit()">
               Keep it
             </button>
             @if (!loading()) {
@@ -159,7 +159,7 @@ export class AgentRevokeDialogComponent {
   readonly busy = input(false);
   readonly error = input<string | null>(null);
 
-  readonly cancel = output<void>();
+  readonly dismissed = output<void>();
   readonly confirm = output<{ alsoStop: boolean }>();
 
   protected readonly alsoStop = signal(false);

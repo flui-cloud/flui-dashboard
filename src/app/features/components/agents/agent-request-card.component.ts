@@ -49,6 +49,16 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
           </span>
         </div>
 
+        @if (proposal().consequence) {
+          <p
+            class="m-0 text-[13px] leading-relaxed text-foreground"
+            data-testid="request-consequence"
+          >
+            <span class="font-medium">If you allow it:</span>
+            {{ proposal().consequence }}
+          </p>
+        }
+
         <p class="m-0 font-mono text-[13px] text-muted-foreground" data-testid="request-who">
           <span class="font-medium text-foreground">{{ agentLabel() }}</span>
           @if (proposal().keyId) {
@@ -89,10 +99,10 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
         </dl>
 
         @if (pricing()) {
-          <p class="m-0 flex items-center gap-2 text-xs text-muted-foreground" data-testid="estimate-loading">
-            <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-            Pricing this request…
-          </p>
+          <div class="space-y-2" data-testid="estimate-loading" aria-busy="true">
+            <div class="skeleton h-3 w-28"></div>
+            <div class="skeleton h-3 w-40"></div>
+          </div>
         } @else if (priceError()) {
           <p class="m-0 text-xs text-muted-foreground" data-testid="estimate-error">
             {{ priceError() }}

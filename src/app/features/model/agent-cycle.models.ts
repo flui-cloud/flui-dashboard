@@ -29,6 +29,7 @@ export interface AgentProposal {
   argsDigest: string;
   sentence: string;
   offersAlways: boolean;
+  consequence?: string | null;
   estimateRef?: string | null;
   estimate?: Record<string, unknown> | null;
   status: ProposalStatus;
@@ -158,14 +159,18 @@ function entriesOf(value: unknown): [string, unknown][] {
   return Object.entries(value as Record<string, unknown>);
 }
 
+function holds(permissionCount: number): string {
+  if (permissionCount === 0) {
+    return 'What you hold on this instance decides what you can lend';
+  }
+  const plural = permissionCount === 1 ? '' : 's';
+  return `You hold ${permissionCount} permission${plural} on this instance`;
+}
+
 export function ceilingSentence(
   isAdmin: boolean,
   permissionCount: number,
 ): string {
-  const held = isAdmin
-    ? 'You are an administrator on this instance'
-    : permissionCount > 0
-      ? `You hold ${permissionCount} permission${permissionCount === 1 ? '' : 's'} on this instance`
-      : 'What you hold on this instance decides what you can lend';
+  const held = isAdmin ? 'You are an administrator on this instance' : holds(permissionCount);
   return `${held} — the grants below choose how much of that you lend out, and they cannot reach past it.`;
 }

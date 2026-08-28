@@ -54,6 +54,20 @@ describe('one request, and the answers on offer', () => {
 
   afterEach(() => TestBed.resetTestingModule());
 
+  describe('what happens if you allow it', () => {
+    it('shows the consequence the route declared', async () => {
+      await build({ consequence: 'Servers start being billed.' });
+      expect(find('request-consequence')?.textContent).toContain(
+        'Servers start being billed.',
+      );
+    });
+
+    it('shows nothing at all when the route declared none', async () => {
+      await build({ consequence: null });
+      expect(find('request-consequence')).toBeNull();
+    });
+  });
+
   describe('three choices, not two', () => {
     it('offers once, always and deny when the request stated its boundary', async () => {
       await build();
@@ -162,7 +176,7 @@ describe('one request, and the answers on offer', () => {
       fixture.detectChanges();
 
       expect(find('estimate-error')?.textContent).toContain('did not answer');
-      expect(findAll('estimate-fact').length).toBe(0);
+      expect(findAll('estimate-fact')).toHaveSize(0);
       expect(find('allow-once')).toBeTruthy();
     });
 
@@ -212,3 +226,4 @@ describe('one request, and the answers on offer', () => {
     });
   });
 });
+
