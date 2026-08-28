@@ -386,11 +386,11 @@ export function describeHand(hand: ContextHand | null | undefined): string | nul
 }
 
 export function parseExpected(typed: unknown): unknown {
-  // Three value accessors feed this: a number input emits a number, an empty one null.
   if (typeof typed === 'number') return Number.isNaN(typed) ? undefined : typed;
   if (typeof typed === 'boolean') return typed;
   if (typed === null || typed === undefined) return undefined;
-  const text = String(typed);
+  if (typeof typed !== 'string') return typed;
+  const text = typed;
   const trimmed = text.trim();
   if (!trimmed) return undefined;
   if (trimmed === 'true') return true;
@@ -516,7 +516,7 @@ export function probeAllowedAt(scopeType: ContextScopeType): boolean {
 }
 
 export const TOPIC_HINT =
-  'A short lowercase handle, e.g. master-node-scaling. Two notes sharing one are about the same subject, which is how a disagreement between them can be shown at all.';
+  'e.g. master-node-scaling. Two notes sharing one are about the same subject, which is how a disagreement between them can be shown at all.';
 
 export const PREMISE_HINT =
   'The value is read in the type the fact answers: 3 against a count is stored as the number 3 and compared as one ever after. Something that cannot be read that way — three against a count — is refused while you are still here, with a sentence saying why. Nothing mistyped is saved and left to accuse itself later.';

@@ -119,6 +119,47 @@ describe('how this installation is run', () => {
   const text = (testid: string): string =>
     find(testid)?.textContent?.trim().replace(/\s+/g, ' ') ?? '';
 
+  describe('the first time anybody arrives', () => {
+    it('says what this is for, shows one, and offers one button', async () => {
+      await build({ entries: [] });
+
+      expect(find('first-run')).not.toBeNull();
+      expect(find('write-first')).not.toBeNull();
+      expect(text('first-run')).toContain('The master is not resized');
+    });
+
+    it('shows no control that has nothing to control', async () => {
+      await build({ entries: [] });
+
+      expect(find('focus')).toBeNull();
+      expect(find('tabs')).toBeNull();
+      expect(find('group-holding')).toBeNull();
+      expect(find('start-writing')).toBeNull();
+    });
+
+    it('is not the answer to a filter that matched nothing', async () => {
+      await build({ entries: [note({ id: 'holds' })] });
+
+      const slug = find('focus-slug') as HTMLInputElement;
+      slug.value = 'some-app';
+      slug.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      api.list.and.returnValue(of([]));
+      (find('focus-apply') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(find('first-run')).toBeNull();
+      expect(find('focus')).not.toBeNull();
+    });
+
+    it('offers a guest nothing to press, and says why', async () => {
+      await build({ entries: [], trial: true });
+      expect(find('write-first')).toBeNull();
+      expect(find('first-run-read-only')).not.toBeNull();
+    });
+  });
+
   it('meets the reader with what has stopped being trustworthy, before what still holds', async () => {
     await build({
       entries: [
@@ -128,22 +169,40 @@ describe('how this installation is run', () => {
       ],
     });
 
-    const review = within('group-review', 'note').map((el) =>
-      el.getAttribute('data-confidence'),
-    );
-    expect(review).toEqual(['broken', 'stale']);
+    expect(
+      within('group-review', 'note').map((el) =>
+        el.getAttribute('data-confidence'),
+      ),
+    ).toEqual(['broken', 'stale']);
+    expect(find('group-holding')).toBeNull();
+
+    (find('tab-holding') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
     expect(
       within('group-holding', 'note').map((el) =>
         el.getAttribute('data-confidence'),
       ),
     ).toEqual(['checked']);
+    expect(find('group-review')).toBeNull();
+  });
 
-    const groups = Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll(
-        '[data-testid="group-review"], [data-testid="group-holding"]',
-      ),
-    ).map((el) => el.getAttribute('data-testid'));
-    expect(groups).toEqual(['group-review', 'group-holding']);
+  it('opens on what holds when nothing is asking for anything', async () => {
+    await build({ entries: [note({ id: 'holds', confidence: 'checked' })] });
+    expect(find('group-holding')).not.toBeNull();
+    expect(find('group-review')).toBeNull();
+    expect(find('tab-count-attention')).toBeNull();
+  });
+
+  it('says on the tab how much is behind it', async () => {
+    await build({
+      entries: [
+        note({ id: 'holds', confidence: 'checked' }),
+        note({ id: 'fell', confidence: 'broken', checkedBy: 'probe' }),
+      ],
+    });
+    expect(find('tab-count-attention')?.textContent?.trim()).toBe('1');
+    expect(find('tab-count-holding')?.textContent?.trim()).toBe('1');
   });
 
   it('calls a fallen premise suspect rather than false', async () => {
@@ -153,7 +212,7 @@ describe('how this installation is run', () => {
     expect(within('group-review', 'verdict')[0].textContent).toContain(
       'premise fell',
     );
-    expect(within('group-review', 'verdict-note')[0].textContent).toContain(
+    expect(within('group-review', 'verdict')[0].getAttribute('title')).toContain(
       'suspect',
     );
     expect(within('group-review', 'body')[0].textContent).toContain(
@@ -179,7 +238,10 @@ describe('how this installation is run', () => {
     });
     const shown = within('conflict', 'title').map((el) => el.textContent?.trim());
     expect(shown).toEqual(['The master is not resized', 'On prod it is resized']);
-    expect(text('conflict')).toContain('Neither wins');
+    expect(text('conflict')).toContain('neither wins');
+    expect(
+      find('conflict-why-master-node-scaling-toggle'),
+    ).toBeTruthy();
   });
 
   it('keeps the re-reading list when the disagreements cannot be read', async () => {
@@ -187,7 +249,7 @@ describe('how this installation is run', () => {
       entries: [note({ id: 'fell', confidence: 'broken', checkedBy: 'probe' })],
       adviceFails: true,
     });
-    expect(within('group-review', 'note').length).toBe(1);
+    expect(within('group-review', 'note')).toHaveSize(1);
     expect(text('conflict-count')).toBe('could not be read');
     expect(text('no-conflicts')).toContain('could not be read');
     expect(find('load-error')).toBeNull();
@@ -203,7 +265,7 @@ describe('how this installation is run', () => {
   });
 
   it('asks both axes at once when a reader focuses on one thing', async () => {
-    await build();
+    await build({ entries: [note({ id: 'holds' })] });
     const slug = find('focus-slug') as HTMLInputElement;
     slug.value = 'api';
     slug.dispatchEvent(new Event('input'));
@@ -219,14 +281,14 @@ describe('how this installation is run', () => {
   });
 
   it('offers no way to write during the trial, and says whose job it is', async () => {
-    await build({ trial: true });
+    await build({ trial: true, entries: [note({ id: 'holds' })] });
     expect(find('start-writing')).toBeNull();
     expect(text('read-only-here')).toContain('whoever runs the instance');
   });
 
   describe('why it used to be done this way', () => {
     const openArchive = async (): Promise<void> => {
-      (find('archive-toggle') as HTMLButtonElement).click();
+      (find('tab-archive') as HTMLButtonElement).click();
       fixture.detectChanges();
       await fixture.whenStable();
       fixture.detectChanges();
@@ -240,6 +302,7 @@ describe('how this installation is run', () => {
 
     it('shows the notes that were retired, and when', async () => {
       await build({
+        entries: [note({ id: 'holds' })],
         retired: [
           note({
             id: 'gone',
@@ -252,21 +315,22 @@ describe('how this installation is run', () => {
       expect(within('group-archive', 'title')[0].textContent).toContain(
         'We used to pin the master',
       );
-      expect(within('group-archive', 'retired').length).toBe(1);
+      expect(within('group-archive', 'retired')).toHaveSize(1);
     });
 
     it('offers nothing to change on a note that was withdrawn', async () => {
       await build({
+        entries: [note({ id: 'holds' })],
         retired: [note({ id: 'gone', checkedBy: 'attestation' })],
       });
       await openArchive();
-      expect(within('group-archive', 'confirm').length).toBe(0);
-      expect(within('group-archive', 'reword-start').length).toBe(0);
-      expect(within('group-archive', 'archive').length).toBe(0);
+      expect(within('group-archive', 'confirm')).toHaveSize(0);
+      expect(within('group-archive', 'reword-start')).toHaveSize(0);
+      expect(within('group-archive', 'archive')).toHaveSize(0);
     });
 
     it('follows the same focus as the live list', async () => {
-      await build();
+      await build({ entries: [note({ id: 'holds' })] });
       const slug = find('focus-slug') as HTMLInputElement;
       slug.value = 'api';
       slug.dispatchEvent(new Event('input'));
@@ -287,7 +351,10 @@ describe('how this installation is run', () => {
       await openArchive();
       expect(find('archive-error')).not.toBeNull();
       expect(find('load-error')).toBeNull();
-      expect(within('group-holding', 'note').length).toBe(1);
+
+      (find('tab-holding') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(within('group-holding', 'note')).toHaveSize(1);
     });
 
     it('is not offered during the trial', async () => {

@@ -50,6 +50,7 @@ import {
   writeBodyOf,
 } from '../../model/operating-context.models';
 import { OperatingContextService } from '../../service/operating-context.service';
+import { ExplainComponent } from '../../../shared/components/explain.component';
 
 const FIELD =
   'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
@@ -74,7 +75,7 @@ const FAILED_REACH: ReachState = {
 @Component({
   selector: 'app-context-note-form',
   standalone: true,
-  imports: [FormsModule, NgIcon, HlmButtonDirective],
+  imports: [FormsModule, NgIcon, HlmButtonDirective, ExplainComponent],
   providers: [
     provideIcons({
       lucideCircleAlert,
@@ -116,15 +117,19 @@ const FAILED_REACH: ReachState = {
 
       <!-- ── Where it applies: two axes ────────────────────────── -->
       <fieldset class="space-y-3 border-0 p-0">
-        <legend class="text-label mb-1 p-0">Where it applies</legend>
-        <p class="m-0 flex items-start gap-2 text-[12px] text-muted-foreground">
-          <ng-icon name="lucideLayers" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>
-            Two separate questions, not one nested inside the other. An
-            application belongs to a project and runs on a cluster; it receives
-            every note whose region contains it, down either axis.
-          </span>
-        </p>
+        <legend class="text-label mb-1 flex items-center gap-2 p-0">
+          <span>Where it applies</span>
+          <ng-icon name="lucideLayers" class="h-3.5 w-3.5 text-muted-foreground" />
+          <app-explain
+            label="two axes"
+            labelClass="text-[12px] font-normal text-muted-foreground"
+            testid="axes-why"
+          >
+            An application belongs to a project and runs on a cluster. It
+            receives every note whose region contains it, down either axis —
+            neither is nested inside the other.
+          </app-explain>
+        </legend>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-2">
@@ -252,7 +257,13 @@ const FAILED_REACH: ReachState = {
             (ngModelChange)="topic.set($event)"
             data-testid="topic"
           />
-          <p class="m-0 text-[11px] text-muted-foreground">{{ topicHint }}</p>
+          <app-explain
+            label="A short lowercase handle"
+            labelClass="text-[11px] text-muted-foreground"
+            testid="topic-hint"
+          >
+            {{ topicHint }}
+          </app-explain>
         </div>
 
         <input
@@ -279,12 +290,21 @@ const FAILED_REACH: ReachState = {
 
       <!-- ── What keeps it honest ──────────────────────────────── -->
       <fieldset class="space-y-3 border-0 p-0">
-        <legend class="text-label mb-1 p-0">What keeps it honest</legend>
-        <p class="m-0 text-[12px] text-muted-foreground">
-          A note ages. Leaning it on a live fact, or on a signature with a shelf
-          life, is what lets it ask to be revisited instead of advising
-          something that stopped being true.
-        </p>
+        <legend class="text-label mb-1 flex items-center gap-2 p-0">
+          <span>What keeps it honest</span>
+          <app-explain
+            label="why this matters"
+            labelClass="text-[12px] font-normal text-muted-foreground"
+            testid="honest-why"
+          >
+            A note ages. Leaning it on a live fact, or on a signature with a
+            shelf life, is what lets it ask to be revisited instead of advising
+            something that stopped being true. <strong>Nothing</strong> means it
+            is prose and says so; <strong>a signature</strong> lapses after the
+            days you give it; <strong>a live fact</strong> is compared against
+            the platform and falls on its own.
+          </app-explain>
+        </legend>
 
         <select
           [class]="selectClass"
@@ -294,19 +314,23 @@ const FAILED_REACH: ReachState = {
           aria-label="What keeps it honest"
           data-testid="check-kind"
         >
-          <option value="none">Nothing — it is prose, and says so</option>
-          <option value="attestation">A person confirms it, and that lapses</option>
+          <option value="none">Nothing — it is prose</option>
+          <option value="attestation">A signature, with a shelf life</option>
           @if (probeUsable()) {
-            <option value="probe">A live fact the platform can compare</option>
+            <option value="probe">A live fact</option>
           }
         </select>
 
         @if (!probeUsable()) {
-          <p class="m-0 text-[11px] text-muted-foreground" data-testid="no-probe-here">
+          <app-explain
+            label="No live fact at this level"
+            labelClass="text-[11px] text-muted-foreground"
+            testid="no-probe-here"
+          >
             A note about the whole installation cannot be compared with
             anything: it is either an intention, or it belongs at a narrower
             level.
-          </p>
+          </app-explain>
         }
 
         @if (checkKind() === 'attestation') {
@@ -389,13 +413,14 @@ const FAILED_REACH: ReachState = {
                 </div>
               }
             } @else {
-              <p
-                class="m-0 text-[11px] text-muted-foreground"
-                data-testid="undeclared-params"
+              <app-explain
+                label="This fact did not say what it wants"
+                labelClass="text-[11px] text-muted-foreground"
+                testid="undeclared-params"
               >
-                This fact did not say what it wants. Name the parameters
-                yourself — the API will say if one is missing.
-              </p>
+                Name the parameters yourself — the API will say if one is
+                missing.
+              </app-explain>
               @for (row of paramRows(); track $index) {
                 <div class="flex gap-2">
                   <input
@@ -488,9 +513,13 @@ const FAILED_REACH: ReachState = {
                 }
               }
             </div>
-            <p class="m-0 text-[11px] text-muted-foreground" data-testid="premise-hint">
+            <app-explain
+              label="How the value is read"
+              labelClass="text-[11px] text-muted-foreground"
+              testid="premise-hint"
+            >
               {{ premiseHint }}
-            </p>
+            </app-explain>
           </div>
         }
       </fieldset>
@@ -508,10 +537,10 @@ const FAILED_REACH: ReachState = {
             This note will be read by
           </p>
           @if (reachLoading()) {
-            <p class="m-0 text-sm text-muted-foreground" data-testid="reach-loading">
-              <ng-icon name="lucideLoader" class="mr-1.5 inline h-3.5 w-3.5 animate-spin" />
-              Working out who that is…
-            </p>
+            <div class="space-y-2" data-testid="reach-loading" aria-busy="true">
+              <div class="skeleton h-4 w-full max-w-md"></div>
+              <div class="skeleton h-4 w-2/3"></div>
+            </div>
           } @else {
             @if (reach(); as line) {
               <p class="m-0 text-sm text-foreground" data-testid="reach-sentence">
@@ -528,14 +557,17 @@ const FAILED_REACH: ReachState = {
               </p>
             } @else {
               <p class="m-0 text-sm text-muted-foreground" data-testid="reach-pending">
-                Finish naming the level and this says who ends up reading it.
+                Name the level to see who reads it.
               </p>
             }
           }
-          <p class="m-0 text-[11px] text-muted-foreground">
-            This is what happens, not what is permitted. A note advises; it
-            never stops anyone doing anything.
-          </p>
+          <app-explain
+            label="what happens, not what is permitted"
+            labelClass="text-[11px] text-muted-foreground"
+            testid="advice-only"
+          >
+            A note advises; it never stops anyone doing anything.
+          </app-explain>
         </div>
       </div>
 
@@ -559,7 +591,7 @@ const FAILED_REACH: ReachState = {
           }
           Write the note
         </button>
-        <button hlmBtn type="button" variant="ghost" (click)="cancel.emit()" data-testid="cancel">
+        <button hlmBtn type="button" variant="ghost" (click)="dismissed.emit()" data-testid="cancel">
           Cancel
         </button>
       </div>
@@ -575,7 +607,7 @@ export class ContextNoteFormComponent {
   readonly error = input<string | null>(null);
 
   readonly save = output<WriteContextEntry>();
-  readonly cancel = output<void>();
+  readonly dismissed = output<void>();
 
   protected readonly natures = ENTRY_NATURES;
   protected readonly aboutAxes = ABOUT_AXES;

@@ -9,8 +9,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideChevronDown,
-  lucideChevronUp,
+  lucideArchive,
   lucideCircleAlert,
   lucideLayers,
   lucideLoader,
@@ -39,6 +38,9 @@ import {
 } from '../../service/operating-context.service';
 import { ContextNoteCardComponent } from './context-note-card.component';
 import { ContextNoteFormComponent } from './context-note-form.component';
+import { ExplainComponent } from '../../../shared/components/explain.component';
+
+type ContextTab = 'attention' | 'holding' | 'archive';
 
 @Component({
   selector: 'app-operating-context',
@@ -49,11 +51,11 @@ import { ContextNoteFormComponent } from './context-note-form.component';
     HlmButtonDirective,
     ContextNoteCardComponent,
     ContextNoteFormComponent,
+    ExplainComponent,
   ],
   providers: [
     provideIcons({
-      lucideChevronDown,
-      lucideChevronUp,
+      lucideArchive,
       lucideCircleAlert,
       lucideLayers,
       lucideLoader,
@@ -65,36 +67,29 @@ import { ContextNoteFormComponent } from './context-note-form.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mx-auto max-w-5xl space-y-8 p-6">
-      <header class="space-y-1">
-        <h1 class="text-2xl font-semibold tracking-tight text-foreground">
+      <header class="flex flex-wrap items-center justify-between gap-3">
+        <h1 class="m-0 text-2xl font-semibold tracking-tight text-foreground">
           How this installation is run
         </h1>
-        <p class="m-0 text-sm text-muted-foreground">
-          What people here decided about how things are done, where each
-          decision applies, and which of them the platform can no longer
-          confirm.
-        </p>
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/[0.07] px-2.5 py-1"
+          data-testid="preamble"
+        >
+          <span class="font-mono text-[10px] font-semibold tracking-widest text-accent-foreground">
+            ADVICE
+          </span>
+          <app-explain
+            label="not permissions"
+            labelClass="text-[12px] text-muted-foreground"
+            testid="preamble-why"
+          >
+            {{ preamble() }}
+          </app-explain>
+        </span>
       </header>
 
-      <div
-        role="note"
-        class="flex items-start gap-3.5 rounded-lg border border-primary/20 bg-primary/[0.07] px-4 py-3.5"
-        data-testid="preamble"
-      >
-        <span
-          class="shrink-0 pt-0.5 font-mono text-[11px] font-semibold tracking-widest text-accent-foreground"
-        >
-          ADVICE
-        </span>
-        <p class="m-0 text-sm text-muted-foreground">
-          <span class="font-semibold text-foreground">
-            These are notes, not permissions.
-          </span>
-          {{ preamble() }}
-        </p>
-      </div>
-
       <!-- ── What reaches a given thing ────────────────────────── -->
+      @if (!firstRun()) {
       <section class="space-y-2" data-testid="focus">
         <div class="flex flex-wrap items-end gap-3">
           <div class="space-y-1">
@@ -137,15 +132,13 @@ import { ContextNoteFormComponent } from './context-note-form.component';
             </button>
           }
         </div>
-        <p class="m-0 flex items-start gap-2 text-[12px] text-muted-foreground">
-          <ng-icon name="lucideLayers" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>
-            Two axes, not a hierarchy: what a thing is, and where it runs. A
-            resource receives the union of every note whose region contains it —
-            arriving down both at once, with neither taking precedence.
-          </span>
-        </p>
+        <app-explain label="Two axes, not a hierarchy" testid="reach-why">
+          What a thing is, and where it runs. A resource receives every note
+          whose region contains it — down both at once, neither taking
+          precedence.
+        </app-explain>
       </section>
+      }
 
       @if (loadError(); as message) {
         <div
@@ -157,8 +150,52 @@ import { ContextNoteFormComponent } from './context-note-form.component';
         </div>
       }
 
+      <!-- ── The first time anybody arrives ────────────────────── -->
+      @if (firstRun() && !writing()) {
+        <section
+          class="card-surface mx-auto max-w-2xl space-y-5 p-8 text-center"
+          data-testid="first-run"
+        >
+          <div class="space-y-2">
+            <h2 class="m-0 text-lg font-semibold text-foreground">
+              Nothing has been written down yet
+            </h2>
+            <p class="m-0 text-sm text-muted-foreground">
+              The local conventions nobody can work out from the code — why the
+              master is left alone, when deploys happen, which cluster is not to
+              be touched. Everybody here reads them, and so does every agent
+              before it changes anything.
+            </p>
+          </div>
+
+          <div class="rounded-lg border border-dashed border-border p-4 text-left">
+            <p class="m-0 text-[11px] uppercase tracking-wide text-muted-foreground">
+              For example
+            </p>
+            <p class="m-0 mt-1.5 text-sm font-medium text-foreground">
+              The master is not resized
+            </p>
+            <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
+              The API runs on it, so resizing takes the control plane down.
+              Add workers instead.
+            </p>
+          </div>
+
+          @if (readOnlyHere()) {
+            <p class="m-0 text-sm text-muted-foreground" data-testid="first-run-read-only">
+              {{ readOnlyWhy() }}
+            </p>
+          } @else {
+            <button hlmBtn (click)="writing.set(true)" data-testid="write-first">
+              <ng-icon name="lucidePlus" class="mr-1.5 h-4 w-4" />
+              Write the first note
+            </button>
+          }
+        </section>
+      }
+
       <!-- ── Writing one ───────────────────────────────────────── -->
-      @if (readOnlyHere()) {
+      @if (readOnlyHere() && !firstRun()) {
         <p class="m-0 text-sm text-muted-foreground" data-testid="read-only-here">
           {{ readOnlyWhy() }}
         </p>
@@ -169,9 +206,9 @@ import { ContextNoteFormComponent } from './context-note-form.component';
           [busy]="saving()"
           [error]="saveError()"
           (save)="write($event)"
-          (cancel)="writing.set(false)"
+          (dismissed)="writing.set(false)"
         />
-      } @else {
+      } @else if (!firstRun()) {
         <button hlmBtn (click)="writing.set(true)" data-testid="start-writing">
           <ng-icon name="lucidePlus" class="mr-1.5 h-4 w-4" />
           Write a note
@@ -179,16 +216,62 @@ import { ContextNoteFormComponent } from './context-note-form.component';
       }
 
       @if (loading()) {
-        <p class="m-0 flex items-center gap-2 text-sm text-muted-foreground" data-testid="loading">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-          Reading what has been decided here…
-        </p>
+        <div class="space-y-3" data-testid="loading" aria-busy="true">
+          @for (row of [1, 2, 3]; track row) {
+            <div class="card-surface space-y-3 p-4">
+              <div class="flex items-center gap-2">
+                <div class="skeleton h-5 w-56"></div>
+                <div class="skeleton h-4 w-16"></div>
+              </div>
+              <div class="skeleton h-3 w-72"></div>
+              <div class="skeleton h-3 w-full max-w-xl"></div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (!loading() && !firstRun()) {
+        <!-- ── Three questions, one at a time ─────────────────── -->
+        <div class="border-b border-border">
+          <nav class="-mb-px flex gap-1 overflow-x-auto scrollbar-none" data-testid="tabs">
+            @for (t of tabs; track t.id) {
+              <button
+                type="button"
+                (click)="chooseTab(t.id)"
+                class="inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors md:px-5"
+                [class]="
+                  tab() === t.id
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
+                "
+                [attr.aria-current]="tab() === t.id ? 'page' : null"
+                [attr.data-testid]="'tab-' + t.id"
+              >
+                <ng-icon [name]="t.icon" class="h-4 w-4" />
+                <span>{{ t.label }}</span>
+                @if (countFor(t.id); as n) {
+                  <span
+                    class="rounded-full px-1.5 py-0.5 text-[11px] tabular-nums"
+                    [class]="
+                      t.id === 'attention'
+                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                        : 'bg-muted text-muted-foreground'
+                    "
+                    [attr.data-testid]="'tab-count-' + t.id"
+                  >
+                    {{ n }}
+                  </span>
+                }
+              </button>
+            }
+          </nav>
+        </div>
       }
 
       <!-- ── Asking to be re-read ──────────────────────────────── -->
-      @if (!loading()) {
+      @if (!loading() && !firstRun() && tab() === 'attention') {
         <section class="space-y-3" data-testid="group-review">
-          <div class="flex items-baseline justify-between gap-4 border-b border-border pb-2.5">
+          <div class="flex items-baseline justify-between gap-4 pb-1">
             <p class="text-label m-0">Asking to be re-read</p>
             <p class="m-0 text-[13px] text-muted-foreground" data-testid="review-count">
               {{ reviewNote() }}
@@ -207,16 +290,20 @@ import { ContextNoteFormComponent } from './context-note-form.component';
               (reword)="reword($event)"
             />
           } @empty {
-            <p class="m-0 text-sm text-muted-foreground" data-testid="nothing-to-review">
-              Nothing is asking to be revisited. A note that leans on a live fact
-              says so here the moment the platform stops agreeing with it.
-            </p>
+            <app-explain
+              label="Nothing is asking to be revisited"
+              labelClass="text-sm text-muted-foreground"
+              testid="nothing-to-review"
+            >
+              A note that leans on a live fact appears here the moment the
+              platform stops agreeing with it.
+            </app-explain>
           }
         </section>
 
         <!-- ── Where two notes disagree ────────────────────────── -->
         <section class="space-y-3" data-testid="group-conflicts">
-          <div class="flex items-baseline justify-between gap-4 border-b border-border pb-2.5">
+          <div class="flex items-baseline justify-between gap-4 pb-1">
             <p class="text-label m-0">Where two notes disagree</p>
             <p class="m-0 text-[13px] text-muted-foreground" data-testid="conflict-count">
               {{ conflictNote() }}
@@ -226,14 +313,16 @@ import { ContextNoteFormComponent } from './context-note-form.component';
           @for (group of conflicts(); track group.topic) {
             <div class="space-y-2 rounded-lg border border-dashed border-border p-3" data-testid="conflict">
               <p class="m-0 flex items-center gap-2 text-[12px] text-muted-foreground">
-                <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5" />
-                <span>
-                  Both of these are about
-                  <span class="font-mono text-foreground">{{ group.topic }}</span>
-                  and they say different things. Neither wins — being written at
-                  a narrower level does not make a note more right, and one of
-                  the two is very often simply older.
-                </span>
+                <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5 shrink-0" />
+                <span class="font-mono text-foreground">{{ group.topic }}</span>
+                <app-explain
+                  label="neither wins"
+                  labelClass="text-[12px] text-muted-foreground"
+                  [testid]="'conflict-why-' + group.topic"
+                >
+                  Being written at a narrower level does not make a note more
+                  right, and one of the two is very often simply older.
+                </app-explain>
               </p>
               @for (entry of group.entries; track entry.id) {
                 <app-context-note-card
@@ -254,10 +343,12 @@ import { ContextNoteFormComponent } from './context-note-form.component';
             </p>
           }
         </section>
+      }
 
-        <!-- ── What still holds ────────────────────────────────── -->
+      <!-- ── What still holds ──────────────────────────────────── -->
+      @if (!loading() && !firstRun() && tab() === 'holding') {
         <section class="space-y-3" data-testid="group-holding">
-          <div class="flex items-baseline justify-between gap-4 border-b border-border pb-2.5">
+          <div class="flex items-baseline justify-between gap-4 pb-1">
             <p class="text-label m-0">What still holds</p>
             <p class="m-0 text-[13px] text-muted-foreground" data-testid="holding-count">
               {{ holdingNote() }}
@@ -276,47 +367,45 @@ import { ContextNoteFormComponent } from './context-note-form.component';
               (reword)="reword($event)"
             />
           } @empty {
-            <p class="m-0 text-sm text-muted-foreground" data-testid="nothing-here">
-              Nothing has been written down about how this installation is run.
+            <app-explain
+              label="Nothing written down yet"
+              labelClass="text-sm text-muted-foreground"
+              testid="nothing-here"
+            >
               The first note is usually the one somebody had to explain twice.
-            </p>
+            </app-explain>
           }
         </section>
+      }
 
-        <!-- ── Why it used to be done this way ─────────────────── -->
+      <!-- ── Why it used to be done this way ───────────────────── -->
+      @if (!loading() && !firstRun() && tab() === 'archive') {
         @if (!readOnlyHere()) {
           <section class="space-y-3" data-testid="group-archive">
-            <div class="flex items-baseline justify-between gap-4 border-b border-border pb-2.5">
+            <div class="flex items-baseline justify-between gap-4 pb-1">
               <p class="text-label m-0">Why it used to be done this way</p>
-              <button
-                hlmBtn
-                size="sm"
-                variant="ghost"
-                (click)="toggleArchive()"
-                data-testid="archive-toggle"
-              >
-                <ng-icon
-                  [name]="showArchive() ? 'lucideChevronUp' : 'lucideChevronDown'"
-                  class="mr-1.5 h-3.5 w-3.5"
-                />
-                {{ showArchive() ? 'Hide what was retired' : 'Show what was retired' }}
-              </button>
             </div>
 
-            @if (showArchive()) {
-              <p class="m-0 text-[12px] text-muted-foreground" data-testid="archive-why">
-                Retiring a note archives it rather than deleting it: a rule that
-                was true once explains a decision that was made once. These are
-                read here and nowhere else — a withdrawn rule is never handed to
-                an agent as advice, and its premise is not asked again, so each
-                one says what was believed on the day it was withdrawn.
-              </p>
+            <app-explain
+              label="Archived, not deleted"
+              labelClass="text-[12px] text-muted-foreground"
+              testid="archive-why"
+            >
+              A rule that was true once explains a decision that was made once.
+              These are read here and nowhere else — a withdrawn rule is never
+              handed to an agent as advice, and its premise is not asked again,
+              so each one says what was believed on the day it was withdrawn.
+            </app-explain>
 
               @if (archiveLoading()) {
-                <p class="m-0 flex items-center gap-2 text-sm text-muted-foreground" data-testid="archive-loading">
-                  <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                  Reading what was retired…
-                </p>
+                <div class="space-y-3" data-testid="archive-loading" aria-busy="true">
+                  @for (row of [1, 2]; track row) {
+                    <div class="card-surface space-y-2 p-4">
+                      <div class="skeleton h-4 w-48"></div>
+                      <div class="skeleton h-3 w-64"></div>
+                    </div>
+                  }
+                </div>
               } @else if (archiveError()) {
                 <p class="m-0 text-sm text-muted-foreground" data-testid="archive-error">
                   {{ archiveError() }}
@@ -334,7 +423,6 @@ import { ContextNoteFormComponent } from './context-note-form.component';
                   </p>
                 }
               }
-            }
           </section>
         }
       }
@@ -368,6 +456,20 @@ export class OperatingContextComponent implements OnInit {
 
   protected readonly focusSlug = signal('');
   protected readonly focusCluster = signal('');
+
+  protected readonly tab = signal<ContextTab>('holding');
+
+  private chosen = false;
+
+  protected readonly tabs: ReadonlyArray<{
+    id: ContextTab;
+    label: string;
+    icon: string;
+  }> = [
+    { id: 'attention', label: 'Needs a look', icon: 'lucideCircleAlert' },
+    { id: 'holding', label: 'In force', icon: 'lucideLayers' },
+    { id: 'archive', label: 'Retired', icon: 'lucideArchive' },
+  ];
 
   protected readonly showArchive = signal(false);
   protected readonly archived = signal<ContextEntry[]>([]);
@@ -412,6 +514,35 @@ export class OperatingContextComponent implements OnInit {
       'Writing a note belongs to whoever runs this instance.',
   );
 
+  protected readonly firstRun = computed(
+    () => !this.loading() && !this.entries().length && !this.focused(),
+  );
+
+  protected chooseTab(id: ContextTab): void {
+    this.chosen = true;
+    this.tab.set(id);
+    if (id === 'archive' && !this.archived().length) this.loadArchive();
+  }
+
+  protected countFor(id: ContextTab): number | null {
+    if (id === 'attention') {
+      const n = this.review().length + this.conflicts().length;
+      return n || null;
+    }
+    if (id === 'holding') return this.holding().length || null;
+    return null;
+  }
+
+  private openingTab(): ContextTab {
+    return this.review().length || this.conflicts().length
+      ? 'attention'
+      : 'holding';
+  }
+
+  private openOnWhatMatters(): void {
+    if (!this.chosen) this.tab.set(this.openingTab());
+  }
+
   protected readonly reviewNote = computed(() => {
     const count = this.review().length;
     if (!count) return 'nothing';
@@ -454,12 +585,6 @@ export class OperatingContextComponent implements OnInit {
     this.load();
   }
 
-  protected toggleArchive(): void {
-    const next = !this.showArchive();
-    this.showArchive.set(next);
-    if (next) this.loadArchive();
-  }
-
   private loadArchive(): void {
     this.archiveLoading.set(true);
     this.archiveError.set(null);
@@ -486,6 +611,7 @@ export class OperatingContextComponent implements OnInit {
       next: (entries) => {
         this.entries.set(entries);
         this.loading.set(false);
+        this.openOnWhatMatters();
       },
       error: (err: unknown) => {
         this.entries.set([]);
@@ -500,13 +626,14 @@ export class OperatingContextComponent implements OnInit {
         this.rawConflicts.set(delivery.conflicts ?? []);
         this.deliveredPreamble.set(delivery.preamble ?? '');
         this.conflictsUnread.set(false);
+        this.openOnWhatMatters();
       },
       error: () => {
         this.rawConflicts.set([]);
         this.conflictsUnread.set(true);
       },
     });
-    if (this.showArchive()) this.loadArchive();
+    if (this.tab() === 'archive') this.loadArchive();
   }
 
   protected write(entry: WriteContextEntry): void {

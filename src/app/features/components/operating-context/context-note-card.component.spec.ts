@@ -22,6 +22,7 @@ describe('one note, read back', () => {
   const build = async (
     entry: ContextEntry,
     readOnly = false,
+    clusterNames: Record<string, string> = {},
   ): Promise<void> => {
     await TestBed.configureTestingModule({
       imports: [ContextNoteCardComponent],
@@ -29,11 +30,40 @@ describe('one note, read back', () => {
     fixture = TestBed.createComponent(ContextNoteCardComponent);
     fixture.componentRef.setInput('entry', entry);
     fixture.componentRef.setInput('readOnly', readOnly);
+    fixture.componentRef.setInput('clusterNames', clusterNames);
     fixture.detectChanges();
   };
 
   const find = (testid: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
+
+  describe('the cluster, called what people call it', () => {
+    const onCluster = (ref: string) =>
+      note({
+        scopeType: 'cluster',
+        scopeRef: ref,
+        reaches: {
+          audience: 'cluster',
+          scopeType: 'cluster',
+          scopeRef: ref,
+          nature: 'practice',
+          descends: true,
+          reachesGuests: false,
+          sentence: `Everyone who works on cluster ${ref} reads this.`,
+        },
+      } as Partial<ContextEntry>);
+
+    it('puts the name where the API put the id', async () => {
+      await build(onCluster('c-1'), false, { 'c-1': 'control-cluster' });
+      expect(find('reaches')?.textContent).toContain('cluster control-cluster');
+      expect(find('reaches')?.textContent).not.toContain('c-1');
+    });
+
+    it('leaves the sentence alone when no name is known', async () => {
+      await build(onCluster('c-9'), false, {});
+      expect(find('reaches')?.textContent).toContain('cluster c-9');
+    });
+  });
 
   it('offers a signature where a signature is what checks it', async () => {
     await build(note({ checkedBy: 'attestation', confidence: 'stale' }));
@@ -186,3 +216,4 @@ describe('one note, read back', () => {
     expect(find('level')?.textContent).toContain('api');
   });
 });
+

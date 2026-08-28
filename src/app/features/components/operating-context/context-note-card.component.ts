@@ -62,6 +62,7 @@ import {
             class="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
             [class]="verdictClass()"
             data-testid="verdict"
+            [title]="verdict().note"
           >
             <ng-icon [name]="verdictIcon()" class="h-3.5 w-3.5" />
             {{ verdict().label }}
@@ -95,9 +96,9 @@ import {
           </span>
         </div>
 
-        <p class="m-0 text-sm text-muted-foreground" data-testid="verdict-note">
-          {{ verdict().note }}
-        </p>
+        <!-- The verdict's meaning is the same sentence on every card carrying
+             the same badge, so it rides on the badge rather than being printed
+             once per note. Reading a list of six was reading it six times. -->
 
         @if (editing()) {
           <div class="space-y-2" data-testid="reword">
@@ -174,7 +175,7 @@ import {
             data-testid="reaches"
           >
             <ng-icon name="lucideUsers" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <span>{{ reach.sentence }}</span>
+            <span>{{ reachSentence() }}</span>
           </p>
         }
 
@@ -255,6 +256,14 @@ export class ContextNoteCardComponent {
   protected readonly level = computed(() =>
     describeScope(this.entry(), (id) => this.clusterNames()[id]),
   );
+
+  protected readonly reachSentence = computed(() => {
+    const reach = this.entry().reaches;
+    if (!reach) return '';
+    const ref = this.entry().scopeRef;
+    const name = ref ? this.clusterNames()[ref] : undefined;
+    return name ? reach.sentence.split(ref!).join(name) : reach.sentence;
+  });
 
   protected readonly changed = computed(() =>
     formatTimeSince(this.entry().updatedAt).toLowerCase(),

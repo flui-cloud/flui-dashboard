@@ -121,12 +121,12 @@ describe('writing a note', () => {
     await type('title', 'A title');
     await type('body', 'A body');
     (find('save') as HTMLButtonElement).click();
-    expect(saved.length).toBe(1);
+    expect(saved).toHaveSize(1);
   });
 
   it('offers no live comparison for a note about the whole installation', async () => {
     await build();
-    expect(find('no-probe-here')).not.toBeNull();
+    expect(find('no-probe-here-toggle')).not.toBeNull();
     const options = Array.from(
       (find('check-kind') as HTMLSelectElement).options,
     ).map((o) => o.value);
@@ -252,7 +252,7 @@ describe('writing a note', () => {
       const asked = fixture.nativeElement.querySelectorAll(
         '[data-testid="declared-param"]',
       );
-      expect(asked.length).toBe(2);
+      expect(asked).toHaveSize(2);
       expect(find('param-name')).toBeNull();
       expect(find('add-param')).toBeNull();
       expect(find('param-slug')).not.toBeNull();
@@ -305,7 +305,7 @@ describe('writing a note', () => {
 
     it('falls back to naming the parameters by hand when the fact never said', async () => {
       await leaning({ id: 'app.field', describes: 'says nothing' });
-      expect(find('undeclared-params')).not.toBeNull();
+      expect(find('undeclared-params-toggle')).not.toBeNull();
       expect(find('param-name')).not.toBeNull();
       expect(find('declared-param')).toBeNull();
     });
@@ -328,6 +328,8 @@ describe('writing a note', () => {
     await build();
     await pick('about-axis', 'apps');
     await pick('check-kind', 'probe');
+    find('premise-hint-toggle')!.click();
+    fixture.detectChanges();
     expect(text('premise-hint')).toContain('refused');
     expect(text('premise-hint')).not.toContain('the note would');
   });
