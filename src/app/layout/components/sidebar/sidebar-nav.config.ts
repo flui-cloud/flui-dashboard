@@ -34,6 +34,12 @@ export const CLUSTER_ITEMS: SidebarNavItem[] = [
     routerLinkActive: 'active',
     icon: 'lucideBoxes',
   },
+  {
+    label: 'Scaling',
+    link: '/scaling',
+    routerLinkActive: 'active',
+    icon: 'lucideChartNoAxesColumnIncreasing',
+  },
 ];
 
 export const INFRASTRUCTURE_ITEMS: SidebarNavItem[] = [

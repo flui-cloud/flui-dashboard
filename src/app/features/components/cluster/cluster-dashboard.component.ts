@@ -25,6 +25,7 @@ import {
   lucideKey,
   lucideCopy,
   lucideCheck,
+  lucideSettings2,
   lucideZap,
 } from '@ng-icons/lucide';
 
@@ -75,6 +76,7 @@ interface TabItem {
       lucideKey,
       lucideCopy,
       lucideCheck,
+      lucideSettings2,
       lucideZap,
     }),
   ],
@@ -331,6 +333,7 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
     { label: 'Storage', route: 'storage', icon: 'lucideHardDrive' },
     { label: 'Nodes', route: 'nodes', icon: 'lucideServer' },
     { label: 'Autoscaling', route: 'autoscaling', icon: 'lucideZap' },
+    { label: 'Scaling (mock)', route: 'scaling', icon: 'lucideSettings2' },
     { label: 'Firewall', route: 'firewall', icon: 'lucideShield' },
     { label: 'DNS', route: 'dns', icon: 'lucideGlobe' },
     { label: 'Variables', route: 'variables', icon: 'lucideKey' },

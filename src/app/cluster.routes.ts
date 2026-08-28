@@ -82,6 +82,13 @@ export const clusterRoutes: Routes = [
           ),
       },
       {
+        path: 'scaling',
+        loadComponent: () =>
+          import('./features/components/cluster/cluster-scaling-tab.component').then(
+            (m) => m.ClusterScalingTabComponent
+          ),
+      },
+      {
         path: 'firewall',
         loadComponent: () =>
           import('./features/components/cluster/cluster-firewall-tab.component').then(
