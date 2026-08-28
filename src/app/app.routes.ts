@@ -5,6 +5,7 @@ import { infrastructureRoutes } from './infrastructure.routes';
 import { appsRoutes } from './apps.routes';
 import { managementRoutes } from './management.routes';
 import { clusterRoutes } from './cluster.routes';
+import { scalingFixtureRoutes, scalingRoutes } from './scaling.routes';
 import { agentsRoutes } from './agents.routes';
 
 export const routes: Routes = [
@@ -31,6 +32,11 @@ export const routes: Routes = [
         (m) => m.SandboxClaimComponent
       ),
     title: 'Open a live Flui',
+  },
+  {
+    path: 'mock/scaling-section',
+    children: scalingFixtureRoutes,
+    title: 'Scaling section — fixture',
   },
   {
     path: 'repositories',
@@ -85,6 +91,10 @@ export const routes: Routes = [
       {
         path: 'cluster',
         children: clusterRoutes,
+      },
+      {
+        path: 'scaling',
+        children: scalingRoutes,
       },
 
       {
