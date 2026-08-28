@@ -10,7 +10,6 @@
 
 
 export interface ProviderFeaturesDto { 
-    autoScaling: boolean;
     loadBalancers: boolean;
     privateNetworking: boolean;
     snapshots: boolean;

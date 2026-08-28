@@ -25,7 +25,6 @@ export interface ProviderCapabilities {
   supportedRegions: ProviderRegion[];
   credentialType: 'api_key' | 'bearer_token' | 'user_password';
   features: {
-    autoScaling: boolean;
     loadBalancers: boolean;
     privateNetworking: boolean;
     snapshots: boolean;
