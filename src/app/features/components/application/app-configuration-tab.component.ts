@@ -85,6 +85,7 @@ import { AppVariablesEditorComponent, VariablesSavePayload } from './app-variabl
           title="Sensitive Variables (Secrets)"
           [data]="variablesService.sensitiveData()"
           [sensitiveKeys]="variablesService.sensitiveKeys()"
+          [pendingKeys]="variablesService.pendingKeys()"
           [saving]="variablesService.saving()"
           (save)="onSaveSensitive($event)"
         />

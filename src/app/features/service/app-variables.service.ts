@@ -18,6 +18,7 @@ export class AppVariablesService {
   readonly error = this.errorData.asReadonly();
   readonly hasVariables = computed(() => !!this.combinedData());
   readonly sensitiveKeys = computed(() => this.combinedData()?.sensitiveKeys ?? []);
+  readonly pendingKeys = computed(() => this.combinedData()?.pendingKeys ?? []);
 
   readonly plainData = computed(() => {
     const vars = this.combinedData();

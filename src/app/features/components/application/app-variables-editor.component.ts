@@ -26,6 +26,8 @@ interface VarRow {
   originalValue: string;
   isNew: boolean;
   isSensitive: boolean;
+  /** Declared but never delivered — no value to mask, only a name to fill in. */
+  isPending: boolean;
   editingPlain: boolean;
   newPlainValue: string;
   editingSecret: boolean;
@@ -178,8 +180,13 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                             </button>
                           </div>
                         } @else {
-                          <span class="font-mono text-xs text-gray-400 dark:text-gray-500 select-none">
-                            {{ isDirtyRow(row) ? '(updated)' : '****' }}
+                          <span
+                            class="font-mono text-xs select-none"
+                            [class]="row.isPending && !isDirtyRow(row)
+                              ? 'italic text-amber-600 dark:text-amber-400'
+                              : 'text-gray-400 dark:text-gray-500'"
+                          >
+                            {{ isDirtyRow(row) ? '(updated)' : (row.isPending ? 'awaiting a value' : '****') }}
                           </span>
                         }
                       } @else if (row.editingPlain) {
@@ -374,6 +381,7 @@ export class AppVariablesEditorComponent implements OnChanges {
   @Input() title = 'Variables';
   @Input() data: Record<string, string> = {};
   @Input() sensitiveKeys: string[] = [];
+  @Input() pendingKeys: string[] = [];
   @Input() saving = false;
 
   @Output() save = new EventEmitter<VariablesSavePayload>();
@@ -402,11 +410,11 @@ export class AppVariablesEditorComponent implements OnChanges {
   } | null>(null);
 
   get isSensitiveSection(): boolean {
-    return this.sensitiveKeys.length > 0;
+    return this.sensitiveKeys.length > 0 || this.pendingKeys.length > 0;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] || changes['sensitiveKeys']) {
+    if (changes['data'] || changes['sensitiveKeys'] || changes['pendingKeys']) {
       this.rebuildRows();
       if (this.jsonMode()) {
         this.jsonText = this.buildJsonText();
@@ -418,19 +426,34 @@ export class AppVariablesEditorComponent implements OnChanges {
 
   private rebuildRows(): void {
     const sensitiveSet = new Set(this.sensitiveKeys);
-    this.rows.set(
-      Object.entries(this.data).map(([key, value]) => ({
-        key,
-        value: sensitiveSet.has(key) ? '****' : value,
-        originalValue: sensitiveSet.has(key) ? '****' : value,
-        isNew: false,
-        isSensitive: sensitiveSet.has(key),
-        editingPlain: false,
-        newPlainValue: '',
-        editingSecret: false,
-        newSecretValue: '',
-      }))
-    );
+    const configured = Object.entries(this.data).map(([key, value]) => ({
+      key,
+      value: sensitiveSet.has(key) ? '****' : value,
+      originalValue: sensitiveSet.has(key) ? '****' : value,
+      isNew: false,
+      isSensitive: sensitiveSet.has(key),
+      isPending: false,
+      editingPlain: false,
+      newPlainValue: '',
+      editingSecret: false,
+      newSecretValue: '',
+    }));
+    // A pending key has no entry in `data` at all — same `****` sentinel as a
+    // configured secret, so an untouched row is skipped on save exactly like
+    // one (see isDirtyRow/onSave); only the display text tells them apart.
+    const pending = this.pendingKeys.map((key) => ({
+      key,
+      value: '****',
+      originalValue: '****',
+      isNew: false,
+      isSensitive: true,
+      isPending: true,
+      editingPlain: false,
+      newPlainValue: '',
+      editingSecret: false,
+      newSecretValue: '',
+    }));
+    this.rows.set([...configured, ...pending]);
     this.deletedKeys.set(new Set());
   }
 
@@ -638,6 +661,7 @@ export class AppVariablesEditorComponent implements OnChanges {
         originalValue: '',
         isNew: true,
         isSensitive: false,
+        isPending: false,
         editingPlain: false,
         newPlainValue: '',
         editingSecret: false,
