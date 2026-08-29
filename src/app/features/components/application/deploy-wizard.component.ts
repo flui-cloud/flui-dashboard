@@ -39,6 +39,7 @@ import {
   lucideStore,
   lucideDatabase,
   lucideSlidersHorizontal,
+  lucideCopy,
 } from '@ng-icons/lucide';
 import { RepositoryService, ConnectedRepository, RepositoryFluiManifest, RepositoryManifestEntry } from '../../service/repository.service';
 import { ClusterService } from '../../service/cluster.service';
@@ -54,6 +55,8 @@ import { TemplateResponseDto } from '../../../core/api/model/templateResponseDto
 import { DockerImagePickerComponent } from './docker-image-picker.component';
 import { EnvSuggestionsPanelComponent } from './env-suggestions-panel.component';
 import { PublicRepoPickerComponent } from './public-repo-picker.component';
+import { ToastService } from '../../../shared/services/toast.service';
+import { PlatformVersionService } from '../../service/platform-version.service';
 import { CatalogOverviewStepComponent } from './deploy-wizard-catalog-steps/catalog-overview-step.component';
 import { CatalogInputsStepComponent } from './deploy-wizard-catalog-steps/catalog-inputs-step.component';
 import { CatalogConfigStepComponent } from './deploy-wizard-catalog-steps/catalog-config-step.component';
@@ -135,6 +138,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
       lucideStore,
       lucideDatabase,
       lucideSlidersHorizontal,
+      lucideCopy,
     }),
   ],
   template: `
@@ -678,20 +682,39 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                   <div class="p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 space-y-3">
                     <div class="flex items-start gap-3">
                       <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                      <div class="space-y-2">
+                      <div class="space-y-3">
                         <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">No flui.yaml found</p>
                         <p class="text-xs text-amber-700 dark:text-amber-300">
                           Flui deploys repositories from a <span class="font-mono">flui.yaml</span> manifest, and branch <span class="font-mono">{{ selectedBranch() }}</span> doesn't have one — neither at the repository root nor in a subdirectory (monorepo).
                         </p>
-                        <p class="text-xs text-amber-700 dark:text-amber-300">To make this repository deployable, scaffold the deploy files with the Flui CLI:</p>
-                        <ol class="text-xs text-amber-800 dark:text-amber-200 list-decimal list-inside space-y-1">
-                          <li>In your project directory run <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">flui app init &lt;framework&gt;</code> — it adds a <span class="font-mono">flui.yaml</span> and a production-ready Dockerfile (<code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">flui app init --list</code> shows the supported frameworks). In a monorepo, run it once per app with <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">--target ./&lt;dir&gt;</code>.</li>
-                          <li>Review the generated <span class="font-mono">flui.yaml</span> (app name, port, healthcheck, env).</li>
-                          <li>Commit, push to <span class="font-mono">{{ selectedBranch() }}</span>, then come back here and retry.</li>
-                        </ol>
+
+                        <div class="space-y-1.5">
+                          <p class="text-xs font-semibold text-amber-900 dark:text-amber-100">Let your coding agent write it</p>
+                          <p class="text-xs text-amber-700 dark:text-amber-300">
+                            Nothing to install and nothing to log into. Paste this into the agent in your editor:
+                          </p>
+                          <pre class="text-[11px] leading-relaxed font-mono whitespace-pre-wrap p-2.5 rounded bg-amber-100/70 dark:bg-amber-900/30 text-amber-900 dark:text-amber-200">{{ manifestAgentPrompt() }}</pre>
+                          <button type="button" (click)="copyManifestPrompt()"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-amber-300 dark:border-amber-700 text-[11px] font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 transition-colors">
+                            <ng-icon [name]="manifestPromptCopied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
+                            {{ manifestPromptCopied() ? 'Copied' : 'Copy prompt' }}
+                          </button>
+                        </div>
+
                         <p class="text-xs text-amber-700 dark:text-amber-300">
-                          Full guide:
-                          <a href="https://docs.flui.cloud/cli/applications/#project-setup" target="_blank" rel="noopener" class="underline font-medium">docs.flui.cloud — flui app init</a>
+                          <span class="font-semibold text-amber-900 dark:text-amber-100">Or scaffold it with the CLI.</span>
+                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">flui app init &lt;framework&gt;</code> adds a <span class="font-mono">flui.yaml</span> and a production-ready Dockerfile —
+                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">--list</code> shows the frameworks, and in a monorepo
+                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">--target ./&lt;dir&gt;</code> runs it once per app. It needs the CLI signed in: run <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">flui auth login</code> first.
+                        </p>
+
+                        <p class="text-xs text-amber-700 dark:text-amber-300">
+                          <span class="font-semibold text-amber-900 dark:text-amber-100">Or write it yourself</span> — see the
+                          <a href="https://docs.flui.cloud/cli/deploy/" target="_blank" rel="noopener" class="underline font-medium">manifest reference</a>.
+                        </p>
+
+                        <p class="text-xs text-amber-700 dark:text-amber-300">
+                          Then commit, push to <span class="font-mono">{{ selectedBranch() }}</span>, and retry here.
                         </p>
                       </div>
                     </div>
@@ -700,7 +723,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors">
                         <ng-icon name="lucideLoader" class="h-3.5 w-3.5" /> Retry
                       </button>
-                      <a href="https://docs.flui.cloud/cli/applications/#project-setup" target="_blank" rel="noopener"
+                      <a href="https://docs.flui.cloud/cli/deploy/" target="_blank" rel="noopener"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-accent transition-colors">
                         Read the docs
                       </a>
@@ -2043,6 +2066,54 @@ export class DeployWizardComponent implements OnInit {
   private readonly clustersApi = inject(InfrastructureClustersService);
   catalog = inject(CatalogService);
   protected authzInstall = inject(AuthzInstallService);
+  private readonly toast = inject(ToastService);
+  private readonly platformVersion = inject(PlatformVersionService);
+
+  /**
+   * What a coding agent needs in order to write the manifest: where the
+   * contract lives, and how to check what it produced.
+   *
+   * The schema is named by its URL rather than by a CLI command on purpose —
+   * whoever is reading this screen is in a browser, may have no Flui CLI at
+   * all, and `flui app init` would send them to a second sign-in before they
+   * could write a single line.
+   *
+   * The URL is pinned to the version THIS installation validates with, taken
+   * from `GET /version`. The floating one resolves to whatever the registry has
+   * today, which is not the same thing: npm has run four minor versions ahead
+   * of the compiled-in package before now, and an author following the unpinned
+   * link would have been handed a contract this cluster does not agree to. On
+   * an installation older than that field, the prompt names the schema without
+   * a version rather than inventing one.
+   */
+  protected readonly manifestAgentPrompt = computed(() => {
+    const spec = this.platformVersion.version()?.manifestSpec;
+    const schemaUrl =
+      spec?.applicationSchemaUrl ??
+      'https://unpkg.com/@flui-cloud/spec/schemas/application.v1beta1.json';
+    return [
+      'Write a flui.yaml for this repository, following the schema at',
+      schemaUrl,
+      '- one kind: Application per deployable app. Then check it with:',
+      'flui deploy --validate-only --cluster <cluster>',
+      'which checks the schema and also asks this installation whether it would',
+      'actually land — cluster, repository, build credentials, room, and what it',
+      'would do. Without the Flui CLI the schema alone can be checked with:',
+      'npx -p @flui-cloud/spec flui-spec validate flui.yaml',
+    ].join('\n');
+  });
+
+  protected manifestPromptCopied = signal(false);
+
+  async copyManifestPrompt(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(this.manifestAgentPrompt());
+      this.manifestPromptCopied.set(true);
+      setTimeout(() => this.manifestPromptCopied.set(false), 1500);
+    } catch {
+      this.toast.showError('Could not copy to clipboard');
+    }
+  }
 
   // Flow routing (Flow B/C) — mirrored from state service for easier template access
   readonly flowSubtype = this.state.flowSubtype;
@@ -2513,6 +2584,9 @@ export class DeployWizardComponent implements OnInit {
   readonly currentStep = computed(() => this.steps()[this.currentStepIndex()]);
 
   ngOnInit(): void {
+    // Idempotent, and the prompt below is wrong without it: the schema URL is
+    // pinned to the version this installation reports.
+    void this.platformVersion.load();
     void (async () => {
       // Background loads — none of these block the initial render
       this.loadClusters();

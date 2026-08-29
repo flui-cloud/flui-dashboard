@@ -11,11 +11,19 @@ export interface PlatformVersion {
     fluiWeb: string;
     fluiAuthz: string;
   };
+  /** Absent on an installation older than the field. */
+  manifestSpec?: {
+    package: string;
+    version: string;
+    applicationSchemaUrl: string;
+  };
 }
 
 /**
  * Fetches the running platform version from the core `GET /version` endpoint.
- * Loaded once and cached; consumed by the sidebar version badge.
+ * Loaded once and cached; consumed by the sidebar version badge and by the
+ * deploy wizard, which needs the manifest contract THIS installation enforces
+ * rather than the newest one published.
  */
 @Injectable({ providedIn: 'root' })
 export class PlatformVersionService {
