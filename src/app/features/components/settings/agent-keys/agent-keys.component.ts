@@ -118,7 +118,10 @@ import { AgentSkill, AgentSkillService } from './agent-skill.service';
               [catalogue]="catalogue()"
               [revoking]="revoking()"
               [currentSkillVersion]="skill()?.version ?? null"
+              [updatingApplications]="updatingApplications()"
+              [updateApplicationsError]="updateApplicationsError()"
               (revoke)="revokeKey($event)"
+              (updateApplications)="updateApplications($event)"
             />
           </div>
         </div>
@@ -141,6 +144,8 @@ export class AgentKeysComponent implements OnInit {
   protected readonly minting = signal(false);
   protected readonly mintError = signal<string | null>(null);
   protected readonly revoking = signal<string | null>(null);
+  protected readonly updatingApplications = signal<string | null>(null);
+  protected readonly updateApplicationsError = signal<string | null>(null);
   protected readonly skill = signal<AgentSkill | null>(null);
   protected readonly skillError = signal<string | null>(null);
 
@@ -218,6 +223,7 @@ export class AgentKeysComponent implements OnInit {
       name: req.name,
       groups: req.groups as CreateApiKeyDto.GroupsEnum[],
       ...(req.expiresAt ? { expiresAt: req.expiresAt } : {}),
+      ...(req.applicationIds ? { applicationIds: req.applicationIds } : {}),
     };
     this.api.apiKeysControllerCreateApiKey(body).subscribe({
       next: (result) => {
@@ -249,6 +255,30 @@ export class AgentKeysComponent implements OnInit {
         this.loadError.set(messageOf(err, `${key.name} could not be revoked.`));
       },
     });
+  }
+
+  protected updateApplications(event: {
+    key: ApiKeyResponseDto;
+    applicationIds: string[];
+  }): void {
+    this.updatingApplications.set(event.key.id);
+    this.updateApplicationsError.set(null);
+    this.api
+      .apiKeysControllerUpdateApiKeyApplications(event.key.id, {
+        applicationIds: event.applicationIds,
+      })
+      .subscribe({
+        next: () => {
+          this.updatingApplications.set(null);
+          this.loadKeys();
+        },
+        error: (err: unknown) => {
+          this.updatingApplications.set(null);
+          this.updateApplicationsError.set(
+            messageOf(err, `${event.key.name}'s applications could not be updated.`),
+          );
+        },
+      });
   }
 }
 

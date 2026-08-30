@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { ManifestSpecDto } from './manifestSpecDto';
 import { ComponentImageTagsDto } from './componentImageTagsDto';
 
 
@@ -23,5 +24,9 @@ export interface VersionResponseDto {
      * Pinned component image tags for this release. Env overrides (FLUI_*_IMAGE_TAG) win when set, so the values reflect what is actually deployed.
      */
     components: ComponentImageTagsDto;
+    /**
+     * The flui.yaml contract this build validates against, pinned to the version compiled in.
+     */
+    manifestSpec: ManifestSpecDto;
 }
 

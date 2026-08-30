@@ -4,6 +4,8 @@ api.base.service.ts
 api.module.ts
 api/accessManagement.service.ts
 api/adoption.service.ts
+api/agentActionCycle.service.ts
+api/agentActivity.service.ts
 api/alerts.service.ts
 api/api.ts
 api/appBuilds.service.ts
@@ -53,6 +55,7 @@ api/inference.service.ts
 api/infrastructureClusters.service.ts
 api/infrastructureOperations.service.ts
 api/infrastructurePlatformComponents.service.ts
+api/infrastructureScaling.service.ts
 api/infrastructureServers.service.ts
 api/kafkaConsole.service.ts
 api/kvConsole.service.ts
@@ -63,6 +66,7 @@ api/messagingConsole.service.ts
 api/objectStoreConsole.service.ts
 api/objectStoreShare.service.ts
 api/observability.service.ts
+api/operatingContext.service.ts
 api/projects.service.ts
 api/providerConnections.service.ts
 api/providerFirewalls.service.ts
@@ -87,6 +91,12 @@ configuration.ts
 encoder.ts
 git_push.sh
 index.ts
+model/accessDeltaAppDto.ts
+model/accessDeltaDto.ts
+model/accessDeltaPrincipalDto.ts
+model/accessDeltaSectionDto.ts
+model/accessPreviewBindingDto.ts
+model/accessPreviewDto.ts
 model/acmeChallengeInfoDto.ts
 model/acmeOrderInfoDto.ts
 model/addFluiTagDto.ts
@@ -97,8 +107,18 @@ model/addWorkerResponseDto.ts
 model/adoptionTokenResponseDto.ts
 model/advisorChoiceOptionDto.ts
 model/advisorUserChoiceDto.ts
+model/agentActivityEntryDto.ts
+model/agentActivityOperationDto.ts
+model/agentActivityPageDto.ts
+model/agentCheckInDto.ts
+model/agentCheckInResultDto.ts
+model/agentIdentityActivityDto.ts
+model/agentIdentityActivityPageDto.ts
+model/agentIdentityDto.ts
+model/agentIdentityResultDto.ts
 model/agentMessageDto.ts
 model/agentRequestDto.ts
+model/agentSkillDto.ts
 model/alertEventDto.ts
 model/alertEventsResponseDto.ts
 model/alertmanagerAlertDto.ts
@@ -152,6 +172,7 @@ model/autoscaleDefaultsDto.ts
 model/autoscaleEffectiveThresholdsDto.ts
 model/autoscaleMetricsDto.ts
 model/autoscaleStatusDto.ts
+model/availabilityOutlookDto.ts
 model/availableRepositoryDto.ts
 model/availableVersionDto.ts
 model/availableVersionsResponseDto.ts
@@ -231,6 +252,9 @@ model/clusterMetricsResponseDto.ts
 model/clusterNodeDto.ts
 model/clusterPowerOperationResponseDto.ts
 model/clusterResponseDto.ts
+model/clusterScalingDecisionDto.ts
+model/clusterScalingGroupRefDto.ts
+model/clusterScalingRowDto.ts
 model/clusterStorageNfsDto.ts
 model/clusterStoragePvcSummaryDto.ts
 model/clusterStorageStatusDto.ts
@@ -253,6 +277,7 @@ model/connectClientDto.ts
 model/connectMailProviderDto.ts
 model/connectPatDto.ts
 model/connectPatResponseDto.ts
+model/consideredCandidateDto.ts
 model/containerDetailDto.ts
 model/containerResourceSpecDto.ts
 model/containerResourcesDto.ts
@@ -262,6 +287,7 @@ model/controlClusterControllerCreateLokiDatasource201ResponseDatasource.ts
 model/controlClusterControllerCreateLokiDatasource400Response.ts
 model/controlClusterControllerTestGrafanaConnection200Response.ts
 model/cpuMetricsDto.ts
+model/createAgentIdentityDto.ts
 model/createApiKeyDto.ts
 model/createApiKeyResultDto.ts
 model/createApiTokenDto.ts
@@ -291,6 +317,7 @@ model/createVNetRouteDto.ts
 model/createVNetSubnetDto.ts
 model/createdIdentityUserDto.ts
 model/dbPitrRestoreDto.ts
+model/decideProposalDto.ts
 model/deleteApplicationResponseDto.ts
 model/deleteServerResponseDto.ts
 model/deliveryEventDto.ts
@@ -317,6 +344,8 @@ model/dnsZoneResponseDto.ts
 model/dockerHubSearchResultDto.ts
 model/dockerHubTagDto.ts
 model/dockerfileAnalysisDto.ts
+model/drainBlockerDto.ts
+model/drainCheckDto.ts
 model/enableProviderDto.ts
 model/ensureByosVNetDto.ts
 model/envVarCandidateDto.ts
@@ -333,6 +362,8 @@ model/firewallReconciliationDetail.ts
 model/firewallResponseDto.ts
 model/firewallRuleDto.ts
 model/firewallRuleResponseDto.ts
+model/fleetHistoryDto.ts
+model/fleetHistoryPointDto.ts
 model/fulltextAssistDto.ts
 model/fulltextRawDto.ts
 model/fulltextSearchDto.ts
@@ -380,6 +411,7 @@ model/issuedJoinTokenResponseDto.ts
 model/kafkaAssistDto.ts
 model/kafkaRunDto.ts
 model/labelDto.ts
+model/ladderRungDto.ts
 model/locationPriceDto.ts
 model/logEntryDto.ts
 model/logVolumeBucketDto.ts
@@ -411,6 +443,8 @@ model/mailTestResultDto.ts
 model/mailVolumePointDto.ts
 model/mailWebhookResultDto.ts
 model/mailWindowDto.ts
+model/manifestCheckDto.ts
+model/manifestSpecDto.ts
 model/memoryMetricsDto.ts
 model/messagingCreateStreamDto.ts
 model/messagingPeekDto.ts
@@ -422,11 +456,16 @@ model/networkMetricsDto.ts
 model/networkingConfigDto.ts
 model/nodeBillingSegmentDto.ts
 model/nodeMonthToDateDto.ts
+model/nodeRequirementResponseDto.ts
 model/nodeSizeLocationDto.ts
 model/nodeSizeOptionDto.ts
 model/nodeSizePriceDto.ts
 model/observabilityEndpointsDto.ts
 model/oidcReadinessDto.ts
+model/openAlarmDto.ts
+model/orderedShapeDto.ts
+model/orphanedClaimDto.ts
+model/orphanedClaimsDto.ts
 model/osCreateBucketDto.ts
 model/osDeleteDto.ts
 model/osListObjectsDto.ts
@@ -435,6 +474,8 @@ model/osSetBucketPolicyDto.ts
 model/osShareDto.ts
 model/packageCacheEntryDto.ts
 model/patValidationResultDto.ts
+model/pendingPodDto.ts
+model/pendingPodRequestDto.ts
 model/permissionGroupDto.ts
 model/pingResponseDto.ts
 model/platformComponentConditionDto.ts
@@ -460,6 +501,7 @@ model/providerFirewallResponseDto.ts
 model/providerPricingDto.ts
 model/providerRefreshTokenDto.ts
 model/providerRegionDto.ts
+model/providerScalingCapabilityDto.ts
 model/providerSchemaDto.ts
 model/providerSchemaFieldDto.ts
 model/providerUpdateFirewallRulesDto.ts
@@ -489,6 +531,9 @@ model/registerByosNodeDto.ts
 model/registerCADto.ts
 model/registerCAResponseDto.ts
 model/registerDnsReplicaDto.ts
+model/removalPreviewApplicationDto.ts
+model/removalPreviewDto.ts
+model/removalPreviewVolumeDto.ts
 model/removeWorkerResponseDto.ts
 model/replicaCpuMetricsDto.ts
 model/replicaInfoDto.ts
@@ -533,7 +578,13 @@ model/sandboxSessionDto.ts
 model/sandboxTenancyDto.ts
 model/saveGhcrPatDto.ts
 model/scaleNodeDto.ts
+model/scalingActuationDto.ts
+model/scalingBoundsResponseDto.ts
 model/scalingConfigDto.ts
+model/scalingDecisionResponseDto.ts
+model/scalingGroupResponseDto.ts
+model/scalingLimitsResponseDto.ts
+model/scalingPreviewDto.ts
 model/scheduledJobDto.ts
 model/scheduledJobRunDto.ts
 model/scheduledJobRunLogsDto.ts
@@ -556,11 +607,13 @@ model/serverResponseDto.ts
 model/serverTypePricingDto.ts
 model/setGatewayPolicyDto.ts
 model/setPlatformConfigDto.ts
+model/shapeCatalogueDto.ts
 model/showcaseItemDto.ts
 model/singleAppMetricsHistoryResponseDto.ts
 model/singleAppMetricsResponseDto.ts
 model/singleAppTrafficHistoryResponseDto.ts
 model/singleAppTrafficResponseDto.ts
+model/standingOrderResponseDto.ts
 model/subnetListResponseDto.ts
 model/subnetResponseDto.ts
 model/supportedRegionDto.ts
@@ -594,6 +647,8 @@ model/triggerBuildDto.ts
 model/triggerBuildResponseDto.ts
 model/triggerScheduledJobResponseDto.ts
 model/triggerStandaloneBuildDto.ts
+model/unschedulablePodsDto.ts
+model/updateApiKeyApplicationsDto.ts
 model/updateAppEndpointDto.ts
 model/updateApplicationDto.ts
 model/updateClusterAutoscaleDto.ts

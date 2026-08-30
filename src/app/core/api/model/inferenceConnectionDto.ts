@@ -15,6 +15,10 @@ export interface InferenceConnectionDto {
     baseUrl: string;
     models: Array<string>;
     isDefault: boolean;
+    /**
+     * Owner of a personal connection; null when the connection is the installation\'s
+     */
+    ownerUserId?: string | null;
     createdAt: string;
 }
 

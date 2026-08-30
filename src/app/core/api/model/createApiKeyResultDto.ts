@@ -16,6 +16,10 @@ export interface CreateApiKeyResultDto {
     createdAt: string;
     expiresAt?: string;
     /**
+     * Last time this key authenticated a request, recorded at most once a minute. Null means not seen since this column existed, not never used.
+     */
+    lastUsedAt?: string;
+    /**
      * Granted scopes. Null means unscoped — the issuer\'s full weight.
      */
     scopes?: Array<string>;
@@ -27,6 +31,18 @@ export interface CreateApiKeyResultDto {
      * Scopes no listed group accounts for. Normally empty; non-empty means the key was assembled scope by scope and the groups alone do not describe it.
      */
     ungroupedScopes?: Array<string>;
+    /**
+     * True for the key that authenticated this request. Revoking that one ends the caller’s own session.
+     */
+    current: boolean;
+    /**
+     * The agent skill version this key’s holder last declared at check-in. Null means it has never checked in, which is not the same as out of date.
+     */
+    skillVersion?: string;
+    /**
+     * Application ids this key may act on. Null means every application its holder can already reach.
+     */
+    applicationIds?: Array<string>;
     /**
      * Plaintext API key — shown only once at creation time.
      */
@@ -43,7 +59,12 @@ export namespace CreateApiKeyResultDto {
         MigrationsLook: 'migrations:look',
         MigrationsChange: 'migrations:change',
         MigrationsDestroy: 'migrations:destroy',
-        MailLook: 'mail:look'
+        MailLook: 'mail:look',
+        AccessLook: 'access:look',
+        AccessChange: 'access:change',
+        InfrastructureLook: 'infrastructure:look',
+        InfrastructureChange: 'infrastructure:change',
+        InfrastructureDestroy: 'infrastructure:destroy'
     } as const;
     export type GroupsEnum = typeof GroupsEnum[keyof typeof GroupsEnum];
 }

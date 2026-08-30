@@ -32,9 +32,17 @@ export interface ApiKeyResponseDto {
      */
     ungroupedScopes?: Array<string>;
     /**
-     * True for the key that authenticated this request. Revoking that one ends the caller's own session.
+     * True for the key that authenticated this request. Revoking that one ends the caller’s own session.
      */
     current: boolean;
+    /**
+     * The agent skill version this key’s holder last declared at check-in. Null means it has never checked in, which is not the same as out of date.
+     */
+    skillVersion?: string;
+    /**
+     * Application ids this key may act on. Null means every application its holder can already reach.
+     */
+    applicationIds?: Array<string>;
 }
 export namespace ApiKeyResponseDto {
     export const GroupsEnum = {
@@ -47,7 +55,12 @@ export namespace ApiKeyResponseDto {
         MigrationsLook: 'migrations:look',
         MigrationsChange: 'migrations:change',
         MigrationsDestroy: 'migrations:destroy',
-        MailLook: 'mail:look'
+        MailLook: 'mail:look',
+        AccessLook: 'access:look',
+        AccessChange: 'access:change',
+        InfrastructureLook: 'infrastructure:look',
+        InfrastructureChange: 'infrastructure:change',
+        InfrastructureDestroy: 'infrastructure:destroy'
     } as const;
     export type GroupsEnum = typeof GroupsEnum[keyof typeof GroupsEnum];
 }

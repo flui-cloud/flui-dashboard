@@ -27,6 +27,10 @@ export interface CreateApiKeyDto {
      * Issue a key with no scope ceiling, carrying the full weight of the issuer. Mutually exclusive with `scopes` and `groups`; one of the three is required, because an empty request used to mean this one silently.
      */
     unscoped?: boolean;
+    /**
+     * Application ids this key may act on. Omit for a key that may act on every application its issuer can already reach — the default, unchanged from before this field existed. Not validated against ownership at issue time: an id the issuer does not own simply opens nothing, the same as naming it by hand would.
+     */
+    applicationIds?: Array<string>;
 }
 export namespace CreateApiKeyDto {
     export const GroupsEnum = {
@@ -39,7 +43,12 @@ export namespace CreateApiKeyDto {
         MigrationsLook: 'migrations:look',
         MigrationsChange: 'migrations:change',
         MigrationsDestroy: 'migrations:destroy',
-        MailLook: 'mail:look'
+        MailLook: 'mail:look',
+        AccessLook: 'access:look',
+        AccessChange: 'access:change',
+        InfrastructureLook: 'infrastructure:look',
+        InfrastructureChange: 'infrastructure:change',
+        InfrastructureDestroy: 'infrastructure:destroy'
     } as const;
     export type GroupsEnum = typeof GroupsEnum[keyof typeof GroupsEnum];
     export const ScopesEnum = {
@@ -49,6 +58,11 @@ export namespace CreateApiKeyDto {
         McpBackupRead: 'mcp:backup:read',
         McpMigrationRead: 'mcp:migration:read',
         McpMailRead: 'mcp:mail:read',
+        McpIamRead: 'mcp:iam:read',
+        McpIamWrite: 'mcp:iam:write',
+        McpInfraRead: 'mcp:infra:read',
+        McpInfraWrite: 'mcp:infra:write',
+        McpInfraDestructive: 'mcp:infra:destructive',
         McpSpecValidate: 'mcp:spec:validate',
         McpAppWrite: 'mcp:app:write',
         McpBackupWrite: 'mcp:backup:write',

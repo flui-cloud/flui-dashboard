@@ -32,6 +32,10 @@ export interface BuildResourcesResponseDto {
      * Whether the cluster has autoscaling enabled
      */
     autoscalingEnabled: boolean;
+    /**
+     * Plain sentence for the status above, including whether a node will actually appear. null when the build job fits.
+     */
+    message?: string | null;
 }
 export namespace BuildResourcesResponseDto {
     export const StatusEnum = {

@@ -147,7 +147,7 @@ export class HealthService extends BaseService {
 
     /**
      * Platform version
-     * Returns the platform release version this API build belongs to, its pinned bootstrap ref, and the component image tags. Env overrides (FLUI_API_IMAGE_TAG / FLUI_WEB_IMAGE_TAG / FLUI_AUTHZ_IMAGE_TAG) win over the compiled-in pins so the values reflect what is actually deployed. Used by the dashboard version badge and the upgrade-available check.
+     * Returns the platform release version this API build belongs to, its pinned bootstrap ref, the component image tags, and the flui.yaml manifest contract this build validates against — pinned to the exact schema, so an author or an agent fetches what this installation enforces rather than the newest one published. Env overrides (FLUI_API_IMAGE_TAG / FLUI_WEB_IMAGE_TAG / FLUI_AUTHZ_IMAGE_TAG) win over the compiled-in pins so the values reflect what is actually deployed. Used by the dashboard version badge and the upgrade-available check.
      * @endpoint get /api/v1/version
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.

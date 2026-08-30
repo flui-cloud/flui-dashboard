@@ -63,9 +63,13 @@ export interface ApplicationResponseDto {
      */
     url?: string;
     /**
-     * Reconciliation state of the public endpoint that backs `url` — whether the DNS record, the Ingress and the certificate were actually applied. \"IN_SYNC\" is the only state in which `url` is populated; in any other state the hostname exists but nothing serves it yet, so treat the app as not publicly reachable and show this instead of a link. Undefined for internal apps and for apps with no endpoint.
+     * Reconciliation state of the public endpoint that backs `url` — whether the DNS record, the Ingress and the certificate were actually applied. \"IN_SYNC\" is a precondition for `url` being populated, not a guarantee: a certificate still being issued also withholds it (see `endpointCertificateStatus`). In any other state the hostname exists but nothing serves it yet, so treat the app as not publicly reachable and show this instead of a link. Undefined for internal apps and for apps with no endpoint.
      */
     endpointStatus?: ApplicationResponseDto.EndpointStatusEnum;
+    /**
+     * State of the TLS certificate that fronts `url`. While it is \"issuing\" or \"pending\" the hostname resolves but HTTPS is not yet answerable, so `url` is withheld and this says why — the app is minutes away, not broken. Undefined for endpoints that never reported one.
+     */
+    endpointCertificateStatus?: ApplicationResponseDto.EndpointCertificateStatusEnum;
     /**
      * Why the public endpoint is not serving, when `endpointStatus` is ERROR — e.g. a missing DNS-01 ClusterIssuer or an unreachable DNS provider. Safe to show to the user verbatim; it names the misconfiguration to fix.
      */
@@ -203,6 +207,14 @@ export namespace ApplicationResponseDto {
         Error: 'ERROR'
     } as const;
     export type EndpointStatusEnum = typeof EndpointStatusEnum[keyof typeof EndpointStatusEnum];
+    export const EndpointCertificateStatusEnum = {
+        Pending: 'pending',
+        Issuing: 'issuing',
+        Valid: 'valid',
+        Expired: 'expired',
+        Failed: 'failed'
+    } as const;
+    export type EndpointCertificateStatusEnum = typeof EndpointCertificateStatusEnum[keyof typeof EndpointCertificateStatusEnum];
     export const WorkloadKindEnum = {
         Deployment: 'Deployment',
         StatefulSet: 'StatefulSet',

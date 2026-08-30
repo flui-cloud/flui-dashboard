@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { AutoscaleEffectiveThresholdsDto } from './autoscaleEffectiveThresholdsDto';
+import { UnschedulablePodsDto } from './unschedulablePodsDto';
 import { AutoscaleMetricsDto } from './autoscaleMetricsDto';
 
 
@@ -18,8 +19,13 @@ export interface AutoscaleStatusDto {
     maxNodes?: number;
     currentNodes: number;
     metrics: AutoscaleMetricsDto;
+    unschedulable?: UnschedulablePodsDto | null;
     warning: AutoscaleStatusDto.WarningEnum;
     warningMessage: string;
+    actuation: AutoscaleStatusDto.ActuationEnum;
+    actuationMessage: string;
+    nodeProvisioning: boolean;
+    driven: boolean;
     effectiveThresholds: AutoscaleEffectiveThresholdsDto;
 }
 export namespace AutoscaleStatusDto {
@@ -29,6 +35,13 @@ export namespace AutoscaleStatusDto {
         DangerNeedsScale: 'DANGER_NEEDS_SCALE'
     } as const;
     export type WarningEnum = typeof WarningEnum[keyof typeof WarningEnum];
+    export const ActuationEnum = {
+        Automatic: 'automatic',
+        NotDriven: 'not_driven',
+        AlertOnlySized: 'alert_only_sized',
+        AlertOnlyUnsized: 'alert_only_unsized'
+    } as const;
+    export type ActuationEnum = typeof ActuationEnum[keyof typeof ActuationEnum];
 }
 
 

@@ -40,6 +40,14 @@ export interface ResourceAvailabilityResponseDto {
      */
     used: ResourceAmountStringDto;
     autoscalingEnabled: boolean;
+    /**
+     * What happens on this provider when the cluster runs out of room. Derived from provider capability and from whether anything is registered to add nodes on its own.
+     */
+    actuation: ResourceAvailabilityResponseDto.ActuationEnum;
+    /**
+     * Plain sentence for the reason above, including whether a node will actually appear. null when the request fits.
+     */
+    reasonMessage?: string | null;
 }
 export namespace ResourceAvailabilityResponseDto {
     export const ReasonEnum = {
@@ -47,6 +55,13 @@ export namespace ResourceAvailabilityResponseDto {
         AutoscalingPending: 'autoscaling_pending'
     } as const;
     export type ReasonEnum = typeof ReasonEnum[keyof typeof ReasonEnum];
+    export const ActuationEnum = {
+        Automatic: 'automatic',
+        NotDriven: 'not_driven',
+        AlertOnlySized: 'alert_only_sized',
+        AlertOnlyUnsized: 'alert_only_unsized'
+    } as const;
+    export type ActuationEnum = typeof ActuationEnum[keyof typeof ActuationEnum];
 }
 
 

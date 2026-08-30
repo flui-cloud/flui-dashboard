@@ -11,7 +11,7 @@
 
 export interface UpsertVariablesDto { 
     /**
-     * Key-value pairs to store. Optional: the handler already ignores it when empty — a payload that only declares has nothing to write to the cluster — so requiring it made a declare-only or delete-only call answer 400 for a field it was about to throw away (decision 48).
+     * Key-value pairs to store. Optional: the handler already ignores it when empty — a payload that only declares has nothing to write to the cluster — so requiring it made a declare-only or delete-only call answer 400 for a field it was about to throw away.
      */
     data?: { [key: string]: string; };
     /**

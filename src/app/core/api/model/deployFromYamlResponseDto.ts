@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { ManifestCheckDto } from './manifestCheckDto';
 
 
 export interface DeployFromYamlResponseDto { 
@@ -24,5 +25,13 @@ export interface DeployFromYamlResponseDto {
      * The manifest actually applied, with the branch environment and the install-time overrides baked in. Returned on validateOnly requests — use it to preview or download what a deploy would produce.
      */
     effectiveYaml?: string;
+    /**
+     * What only this installation can say — target cluster, connected repository, build credentials, live capacity, what the deploy would do, how the app is reached. Returned on validateOnly requests. A schema-valid manifest can still fail every one of these.
+     */
+    checks?: Array<ManifestCheckDto>;
+    /**
+     * True when nothing in `checks` would stop a deploy. An unanswered check never blocks: not being able to look is not a refusal.
+     */
+    wouldDeploy?: boolean;
 }
 

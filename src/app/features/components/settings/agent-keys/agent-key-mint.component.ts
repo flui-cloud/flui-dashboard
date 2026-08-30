@@ -6,6 +6,7 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -26,11 +27,13 @@ import { AppConfigService } from '../../../../core/services/app-config.service';
 import { CreateApiKeyResultDto } from '../../../../core/api/model/createApiKeyResultDto';
 import { AgentSkill } from './agent-skill.service';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
+import { AgentKeyApplicationPickerComponent } from './agent-key-application-picker.component';
 
 export interface MintRequest {
   name: string;
   groups: string[];
   expiresAt?: string;
+  applicationIds?: string[];
 }
 
 // One entry per area the API publishes. A missing one is not a crash — the
@@ -62,6 +65,7 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
     HlmBadgeDirective,
     HlmInputDirective,
     HlmLabelDirective,
+    AgentKeyApplicationPickerComponent,
   ],
   providers: [
     provideIcons({
@@ -270,6 +274,33 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
           }
         </div>
 
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Which applications
+            </p>
+            <button
+              type="button"
+              data-testid="toggle-app-scope"
+              (click)="limitToApps.set(!limitToApps())"
+              class="text-xs font-medium text-primary underline underline-offset-2"
+            >
+              {{ limitToApps() ? 'Reach every application instead' : 'Limit to specific applications' }}
+            </button>
+          </div>
+          @if (limitToApps()) {
+            <app-agent-key-application-picker
+              #appPicker
+              (selectionChange)="pickedApps.set($event)"
+            />
+          } @else {
+            <p class="text-sm text-muted-foreground">
+              Every application you can already reach — the default. Narrow it above if this
+              agent is only meant to work on some of them.
+            </p>
+          }
+        </div>
+
         @if (error(); as e) {
           <div class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
             <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
@@ -321,6 +352,9 @@ export class AgentKeyMintComponent {
   protected readonly copied = signal(false);
   protected readonly skillOpen = signal(false);
   protected readonly skillCopied = signal(false);
+  protected readonly limitToApps = signal(false);
+  protected readonly pickedApps = signal<string[]>([]);
+  private readonly appPicker = viewChild<AgentKeyApplicationPickerComponent>('appPicker');
 
   protected readonly mcpEndpoint = computed(
     () => `${this.cfg.apiBaseUrl}/api/v1/mcp`,
@@ -371,6 +405,7 @@ export class AgentKeyMintComponent {
         days === null
           ? undefined
           : new Date(Date.now() + days * 86_400_000).toISOString(),
+      applicationIds: this.limitToApps() ? this.pickedApps() : undefined,
     });
   }
 
@@ -382,6 +417,9 @@ export class AgentKeyMintComponent {
     this.copied.set(false);
     this.skillOpen.set(false);
     this.skillCopied.set(false);
+    this.limitToApps.set(false);
+    this.pickedApps.set([]);
+    this.appPicker()?.reset();
   }
 
   protected masked(value: string): string {
