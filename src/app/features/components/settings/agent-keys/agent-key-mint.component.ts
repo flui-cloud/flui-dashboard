@@ -291,6 +291,7 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
           @if (limitToApps()) {
             <app-agent-key-application-picker
               #appPicker
+              [suggestDefault]="true"
               (selectionChange)="pickedApps.set($event)"
             />
           } @else {
