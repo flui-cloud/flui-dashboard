@@ -98,7 +98,7 @@ export const routes: Routes = [
       },
 
       {
-        path: 'settings/agents',
+        path: 'agents',
         children: agentsRoutes,
       },
       {

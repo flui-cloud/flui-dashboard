@@ -162,7 +162,7 @@ export const ALL_MANAGEMENT_ITEMS: SidebarNavItem[] = [
   },
   {
     label: 'Agents',
-    link: '/settings/agents',
+    link: '/agents',
     routerLinkActive: 'active',
     icon: 'lucideBot',
   },

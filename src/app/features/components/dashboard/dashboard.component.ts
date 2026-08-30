@@ -10,6 +10,7 @@ import { DashboardCertsComponent } from './dashboard-certs.component';
 import { DashboardActivityComponent } from './dashboard-activity.component';
 import { DashboardBackupsComponent } from './dashboard-backups.component';
 import { DashboardCredentialsBannerComponent } from './dashboard-credentials-banner.component';
+import { DashboardAgentStatusComponent } from './dashboard-agent-status.component';
 import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.component';
 
 @Component({
@@ -25,6 +26,7 @@ import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.compone
     DashboardActivityComponent,
     DashboardBackupsComponent,
     DashboardCredentialsBannerComponent,
+    DashboardAgentStatusComponent,
     SandboxGuideCardComponent,
   ],
   template: `
@@ -32,6 +34,9 @@ import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.compone
 
       <!-- Global Platform Pulse -->
       <app-dashboard-pulse />
+
+      <!-- Is an agent connected, and is one working right now — always visible, not tucked under Settings -->
+      <app-dashboard-agent-status />
 
       <!-- Credentials status banner (only shown when something needs attention) -->
       <app-dashboard-credentials-banner />
