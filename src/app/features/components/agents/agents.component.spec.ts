@@ -1,8 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AuthService as ApiAuthService } from '../../../core/api/api/auth.service';
 import { PermissionService } from '../../../core/services/permission.service';
+import { AgentSkillService } from '../settings/agent-keys/agent-skill.service';
 import {
   ActivityScope,
   AgentActivityEntry,
@@ -148,8 +151,14 @@ describe('the agents section', () => {
     await TestBed.configureTestingModule({
       imports: [AgentsComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: AgentCycleService, useValue: cycle },
         { provide: ApiAuthService, useValue: keys },
+        {
+          provide: AgentSkillService,
+          useValue: { skill: () => throwError(() => ({ status: 404 })) },
+        },
         {
           provide: PermissionService,
           useValue: {

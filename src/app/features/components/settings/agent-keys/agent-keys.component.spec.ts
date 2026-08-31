@@ -324,18 +324,29 @@ describe('the agent keys screen', () => {
       fixture.detectChanges();
     };
 
-    it('offers the skill beside the key, with the version it is', async () => {
+    const openSkillSection = () => {
+      (el('[data-testid="skill-section-toggle"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+    };
+
+    it('offers the skill beside the key, collapsed behind an explicit "not using MCP" toggle', async () => {
       await build(GUEST_GRANTS);
       mintOne();
 
+      // Collapsed by default: MCP's get_started already carries this, so it
+      // is not a second thing to do — the toggle label says so up front.
       expect(el('[data-testid="skill-handoff"]')).not.toBeNull();
-      expect(text('[data-testid="skill-version"]')).toBe('skill 1.0.0');
+      expect(el('[data-testid="skill-version"]')).toBeNull();
       expect(text('[data-testid="skill-handoff"]')).toContain('SKILL.md');
+
+      openSkillSection();
+      expect(text('[data-testid="skill-version"]')).toBe('skill 1.0.0');
     });
 
     it('lets the instructions be read before they are taken', async () => {
       await build(GUEST_GRANTS);
       mintOne();
+      openSkillSection();
 
       expect(el('[data-testid="skill-content"]')).toBeNull();
       (el('[data-testid="show-skill"]') as HTMLButtonElement).click();
@@ -348,6 +359,7 @@ describe('the agent keys screen', () => {
     it('shows no credential inside the document', async () => {
       await build(GUEST_GRANTS);
       mintOne();
+      openSkillSection();
       (el('[data-testid="show-skill"]') as HTMLButtonElement).click();
       fixture.detectChanges();
 

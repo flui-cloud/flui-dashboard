@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject,
   input,
   output,
   signal,
@@ -12,10 +11,6 @@ import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
-  lucideCopy,
-  lucideEye,
-  lucideEyeOff,
-  lucideBookOpen,
   lucideLoader,
   lucideLock,
   lucideTriangleAlert,
@@ -23,17 +18,19 @@ import {
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
 import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
-import { AppConfigService } from '../../../../core/services/app-config.service';
 import { CreateApiKeyResultDto } from '../../../../core/api/model/createApiKeyResultDto';
 import { AgentSkill } from './agent-skill.service';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
 import { AgentKeyApplicationPickerComponent } from './agent-key-application-picker.component';
+import { AgentKeyProjectPickerComponent } from './agent-key-project-picker.component';
+import { ConnectAgentComponent } from './connect-agent.component';
 
 export interface MintRequest {
   name: string;
   groups: string[];
   expiresAt?: string;
   applicationIds?: string[];
+  projectIds?: string[];
 }
 
 // One entry per area the API publishes. A missing one is not a crash — the
@@ -66,14 +63,12 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
     HlmInputDirective,
     HlmLabelDirective,
     AgentKeyApplicationPickerComponent,
+    AgentKeyProjectPickerComponent,
+    ConnectAgentComponent,
   ],
   providers: [
     provideIcons({
-      lucideBookOpen,
       lucideCheck,
-      lucideCopy,
-      lucideEye,
-      lucideEyeOff,
       lucideLoader,
       lucideLock,
       lucideTriangleAlert,
@@ -82,104 +77,17 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (minted(); as key) {
-      <div class="rounded-lg border border-primary/40 bg-primary/5 p-4 space-y-3">
+      <div class="space-y-3">
         <div class="flex items-start gap-2">
           <ng-icon name="lucideCheck" class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <div class="min-w-0">
-            <p class="text-sm font-medium text-foreground">{{ key.name }} is ready.</p>
-            <p class="text-sm text-muted-foreground">
-              Copy it now — this is the only time the value is shown. If you lose it,
-              revoke this key and issue another.
-            </p>
-          </div>
+          <p class="text-sm font-medium text-foreground">{{ key.name }} is ready.</p>
         </div>
-
-        <div class="flex items-center gap-2">
-          <code
-            data-testid="minted-key"
-            class="min-w-0 flex-1 truncate rounded-md border border-border bg-background px-3 py-2 font-mono text-xs"
-          >{{ shown() ? key.key : masked(key.key) }}</code>
-          <button
-            type="button"
-            data-testid="toggle-key"
-            (click)="shown.set(!shown())"
-            [attr.aria-label]="shown() ? 'Hide the key' : 'Show the key'"
-            class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-          >
-            <ng-icon [name]="shown() ? 'lucideEyeOff' : 'lucideEye'" class="h-3.5 w-3.5" />
-            {{ shown() ? 'Hide' : 'Show' }}
-          </button>
-          <button
-            type="button"
-            data-testid="copy-key"
-            (click)="copy(key.key)"
-            class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <ng-icon [name]="copied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
-            {{ copied() ? 'Copied' : 'Copy' }}
-          </button>
-        </div>
-
-        <div class="rounded-md border border-border bg-background px-3 py-2">
-          <p class="text-xs text-muted-foreground">Point your agent at this endpoint:</p>
-          <p class="mt-1 font-mono text-xs text-foreground break-all">POST {{ mcpEndpoint() }}</p>
-          <p class="font-mono text-xs text-muted-foreground break-all">Authorization: Bearer &lt;your key&gt;</p>
-        </div>
-
-        @if (skill(); as doc) {
-          <div class="rounded-md border border-border bg-background px-3 py-2 space-y-2" data-testid="skill-handoff">
-            <div class="flex flex-wrap items-center gap-2">
-              <ng-icon name="lucideBookOpen" class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <span class="text-xs font-medium text-foreground">Take the instructions too</span>
-              <span hlmBadge variant="secondary" class="text-xs" data-testid="skill-version">
-                skill {{ doc.version }}
-              </span>
-            </div>
-            <p class="text-xs text-muted-foreground">
-              The key says what the agent may do; this says how work is done here. Save it as
-              <span class="font-mono">{{ doc.filename }}</span> where your agent keeps its skills.
-              It carries no credential, so it is safe to commit.
-            </p>
-            <div class="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                data-testid="copy-skill"
-                (click)="copySkill(doc.content)"
-                class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                <ng-icon [name]="skillCopied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
-                {{ skillCopied() ? 'Copied' : 'Copy ' + doc.filename }}
-              </button>
-              <button
-                type="button"
-                data-testid="show-skill"
-                (click)="skillOpen.set(!skillOpen())"
-                class="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
-              >
-                {{ skillOpen() ? 'Hide it' : 'Read it first' }}
-              </button>
-            </div>
-            @if (skillOpen()) {
-              <pre
-                data-testid="skill-content"
-                class="max-h-64 overflow-auto rounded-md border border-border bg-muted/40 p-3 font-mono text-[11px] leading-relaxed text-foreground whitespace-pre-wrap"
-              >{{ doc.content }}</pre>
-            }
-          </div>
-        } @else if (skillError()) {
-          <div class="rounded-md border border-border bg-background px-3 py-2" data-testid="skill-missing">
-            <p class="text-xs text-muted-foreground">{{ skillError() }}</p>
-          </div>
-        }
-
-        <button
-          type="button"
-          data-testid="dismiss-minted"
-          (click)="dismiss.emit()"
-          class="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
-        >
-          I have copied it
-        </button>
+        <app-connect-agent
+          [apiKey]="key.key"
+          [skill]="skill()"
+          [skillError]="skillError()"
+          (dismiss)="dismiss.emit()"
+        />
       </div>
     } @else {
       <div class="space-y-4">
@@ -302,6 +210,37 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
           }
         </div>
 
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Which projects
+            </p>
+            <button
+              type="button"
+              data-testid="toggle-project-scope"
+              (click)="limitToProjects.set(!limitToProjects())"
+              class="text-xs font-medium text-primary underline underline-offset-2"
+            >
+              {{ limitToProjects() ? 'Drop the project grant' : 'Also grant whole projects' }}
+            </button>
+          </div>
+          @if (limitToProjects()) {
+            <app-agent-key-project-picker
+              #projectPicker
+              (selectionChange)="pickedProjects.set($event)"
+            />
+            <p class="text-xs text-muted-foreground">
+              An app added to a granted project later is reached too — nothing to reissue.
+              Combines with the applications above rather than replacing them.
+            </p>
+          } @else {
+            <p class="text-sm text-muted-foreground">
+              No project grant — the default. Grant one if this agent should keep reaching a
+              project's apps as it grows, without you widening the key by hand each time.
+            </p>
+          }
+        </div>
+
         @if (error(); as e) {
           <div class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
             <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
@@ -343,23 +282,16 @@ export class AgentKeyMintComponent {
   readonly create = output<MintRequest>();
   readonly dismiss = output<void>();
 
-  private readonly cfg = inject(AppConfigService);
-
   protected readonly lifetimes = LIFETIMES;
   protected name = '';
   protected lifetime = '30d';
   protected readonly picked = signal<ReadonlySet<string>>(new Set());
-  protected readonly shown = signal(false);
-  protected readonly copied = signal(false);
-  protected readonly skillOpen = signal(false);
-  protected readonly skillCopied = signal(false);
   protected readonly limitToApps = signal(false);
   protected readonly pickedApps = signal<string[]>([]);
   private readonly appPicker = viewChild<AgentKeyApplicationPickerComponent>('appPicker');
-
-  protected readonly mcpEndpoint = computed(
-    () => `${this.cfg.apiBaseUrl}/api/v1/mcp`,
-  );
+  protected readonly limitToProjects = signal(false);
+  protected readonly pickedProjects = signal<string[]>([]);
+  private readonly projectPicker = viewChild<AgentKeyProjectPickerComponent>('projectPicker');
 
   protected readonly grantableCount = computed(
     () => this.catalogue().filter((g) => g.grantable).length,
@@ -407,6 +339,7 @@ export class AgentKeyMintComponent {
           ? undefined
           : new Date(Date.now() + days * 86_400_000).toISOString(),
       applicationIds: this.limitToApps() ? this.pickedApps() : undefined,
+      projectIds: this.limitToProjects() ? this.pickedProjects() : undefined,
     });
   }
 
@@ -414,36 +347,11 @@ export class AgentKeyMintComponent {
     this.name = '';
     this.lifetime = '30d';
     this.picked.set(new Set());
-    this.shown.set(false);
-    this.copied.set(false);
-    this.skillOpen.set(false);
-    this.skillCopied.set(false);
     this.limitToApps.set(false);
     this.pickedApps.set([]);
     this.appPicker()?.reset();
-  }
-
-  protected masked(value: string): string {
-    return '•'.repeat(Math.min(value.length, 48));
-  }
-
-  protected copySkill(value: string): void {
-    void navigator.clipboard
-      ?.writeText(value)
-      .then(() => {
-        this.skillCopied.set(true);
-        setTimeout(() => this.skillCopied.set(false), 2_000);
-      })
-      .catch(() => this.skillOpen.set(true));
-  }
-
-  protected copy(value: string): void {
-    void navigator.clipboard
-      ?.writeText(value)
-      .then(() => {
-        this.copied.set(true);
-        setTimeout(() => this.copied.set(false), 2_000);
-      })
-      .catch(() => this.shown.set(true));
+    this.limitToProjects.set(false);
+    this.pickedProjects.set([]);
+    this.projectPicker()?.reset();
   }
 }

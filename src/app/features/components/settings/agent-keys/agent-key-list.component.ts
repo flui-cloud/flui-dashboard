@@ -28,6 +28,8 @@ import {
 } from './agent-key-connection';
 import { AgentKeyApplicationsService } from './agent-key-applications.service';
 import { AgentKeyApplicationPickerComponent } from './agent-key-application-picker.component';
+import { AgentKeyProjectsService } from './agent-key-projects.service';
+import { AgentKeyProjectPickerComponent } from './agent-key-project-picker.component';
 
 interface KeyRow {
   key: ApiKeyResponseDto;
@@ -38,15 +40,23 @@ interface KeyRow {
   connection: KeyConnection;
   /** Names of the applications `key.applicationIds` resolves to; null = every application. */
   appNames: string[] | null;
+  /** Names of the projects `key.projectIds` resolves to; null = no project grant. */
+  projectNames: string[] | null;
 }
 
-/** An id absent from the lookup is one the application list no longer has — deleted, not hidden. */
-function resolveAppNames(
-  applicationIds: string[] | null | undefined,
+/** Which of a row's two scope pickers, if either, is open right now. */
+interface EditTarget {
+  keyId: string;
+  field: 'applications' | 'projects';
+}
+
+/** An id absent from the lookup is one the list no longer has — deleted, not hidden. */
+function resolveNames(
+  ids: string[] | null | undefined,
   names: ReadonlyMap<string, string>,
 ): string[] | null {
-  if (!applicationIds) return null;
-  return applicationIds.map((id) => names.get(id) ?? `${id} (deleted)`);
+  if (!ids) return null;
+  return ids.map((id) => names.get(id) ?? `${id} (deleted)`);
 }
 
 @Component({
@@ -58,6 +68,7 @@ function resolveAppNames(
     HlmBadgeDirective,
     DeleteConfirmationDialogComponent,
     AgentKeyApplicationPickerComponent,
+    AgentKeyProjectPickerComponent,
   ],
   providers: [
     provideIcons({ lucideKeyRound, lucidePencil, lucidePlugZap, lucideTriangleAlert }),
@@ -105,11 +116,20 @@ function resolveAppNames(
                   <button
                     type="button"
                     [attr.data-testid]="'edit-applications-' + row.key.id"
-                    (click)="toggleEdit(row.key)"
+                    (click)="toggleEdit(row.key, 'applications')"
                     class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
                     Applications
+                  </button>
+                  <button
+                    type="button"
+                    [attr.data-testid]="'edit-projects-' + row.key.id"
+                    (click)="toggleEdit(row.key, 'projects')"
+                    class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
+                    Projects
                   </button>
                   <button
                     type="button"
@@ -145,19 +165,34 @@ function resolveAppNames(
             <p class="font-mono text-[11px] text-muted-foreground/80 break-all">{{ row.scopes }}</p>
 
             <p class="text-xs text-muted-foreground" [attr.data-testid]="'apps-' + row.key.id">
-              @if (row.appNames === null) {
+              @if (row.appNames === null && row.projectNames === null) {
                 Reaches every application you can.
-              } @else if (row.appNames.length === 0) {
-                Reaches no application — every application id it named is gone.
               } @else {
-                Limited to {{ row.appNames.join(', ') }}.
+                @if (row.projectNames !== null) {
+                  @if (row.projectNames.length === 0) {
+                    Every project it named is gone.
+                  } @else {
+                    Reaches {{ row.projectNames.join(', ') }}
+                  }
+                  @if (row.appNames !== null && row.appNames.length > 0) {
+                    , plus {{ row.appNames.join(', ') }}.
+                  } @else {
+                    .
+                  }
+                } @else if (row.appNames !== null) {
+                  @if (row.appNames.length === 0) {
+                    Reaches no application — every application id it named is gone.
+                  } @else {
+                    Limited to {{ row.appNames.join(', ') }}.
+                  }
+                }
               }
             </p>
 
-            @if (editing() === row.key.id) {
+            @if (editing()?.keyId === row.key.id && editing()?.field === 'applications') {
               <div class="space-y-2 rounded-md border border-border bg-muted/20 p-3" [attr.data-testid]="'edit-applications-panel-' + row.key.id">
                 <app-agent-key-application-picker
-                  #editPicker
+                  #editAppPicker
                   [selected]="row.key.applicationIds ?? undefined"
                   (selectionChange)="editPicked.set($event)"
                 />
@@ -183,6 +218,40 @@ function resolveAppNames(
                   </button>
                   <p class="text-xs text-muted-foreground">
                     Empty means every application — the key is not limited.
+                  </p>
+                </div>
+              </div>
+            }
+
+            @if (editing()?.keyId === row.key.id && editing()?.field === 'projects') {
+              <div class="space-y-2 rounded-md border border-border bg-muted/20 p-3" [attr.data-testid]="'edit-projects-panel-' + row.key.id">
+                <app-agent-key-project-picker
+                  #editProjectPicker
+                  [selected]="row.key.projectIds ?? undefined"
+                  (selectionChange)="editPicked.set($event)"
+                />
+                @if (updateProjectsError(); as e) {
+                  <p class="text-xs text-destructive" [attr.data-testid]="'edit-projects-error-' + row.key.id">{{ e }}</p>
+                }
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    [attr.data-testid]="'save-projects-' + row.key.id"
+                    (click)="saveProjects(row.key)"
+                    [disabled]="updatingProjects() === row.key.id"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {{ updatingProjects() === row.key.id ? 'Saving…' : 'Save' }}
+                  </button>
+                  <button
+                    type="button"
+                    (click)="editing.set(null)"
+                    class="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  >
+                    Cancel
+                  </button>
+                  <p class="text-xs text-muted-foreground">
+                    Empty means no project grant — an app is still reached individually, if named above.
                   </p>
                 </div>
               </div>
@@ -230,29 +299,42 @@ export class AgentKeyListComponent {
   readonly currentSkillVersion = input<string | null>(null);
   readonly updatingApplications = input<string | null>(null);
   readonly updateApplicationsError = input<string | null>(null);
+  readonly updatingProjects = input<string | null>(null);
+  readonly updateProjectsError = input<string | null>(null);
 
   readonly revoke = output<ApiKeyResponseDto>();
   readonly updateApplications = output<{
     key: ApiKeyResponseDto;
     applicationIds: string[];
   }>();
+  readonly updateProjects = output<{
+    key: ApiKeyResponseDto;
+    projectIds: string[];
+  }>();
 
   private readonly dialog = viewChild.required<DeleteConfirmationDialogComponent>('revokeDialog');
   private readonly appsService = inject(AgentKeyApplicationsService);
+  private readonly projectsService = inject(AgentKeyProjectsService);
   protected readonly pending = signal<ApiKeyResponseDto | null>(null);
-  protected readonly editing = signal<string | null>(null);
+  protected readonly editing = signal<EditTarget | null>(null);
   protected readonly editPicked = signal<string[]>([]);
   /** Application id → name, loaded once; a name missing from it is a stale/deleted id. */
   private readonly appNamesById = signal<Map<string, string>>(new Map());
+  /** Project id → name, loaded once, same convention as {@link appNamesById}. */
+  private readonly projectNamesById = signal<Map<string, string>>(new Map());
 
   constructor() {
     this.appsService.list().subscribe((apps) => {
       this.appNamesById.set(new Map(apps.map((a) => [a.id, a.name])));
     });
+    this.projectsService.list().subscribe((projects) => {
+      this.projectNamesById.set(new Map(projects.map((p) => [p.id, p.name])));
+    });
   }
 
   protected readonly rows = computed<KeyRow[]>(() => {
-    const names = this.appNamesById();
+    const appNames = this.appNamesById();
+    const projectNames = this.projectNamesById();
     return this.keys().map((key) => {
       const surface = readKeySurface(key, this.catalogue());
       return {
@@ -265,22 +347,34 @@ export class AgentKeyListComponent {
           key as ConnectedKey,
           this.currentSkillVersion(),
         ),
-        appNames: resolveAppNames(key.applicationIds, names),
+        appNames: resolveNames(key.applicationIds, appNames),
+        projectNames: resolveNames(key.projectIds, projectNames),
       };
     });
   });
 
-  protected toggleEdit(key: ApiKeyResponseDto): void {
-    if (this.editing() === key.id) {
+  protected toggleEdit(
+    key: ApiKeyResponseDto,
+    field: EditTarget['field'],
+  ): void {
+    const current = this.editing();
+    if (current?.keyId === key.id && current.field === field) {
       this.editing.set(null);
       return;
     }
-    this.editPicked.set(key.applicationIds ?? []);
-    this.editing.set(key.id);
+    this.editPicked.set(
+      (field === 'applications' ? key.applicationIds : key.projectIds) ?? [],
+    );
+    this.editing.set({ keyId: key.id, field });
   }
 
   protected saveApplications(key: ApiKeyResponseDto): void {
     this.updateApplications.emit({ key, applicationIds: this.editPicked() });
+    this.editing.set(null);
+  }
+
+  protected saveProjects(key: ApiKeyResponseDto): void {
+    this.updateProjects.emit({ key, projectIds: this.editPicked() });
     this.editing.set(null);
   }
 

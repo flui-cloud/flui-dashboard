@@ -6,9 +6,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideTriangleAlert } from '@ng-icons/lucide';
+import { lucideKeyRound, lucideLoader, lucideTriangleAlert } from '@ng-icons/lucide';
 import { AuthService as ApiAuthService } from '../../../core/api/api/auth.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import {
@@ -31,28 +31,45 @@ import { AgentActivityLogComponent } from './agent-activity-log.component';
 import { AgentConcessionsTableComponent } from './agent-concessions-table.component';
 import { AgentRequestCardComponent } from './agent-request-card.component';
 import { AgentRevokeDialogComponent } from './agent-revoke-dialog.component';
+import { AgentSkill, AgentSkillService } from '../settings/agent-keys/agent-skill.service';
+import { ConnectAgentComponent } from '../settings/agent-keys/connect-agent.component';
 
 @Component({
   selector: 'app-agents',
   standalone: true,
   imports: [
     NgIcon,
+    RouterLink,
     AgentActivityLogComponent,
     AgentRequestCardComponent,
     AgentConcessionsTableComponent,
     AgentRevokeDialogComponent,
+    ConnectAgentComponent,
   ],
-  providers: [provideIcons({ lucideLoader, lucideTriangleAlert })],
+  providers: [provideIcons({ lucideKeyRound, lucideLoader, lucideTriangleAlert })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mx-auto max-w-5xl space-y-8 p-6">
-      <header class="space-y-1">
-        <h1 class="text-2xl font-semibold tracking-tight text-foreground">Agents</h1>
-        <p class="m-0 text-sm text-muted-foreground">
-          What your agents are asking to do, what they may already do, and what
-          they have done.
-        </p>
+      <header class="flex flex-wrap items-start justify-between gap-4">
+        <div class="space-y-1">
+          <h1 class="text-2xl font-semibold tracking-tight text-foreground">Agents</h1>
+          <p class="m-0 text-sm text-muted-foreground">
+            What your agents are asking to do, what they may already do, and what
+            they have done.
+          </p>
+        </div>
+        <a
+          routerLink="/settings"
+          fragment="agent-keys"
+          data-testid="configure-key-link"
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          <ng-icon name="lucideKeyRound" class="h-3.5 w-3.5" />
+          Configure key
+        </a>
       </header>
+
+      <app-connect-agent [skill]="skill()" [skillError]="skillError()" />
 
       <div
         role="note"
@@ -190,6 +207,10 @@ export class AgentsComponent implements OnInit {
   private readonly keys = inject(ApiAuthService);
   private readonly perms = inject(PermissionService);
   private readonly route = inject(ActivatedRoute);
+  private readonly skills = inject(AgentSkillService);
+
+  protected readonly skill = signal<AgentSkill | null>(null);
+  protected readonly skillError = signal<string | null>(null);
 
   private readonly proposals = signal<AgentProposal[]>([]);
   protected readonly concessions = signal<AgentConcession[]>([]);
@@ -270,6 +291,22 @@ export class AgentsComponent implements OnInit {
     this.loadKeyNames();
     this.loadActivity();
     this.loadAgentIdentities();
+    this.loadSkill();
+  }
+
+  private loadSkill(): void {
+    this.skills.skill().subscribe({
+      next: (doc) => {
+        this.skill.set(doc);
+        this.skillError.set(null);
+      },
+      error: () => {
+        this.skill.set(null);
+        this.skillError.set(
+          'The instructions for agents could not be read from this instance.',
+        );
+      },
+    });
   }
 
   protected agentName(keyId: string | null | undefined): string | null {

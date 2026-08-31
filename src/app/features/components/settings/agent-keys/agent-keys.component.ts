@@ -27,6 +27,7 @@ import { SandboxLevelNoticeComponent } from '../../../../shared/components/sandb
 import { AgentKeyListComponent } from './agent-key-list.component';
 import { AgentKeyMintComponent, MintRequest } from './agent-key-mint.component';
 import { AgentSkill, AgentSkillService } from './agent-skill.service';
+import { ConnectAgentComponent } from './connect-agent.component';
 
 @Component({
   selector: 'app-agent-keys',
@@ -41,6 +42,7 @@ import { AgentSkill, AgentSkillService } from './agent-skill.service';
     SandboxLevelNoticeComponent,
     AgentKeyMintComponent,
     AgentKeyListComponent,
+    ConnectAgentComponent,
   ],
   providers: [provideIcons({ lucideInfo, lucideLoader, lucideTriangleAlert })],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,9 +74,17 @@ import { AgentSkill, AgentSkillService } from './agent-skill.service';
           Reading what you may hand on…
         </div>
       } @else {
+        @if (!minted()) {
+          <app-connect-agent
+            [skill]="skill()"
+            [skillError]="skillError()"
+            data-testid="connect-agent-standalone"
+          />
+        }
+
         <div hlmCard>
           <div hlmCardHeader>
-            <h3 hlmCardTitle>Connect an agent</h3>
+            <h3 hlmCardTitle>Issue a new key</h3>
             <p hlmCardDescription>
               Switch on what the agent may do, name it, and copy the key it gives you back.
             </p>
@@ -120,8 +130,11 @@ import { AgentSkill, AgentSkillService } from './agent-skill.service';
               [currentSkillVersion]="skill()?.version ?? null"
               [updatingApplications]="updatingApplications()"
               [updateApplicationsError]="updateApplicationsError()"
+              [updatingProjects]="updatingProjects()"
+              [updateProjectsError]="updateProjectsError()"
               (revoke)="revokeKey($event)"
               (updateApplications)="updateApplications($event)"
+              (updateProjects)="updateProjects($event)"
             />
           </div>
         </div>
@@ -146,6 +159,8 @@ export class AgentKeysComponent implements OnInit {
   protected readonly revoking = signal<string | null>(null);
   protected readonly updatingApplications = signal<string | null>(null);
   protected readonly updateApplicationsError = signal<string | null>(null);
+  protected readonly updatingProjects = signal<string | null>(null);
+  protected readonly updateProjectsError = signal<string | null>(null);
   protected readonly skill = signal<AgentSkill | null>(null);
   protected readonly skillError = signal<string | null>(null);
 
@@ -224,6 +239,7 @@ export class AgentKeysComponent implements OnInit {
       groups: req.groups as CreateApiKeyDto.GroupsEnum[],
       ...(req.expiresAt ? { expiresAt: req.expiresAt } : {}),
       ...(req.applicationIds ? { applicationIds: req.applicationIds } : {}),
+      ...(req.projectIds ? { projectIds: req.projectIds } : {}),
     };
     this.api.apiKeysControllerCreateApiKey(body).subscribe({
       next: (result) => {
@@ -276,6 +292,30 @@ export class AgentKeysComponent implements OnInit {
           this.updatingApplications.set(null);
           this.updateApplicationsError.set(
             messageOf(err, `${event.key.name}'s applications could not be updated.`),
+          );
+        },
+      });
+  }
+
+  protected updateProjects(event: {
+    key: ApiKeyResponseDto;
+    projectIds: string[];
+  }): void {
+    this.updatingProjects.set(event.key.id);
+    this.updateProjectsError.set(null);
+    this.api
+      .apiKeysControllerUpdateApiKeyProjects(event.key.id, {
+        projectIds: event.projectIds,
+      })
+      .subscribe({
+        next: () => {
+          this.updatingProjects.set(null);
+          this.loadKeys();
+        },
+        error: (err: unknown) => {
+          this.updatingProjects.set(null);
+          this.updateProjectsError.set(
+            messageOf(err, `${event.key.name}'s projects could not be updated.`),
           );
         },
       });
