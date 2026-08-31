@@ -555,6 +555,7 @@ export * from './triggerScheduledJobResponseDto';
 export * from './triggerStandaloneBuildDto';
 export * from './unschedulablePodsDto';
 export * from './updateApiKeyApplicationsDto';
+export * from './updateApiKeyProjectsDto';
 export * from './updateAppEndpointDto';
 export * from './updateApplicationDto';
 export * from './updateClusterAutoscaleDto';

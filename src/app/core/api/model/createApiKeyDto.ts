@@ -31,6 +31,10 @@ export interface CreateApiKeyDto {
      * Application ids this key may act on. Omit for a key that may act on every application its issuer can already reach — the default, unchanged from before this field existed. Not validated against ownership at issue time: an id the issuer does not own simply opens nothing, the same as naming it by hand would.
      */
     applicationIds?: Array<string>;
+    /**
+     * Project ids this key may act on, alongside `applicationIds` rather than instead of it — an application is covered the moment either list reaches it. An app added to a granted project later is covered too, with nothing to re-issue. Not validated against ownership at issue time, same as `applicationIds`.
+     */
+    projectIds?: Array<string>;
 }
 export namespace CreateApiKeyDto {
     export const GroupsEnum = {
@@ -52,6 +56,7 @@ export namespace CreateApiKeyDto {
     } as const;
     export type GroupsEnum = typeof GroupsEnum[keyof typeof GroupsEnum];
     export const ScopesEnum = {
+        McpOnboardingRead: 'mcp:onboarding:read',
         McpCatalogRead: 'mcp:catalog:read',
         McpAppRead: 'mcp:app:read',
         McpObsRead: 'mcp:obs:read',

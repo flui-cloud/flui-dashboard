@@ -43,6 +43,10 @@ export interface ApiKeyResponseDto {
      * Application ids this key may act on. Null means every application its holder can already reach.
      */
     applicationIds?: Array<string>;
+    /**
+     * Project ids this key may act on, alongside `applicationIds` rather than instead of it. Null means no project grant.
+     */
+    projectIds?: Array<string>;
 }
 export namespace ApiKeyResponseDto {
     export const GroupsEnum = {

@@ -43,6 +43,7 @@ export namespace CreateAgentIdentityDto {
     } as const;
     export type GroupsEnum = typeof GroupsEnum[keyof typeof GroupsEnum];
     export const ScopesEnum = {
+        McpOnboardingRead: 'mcp:onboarding:read',
         McpCatalogRead: 'mcp:catalog:read',
         McpAppRead: 'mcp:app:read',
         McpObsRead: 'mcp:obs:read',

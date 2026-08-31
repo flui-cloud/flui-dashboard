@@ -44,6 +44,10 @@ export interface CreateApiKeyResultDto {
      */
     applicationIds?: Array<string>;
     /**
+     * Project ids this key may act on, alongside `applicationIds` rather than instead of it. Null means no project grant.
+     */
+    projectIds?: Array<string>;
+    /**
      * Plaintext API key — shown only once at creation time.
      */
     key: string;

@@ -649,6 +649,7 @@ model/triggerScheduledJobResponseDto.ts
 model/triggerStandaloneBuildDto.ts
 model/unschedulablePodsDto.ts
 model/updateApiKeyApplicationsDto.ts
+model/updateApiKeyProjectsDto.ts
 model/updateAppEndpointDto.ts
 model/updateApplicationDto.ts
 model/updateClusterAutoscaleDto.ts

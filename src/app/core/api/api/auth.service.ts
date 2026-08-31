@@ -65,6 +65,8 @@ import { ResetPasswordResultDto } from '../model/resetPasswordResultDto';
 // @ts-ignore
 import { UpdateApiKeyApplicationsDto } from '../model/updateApiKeyApplicationsDto';
 // @ts-ignore
+import { UpdateApiKeyProjectsDto } from '../model/updateApiKeyProjectsDto';
+// @ts-ignore
 import { UpdateIdentityRoleDto } from '../model/updateIdentityRoleDto';
 // @ts-ignore
 import { UpdateMeDto } from '../model/updateMeDto';
@@ -699,6 +701,80 @@ export class AuthService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: updateApiKeyApplicationsDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Change which projects a key may act on, without reissuing it
+     * Replaces the key\&#39;s project list wholesale — send the complete set you want it to hold, not just the ones being added. Omit &#x60;projectIds&#x60; (or send an empty array) to lift the restriction. Independent of the application list on the same key: an application counts as covered the moment either list reaches it, and an app added to a granted project later is covered on its next request — nothing to reissue.
+     * @endpoint patch /api/v1/auth/api-keys/{id}/projects
+     * @param id 
+     * @param updateApiKeyProjectsDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public apiKeysControllerUpdateApiKeyProjects(id: string, updateApiKeyProjectsDto: UpdateApiKeyProjectsDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ApiKeyResponseDto>;
+    public apiKeysControllerUpdateApiKeyProjects(id: string, updateApiKeyProjectsDto: UpdateApiKeyProjectsDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ApiKeyResponseDto>>;
+    public apiKeysControllerUpdateApiKeyProjects(id: string, updateApiKeyProjectsDto: UpdateApiKeyProjectsDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ApiKeyResponseDto>>;
+    public apiKeysControllerUpdateApiKeyProjects(id: string, updateApiKeyProjectsDto: UpdateApiKeyProjectsDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling apiKeysControllerUpdateApiKeyProjects.');
+        }
+        if (updateApiKeyProjectsDto === null || updateApiKeyProjectsDto === undefined) {
+            throw new Error('Required parameter updateApiKeyProjectsDto was null or undefined when calling apiKeysControllerUpdateApiKeyProjects.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/auth/api-keys/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/projects`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ApiKeyResponseDto>('patch', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: updateApiKeyProjectsDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
