@@ -137,10 +137,14 @@ internal-docs/
 /typings
 
 # ---------- Tooling residue ----------
-/tools
+/tools/*
+!/tools/visual-bench
 structure.sh
 build.log
 build-output.log
+
+# ---------- Visual bench captured session (real tokens, never commit) ----------
+/.auth
 
 # ---------- Local dashboard config ----------
 # Generated/overwritten by `flui env export-config` — only the .example.json is tracked.

@@ -1,0 +1,17 @@
+{
+  "name": "flui-dashboard-visual-bench",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Local-only Playwright bench that captures deterministic reference screenshots of every dashboard route. Deliberately NOT part of the dashboard's pnpm project: own package.json, own node_modules, never enters pnpm-lock.yaml, never reaches the Docker build.",
+  "scripts": {
+    "auth": "node auth-capture.mjs",
+    "capture": "node capture.mjs",
+    "diff": "node diff-runs.mjs",
+    "verify": "node verify.mjs",
+    "discover-entities": "node discover-entities.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1"
+  }
+}
