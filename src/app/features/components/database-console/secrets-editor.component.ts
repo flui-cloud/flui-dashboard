@@ -166,7 +166,9 @@ import {
               <button
                 type="button"
                 (click)="s.revealAll.set(!s.revealAll())"
-                class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
+                [disabled]="s.maskModeOn()"
+                [title]="s.maskModeOn() ? 'Turn off mask mode to reveal' : ''"
+                class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
               >
                 <ng-icon
                   [name]="s.revealAll() ? 'lucideEyeOff' : 'lucideEye'"
@@ -251,8 +253,9 @@ import {
                         <button
                           type="button"
                           (click)="s.toggleReveal($index)"
-                          class="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
-                          [title]="s.isRevealed($index) ? 'Hide' : 'Reveal'"
+                          [disabled]="s.maskModeOn()"
+                          [title]="s.maskModeOn() ? 'Turn off mask mode to reveal' : (s.isRevealed($index) ? 'Hide' : 'Reveal')"
+                          class="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                         >
                           <ng-icon
                             [name]="

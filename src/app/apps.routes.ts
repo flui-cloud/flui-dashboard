@@ -89,6 +89,10 @@ export const appsRoutes: Routes = [
               import('./features/components/application/app-logs-tab.component').then(
                 (m) => m.AppLogsTabComponent
               ),
+            // Marker only, no consumer yet: mask mode makes no substitution
+            // promise over raw log content, so automated screenshot capture
+            // is expected to skip this route.
+            data: { maskModeCaptureExempt: true },
           },
           {
             path: 'revisions',

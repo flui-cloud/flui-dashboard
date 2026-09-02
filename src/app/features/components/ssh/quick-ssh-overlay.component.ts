@@ -3,6 +3,7 @@ import {
   inject,
   signal,
   computed,
+  effect,
   OnInit,
   OnDestroy,
   NgZone,
@@ -23,6 +24,7 @@ import {
 import { QuickSshService, SshSession } from '../../service/quick-ssh.service';
 import { SshTerminalComponent } from '../compute/ssh-terminal.component';
 import { VirtualInstancesService } from '../../../core/api/api/virtualInstances.service';
+import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { InstanceResponseDto } from '../../../core/api/model/instanceResponseDto';
 import { InstanceWithLabels, getOwnership, getClusterInfo } from '../../model/instance.models';
 
@@ -201,6 +203,7 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
   protected readonly sshService = inject(QuickSshService);
   private readonly instancesService = inject(VirtualInstancesService);
   private readonly zone = inject(NgZone);
+  private readonly maskMode = inject(MaskModeService);
 
   protected readonly isLoadingNodes = signal(false);
   protected readonly nodes = signal<InstanceWithLabels[]>([]);
@@ -230,6 +233,23 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
       (this.getNodeClusterName(n) || '').toLowerCase().includes(query)
     );
   });
+
+  /**
+   * The node picker (real IPs) is fetched once, so a picker left open across
+   * a mask-mode toggle would keep showing the pre-toggle list. Skips its own
+   * first run — `ngOnInit` already loads it.
+   */
+  constructor() {
+    let first = true;
+    effect(() => {
+      this.maskMode.enabled();
+      if (first) {
+        first = false;
+        return;
+      }
+      this.loadNodes();
+    });
+  }
 
   ngOnInit(): void {
     this.loadNodes();

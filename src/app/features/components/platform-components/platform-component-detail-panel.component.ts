@@ -12,6 +12,7 @@ import {
   lucideCircleAlert,
   lucideCircleMinus,
   lucideSearch,
+  lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { FormsModule } from '@angular/forms';
 import { PlatformComponentResponseDto } from '../../../core/api/model/platformComponentResponseDto';
@@ -20,6 +21,7 @@ import { RedeployPlatformComponentResponseDto } from '../../../core/api/model/re
 import { PlatformComponentsService } from '../../service/platform-components.service';
 import { PlatformComponentStatusBadgeComponent } from './platform-component-status-badge.component';
 import { LogTableComponent } from '../application/log-table.component';
+import { MaskModeService } from '../../../core/services/mask-mode.service';
 import type { AppLogEntryDto } from '../../service/application-logs.service';
 
 @Component({
@@ -38,6 +40,7 @@ import type { AppLogEntryDto } from '../../service/application-logs.service';
       lucideCircleAlert,
       lucideCircleMinus,
       lucideSearch,
+      lucideTriangleAlert,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -215,6 +218,16 @@ import type { AppLogEntryDto } from '../../service/application-logs.service';
             </button>
           </div>
 
+          @if (maskMode.enabled()) {
+            <div
+              data-testid="mask-mode-log-banner"
+              class="flex items-center gap-2 border-b border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-2 text-xs font-medium text-amber-800 dark:text-amber-300 flex-shrink-0"
+            >
+              <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 shrink-0" />
+              Mask mode cannot protect log content — do not share this screen.
+            </div>
+          }
+
           <!-- Toolbar -->
           @if (!logsLoading()) {
             <div class="flex items-center gap-3 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
@@ -259,6 +272,8 @@ import type { AppLogEntryDto } from '../../service/application-logs.service';
   `,
 })
 export class PlatformComponentDetailPanelComponent {
+  protected readonly maskMode = inject(MaskModeService);
+
   component = input.required<PlatformComponentResponseDto>();
   clusterId = input.required<string>();
   isRedeploying = input<boolean>(false);

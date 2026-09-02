@@ -220,7 +220,9 @@ describe('the agent keys screen', () => {
     expect(body.groups).toEqual(['apps:change'] as never);
     expect(body.expiresAt).toBeDefined();
 
-    expect(text('[data-testid="minted-key"]')).not.toContain('flui_test_value');
+    // The component no longer decides what is shown: it renders whatever the
+    // mint response carried, in the clear or already substituted server-side.
+    expect(text('[data-testid="minted-key"]')).toContain('flui_test_value');
     expect(el('[data-testid="copy-key"]')).not.toBeNull();
   });
 

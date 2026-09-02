@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { AppConfigService } from '../../core/services/app-config.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { MaskModeService } from '../../core/services/mask-mode.service';
 import {
   AccessBinding,
   AccessDelta,
@@ -45,9 +46,28 @@ export class IamService {
   private readonly http = inject(HttpClient);
   private readonly appConfig = inject(AppConfigService);
   private readonly notify = inject(NotificationService);
+  private readonly maskMode = inject(MaskModeService);
 
   private get iamBase(): string {
     return `${this.appConfig.apiBaseUrl}/api/v1/iam`;
+  }
+
+  /**
+   * User emails are loaded once into `_users`, and this root singleton
+   * outlives any component reading `users()` — so a mask-mode toggle has to
+   * reload them here, or a stale real email survives it. Skips its own first
+   * run, which `refresh()` already covers.
+   */
+  constructor() {
+    let first = true;
+    effect(() => {
+      this.maskMode.enabled();
+      if (first) {
+        first = false;
+        return;
+      }
+      this.loadUsers();
+    });
   }
 
   readonly principals = signal<PrincipalOption[]>([]);

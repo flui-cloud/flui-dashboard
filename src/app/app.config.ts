@@ -14,12 +14,13 @@ import { NotificationService } from './core/services/notification.service';
 import { OidcAuthService } from './core/services/oidc-auth.service';
 import { AuthService } from './core/services/auth.service';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { maskModeInterceptor } from './core/interceptors/mask-mode.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
+    provideHttpClient(withXhr(), withInterceptors([authInterceptor, maskModeInterceptor])),
     provideEcharts(),
     provideMarkdown({
       markedOptions: {

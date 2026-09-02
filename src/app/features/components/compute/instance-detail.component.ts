@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed, inject, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, viewChild, effect, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -33,6 +33,7 @@ import {
   HlmCardTitleDirective,
 } from '@spartan-ng/ui-card-helm';
 import { VirtualInstancesService, InfrastructureServersService } from '../../../core/api';
+import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { InstanceWithLabels, isManagedByFlui, getOwnership, getClusterInfo } from '../../model/instance.models';
 import { InstanceManagedBadgeComponent } from './instance-managed-badge.component';
 import { InstanceDeleteDialogComponent } from './instance-delete-dialog.component';
@@ -490,8 +491,31 @@ export class InstanceDetailComponent implements OnInit {
   private readonly virtualInstancesService = inject(VirtualInstancesService);
   private readonly infrastructureServersService = inject(InfrastructureServersService);
   private readonly clusterService = inject(ClusterService);
+  private readonly maskMode = inject(MaskModeService);
+
+  private provider: string | null = null;
+  private providerId: string | null = null;
 
   deleteDialog = viewChild<InstanceDeleteDialogComponent>('deleteDialog');
+
+  /**
+   * `instance` (real public IP) is fetched once on entry, so a mask-mode
+   * toggle has to reload it or the page keeps rendering the value fetched
+   * under the previous state. Skips its own first run.
+   */
+  constructor() {
+    let first = true;
+    effect(() => {
+      this.maskMode.enabled();
+      if (first) {
+        first = false;
+        return;
+      }
+      if (this.provider && this.providerId) {
+        this.loadInstance(this.provider, this.providerId);
+      }
+    });
+  }
 
   instance = signal<InstanceWithLabels | null>(null);
   isLoading = signal(true);
@@ -536,6 +560,8 @@ export class InstanceDetailComponent implements OnInit {
   ngOnInit() {
     const provider = this.route.snapshot.paramMap.get('provider');
     const providerId = this.route.snapshot.paramMap.get('providerId');
+    this.provider = provider;
+    this.providerId = providerId;
 
     if (provider && providerId) {
       this.loadInstance(provider, providerId);

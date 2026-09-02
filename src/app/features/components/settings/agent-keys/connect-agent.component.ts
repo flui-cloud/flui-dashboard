@@ -14,8 +14,6 @@ import {
   lucideCheck,
   lucideChevronDown,
   lucideCopy,
-  lucideEye,
-  lucideEyeOff,
   lucidePlugZap,
 } from '@ng-icons/lucide';
 import { AppConfigService } from '../../../../core/services/app-config.service';
@@ -70,8 +68,6 @@ function buildChatPrompt(mcpEndpoint: string): string {
       lucideCheck,
       lucideChevronDown,
       lucideCopy,
-      lucideEye,
-      lucideEyeOff,
       lucidePlugZap,
     }),
   ],
@@ -109,17 +105,7 @@ function buildChatPrompt(mcpEndpoint: string): string {
                 <code
                   data-testid="minted-key"
                   class="min-w-0 flex-1 truncate rounded-md border border-border bg-background px-3 py-2 font-mono text-xs"
-                >{{ shown() ? key : masked(key) }}</code>
-                <button
-                  type="button"
-                  data-testid="toggle-key"
-                  (click)="shown.set(!shown())"
-                  [attr.aria-label]="shown() ? 'Hide the key' : 'Show the key'"
-                  class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  <ng-icon [name]="shown() ? 'lucideEyeOff' : 'lucideEye'" class="h-3.5 w-3.5" />
-                  {{ shown() ? 'Hide' : 'Show' }}
-                </button>
+                >{{ key }}</code>
                 <button
                   type="button"
                   data-testid="copy-key"
@@ -249,7 +235,6 @@ export class ConnectAgentComponent implements OnInit {
   private readonly cfg = inject(AppConfigService);
 
   protected readonly open = signal(false);
-  protected readonly shown = signal(false);
   protected readonly keyCopied = signal(false);
   protected readonly promptCopied = signal(false);
   protected readonly skillSectionOpen = signal(false);
@@ -266,10 +251,6 @@ export class ConnectAgentComponent implements OnInit {
     this.open.set(!!this.apiKey());
   }
 
-  protected masked(value: string): string {
-    return '•'.repeat(Math.min(value.length, 48));
-  }
-
   protected copy(value: string): void {
     void navigator.clipboard
       ?.writeText(value)
@@ -277,7 +258,10 @@ export class ConnectAgentComponent implements OnInit {
         this.keyCopied.set(true);
         setTimeout(() => this.keyCopied.set(false), 2_000);
       })
-      .catch(() => this.shown.set(true));
+      .catch(() => {
+        // Clipboard unavailable (insecure context) — the key is already
+        // rendered in full above, so there is no fallback to offer.
+      });
   }
 
   protected copyPrompt(): void {

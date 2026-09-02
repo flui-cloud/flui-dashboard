@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { SecretsConsoleService } from '../../service/secrets-console.service';
 import {
@@ -7,6 +7,7 @@ import {
   SecretsServerInfo,
 } from '../../model/secrets-console.models';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { KvRow, consoleError, dataToRows, joinPath } from './secrets-format';
 
 type ConnState = 'connecting' | 'connected' | 'error';
@@ -15,6 +16,36 @@ type ConnState = 'connecting' | 'connected' | 'error';
 export class SecretsConsoleStateService {
   private readonly api = inject(SecretsConsoleService);
   private readonly router = inject(Router);
+  private readonly maskMode = inject(MaskModeService);
+  /** Exposed so the editor can disable reveal/copy affordances while it's on. */
+  readonly maskModeOn = this.maskMode.enabled;
+
+  /**
+   * A mask-mode toggle must never leave an open secret showing a value
+   * fetched under the previous state: the copy paths in
+   * `SecretsEditorComponent` read `rows()` live, so refreshing it here is
+   * what stops them handing out a stale real value. Skips its own first run.
+   */
+  constructor() {
+    let first = true;
+    effect(() => {
+      const on = this.maskMode.enabled();
+      if (first) {
+        first = false;
+        return;
+      }
+      if (!this.editing() || this.isNew()) return;
+      // Drop revealed rows synchronously, ahead of the refetch: a row left
+      // revealed would keep the pre-toggle value on screen for the round trip.
+      if (on) {
+        this.revealAll.set(false);
+        this.revealedRows.set(new Set());
+      }
+      const path = this.selectedPath();
+      if (!path) return;
+      this.refetchSelected(this.viewVersion() ?? undefined);
+    });
+  }
 
   readonly appId = signal<string | null>(null);
 
@@ -203,7 +234,7 @@ export class SecretsConsoleStateService {
           this.navigate(parts.join('/'));
           this.openSecret(leaf);
         } else {
-          this.reloadSelected();
+          this.refetchSelected();
         }
       },
       error: (e) => {
@@ -213,11 +244,12 @@ export class SecretsConsoleStateService {
     });
   }
 
-  private reloadSelected(): void {
+  /** Re-reads the currently open secret — at a given version, or the latest. */
+  private refetchSelected(version?: number): void {
     const id = this.appId();
     const path = this.selectedPath();
     if (!id || !path) return;
-    this.api.read(id, path).subscribe({
+    this.api.read(id, path, version).subscribe({
       next: (r) => {
         this.selected.set(r.secret);
         this.viewVersion.set(r.secret?.version ?? null);

@@ -5,9 +5,11 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideSearch, lucideRefreshCw, lucideChevronDown,
   lucideDownload, lucideX, lucideAlertCircle, lucideActivity, lucideCalendar,
+  lucideTriangleAlert,
 } from '@ng-icons/lucide';
 
 import { ApplicationService } from '../../service/application.service';
+import { MaskModeService } from '../../../core/services/mask-mode.service';
 import {
   ApplicationLogsService,
   ALL_LOG_LEVELS,
@@ -27,11 +29,22 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
     provideIcons({
       lucideSearch, lucideRefreshCw, lucideChevronDown,
       lucideDownload, lucideX, lucideAlertCircle, lucideActivity, lucideCalendar,
+      lucideTriangleAlert,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col gap-0 min-h-0">
+
+      @if (maskMode.enabled()) {
+        <div
+          data-testid="mask-mode-log-banner"
+          class="flex items-center gap-2 rounded-t-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-2 text-xs font-medium text-amber-800 dark:text-amber-300"
+        >
+          <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 shrink-0" />
+          Mask mode cannot protect log content — do not share this screen.
+        </div>
+      }
 
       <!-- ── Log Volume Distribution ─────────────────────────────────────── -->
       <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-t-lg p-4">
@@ -172,6 +185,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
 })
 export class AppLogsViewerComponent {
   protected logs = inject(ApplicationLogsService);
+  protected readonly maskMode = inject(MaskModeService);
   private readonly appService = inject(ApplicationService);
 
   readonly allLevels  = ALL_LOG_LEVELS;

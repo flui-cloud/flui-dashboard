@@ -15,6 +15,7 @@ import { CatalogService } from '../../service/catalog.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { ApplicationsService } from '../../../core/api/api/applications.service';
 import { DbConsoleService } from '../../service/db-console.service';
+import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { evaluateEndpointReadiness } from '../../model/endpoint-readiness';
 import { buildOpenAppUrl } from '../../model/open-app-url';
 import { DbConnectionInfo } from '../../model/db-console.models';
@@ -200,6 +201,7 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   private readonly applicationsApi = inject(ApplicationsService);
   private readonly dbConsole = inject(DbConsoleService);
   private readonly route = inject(ActivatedRoute);
+  private readonly maskMode = inject(MaskModeService);
 
   // Per-component connection coordinates (no password), keyed by application id.
   protected readonly connInfo = signal<Record<string, DbConnectionInfo>>({});
@@ -298,6 +300,24 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
     effect(() => {
       for (const db of this.dbApps()) {
         if (this.connRequested.has(db.id)) continue;
+        this.connRequested.add(db.id);
+        void this.loadConnInfo(db.id);
+      }
+    });
+
+    // `connRequested` fetches each app's connection info once, so a mask-mode
+    // toggle mid-visit would leave the connect card rendering the host string
+    // fetched under the previous state. Clear the cache and re-request.
+    let first = true;
+    effect(() => {
+      this.maskMode.enabled();
+      if (first) {
+        first = false;
+        return;
+      }
+      this.connRequested.clear();
+      this.connInfo.set({});
+      for (const db of this.dbApps()) {
         this.connRequested.add(db.id);
         void this.loadConnInfo(db.id);
       }

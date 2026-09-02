@@ -2,10 +2,13 @@ import {
   Component, OnChanges, SimpleChanges, signal,
   input,
   output,
+  inject,
+  effect,
   ChangeDetectionStrategy
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucidePlus,
@@ -172,7 +175,13 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                               placeholder="new value"
                               class="flex-1 font-mono text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-blue-400 rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
                             />
-                            <button type="button" (click)="toggleValues()" class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <button
+                              type="button"
+                              (click)="toggleValues()"
+                              [disabled]="maskMode.enabled()"
+                              [title]="maskMode.enabled() ? 'Turn off mask mode to reveal' : ''"
+                              class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-gray-400"
+                            >
                               <ng-icon [name]="showValues() ? 'lucideEyeOff' : 'lucideEye'" class="h-3.5 w-3.5" />
                             </button>
                             <button type="button" (click)="openExpandModal(i, true)" class="flex-shrink-0 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" title="Expand editor">
@@ -334,7 +343,13 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
           <div class="flex-1 overflow-auto p-5 space-y-3">
             @if (expandModal()!.isSensitive) {
               <div class="flex items-center gap-2 mb-1">
-                <button type="button" (click)="toggleValues()" class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                <button
+                  type="button"
+                  (click)="toggleValues()"
+                  [disabled]="maskMode.enabled()"
+                  [title]="maskMode.enabled() ? 'Turn off mask mode to reveal' : ''"
+                  class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-gray-500"
+                >
                   <ng-icon [name]="showValues() ? 'lucideEyeOff' : 'lucideEye'" class="h-3.5 w-3.5" />
                   {{ showValues() ? 'Hide' : 'Show' }} value
                 </button>
@@ -389,6 +404,16 @@ export class AppVariablesEditorComponent implements OnChanges {
   readonly saving = input(false);
 
   readonly save = output<VariablesSavePayload>();
+
+  protected readonly maskMode = inject(MaskModeService);
+
+  constructor() {
+    // Values already revealed locally must go back to hidden as soon as mask
+    // mode turns on, rather than waiting for another click.
+    effect(() => {
+      if (this.maskMode.enabled()) this.showValues.set(false);
+    });
+  }
 
   protected rows = signal<VarRow[]>([]);
   protected deletedKeys = signal<Set<string>>(new Set());
