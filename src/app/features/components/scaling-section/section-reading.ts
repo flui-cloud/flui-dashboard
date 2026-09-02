@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Resource, ResourceStatus, Signal, computed } from '@angular/core';
+import { Resource, Signal, computed } from '@angular/core';
 
 export interface Loaded<T> {
   data: T | null;
@@ -15,7 +15,7 @@ export function loadedOf<T>(
   return computed(() => {
     const error = resource.error();
     const absent = error instanceof HttpErrorResponse && error.status === 404;
-    const idle = resource.status() === ResourceStatus.Idle;
+    const idle = resource.status() === 'idle';
 
     return {
       data: resource.value() ?? null,
@@ -42,5 +42,5 @@ export function reasonOf(error: unknown): string {
       : null;
 
   if (typeof message === 'string' && message) return `${error.status} · ${message}`;
-  return `${error.status} ${error.statusText || 'error'}`;
+  return `${error.status} error`;
 }

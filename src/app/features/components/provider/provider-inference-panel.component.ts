@@ -1,13 +1,15 @@
-import { Component, Input, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, input, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCpu, lucideCheck, lucideCircleX, lucideLoader } from '@ng-icons/lucide';
 import { InferenceSettingsService } from '../../service/inference-settings.service';
+import { ValidationResultDto } from '../../../core/api/model/validationResultDto';
 
 @Component({
   selector: 'provider-inference-panel',
   standalone: true,
   imports: [NgIcon],
   providers: [provideIcons({ lucideCpu, lucideCheck, lucideCircleX, lucideLoader })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (info(); as p) {
       <section class="bg-card border border-border rounded-xl overflow-hidden">
@@ -57,7 +59,7 @@ import { InferenceSettingsService } from '../../service/inference-settings.servi
   `,
 })
 export class ProviderInferencePanelComponent implements OnInit {
-  @Input({ required: true }) providerId!: string;
+  readonly providerId = input.required<string>();
 
   private readonly service = inject(InferenceSettingsService);
 
@@ -65,7 +67,7 @@ export class ProviderInferencePanelComponent implements OnInit {
   protected readonly result = signal<{ ok: boolean; message: string } | null>(null);
 
   protected readonly info = computed(() =>
-    this.service.providers().find((p) => p.provider === this.providerId) ?? null,
+    this.service.providers().find((p) => p.provider === this.providerId()) ?? null,
   );
 
   ngOnInit(): void {
@@ -75,12 +77,10 @@ export class ProviderInferencePanelComponent implements OnInit {
   test(): void {
     this.testing.set(true);
     this.result.set(null);
-    this.service.validateProvider(this.providerId as any).subscribe({
+    this.service.validateProvider(this.providerId() as any).subscribe({
       next: (r) => {
         const models = (r.details as any)?.models;
-        const msg = Array.isArray(models)
-          ? `${models.length} model${models.length === 1 ? '' : 's'} reachable`
-          : r.message ?? (r.success ? 'OK' : 'Failed');
+        const msg = this.describeValidationResult(r, models);
         this.testing.set(false);
         this.result.set({ ok: r.success, message: msg });
       },
@@ -89,5 +89,13 @@ export class ProviderInferencePanelComponent implements OnInit {
         this.result.set({ ok: false, message: e?.error?.message ?? 'Validation failed' });
       },
     });
+  }
+
+  private describeValidationResult(r: ValidationResultDto, models: unknown): string {
+    if (Array.isArray(models)) {
+      return `${models.length} model${models.length === 1 ? '' : 's'} reachable`;
+    }
+    if (r.message) return r.message;
+    return r.success ? 'OK' : 'Failed';
   }
 }

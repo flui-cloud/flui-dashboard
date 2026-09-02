@@ -1,4 +1,4 @@
-import { Component, inject, output, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, output, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideX,
@@ -41,6 +41,7 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
       lucideCopy, lucideCheck, lucideExternalLink, lucideSettings,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <!-- Modal backdrop -->
     <div
@@ -316,49 +317,54 @@ export class DnsSetupWizardComponent implements OnInit {
   }
 
   protected async next(): Promise<void> {
-    if (this.wiz.currentStep() === 'mode') {
-      this.wiz.advance();
-      // In direct mode: entering issuer step — load existing HTTP-01 issuer if any
-      if (this.wiz.currentStep() === 'issuer' && this.wiz.certMode() === 'direct') {
-        const clusterId = this.clusterId();
-        if (clusterId) this.wiz.loadHttpIssuer(clusterId);
-      }
-      return;
-    }
-    if (this.wiz.currentStep() === 'zone') {
-      if (this.wiz.dnsZonesService.zones().length === 0 && this.wiz.zoneRegPhase() !== 'done') {
-        await this.wiz.registerZoneInline();
-        if (this.wiz.zoneRegPhase() !== 'done') return;
-      }
-      this.wiz.advance();
+    const step = this.wiz.currentStep();
+    if (step === 'mode') return this.nextFromMode();
+    if (step === 'zone') return this.nextFromZone();
+    if (step === 'issuer') return this.nextFromIssuer();
+    if (step === 'endpoints-config') return this.nextFromEndpointsConfig();
+    this.wiz.advance();
+  }
+
+  private nextFromMode(): void {
+    this.wiz.advance();
+    // In direct mode: entering issuer step — load existing HTTP-01 issuer if any
+    if (this.wiz.currentStep() === 'issuer' && this.wiz.certMode() === 'direct') {
       const clusterId = this.clusterId();
-      if (clusterId) this.wiz.runSetup(clusterId);
-      return;
+      if (clusterId) this.wiz.loadHttpIssuer(clusterId);
     }
-    if (this.wiz.currentStep() === 'issuer') {
-      const clusterId = this.clusterId();
-      if (this.wiz.certMode() === 'direct') {
-        const phase = this.wiz.issuerPhase();
-        if (phase === 'idle' || phase === 'error') {
-          // Run HTTP-01 issuer setup first, then advance when done
-          if (clusterId) await this.wiz.runSetup(clusterId);
-          if (this.wiz.issuerPhase() !== 'done') return; // error — stay on step
-        }
-        this.wiz.advance(); // → endpoints-config
-        if (clusterId) this.wiz.loadDirectConfig(clusterId);
-      } else {
-        this.wiz.advance(); // → endpoints (wildcard)
-        if (clusterId) this.wiz.runEndpointSetup(clusterId);
-      }
-      return;
-    }
-    if (this.wiz.currentStep() === 'endpoints-config') {
-      this.wiz.advance();
-      const clusterId = this.clusterId();
-      if (clusterId) this.wiz.runEndpointSetup(clusterId);
-      return;
+  }
+
+  private async nextFromZone(): Promise<void> {
+    if (this.wiz.dnsZonesService.zones().length === 0 && this.wiz.zoneRegPhase() !== 'done') {
+      await this.wiz.registerZoneInline();
+      if (this.wiz.zoneRegPhase() !== 'done') return;
     }
     this.wiz.advance();
+    const clusterId = this.clusterId();
+    if (clusterId) this.wiz.runSetup(clusterId);
+  }
+
+  private async nextFromIssuer(): Promise<void> {
+    const clusterId = this.clusterId();
+    if (this.wiz.certMode() === 'direct') {
+      const phase = this.wiz.issuerPhase();
+      if (phase === 'idle' || phase === 'error') {
+        // Run HTTP-01 issuer setup first, then advance when done
+        if (clusterId) await this.wiz.runSetup(clusterId);
+        if (this.wiz.issuerPhase() !== 'done') return; // error — stay on step
+      }
+      this.wiz.advance(); // → endpoints-config
+      if (clusterId) this.wiz.loadDirectConfig(clusterId);
+    } else {
+      this.wiz.advance(); // → endpoints (wildcard)
+      if (clusterId) this.wiz.runEndpointSetup(clusterId);
+    }
+  }
+
+  private nextFromEndpointsConfig(): void {
+    this.wiz.advance();
+    const clusterId = this.clusterId();
+    if (clusterId) this.wiz.runEndpointSetup(clusterId);
   }
 
   protected back(): void {

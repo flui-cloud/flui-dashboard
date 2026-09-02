@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, signal, computed, inject, ElementRef, AfterViewChecked, viewChild, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { firstValueFrom } from 'rxjs';
@@ -53,7 +53,7 @@ function phaseIndex(status: BuildPhase): number {
 @Component({
   selector: 'app-build-progress',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [
     provideIcons({
       lucideArrowLeft, lucideCheck, lucideLoader, lucideTriangleAlert,
@@ -62,6 +62,7 @@ function phaseIndex(status: BuildPhase): number {
       lucideContainer, lucideRocket, lucideCpu, lucideSquare,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-6xl mx-auto p-6">
       <!-- Back -->
@@ -425,7 +426,7 @@ function phaseIndex(status: BuildPhase): number {
   `,
 })
 export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewChecked {
-  @ViewChild('logContainer') private readonly logContainer?: ElementRef<HTMLDivElement>;
+  private readonly logContainer = viewChild<ElementRef<HTMLDivElement>>('logContainer');
 
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -493,29 +494,9 @@ export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewCh
         this.buildLogs.set(build.logs);
         this.shouldScrollLogs = true;
       }
-      const plan = build.railpackPlan as any;
-      if (plan?.framework && plan.framework !== 'unknown') this.detectedFramework.set(plan.framework);
-      if (plan?.buildCommand) this.buildCommand.set(plan.buildCommand);
-      if (plan?.startCommand) this.startCommand.set(plan.startCommand);
-      if (build.detectedFramework && build.detectedFramework !== 'unknown') this.detectedFramework.set(build.detectedFramework);
-      if (build.detectedFrontendFramework) this.detectedFrontendFramework.set(build.detectedFrontendFramework);
-      if (build.detectedPort) this.detectedPort.set(build.detectedPort);
+      this.applyInitialDetectedFields(build);
 
-      if (build.status === 'COMPLETED') {
-        const DEPLOY_WINDOW_MS = 5 * 60 * 1000;
-        const completedAgo = build.completedAt
-          ? Date.now() - new Date(build.completedAt).getTime()
-          : Infinity;
-        if (completedAgo > DEPLOY_WINDOW_MS) {
-          this.phase.set('completed');
-          return;
-        }
-        this.phase.set('deploying');
-      } else if (build.status === 'FAILED' || build.status === 'CANCELLED') {
-        this.phase.set('failed');
-        this.errorMessage.set(build.errorMessage ?? 'Build failed');
-        return; // no WS needed
-      }
+      if (this.applyInitialPhase(build)) return;
     } catch {
       // proceed with defaults
     }
@@ -523,6 +504,36 @@ export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewCh
     this.startElapsedTimer(startedAt);
     this.subscribeWebSocket(appId);
     this.startPolling(bId);
+  }
+
+  private applyInitialDetectedFields(build: any): void {
+    const plan = build.railpackPlan as any;
+    if (plan?.framework && plan.framework !== 'unknown') this.detectedFramework.set(plan.framework);
+    if (plan?.buildCommand) this.buildCommand.set(plan.buildCommand);
+    if (plan?.startCommand) this.startCommand.set(plan.startCommand);
+    if (build.detectedFramework && build.detectedFramework !== 'unknown') this.detectedFramework.set(build.detectedFramework);
+    if (build.detectedFrontendFramework) this.detectedFrontendFramework.set(build.detectedFrontendFramework);
+    if (build.detectedPort) this.detectedPort.set(build.detectedPort);
+  }
+
+  /** Returns true when the initial load already reached a terminal state and no WS/polling is needed. */
+  private applyInitialPhase(build: any): boolean {
+    if (build.status === 'COMPLETED') {
+      const DEPLOY_WINDOW_MS = 5 * 60 * 1000;
+      const completedAgo = build.completedAt
+        ? Date.now() - new Date(build.completedAt).getTime()
+        : Infinity;
+      if (completedAgo > DEPLOY_WINDOW_MS) {
+        this.phase.set('completed');
+        return true;
+      }
+      this.phase.set('deploying');
+    } else if (build.status === 'FAILED' || build.status === 'CANCELLED') {
+      this.phase.set('failed');
+      this.errorMessage.set(build.errorMessage ?? 'Build failed');
+      return true;
+    }
+    return false;
   }
 
   ngOnDestroy(): void {
@@ -634,47 +645,57 @@ export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewCh
       try {
         const build = await firstValueFrom(this.appBuildsApi.appBuildsControllerGetBuild(buildId));
         this.buildStatus.set(build.status);
-
-        // Sync logs from API as fallback when WS events are missed
-        if (build.logs?.length && build.logs.length > this.buildLogs().length) {
-          this.buildLogs.set(build.logs);
-          this.shouldScrollLogs = true;
-        }
-
-        // Pick up railpackPlan if we missed the WS buildPlan event
-        const plan = build.railpackPlan as any;
-        if (plan) {
-          if (plan.framework && plan.framework !== 'unknown' && !this.detectedFramework()) {
-            this.detectedFramework.set(plan.framework);
-          }
-          if (plan.buildCommand && !this.buildCommand()) this.buildCommand.set(plan.buildCommand);
-          if (plan.startCommand && !this.startCommand()) this.startCommand.set(plan.startCommand);
-        }
-        if (build.detectedFramework && build.detectedFramework !== 'unknown' && !this.detectedFramework()) {
-          this.detectedFramework.set(build.detectedFramework);
-        }
-        if (build.detectedFrontendFramework && !this.detectedFrontendFramework()) {
-          this.detectedFrontendFramework.set(build.detectedFrontendFramework);
-        }
-        if (build.detectedPort && !this.detectedPort()) this.detectedPort.set(build.detectedPort);
+        this.applySyncedLogs(build);
+        this.applyDetectedPlanIfMissing(build);
 
         const currentPhase = this.phase();
         if (currentPhase === 'completed' || currentPhase === 'failed') {
           this.stopPolling();
           return;
         }
-        if (build.status === 'COMPLETED') {
-          this.phase.set('deploying');
-          this.stopPolling();
-          this.stopElapsedTimer();
-        } else if (build.status === 'FAILED' || build.status === 'CANCELLED') {
-          this.phase.set('failed');
-          this.errorMessage.set(build.errorMessage ?? 'Build failed');
-          this.stopPolling();
-          this.stopElapsedTimer();
-        }
+        this.applyTerminalPhaseTransition(build, false);
       } catch { /* ignore */ }
     }, 5000);
+  }
+
+  /** Syncs logs from the API as a fallback when WS log events were missed. */
+  private applySyncedLogs(build: any): void {
+    if (build.logs?.length && build.logs.length > this.buildLogs().length) {
+      this.buildLogs.set(build.logs);
+      this.shouldScrollLogs = true;
+    }
+  }
+
+  /** Picks up detected plan fields we may have missed via WS, without overriding what's already set. */
+  private applyDetectedPlanIfMissing(build: any): void {
+    const plan = build.railpackPlan as any;
+    if (plan?.framework && plan.framework !== 'unknown' && !this.detectedFramework()) {
+      this.detectedFramework.set(plan.framework);
+    }
+    if (plan?.buildCommand && !this.buildCommand()) this.buildCommand.set(plan.buildCommand);
+    if (plan?.startCommand && !this.startCommand()) this.startCommand.set(plan.startCommand);
+    if (build.detectedFramework && build.detectedFramework !== 'unknown' && !this.detectedFramework()) {
+      this.detectedFramework.set(build.detectedFramework);
+    }
+    if (build.detectedFrontendFramework && !this.detectedFrontendFramework()) {
+      this.detectedFrontendFramework.set(build.detectedFrontendFramework);
+    }
+    if (build.detectedPort && !this.detectedPort()) this.detectedPort.set(build.detectedPort);
+  }
+
+  private applyTerminalPhaseTransition(build: any, stopHeartbeat: boolean): void {
+    if (build.status === 'COMPLETED') {
+      this.phase.set('deploying');
+      this.stopPolling();
+      this.stopElapsedTimer();
+      if (stopHeartbeat) this.stopHeartbeatWatchdog();
+    } else if (build.status === 'FAILED' || build.status === 'CANCELLED') {
+      this.phase.set('failed');
+      this.errorMessage.set(build.errorMessage ?? 'Build failed');
+      this.stopPolling();
+      this.stopElapsedTimer();
+      if (stopHeartbeat) this.stopHeartbeatWatchdog();
+    }
   }
 
   private stopPolling(): void {
@@ -706,35 +727,13 @@ export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewCh
       );
       this.buildStatus.set(build.status);
       this.connectionLost.set(false);
-      const plan = build.railpackPlan as any;
-      if (plan?.framework && plan.framework !== 'unknown' && !this.detectedFramework()) {
-        this.detectedFramework.set(plan.framework);
-      }
-      if (plan?.buildCommand && !this.buildCommand()) this.buildCommand.set(plan.buildCommand);
-      if (plan?.startCommand && !this.startCommand()) this.startCommand.set(plan.startCommand);
-      if (build.detectedFramework && build.detectedFramework !== 'unknown' && !this.detectedFramework()) {
-        this.detectedFramework.set(build.detectedFramework);
-      }
-      if (build.detectedFrontendFramework && !this.detectedFrontendFramework()) {
-        this.detectedFrontendFramework.set(build.detectedFrontendFramework);
-      }
-      if (build.detectedPort && !this.detectedPort()) this.detectedPort.set(build.detectedPort);
+      this.applyDetectedPlanIfMissing(build);
+
       // Don't override a terminal phase (completed/failed) on reconnect
       const currentPhase = this.phase();
       if (currentPhase === 'completed' || currentPhase === 'failed') return;
 
-      if (build.status === 'COMPLETED') {
-        this.phase.set('deploying');
-        this.stopPolling();
-        this.stopElapsedTimer();
-        this.stopHeartbeatWatchdog();
-      } else if (build.status === 'FAILED' || build.status === 'CANCELLED') {
-        this.phase.set('failed');
-        this.errorMessage.set(build.errorMessage ?? 'Build failed');
-        this.stopPolling();
-        this.stopElapsedTimer();
-        this.stopHeartbeatWatchdog();
-      }
+      this.applyTerminalPhaseTransition(build, true);
     } catch { /* ignore */ }
   }
 
@@ -756,8 +755,9 @@ export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewCh
   }
 
   private scrollLogsToBottom(): void {
-    if (this.logContainer) {
-      const el = this.logContainer.nativeElement;
+    const logContainer = this.logContainer();
+    if (logContainer) {
+      const el = logContainer.nativeElement;
       el.scrollTop = el.scrollHeight;
     }
   }

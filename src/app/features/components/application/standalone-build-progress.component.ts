@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { Component, OnInit, OnDestroy, signal, computed, inject, ElementRef, AfterViewChecked, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { firstValueFrom } from 'rxjs';
@@ -64,7 +64,7 @@ interface WizardState {
 @Component({
   selector: 'app-standalone-build-progress',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [
     provideIcons({
       lucideArrowLeft, lucideCheck, lucideLoader, lucideTriangleAlert,
@@ -73,6 +73,7 @@ interface WizardState {
       lucideCpu,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-6xl mx-auto p-6">
       <!-- Back -->
@@ -469,7 +470,7 @@ interface WizardState {
   `,
 })
 export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, AfterViewChecked {
-  @ViewChild('logContainer') private readonly logContainer?: ElementRef<HTMLDivElement>;
+  private readonly logContainer = viewChild<ElementRef<HTMLDivElement>>('logContainer');
 
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -538,7 +539,7 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
         return;
       }
   
-      const state = (this.router.getCurrentNavigation()?.extras?.state ?? history.state) as WizardState | undefined;
+      const state = (this.router.currentNavigation()?.extras?.state ?? history.state) as WizardState | undefined;
       if (state?.clusterId) {
         this.wizardState.set(state);
       }
@@ -671,12 +672,7 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
           this.buildLogs.set(build.logs);
           this.shouldScrollLogs = true;
         }
-        if (build.detectedFramework && build.detectedFramework !== 'unknown' && !this.detectedFramework()) {
-          this.detectedFramework.set(build.detectedFramework);
-        }
-        if (build.detectedPort && !this.detectedPort()) this.detectedPort.set(build.detectedPort);
-        if (build.suggestedName && !this.appName()) this.appName.set(build.suggestedName);
-        if (build.imageRef && !this.imageRef()) this.imageRef.set(build.imageRef);
+        this.applyDetectedFieldsIfMissing(build);
         if (build.detectedStartCommand && !this.detectedStartCommand()) this.detectedStartCommand.set(build.detectedStartCommand);
 
         const currentPhase = this.phase();
@@ -684,18 +680,39 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
           this.stopPolling();
           return;
         }
-        if (build.status === 'COMPLETED') {
-          this.phase.set('confirm');
-          this.stopPolling();
-          this.stopElapsedTimer();
-        } else if (build.status === 'FAILED' || build.status === 'CANCELLED') {
-          this.phase.set('failed');
-          this.errorMessage.set(build.errorMessage ?? 'Build failed');
-          this.stopPolling();
-          this.stopElapsedTimer();
-        }
+        this.applyTerminalPhaseTransition(build, false);
       } catch { /* ignore */ }
     }, 5000);
+  }
+
+  /** Picks up detected fields we may have missed via WS, without overriding what's already set. */
+  private applyDetectedFieldsIfMissing(build: {
+    detectedFramework?: string | null;
+    detectedPort?: number | null;
+    suggestedName?: string | null;
+    imageRef?: string | null;
+  }): void {
+    if (build.detectedFramework && build.detectedFramework !== 'unknown' && !this.detectedFramework()) {
+      this.detectedFramework.set(build.detectedFramework);
+    }
+    if (build.detectedPort && !this.detectedPort()) this.detectedPort.set(build.detectedPort);
+    if (build.suggestedName && !this.appName()) this.appName.set(build.suggestedName);
+    if (build.imageRef && !this.imageRef()) this.imageRef.set(build.imageRef);
+  }
+
+  private applyTerminalPhaseTransition(build: { status: string; errorMessage?: string | null }, stopHeartbeat: boolean): void {
+    if (build.status === 'COMPLETED') {
+      this.phase.set('confirm');
+      this.stopPolling();
+      this.stopElapsedTimer();
+      if (stopHeartbeat) this.stopHeartbeatWatchdog();
+    } else if (build.status === 'FAILED' || build.status === 'CANCELLED') {
+      this.phase.set('failed');
+      this.errorMessage.set(build.errorMessage ?? 'Build failed');
+      this.stopPolling();
+      this.stopElapsedTimer();
+      if (stopHeartbeat) this.stopHeartbeatWatchdog();
+    }
   }
 
   private stopPolling(): void {
@@ -725,26 +742,10 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
       const build = await firstValueFrom(this.buildsApi.standaloneBuildsControllerGetBuild(this.buildId()));
       this.buildStatus.set(build.status);
       this.connectionLost.set(false);
-      if (build.detectedFramework && build.detectedFramework !== 'unknown' && !this.detectedFramework()) {
-        this.detectedFramework.set(build.detectedFramework);
-      }
-      if (build.detectedPort && !this.detectedPort()) this.detectedPort.set(build.detectedPort);
-      if (build.suggestedName && !this.appName()) this.appName.set(build.suggestedName);
-      if (build.imageRef && !this.imageRef()) this.imageRef.set(build.imageRef);
+      this.applyDetectedFieldsIfMissing(build);
       const currentPhase = this.phase();
       if (currentPhase === 'confirm' || currentPhase === 'failed') return;
-      if (build.status === 'COMPLETED') {
-        this.phase.set('confirm');
-        this.stopPolling();
-        this.stopElapsedTimer();
-        this.stopHeartbeatWatchdog();
-      } else if (build.status === 'FAILED' || build.status === 'CANCELLED') {
-        this.phase.set('failed');
-        this.errorMessage.set(build.errorMessage ?? 'Build failed');
-        this.stopPolling();
-        this.stopElapsedTimer();
-        this.stopHeartbeatWatchdog();
-      }
+      this.applyTerminalPhaseTransition(build, true);
     } catch { /* ignore */ }
   }
 
@@ -762,8 +763,9 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
   }
 
   private scrollLogsToBottom(): void {
-    if (this.logContainer) {
-      const el = this.logContainer.nativeElement;
+    const logContainer = this.logContainer();
+    if (logContainer) {
+      const el = logContainer.nativeElement;
       el.scrollTop = el.scrollHeight;
     }
   }

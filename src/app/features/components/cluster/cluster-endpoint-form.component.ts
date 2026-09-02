@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal, OnChanges, computed } from '@angular/core';
+import { Component, inject, input, output, signal, OnChanges, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -35,6 +35,7 @@ export interface AppOption {
   standalone: true,
   imports: [FormsModule, NgIconComponent],
   providers: [provideIcons({ lucideX, lucideShieldCheck, lucideShieldAlert, lucideCopy, lucideCheck, lucideLoader, lucideCircleCheck, lucideCircleX, lucideWand2, lucideZap, lucideGlobe, lucidePencil, lucideTriangleAlert })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-4 border border-border rounded-lg card-inner space-y-4">
       <div class="flex items-center justify-between">
@@ -272,7 +273,7 @@ export interface AppOption {
             </button>
             @if (assignments().length > 1) {
               <select
-                [ngModel]="selectedAssignment()?.id"
+                [ngModel]="$safeNavigationMigration(selectedAssignment()?.id)"
                 (ngModelChange)="onZoneSelect($event)"
                 class="px-2 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
                 title="Choose the DNS zone for this endpoint"
@@ -855,60 +856,9 @@ export class ClusterEndpointFormComponent implements OnChanges {
   ngOnChanges(): void {
     const ep = this.endpoint();
     if (ep) {
-      this.selectedAppId.set(ep.applicationId ?? this.fixedApplicationId());
-      // Endpoint type is immutable on edit — read it from the persisted row.
-      this.endpointType.set((ep.endpointType as EndpointType) ?? 'public');
-      // If the cluster has zones but the existing endpoint isn't tied to one,
-      // it was created in BYOD mode — preserve that on edit.
-      this.byodOverride.set(this.assignments().length > 0 && !ep.clusterDnsZoneId);
-      this.selectedZoneId.set(ep.clusterDnsZoneId ?? '');
-      const zone = this.effectiveAssignment();
-      let prefix = '';
-      let fqdn = ep.fqdn;
-      if (zone) {
-        const suffix = '.' + this.zoneSuffix();
-        prefix = ep.fqdn.endsWith(suffix)
-          ? ep.fqdn.slice(0, ep.fqdn.length - suffix.length)
-          : ep.fqdn;
-        fqdn = '';
-      }
-      let ipSlugOverride = '';
-      if ((ep.hostnameMode as 'ip' | 'domain') === 'ip' && ep.fqdn) {
-        const ipDashed = this.masterIp().replaceAll('.',  '-');
-        const suffix = `.${ipDashed}.nip.io`;
-        if (ipDashed && ep.fqdn.endsWith(suffix)) {
-          ipSlugOverride = ep.fqdn.slice(0, ep.fqdn.length - suffix.length);
-        }
-      }
-      this.form = {
-        applicationId: ep.applicationId ?? this.fixedApplicationId(),
-        fqdn,
-        subdomainPrefix: prefix,
-        ipSlugOverride,
-        certificateRequired: ep.certificateRequired,
-        certificateProvider: ep.certificateProvider ?? 'lets_encrypt',
-        hostnameMode: (ep.hostnameMode as 'ip' | 'domain') ?? (zone ? 'domain' : 'ip'),
-        certChallenge: (ep.certChallenge as 'http-01' | 'dns-01') ?? 'http-01',
-      };
+      this.applyExistingEndpoint(ep);
     } else {
-      this.selectedAppId.set(this.fixedApplicationId());
-      // New endpoints default to zone mode when a zone is assigned — the user
-      // can opt into BYOD via the toggle. Reset here so reusing the modal
-      // doesn't carry a previous selection.
-      this.byodOverride.set(false);
-      this.selectedZoneId.set('');
-      // For new endpoints, honor parent's defaultEndpointType — but downgrade
-      // to "public" if the cluster cannot host internal endpoints, so the user
-      // never starts on a disabled option.
-      const wanted = this.defaultEndpointType();
-      this.endpointType.set(
-        wanted === 'internal' && this.internalAvailable() ? 'internal' : 'public',
-      );
-      this.form = this.emptyForm();
-      if (this.endpointType() === 'internal') {
-        this.form.hostnameMode = 'domain';
-        this.form.certificateRequired = true;
-      }
+      this.applyNewEndpointDefaults();
     }
     this.promoteToProd.set(false);
     this.fqdnError.set(null);
@@ -918,6 +868,68 @@ export class ClusterEndpointFormComponent implements OnChanges {
     this.dnsResult.set(null);
     this.dnsChecking.set(false);
     if (this.dnsDebounceTimer) clearTimeout(this.dnsDebounceTimer);
+  }
+
+  private applyExistingEndpoint(ep: AppEndpointResponseDto): void {
+    this.selectedAppId.set(ep.applicationId ?? this.fixedApplicationId());
+    // Endpoint type is immutable on edit — read it from the persisted row.
+    this.endpointType.set((ep.endpointType as EndpointType) ?? 'public');
+    // If the cluster has zones but the existing endpoint isn't tied to one,
+    // it was created in BYOD mode — preserve that on edit.
+    this.byodOverride.set(this.assignments().length > 0 && !ep.clusterDnsZoneId);
+    this.selectedZoneId.set(ep.clusterDnsZoneId ?? '');
+    const zone = this.effectiveAssignment();
+    let prefix = '';
+    let fqdn = ep.fqdn;
+    if (zone) {
+      const suffix = '.' + this.zoneSuffix();
+      prefix = ep.fqdn.endsWith(suffix)
+        ? ep.fqdn.slice(0, ep.fqdn.length - suffix.length)
+        : ep.fqdn;
+      fqdn = '';
+    }
+    const ipSlugOverride = this.deriveIpSlugOverride(ep);
+    this.form = {
+      applicationId: ep.applicationId ?? this.fixedApplicationId(),
+      fqdn,
+      subdomainPrefix: prefix,
+      ipSlugOverride,
+      certificateRequired: ep.certificateRequired,
+      certificateProvider: ep.certificateProvider ?? 'lets_encrypt',
+      hostnameMode: (ep.hostnameMode as 'ip' | 'domain') ?? (zone ? 'domain' : 'ip'),
+      certChallenge: (ep.certChallenge as 'http-01' | 'dns-01') ?? 'http-01',
+    };
+  }
+
+  private deriveIpSlugOverride(ep: AppEndpointResponseDto): string {
+    if ((ep.hostnameMode as 'ip' | 'domain') !== 'ip' || !ep.fqdn) return '';
+    const ipDashed = this.masterIp().replaceAll('.', '-');
+    const suffix = `.${ipDashed}.nip.io`;
+    if (ipDashed && ep.fqdn.endsWith(suffix)) {
+      return ep.fqdn.slice(0, ep.fqdn.length - suffix.length);
+    }
+    return '';
+  }
+
+  private applyNewEndpointDefaults(): void {
+    this.selectedAppId.set(this.fixedApplicationId());
+    // New endpoints default to zone mode when a zone is assigned — the user
+    // can opt into BYOD via the toggle. Reset here so reusing the modal
+    // doesn't carry a previous selection.
+    this.byodOverride.set(false);
+    this.selectedZoneId.set('');
+    // For new endpoints, honor parent's defaultEndpointType — but downgrade
+    // to "public" if the cluster cannot host internal endpoints, so the user
+    // never starts on a disabled option.
+    const wanted = this.defaultEndpointType();
+    this.endpointType.set(
+      wanted === 'internal' && this.internalAvailable() ? 'internal' : 'public',
+    );
+    this.form = this.emptyForm();
+    if (this.endpointType() === 'internal') {
+      this.form.hostnameMode = 'domain';
+      this.form.certificateRequired = true;
+    }
   }
 
   protected copyIp(): void {
@@ -993,8 +1005,8 @@ export class ClusterEndpointFormComponent implements OnChanges {
     const slug = this.applications().find(a => a.id === appId)?.slug ?? '';
     if (zone) {
       if (!this.form.subdomainPrefix && slug) this.form.subdomainPrefix = slug;
-    } else {
-      if (!this.form.fqdn && slug) this.form.fqdn = `${slug}.example.com`;
+    } else if (!this.form.fqdn && slug) {
+      this.form.fqdn = `${slug}.example.com`;
     }
   }
 

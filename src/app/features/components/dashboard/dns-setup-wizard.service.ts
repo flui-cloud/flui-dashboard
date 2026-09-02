@@ -211,40 +211,46 @@ export class DnsSetupWizardService {
   readonly canProceed = computed(() => {
     switch (this.currentStep()) {
       case 'mode': return true;
-      case 'zone': {
-        if (this.dnsZonesService.zones().length === 0) {
-          const phase = this.zoneRegPhase();
-          if (phase === 'done') return true;
-          return !!this.zoneRegSelectedZoneId() && !!this.zoneRegEmail()
-            && phase !== 'registering' && phase !== 'loading';
-        }
-        return !!this.selectedZoneId && !!this.acmeEmail;
-      }
-      case 'issuer': {
-        if (this.certMode() === 'direct') {
-          const phase = this.issuerPhase();
-          if (phase === 'done') return true;
-          // Allow clicking Next to trigger setup when email is ready but not yet submitted
-          if (phase === 'idle' || phase === 'error') {
-            return !!this.existingHttpIssuerEmail() || !!this.directAcmeEmail().trim();
-          }
-          return false; // configuring in progress
-        }
-        return this.issuerPhase() === 'done';
-      }
-      case 'endpoints-config': {
-        const rows = this.directEndpoints();
-        if (rows.length === 0) return false;
-        return rows.every(r => {
-          if (!r.configured) return false;
-          if (r.draftHostnameMode === 'ip') return !!r.draftPrefix.trim() && !!this.masterIp();
-          return !!r.draftFqdn.trim();
-        });
-      }
+      case 'zone': return this.canProceedFromZone();
+      case 'issuer': return this.canProceedFromIssuer();
+      case 'endpoints-config': return this.canProceedFromEndpointsConfig();
       case 'endpoints':        return this.endpointPhase() === 'done' && !this.hasFailedEndpoint();
       case 'done':             return true;
     }
   });
+
+  private canProceedFromZone(): boolean {
+    if (this.dnsZonesService.zones().length === 0) {
+      const phase = this.zoneRegPhase();
+      if (phase === 'done') return true;
+      return !!this.zoneRegSelectedZoneId() && !!this.zoneRegEmail()
+        && phase !== 'registering' && phase !== 'loading';
+    }
+    return !!this.selectedZoneId && !!this.acmeEmail;
+  }
+
+  private canProceedFromIssuer(): boolean {
+    if (this.certMode() === 'direct') {
+      const phase = this.issuerPhase();
+      if (phase === 'done') return true;
+      // Allow clicking Next to trigger setup when email is ready but not yet submitted
+      if (phase === 'idle' || phase === 'error') {
+        return !!this.existingHttpIssuerEmail() || !!this.directAcmeEmail().trim();
+      }
+      return false; // configuring in progress
+    }
+    return this.issuerPhase() === 'done';
+  }
+
+  private canProceedFromEndpointsConfig(): boolean {
+    const rows = this.directEndpoints();
+    if (rows.length === 0) return false;
+    return rows.every(r => {
+      if (!r.configured) return false;
+      if (r.draftHostnameMode === 'ip') return !!r.draftPrefix.trim() && !!this.masterIp();
+      return !!r.draftFqdn.trim();
+    });
+  }
 
   // ── Navigation helpers ───────────────────────────────────────────────
   advance(): void {
@@ -593,99 +599,146 @@ export class DnsSetupWizardService {
     // In direct mode, FQDNs come from directEndpoints; in wildcard mode, auto-generated from zone
     const isDirect = this.certMode() === 'direct';
 
-    let zoneName = '';
-    if (!isDirect) {
-      zoneName = this.selectedZoneName();
-      if (!zoneName) {
-        this.endpointError.set('Could not determine zone name');
-        this.endpointPhase.set('error');
-        return;
-      }
-    }
+    const zoneName = this.resolveEndpointSetupZoneName(isDirect);
+    if (zoneName === null) return; // error already set
 
     this.endpointError.set(null);
     this.endpointPhase.set('configuring');
 
     const zoneId = this.clusterDnsZoneService.assignment()?.id ?? '';
 
+    const systemAppDefs = await this.loadEndpointSetupSystemAppDefs(clusterId, isDirect);
+    if (systemAppDefs === null) return; // error already set
+
+    await this.appEndpointsService.loadEndpoints(clusterId);
+    const existingEndpoints = this.appEndpointsService.endpoints();
+
+    const appDefs = this.buildEndpointSetupAppDefs(isDirect, zoneName, systemAppDefs);
+
+    // Direct mode batch optimisation: one SAN certificate covering all FQDNs
+    // (HTTP-01 in this wizard) → 1 ACME challenge instead of N. The id is reused
+    // when each endpoint is created below.
+    const sanCertificateId = await this.resolveEndpointSetupSanCertificateId(clusterId, isDirect, isRetry, appDefs);
+
+    this.seedEndpointStatuses(isRetry, appDefs, systemAppDefs, existingEndpoints);
+
+    for (const def of appDefs) {
+      await this.processEndpointSetupDef(def, clusterId, zoneId, isDirect, sanCertificateId);
+    }
+
+    this.endpointPhase.set('polling');
+    await this.pollEndpointStatuses(clusterId, this.startsInStaging ? 'staging' : 'prod');
+  }
+
+  /** Returns null (and sets the error phase) when the zone name can't be determined in wildcard mode. */
+  private resolveEndpointSetupZoneName(isDirect: boolean): string | null {
+    if (isDirect) return '';
+    const zoneName = this.selectedZoneName();
+    if (!zoneName) {
+      this.endpointError.set('Could not determine zone name');
+      this.endpointPhase.set('error');
+      return null;
+    }
+    return zoneName;
+  }
+
+  /** Returns null (and sets the error phase) when wildcard mode can't proceed without system app data. */
+  private async loadEndpointSetupSystemAppDefs(
+    clusterId: string,
+    isDirect: boolean,
+  ): Promise<Array<{ key: string; label: string; slug: string; applicationId: string }> | null> {
+    try {
+      const [systemStatus, clusterApps] = await Promise.all([
+        firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerGetSystemDnsStatus(clusterId)),
+        firstValueFrom(this.applicationsApi.applicationsControllerListByCluster(clusterId, undefined, undefined, undefined, 'system')),
+      ]);
+      return this.buildSystemAppDefs(systemStatus, clusterApps);
+    } catch {
+      if (!isDirect) {
+        this.endpointError.set('Failed to load system app configuration');
+        this.endpointPhase.set('error');
+        return null;
+      }
+      // Direct mode: proceed without — app list comes from directEndpoints
+      return [];
+    }
+  }
+
+  // In direct mode, use FQDNs already configured by the user in step endpoints-config.
+  // In wildcard mode, build from system-status (source of truth for which apps exist).
+  private buildEndpointSetupAppDefs(
+    isDirect: boolean,
+    zoneName: string,
+    systemAppDefs: Array<{ key: string; label: string; slug: string; applicationId: string }>,
+  ): Array<{ key: string; label: string; fqdn: string; slug: string; hostnameMode: 'ip' | 'domain' }> {
+    if (isDirect) {
+      return this.directEndpoints().map(r => ({
+        key: r.key,
+        label: r.label,
+        fqdn: r.endpoint?.fqdn ?? this.resolveDraftFqdn(r),
+        slug: r.slug,
+        hostnameMode: r.draftHostnameMode,
+      }));
+    }
     // Subdomain prefix per slug for wildcard mode (convention: api.*, dashboard.*, auth.*)
     const SLUG_SUBDOMAIN: Record<string, string> = {
       'flui-api': 'api',
       'flui-web': 'dashboard',
       'zitadel':  'auth',
     };
+    return systemAppDefs.map(d => ({
+      key: d.key,
+      label: d.label,
+      fqdn: `${SLUG_SUBDOMAIN[d.slug] ?? d.slug}.${zoneName}`,
+      slug: d.slug,
+      hostnameMode: 'domain' as const,
+    }));
+  }
 
-    let systemAppDefs: Array<{ key: string; label: string; slug: string; applicationId: string }> = [];
+  private async resolveEndpointSetupSanCertificateId(
+    clusterId: string,
+    isDirect: boolean,
+    isRetry: boolean,
+    appDefs: Array<{ fqdn: string }>,
+  ): Promise<string | null> {
+    if (isRetry) return this.batchSanCertificateId();
+    if (!isDirect) return null;
+
+    const fqdnsForSan = appDefs
+      .map(d => d.fqdn)
+      .filter((f): f is string => !!f && f.length > 0);
+    if (fqdnsForSan.length === 0) return null;
+
     try {
-      const [systemStatus, clusterApps] = await Promise.all([
-        firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerGetSystemDnsStatus(clusterId)),
-        firstValueFrom(this.applicationsApi.applicationsControllerListByCluster(clusterId, undefined, undefined, undefined, 'system')),
-      ]);
-      systemAppDefs = this.buildSystemAppDefs(systemStatus, clusterApps);
-    } catch {
-      if (!isDirect) {
-        this.endpointError.set('Failed to load system app configuration');
-        this.endpointPhase.set('error');
-        return;
-      }
-      // Direct mode: proceed without — app list comes from directEndpoints
+      const sanDto: CreateSanCertificateDto = {
+        name: `system-services-${Date.now().toString(36)}`,
+        fqdns: fqdnsForSan,
+        certChallenge: CreateSanCertificateDto.CertChallengeEnum.Http01,
+        certificateProvider: this.startsInStaging
+          ? CreateSanCertificateDto.CertificateProviderEnum.LetsEncryptStaging
+          : CreateSanCertificateDto.CertificateProviderEnum.LetsEncrypt,
+      };
+      const san = await firstValueFrom(
+        this.sanCertsApi.sanCertificateControllerCreate(clusterId, sanDto),
+      );
+      const sanCertificateId = san?.id ?? null;
+      this.batchSanCertificateId.set(sanCertificateId);
+      return sanCertificateId;
+    } catch (err) {
+      // Fall back to per-host certs if SAN creation fails (non-fatal — the
+      // wizard still works, just slower). Surface as a warning, not an error.
+      console.warn('[dns-wizard] SAN certificate creation failed, falling back to per-host:', err);
+      this.batchSanCertificateId.set(null);
+      return null;
     }
+  }
 
-    await this.appEndpointsService.loadEndpoints(clusterId);
-    const existingEndpoints = this.appEndpointsService.endpoints();
-
-    // In direct mode, use FQDNs already configured by the user in step endpoints-config
-    // In wildcard mode, build from system-status (source of truth for which apps exist)
-    const appDefs: Array<{ key: string; label: string; fqdn: string; slug: string; hostnameMode: 'ip' | 'domain' }> = isDirect
-      ? this.directEndpoints().map(r => ({
-          key: r.key,
-          label: r.label,
-          fqdn: r.endpoint?.fqdn ?? this.resolveDraftFqdn(r),
-          slug: r.slug,
-          hostnameMode: r.draftHostnameMode,
-        }))
-      : systemAppDefs.map(d => ({
-          key: d.key,
-          label: d.label,
-          fqdn: `${SLUG_SUBDOMAIN[d.slug] ?? d.slug}.${zoneName}`,
-          slug: d.slug,
-          hostnameMode: 'domain' as const,
-        }));
-
-    // Direct mode batch optimisation: one SAN certificate covering all FQDNs
-    // (HTTP-01 in this wizard) → 1 ACME challenge instead of N. The id is reused
-    // when each endpoint is created below.
-    let sanCertificateId: string | null = null;
-    if (isDirect && !isRetry) {
-      const fqdnsForSan = appDefs
-        .map(d => d.fqdn)
-        .filter((f): f is string => !!f && f.length > 0);
-      if (fqdnsForSan.length > 0) {
-        try {
-          const sanDto: CreateSanCertificateDto = {
-            name: `system-services-${Date.now().toString(36)}`,
-            fqdns: fqdnsForSan,
-            certChallenge: CreateSanCertificateDto.CertChallengeEnum.Http01,
-            certificateProvider: this.startsInStaging
-              ? CreateSanCertificateDto.CertificateProviderEnum.LetsEncryptStaging
-              : CreateSanCertificateDto.CertificateProviderEnum.LetsEncrypt,
-          };
-          const san = await firstValueFrom(
-            this.sanCertsApi.sanCertificateControllerCreate(clusterId, sanDto),
-          );
-          sanCertificateId = san?.id ?? null;
-          this.batchSanCertificateId.set(sanCertificateId);
-        } catch (err) {
-          // Fall back to per-host certs if SAN creation fails (non-fatal — the
-          // wizard still works, just slower). Surface as a warning, not an error.
-          console.warn('[dns-wizard] SAN certificate creation failed, falling back to per-host:', err);
-          this.batchSanCertificateId.set(null);
-        }
-      }
-    } else if (isRetry) {
-      sanCertificateId = this.batchSanCertificateId();
-    }
-
+  private seedEndpointStatuses(
+    isRetry: boolean,
+    appDefs: Array<{ key: string; label: string; fqdn: string; slug: string; hostnameMode: 'ip' | 'domain' }>,
+    systemAppDefs: Array<{ key: string; label: string; slug: string; applicationId: string }>,
+    existingEndpoints: AppEndpointResponseDto[],
+  ): void {
     const appIdByKey = new Map(systemAppDefs.map(d => [d.key, d.applicationId]));
 
     if (isRetry) {
@@ -693,9 +746,10 @@ export class DnsSetupWizardService {
         if (a.status === 'done') return a;
         const ep = existingEndpoints.find(e => e.fqdn === a.fqdn);
         const slugForKey = appDefs.find(d => d.key === a.key)?.slug;
+        const applicationIdFromKey = slugForKey ? (appIdByKey.get(slugForKey) ?? null) : null;
         return {
           ...a,
-          applicationId: ep?.applicationId ?? (slugForKey ? (appIdByKey.get(slugForKey) ?? null) : null) ?? a.applicationId,
+          applicationId: ep?.applicationId ?? applicationIdFromKey ?? a.applicationId,
           endpointId: ep?.id ?? a.endpointId,
           phase: 'idle' as const,
           rolloutProgress: null,
@@ -722,70 +776,88 @@ export class DnsSetupWizardService {
         };
       }));
     }
+  }
 
-    for (const def of appDefs) {
-      const current = this.appEndpointsDataSignal().find(a => a.key === def.key)!;
-      if (current.status === 'done') continue;
+  private async processEndpointSetupDef(
+    def: { key: string; label: string; fqdn: string; slug: string; hostnameMode: 'ip' | 'domain' },
+    clusterId: string,
+    zoneId: string,
+    isDirect: boolean,
+    sanCertificateId: string | null,
+  ): Promise<void> {
+    const current = this.appEndpointsDataSignal().find(a => a.key === def.key)!;
+    if (current.status === 'done') return;
 
-      this.updateAppStatus(def.key, { status: 'running', phase: 'creating-endpoint' });
+    this.updateAppStatus(def.key, { status: 'running', phase: 'creating-endpoint' });
 
-      let endpointId = current.endpointId;
-
-      if (!endpointId) {
-        if (!current.applicationId) {
-          this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: 'Application not found — cannot create endpoint' });
-          continue;
-        }
-        const dto: CreateAppEndpointDto = {
-          applicationId: current.applicationId,
-          fqdn: def.fqdn || undefined,
-          clusterDnsZoneId: zoneId || undefined,
-          certificateRequired: true,
-          certificateProvider: this.startsInStaging
-            ? CreateAppEndpointDto.CertificateProviderEnum.LetsEncryptStaging
-            : CreateAppEndpointDto.CertificateProviderEnum.LetsEncrypt,
-          hostnameMode: (def.hostnameMode === 'ip'
-            ? CreateAppEndpointDto.HostnameModeEnum.Ip
-            : CreateAppEndpointDto.HostnameModeEnum.Domain),
-          certChallenge: isDirect
-            ? CreateAppEndpointDto.CertChallengeEnum.Http01
-            : CreateAppEndpointDto.CertChallengeEnum.Dns01,
-          // Bind to the shared SAN cert when we created one — reuses the master
-          // TLS Secret and skips per-host emission.
-          ...(sanCertificateId ? { sanCertificateId } : {}),
-        };
-        const ep = await this.appEndpointsService.createEndpoint(clusterId, dto);
-        if (!ep) {
-          this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: this.appEndpointsService.error() ?? 'Failed to create endpoint' });
-          continue;
-        }
-        endpointId = ep.id;
-        this.updateAppStatus(def.key, { endpointId, applicationId: ep.applicationId ?? null });
-        await this.appEndpointsService.loadEndpoints(clusterId);
-      }
-
-      const epForCheck = this.appEndpointsService.endpoints().find(e => e.id === endpointId);
-      const expectedIp = epForCheck?.dnsRecordValue ?? null;
-      if (expectedIp) {
-        this.updateAppStatus(def.key, { phase: 'checking-dns', dnsCheckStatus: 'checking' });
-        const dnsOk = await this.waitForDnsResolution(def.key, def.fqdn, expectedIp);
-        if (!dnsOk) this.updateAppStatus(def.key, { dnsCheckStatus: 'failed' });
-      } else {
-        this.updateAppStatus(def.key, { phase: 'checking-dns', dnsCheckStatus: 'pending' });
-      }
-
-      this.updateAppStatus(def.key, { phase: 'reconciling' });
-      const reconciled = await this.appEndpointsService.reconcileEndpoint(endpointId);
-      if (!reconciled) {
-        this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: this.appEndpointsService.error() ?? 'Failed to reconcile endpoint' });
-        continue;
-      }
-
-      // Domain sync runs after production certs are valid (see pollEndpointStatuses).
+    let endpointId = current.endpointId;
+    if (!endpointId) {
+      endpointId = await this.ensureEndpointCreated(def, clusterId, zoneId, isDirect, sanCertificateId, current);
+      if (!endpointId) return;
     }
 
-    this.endpointPhase.set('polling');
-    await this.pollEndpointStatuses(clusterId, this.startsInStaging ? 'staging' : 'prod');
+    await this.checkEndpointDns(def, endpointId);
+
+    this.updateAppStatus(def.key, { phase: 'reconciling' });
+    const reconciled = await this.appEndpointsService.reconcileEndpoint(endpointId);
+    if (!reconciled) {
+      this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: this.appEndpointsService.error() ?? 'Failed to reconcile endpoint' });
+    }
+
+    // Domain sync runs after production certs are valid (see pollEndpointStatuses).
+  }
+
+  /** Creates the endpoint for a def that doesn't have one yet. Returns null (and sets the error status) on failure. */
+  private async ensureEndpointCreated(
+    def: { key: string; fqdn: string; hostnameMode: 'ip' | 'domain' },
+    clusterId: string,
+    zoneId: string,
+    isDirect: boolean,
+    sanCertificateId: string | null,
+    current: AppEndpointStatus,
+  ): Promise<string | null> {
+    if (!current.applicationId) {
+      this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: 'Application not found — cannot create endpoint' });
+      return null;
+    }
+    const dto: CreateAppEndpointDto = {
+      applicationId: current.applicationId,
+      fqdn: def.fqdn || undefined,
+      clusterDnsZoneId: zoneId || undefined,
+      certificateRequired: true,
+      certificateProvider: this.startsInStaging
+        ? CreateAppEndpointDto.CertificateProviderEnum.LetsEncryptStaging
+        : CreateAppEndpointDto.CertificateProviderEnum.LetsEncrypt,
+      hostnameMode: (def.hostnameMode === 'ip'
+        ? CreateAppEndpointDto.HostnameModeEnum.Ip
+        : CreateAppEndpointDto.HostnameModeEnum.Domain),
+      certChallenge: isDirect
+        ? CreateAppEndpointDto.CertChallengeEnum.Http01
+        : CreateAppEndpointDto.CertChallengeEnum.Dns01,
+      // Bind to the shared SAN cert when we created one — reuses the master
+      // TLS Secret and skips per-host emission.
+      ...(sanCertificateId ? { sanCertificateId } : {}),
+    };
+    const ep = await this.appEndpointsService.createEndpoint(clusterId, dto);
+    if (!ep) {
+      this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: this.appEndpointsService.error() ?? 'Failed to create endpoint' });
+      return null;
+    }
+    this.updateAppStatus(def.key, { endpointId: ep.id, applicationId: ep.applicationId ?? null });
+    await this.appEndpointsService.loadEndpoints(clusterId);
+    return ep.id;
+  }
+
+  private async checkEndpointDns(def: { key: string; fqdn: string }, endpointId: string): Promise<void> {
+    const epForCheck = this.appEndpointsService.endpoints().find(e => e.id === endpointId);
+    const expectedIp = epForCheck?.dnsRecordValue ?? null;
+    if (expectedIp) {
+      this.updateAppStatus(def.key, { phase: 'checking-dns', dnsCheckStatus: 'checking' });
+      const dnsOk = await this.waitForDnsResolution(def.key, def.fqdn, expectedIp);
+      if (!dnsOk) this.updateAppStatus(def.key, { dnsCheckStatus: 'failed' });
+    } else {
+      this.updateAppStatus(def.key, { phase: 'checking-dns', dnsCheckStatus: 'pending' });
+    }
   }
 
   // ── Rollout monitoring ───────────────────────────────────────────────
@@ -841,9 +913,26 @@ export class DnsSetupWizardService {
 
     if (!fluiApiAppId || !fluiWebAppId) return;
 
-    // Sync runs sequentially per app, but Next is still disabled until the
-    // whole flow finishes. Spin all three loaders together so the UI doesn't
-    // look frozen with checkmarks while work is still happening.
+    this.startDomainSyncLoaders(apps);
+
+    // OIDC-only: sync Zitadel ExternalDomain + register new redirect URIs.
+    if (zitadelAppId) {
+      const authOk = await this.syncZitadelAuthDomain(clusterId, zitadelAppId, fluiWebAppId);
+      if (!authOk) return;
+    }
+
+    // Web before api: in OIDC mode, sync-api-domain restarts flui-api and invalidates the token,
+    // so it must be last. In local mode order doesn't matter but we keep it consistent.
+    const webOk = await this.syncFluiWebDomain(clusterId, fluiApiAppId, fluiWebAppId, zitadelAppId);
+    if (!webOk) return;
+
+    await this.syncFluiApiDomain(clusterId, fluiApiAppId, fluiWebAppId, zitadelAppId);
+  }
+
+  // Sync runs sequentially per app, but Next is still disabled until the
+  // whole flow finishes. Spin all three loaders together so the UI doesn't
+  // look frozen with checkmarks while work is still happening.
+  private startDomainSyncLoaders(apps: AppEndpointStatus[]): void {
     const initialSyncPhase: Record<string, AppEndpointPhase> = {
       'zitadel': 'syncing-auth',
       'flui-web': 'syncing-web',
@@ -854,24 +943,24 @@ export class DnsSetupWizardService {
         this.updateAppStatus(app.key, { status: 'running', phase: initialSyncPhase[app.key] });
       }
     }
+  }
 
-    // OIDC-only: sync Zitadel ExternalDomain + register new redirect URIs.
-    if (zitadelAppId) {
-      this.updateAppStatus('zitadel', { phase: 'syncing-auth' });
-      try {
-        const authDto: SyncAuthDomainDto = { fluiWebApplicationId: fluiWebAppId };
-        await firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerSyncAuthDomain(clusterId, authDto));
-      } catch {
-        this.updateAppStatus('zitadel', { status: 'error', phase: 'error', errorMessage: 'Auth domain sync failed' });
-        return;
-      }
-      const authRolloutOk = await this.waitForRollout(zitadelAppId, 'zitadel', 'rollout-auth');
-      if (!authRolloutOk) return;
-      this.updateAppStatus('zitadel', { status: 'done', phase: 'done' });
+  private async syncZitadelAuthDomain(clusterId: string, zitadelAppId: string, fluiWebAppId: string): Promise<boolean> {
+    this.updateAppStatus('zitadel', { phase: 'syncing-auth' });
+    try {
+      const authDto: SyncAuthDomainDto = { fluiWebApplicationId: fluiWebAppId };
+      await firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerSyncAuthDomain(clusterId, authDto));
+    } catch {
+      this.updateAppStatus('zitadel', { status: 'error', phase: 'error', errorMessage: 'Auth domain sync failed' });
+      return false;
     }
+    const authRolloutOk = await this.waitForRollout(zitadelAppId, 'zitadel', 'rollout-auth');
+    if (!authRolloutOk) return false;
+    this.updateAppStatus('zitadel', { status: 'done', phase: 'done' });
+    return true;
+  }
 
-    // Web before api: in OIDC mode, sync-api-domain restarts flui-api and invalidates the token,
-    // so it must be last. In local mode order doesn't matter but we keep it consistent.
+  private async syncFluiWebDomain(clusterId: string, fluiApiAppId: string, fluiWebAppId: string, zitadelAppId: string | null | undefined): Promise<boolean> {
     this.updateAppStatus('flui-web', { phase: 'syncing-web' });
     try {
       const webDto: SyncWebDomainDto = {
@@ -882,13 +971,16 @@ export class DnsSetupWizardService {
       await firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerSyncWebDomain(clusterId, webDto));
     } catch {
       this.updateAppStatus('flui-web', { status: 'error', phase: 'error', errorMessage: 'Web domain sync failed' });
-      return;
+      return false;
     }
 
     const webRolloutOk = await this.waitForRollout(fluiWebAppId, 'flui-web', 'rollout-web');
-    if (!webRolloutOk) return;
+    if (!webRolloutOk) return false;
     this.updateAppStatus('flui-web', { status: 'done', phase: 'done' });
+    return true;
+  }
 
+  private async syncFluiApiDomain(clusterId: string, fluiApiAppId: string, fluiWebAppId: string, zitadelAppId: string | null | undefined): Promise<boolean> {
     this.updateAppStatus('flui-api', { phase: 'syncing-api' });
     try {
       const syncDto: SyncApiDomainDto = {
@@ -899,12 +991,13 @@ export class DnsSetupWizardService {
       await firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerSyncApiDomain(clusterId, syncDto));
     } catch {
       this.updateAppStatus('flui-api', { status: 'error', phase: 'error', errorMessage: 'API domain sync failed' });
-      return;
+      return false;
     }
 
     const apiRolloutOk = await this.waitForRollout(fluiApiAppId, 'flui-api', 'rollout-api');
-    if (!apiRolloutOk) return;
+    if (!apiRolloutOk) return false;
     this.updateAppStatus('flui-api', { status: 'done', phase: 'done' });
+    return true;
   }
 
   private async waitForDnsResolution(key: AppEndpointStatus['key'], fqdn: string, expectedIp: string): Promise<boolean> {
@@ -939,81 +1032,11 @@ export class DnsSetupWizardService {
         const allEndpoints = this.appEndpointsService.endpoints();
 
         for (const app of this.appEndpointsDataSignal()) {
-          if (app.status === 'error' && !app.endpointId) continue;
-          if (!app.endpointId) continue;
-          const ep = allEndpoints.find(e => e.id === app.endpointId);
-          if (!ep) continue;
-
-          const ingressConfigured = ep.reconciliationStatus === 'IN_SYNC';
-          const certStatus = (ep.certificateStatus as AppEndpointStatus['certStatus']) ?? null;
-          const certMessage = ep.certificateMessage ?? null;
-          // cert-manager may set "failed" during transient challenge propagation — treat as still issuing
-          const challengeInProgress = (certStatus === 'failed') &&
-            !!certMessage && /waiting for (dns-01|http-01|tls-alpn-01) challenge/i.test(certMessage);
-          const certPermanentlyFailed = (certStatus === 'failed' || certStatus === 'expired') && !challengeInProgress;
-          // If challenge is still in progress, treat as "issuing" for display purposes
-          const effectiveStatus: AppEndpointStatus['certStatus'] = challengeInProgress ? 'issuing' : certStatus;
-          const certSettled = effectiveStatus !== null && effectiveStatus !== 'pending' && effectiveStatus !== 'issuing';
-          const isReady = ingressConfigured && certSettled;
-
-          // In staging phase: a settled cert means staging is done (valid or failed)
-          // In prod phase: done means final success
-          let newPhase: AppEndpointPhase;
-          if (!isReady) newPhase = activePhase;
-          else if (certPermanentlyFailed) newPhase = 'error';
-          else if (phase === 'staging') newPhase = 'issuing-cert';
-          else newPhase = 'done';
-
-          let endpointStatus: AppEndpointStatus['status'];
-          if (isReady && certPermanentlyFailed) endpointStatus = 'error';
-          else if (isReady && phase === 'prod') endpointStatus = 'done';
-          else endpointStatus = 'running';
-
-          this.updateAppStatus(app.key, {
-            certStatus: effectiveStatus, certMessage, ingressConfigured,
-            phase: newPhase,
-            status: endpointStatus,
-            errorMessage: certPermanentlyFailed ? (certMessage ?? 'Certificate issuance failed') : null,
-          });
+          this.applyPolledEndpointStatus(app, allEndpoints, phase, activePhase);
         }
 
-        const apps = this.appEndpointsDataSignal();
-        const appsWithEndpoint = apps.filter(a => !!a.endpointId);
-        const allEndpointsLoaded = this.appEndpointsService.endpoints();
-
-        // Classify each active endpoint by its current cert status from the API
-        const certEntries = appsWithEndpoint.map(a => {
-          const ep = allEndpointsLoaded.find(e => e.id === a.endpointId);
-          return { status: ep?.certificateStatus as AppEndpointStatus['certStatus'] | undefined, message: ep?.certificateMessage ?? null };
-        });
-
-        // cert-manager sets "failed" even during transient challenge propagation waits.
-        // Only treat as permanently failed if message does NOT indicate an in-progress challenge.
-        const isChallengeInProgress = (msg: string | null) =>
-          !!msg && /waiting for (dns-01|http-01|tls-alpn-01) challenge/i.test(msg);
-
-        const anyPermanentlyFailed = certEntries.some(
-          e => (e.status === 'failed' || e.status === 'expired') && !isChallengeInProgress(e.message)
-        );
-        const allValid = certEntries.length > 0 && certEntries.every(e => e.status === 'valid');
-
-        // Stop immediately if any cert has permanently failed
-        if (anyPermanentlyFailed) {
-          this.endpointPhase.set('done');
-          return;
-        }
-
-        if (allValid) {
-          if (phase === 'staging' && this.autoUpgradeAfterStaging) {
-            const upgraded = await this.upgradeToProdCerts();
-            if (upgraded) {
-              await this.pollEndpointStatuses(clusterId, 'prod');
-            }
-            return;
-          }
-          await this.finalizeEndpointFlow(clusterId);
-          return;
-        }
+        const done = await this.evaluatePollCompletion(clusterId, phase);
+        if (done) return;
       } catch { /* transient */ }
     }
 
@@ -1022,6 +1045,114 @@ export class DnsSetupWizardService {
     );
     this.endpointPhase.set('done');
     this.endpointError.set('Endpoints are configured. Certificate issuance is running in the background.');
+  }
+
+  private applyPolledEndpointStatus(
+    app: AppEndpointStatus,
+    allEndpoints: AppEndpointResponseDto[],
+    phase: 'staging' | 'prod',
+    activePhase: AppEndpointPhase,
+  ): void {
+    if (app.status === 'error' && !app.endpointId) return;
+    if (!app.endpointId) return;
+    const ep = allEndpoints.find(e => e.id === app.endpointId);
+    if (!ep) return;
+
+    const { ingressConfigured, effectiveStatus, certMessage, certPermanentlyFailed, isReady } = this.classifyPolledCertStatus(ep);
+    const { newPhase, endpointStatus } = this.derivePolledPhaseAndStatus(isReady, certPermanentlyFailed, phase, activePhase);
+
+    this.updateAppStatus(app.key, {
+      certStatus: effectiveStatus, certMessage, ingressConfigured,
+      phase: newPhase,
+      status: endpointStatus,
+      errorMessage: certPermanentlyFailed ? (certMessage ?? 'Certificate issuance failed') : null,
+    });
+  }
+
+  private classifyPolledCertStatus(ep: AppEndpointResponseDto): {
+    ingressConfigured: boolean;
+    effectiveStatus: AppEndpointStatus['certStatus'];
+    certMessage: string | null;
+    certPermanentlyFailed: boolean;
+    isReady: boolean;
+  } {
+    const ingressConfigured = ep.reconciliationStatus === 'IN_SYNC';
+    const certStatus = (ep.certificateStatus as AppEndpointStatus['certStatus']) ?? null;
+    const certMessage = ep.certificateMessage ?? null;
+    // cert-manager may set "failed" during transient challenge propagation — treat as still issuing
+    const challengeInProgress = (certStatus === 'failed') &&
+      !!certMessage && /waiting for (dns-01|http-01|tls-alpn-01) challenge/i.test(certMessage);
+    const certPermanentlyFailed = (certStatus === 'failed' || certStatus === 'expired') && !challengeInProgress;
+    // If challenge is still in progress, treat as "issuing" for display purposes
+    const effectiveStatus: AppEndpointStatus['certStatus'] = challengeInProgress ? 'issuing' : certStatus;
+    const certSettled = effectiveStatus !== null && effectiveStatus !== 'pending' && effectiveStatus !== 'issuing';
+    const isReady = ingressConfigured && certSettled;
+    return { ingressConfigured, effectiveStatus, certMessage, certPermanentlyFailed, isReady };
+  }
+
+  private derivePolledPhaseAndStatus(
+    isReady: boolean,
+    certPermanentlyFailed: boolean,
+    phase: 'staging' | 'prod',
+    activePhase: AppEndpointPhase,
+  ): { newPhase: AppEndpointPhase; endpointStatus: AppEndpointStatus['status'] } {
+    // In staging phase: a settled cert means staging is done (valid or failed)
+    // In prod phase: done means final success
+    let newPhase: AppEndpointPhase;
+    if (!isReady) newPhase = activePhase;
+    else if (certPermanentlyFailed) newPhase = 'error';
+    else if (phase === 'staging') newPhase = 'issuing-cert';
+    else newPhase = 'done';
+
+    let endpointStatus: AppEndpointStatus['status'];
+    if (isReady && certPermanentlyFailed) endpointStatus = 'error';
+    else if (isReady && phase === 'prod') endpointStatus = 'done';
+    else endpointStatus = 'running';
+
+    return { newPhase, endpointStatus };
+  }
+
+  /** Returns true once polling should stop — either a terminal failure, or the flow finished / handed off to prod polling. */
+  private async evaluatePollCompletion(clusterId: string, phase: 'staging' | 'prod'): Promise<boolean> {
+    const apps = this.appEndpointsDataSignal();
+    const appsWithEndpoint = apps.filter(a => !!a.endpointId);
+    const allEndpointsLoaded = this.appEndpointsService.endpoints();
+
+    // Classify each active endpoint by its current cert status from the API
+    const certEntries = appsWithEndpoint.map(a => {
+      const ep = allEndpointsLoaded.find(e => e.id === a.endpointId);
+      return { status: ep?.certificateStatus as AppEndpointStatus['certStatus'] | undefined, message: ep?.certificateMessage ?? null };
+    });
+
+    // cert-manager sets "failed" even during transient challenge propagation waits.
+    // Only treat as permanently failed if message does NOT indicate an in-progress challenge.
+    const isChallengeInProgress = (msg: string | null) =>
+      !!msg && /waiting for (dns-01|http-01|tls-alpn-01) challenge/i.test(msg);
+
+    const anyPermanentlyFailed = certEntries.some(
+      e => (e.status === 'failed' || e.status === 'expired') && !isChallengeInProgress(e.message)
+    );
+    const allValid = certEntries.length > 0 && certEntries.every(e => e.status === 'valid');
+
+    // Stop immediately if any cert has permanently failed
+    if (anyPermanentlyFailed) {
+      this.endpointPhase.set('done');
+      return true;
+    }
+
+    if (allValid) {
+      if (phase === 'staging' && this.autoUpgradeAfterStaging) {
+        const upgraded = await this.upgradeToProdCerts();
+        if (upgraded) {
+          await this.pollEndpointStatuses(clusterId, 'prod');
+        }
+        return true;
+      }
+      await this.finalizeEndpointFlow(clusterId);
+      return true;
+    }
+
+    return false;
   }
 
   /** Upgrades all active endpoints from staging to production Let's Encrypt. Returns false if any upgrade failed. */

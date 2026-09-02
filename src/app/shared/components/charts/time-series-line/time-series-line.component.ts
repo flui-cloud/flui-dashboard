@@ -1,5 +1,5 @@
-import { Component, input, computed, signal, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, computed, signal, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
 import {
@@ -34,7 +34,7 @@ import {
 @Component({
   selector: 'app-time-series-line',
   standalone: true,
-  imports: [CommonModule, NgxEchartsDirective],
+  imports: [NgxEchartsDirective],
   providers: [provideEcharts()],
   template: `
     <div class="time-series-container" [style.height]="config().height">
@@ -45,6 +45,7 @@ import {
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .time-series-container {
       display: flex;
@@ -137,8 +138,133 @@ export class TimeSeriesLineComponent implements OnDestroy {
     const chartData = this.data();
     const isDark = this.currentTheme() === 'dark';
 
-    // Prepare series data
-    const series: any[] = chartData.series.map((s, index) => {
+    const series = this.buildSeries(chartData, cfg);
+
+    // Add mark lines to first series
+    const thresholdMarkLines = this.buildThresholdMarkLines(cfg);
+    if (series.length > 0 && thresholdMarkLines.length > 0) {
+      series[0].markLine = {
+        silent: true,
+        data: thresholdMarkLines
+      };
+    }
+
+    return {
+      title: {
+        text: chartData.title,
+        left: 'left',
+        textStyle: {
+          fontSize: 16,
+          fontWeight: 600,
+          color: isDark ? '#f9fafb' : '#111827'
+        }
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: isDark ? '#1f2937' : '#ffffff',
+        borderColor: isDark ? '#374151' : '#e5e7eb',
+        textStyle: {
+          color: isDark ? '#f9fafb' : '#111827'
+        },
+        formatter: (params: any) => this.formatTooltip(params)
+      },
+      legend: this.buildLegendConfig(cfg, chartData, isDark),
+      grid: this.buildGridConfig(cfg, chartData),
+      xAxis: this.buildXAxisConfig(cfg, isDark),
+      yAxis: this.buildYAxisConfig(cfg, isDark),
+      series: series,
+      animation: cfg.animated,
+      dataZoom: this.buildDataZoomConfig(cfg)
+    };
+  });
+
+  private buildLegendConfig(cfg: any, chartData: TimeSeriesChartData, isDark: boolean): object {
+    return {
+      show: cfg.showLegend && chartData.series.length > 1,
+      top: 35,
+      left: 'left',
+      textStyle: {
+        color: isDark ? '#9ca3af' : '#6b7280'
+      }
+    };
+  }
+
+  private buildGridConfig(cfg: any, chartData: TimeSeriesChartData): object {
+    return {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: cfg.showLegend && chartData.series.length > 1 ? 70 : 50,
+      containLabel: true
+    };
+  }
+
+  private buildXAxisConfig(cfg: any, isDark: boolean): object {
+    return {
+      type: 'time',
+      boundaryGap: false as any,
+      axisLine: {
+        lineStyle: {
+          color: isDark ? '#374151' : '#e5e7eb'
+        }
+      },
+      axisLabel: {
+        color: isDark ? '#9ca3af' : '#6b7280',
+        fontSize: 11,
+        formatter: (value: number) => this.formatTimestamp(new Date(value))
+      },
+      splitLine: {
+        show: cfg.showGrid,
+        lineStyle: {
+          color: isDark ? '#374151' : '#f3f4f6',
+          type: 'dashed'
+        }
+      }
+    };
+  }
+
+  private buildYAxisConfig(cfg: any, isDark: boolean): object {
+    return {
+      type: 'value',
+      min: cfg.yMin,
+      max: cfg.yMax,
+      axisLine: {
+        show: false
+      },
+      axisLabel: {
+        color: isDark ? '#9ca3af' : '#6b7280',
+        fontSize: 11,
+        formatter: (value: number) => this.formatValue(value)
+      },
+      splitLine: {
+        show: cfg.showGrid,
+        lineStyle: {
+          color: isDark ? '#374151' : '#f3f4f6',
+          type: 'dashed'
+        }
+      }
+    };
+  }
+
+  private buildDataZoomConfig(cfg: any): any[] | undefined {
+    if (!cfg.enableZoom) return undefined;
+    return [
+      {
+        type: 'inside',
+        start: 0,
+        end: 100
+      },
+      {
+        start: 0,
+        end: 100,
+        height: 20,
+        bottom: 10
+      }
+    ];
+  }
+
+  private buildSeries(chartData: TimeSeriesChartData, cfg: any): any[] {
+    return chartData.series.map((s, index) => {
       const seriesConfig: any = {
         name: s.name,
         type: 'line',
@@ -167,8 +293,9 @@ export class TimeSeriesLineComponent implements OnDestroy {
 
       return seriesConfig;
     });
+  }
 
-    // Threshold lines (if any)
+  private buildThresholdMarkLines(cfg: any): any[] {
     const thresholdMarkLines: any[] = [];
     if (cfg.thresholds?.warning !== undefined) {
       thresholdMarkLines.push({
@@ -204,121 +331,24 @@ export class TimeSeriesLineComponent implements OnDestroy {
         }
       });
     }
+    return thresholdMarkLines;
+  }
 
-    // Add mark lines to first series
-    if (series.length > 0 && thresholdMarkLines.length > 0) {
-      series[0].markLine = {
-        silent: true,
-        data: thresholdMarkLines
-      };
-    }
+  private formatTooltip(params: any[]): string {
+    const timestamp = new Date(params[0].value[0]);
+    let result = `<div style="font-weight: 600; margin-bottom: 4px;">${this.formatTimestamp(timestamp)}</div>`;
 
-    return {
-      title: {
-        text: chartData.title,
-        left: 'left',
-        textStyle: {
-          fontSize: 16,
-          fontWeight: 600,
-          color: isDark ? '#f9fafb' : '#111827'
-        }
-      },
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: isDark ? '#1f2937' : '#ffffff',
-        borderColor: isDark ? '#374151' : '#e5e7eb',
-        textStyle: {
-          color: isDark ? '#f9fafb' : '#111827'
-        },
-        formatter: (params: any) => {
-          const timestamp = new Date(params[0].value[0]);
-          let result = `<div style="font-weight: 600; margin-bottom: 4px;">${this.formatTimestamp(timestamp)}</div>`;
+    params.forEach((param: any) => {
+      const value = param.value[1];
+      const color = param.color;
+      result += `<div style="display: flex; align-items: center; margin-top: 4px;">
+        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${color}; margin-right: 8px;"></span>
+        <span style="flex: 1;">${param.seriesName}:</span>
+        <span style="font-weight: 600; margin-left: 8px;">${this.formatValue(value)}</span>
+      </div>`;
+    });
 
-          params.forEach((param: any) => {
-            const value = param.value[1];
-            const color = param.color;
-            result += `<div style="display: flex; align-items: center; margin-top: 4px;">
-              <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${color}; margin-right: 8px;"></span>
-              <span style="flex: 1;">${param.seriesName}:</span>
-              <span style="font-weight: 600; margin-left: 8px;">${this.formatValue(value)}</span>
-            </div>`;
-          });
-
-          return result;
-        }
-      },
-      legend: {
-        show: cfg.showLegend && chartData.series.length > 1,
-        top: 35,
-        left: 'left',
-        textStyle: {
-          color: isDark ? '#9ca3af' : '#6b7280'
-        }
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        top: cfg.showLegend && chartData.series.length > 1 ? 70 : 50,
-        containLabel: true
-      },
-      xAxis: {
-        type: 'time',
-        boundaryGap: false as any,
-        axisLine: {
-          lineStyle: {
-            color: isDark ? '#374151' : '#e5e7eb'
-          }
-        },
-        axisLabel: {
-          color: isDark ? '#9ca3af' : '#6b7280',
-          fontSize: 11,
-          formatter: (value: number) => this.formatTimestamp(new Date(value))
-        },
-        splitLine: {
-          show: cfg.showGrid,
-          lineStyle: {
-            color: isDark ? '#374151' : '#f3f4f6',
-            type: 'dashed'
-          }
-        }
-      },
-      yAxis: {
-        type: 'value',
-        min: cfg.yMin,
-        max: cfg.yMax,
-        axisLine: {
-          show: false
-        },
-        axisLabel: {
-          color: isDark ? '#9ca3af' : '#6b7280',
-          fontSize: 11,
-          formatter: (value: number) => this.formatValue(value)
-        },
-        splitLine: {
-          show: cfg.showGrid,
-          lineStyle: {
-            color: isDark ? '#374151' : '#f3f4f6',
-            type: 'dashed'
-          }
-        }
-      },
-      series: series,
-      animation: cfg.animated,
-      dataZoom: cfg.enableZoom ? [
-        {
-          type: 'inside',
-          start: 0,
-          end: 100
-        },
-        {
-          start: 0,
-          end: 100,
-          height: 20,
-          bottom: 10
-        }
-      ] : undefined
-    };
-  });
+    return result;
+  }
 
 }

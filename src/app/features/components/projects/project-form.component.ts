@@ -1,8 +1,9 @@
-import { Component, computed, effect, input, output, signal } from '@angular/core';
+import { Component, computed, effect, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import {
   PROJECT_PRESET_COLORS,
   Project,
 } from '../../model/project.model';
+import { stripHyphenEdges } from '../../../shared/utils/slug';
 
 export interface ProjectFormValue {
   name: string;
@@ -18,6 +19,7 @@ const FIELD =
   standalone: true,
   imports: [],
   host: { class: 'block' },
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-3">
       <div class="grid gap-3" [class.sm:grid-cols-2]="withDescription()">
@@ -134,12 +136,11 @@ export class ProjectFormComponent {
   protected readonly slug = computed(() => {
     const existing = this.project();
     if (existing) return existing.slug;
-    const base = this.name()
+    const rawBase = this.name()
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 60);
+      .replace(/[^a-z0-9]+/g, '-');
+    const base = stripHyphenEdges(rawBase).slice(0, 60);
     return base ? `slug: ${base}` : '';
   });
 

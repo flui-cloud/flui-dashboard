@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { take } from 'rxjs/operators';
@@ -45,7 +45,7 @@ import { PermissionService } from '../../../core/services/permission.service';
 @Component({
   selector: 'app-repositories-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, ConfirmationDialogComponent, GithubConnectComponent, GhcrPatModalComponent, RepoDeployChoiceModalComponent],
+  imports: [FormsModule, NgIconComponent, ConfirmationDialogComponent, GithubConnectComponent, GhcrPatModalComponent, RepoDeployChoiceModalComponent],
   providers: [
     provideIcons({
       lucideGitBranch,
@@ -74,6 +74,7 @@ import { PermissionService } from '../../../core/services/permission.service';
       lucideKey,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <!-- Success Toast -->
     @if (showSuccessToast()) {
@@ -295,7 +296,7 @@ import { PermissionService } from '../../../core/services/permission.service';
           <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
             <app-github-connect
               [authMethod]="setupStatus()!.authMethod!"
-              [appSlug]="setupStatus()?.appSlug"
+              [appSlug]="$safeNavigationMigration(setupStatus()?.appSlug)"
               (connected)="onGithubConnected($event)"
             />
           </div>
@@ -932,7 +933,7 @@ import { PermissionService } from '../../../core/services/permission.service';
     @if (patModalMode()) {
       <app-ghcr-pat-modal
         [mode]="patModalMode()!"
-        [initialExpiresAt]="patStatus()?.expiresAt"
+        [initialExpiresAt]="$safeNavigationMigration(patStatus()?.expiresAt)"
         (cancelled)="patModalMode.set(null)"
         (saved)="onPatSaved()"
       />
@@ -956,8 +957,8 @@ export class RepositoriesListComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly appService = inject(ApplicationService);
 
-  @ViewChild('disconnectDialog') disconnectDialog!: ConfirmationDialogComponent;
-  @ViewChild('removePatDialog') removePatDialog!: ConfirmationDialogComponent;
+  readonly disconnectDialog = viewChild.required<ConfirmationDialogComponent>('disconnectDialog');
+  readonly removePatDialog = viewChild.required<ConfirmationDialogComponent>('removePatDialog');
   private readonly oauthApi = inject(GithubAppOAuthService);
 
   // Deploy choice modal state (when a repo already has an app)
@@ -1015,7 +1016,11 @@ export class RepositoriesListComponent implements OnInit {
 
   githubAppConfigUrl = computed(() => {
     const raw = this.setupStatus()?.appSlug || '';
-    const slug = raw.replace(/.*\/apps\//, '').replace(/\/.*$/, '') || 'flui-cloud';
+    const marker = '/apps/';
+    const markerIdx = raw.lastIndexOf(marker);
+    const afterApps = markerIdx >= 0 ? raw.slice(markerIdx + marker.length) : raw;
+    const slashIdx = afterApps.indexOf('/');
+    const slug = (slashIdx >= 0 ? afterApps.slice(0, slashIdx) : afterApps) || 'flui-cloud';
     return `https://github.com/apps/${slug}/installations/new`;
   });
 
@@ -1141,21 +1146,21 @@ export class RepositoriesListComponent implements OnInit {
   }
 
   confirmRemovePat(): void {
-    this.removePatDialog.open();
+    this.removePatDialog().open();
   }
 
   async executeRemovePat(): Promise<void> {
-    this.removePatDialog.setProcessing(true);
+    this.removePatDialog().setProcessing(true);
     try {
       await this.oauthApi.deletePackagesPat();
       await this.loadPatStatus();
-      this.removePatDialog.close();
+      this.removePatDialog().close();
       this.successToastTitle.set('GHCR token removed');
       this.successToastMessage.set('');
       this.showSuccessToast.set(true);
       setTimeout(() => this.showSuccessToast.set(false), 4000);
     } catch (err: any) {
-      this.removePatDialog.setProcessing(false);
+      this.removePatDialog().setProcessing(false);
       this.errorToastTitle.set('Could not remove token');
       this.errorToastMessage.set(err?.error?.message || err?.message || '');
       this.showErrorToast.set(true);
@@ -1248,25 +1253,25 @@ export class RepositoriesListComponent implements OnInit {
 
   disconnectOAuth(provider: 'github' | 'gitlab') {
     this.providerToDisconnect.set(provider);
-    this.disconnectDialog.open();
+    this.disconnectDialog().open();
   }
 
   async executeDisconnect() {
     const provider = this.providerToDisconnect();
     if (!provider) return;
 
-    this.disconnectDialog.setProcessing(true);
+    this.disconnectDialog().setProcessing(true);
 
     try {
       const gitProvider = provider === 'github' ? GitProvider.GitHub : GitProvider.GitLab;
       await this.repoService.disconnectOAuth(gitProvider);
       await this.loadRepos();
 
-      this.disconnectDialog.close();
+      this.disconnectDialog().close();
       this.providerToDisconnect.set(null);
     } catch (error) {
       console.error('Failed to disconnect OAuth:', error);
-      this.disconnectDialog.setProcessing(false);
+      this.disconnectDialog().setProcessing(false);
     }
   }
 
@@ -1324,53 +1329,16 @@ export class RepositoriesListComponent implements OnInit {
     this.isImporting.set(true);
     try {
       const response = await this.repoService.importRepositories(selected, false);
-
-      // Interpret the response
       const { imported, failed, errors } = response;
       const total = selected.length;
 
-      // Case 1: All repositories imported successfully
       if (imported === total && failed === 0) {
-        this.closeImportModal();
-        await this.loadRepos();
-
-        this.successToastTitle.set('Import Successful');
-        this.successToastMessage.set(`${imported} ${imported === 1 ? 'repository' : 'repositories'} imported successfully.`);
-        this.showSuccessToast.set(true);
-        setTimeout(() => this.showSuccessToast.set(false), 5000);
+        await this.handleAllImported(imported);
+      } else if (imported === 0 && failed === total) {
+        this.handleAllFailed(failed, errors);
+      } else if (imported > 0 && failed > 0) {
+        await this.handlePartialImport(imported, failed, errors);
       }
-      // Case 2: All repositories failed to import
-      else if (imported === 0 && failed === total) {
-        // Keep modal open, show error
-        const errorList = errors && errors.length > 0
-          ? errors.join('\n• ')
-          : 'All repositories failed to import.';
-
-        this.errorToastTitle.set('Import Failed');
-        this.errorToastMessage.set(`All ${failed} ${failed === 1 ? 'repository' : 'repositories'} failed to import:\n• ${errorList}`);
-        this.showErrorToast.set(true);
-        setTimeout(() => this.showErrorToast.set(false), 15000);
-      }
-      // Case 3: Partial success - some imported, some failed
-      else if (imported > 0 && failed > 0) {
-        // Close modal and reload to show imported ones
-        this.closeImportModal();
-        await this.loadRepos();
-
-        // Show warning toast with details
-        const errorList = errors && errors.length > 0
-          ? '\n\nErrors:\n• ' + errors.join('\n• ')
-          : '';
-
-        this.warningToastMessage.set(
-          `Partial import completed:\n` +
-          `✓ ${imported} ${imported === 1 ? 'repository' : 'repositories'} imported successfully\n` +
-          `✗ ${failed} ${failed === 1 ? 'repository' : 'repositories'} failed${errorList}`
-        );
-        this.showWarningToast.set(true);
-        setTimeout(() => this.showWarningToast.set(false), 15000);
-      }
-
     } catch (error: any) {
       console.error('Failed to import repositories:', error);
 
@@ -1385,6 +1353,47 @@ export class RepositoriesListComponent implements OnInit {
     } finally {
       this.isImporting.set(false);
     }
+  }
+
+  // Case 1: All repositories imported successfully
+  private async handleAllImported(imported: number): Promise<void> {
+    this.closeImportModal();
+    await this.loadRepos();
+
+    this.successToastTitle.set('Import Successful');
+    this.successToastMessage.set(`${imported} ${imported === 1 ? 'repository' : 'repositories'} imported successfully.`);
+    this.showSuccessToast.set(true);
+    setTimeout(() => this.showSuccessToast.set(false), 5000);
+  }
+
+  // Case 2: All repositories failed to import — keep modal open, show error
+  private handleAllFailed(failed: number, errors: string[] | undefined): void {
+    const errorList = errors && errors.length > 0
+      ? errors.join('\n• ')
+      : 'All repositories failed to import.';
+
+    this.errorToastTitle.set('Import Failed');
+    this.errorToastMessage.set(`All ${failed} ${failed === 1 ? 'repository' : 'repositories'} failed to import:\n• ${errorList}`);
+    this.showErrorToast.set(true);
+    setTimeout(() => this.showErrorToast.set(false), 15000);
+  }
+
+  // Case 3: Partial success — some imported, some failed. Close modal and reload to show imported ones.
+  private async handlePartialImport(imported: number, failed: number, errors: string[] | undefined): Promise<void> {
+    this.closeImportModal();
+    await this.loadRepos();
+
+    const errorList = errors && errors.length > 0
+      ? '\n\nErrors:\n• ' + errors.join('\n• ')
+      : '';
+
+    this.warningToastMessage.set(
+      `Partial import completed:\n` +
+      `✓ ${imported} ${imported === 1 ? 'repository' : 'repositories'} imported successfully\n` +
+      `✗ ${failed} ${failed === 1 ? 'repository' : 'repositories'} failed${errorList}`
+    );
+    this.showWarningToast.set(true);
+    setTimeout(() => this.showWarningToast.set(false), 15000);
   }
 
   confirmDelete(repo: ConnectedRepository) {

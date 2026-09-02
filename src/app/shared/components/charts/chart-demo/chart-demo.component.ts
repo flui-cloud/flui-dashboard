@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { RingGaugeComponent } from '../ring-gauge/ring-gauge.component';
 import { GradeGaugeComponent } from '../grade-gauge/grade-gauge.component';
 import { TimeSeriesLineComponent } from '../time-series-line/time-series-line.component';
@@ -29,7 +29,6 @@ import {
   selector: 'app-chart-demo',
   standalone: true,
   imports: [
-    CommonModule,
     RingGaugeComponent,
     GradeGaugeComponent,
     TimeSeriesLineComponent,
@@ -37,7 +36,8 @@ import {
     StatusTimelineComponent,
     ProportionDonutComponent,
     ProportionBarComponent
-  ],
+],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-8 space-y-8 bg-background">
       <div>
@@ -561,6 +561,15 @@ export class ChartDemoComponent {
   };
 
   /**
+   * A float in [0, 1) for jittering demo/mock data. Not Math.random() — this
+   * component only ever feeds fake showcase numbers to charts, but a plain
+   * PRNG here still trips security linters, so we use WebCrypto instead.
+   */
+  private demoRandom(): number {
+    return crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
+  }
+
+  /**
    * Generate mock time series data
    */
   private generateTimeSeriesData(points: number, minValue: number, maxValue: number): any[] {
@@ -570,7 +579,7 @@ export class ChartDemoComponent {
 
     for (let i = points - 1; i >= 0; i--) {
       const timestamp = now - (i * interval);
-      const value = minValue + Math.random() * (maxValue - minValue);
+      const value = minValue + this.demoRandom() * (maxValue - minValue);
       data.push({ timestamp, value });
     }
 
@@ -589,11 +598,11 @@ export class ChartDemoComponent {
       date.setDate(date.getDate() - (days - i));
 
       // 99.95% uptime means ~3-4 incidents in 90 days
-      const isIncident = Math.random() < 0.005;
+      const isIncident = this.demoRandom() < 0.005;
 
       if (isIncident) {
         const incidents = ['down', 'degraded', 'maintenance'];
-        const status = incidents[Math.floor(Math.random() * incidents.length)];
+        const status = incidents[Math.floor(this.demoRandom() * incidents.length)];
         const messages = {
           down: 'Server crash - automatic restart',
           degraded: 'High latency detected',
@@ -603,7 +612,7 @@ export class ChartDemoComponent {
         events.push({
           timestamp: date,
           status,
-          duration: Math.floor(Math.random() * 3600000), // 0-1 hour
+          duration: Math.floor(this.demoRandom() * 3600000), // 0-1 hour
           message: messages[status as keyof typeof messages]
         });
       } else {
@@ -626,7 +635,7 @@ export class ChartDemoComponent {
     this.cpuData.set({
       ...this.cpuData(),
       previousValue: currentCpu,
-      value: Math.min(100, Math.max(0, currentCpu + (Math.random() * 20 - 10)))
+      value: Math.min(100, Math.max(0, currentCpu + (this.demoRandom() * 20 - 10)))
     });
 
     // Update Memory
@@ -634,7 +643,7 @@ export class ChartDemoComponent {
     this.memoryData.set({
       ...this.memoryData(),
       previousValue: currentMemory,
-      value: Math.min(100, Math.max(0, currentMemory + (Math.random() * 15 - 7)))
+      value: Math.min(100, Math.max(0, currentMemory + (this.demoRandom() * 15 - 7)))
     });
 
     // Update Disk
@@ -642,7 +651,7 @@ export class ChartDemoComponent {
     this.diskData.set({
       ...this.diskData(),
       previousValue: currentDisk,
-      value: Math.min(100, Math.max(0, currentDisk + (Math.random() * 5 - 2)))
+      value: Math.min(100, Math.max(0, currentDisk + (this.demoRandom() * 5 - 2)))
     });
 
     // Update Custom
@@ -650,7 +659,7 @@ export class ChartDemoComponent {
     this.customData.set({
       ...this.customData(),
       previousValue: currentCustom,
-      value: Math.min(1000, Math.max(0, currentCustom + (Math.random() * 100 - 50)))
+      value: Math.min(1000, Math.max(0, currentCustom + (this.demoRandom() * 100 - 50)))
     });
 
     // Update Latency
@@ -658,7 +667,7 @@ export class ChartDemoComponent {
     this.latencyData.set({
       ...this.latencyData(),
       previousValue: currentLatency,
-      value: Math.min(200, Math.max(0, currentLatency + (Math.random() * 30 - 15)))
+      value: Math.min(200, Math.max(0, currentLatency + (this.demoRandom() * 30 - 15)))
     });
   }
 

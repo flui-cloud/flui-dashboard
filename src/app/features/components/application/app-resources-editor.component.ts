@@ -1,6 +1,6 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, signal, computed, inject } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, signal, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { RolloutState } from '../../service/app-runtime.service';
-import { CommonModule } from '@angular/common';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw,
@@ -23,7 +23,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
 @Component({
   selector: 'app-resources-editor',
   standalone: true,
-  imports: [CommonModule, NgIconComponent, ResourceSliderComponent],
+  imports: [NgIconComponent, ResourceSliderComponent],
   providers: [
     provideIcons({
       lucideRefreshCw, lucideMinus, lucidePlus, lucideAlertTriangle,
@@ -31,12 +31,13 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
       lucidePencil, lucideX, lucideCheck,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
 
       <!-- ── Top bar: Refresh ── -->
       <div class="flex justify-end">
-        <button type="button" (click)="onRefresh()" [disabled]="savingReplicas || savingResources || savingRestart"
+        <button type="button" (click)="onRefresh()" [disabled]="savingReplicas() || savingResources() || savingRestart()"
           class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors disabled:opacity-50">
           <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" />
           Refresh runtime data
@@ -60,7 +61,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
           @if (restartRollout) {
             <!-- no button during rollout -->
           } @else if (!confirmRestart()) {
-            <button type="button" (click)="promptRestart()" [disabled]="savingRestart"
+            <button type="button" (click)="promptRestart()" [disabled]="savingRestart()"
               class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors">
               <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
               Restart
@@ -68,9 +69,9 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
           } @else {
             <div class="flex items-center gap-2">
               <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Confirm restart?</span>
-              <button type="button" (click)="confirmRestartAction()" [disabled]="savingRestart"
+              <button type="button" (click)="confirmRestartAction()" [disabled]="savingRestart()"
                 class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white rounded-lg disabled:opacity-50 transition-colors">
-                @if (savingRestart) { <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" /> }
+                @if (savingRestart()) { <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" /> }
                 Yes, Restart
               </button>
               <button type="button" (click)="cancelRestart()"
@@ -114,7 +115,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
           </div>
           <!-- Edit / Save-Cancel toggle -->
           @if (!replicaEditing()) {
-            <button type="button" (click)="startReplicaEdit()" [disabled]="savingReplicas || !runtime"
+            <button type="button" (click)="startReplicaEdit()" [disabled]="savingReplicas() || !runtime"
               class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-40">
               <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
               Edit
@@ -126,9 +127,9 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
                 <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                 Cancel
               </button>
-              <button type="button" (click)="applyReplicas()" [disabled]="!replicaDirty() || savingReplicas"
+              <button type="button" (click)="applyReplicas()" [disabled]="!replicaDirty() || savingReplicas()"
                 class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-40 transition-colors">
-                @if (savingReplicas) { <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" /> }
+                @if (savingReplicas()) { <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" /> }
                 @else { <ng-icon name="lucideCheck" class="h-3.5 w-3.5" /> }
                 Apply
               </button>
@@ -139,13 +140,13 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
         <div class="px-5 py-4">
           <div class="flex items-center gap-3">
             <button type="button" (click)="decReplicas()"
-              [disabled]="!replicaEditing() || replicaValue() <= 0 || savingReplicas"
+              [disabled]="!replicaEditing() || replicaValue() <= 0 || savingReplicas()"
               class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               <ng-icon name="lucideMinus" class="h-4 w-4" />
             </button>
             <span class="text-2xl font-bold text-gray-900 dark:text-white w-8 text-center select-none">{{ replicaValue() }}</span>
             <button type="button" (click)="incReplicas()"
-              [disabled]="!replicaEditing() || replicaValue() >= 20 || savingReplicas"
+              [disabled]="!replicaEditing() || replicaValue() >= 20 || savingReplicas()"
               class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               <ng-icon name="lucidePlus" class="h-4 w-4" />
             </button>
@@ -184,7 +185,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
               </div>
 
               @if (editingContainerIndex() !== i) {
-                <button type="button" (click)="startResourceEdit(i)" [disabled]="savingResources"
+                <button type="button" (click)="startResourceEdit(i)" [disabled]="savingResources()"
                   class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-40">
                   <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
                   Edit
@@ -196,9 +197,9 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
                     <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                     Cancel
                   </button>
-                  <button type="button" (click)="saveResources(i)" [disabled]="!resourcesDirty() || savingResources"
+                  <button type="button" (click)="saveResources(i)" [disabled]="!resourcesDirty() || savingResources()"
                     class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                    @if (savingResources) { <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" /> }
+                    @if (savingResources()) { <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" /> }
                     @else { <ng-icon name="lucideCheck" class="h-3.5 w-3.5" /> }
                     Save
                   </button>
@@ -223,8 +224,8 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
                     label="CPU Reserved"
                     type="cpu"
                     [value]="i === 0 ? cpuRequest() : (container.requests.cpu ?? '')"
-                    [maxValue]="maxCpuMc"
-                    [disabled]="editingContainerIndex() !== i || savingResources"
+                    [maxValue]="maxCpuMc()"
+                    [disabled]="editingContainerIndex() !== i || savingResources()"
                     (valueChange)="setCpuRequest($event)"
                   />
                   @if (monitoringService.metrics(); as m) {
@@ -239,8 +240,8 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
                     label="CPU Maximum"
                     type="cpu"
                     [value]="i === 0 ? cpuLimit() : (container.limits.cpu ?? '')"
-                    [maxValue]="maxCpuMc"
-                    [disabled]="editingContainerIndex() !== i || savingResources"
+                    [maxValue]="maxCpuMc()"
+                    [disabled]="editingContainerIndex() !== i || savingResources()"
                     (valueChange)="setCpuLimit($event)"
                   />
                   @if (monitoringService.metrics(); as m) {
@@ -266,8 +267,8 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
                     label="Memory Reserved"
                     type="memory"
                     [value]="i === 0 ? memRequest() : (container.requests.memory ?? '')"
-                    [maxValue]="maxMemMib"
-                    [disabled]="editingContainerIndex() !== i || savingResources"
+                    [maxValue]="maxMemMib()"
+                    [disabled]="editingContainerIndex() !== i || savingResources()"
                     (valueChange)="setMemRequest($event)"
                   />
                   @if (monitoringService.metrics(); as m) {
@@ -282,8 +283,8 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
                     label="Memory Maximum"
                     type="memory"
                     [value]="i === 0 ? memLimit() : (container.limits.memory ?? '')"
-                    [maxValue]="maxMemMib"
-                    [disabled]="editingContainerIndex() !== i || savingResources"
+                    [maxValue]="maxMemMib()"
+                    [disabled]="editingContainerIndex() !== i || savingResources()"
                     (valueChange)="setMemLimit($event)"
                   />
                   @if (monitoringService.metrics(); as m) {
@@ -323,11 +324,11 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
 })
 export class AppResourcesEditorComponent implements OnChanges {
   @Input() runtime: AppRuntimeResponseDto | null = null;
-  @Input() savingReplicas = false;
-  @Input() savingResources = false;
-  @Input() savingRestart = false;
-  @Input() maxCpuMc = 4000;
-  @Input() maxMemMib = 4096;
+  readonly savingReplicas = input(false);
+  readonly savingResources = input(false);
+  readonly savingRestart = input(false);
+  readonly maxCpuMc = input(4000);
+  readonly maxMemMib = input(4096);
   @Input() rollout: RolloutState | null = null;
 
   protected get restartRollout(): RolloutState | null {
@@ -340,10 +341,10 @@ export class AppResourcesEditorComponent implements OnChanges {
 
   protected monitoringService = inject(ApplicationMonitoringService);
 
-  @Output() saveResourcesEvent = new EventEmitter<UpdateResourcesDto>();
-  @Output() saveReplicasEvent = new EventEmitter<UpdateReplicasDto>();
-  @Output() restartEvent = new EventEmitter<void>();
-  @Output() refreshEvent = new EventEmitter<void>();
+  readonly saveResourcesEvent = output<UpdateResourcesDto>();
+  readonly saveReplicasEvent = output<UpdateReplicasDto>();
+  readonly restartEvent = output<void>();
+  readonly refreshEvent = output<void>();
 
   // Replica state
   protected replicaEditing = signal(false);
@@ -530,13 +531,19 @@ export class AppResourcesEditorComponent implements OnChanges {
   }
 
   protected formatCpuCores(cores: number | null): string {
-    const c = cores ?? 0;
+    return this.formatCores(cores ?? 0);
+  }
+
+  private formatCores(c: number): string {
     if (c >= 1) return `${c.toFixed(2)} cores`;
     return `${(c * 1000).toFixed(0)}m`;
   }
 
   protected formatMemBytes(bytes: number | null): string {
-    const b = bytes ?? 0;
+    return this.formatBytes(bytes ?? 0);
+  }
+
+  private formatBytes(b: number): string {
     if (b >= 1024 * 1024 * 1024) return `${(b / (1024 * 1024 * 1024)).toFixed(1)} GiB`;
     if (b >= 1024 * 1024) return `${(b / (1024 * 1024)).toFixed(1)} MiB`;
     if (b >= 1024) return `${(b / 1024).toFixed(1)} KiB`;

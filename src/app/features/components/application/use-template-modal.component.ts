@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -16,6 +16,7 @@ import { ApplicationsService } from '../../../core/api/api/applications.service'
 import { TemplateResponseDto } from '../../../core/api/model/templateResponseDto';
 import { CreateApplicationDto } from '../../../core/api/model/createApplicationDto';
 import { GitProvider } from '../../model/application.models';
+import { stripHyphenEdges } from '../../../shared/utils/slug';
 
 type FlowStep =
   | 'form'
@@ -43,7 +44,7 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
 @Component({
   selector: 'app-use-template-modal',
   standalone: true,
-  imports: [CommonModule, RouterLink, NgIcon],
+  imports: [RouterLink, NgIcon],
   providers: [provideIcons({
     lucideX, lucideLoader, lucideCheck, lucideCircleCheck, lucideTriangleAlert,
     lucideGithub, lucideServer, lucideRocket, lucideLock, lucideGlobe, lucideInfo, lucideTrash, lucideExternalLink,
@@ -523,7 +524,7 @@ export class UseTemplateModalComponent implements OnInit {
 
       // Step 3: Create Flui application linked to the new repo
       this.currentStep.set('creating-app');
-      const appName = this.name().toLowerCase().replaceAll(/[^a-z0-9-]/g, '-').replaceAll(/^-+|-+$/g, '');
+      const appName = stripHyphenEdges(this.name().toLowerCase().replaceAll(/[^a-z0-9-]/g, '-'));
       const appResponse = await firstValueFrom(
         this.applicationsApi.applicationsControllerCreate(this.selectedClusterId(), {
           name: appName,

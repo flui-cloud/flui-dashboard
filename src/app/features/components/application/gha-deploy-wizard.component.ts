@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -50,14 +50,13 @@ const WIZARD_STEPS: WizardStep[] = [
   selector: 'app-gha-deploy-wizard',
   standalone: true,
   imports: [
-    CommonModule,
     NgIcon,
     WizardStepperComponent,
     ExtractEnvStepComponent,
     DeployConfigStepComponent,
     RuntimeConfigStepComponent,
-    GenerateWorkflowStepComponent,
-  ],
+    GenerateWorkflowStepComponent
+],
   providers: [
     DeployWizardStateService,
     provideIcons({ lucideGithub, lucideKey, lucideSettings, lucideServer, lucideCpu, lucideArrowLeft, lucideArrowRight, lucideLoader, lucideCheck }),
@@ -230,7 +229,7 @@ export class GhaDeployWizardComponent implements OnInit {
   ngOnInit(): void {
     void (async () => {
       // Initialize from router navigation state
-      const nav = this.router.getCurrentNavigation();
+      const nav = this.router.currentNavigation();
       const state = nav?.extras?.state as any ?? history.state;
   
       if (state?.repositoryId && state?.branch && state?.analysisResult) {
@@ -345,6 +344,26 @@ export class GhaDeployWizardComponent implements OnInit {
     this.router.navigate(['/apps/deploy/new']);
   }
 
+  // Step 2: Save env vars
+  private async saveEnvVars(appId: string): Promise<void> {
+    const envVars = this.state.envVars();
+    if (envVars.length === 0) return;
+
+    const plain: Record<string, string> = {};
+    const sensitive: Record<string, string> = {};
+    for (const v of envVars) {
+      if (v.value === '') continue;
+      if (v.isSecret) sensitive[v.key] = v.value;
+      else plain[v.key] = v.value;
+    }
+    if (Object.keys(plain).length > 0) {
+      await this.appVariablesService.upsertPlain(appId, plain);
+    }
+    if (Object.keys(sensitive).length > 0) {
+      await this.appVariablesService.upsertSensitive(appId, sensitive);
+    }
+  }
+
   async onGenerateWorkflow(): Promise<void> {
     this.globalError.set(null);
     this.workflowError.set(null);
@@ -353,24 +372,7 @@ export class GhaDeployWizardComponent implements OnInit {
       this.workflowState.set('generating');
       const appId = await this.ensureApplication();
 
-      // Step 2: Save env vars
-      const envVars = this.state.envVars();
-      if (envVars.length > 0) {
-        const plain: Record<string, string> = {};
-        const sensitive: Record<string, string> = {};
-        for (const v of envVars) {
-          if (v.value !== '') {
-            if (v.isSecret) sensitive[v.key] = v.value;
-            else plain[v.key] = v.value;
-          }
-        }
-        if (Object.keys(plain).length > 0) {
-          await this.appVariablesService.upsertPlain(appId, plain);
-        }
-        if (Object.keys(sensitive).length > 0) {
-          await this.appVariablesService.upsertSensitive(appId, sensitive);
-        }
-      }
+      await this.saveEnvVars(appId);
 
       this.workflowState.set('committing');
       const result = await this.appService.generateWorkflowV3(appId, {

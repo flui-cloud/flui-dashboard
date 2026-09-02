@@ -1,7 +1,8 @@
 import {
   Component, input, output, computed, signal, OnDestroy, ElementRef, inject, NgZone,
+  ChangeDetectionStrategy
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
 import type { ECharts } from 'echarts/core';
@@ -10,6 +11,7 @@ import {
   LogVolumeData,
   LogVolumeHistogramConfig,
   LogVolumeRangeSelection,
+  LogVolumeLevelSeries,
   LOG_LEVEL_COLORS,
   ChartTheme,
 } from '../chart.models';
@@ -30,8 +32,9 @@ const GRID_BOTTOM = 28;
 @Component({
   selector: 'app-log-volume-histogram',
   standalone: true,
-  imports: [CommonModule, NgxEchartsDirective],
+  imports: [NgxEchartsDirective],
   providers: [provideEcharts()],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="relative w-full select-none" [style.height]="mergedConfig().height">
 
@@ -147,7 +150,7 @@ export class LogVolumeHistogramComponent implements OnDestroy {
 
   readonly isEmpty = computed(() => {
     const d = this.data();
-    return !d || d.series.length === 0 || d.series.every(s => s.series.length === 0);
+    return !d || d.series.every(s => s.series.length === 0);
   });
 
   // ── ECharts option ────────────────────────────────────────────────────────
@@ -165,44 +168,9 @@ export class LogVolumeHistogramComponent implements OnDestroy {
     }
     const timestamps = Array.from(tsSet).sort((a, b) => a - b);
 
-    const LEVEL_ORDER = ['error', 'warn', 'info', 'debug', 'trace'];
-    const orderedSeries = LEVEL_ORDER
-      .map(lvl => d.series.find(s => s.level === lvl))
-      .filter(Boolean) as typeof d.series;
-    for (const ls of d.series) {
-      if (!LEVEL_ORDER.includes(ls.level)) orderedSeries.push(ls);
-    }
-
-    const bucketMap = (ls: typeof d.series[0]) => {
-      const m = new Map<number, number>();
-      for (const b of ls.series) m.set(b.timestamp * 1000, b.count);
-      return m;
-    };
-
-    const highlight = cfg.highlightRange;
-    const markArea = highlight ? {
-      silent: true,
-      itemStyle: { color: 'rgba(59,130,246,0.12)', borderWidth: 0 },
-      data: [[
-        { xAxis: highlight.start.getTime() },
-        { xAxis: highlight.end.getTime()   },
-      ]],
-    } : undefined;
-
-    const echartsSeriesList: any[] = orderedSeries.map((ls, i) => ({
-      name: ls.level,
-      type: 'bar',
-      stack: 'total',
-      barMaxWidth: 40,
-      itemStyle: {
-        color: LOG_LEVEL_COLORS[ls.level] ?? '#6b7280',
-        borderRadius: [1, 1, 0, 0],
-      },
-      emphasis: { focus: 'series' },
-      data: timestamps.map(ts => [ts, bucketMap(ls).get(ts) ?? 0]),
-      // markArea only on the first series to avoid stacking duplicates
-      ...(i === 0 && markArea ? { markArea } : {}),
-    }));
+    const orderedSeries = this.buildOrderedSeries(d.series);
+    const markArea = this.buildMarkArea(cfg.highlightRange);
+    const echartsSeriesList = this.buildEchartsSeriesList(orderedSeries, timestamps, markArea);
 
     return {
       animation: cfg.animated,
@@ -224,29 +192,7 @@ export class LogVolumeHistogramComponent implements OnDestroy {
         borderColor: isDark ? '#374151' : '#e5e7eb',
         borderWidth: 1,
         textStyle: { color: isDark ? '#f9fafb' : '#111827', fontSize: 11 },
-        formatter: (params: any) => {
-          const ts = new Date(params[0].value[0]);
-          const label = ts.toLocaleString('en-GB', {
-            month: 'short', day: '2-digit',
-            hour: '2-digit', minute: '2-digit', hour12: false,
-          });
-          let html = `<div style="font-weight:600;margin-bottom:4px;">${label}</div>`;
-          let total = 0;
-          for (const p of params) {
-            const v = p.value[1] as number;
-            if (v === 0) continue;
-            total += v;
-            html += `<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
-              <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${p.color};"></span>
-              <span style="flex:1;">${p.seriesName}</span>
-              <span style="font-weight:600;font-variant-numeric:tabular-nums;">${v.toLocaleString()}</span>
-            </div>`;
-          }
-          html += `<div style="margin-top:5px;padding-top:4px;border-top:1px solid ${isDark ? '#374151' : '#e5e7eb'};display:flex;justify-content:space-between;">
-            <span>Total</span><span style="font-weight:700;">${total.toLocaleString()}</span>
-          </div>`;
-          return html;
-        },
+        formatter: (params: any) => this.formatTooltip(params, isDark),
       },
       xAxis: {
         type: 'time',
@@ -279,6 +225,77 @@ export class LogVolumeHistogramComponent implements OnDestroy {
       series: echartsSeriesList,
     };
   });
+
+  // error > warn > info > debug > trace, with any unrecognized levels appended after.
+  private buildOrderedSeries(series: LogVolumeLevelSeries[]): LogVolumeLevelSeries[] {
+    const LEVEL_ORDER = ['error', 'warn', 'info', 'debug', 'trace'];
+    const ordered = LEVEL_ORDER
+      .map(lvl => series.find(s => s.level === lvl))
+      .filter(Boolean) as LogVolumeLevelSeries[];
+    for (const ls of series) {
+      if (!LEVEL_ORDER.includes(ls.level)) ordered.push(ls);
+    }
+    return ordered;
+  }
+
+  private buildMarkArea(highlight: LogVolumeHistogramConfig['highlightRange']): object | undefined {
+    if (!highlight) return undefined;
+    return {
+      silent: true,
+      itemStyle: { color: 'rgba(59,130,246,0.12)', borderWidth: 0 },
+      data: [[
+        { xAxis: highlight.start.getTime() },
+        { xAxis: highlight.end.getTime()   },
+      ]],
+    };
+  }
+
+  private buildEchartsSeriesList(orderedSeries: LogVolumeLevelSeries[], timestamps: number[], markArea: object | undefined): any[] {
+    const bucketMap = (ls: LogVolumeLevelSeries) => {
+      const m = new Map<number, number>();
+      for (const b of ls.series) m.set(b.timestamp * 1000, b.count);
+      return m;
+    };
+
+    return orderedSeries.map((ls, i) => ({
+      name: ls.level,
+      type: 'bar',
+      stack: 'total',
+      barMaxWidth: 40,
+      itemStyle: {
+        color: LOG_LEVEL_COLORS[ls.level] ?? '#6b7280',
+        borderRadius: [1, 1, 0, 0],
+      },
+      emphasis: { focus: 'series' },
+      data: timestamps.map(ts => [ts, bucketMap(ls).get(ts) ?? 0]),
+      // markArea only on the first series to avoid stacking duplicates
+      ...(i === 0 && markArea ? { markArea } : {}),
+    }));
+  }
+
+  private formatTooltip(params: any, isDark: boolean): string {
+    const ts = new Date(params[0].value[0]);
+    const label = ts.toLocaleString('en-GB', {
+      month: 'short', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    let html = `<div style="font-weight:600;margin-bottom:4px;">${label}</div>`;
+    let total = 0;
+    for (const p of params) {
+      const v = p.value[1] as number;
+      if (v === 0) continue;
+      total += v;
+      html += `<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${p.color};"></span>
+        <span style="flex:1;">${p.seriesName}</span>
+        <span style="font-weight:600;font-variant-numeric:tabular-nums;">${v.toLocaleString()}</span>
+      </div>`;
+    }
+    html += `<div style="margin-top:5px;padding-top:4px;border-top:1px solid ${isDark ? '#374151' : '#e5e7eb'};display:flex;justify-content:space-between;">
+      <span>Total</span><span style="font-weight:700;">${total.toLocaleString()}</span>
+    </div>`;
+    return html;
+  }
 
   // ── Chart lifecycle ───────────────────────────────────────────────────────
   onChartInit(chart: ECharts) {

@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRocket, lucideRotateCcw, lucideArrowUpDown, lucideCpu,
@@ -13,7 +13,7 @@ import { ApplicationService } from '../../service/application.service';
 @Component({
   selector: 'app-activity-feed',
   standalone: true,
-  imports: [CommonModule, NgIconComponent],
+  imports: [NgIconComponent],
   providers: [
     provideIcons({
       lucideRocket, lucideRotateCcw, lucideArrowUpDown, lucideCpu,
@@ -21,6 +21,7 @@ import { ApplicationService } from '../../service/application.service';
       lucideGitCommit, lucideLoader, lucideAlertCircle, lucideWand,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-3">
       <!-- Filter bar -->
@@ -29,7 +30,7 @@ import { ApplicationService } from '../../service/application.service';
           <button
             (click)="filterChange.emit(filter.value)"
             class="px-3 py-1 text-xs rounded-full border transition-colors font-medium"
-            [class]="activeFilter === filter.value
+            [class]="activeFilter() === filter.value
               ? 'bg-blue-600 text-white border-blue-600'
               : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'"
           >
@@ -126,10 +127,10 @@ export class AppActivityFeedComponent {
   service = inject(AppRevisionsService);
   private readonly appService = inject(ApplicationService);
 
-  @Input() activeFilter: AuditEventType | undefined = undefined;
-  @Output() filterChange = new EventEmitter<AuditEventType | undefined>();
-  @Output() loadMore = new EventEmitter<void>();
-  @Output() rollback = new EventEmitter<AppAuditEventSummaryDto>();
+  readonly activeFilter = input<AuditEventType>();
+  readonly filterChange = output<AuditEventType | undefined>();
+  readonly loadMore = output<void>();
+  readonly rollback = output<AppAuditEventSummaryDto>();
 
   filters: { label: string; value: AuditEventType | undefined }[] = [
     { label: 'All', value: undefined },
@@ -195,18 +196,9 @@ export class AppActivityFeedComponent {
       case 'rollback':
         return `Rolled back to #${m?.rollbackFromRevision ?? '?'}`;
       case 'scale':
-        return (m?.before?.replicas !== undefined && m?.after?.replicas !== undefined)
-          ? `Scaled from ${m.before.replicas} to ${m.after.replicas} replicas`
-          : 'Scaled replicas';
-      case 'resource_update': {
-        if (m?.autoFix && m?.previousMemoryLimit && m?.newMemoryLimit) {
-          return `Memory limit raised ${m.previousMemoryLimit} → ${m.newMemoryLimit}`;
-        }
-        const parts: string[] = [];
-        if (m?.after?.cpu?.limit) parts.push(`CPU limit ${m.before?.cpu?.limit ?? '?'} → ${m.after.cpu.limit}`);
-        if (m?.after?.memory?.limit) parts.push(`Memory limit ${m.before?.memory?.limit ?? '?'} → ${m.after.memory.limit}`);
-        return parts.length ? parts.join(', ') : 'Resources updated';
-      }
+        return this.formatScaleChange(m);
+      case 'resource_update':
+        return this.formatResourceUpdate(m);
       case 'restart': return 'Rolling restart triggered';
       case 'stop': return m?.previousReplicas === undefined ? 'Application stopped' : `Stopped (was ${m.previousReplicas} replicas)`;
       case 'start': return m?.restoredReplicas === undefined ? 'Application started' : `Started (restored ${m.restoredReplicas} replicas)`;
@@ -215,5 +207,22 @@ export class AppActivityFeedComponent {
       case 'reconciled': return 'Reconciled with cluster';
       default: return event.eventType;
     }
+  }
+
+  private formatScaleChange(m: any): string {
+    if (m?.before?.replicas === undefined || m?.after?.replicas === undefined) {
+      return 'Scaled replicas';
+    }
+    return `Scaled from ${m.before.replicas} to ${m.after.replicas} replicas`;
+  }
+
+  private formatResourceUpdate(m: any): string {
+    if (m?.autoFix && m?.previousMemoryLimit && m?.newMemoryLimit) {
+      return `Memory limit raised ${m.previousMemoryLimit} → ${m.newMemoryLimit}`;
+    }
+    const parts: string[] = [];
+    if (m?.after?.cpu?.limit) parts.push(`CPU limit ${m.before?.cpu?.limit ?? '?'} → ${m.after.cpu.limit}`);
+    if (m?.after?.memory?.limit) parts.push(`Memory limit ${m.before?.memory?.limit ?? '?'} → ${m.after.memory.limit}`);
+    return parts.length ? parts.join(', ') : 'Resources updated';
   }
 }

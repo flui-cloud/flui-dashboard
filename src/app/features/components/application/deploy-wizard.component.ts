@@ -1,5 +1,5 @@
-import { Component, OnInit, signal, computed, inject, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -44,7 +44,7 @@ import {
 import { RepositoryService, ConnectedRepository, RepositoryFluiManifest, RepositoryManifestEntry } from '../../service/repository.service';
 import { ClusterService } from '../../service/cluster.service';
 import { TemplateService } from '../../service/template.service';
-import { DeployWizardStateService } from '../../service/deploy-wizard-state.service';
+import { DeployWizardStateService, FlowSubtype } from '../../service/deploy-wizard-state.service';
 import { ApplicationsService } from '../../../core/api/api/applications.service';
 import { ImagesService } from '../../../core/api/api/images.service';
 import { InfrastructureClustersService } from '../../../core/api/api/infrastructureClusters.service';
@@ -78,6 +78,7 @@ import { EnvVarDetectionResultDto } from '../../../core/api/model/envVarDetectio
 import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
 import { ClusterInfo } from '../../model/cluster.models';
 import { internalHostingErrorMessage } from '../../model/app-exposure';
+import { stripHyphenEdges } from '../../../shared/utils/slug';
 import { AuthzInstallService } from '../../service/authz-install.service';
 import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallResponseDto';
 
@@ -85,7 +86,6 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
   selector: 'app-deploy-wizard',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     NgIcon,
     WizardStepperComponent,
@@ -100,8 +100,8 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
     CatalogLinkedBbStepComponent,
     CatalogDependenciesStepComponent,
     CatalogSuccessStepComponent,
-    CatalogResourcesReviewComponent,
-  ],
+    CatalogResourcesReviewComponent
+],
   providers: [
     DeployWizardStateService,
     provideIcons({
@@ -141,6 +141,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
       lucideCopy,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-4xl mx-auto p-6">
       <!-- Back Button -->
@@ -2343,29 +2344,55 @@ export class DeployWizardComponent implements OnInit {
     const ci = this.currentStepIndex();
     const sub = this.flowSubtype();
 
-    /** Helper: stamps every step in the array with the correct isCompleted
-     *  flag — any step whose index is strictly less than the current step
-     *  index is marked as completed (green). */
+    /** Stamps every step in the array with the correct isCompleted flag —
+     *  any step whose index is strictly less than the current step index
+     *  is marked as completed (green). */
     const markCompleted = (raw: WizardStepperStep[]): WizardStepperStep[] =>
       raw.map((s, i) => ({ ...s, isCompleted: i < ci }));
 
-    const sourceStep: WizardStepperStep = {
+    const sourceStep = this.buildSourceStep(sub);
+    const clusterStep = this.buildClusterStep();
+    const reviewStep = this.buildReviewStep();
+
+    if (sub === 'image') {
+      return markCompleted(this.buildImageFlowSteps(sourceStep, clusterStep, reviewStep));
+    }
+    if (sub === 'template') {
+      return markCompleted(this.buildTemplateFlowSteps(sourceStep, clusterStep, reviewStep));
+    }
+    if (sub === 'existing-repo') {
+      return markCompleted(this.buildExistingRepoFlowSteps(sourceStep, clusterStep, reviewStep));
+    }
+    if (sub === 'marketplace') {
+      return markCompleted(this.buildMarketplaceFlowSteps(sourceStep, clusterStep, reviewStep));
+    }
+
+    // No flow picked yet — show only source step
+    return markCompleted([sourceStep]);
+  });
+
+  private buildSourceStep(sub: FlowSubtype): WizardStepperStep {
+    return {
       id: 'source',
       title: 'Source',
       icon: 'lucideSettings',
       isValid: !!sub,
       isCompleted: false, // stamped by markCompleted
     };
+  }
 
-    const clusterStep: WizardStepperStep = {
+  private buildClusterStep(): WizardStepperStep {
+    return {
       id: 'cluster',
       title: 'Cluster',
       icon: 'lucideServer',
       isValid: !!this.selectedCluster(),
       isCompleted: false,
     };
+  }
 
-    const reviewStep: WizardStepperStep = {
+  private buildReviewStep(): WizardStepperStep {
+    return {
       id: 'review',
       title: 'Review',
       icon: 'lucideCheck',
@@ -2375,201 +2402,191 @@ export class DeployWizardComponent implements OnInit {
       isValid: !(this.state.allowMasterPlacementRelevant() && !this.state.allowMasterPlacement()),
       isCompleted: false,
     };
+  }
 
-    // Flow A — Docker image
-    if (sub === 'image') {
-      return markCompleted([
-        sourceStep,
-        {
-          id: 'docker_image',
-          title: 'Docker Image',
-          icon: 'lucideContainer',
-          isValid: !!this.selectedImageRef(),
-          isCompleted: false,
-        },
-        {
-          id: 'environment',
-          title: 'Configuration',
-          icon: 'lucideKey',
-          isValid: true,
-          isCompleted: false,
-        },
-        clusterStep,
-        reviewStep,
-      ]);
-    }
+  private buildImageFlowSteps(sourceStep: WizardStepperStep, clusterStep: WizardStepperStep, reviewStep: WizardStepperStep): WizardStepperStep[] {
+    return [
+      sourceStep,
+      {
+        id: 'docker_image',
+        title: 'Docker Image',
+        icon: 'lucideContainer',
+        isValid: !!this.selectedImageRef(),
+        isCompleted: false,
+      },
+      {
+        id: 'environment',
+        title: 'Configuration',
+        icon: 'lucideKey',
+        isValid: true,
+        isCompleted: false,
+      },
+      clusterStep,
+      reviewStep,
+    ];
+  }
 
-    // Flow B — Deploy from Flui template
-    if (sub === 'template') {
-      return markCompleted([
-        sourceStep,
-        {
-          id: 'template-picker',
-          title: 'Template',
-          icon: 'lucideRocket',
-          isValid: !!this.state.selectedTemplate(),
-          isCompleted: false,
-        },
-        {
-          id: 'template-settings',
-          title: 'Repo settings',
-          icon: 'lucideGithub',
-          isValid: !!this.state.newRepoName() && !this.templateNameError(),
-          isCompleted: false,
-        },
-        clusterStep,
-        {
-          id: 'environment',
-          title: 'Env vars',
-          icon: 'lucideKey',
-          isValid: true,
-          isCompleted: false,
-        },
-        reviewStep,
-        {
-          id: 'generate',
-          title: 'Deploy',
-          icon: 'lucidePlay',
-          isValid: true,
-          isCompleted: false,
-        },
-      ]);
-    }
-
-    // Flow C — Existing repository
-    if (sub === 'existing-repo') {
-      const hasRepo = !!(this.selectedRepo() || this.selectedPublicRepo());
-      const analysisValid = this.analysisBranch() === 'flui-ready';
-
-      const stepsC: WizardStepperStep[] = [
-        sourceStep,
-        {
-          id: 'repository',
-          title: 'Repository',
-          icon: 'lucideGitBranch',
-          isValid: hasRepo,
-          isCompleted: false,
-        },
-        {
-          id: 'analysis',
-          title: 'Analysis',
-          icon: 'lucideGithub',
-          isValid: analysisValid,
-          isCompleted: false,
-        },
-        clusterStep,
-        {
-          id: 'environment',
-          title: 'Env vars',
-          icon: 'lucideKey',
-          isValid: true,
-          isCompleted: false,
-        },
-      ];
-
-      stepsC.push(reviewStep);
-      stepsC.push({
+  private buildTemplateFlowSteps(sourceStep: WizardStepperStep, clusterStep: WizardStepperStep, reviewStep: WizardStepperStep): WizardStepperStep[] {
+    return [
+      sourceStep,
+      {
+        id: 'template-picker',
+        title: 'Template',
+        icon: 'lucideRocket',
+        isValid: !!this.state.selectedTemplate(),
+        isCompleted: false,
+      },
+      {
+        id: 'template-settings',
+        title: 'Repo settings',
+        icon: 'lucideGithub',
+        isValid: !!this.state.newRepoName() && !this.templateNameError(),
+        isCompleted: false,
+      },
+      clusterStep,
+      {
+        id: 'environment',
+        title: 'Env vars',
+        icon: 'lucideKey',
+        isValid: true,
+        isCompleted: false,
+      },
+      reviewStep,
+      {
         id: 'generate',
         title: 'Deploy',
         icon: 'lucidePlay',
         isValid: true,
         isCompleted: false,
-      });
-      return markCompleted(stepsC);
-    }
+      },
+    ];
+  }
 
-    // Flow D — Marketplace (catalog install)
-    if (sub === 'marketplace') {
-      const detail = this.state.catalogDetail();
-      const hasPrompts = (detail?.userInputPrompts?.length ?? 0) > 0;
-      const hasDefaultCredentials = !!detail?.defaultCredentials;
-      const hasEditableEnv = (detail?.editableEnv?.length ?? 0) > 0;
+  private buildExistingRepoFlowSteps(sourceStep: WizardStepperStep, clusterStep: WizardStepperStep, reviewStep: WizardStepperStep): WizardStepperStep[] {
+    const hasRepo = !!(this.selectedRepo() || this.selectedPublicRepo());
+    const analysisValid = this.analysisBranch() === 'flui-ready';
 
-      const marketplaceSteps: WizardStepperStep[] = [
-        sourceStep,
-        {
-          id: 'catalog-overview',
-          title: 'App',
-          icon: 'lucideStore',
-          isValid: !!detail && this.state.catalogDisplayNameValid(),
-          isCompleted: false,
-        },
-      ];
-
-      if (hasPrompts || hasDefaultCredentials) {
-        marketplaceSteps.push({
-          id: 'catalog-inputs',
-          title: 'Configuration',
-          icon: 'lucideKey',
-          isValid: this.state.catalogInputsValid(),
-          isCompleted: false,
-        });
-      }
-
-      if (hasEditableEnv) {
-        marketplaceSteps.push({
-          id: 'catalog-config',
-          title: 'Settings',
-          icon: 'lucideSettings',
-          isValid: true,
-          isCompleted: false,
-        });
-      }
-
-      if (this.state.needsCatalogFeaturesStep()) {
-        marketplaceSteps.push({
-          id: 'catalog-features',
-          title: 'Features',
-          icon: 'lucideSlidersHorizontal',
-          isValid: true,
-          isCompleted: false,
-        });
-      }
-
-      marketplaceSteps.push(clusterStep);
-      if (this.state.needsDependencyPicker()) {
-        marketplaceSteps.push({
-          id: 'catalog-dependencies',
-          title: 'Dependencies',
-          icon: 'lucideDatabase',
-          isValid: this.state.catalogDependenciesValid(),
-          isCompleted: false,
-        });
-      }
-      if (this.state.needsLinkedBbPicker()) {
-        marketplaceSteps.push({
-          id: 'catalog-linked-bb',
-          title: 'Link ',
-          icon: 'lucideDatabase',
-          // Optional step: the user can skip and Connect later from the app page.
-          isValid: true,
-          isCompleted: false,
-        });
-      }
-      if (detail?.exposesPublicEndpoint !== false && this.state.exposureMode() !== CreateApplicationDto.ExposureEnum.Internal) {
-        marketplaceSteps.push({
-          id: 'catalog-domain',
-          title: 'Domain',
-          icon: 'lucideCloud',
-          isValid: this.state.catalogDomainValid(),
-          isCompleted: false,
-        });
-      }
-      marketplaceSteps.push(reviewStep);
-      marketplaceSteps.push({
+    return [
+      sourceStep,
+      {
+        id: 'repository',
+        title: 'Repository',
+        icon: 'lucideGitBranch',
+        isValid: hasRepo,
+        isCompleted: false,
+      },
+      {
+        id: 'analysis',
+        title: 'Analysis',
+        icon: 'lucideGithub',
+        isValid: analysisValid,
+        isCompleted: false,
+      },
+      clusterStep,
+      {
+        id: 'environment',
+        title: 'Env vars',
+        icon: 'lucideKey',
+        isValid: true,
+        isCompleted: false,
+      },
+      reviewStep,
+      {
         id: 'generate',
-        title: 'Install',
+        title: 'Deploy',
         icon: 'lucidePlay',
         isValid: true,
         isCompleted: false,
-      });
+      },
+    ];
+  }
 
-      return markCompleted(marketplaceSteps);
+  private buildMarketplaceFlowSteps(sourceStep: WizardStepperStep, clusterStep: WizardStepperStep, reviewStep: WizardStepperStep): WizardStepperStep[] {
+    const detail = this.state.catalogDetail();
+    const hasPrompts = (detail?.userInputPrompts?.length ?? 0) > 0;
+    const hasDefaultCredentials = !!detail?.defaultCredentials;
+    const hasEditableEnv = (detail?.editableEnv?.length ?? 0) > 0;
+
+    const marketplaceSteps: WizardStepperStep[] = [
+      sourceStep,
+      {
+        id: 'catalog-overview',
+        title: 'App',
+        icon: 'lucideStore',
+        isValid: !!detail && this.state.catalogDisplayNameValid(),
+        isCompleted: false,
+      },
+    ];
+
+    if (hasPrompts || hasDefaultCredentials) {
+      marketplaceSteps.push({
+        id: 'catalog-inputs',
+        title: 'Configuration',
+        icon: 'lucideKey',
+        isValid: this.state.catalogInputsValid(),
+        isCompleted: false,
+      });
     }
 
-    // No flow picked yet — show only source step
-    return markCompleted([sourceStep]);
-  });
+    if (hasEditableEnv) {
+      marketplaceSteps.push({
+        id: 'catalog-config',
+        title: 'Settings',
+        icon: 'lucideSettings',
+        isValid: true,
+        isCompleted: false,
+      });
+    }
+
+    if (this.state.needsCatalogFeaturesStep()) {
+      marketplaceSteps.push({
+        id: 'catalog-features',
+        title: 'Features',
+        icon: 'lucideSlidersHorizontal',
+        isValid: true,
+        isCompleted: false,
+      });
+    }
+
+    marketplaceSteps.push(clusterStep);
+    if (this.state.needsDependencyPicker()) {
+      marketplaceSteps.push({
+        id: 'catalog-dependencies',
+        title: 'Dependencies',
+        icon: 'lucideDatabase',
+        isValid: this.state.catalogDependenciesValid(),
+        isCompleted: false,
+      });
+    }
+    if (this.state.needsLinkedBbPicker()) {
+      marketplaceSteps.push({
+        id: 'catalog-linked-bb',
+        title: 'Link ',
+        icon: 'lucideDatabase',
+        // Optional step: the user can skip and Connect later from the app page.
+        isValid: true,
+        isCompleted: false,
+      });
+    }
+    if (detail?.exposesPublicEndpoint !== false && this.state.exposureMode() !== CreateApplicationDto.ExposureEnum.Internal) {
+      marketplaceSteps.push({
+        id: 'catalog-domain',
+        title: 'Domain',
+        icon: 'lucideCloud',
+        isValid: this.state.catalogDomainValid(),
+        isCompleted: false,
+      });
+    }
+    marketplaceSteps.push(reviewStep, {
+      id: 'generate',
+      title: 'Install',
+      icon: 'lucidePlay',
+      isValid: true,
+      isCompleted: false,
+    });
+
+    return marketplaceSteps;
+  }
 
   // Template name validation (matches the backend regex from FRONTEND_TEMPLATE_DEPLOY.md)
   private static readonly REPO_NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
@@ -2683,29 +2700,38 @@ export class DeployWizardComponent implements OnInit {
 
     const nextIndex = this.currentStepIndex() + 1;
     const nextStepId = this.steps()[nextIndex]?.id;
+    const sub = this.flowSubtype();
 
-    // Flow C — check for the flui.yaml manifest when entering the analysis step
-    if (nextStepId === 'analysis' && this.flowSubtype() === 'existing-repo') {
+    this.handleAnalysisStepEntry(nextStepId, sub);
+    this.handleClusterStepEntryFlowC(nextStepId, sub);
+    this.handleEnvironmentStepEntry(nextStepId, sub);
+    this.handleReviewStepEntry(nextStepId, sub);
+    this.handleClusterSelectionSync();
+
+    this.currentStepIndex.set(Math.min(nextIndex, this.steps().length - 1));
+  }
+
+  // Flow C — check for the flui.yaml manifest when entering the analysis step
+  private handleAnalysisStepEntry(nextStepId: string | undefined, sub: FlowSubtype): void {
+    if (nextStepId === 'analysis' && sub === 'existing-repo') {
       this.loadBranches().then(() => this.triggerManifestCheck());
     }
+  }
 
-    // Flow C — sync state service with repo + manifest when entering cluster step from analysis
-    if (nextStepId === 'cluster' && this.flowSubtype() === 'existing-repo') {
-      const repo = this.selectedRepo();
-      const manifest = this.manifestForSelector();
-      if (repo && manifest?.valid) {
-        this.state.initializeFromManifest(repo.id, repo.fullName, this.selectedBranch(), manifest, this.selectedCluster()?.id ?? '');
-      }
+  // Flow C — sync state service with repo + manifest when entering cluster step from analysis
+  private handleClusterStepEntryFlowC(nextStepId: string | undefined, sub: FlowSubtype): void {
+    if (nextStepId !== 'cluster' || sub !== 'existing-repo') return;
+    const repo = this.selectedRepo();
+    const manifest = this.manifestForSelector();
+    if (repo && manifest?.valid) {
+      this.state.initializeFromManifest(repo.id, repo.fullName, this.selectedBranch(), manifest, this.selectedCluster()?.id ?? '');
     }
+  }
 
-    // Flow B — sync state service with template + cluster selection
-    if (nextStepId === 'cluster' && this.flowSubtype() === 'template') {
-      // nothing extra — state.selectedTemplate is already set
-    }
-
+  private handleEnvironmentStepEntry(nextStepId: string | undefined, sub: FlowSubtype): void {
     // Flow C — env vars step: the manifest's deploy.env is the source of truth.
     // Source-code detection only runs when the manifest declares no env at all.
-    if (nextStepId === 'environment' && this.flowSubtype() === 'existing-repo' && (this.selectedRepo() || this.selectedPublicRepo())) {
+    if (nextStepId === 'environment' && sub === 'existing-repo' && (this.selectedRepo() || this.selectedPublicRepo())) {
       const manifestHasEnv = this.prefillEnvVarsFromManifest();
       if (!manifestHasEnv) {
         this.loadBranches().then(() => this.analyzeAndSuggestEnvVars());
@@ -2713,62 +2739,62 @@ export class DeployWizardComponent implements OnInit {
     }
 
     // Flow A — inspect image ports when entering config step
-    if (nextStepId === 'environment' && this.flowSubtype() === 'image') {
+    if (nextStepId === 'environment' && sub === 'image') {
       this.inspectImagePorts();
     }
+  }
 
-    // Re-run the runtime resource check whenever the user advances PAST the
-    // config step (where they could have changed profile/replicas) OR into
-    // the review step. This catches the Flow C case: user picks cluster first
-    // (check runs with template defaults) and then changes the profile in
-    // flui-config — without this re-run the review would still show the
-    // stale check from the cluster step.
-    if (nextStepId === 'review' && this.flowSubtype() !== 'marketplace') {
-      const clusterId = this.selectedCluster()?.id;
-      if (clusterId) {
-        this.checkResourceAvailabilityForCluster(clusterId);
-      }
+  private handleReviewStepEntry(nextStepId: string | undefined, sub: FlowSubtype): void {
+    if (nextStepId !== 'review') return;
+
+    const clusterId = this.selectedCluster()?.id;
+    if (!clusterId) return;
+
+    if (sub !== 'marketplace') {
+      // Re-run the runtime resource check whenever the user advances PAST the
+      // config step (where they could have changed profile/replicas) OR into
+      // the review step. This catches the Flow C case: user picks cluster first
+      // (check runs with template defaults) and then changes the profile in
+      // flui-config — without this re-run the review would still show the
+      // stale check from the cluster step.
+      this.checkResourceAvailabilityForCluster(clusterId);
+      return;
     }
 
     // Marketplace uses a dedicated capacity check with the manifest-declared
     // resources (or the user's overrides), not the generic profile-based one.
-    if (nextStepId === 'review' && this.flowSubtype() === 'marketplace') {
-      const clusterId = this.selectedCluster()?.id;
-      if (clusterId) {
-        this.state.checkCatalogResourceAvailability(clusterId);
-        // Surface the control-plane placement toggle when a dedicated-storage app
-        // targets a worker-less cluster, instead of failing the deploy later.
-        this.state.refreshMasterPlacementRelevance(clusterId);
-      }
-    }
+    this.state.checkCatalogResourceAvailability(clusterId);
+    // Surface the control-plane placement toggle when a dedicated-storage app
+    // targets a worker-less cluster, instead of failing the deploy later.
+    this.state.refreshMasterPlacementRelevance(clusterId);
+  }
 
-    // Cluster sync — push the chosen cluster into the state service for Flow B/C/D
-    if (this.currentStep().id === 'cluster' && this.selectedCluster()?.id) {
-      const clusterId = this.selectedCluster()!.id!;
-      this.state.clusterId.set(clusterId);
-      // Load cluster capabilities for all flows — marketplace uses them for the
-      // Domain step branches, docker/git flows use them to gate the Internal
-      // exposure option (hide if the cluster has no internal hosting).
-      this.state.fetchClusterCapabilities(clusterId);
-      if (this.flowSubtype() === 'marketplace') {
-        // Refresh the catalog detail with the chosen clusterId so `installable`
-        // and `notInstallableReason` reflect this cluster's readiness.
-        const slug = this.state.catalogSlug();
-        if (slug) {
-          this.catalog.loadDetail(slug, clusterId).then(detail => {
-            if (detail) this.state.catalogDetail.set(detail);
-          });
-        }
-        if (this.state.needsLinkedBbPicker()) {
-          this.state.loadReusableInstances(clusterId);
-        }
-        if (this.state.needsDependencyPicker()) {
-          this.state.loadDependencyInstances(clusterId);
-        }
-      }
-    }
+  // Cluster sync — push the chosen cluster into the state service for Flow B/C/D
+  private handleClusterSelectionSync(): void {
+    if (this.currentStep().id !== 'cluster' || !this.selectedCluster()?.id) return;
 
-    this.currentStepIndex.set(Math.min(nextIndex, this.steps().length - 1));
+    const clusterId = this.selectedCluster()!.id!;
+    this.state.clusterId.set(clusterId);
+    // Load cluster capabilities for all flows — marketplace uses them for the
+    // Domain step branches, docker/git flows use them to gate the Internal
+    // exposure option (hide if the cluster has no internal hosting).
+    this.state.fetchClusterCapabilities(clusterId);
+    if (this.flowSubtype() !== 'marketplace') return;
+
+    // Refresh the catalog detail with the chosen clusterId so `installable`
+    // and `notInstallableReason` reflect this cluster's readiness.
+    const slug = this.state.catalogSlug();
+    if (slug) {
+      this.catalog.loadDetail(slug, clusterId).then(detail => {
+        if (detail) this.state.catalogDetail.set(detail);
+      });
+    }
+    if (this.state.needsLinkedBbPicker()) {
+      this.state.loadReusableInstances(clusterId);
+    }
+    if (this.state.needsDependencyPicker()) {
+      this.state.loadDependencyInstances(clusterId);
+    }
   }
 
   previousStep(): void {
@@ -3245,7 +3271,7 @@ export class DeployWizardComponent implements OnInit {
         );
         this.envVars.set(vars);
         this.jsonError.set(null);
-      } catch (error) {
+      } catch {
         this.jsonError.set('Invalid JSON format');
       }
     }
@@ -3288,7 +3314,7 @@ export class DeployWizardComponent implements OnInit {
     try {
       JSON.parse(json);
       this.jsonError.set(null);
-    } catch (error) {
+    } catch {
       this.jsonError.set('Invalid JSON format');
     }
   }
@@ -3531,7 +3557,7 @@ export class DeployWizardComponent implements OnInit {
     const template = this.catalog.capabilities()?.internalHostTemplate;
     if (!template) return null;
     const rawName = this.getApplicationName();
-    const slug = rawName.toLowerCase().replaceAll(/[^a-z0-9-]/g, '-').replaceAll(/^-+|-+$/g, '') || 'app';
+    const slug = stripHyphenEdges(rawName.toLowerCase().replaceAll(/[^a-z0-9-]/g, '-')) || 'app';
     return 'https://' + template.replace('{slug}', slug);
   });
 
@@ -3556,110 +3582,111 @@ export class DeployWizardComponent implements OnInit {
 
     const sub = this.flowSubtype();
 
-    // Flow A — Docker image
-    if (sub === 'image') {
-      this.isDeploying.set(true);
-      this.deployError.set(null);
-      try {
-        const envVars = this.buildEnvVarsList();
-        if (envVars === null) return;
+    if (sub === 'image') return this.deployImageFlow(cluster.id);
+    if (sub === 'template') return this.deployTemplateFlow(cluster.id);
+    if (sub === 'existing-repo') return this.deployExistingRepoFlow(cluster.id);
+    if (sub === 'marketplace') return this.deployMarketplaceFlow(cluster.id);
+  }
 
-        const response = await firstValueFrom(
-          this.applicationsApi.applicationsControllerCreate(cluster.id, {
-            name: this.getApplicationName(),
-            category: CreateApplicationDto.CategoryEnum.User,
-            kind: this.selectedKind() as CreateApplicationDto.KindEnum,
-            sourceType: CreateApplicationDto.SourceTypeEnum.DockerImage,
-            sourceConfig: {
-              imageRef: this.selectedImageRef(),
-              pullPolicy: 'IfNotPresent',
-            },
-            port: this.appPort() ?? undefined,
-            replicas: this.appReplicas(),
-            resourceProfile: this.selectedProfile() as CreateApplicationDto.ResourceProfileEnum,
-            exposure: this.state.exposureMode(),
-            env: envVars.map(v => ({ name: v.key, value: v.value, secret: v.isSecret })),
-            autoDeploy: true,
-            healthProbe: this.buildHealthProbe(),
-          } as any)
-        );
+  // Flow A — Docker image
+  private async deployImageFlow(clusterId: string): Promise<void> {
+    this.isDeploying.set(true);
+    this.deployError.set(null);
+    try {
+      const envVars = this.buildEnvVarsList();
+      if (envVars === null) return;
 
-        if (response.operation?.id) {
-          this.router.navigate(['/apps/deploy', response.operation.id], {
-            queryParams: { appId: response.application.id },
-          });
-        } else {
-          this.router.navigate(['/apps/applications', response.application.id]);
-        }
-      } catch (error) {
-        console.error('Failed to start deployment:', error);
-        const msg = internalHostingErrorMessage(error);
-        this.deployError.set(msg ?? 'Failed to start deployment. Check logs for details.');
-      } finally {
-        this.isDeploying.set(false);
+      const response = await firstValueFrom(
+        this.applicationsApi.applicationsControllerCreate(clusterId, {
+          name: this.getApplicationName(),
+          category: CreateApplicationDto.CategoryEnum.User,
+          kind: this.selectedKind() as CreateApplicationDto.KindEnum,
+          sourceType: CreateApplicationDto.SourceTypeEnum.DockerImage,
+          sourceConfig: {
+            imageRef: this.selectedImageRef(),
+            pullPolicy: 'IfNotPresent',
+          },
+          port: this.appPort() ?? undefined,
+          replicas: this.appReplicas(),
+          resourceProfile: this.selectedProfile() as CreateApplicationDto.ResourceProfileEnum,
+          exposure: this.state.exposureMode(),
+          env: envVars.map(v => ({ name: v.key, value: v.value, secret: v.isSecret })),
+          autoDeploy: true,
+          healthProbe: this.buildHealthProbe(),
+        } as any)
+      );
+
+      if (response.operation?.id) {
+        this.router.navigate(['/apps/deploy', response.operation.id], {
+          queryParams: { appId: response.application.id },
+        });
+      } else {
+        this.router.navigate(['/apps/applications', response.application.id]);
       }
-      return;
+    } catch (error) {
+      console.error('Failed to start deployment:', error);
+      const msg = internalHostingErrorMessage(error);
+      this.deployError.set(msg ?? 'Failed to start deployment. Check logs for details.');
+    } finally {
+      this.isDeploying.set(false);
     }
+  }
 
-    // Flow B — Template
-    if (sub === 'template') {
-      this.isDeploying.set(true);
-      this.deployError.set(null);
-      try {
-        // Sync cluster + env vars from local state into the service
-        this.state.clusterId.set(cluster.id);
-        this.state.envVars.set(this.envVars().map(v => ({ key: v.key, value: v.value, isSecret: v.isSecret })));
+  // Flow B — Template
+  private async deployTemplateFlow(clusterId: string): Promise<void> {
+    this.isDeploying.set(true);
+    this.deployError.set(null);
+    try {
+      // Sync cluster + env vars from local state into the service
+      this.state.clusterId.set(clusterId);
+      this.state.envVars.set(this.envVars().map(v => ({ key: v.key, value: v.value, isSecret: v.isSecret })));
 
-        const appId = await this.state.orchestrateTemplateFlow();
-        if (appId && !this.state.workflowPullRequestUrl()) {
-          // Small delay so the user can see the done state, then navigate to the monitor
-          setTimeout(() => {
-            this.router.navigate(['/apps/deploy/gha-build', appId]);
-          }, 1200);
-        }
-      } catch (error) {
-        const msg = internalHostingErrorMessage(error);
-        if (msg) this.deployError.set(msg);
-      } finally {
-        this.isDeploying.set(false);
+      const appId = await this.state.orchestrateTemplateFlow();
+      if (appId && !this.state.workflowPullRequestUrl()) {
+        // Small delay so the user can see the done state, then navigate to the monitor
+        setTimeout(() => {
+          this.router.navigate(['/apps/deploy/gha-build', appId]);
+        }, 1200);
       }
-      return;
+    } catch (error) {
+      const msg = internalHostingErrorMessage(error);
+      if (msg) this.deployError.set(msg);
+    } finally {
+      this.isDeploying.set(false);
     }
+  }
 
-    // Flow C — Existing repo
-    if (sub === 'existing-repo') {
-      this.isDeploying.set(true);
-      this.deployError.set(null);
-      try {
-        this.state.clusterId.set(cluster.id);
-        this.state.envVars.set(this.envVars().map(v => ({ key: v.key, value: v.value, isSecret: v.isSecret })));
+  // Flow C — Existing repo
+  private async deployExistingRepoFlow(clusterId: string): Promise<void> {
+    this.isDeploying.set(true);
+    this.deployError.set(null);
+    try {
+      this.state.clusterId.set(clusterId);
+      this.state.envVars.set(this.envVars().map(v => ({ key: v.key, value: v.value, isSecret: v.isSecret })));
 
-        const appId = await this.state.orchestrateExistingRepoFlow();
-        if (appId) {
-          setTimeout(() => {
-            this.router.navigate(['/apps/deploy/gha-build', appId]);
-          }, 1200);
-        }
-      } catch (error) {
-        const msg = internalHostingErrorMessage(error);
-        if (msg) this.deployError.set(msg);
-      } finally {
-        this.isDeploying.set(false);
+      const appId = await this.state.orchestrateExistingRepoFlow();
+      if (appId) {
+        setTimeout(() => {
+          this.router.navigate(['/apps/deploy/gha-build', appId]);
+        }, 1200);
       }
-      return;
+    } catch (error) {
+      const msg = internalHostingErrorMessage(error);
+      if (msg) this.deployError.set(msg);
+    } finally {
+      this.isDeploying.set(false);
     }
+  }
 
-    // Flow D — Marketplace
-    if (sub === 'marketplace') {
-      this.isDeploying.set(true);
-      try {
-        this.state.clusterId.set(cluster.id);
-        await this.state.orchestrateMarketplaceFlow();
-        // Success UI renders inline in the generate step when installPhase is 'running'
-      } finally {
-        this.isDeploying.set(false);
-      }
-      return;
+  // Flow D — Marketplace
+  private async deployMarketplaceFlow(clusterId: string): Promise<void> {
+    this.isDeploying.set(true);
+    try {
+      this.state.clusterId.set(clusterId);
+      await this.state.orchestrateMarketplaceFlow();
+      // Success UI renders inline in the generate step when installPhase is 'running'
+    } finally {
+      this.isDeploying.set(false);
     }
   }
 
