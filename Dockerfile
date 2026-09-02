@@ -8,6 +8,11 @@ WORKDIR /app
 # at lockfileVersion 9.0 which both 9.x and 10.x understand.
 RUN npm install -g pnpm@9
 COPY package.json pnpm-lock.yaml ./
+# vendor/ holds local tarball dependencies (file:vendor/*.tgz in package.json,
+# for packages not yet published to npm) — pnpm needs them on disk to resolve
+# the lockfile, so they have to land before install, not with the rest of the
+# source in the next COPY.
+COPY vendor/ ./vendor/
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN npm run build
