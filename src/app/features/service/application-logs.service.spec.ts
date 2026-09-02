@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -16,7 +16,7 @@ describe('ApplicationLogsService', () => {
     TestBed.configureTestingModule({
       providers: [
         ApplicationLogsService,
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: AppConfigService, useValue: config },
       ],

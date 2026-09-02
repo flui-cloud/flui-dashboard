@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed, inject, viewChild } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -81,6 +81,7 @@ import { ClusterType, isControlClusterType } from '../../model/cluster.models';
       lucideKey,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-4">
       <!-- Header -->
@@ -382,7 +383,7 @@ import { ClusterType, isControlClusterType } from '../../model/cluster.models';
                         [serverId]="getServerIdForSsh()"
                         [serverIp]="getServerIpForSsh()"
                         [useBootstrapKey]="useBootstrapKey()"
-                        [clusterId]="clusterInfo()?.clusterId"
+                        [clusterId]="$safeNavigationMigration(clusterInfo()?.clusterId)"
                       />
                     </div>
                   </div>

@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -32,7 +32,7 @@ const PAT_DEEP_LINK =
 @Component({
   selector: 'app-github-setup-wizard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, WizardShellComponent],
+  imports: [FormsModule, NgIconComponent, WizardShellComponent],
   providers: [
     provideIcons({
       lucideGithub,
@@ -46,6 +46,7 @@ const PAT_DEEP_LINK =
       lucideChevronRight,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <app-wizard-shell
       wizardTitle="GitHub Integration Setup"

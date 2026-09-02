@@ -96,7 +96,7 @@ export class ScalingOverviewComponent {
   private readonly api = inject(ScalingApiService);
 
   protected readonly rowsRes = rxResource({
-    loader: () => this.api.rows(),
+    stream: () => this.api.rows(),
   });
 
   private readonly loaded = loadedOf<ClusterScalingRow[]>(

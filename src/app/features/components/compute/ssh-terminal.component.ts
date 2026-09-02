@@ -3,14 +3,15 @@ import {
   OnInit,
   OnDestroy,
   AfterViewInit,
-  ViewChild,
   ElementRef,
   input,
   inject,
   computed,
   effect,
+  viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Terminal } from 'xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { TerminalService } from '../../../core/services/terminal.service';
@@ -22,7 +23,7 @@ import { TerminalService } from '../../../core/services/terminal.service';
 @Component({
   selector: 'app-ssh-terminal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="terminal-container">
       <!-- Status overlay -->
@@ -50,6 +51,7 @@ import { TerminalService } from '../../../core/services/terminal.service';
       <div #terminalContainer class="xterm-wrapper" (click)="focusTerminal()"></div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host {
       display: block;
@@ -146,8 +148,7 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly terminalService = inject(TerminalService);
 
   // Terminal elements
-  @ViewChild('terminalContainer', { static: true })
-  terminalContainer!: ElementRef<HTMLDivElement>;
+  readonly terminalContainer = viewChild.required<ElementRef<HTMLDivElement>>('terminalContainer');
 
   private terminal: Terminal | null = null;
   private fitAddon: FitAddon | null = null;
@@ -246,12 +247,13 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    if (!this.terminal || !this.terminalContainer) return;
+    const terminalContainer = this.terminalContainer();
+    if (!this.terminal || !terminalContainer) return;
 
-    this.terminal.open(this.terminalContainer.nativeElement);
+    this.terminal.open(terminalContainer.nativeElement);
 
     this.wheelListener = (e: WheelEvent) => { e.stopPropagation(); };
-    this.terminalContainer.nativeElement.addEventListener('wheel', this.wheelListener, { passive: false });
+    terminalContainer.nativeElement.addEventListener('wheel', this.wheelListener, { passive: false });
 
     this.terminal.writeln('\x1b[36mFlui Cloud Terminal\x1b[0m');
     this.terminal.writeln('Initializing terminal...');
@@ -280,7 +282,8 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
    * Setup resize observer to auto-fit terminal on container resize
    */
   private setupResizeObserver(): void {
-    if (!this.terminalContainer) return;
+    const terminalContainer = this.terminalContainer();
+    if (!terminalContainer) return;
 
     this.resizeObserver = new ResizeObserver(() => {
       if (this.fitAddon && this.terminal) {
@@ -300,7 +303,7 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    this.resizeObserver.observe(this.terminalContainer.nativeElement);
+    this.resizeObserver.observe(terminalContainer.nativeElement);
   }
 
   /**
@@ -333,8 +336,9 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.wheelListener && this.terminalContainer) {
-      this.terminalContainer.nativeElement.removeEventListener('wheel', this.wheelListener);
+    const terminalContainer = this.terminalContainer();
+    if (this.wheelListener && terminalContainer) {
+      terminalContainer.nativeElement.removeEventListener('wheel', this.wheelListener);
       this.wheelListener = null;
     }
     this.resizeObserver?.disconnect();

@@ -1,5 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -16,7 +16,7 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
 @Component({
   selector: 'app-github-installed',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, GhcrPatModalComponent],
+  imports: [FormsModule, NgIconComponent, GhcrPatModalComponent],
   providers: [
     provideIcons({
       lucideGithub,
@@ -26,6 +26,7 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
       lucideKey,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
       <div class="max-w-md w-full bg-white dark:bg-slate-800 rounded-lg shadow-md p-8">

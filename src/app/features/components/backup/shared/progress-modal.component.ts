@@ -1,11 +1,12 @@
-import { Component, computed, inject, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { BackupService } from '../../../service/backup.service';
 
 @Component({
   selector: 'app-backup-progress-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (op(); as o) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

@@ -1,5 +1,5 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, effect, inject, input, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideBell,
@@ -13,7 +13,7 @@ import { AlertEvent } from '../../model/alert.models';
 @Component({
   selector: 'app-alerts-section',
   standalone: true,
-  imports: [CommonModule, NgIconComponent],
+  imports: [NgIconComponent],
   providers: [
     provideIcons({
       lucideBell,
@@ -22,6 +22,7 @@ import { AlertEvent } from '../../model/alert.models';
       lucideTriangleAlert,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
       <div class="flex items-start justify-between gap-4">

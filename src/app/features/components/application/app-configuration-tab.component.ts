@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { ActivatedRoute } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -16,10 +16,11 @@ import { AppVariablesEditorComponent, VariablesSavePayload } from './app-variabl
 @Component({
   selector: 'app-configuration-tab',
   standalone: true,
-  imports: [CommonModule, NgIconComponent, AppVariablesEditorComponent],
+  imports: [NgIconComponent, AppVariablesEditorComponent],
   providers: [
     provideIcons({ lucideLoader, lucideAlertCircle, lucideInfo, lucideCopy, lucideCheck }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (app(); as app) {
       <div class="space-y-6">

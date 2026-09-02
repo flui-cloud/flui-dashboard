@@ -6,7 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -49,7 +49,7 @@ const FRESHNESS_LABEL: Record<Freshness, string> = {
   selector: 'app-platform-backup-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, NgIcon, BackupStatusBadgeComponent],
+  imports: [FormsModule, NgIcon, BackupStatusBadgeComponent],
   providers: [
     provideIcons({
       lucideCircleAlert,

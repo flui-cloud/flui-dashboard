@@ -1,5 +1,5 @@
-import { Component, Input, OnChanges, SimpleChanges, computed, effect, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnChanges, SimpleChanges, computed, effect, inject, signal, input, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -23,7 +23,7 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
 @Component({
   selector: 'app-latest-release-card',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgIconComponent],
+  imports: [RouterModule, NgIconComponent],
   providers: [
     provideIcons({
       lucideRocket,
@@ -36,6 +36,7 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
       lucideRefreshCw,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (release(); as r) {
       <div
@@ -117,7 +118,7 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
   `,
 })
 export class AppLatestReleaseCardComponent implements OnChanges {
-  @Input({ required: true }) appId!: string;
+  readonly appId = input.required<string>();
 
   private readonly releaseService = inject(AppReleaseService);
   private readonly buildsApi = inject(AppBuildsService);
@@ -136,9 +137,10 @@ export class AppLatestReleaseCardComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['appId'] && this.appId) {
-      this.releaseService.loadCurrent(this.appId);
-      this.releaseService.subscribe(this.appId);
+    const appId = this.appId();
+    if (changes['appId'] && appId) {
+      this.releaseService.loadCurrent(appId);
+      this.releaseService.subscribe(appId);
     }
   }
 

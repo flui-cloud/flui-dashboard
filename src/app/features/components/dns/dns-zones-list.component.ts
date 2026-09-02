@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, effect, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, effect, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideTrash2, lucideGlobe, lucideAlertCircle, lucideRefreshCw, lucidePlus, lucideServer, lucideChevronDown, lucideChevronRight, lucideClock, lucideRadioTower } from '@ng-icons/lucide';
@@ -15,6 +15,7 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
   standalone: true,
   imports: [ReadOnlySectionDirective, NgIconComponent, RouterLink, DeleteConfirmationDialogComponent, ZoneReplicasComponent],
   providers: [provideIcons({ lucideTrash2, lucideGlobe, lucideAlertCircle, lucideRefreshCw, lucidePlus, lucideServer, lucideChevronDown, lucideChevronRight, lucideClock, lucideRadioTower })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
 

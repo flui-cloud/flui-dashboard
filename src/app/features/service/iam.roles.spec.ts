@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -56,7 +56,7 @@ describe('IamService role pickers', () => {
     TestBed.configureTestingModule({
       providers: [
         IamService,
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: AppConfigService, useValue: { apiBaseUrl: '' } },
         { provide: NotificationService, useValue: { add: () => undefined } },

@@ -1,5 +1,5 @@
-import { Component, input, computed, signal, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, computed, signal, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
 import {
@@ -27,7 +27,7 @@ import {
 @Component({
   selector: 'app-grade-gauge',
   standalone: true,
-  imports: [CommonModule, NgxEchartsDirective],
+  imports: [NgxEchartsDirective],
   providers: [provideEcharts()],
   template: `
     <div class="grade-gauge-container" [style.height]="config().height">
@@ -52,6 +52,7 @@ import {
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .grade-gauge-container {
       display: flex;

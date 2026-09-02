@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
 import { ToastService } from '../../../../shared/services/toast.service';
@@ -12,7 +12,8 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
 @Component({
   selector: 'app-policy-detail',
   standalone: true,
-  imports: [ReadOnlySectionDirective, CommonModule, BackupStatusBadgeComponent, BackupProgressModalComponent, BackupBackLinkComponent],
+  imports: [ReadOnlySectionDirective, BackupStatusBadgeComponent, BackupProgressModalComponent, BackupBackLinkComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-3xl space-y-4">
       <app-backup-back-link link="/management/backup/policies" label="Back to policies" />

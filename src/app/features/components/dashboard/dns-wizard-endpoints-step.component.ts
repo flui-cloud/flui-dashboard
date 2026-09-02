@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideCheckCircle,
@@ -33,6 +33,7 @@ const PHASE_LABELS: Record<AppEndpointPhase, string> = {
   standalone: true,
   imports: [NgIconComponent],
   providers: [provideIcons({ lucideCheckCircle, lucideLoader, lucideAlertCircle, lucideRefreshCw, lucideFileText, lucideInfo })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex items-start justify-between mb-1">
       <h3 class="text-sm font-semibold text-foreground">

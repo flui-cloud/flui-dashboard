@@ -2,8 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
-  ViewChild,
   inject,
+  viewChild
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -323,10 +323,8 @@ export class CacheConsolePageComponent implements OnInit {
     { initialValue: this.route.snapshot.paramMap.get('applicationId') },
   );
 
-  @ViewChild('flushDialog')
-  private readonly flushDialog?: ConfirmationDialogComponent;
-  @ViewChild('removeDialog')
-  private readonly removeDialog?: ConfirmationDialogComponent;
+  private readonly flushDialog = viewChild<ConfirmationDialogComponent>('flushDialog');
+  private readonly removeDialog = viewChild<ConfirmationDialogComponent>('removeDialog');
 
   ngOnInit(): void {
     this.s.appId.set(this.applicationId() ?? null);
@@ -335,11 +333,11 @@ export class CacheConsolePageComponent implements OnInit {
 
   protected askRemove(key: string): void {
     this.s.pendingRemove.set(key);
-    this.removeDialog?.open();
+    this.removeDialog()?.open();
   }
 
   protected askFlush(): void {
-    this.flushDialog?.open();
+    this.flushDialog()?.open();
   }
 
   protected fmtUptime(sec: number): string {

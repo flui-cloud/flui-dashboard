@@ -1,5 +1,5 @@
-import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideCheck } from '@ng-icons/lucide';
 
@@ -42,7 +42,7 @@ export interface WizardStepperStep {
 @Component({
   selector: 'app-wizard-stepper',
   standalone: true,
-  imports: [CommonModule, NgIconComponent],
+  imports: [NgIconComponent],
   providers: [
     provideIcons({
       lucideCheck,
@@ -54,38 +54,40 @@ export interface WizardStepperStep {
         <div
           class="flex items-center"
           [class.flex-1]="!isLast"
-        >
+          >
           <!-- Step Circle -->
           <div
             class="flex flex-col items-center"
             [class.cursor-pointer]="allowStepClick() && canNavigateToStep(i)"
             (click)="onStepClick(i)"
-          >
+            >
             <div
               [class]="getStepCircleClass(step, i)"
               class="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200"
-            >
-              <ng-icon
-                *ngIf="step.isCompleted"
-                name="lucideCheck"
-                size="20"
-                class="text-white"
-              ></ng-icon>
-              <ng-icon
-                *ngIf="!step.isCompleted"
-                [name]="step.icon"
-                size="20"
-                [class]="getStepIconClass(i)"
-              ></ng-icon>
+              >
+              @if (step.isCompleted) {
+                <ng-icon
+                  name="lucideCheck"
+                  size="20"
+                  class="text-white"
+                ></ng-icon>
+              }
+              @if (!step.isCompleted) {
+                <ng-icon
+                  [name]="step.icon"
+                  size="20"
+                  [class]="getStepIconClass(i)"
+                ></ng-icon>
+              }
             </div>
             <span
               [class]="getStepLabelClass(i)"
               class="mt-2 text-sm font-medium transition-colors duration-200"
-            >
+              >
               {{ step.title }}
             </span>
           </div>
-
+    
           <!-- Connector Line -->
           @if (!isLast) {
             <div
@@ -96,7 +98,8 @@ export interface WizardStepperStep {
         </div>
       }
     </div>
-  `,
+    `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [],
 })
 export class WizardStepperComponent {

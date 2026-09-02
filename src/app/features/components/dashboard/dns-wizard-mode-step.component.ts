@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideInfo } from '@ng-icons/lucide';
 import { DnsSetupWizardService, CertMode } from './dns-setup-wizard.service';
@@ -8,6 +8,7 @@ import { DnsSetupWizardService, CertMode } from './dns-setup-wizard.service';
   standalone: true,
   imports: [NgIconComponent],
   providers: [provideIcons({ lucideInfo })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <h3 class="text-sm font-semibold text-foreground mb-1">How do you want to secure your apps?</h3>
     <p class="text-xs text-muted-foreground mb-4">

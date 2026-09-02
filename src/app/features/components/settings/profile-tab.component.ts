@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideAlertCircle } from '@ng-icons/lucide';
@@ -29,6 +29,7 @@ import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
     HlmLabelDirective,
   ],
   providers: [provideIcons({ lucideCheck, lucideAlertCircle })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div hlmCard>
       <div hlmCardHeader>

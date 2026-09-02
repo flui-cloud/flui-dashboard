@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleCheck, lucideCircleX, lucideLoaderCircle } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
@@ -21,6 +21,7 @@ const TERMINAL = new Set<OperationState>(['COMPLETED', 'FAILED', 'CANCELLED']);
   standalone: true,
   imports: [NgIcon],
   providers: [provideIcons({ lucideCircleCheck, lucideCircleX, lucideLoaderCircle })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="mt-2 rounded-xl border px-3 py-2.5 text-xs"
       [class]="succeeded()

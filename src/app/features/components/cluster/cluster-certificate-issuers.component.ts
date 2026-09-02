@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, input, signal, computed, effect, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, inject, input, signal, computed, effect, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -23,6 +23,7 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
       lucideLoader, lucideCheckCircle, lucideAlertCircle, lucideSettings2, lucideTrash2
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div id="standard-certificate-issuers" class="space-y-4">
       <div>

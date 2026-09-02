@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideUsersRound,
@@ -31,6 +31,7 @@ const FIELD =
     DeleteConfirmationDialogComponent,
   ],
   providers: [provideIcons({ lucideUsersRound, lucidePlus, lucideTrash2, lucideX })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between gap-3">

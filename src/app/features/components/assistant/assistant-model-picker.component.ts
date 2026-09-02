@@ -1,4 +1,4 @@
-import { Component, HostListener, computed, inject, output, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideChevronDown, lucideChevronUp, lucideSearch } from '@ng-icons/lucide';
@@ -10,6 +10,7 @@ import { AssistantModelSelectionService, EnrichedOption } from '../../service/as
   imports: [NgIcon],
   providers: [provideIcons({ lucideCheck, lucideChevronDown, lucideChevronUp, lucideSearch })],
   styles: [':host { display: contents; }'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="relative min-w-0" (click)="$event.stopPropagation()">
       @if (sel.pickerOptions().length > 1) {

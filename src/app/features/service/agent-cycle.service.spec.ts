@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -16,7 +16,7 @@ describe('the action-cycle client', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: AppConfigService, useValue: { apiBaseUrl: API } },
       ],
@@ -29,12 +29,16 @@ describe('the action-cycle client', () => {
 
   it('reads the requests waiting on a person', () => {
     service.listProposals().subscribe();
-    http.expectOne(`${API}/api/v1/agent/proposals`).flush([]);
+    const req = http.expectOne(`${API}/api/v1/agent/proposals`);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
   });
 
   it('reads one request', () => {
     service.proposal('p 1').subscribe();
-    http.expectOne(`${API}/api/v1/agent/proposals/p%201`).flush({});
+    const req = http.expectOne(`${API}/api/v1/agent/proposals/p%201`);
+    expect(req.request.method).toBe('GET');
+    req.flush({});
   });
 
   it('answers a request with the decision in the body', () => {
@@ -47,7 +51,9 @@ describe('the action-cycle client', () => {
 
   it('reads what stands', () => {
     service.listConcessions().subscribe();
-    http.expectOne(`${API}/api/v1/agent/concessions`).flush([]);
+    const req = http.expectOne(`${API}/api/v1/agent/concessions`);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
   });
 
   it('asks what is still running under a grant', () => {
@@ -66,22 +72,22 @@ describe('the action-cycle client', () => {
 
   it('asks what is running to stop only when told to', () => {
     service.revoke('g-1', true).subscribe();
-    http
-      .expectOne(`${API}/api/v1/agent/concessions/g-1?stop=true`)
-      .flush({ concession: {}, stopRequested: ['o-1'], stillRunning: [] });
+    const req = http.expectOne(`${API}/api/v1/agent/concessions/g-1?stop=true`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ concession: {}, stopRequested: ['o-1'], stillRunning: [] });
   });
 
   it('prices a request from the route the request itself named', () => {
     service.estimate('/infrastructure/clusters/c-1/capacity-plan').subscribe();
-    http
-      .expectOne(`${API}/api/v1/infrastructure/clusters/c-1/capacity-plan`)
-      .flush({});
+    const req = http.expectOne(`${API}/api/v1/infrastructure/clusters/c-1/capacity-plan`);
+    expect(req.request.method).toBe('GET');
+    req.flush({});
   });
 
   it('tolerates a price route that arrived without its leading slash', () => {
     service.estimate('infrastructure/clusters/c-1/capacity-plan').subscribe();
-    http
-      .expectOne(`${API}/api/v1/infrastructure/clusters/c-1/capacity-plan`)
-      .flush({});
+    const req = http.expectOne(`${API}/api/v1/infrastructure/clusters/c-1/capacity-plan`);
+    expect(req.request.method).toBe('GET');
+    req.flush({});
   });
 });

@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -24,17 +24,17 @@ import { AddWorkerDialogComponent } from './add-worker-dialog.component';
   selector: 'cluster-monitoring-tab',
   standalone: true,
   imports: [
-    CommonModule,
     GradeGaugeComponent,
     TimeSeriesLineComponent,
     NgIconComponent,
     AutoscaleWarningBannerComponent,
-    AddWorkerDialogComponent,
-  ],
+    AddWorkerDialogComponent
+],
   providers: [
     provideIcons({ lucideRefreshCw, lucideActivity }),
   ],
   templateUrl: './cluster-monitoring-tab.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host {
       display: block;

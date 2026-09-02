@@ -1,5 +1,5 @@
-import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideLoader,
@@ -17,7 +17,7 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
 @Component({
   selector: 'app-env-suggestions-panel',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [
     provideIcons({
       lucideLoader,
@@ -29,6 +29,7 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
       lucideRefreshCw,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <!-- Loading state -->
     @if (loading()) {

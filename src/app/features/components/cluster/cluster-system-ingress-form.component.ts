@@ -1,4 +1,4 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -14,6 +14,7 @@ import { ConfigureSystemIngressDto } from '../../../core/api/model/configureSyst
   providers: [
     provideIcons({ lucideSettings2, lucideLoader, lucideCheckCircle, lucideAlertCircle, lucideChevronDown, lucideChevronUp }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-3">
       <!-- Header toggle -->

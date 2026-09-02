@@ -1,5 +1,5 @@
-import { Component, input, output, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -29,7 +29,7 @@ interface ScopeCheckResult {
 @Component({
   selector: 'app-github-connect',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent],
+  imports: [FormsModule, NgIconComponent],
   providers: [
     provideIcons({
       lucideGithub,
@@ -43,6 +43,7 @@ interface ScopeCheckResult {
       lucideTriangleAlert,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col items-center py-10 px-4 text-center">
       <!-- GitHub logo -->

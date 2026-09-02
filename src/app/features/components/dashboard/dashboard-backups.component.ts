@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -37,6 +37,7 @@ const REFRESH_INTERVAL_MS = 60_000;
       lucideTriangleAlert,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (loading() && !status()) {
     <div class="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-4">

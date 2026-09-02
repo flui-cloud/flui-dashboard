@@ -1,6 +1,6 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { provideEcharts } from 'ngx-echarts';
 import { Renderer, type Tokens } from 'marked';
 import { MARKED_OPTIONS, provideMarkdown } from 'ngx-markdown';
@@ -19,7 +19,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
     provideEcharts(),
     provideMarkdown({
       markedOptions: {

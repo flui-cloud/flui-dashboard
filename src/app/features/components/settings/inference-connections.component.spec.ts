@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { InferenceSettingsService } from '../../service/inference-settings.service';
@@ -34,7 +34,7 @@ describe('deleting an LLM connection', () => {
     await TestBed.configureTestingModule({
       imports: [InferenceConnectionsComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: InferenceSettingsService, useValue: service },
         {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DashboardService } from '../../service/dashboard.service';
 import { DashboardDnsService } from '../../service/dashboard-dns.service';
 import { DashboardPulseComponent } from './dashboard-pulse.component';
@@ -29,6 +29,7 @@ import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.compone
     DashboardAgentStatusComponent,
     SandboxGuideCardComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col gap-4 p-4 md:p-6 min-h-full">
 

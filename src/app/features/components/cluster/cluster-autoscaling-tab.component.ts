@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -48,6 +48,7 @@ import { InstanceWithLabels, getClusterInfo, getClusterNodeId } from '../../mode
       lucideMinus,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">

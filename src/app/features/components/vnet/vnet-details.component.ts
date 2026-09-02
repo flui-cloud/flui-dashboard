@@ -5,7 +5,7 @@
  * routes, and attached servers. Provides subnet management capabilities.
  */
 
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -534,6 +534,7 @@ import { ProviderWizardService } from '../../../shared/services/provider-wizard.
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: []
 })
 export class VNetDetailsComponent implements OnInit {
@@ -686,10 +687,7 @@ export class VNetDetailsComponent implements OnInit {
           undefined,
           undefined,
           undefined,
-          vnet.provider,
-          undefined,
-          undefined,
-          undefined
+          vnet.provider
         )
       );
 

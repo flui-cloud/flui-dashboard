@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, output, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, input, output, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -29,7 +29,7 @@ interface CredentialField {
 @Component({
   selector: 'provider-credentials-panel',
   standalone: true,
-  imports: [ReadOnlySectionDirective, CommonModule, ReactiveFormsModule, NgIcon],
+  imports: [ReadOnlySectionDirective, ReactiveFormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideCalendar,
@@ -43,6 +43,7 @@ interface CredentialField {
       lucideX,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <section class="bg-card border border-border rounded-xl overflow-hidden">
       <header class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2">

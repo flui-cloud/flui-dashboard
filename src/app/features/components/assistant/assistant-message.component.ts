@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBot } from '@ng-icons/lucide';
 import { MarkdownComponent } from 'ngx-markdown';
@@ -12,6 +12,7 @@ import { AssistantToolResultComponent } from './assistant-tool-result.component'
   imports: [NgIcon, MarkdownComponent, AssistantOperationProgressComponent, AssistantToolResultComponent],
   providers: [provideIcons({ lucideBot })],
   styles: [':host { display: contents; }'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex gap-2" [class.flex-row-reverse]="message().role === 'user'">
       @if (message().role !== 'user') {

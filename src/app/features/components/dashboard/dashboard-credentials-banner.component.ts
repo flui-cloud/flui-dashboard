@@ -1,5 +1,5 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -19,7 +19,7 @@ import {
 @Component({
   selector: 'app-dashboard-credentials-banner',
   standalone: true,
-  imports: [CommonModule, NgIconComponent],
+  imports: [NgIconComponent],
   providers: [
     provideIcons({
       lucideTriangleAlert,
@@ -29,6 +29,7 @@ import {
       lucideX,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (visible() && attentionItems().length > 0) {
       <div [class]="containerClass()">

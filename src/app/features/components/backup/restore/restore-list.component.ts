@@ -1,5 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
@@ -9,7 +9,8 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
 @Component({
   selector: 'app-restore-list',
   standalone: true,
-  imports: [ReadOnlySectionDirective, CommonModule, RouterLink, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  imports: [ReadOnlySectionDirective, RouterLink, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-4">
       <app-backup-back-link link="/management/backup" label="Back to Backup" />

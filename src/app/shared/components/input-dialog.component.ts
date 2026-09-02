@@ -1,11 +1,12 @@
 import {
   Component,
-  EventEmitter,
   Input,
-  Output,
   signal,
+  input,
+  output,
+  ChangeDetectionStrategy
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePencil, lucideX, lucideLoader } from '@ng-icons/lucide';
@@ -19,8 +20,9 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 @Component({
   selector: 'app-input-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon, HlmButtonDirective],
+  imports: [FormsModule, NgIcon, HlmButtonDirective],
   providers: [provideIcons({ lucidePencil, lucideX, lucideLoader })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isOpen()) {
       <div
@@ -40,7 +42,7 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
                   class="flex h-12 w-12 items-center justify-center rounded-full flex-shrink-0 bg-blue-100 dark:bg-blue-900/20"
                 >
                   <ng-icon
-                    [name]="icon"
+                    [name]="icon()"
                     class="h-6 w-6 text-blue-600 dark:text-blue-400"
                   />
                 </div>
@@ -48,7 +50,7 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
                   <h3
                     class="text-lg font-semibold text-gray-900 dark:text-white"
                   >
-                    {{ title }}
+                    {{ title() }}
                   </h3>
                   @if (message) {
                     <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
@@ -74,7 +76,7 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
                 #field
                 type="text"
                 [(ngModel)]="value"
-                [placeholder]="placeholder"
+                [placeholder]="placeholder()"
                 [disabled]="isProcessing()"
                 (keydown.enter)="onConfirm()"
                 class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -94,7 +96,7 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
                 [disabled]="isProcessing()"
                 class="min-w-[80px]"
               >
-                {{ cancelText }}
+                {{ cancelText() }}
               </button>
               <button
                 hlmBtn
@@ -107,9 +109,9 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
                     name="lucideLoader"
                     class="h-4 w-4 mr-2 animate-spin"
                   />
-                  {{ confirmText }}…
+                  {{ confirmText() }}…
                 } @else {
-                  {{ confirmText }}
+                  {{ confirmText() }}
                 }
               </button>
             </div>
@@ -120,15 +122,15 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
   `,
 })
 export class InputDialogComponent {
-  @Input() title = 'Enter a value';
+  readonly title = input('Enter a value');
   @Input() message = '';
-  @Input() placeholder = '';
-  @Input() confirmText = 'Create';
-  @Input() cancelText = 'Cancel';
-  @Input() icon = 'lucidePencil';
+  readonly placeholder = input('');
+  readonly confirmText = input('Create');
+  readonly cancelText = input('Cancel');
+  readonly icon = input('lucidePencil');
 
-  @Output() confirmed = new EventEmitter<string>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly confirmed = output<string>();
+  readonly cancelled = output<void>();
 
   value = '';
   isOpen = signal(false);

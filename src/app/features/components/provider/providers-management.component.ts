@@ -1,5 +1,5 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -18,11 +18,10 @@ type ViewMode = 'overview' | 'configure';
   selector: 'providers-management',
   standalone: true,
   imports: [
-    CommonModule,
     NgIcon,
     ProvidersOverviewComponent,
     ProviderConfigurationWizardComponent
-  ],
+],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -30,6 +29,7 @@ type ViewMode = 'overview' | 'configure';
       lucideCheck
     })
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="container mx-auto px-4 py-8">
       @switch (currentView()) {

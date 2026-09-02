@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, signal, effect, ViewChild } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, effect, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
@@ -65,6 +65,7 @@ import { AppProjectSectionComponent } from './app-project-section.component';
       lucidePin,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app-overview-tab.component.html',
 })
 export class AppOverviewTabComponent implements OnInit {
@@ -79,7 +80,7 @@ export class AppOverviewTabComponent implements OnInit {
   readonly app = this.appService.selectedApplication;
   readonly runtime = this.runtimeService.runtime;
 
-  @ViewChild('deleteDialog') deleteDialog!: ConfirmationDialogComponent;
+  readonly deleteDialog = viewChild.required<ConfirmationDialogComponent>('deleteDialog');
 
   readonly isDeleting = signal(false);
   readonly deleteStepMessage = signal<string | null>(null);
@@ -176,19 +177,19 @@ export class AppOverviewTabComponent implements OnInit {
   readonly recentEvents = computed(() => this.revisionsService.events().slice(0, 3));
 
   openDeleteDialog(): void {
-    this.deleteDialog.open();
+    this.deleteDialog().open();
   }
 
   async onDeleteConfirmed(): Promise<void> {
     const id = this.app()?.id;
     if (!id) return;
-    this.deleteDialog.setProcessing(true);
+    this.deleteDialog().setProcessing(true);
     this.isDeleting.set(true);
     try {
       await this.appService.deleteApplication(id);
-      this.deleteDialog.close();
+      this.deleteDialog().close();
     } catch {
-      this.deleteDialog.setProcessing(false);
+      this.deleteDialog().setProcessing(false);
       this.isDeleting.set(false);
     }
   }

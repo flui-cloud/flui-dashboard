@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { DeployWizardStateService } from '../../service/deploy-wizard-state.service';
 
@@ -8,7 +8,7 @@ const RESOURCE_PROFILES = ['nano', 'micro', 'small', 'medium', 'large', 'xlarge'
 @Component({
   selector: 'app-deploy-config-step',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="space-y-5">
       <!-- Port -->

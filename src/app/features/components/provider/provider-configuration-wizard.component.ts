@@ -6,10 +6,11 @@ import {
   output,
   signal,
   OnInit,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
-import { CommonModule } from '@angular/common';
+
 import {
   FormBuilder,
   FormGroup,
@@ -54,7 +55,7 @@ interface WizardStep {
 @Component({
   selector: 'provider-configuration-wizard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgIcon],
+  imports: [ReactiveFormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -71,6 +72,7 @@ interface WizardStep {
       lucideInfo,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-4xl mx-auto">
       <div class="mb-8">

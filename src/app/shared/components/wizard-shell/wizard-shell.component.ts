@@ -1,5 +1,5 @@
-import { Component, input, output, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
@@ -38,7 +38,7 @@ export interface WizardStep {
 @Component({
   selector: 'app-wizard-shell',
   standalone: true,
-  imports: [CommonModule, NgIconComponent, WizardStepperComponent],
+  imports: [NgIconComponent, WizardStepperComponent],
   providers: [
     provideIcons({
       lucideCheck,
@@ -59,16 +59,16 @@ export interface WizardStep {
             {{ wizardDescription() }}
           </p>
         </div>
-
+    
         <!-- Progress Stepper -->
         <div class="mb-4">
           <app-wizard-stepper
             [steps]="stepperSteps()"
             [currentStepIndex]="currentStepIndex()"
             [allowStepClick]="false"
-          />
+            />
         </div>
-
+    
         <!-- Step Content Card -->
         <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-5 mb-4">
           <!-- Current Step Header -->
@@ -80,59 +80,66 @@ export interface WizardStep {
               {{ currentStep().description }}
             </p>
           </div>
-
+    
           <!-- Step Content (projected) -->
           <ng-content></ng-content>
         </div>
-
+    
         <!-- Navigation Buttons -->
         <div class="flex items-center justify-between">
-          <button
-            *ngIf="currentStepIndex() > 0"
-            (click)="onPrevious()"
-            class="flex items-center gap-1.5 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-          >
-            <ng-icon name="lucideChevronLeft" size="16"></ng-icon>
-            <span>Previous</span>
-          </button>
-
-          <div *ngIf="currentStepIndex() === 0"></div>
-
+          @if (currentStepIndex() > 0) {
+            <button
+              (click)="onPrevious()"
+              class="flex items-center gap-1.5 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+              <ng-icon name="lucideChevronLeft" size="16"></ng-icon>
+              <span>Previous</span>
+            </button>
+          }
+    
+          @if (currentStepIndex() === 0) {
+            <div></div>
+          }
+    
           <div class="flex items-center gap-3">
-            <button
-              *ngIf="showCancelButton()"
-              (click)="onCancel()"
-              class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-
-            <button
-              *ngIf="!isLastStep()"
-              (click)="onNext()"
-              [disabled]="!currentStep().isValid"
-              [class]="getNextButtonClass()"
-              class="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-all duration-200"
-            >
-              <span>Next</span>
-              <ng-icon name="lucideChevronRight" size="16"></ng-icon>
-            </button>
-
-            <button
-              *ngIf="isLastStep()"
-              (click)="onCreate()"
-              [disabled]="!canCreate()"
-              [class]="getCreateButtonClass()"
-              class="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-all duration-200"
-            >
-              <ng-icon name="lucideRocket" size="16"></ng-icon>
-              <span>{{ createButtonText() }}</span>
-            </button>
+            @if (showCancelButton()) {
+              <button
+                (click)="onCancel()"
+                class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                Cancel
+              </button>
+            }
+    
+            @if (!isLastStep()) {
+              <button
+                (click)="onNext()"
+                [disabled]="!currentStep().isValid"
+                [class]="getNextButtonClass()"
+                class="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-all duration-200"
+                >
+                <span>Next</span>
+                <ng-icon name="lucideChevronRight" size="16"></ng-icon>
+              </button>
+            }
+    
+            @if (isLastStep()) {
+              <button
+                (click)="onCreate()"
+                [disabled]="!canCreate()"
+                [class]="getCreateButtonClass()"
+                class="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-all duration-200"
+                >
+                <ng-icon name="lucideRocket" size="16"></ng-icon>
+                <span>{{ createButtonText() }}</span>
+              </button>
+            }
           </div>
         </div>
       </div>
     </div>
-  `,
+    `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [],
 })
 export class WizardShellComponent {

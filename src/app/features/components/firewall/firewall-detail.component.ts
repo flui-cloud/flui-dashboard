@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -26,6 +26,7 @@ import { FirewallRuleFormData, convertRuleResponseToFormData } from '../../model
   ],
   viewProviders: [provideIcons({ lucideArrowLeft })],
   templateUrl: './firewall-detail.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./firewall-detail.component.scss']
 })
 export class FirewallDetailComponent implements OnInit {

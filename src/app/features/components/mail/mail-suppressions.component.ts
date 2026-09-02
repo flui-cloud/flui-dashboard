@@ -2,10 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
-  ViewChild,
   computed,
   inject,
   signal,
+  viewChild
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -195,8 +195,7 @@ export class MailSuppressionsComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly pending = signal<string | null>(null);
 
-  @ViewChild('removeDialog')
-  private readonly removeDialog?: ConfirmationDialogComponent;
+  private readonly removeDialog = viewChild<ConfirmationDialogComponent>('removeDialog');
 
   protected readonly shown = computed(() => {
     const q = this.search().trim().toLowerCase();
@@ -233,23 +232,23 @@ export class MailSuppressionsComponent implements OnInit {
 
   protected askRemove(address: string): void {
     this.pending.set(address);
-    this.removeDialog?.open();
+    this.removeDialog()?.open();
   }
 
   protected confirmRemove(): void {
     const address = this.pending();
     if (!address) return;
-    this.removeDialog?.setProcessing(true);
+    this.removeDialog()?.setProcessing(true);
     this.api.unsuppress(address).subscribe({
       next: () => {
         this.entries.update((list) => list.filter((e) => e.address !== address));
         this.pending.set(null);
-        this.removeDialog?.close();
+        this.removeDialog()?.close();
       },
       error: (err) => {
         this.error.set(consoleError(err));
-        this.removeDialog?.setProcessing(false);
-        this.removeDialog?.close();
+        this.removeDialog()?.setProcessing(false);
+        this.removeDialog()?.close();
       },
     });
   }

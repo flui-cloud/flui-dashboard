@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucidePanelLeft, lucidePanelRight } from '@ng-icons/lucide';
 import { hlm } from '@spartan-ng/brain/core';
@@ -18,6 +18,7 @@ import { ClassValue } from 'clsx';
 	host: {
 		'[class]': '_computedClass()',
 	},
+	changeDetection: ChangeDetectionStrategy.Eager,
 	template: `
 		<button brnSidebarTrigger class="inline-flex items-center justify-center">
 			<ng-icon

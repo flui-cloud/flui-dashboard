@@ -1,11 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ViewChild,
   effect,
   inject,
   input,
   signal,
+  viewChild
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -121,7 +121,7 @@ export class DbLogicalBackupComponent {
   readonly ok = signal<string | null>(null);
   readonly pendingFile = signal<File | null>(null);
 
-  @ViewChild('restoreDialog') private readonly restoreDialog?: ConfirmationDialogComponent;
+  private readonly restoreDialog = viewChild<ConfirmationDialogComponent>('restoreDialog');
 
   constructor() {
     effect(() => {
@@ -168,27 +168,27 @@ export class DbLogicalBackupComponent {
     input.value = '';
     if (!file) return;
     this.pendingFile.set(file);
-    this.restoreDialog?.open();
+    this.restoreDialog()?.open();
   }
 
   confirmRestore(): void {
     const id = this.appId();
     const file = this.pendingFile();
     if (!id || !file) return;
-    this.restoreDialog?.setProcessing(true);
+    this.restoreDialog()?.setProcessing(true);
     this.restoring.set(true);
     this.error.set(null);
     this.ok.set(null);
     this.svc.restore(id, file).subscribe({
       next: () => {
-        this.restoreDialog?.close();
+        this.restoreDialog()?.close();
         this.pendingFile.set(null);
         this.restoring.set(false);
         this.ok.set('Restore complete.');
       },
       error: (e) => {
-        this.restoreDialog?.setProcessing(false);
-        this.restoreDialog?.close();
+        this.restoreDialog()?.setProcessing(false);
+        this.restoreDialog()?.close();
         this.pendingFile.set(null);
         this.restoring.set(false);
         this.error.set(this.msg(e));

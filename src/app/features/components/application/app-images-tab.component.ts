@@ -1,5 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -25,13 +25,14 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
 @Component({
   selector: 'app-images-tab',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon, RouterLink, HlmButtonDirective, HlmInputDirective, HlmLabelDirective],
+  imports: [FormsModule, NgIcon, RouterLink, HlmButtonDirective, HlmInputDirective, HlmLabelDirective],
   providers: [provideIcons({
     lucideRefreshCw, lucideLoader, lucideRocket, lucideCircleCheck,
     lucideImage, lucideTriangleAlert, lucideTag, lucideX, lucideArrowDown,
     lucideCalendar, lucideCpu, lucideInfo, lucideGithub, lucideArrowRight,
     lucideRotateCcw, lucideHistory, lucideTrash2,
   })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
       <!-- Header -->

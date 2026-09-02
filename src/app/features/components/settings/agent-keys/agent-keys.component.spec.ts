@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { AuthService as ApiAuthService } from '../../../../core/api/api/auth.service';
@@ -134,7 +134,7 @@ describe('the agent keys screen', () => {
     await TestBed.configureTestingModule({
       imports: [AgentKeysComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: ApiAuthService, useValue: api },
         {

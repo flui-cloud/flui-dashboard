@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, computed, signal, inject } from '@angular/core';
+import { Component, Input, computed, signal, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -42,6 +42,7 @@ import {
       lucideWand,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (diagnosis) {
       <div
@@ -124,7 +125,7 @@ import {
                         {{ diagnosis.suggestedAction.message }}
                       </p>
                     </div>
-                    @if (redeployInProgress) {
+                    @if (redeployInProgress()) {
                       <div class="flex items-center gap-2 text-xs text-purple-800 dark:text-purple-300">
                         <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                         Redeploy in progress
@@ -285,13 +286,13 @@ export class DiagnosisDetailDialogComponent {
   get diagnosis(): CrashDiagnosis | null {
     return this._diagnosis;
   }
-  @Input() applicationId: string | null = null;
+  readonly applicationId = input<string | null>(null);
   /** True when the app is currently in an UPDATING/PROVISIONING status
    * driven by the actuator's auto-remediation redeploy. */
-  @Input() redeployInProgress = false;
+  readonly redeployInProgress = input(false);
 
-  @Output() closed = new EventEmitter<void>();
-  @Output() dismiss = new EventEmitter<CrashDiagnosis>();
+  readonly closed = output<void>();
+  readonly dismiss = output<CrashDiagnosis>();
 
   dismissing = signal(false);
 
@@ -325,7 +326,8 @@ export class DiagnosisDetailDialogComponent {
   }
 
   gotoConfiguration(): void {
-    if (!this.applicationId) return;
+    const applicationId = this.applicationId();
+    if (!applicationId) return;
     const payload = this.diagnosis?.suggestedAction?.payload as
       | { envVar?: string; kind?: string; name?: string }
       | undefined;
@@ -335,7 +337,7 @@ export class DiagnosisDetailDialogComponent {
       queryParams['missingKind'] = payload.kind;
       queryParams['missingName'] = payload.name;
     }
-    this.router.navigate(['/apps/applications', this.applicationId, 'configuration'], {
+    this.router.navigate(['/apps/applications', applicationId, 'configuration'], {
       queryParams,
     });
     this.close();

@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { ActivatedRoute } from '@angular/router';
 import { UserEventsService } from '../../../core/services/user-events.service';
 import { firstValueFrom } from 'rxjs';
@@ -32,18 +32,18 @@ type MonitoringTimeRange = '1h' | '2h' | '3h' | '6h' | '1d';
   selector: 'app-monitoring-tab',
   standalone: true,
   imports: [
-    CommonModule,
     NgIconComponent,
     GradeGaugeComponent,
     TimeSeriesLineComponent,
     MultiStatCardComponent,
     DbDiskUsageComponent,
     AppTrafficSectionComponent,
-    AppAlertsSectionComponent,
-  ],
+    AppAlertsSectionComponent
+],
   providers: [
     provideIcons({ lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert, lucideHeartPulse }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app-monitoring-tab.component.html',
 })
 export class AppMonitoringTabComponent implements OnInit, OnDestroy {

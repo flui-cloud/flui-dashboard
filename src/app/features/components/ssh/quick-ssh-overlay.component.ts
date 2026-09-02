@@ -6,8 +6,9 @@ import {
   OnInit,
   OnDestroy,
   NgZone,
+  ChangeDetectionStrategy
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideX,
@@ -33,7 +34,7 @@ const MIN_H = 280;
 @Component({
   selector: 'app-quick-ssh-overlay',
   standalone: true,
-  imports: [CommonModule, NgIcon, SshTerminalComponent],
+  imports: [NgIcon, SshTerminalComponent],
   providers: [provideIcons({ lucideX, lucideMinus, lucideTerminal, lucideRefreshCw, lucideMonitor, lucideChevronRight, lucideMaximize2, lucideMinimize2 })],
   template: `
     @if (sshService.isOpen()) {
@@ -189,6 +190,7 @@ const MIN_H = 280;
       </div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host {
       display: contents;

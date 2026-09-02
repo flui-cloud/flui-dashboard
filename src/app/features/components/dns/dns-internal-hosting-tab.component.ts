@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, effect, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -32,6 +32,7 @@ import {
       lucideServer,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
 

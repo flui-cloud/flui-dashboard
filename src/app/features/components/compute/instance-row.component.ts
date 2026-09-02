@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, Input, computed, inject, signal } from '@angular/core';
+
+import { Component, Input, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import {
@@ -25,12 +25,11 @@ import { InstanceStatusBadgeComponent } from './instance-status-badge.component'
   selector: 'app-instance-row',
   standalone: true,
   imports: [
-    CommonModule,
     NgIcon,
     InstanceManagedBadgeComponent,
     InstanceActionsComponent,
-    InstanceStatusBadgeComponent,
-  ],
+    InstanceStatusBadgeComponent
+],
   providers: [
     provideIcons({
       lucideServer,
@@ -47,6 +46,7 @@ import { InstanceStatusBadgeComponent } from './instance-status-badge.component'
       lucideCheck,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="border border-border rounded-lg hover:bg-muted/30 transition-colors">
       <!-- Header: instance name + actions -->
@@ -114,7 +114,7 @@ import { InstanceStatusBadgeComponent } from './instance-status-badge.component'
               <ng-icon name="lucideGlobe" class="h-3 w-3 text-blue-600 flex-shrink-0" />
               <span class="font-mono text-xs">{{ instance.ipConfig?.v4?.ip }}</span>
               <button
-                (click)="copyIp(instance.ipConfig?.v4?.ip); $event.stopPropagation()"
+                (click)="copyIp($safeNavigationMigration(instance.ipConfig?.v4?.ip)); $event.stopPropagation()"
                 class="p-0.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                 [title]="copiedIp() ? 'Copied!' : 'Copy IP'"
               >
@@ -158,14 +158,7 @@ export class InstanceRowComponent {
       this.copiedIp.set(true);
       setTimeout(() => this.copiedIp.set(false), 2000);
     } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = ip;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      this.copiedIp.set(true);
-      setTimeout(() => this.copiedIp.set(false), 2000);
+      // Clipboard API unavailable (e.g. insecure context) — nothing more we can do.
     }
   }
 

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { BrnSidebarService } from '@dawit-io/spartan-sidebar-core';
 import { hlm } from '@spartan-ng/brain/core';
 import { ClassValue } from 'clsx';
@@ -9,6 +9,7 @@ import { ClassValue } from 'clsx';
 	host: {
 		'[class]': '_computedClass()',
 	},
+	changeDetection: ChangeDetectionStrategy.Eager,
 	template: `
 		<div class="flex w-full items-center" [class.justify-center]="!_sidebarService.isExpanded()">
 			<div class="flex items-center" [class.gap-2]="_sidebarService.isExpanded()">

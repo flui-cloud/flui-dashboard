@@ -1,11 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Output,
-  ViewChild,
   input,
   signal,
+  viewChild,
+  output
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -108,10 +107,9 @@ export class DocumentQueryBarComponent {
   readonly running = input(false);
   readonly fields = input<DocumentField[]>([]);
 
-  @Output() readonly find = new EventEmitter<DocQuery>();
+  readonly find = output<DocQuery>();
 
-  @ViewChild(DocumentFilterEditorComponent)
-  private readonly editor?: DocumentFilterEditorComponent;
+  private readonly editor = viewChild(DocumentFilterEditorComponent);
 
   protected readonly showOptions = signal(false);
 
@@ -121,7 +119,7 @@ export class DocumentQueryBarComponent {
   emit(): void {
     if (this.disabled()) return;
     this.find.emit({
-      filterText: this.editor?.text() ?? '',
+      filterText: this.editor()?.text() ?? '',
       projectionText: this.projectionText,
       sortText: this.sortText,
     });
@@ -129,7 +127,7 @@ export class DocumentQueryBarComponent {
 
   /** Load a query into the bar and run it (used when the assistant routes a find here). */
   setQuery(filterText: string, projectionText: string, sortText: string): void {
-    this.editor?.setText(filterText);
+    this.editor()?.setText(filterText);
     this.projectionText = projectionText;
     this.sortText = sortText;
     if (projectionText || sortText) this.showOptions.set(true);
@@ -137,7 +135,7 @@ export class DocumentQueryBarComponent {
   }
 
   reset(): void {
-    this.editor?.setText('');
+    this.editor()?.setText('');
     this.projectionText = '';
     this.sortText = '';
     this.emit();

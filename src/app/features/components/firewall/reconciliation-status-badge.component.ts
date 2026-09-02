@@ -1,5 +1,5 @@
-import { Component, input, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { ReconciliationStatus, getStatusBadgeColor, getStatusBadgeLabel } from '../../model/firewall-v2.models';
 
 /**
@@ -15,7 +15,7 @@ import { ReconciliationStatus, getStatusBadgeColor, getStatusBadgeLabel } from '
 @Component({
   selector: 'app-reconciliation-status-badge',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <span
       [class]="badgeClasses()"
@@ -25,6 +25,7 @@ import { ReconciliationStatus, getStatusBadgeColor, getStatusBadgeLabel } from '
       {{ label() }}
     </span>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host {
       display: inline-block;

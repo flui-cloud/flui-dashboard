@@ -1,5 +1,5 @@
-import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -17,7 +17,8 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
 @Component({
   selector: 'app-enable-backups-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, BackupProgressModalComponent],
+  imports: [FormsModule, RouterLink, BackupProgressModalComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (open()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

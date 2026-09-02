@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, signal, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTriangleAlert, lucideX, lucideLoader } from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
@@ -24,15 +24,14 @@ export interface DeleteConfirmationData {
   selector: 'app-delete-confirmation-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     NgIcon,
     HlmButtonDirective,
     HlmCardDirective,
     HlmCardHeaderDirective,
     HlmCardTitleDirective,
     HlmCardDescriptionDirective,
-    HlmCardContentDirective,
-  ],
+    HlmCardContentDirective
+],
   providers: [
     provideIcons({
       lucideTriangleAlert,
@@ -40,6 +39,7 @@ export interface DeleteConfirmationData {
       lucideLoader,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isOpen()) {
       <div
@@ -144,8 +144,8 @@ export class DeleteConfirmationDialogComponent {
     this._isDeleting.set(value);
   }
 
-  @Output() confirmed = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly confirmed = output<void>();
+  readonly cancelled = output<void>();
 
   data = signal<DeleteConfirmationData | null>(null);
   private readonly _isDeleting = signal(false);

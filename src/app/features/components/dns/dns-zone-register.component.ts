@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -13,6 +13,7 @@ type Step = 1 | 2 | 3;
   standalone: true,
   imports: [RouterLink, FormsModule, NgIconComponent],
   providers: [provideIcons({ lucideArrowLeft, lucideChevronDown, lucideAlertCircle, lucideExternalLink, lucideGlobe, lucideServer })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 flex justify-center">
     <div class="w-full max-w-xl">

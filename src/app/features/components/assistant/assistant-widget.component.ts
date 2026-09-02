@@ -10,6 +10,7 @@ import {
   inject,
   signal,
   viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { MarkdownComponent } from 'ngx-markdown';
@@ -64,6 +65,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
     .panel-lg { width: 680px; height: min(85vh, 860px); min-width: 360px; min-height: 300px; resize: both; }
     .panel-full { width: 100%; height: 100%; max-width: 1024px; max-height: 88vh; }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div [class]="containerClasses()" [class.pointer-events-none]="!expanded()">
 

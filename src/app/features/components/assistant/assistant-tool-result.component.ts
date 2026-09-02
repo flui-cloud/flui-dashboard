@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { AgentToolStep, LogSourcesResult } from '../../service/assistant.service';
 import { AppLogsResult, AssistantLogViewerComponent } from './assistant-log-viewer.component';
 import { AssistantDataTableComponent, DataTableConfig } from './assistant-data-table.component';
@@ -7,6 +7,7 @@ import { AssistantDataTableComponent, DataTableConfig } from './assistant-data-t
   selector: 'app-assistant-tool-result',
   standalone: true,
   imports: [AssistantLogViewerComponent, AssistantDataTableComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isSources()) {
       <div class="mt-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2 text-xs">

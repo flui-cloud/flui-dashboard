@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -17,7 +17,7 @@ import { RepositoryService } from '../../service/repository.service';
 @Component({
   selector: 'app-extract-env-step',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [FormsModule, NgIcon],
   providers: [
     provideIcons({ lucideLock, lucideFileText, lucideLoader, lucidePlus, lucideTrash2, lucideInfo, lucideTriangleAlert }),
   ],

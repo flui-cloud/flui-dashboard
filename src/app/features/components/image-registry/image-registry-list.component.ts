@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -13,11 +13,12 @@ import { FluiTagManagerComponent } from './flui-tag-manager.component';
 @Component({
   selector: 'app-image-registry-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon, FluiTagManagerComponent],
+  imports: [FormsModule, NgIcon, FluiTagManagerComponent],
   providers: [provideIcons({
     lucideRefreshCw, lucideLoader, lucideSearch, lucideRocket,
     lucideTrash, lucideCircleCheck, lucideTriangleAlert, lucideImage, lucideInfo,
   })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6 p-6">
       <!-- Header -->

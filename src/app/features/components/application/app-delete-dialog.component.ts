@@ -1,12 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Output,
   computed,
   inject,
   input,
   signal,
+  output
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -184,7 +183,7 @@ export class AppDeleteDialogComponent {
   readonly primary = input<Application | null>(null);
   readonly listRoute = input<string>('/apps/applications');
 
-  @Output() readonly deleted = new EventEmitter<void>();
+  readonly deleted = output<void>();
 
   protected readonly showModal = signal(false);
   protected readonly confirmInput = signal('');

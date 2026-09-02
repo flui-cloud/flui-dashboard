@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, effect, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -36,6 +36,7 @@ function getCachePhaseClass(phase: BuildCacheInfoResponseDto.PhaseEnum | null): 
       lucideInfo,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="bg-card border border-border rounded-lg p-4 space-y-4">
 

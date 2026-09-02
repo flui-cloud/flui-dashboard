@@ -1,9 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Output,
   input,
+  output
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -136,10 +135,10 @@ export class DocumentCollectionTreeComponent {
   readonly selectedCollection = input<string | null>(null);
   readonly loading = input(false);
 
-  @Output() readonly selectDb = new EventEmitter<string>();
-  @Output() readonly selectCollection = new EventEmitter<string>();
-  @Output() readonly refresh = new EventEmitter<void>();
-  @Output() readonly collapse = new EventEmitter<void>();
+  readonly selectDb = output<string>();
+  readonly selectCollection = output<string>();
+  readonly refresh = output<void>();
+  readonly collapse = output<void>();
 
   formatCount(n: number): string {
     if (n < 1000) return `${n}`;

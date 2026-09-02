@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleCheck,
@@ -11,6 +11,7 @@ import {
   standalone: true,
   imports: [NgIconComponent],
   providers: [provideIcons({ lucideCircleCheck, lucideCircleAlert, lucideCircleMinus })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium" [class]="badgeClass()">
       <ng-icon [name]="icon()" class="h-3 w-3" />

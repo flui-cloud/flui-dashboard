@@ -5,6 +5,7 @@ import {
   inject,
   signal,
   viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -60,6 +61,7 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
     HlmLabelDirective,
   ],
   providers: [provideIcons({ lucideCheck, lucideAlertCircle, lucideLoader, lucidePlus, lucideTrash2 })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
       <app-sandbox-level-notice area="models" />

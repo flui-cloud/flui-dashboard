@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
@@ -9,6 +9,7 @@ import { SandboxService } from '../../core/services/sandbox.service';
 @Component({
   standalone: true,
   imports: [ReadOnlySectionDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button id="one" appReadOnlySection="clusters">section only</button>
     <button id="both" [appReadOnlySection]="['clusters', 'cluster']">both</button>

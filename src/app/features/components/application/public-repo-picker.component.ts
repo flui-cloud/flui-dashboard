@@ -1,5 +1,5 @@
-import { Component, Output, EventEmitter, signal, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, inject, OnInit, OnDestroy, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -17,10 +17,11 @@ import { PublicRepoSearchResultDto } from '../../../core/api/model/publicRepoSea
 @Component({
   selector: 'app-public-repo-picker',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent],
+  imports: [FormsModule, NgIconComponent],
   providers: [
     provideIcons({ lucideSearch, lucideLoader, lucideStar, lucideCircleAlert, lucideGitBranch }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-3">
       <!-- Search input -->
@@ -98,7 +99,7 @@ import { PublicRepoSearchResultDto } from '../../../core/api/model/publicRepoSea
   `,
 })
 export class PublicRepoPickerComponent implements OnInit, OnDestroy {
-  @Output() repoSelected = new EventEmitter<PublicRepoSearchResultDto>();
+  readonly repoSelected = output<PublicRepoSearchResultDto>();
 
   private readonly repoService = inject(RepositoryService);
 

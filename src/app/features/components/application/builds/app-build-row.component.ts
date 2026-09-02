@@ -1,5 +1,5 @@
-import { Component, computed, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideGitBranch, lucideClock, lucideExternalLink, lucideRocket, lucideLoader,
@@ -12,9 +12,10 @@ import { formatDuration, formatRelativeDate, truncateImageRef } from './build-fo
 @Component({
   selector: 'app-build-row',
   standalone: true,
-  imports: [CommonModule, NgIcon, AppBuildProviderBadgeComponent, AppBuildStatusBadgeComponent],
+  imports: [NgIcon, AppBuildProviderBadgeComponent, AppBuildStatusBadgeComponent],
   providers: [provideIcons({ lucideGitBranch, lucideClock, lucideExternalLink, lucideRocket, lucideLoader })],
   host: { class: 'contents' },
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tr class="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
       <td class="px-4 py-3">

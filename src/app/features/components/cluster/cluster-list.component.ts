@@ -1,5 +1,5 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -44,10 +44,9 @@ interface FilterState {
   imports: [
     ReadOnlySectionDirective,
     CanDirective,
-    CommonModule,
     FormsModule,
-    NgIconComponent,
-  ],
+    NgIconComponent
+],
   providers: [
     provideIcons({
       lucideRefreshCw,
@@ -71,6 +70,7 @@ interface FilterState {
       lucideInfo
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6 p-6">
       <div class="flex items-center justify-between">

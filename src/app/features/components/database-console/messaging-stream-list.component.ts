@@ -1,9 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ViewChild,
   inject,
   signal,
+  viewChild
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -268,8 +268,7 @@ import { bytes } from './messaging-format';
 export class MessagingStreamListComponent {
   protected readonly s = inject(MessagingConsoleStateService);
 
-  @ViewChild('deleteDialog')
-  private readonly deleteDialog?: ConfirmationDialogComponent;
+  private readonly deleteDialog = viewChild<ConfirmationDialogComponent>('deleteDialog');
 
   readonly showCreate = signal(false);
   newName = '';
@@ -281,7 +280,7 @@ export class MessagingStreamListComponent {
   }
 
   askDelete(name: string): void {
-    this.s.askDelete(name, this.deleteDialog);
+    this.s.askDelete(name, this.deleteDialog());
   }
 
   createStream(): void {

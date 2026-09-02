@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -46,6 +46,7 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
   providers: [
     provideIcons({ lucideCircleAlert, lucideShieldAlert, lucideRefreshCw, lucideFilter }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
       <!-- Filters -->

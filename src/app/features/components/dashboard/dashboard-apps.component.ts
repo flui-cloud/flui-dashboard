@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -40,6 +40,7 @@ interface AppStatItem {
       lucideHammer,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div
       class="bg-card border border-border rounded-lg p-5 h-full flex flex-col

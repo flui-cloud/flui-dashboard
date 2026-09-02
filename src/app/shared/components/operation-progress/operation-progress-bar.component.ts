@@ -5,13 +5,14 @@
  * Reusable across all long-running operations.
  */
 
-import { Component, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+
 
 @Component({
   selector: 'app-operation-progress-bar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="bg-card border border-border rounded-lg p-6 mb-6">
       <div class="flex items-center justify-between mb-4">

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideCirclePlus, lucideInfo } from '@ng-icons/lucide';
 import {
@@ -27,6 +27,7 @@ const SELECT_CLASS =
     HlmBadgeDirective,
   ],
   providers: [provideIcons({ lucideArrowRight, lucideCirclePlus, lucideInfo })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './grant-builder.component.html',
 })
 export class GrantBuilderComponent {

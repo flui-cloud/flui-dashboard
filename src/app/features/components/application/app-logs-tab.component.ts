@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationLogsService } from '../../service/application-logs.service';
@@ -17,6 +17,7 @@ import { AppLogsViewerComponent } from './app-logs-viewer.component';
   selector: 'app-logs-tab',
   standalone: true,
   imports: [AppLogsViewerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<app-logs-viewer />`,
 })
 export class AppLogsTabComponent implements OnInit, OnDestroy {

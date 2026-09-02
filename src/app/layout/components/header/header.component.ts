@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideGithub, lucideSun, lucideMoon, lucideTerminal, lucideOrbit } from '@ng-icons/lucide';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -13,6 +13,7 @@ import { UniverseOverlayService } from '../../../features/service/universe-overl
   providers: [
     provideIcons({ lucideGithub, lucideSun, lucideMoon, lucideTerminal, lucideOrbit }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex items-center gap-1">
       <app-notification-panel />

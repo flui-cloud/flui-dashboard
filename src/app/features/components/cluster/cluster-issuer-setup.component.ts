@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal, computed, effect, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, input, output, signal, computed, effect, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -28,6 +28,7 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
       lucideLoader, lucideCheckCircle, lucideAlertCircle, lucideWifi, lucideDna, lucideTrash2,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-3">
 

@@ -1,6 +1,6 @@
-import { Component, OnDestroy, inject, signal, computed, effect, untracked } from '@angular/core';
+import { Component, OnDestroy, inject, signal, computed, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
+
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -61,7 +61,7 @@ interface TabItem {
 @Component({
   selector: 'app-application-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgIconComponent],
+  imports: [RouterModule, NgIconComponent],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -90,6 +90,7 @@ interface TabItem {
       lucideChevronDown,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <!-- Error Toast -->
     @if (showErrorToast()) {

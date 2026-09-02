@@ -5,7 +5,7 @@
  * Follows the pattern established in ClusterListComponent.
  */
 
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -333,6 +333,7 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: []
 })
 export class VNetListComponent implements OnInit {

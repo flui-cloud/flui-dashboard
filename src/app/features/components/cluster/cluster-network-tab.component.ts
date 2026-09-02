@@ -1,5 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -20,7 +20,7 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
 @Component({
   selector: 'cluster-network-tab',
   standalone: true,
-  imports: [CommonModule, NgIconComponent, AttachVNetDialogComponent],
+  imports: [NgIconComponent, AttachVNetDialogComponent],
   providers: [
     provideIcons({
       lucideNetwork,
@@ -32,6 +32,7 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
       lucideShieldCheck,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface p-6">
       <div class="flex items-center justify-end mb-6">

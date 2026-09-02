@@ -1,5 +1,5 @@
 import { Component, Output, EventEmitter, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRocket, lucideRotateCcw, lucideArrowUpDown, lucideCpu,
@@ -18,7 +18,7 @@ interface ResourcesSnapshot {
 @Component({
   selector: 'app-revisions-list',
   standalone: true,
-  imports: [CommonModule, NgIconComponent],
+  imports: [NgIconComponent],
   providers: [
     provideIcons({
       lucideRocket, lucideRotateCcw, lucideArrowUpDown, lucideCpu,

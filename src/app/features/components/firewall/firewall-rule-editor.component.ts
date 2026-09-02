@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import {
   FirewallRuleFormData,
@@ -13,7 +13,7 @@ import {
 @Component({
   selector: 'app-firewall-rule-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './firewall-rule-editor.component.html',
   styleUrls: ['./firewall-rule-editor.component.scss']
 })

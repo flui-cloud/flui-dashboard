@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { ActivatedRoute } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideAlertCircle } from '@ng-icons/lucide';
@@ -10,8 +10,9 @@ import { AppActivityFeedComponent } from './app-activity-feed.component';
 @Component({
   selector: 'app-revisions-tab',
   standalone: true,
-  imports: [CommonModule, NgIconComponent, AppActivityFeedComponent],
+  imports: [NgIconComponent, AppActivityFeedComponent],
   providers: [provideIcons({ lucideAlertCircle })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-3">
       @if (service.rollbackError()) {

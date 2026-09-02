@@ -56,11 +56,11 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
               <dl class="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
                 <div>
                   <dt class="text-xs text-muted-foreground">Recoverable from</dt>
-                  <dd>{{ fmt(s.window?.oldest) }}</dd>
+                  <dd>{{ fmt($safeNavigationMigration(s.window?.oldest)) }}</dd>
                 </div>
                 <div>
                   <dt class="text-xs text-muted-foreground">up to</dt>
-                  <dd>{{ fmt(s.window?.newest) }} <span class="text-xs text-muted-foreground">(≈ now)</span></dd>
+                  <dd>{{ fmt($safeNavigationMigration(s.window?.newest)) }} <span class="text-xs text-muted-foreground">(≈ now)</span></dd>
                 </div>
                 <div>
                   <dt class="text-xs text-muted-foreground">Base backups</dt>

@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideExternalLink, lucideLock, lucideLockOpen,
@@ -38,6 +38,7 @@ interface ParsedError {
     lucideAlertTriangle, lucideCopy, lucideCheck, lucideShieldCheck, lucideShieldAlert,
     lucideFileText, lucideX, lucideDownload, lucidePencil, lucideTrash2, lucideRefreshCw
   })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (endpoints().length > 0) {
       <div class="space-y-2">
@@ -404,8 +405,8 @@ export class DnsEndpointsListComponent {
   }
 
   private parseReconcileError(raw: string): Omit<ParsedError, 'title' | 'certMessage'> {
-    const bodyMatch = raw.match(/Body:\s*"([\s\S]+?)"(?:\s*\nHeaders:|$)/);
-    const httpCodeMatch = raw.match(/HTTP-Code:\s*(\d+)/);
+    const bodyMatch = /Body:\s*"([\s\S]+?)"(?:\s*\nHeaders:|$)/.exec(raw);
+    const httpCodeMatch = /HTTP-Code:\s*(\d+)/.exec(raw);
 
     let k8sMessage: string | null = null;
     let causes: ErrorCause[] = [];

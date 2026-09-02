@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideX } from '@ng-icons/lucide';
@@ -13,6 +13,7 @@ import { lucideCheck, lucideX } from '@ng-icons/lucide';
       lucideX,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <span
       hlmBadge

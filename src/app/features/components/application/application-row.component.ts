@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleCheck,
@@ -34,6 +34,7 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
       lucideShield,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div
       class="flex items-center gap-4 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer group"

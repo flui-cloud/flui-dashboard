@@ -1,5 +1,5 @@
-import { Component, Input, OnInit, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -14,8 +14,9 @@ import { severityBannerClass } from '../../../model/crash-diagnosis.models';
 @Component({
   selector: 'app-diagnoses-banner',
   standalone: true,
-  imports: [CommonModule, NgIcon, RouterLink, HlmButtonDirective],
+  imports: [NgIcon, RouterLink, HlmButtonDirective],
   providers: [provideIcons({ lucideShieldAlert, lucideChevronRight, lucideTriangleAlert })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (latest()) {
       <div
@@ -36,7 +37,7 @@ import { severityBannerClass } from '../../../model/crash-diagnosis.models';
           hlmBtn
           size="sm"
           variant="outline"
-          [routerLink]="['/apps/applications', applicationId, 'diagnoses']"
+          [routerLink]="['/apps/applications', applicationId(), 'diagnoses']"
           class="flex-shrink-0"
         >
           View
@@ -47,7 +48,7 @@ import { severityBannerClass } from '../../../model/crash-diagnosis.models';
   `,
 })
 export class DiagnosesBannerComponent implements OnInit {
-  @Input({ required: true }) applicationId!: string;
+  readonly applicationId = input.required<string>();
 
   private readonly service = inject(CrashDiagnosesService);
 
@@ -61,8 +62,9 @@ export class DiagnosesBannerComponent implements OnInit {
 
   ngOnInit(): void {
     void (async () => {
-      if (this.applicationId && this.service.diagnoses().length === 0) {
-        await this.service.loadList(this.applicationId, { limit: 10 });
+      const applicationId = this.applicationId();
+      if (applicationId && this.service.diagnoses().length === 0) {
+        await this.service.loadList(applicationId, { limit: 10 });
       }
     })();
   }

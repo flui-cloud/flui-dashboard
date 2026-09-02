@@ -1,5 +1,5 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { firstValueFrom } from 'rxjs';
@@ -81,7 +81,7 @@ function getPodPhaseClass(phase: string): string {
 @Component({
   selector: 'app-build-namespace',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon, BuildCachePanelComponent],
+  imports: [FormsModule, NgIcon, BuildCachePanelComponent],
   providers: [
     provideIcons({
       lucideHammer, lucideLoader, lucideRefreshCw, lucideTriangleAlert,
@@ -89,6 +89,7 @@ function getPodPhaseClass(phase: string): string {
       lucideInfo,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-6 max-w-6xl mx-auto">
 

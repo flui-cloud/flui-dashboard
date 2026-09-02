@@ -2,10 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
-  ViewChild,
   computed,
   inject,
   signal,
+  viewChild
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -657,8 +657,7 @@ export class MailProvidersComponent implements OnInit {
   protected activateNow = false;
   protected readonly config = signal<MailConnectionConfig>({});
 
-  @ViewChild('disconnectDialog')
-  private readonly disconnectDialog?: ConfirmationDialogComponent;
+  private readonly disconnectDialog = viewChild<ConfirmationDialogComponent>('disconnectDialog');
 
   protected readonly profile = computed<MailProviderProfile | null>(
     () => MAIL_PROVIDERS.find((p) => p.id === this.chosen()) ?? null,
@@ -904,24 +903,24 @@ export class MailProvidersComponent implements OnInit {
 
   protected askDisconnect(connection: MailConnection): void {
     this.pending.set(connection);
-    this.disconnectDialog?.open();
+    this.disconnectDialog()?.open();
   }
 
   protected confirmDisconnect(): void {
     const connection = this.pending();
     if (!connection) return;
 
-    this.disconnectDialog?.setProcessing(true);
+    this.disconnectDialog()?.setProcessing(true);
     this.api.disconnect(connection.id).subscribe({
       next: () => {
         this.pending.set(null);
-        this.disconnectDialog?.close();
+        this.disconnectDialog()?.close();
         this.load();
       },
       error: (err) => {
         this.error.set(consoleError(err));
-        this.disconnectDialog?.setProcessing(false);
-        this.disconnectDialog?.close();
+        this.disconnectDialog()?.setProcessing(false);
+        this.disconnectDialog()?.close();
       },
     });
   }

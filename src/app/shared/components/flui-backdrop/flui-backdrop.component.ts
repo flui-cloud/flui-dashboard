@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-flui-backdrop',
@@ -70,6 +70,7 @@ import { Component, input } from '@angular/core';
       .glow { animation: none; }
     }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="glow"></div>
     <img class="mark mark-light" src="/icons/flui-mark/blue-512.png" alt="" aria-hidden="true" draggable="false" />

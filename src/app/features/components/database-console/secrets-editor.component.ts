@@ -1,10 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ViewChild,
   effect,
   inject,
   signal,
+  viewChild
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -400,10 +400,8 @@ export class SecretsEditorComponent {
     });
   }
 
-  @ViewChild('destroyDialog')
-  private readonly destroyDialog?: ConfirmationDialogComponent;
-  @ViewChild('deleteDialog')
-  private readonly deleteDialog?: ConfirmationDialogComponent;
+  private readonly destroyDialog = viewChild<ConfirmationDialogComponent>('destroyDialog');
+  private readonly deleteDialog = viewChild<ConfirmationDialogComponent>('deleteDialog');
 
   previewPath(): string {
     return joinPath(this.s.prefix(), this.newLeaf.trim()) || '…';
@@ -447,15 +445,15 @@ export class SecretsEditorComponent {
   }
 
   askSoftDelete(): void {
-    this.deleteDialog?.open();
+    this.deleteDialog()?.open();
   }
   confirmSoftDelete(): void {
-    this.s.removeSecret(false, this.deleteDialog);
+    this.s.removeSecret(false, this.deleteDialog());
   }
   askDestroy(): void {
-    this.destroyDialog?.open();
+    this.destroyDialog()?.open();
   }
   confirmDestroy(): void {
-    this.s.removeSecret(true, this.destroyDialog);
+    this.s.removeSecret(true, this.destroyDialog());
   }
 }

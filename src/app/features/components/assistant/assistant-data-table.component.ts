@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, signal, ChangeDetectionStrategy } from '@angular/core';
 
 export interface DataTableConfig {
   columns: string[];
@@ -8,6 +8,7 @@ export interface DataTableConfig {
 @Component({
   selector: 'app-assistant-data-table',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="mt-2 rounded-xl border border-border/50 overflow-hidden text-xs bg-background">
       <div class="flex items-center gap-2 px-3 py-2 border-b border-border/50 bg-muted/30">

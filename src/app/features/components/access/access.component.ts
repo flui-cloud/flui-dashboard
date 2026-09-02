@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
@@ -68,6 +68,7 @@ interface TabDef {
       lucideInfo,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-6xl mx-auto space-y-6">
       <div class="flex items-start justify-between gap-4">
@@ -286,8 +287,7 @@ export class AccessComponent implements OnInit {
     return this.iam.matchApps(b.scope).length;
   }
 
-  @ViewChild('revokeDialog')
-  private readonly revokeDialog!: ConfirmationDialogComponent;
+  private readonly revokeDialog = viewChild.required<ConfirmationDialogComponent>('revokeDialog');
 
   readonly pendingRevoke = signal<GrantRecord | null>(null);
   private readonly revokeDelta = signal<AccessDelta | null>(null);
@@ -311,7 +311,7 @@ export class AccessComponent implements OnInit {
     this.pendingRevoke.set(grant);
     this.revokeDelta.set(null);
     this.revokeUnknown.set(false);
-    this.revokeDialog.open();
+    this.revokeDialog().open();
     this.iam.revocationPreview(grant.id).subscribe((delta) => {
       if (this.pendingRevoke()?.id !== grant.id) return;
       this.revokeDelta.set(delta);
@@ -322,7 +322,7 @@ export class AccessComponent implements OnInit {
   onRemoveConfirmed(): void {
     const grant = this.pendingRevoke();
     if (grant) this.iam.removeGrant(grant.id);
-    this.revokeDialog.close();
+    this.revokeDialog().close();
     this.pendingRevoke.set(null);
   }
 

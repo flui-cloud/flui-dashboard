@@ -1,5 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -19,13 +19,8 @@ interface OverviewCard {
 @Component({
   selector: 'app-backup-overview',
   standalone: true,
-  imports: [ReadOnlySectionDirective, 
-    CommonModule,
-    FormsModule,
-    RouterLink,
-    EnableBackupsModalComponent,
-    PlatformBackupCardComponent,
-  ],
+  imports: [ReadOnlySectionDirective, FormsModule, RouterLink, EnableBackupsModalComponent, PlatformBackupCardComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-6">
       <header class="flex items-start justify-between">

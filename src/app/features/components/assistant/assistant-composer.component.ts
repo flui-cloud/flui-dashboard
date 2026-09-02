@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideAlertCircle, lucideSend } from '@ng-icons/lucide';
 import { AssistantChatService } from '../../service/assistant.service';
@@ -10,6 +10,7 @@ import { AssistantModelPickerComponent } from './assistant-model-picker.componen
   standalone: true,
   imports: [NgIcon, AssistantModelPickerComponent],
   providers: [provideIcons({ lucideAlertCircle, lucideSend })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-2" [class.mx-auto]="fullscreen()" [class.max-w-3xl]="fullscreen()" [class.w-full]="fullscreen()">
       @if (chatService.destructiveEnabled()) {

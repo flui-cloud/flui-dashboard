@@ -1,4 +1,4 @@
-import { Component, HostBinding, inject } from '@angular/core';
+import { Component, HostBinding, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ThemeService } from './core/services/theme.service';
 import { NetworkStatusBannerComponent } from './shared/components/network-status-banner.component';
@@ -8,6 +8,7 @@ import { NetworkStatusBannerComponent } from './shared/components/network-status
   standalone: true,
   imports: [RouterOutlet, NetworkStatusBannerComponent],
   providers: [ThemeService],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <router-outlet></router-outlet>
     <app-network-status-banner />

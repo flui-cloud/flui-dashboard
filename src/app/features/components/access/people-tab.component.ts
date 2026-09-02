@@ -1,4 +1,4 @@
-import { Component, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideUserPlus,
@@ -63,6 +63,7 @@ const FIELD =
       lucideTriangleAlert,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './people-tab.component.html',
 })
 export class PeopleTabComponent {
@@ -208,8 +209,7 @@ export class PeopleTabComponent {
     this.pendingGlobals.update((m) => ({ ...m, [id]: value }));
   }
 
-  @ViewChild('roleDialog')
-  private readonly roleDialog!: ConfirmationDialogComponent;
+  private readonly roleDialog = viewChild.required<ConfirmationDialogComponent>('roleDialog');
 
   readonly pendingRoleUser = signal<UserRecord | null>(null);
   private readonly roleDelta = signal<AccessDelta | null>(null);
@@ -239,7 +239,7 @@ export class PeopleTabComponent {
     this.pendingRoleUser.set(u);
     this.roleDelta.set(null);
     this.roleUnknown.set(false);
-    this.roleDialog.open();
+    this.roleDialog().open();
 
     const existing = this.iam.globalGrantOf(u.email);
     this.iam
@@ -262,7 +262,7 @@ export class PeopleTabComponent {
   onRoleChangeConfirmed(): void {
     const u = this.pendingRoleUser();
     if (u) this.saveGlobal(u);
-    this.roleDialog.close();
+    this.roleDialog().close();
     this.pendingRoleUser.set(null);
   }
 
@@ -276,8 +276,7 @@ export class PeopleTabComponent {
     this.iam.setUserGlobalRole(u.email, value === 'none' ? null : value);
   }
 
-  @ViewChild('adminDialog')
-  private readonly adminDialog!: ConfirmationDialogComponent;
+  private readonly adminDialog = viewChild.required<ConfirmationDialogComponent>('adminDialog');
   readonly pendingAdminUser = signal<UserRecord | null>(null);
 
   readonly adminDialogTitle = computed(() =>
@@ -298,13 +297,13 @@ export class PeopleTabComponent {
 
   toggleAdmin(u: UserRecord): void {
     this.pendingAdminUser.set(u);
-    this.adminDialog.open();
+    this.adminDialog().open();
   }
 
   onAdminConfirmed(): void {
     const u = this.pendingAdminUser();
     if (u) this.iam.setUserAdmin(u.id, !u.isAdmin);
-    this.adminDialog.close();
+    this.adminDialog().close();
     this.pendingAdminUser.set(null);
   }
 

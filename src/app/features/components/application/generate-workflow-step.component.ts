@@ -1,5 +1,5 @@
-import { Component, computed, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideGithub,
@@ -20,7 +20,7 @@ export type WorkflowGenerationState = 'idle' | 'generating' | 'committing' | 'wa
 @Component({
   selector: 'app-generate-workflow-step',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [
     provideIcons({
       lucideGithub,
@@ -31,6 +31,7 @@ export type WorkflowGenerationState = 'idle' | 'generating' | 'committing' | 'wa
       lucideTriangleAlert,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-5">
       @if (generationState() === 'idle') {

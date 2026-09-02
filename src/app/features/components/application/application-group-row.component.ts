@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleCheck,
@@ -34,6 +34,7 @@ import { ApplicationRowComponent } from './application-row.component';
       lucideExternalLink,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isComposed()) {
       <div

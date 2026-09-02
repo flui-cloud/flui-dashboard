@@ -2,13 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
-  Output,
-  ViewChild,
   effect,
   inject,
   input,
   signal,
+  viewChild,
+  output
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -188,10 +187,10 @@ export class DocumentShellComponent {
   readonly database = input<string | null>(null);
 
   /** Emitted after a write so the page can refresh the browse pane. */
-  @Output() readonly changed = new EventEmitter<void>();
+  readonly changed = output<void>();
 
-  @ViewChild('scroll') private readonly scrollEl?: ElementRef<HTMLDivElement>;
-  @ViewChild(MongoShellInputComponent) private readonly inputEl?: MongoShellInputComponent;
+  private readonly scrollEl = viewChild<ElementRef<HTMLDivElement>>('scroll');
+  private readonly inputEl = viewChild(MongoShellInputComponent);
 
   protected readonly help = HELP_TEXT;
   readonly expanded = signal(this.readStore('flui.docshell.expanded') ?? false);
@@ -208,7 +207,7 @@ export class DocumentShellComponent {
     effect(() => {
       this.entries();
       this.running();
-      const el = this.scrollEl?.nativeElement;
+      const el = this.scrollEl()?.nativeElement;
       if (el) requestAnimationFrame(() => (el.scrollTop = el.scrollHeight));
     });
   }
@@ -241,7 +240,7 @@ export class DocumentShellComponent {
   /** Place text in the input without running (assistant "Insert"). */
   insert(text: string): void {
     if (!this.expanded()) this.toggle();
-    setTimeout(() => this.inputEl?.setText(text));
+    setTimeout(() => this.inputEl()?.setText(text));
   }
 
   // Typed runs follow the Read-only toggle (backend gate authoritative: a write under read-only

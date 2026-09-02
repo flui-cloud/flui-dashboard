@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideShieldCheck, lucideExternalLink, lucideArrowRight } from '@ng-icons/lucide';
@@ -9,6 +9,7 @@ import { DnsSetupWizardService } from './dns-setup-wizard.service';
   standalone: true,
   imports: [RouterLink, NgIconComponent],
   providers: [provideIcons({ lucideShieldCheck, lucideExternalLink, lucideArrowRight })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex-1 flex flex-col gap-4 py-2">
       <div class="flex items-center gap-3">

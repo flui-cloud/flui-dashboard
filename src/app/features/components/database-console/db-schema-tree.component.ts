@@ -1,11 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Output,
   computed,
   input,
   signal,
+  output
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -158,9 +157,12 @@ export class DbSchemaTreeComponent {
   readonly schema = input<SchemaTree | null>(null);
   readonly loading = input(false);
 
-  @Output() readonly refresh = new EventEmitter<void>();
-  @Output() readonly collapse = new EventEmitter<void>();
-  @Output() readonly browse = new EventEmitter<{ schema: string; table: string }>();
+  readonly refresh = output<void>();
+  readonly collapse = output<void>();
+  readonly browse = output<{
+    schema: string;
+    table: string;
+}>();
 
   readonly expanded = signal<ReadonlySet<string>>(new Set());
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AuthService as ApiAuthService } from '../../../../core/api/api/auth.service';
@@ -8,6 +8,7 @@ import { consumeLoginRedirect } from '../../../../core/utils/safe-redirect';
 @Component({
   selector: 'app-auth-callback',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-h-screen flex items-center justify-center bg-background">
       @if (apiError()) {

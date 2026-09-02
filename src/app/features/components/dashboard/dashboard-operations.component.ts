@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideArrowRight } from '@ng-icons/lucide';
@@ -29,6 +29,7 @@ const STATUS_COLORS: Partial<Record<ClusterStatus, string>> = {
   standalone: true,
   imports: [RouterLink, NgIconComponent],
   providers: [provideIcons({ lucideLoader, lucideArrowRight })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (operations().length > 0) {
       <div class="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">

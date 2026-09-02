@@ -2,8 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
-  ViewChild,
   inject,
+  viewChild
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -169,7 +169,7 @@ export class SearchConsolePageComponent implements OnInit {
     { initialValue: this.route.snapshot.paramMap.get('applicationId') },
   );
 
-  @ViewChild(RestConsoleComponent) private readonly shell?: RestConsoleComponent;
+  private readonly shell = viewChild(RestConsoleComponent);
 
   ngOnInit(): void {
     this.s.appId.set(this.applicationId() ?? null);
@@ -181,7 +181,7 @@ export class SearchConsolePageComponent implements OnInit {
   onChatRun(ev: { code: string; mutation: boolean }): void {
     if (this.s.view() === 'console') {
       // Confirmed-in-chat write runs once as a one-off; reads honor the console toggle.
-      this.shell?.runText(ev.code, ev.mutation);
+      this.shell()?.runText(ev.code, ev.mutation);
       return;
     }
     this.s.onAssistApply(ev.code);
@@ -190,7 +190,7 @@ export class SearchConsolePageComponent implements OnInit {
   // Chat "Insert": console → only populate the shell editor (no run); browse → apply.
   onChatInsert(code: string): void {
     if (this.s.view() === 'console') {
-      this.shell?.setText(code);
+      this.shell()?.setText(code);
       return;
     }
     this.s.onAssistApply(code);

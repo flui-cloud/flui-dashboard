@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleCheck, lucideTriangleAlert, lucideLayers } from '@ng-icons/lucide';
 import { DockerfileAnalysisDto } from '../../../core/api/model/dockerfileAnalysisDto';
@@ -12,7 +12,7 @@ const RUNTIME_ICONS: Record<string, string> = {
 @Component({
   selector: 'app-dockerfile-analysis-banner',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [provideIcons({ lucideCircleCheck, lucideTriangleAlert, lucideLayers })],
   template: `
     @if (analysis(); as da) {

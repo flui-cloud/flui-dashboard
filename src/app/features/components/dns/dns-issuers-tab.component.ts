@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, OnInit } from '@angular/core';
+import { Component, inject, signal, effect, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideServer, lucideInfo, lucideRefreshCw } from '@ng-icons/lucide';
@@ -12,6 +12,7 @@ import { ClusterIssuerSetupComponent } from '../cluster/cluster-issuer-setup.com
   standalone: true,
   imports: [NgIconComponent, FormsModule, ClusterCertificateIssuersComponent, ClusterIssuerSetupComponent],
   providers: [provideIcons({ lucideServer, lucideInfo, lucideRefreshCw })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
 

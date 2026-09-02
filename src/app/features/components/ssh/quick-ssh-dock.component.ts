@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTerminal, lucideMaximize2, lucideX } from '@ng-icons/lucide';
 import { QuickSshService } from '../../service/quick-ssh.service';
@@ -40,6 +40,7 @@ import { QuickSshService } from '../../service/quick-ssh.service';
       </div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host {
       display: contents;

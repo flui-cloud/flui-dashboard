@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, signal, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import {
   FirewallRuleFormData,
@@ -9,8 +9,9 @@ import {
 @Component({
   selector: 'app-firewall-inline-rule-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './firewall-inline-rule-editor.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./firewall-inline-rule-editor.component.scss']
 })
 export class FirewallInlineRuleEditorComponent {
@@ -21,11 +22,11 @@ export class FirewallInlineRuleEditorComponent {
     }
   }
 
-  @Input() supportsSshAllowlist = true;
-  @Input() isHostFirewall = false;
+  readonly supportsSshAllowlist = input(true);
+  readonly isHostFirewall = input(false);
 
-  @Output() save = new EventEmitter<FirewallRuleFormData[]>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly save = output<FirewallRuleFormData[]>();
+  readonly cancelled = output<void>();
 
   private readonly originalRules = signal<FirewallRuleFormData[]>([]);
   workingRules = signal<FirewallRuleFormData[]>([]);
@@ -213,7 +214,7 @@ export class FirewallInlineRuleEditorComponent {
 
   isManagedSshRule(rule: FirewallRuleFormData): boolean {
     return (
-      !this.supportsSshAllowlist &&
+      !this.supportsSshAllowlist() &&
       rule.direction === 'in' &&
       rule.protocol === 'tcp' &&
       rule.port === '22'
@@ -221,7 +222,7 @@ export class FirewallInlineRuleEditorComponent {
   }
 
   isUnenforcedEgress(rule: FirewallRuleFormData): boolean {
-    return this.isHostFirewall && rule.direction === 'out';
+    return this.isHostFirewall() && rule.direction === 'out';
   }
 
   ruleBadge(rule: FirewallRuleFormData): string | null {

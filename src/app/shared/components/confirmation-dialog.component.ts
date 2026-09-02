@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { Component, Input, signal, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -25,6 +25,7 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
       lucideLoader,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isOpen()) {
       <div
@@ -42,27 +43,27 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
                 <div
                   class="flex h-12 w-12 items-center justify-center rounded-full flex-shrink-0"
                   [ngClass]="{
-                    'bg-red-100 dark:bg-red-900/20': variant === 'danger',
-                    'bg-yellow-100 dark:bg-yellow-900/20': variant === 'warning',
-                    'bg-blue-100 dark:bg-blue-900/20': variant === 'info'
+                    'bg-red-100 dark:bg-red-900/20': variant() === 'danger',
+                    'bg-yellow-100 dark:bg-yellow-900/20': variant() === 'warning',
+                    'bg-blue-100 dark:bg-blue-900/20': variant() === 'info'
                   }"
                 >
                   <ng-icon
                     [name]="iconName"
                     class="h-6 w-6"
                     [ngClass]="{
-                      'text-red-600 dark:text-red-400': variant === 'danger',
-                      'text-yellow-600 dark:text-yellow-400': variant === 'warning',
-                      'text-blue-600 dark:text-blue-400': variant === 'info'
+                      'text-red-600 dark:text-red-400': variant() === 'danger',
+                      'text-yellow-600 dark:text-yellow-400': variant() === 'warning',
+                      'text-blue-600 dark:text-blue-400': variant() === 'info'
                     }"
                   />
                 </div>
                 <div class="flex-1">
                   <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ title }}
+                    {{ title() }}
                   </h3>
                   <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    {{ message }}
+                    {{ message() }}
                   </p>
 
                   @if (details?.length) {
@@ -104,24 +105,24 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
                 [disabled]="isProcessing()"
                 class="min-w-[80px]"
               >
-                {{ cancelText }}
+                {{ cancelText() }}
               </button>
               <button
                 hlmBtn
                 (click)="onConfirm()"
                 [disabled]="isProcessing()"
                 [ngClass]="{
-                  'bg-red-600 hover:bg-red-700 text-white': variant === 'danger',
-                  'bg-yellow-600 hover:bg-yellow-700 text-white': variant === 'warning',
-                  'bg-blue-600 hover:bg-blue-700 text-white': variant === 'info'
+                  'bg-red-600 hover:bg-red-700 text-white': variant() === 'danger',
+                  'bg-yellow-600 hover:bg-yellow-700 text-white': variant() === 'warning',
+                  'bg-blue-600 hover:bg-blue-700 text-white': variant() === 'info'
                 }"
                 class="min-w-[100px]"
               >
                 @if (isProcessing()) {
                   <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                  {{ processingText ?? confirmText }}
+                  {{ processingText() ?? confirmText() }}
                 } @else {
-                  {{ confirmText }}
+                  {{ confirmText() }}
                 }
               </button>
             </div>
@@ -132,29 +133,30 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
   `,
 })
 export class ConfirmationDialogComponent {
-  @Input() processingText?: string;
+  readonly processingText = input<string>();
   @Input() details?: string[];
 
   protected readonly detailsOpen = signal(false);
 
-  @Input() title = 'Confirm Action';
-  @Input() message = 'Are you sure you want to proceed?';
-  @Input() confirmText = 'Confirm';
-  @Input() cancelText = 'Cancel';
-  @Input() variant: ConfirmationDialogVariant = 'info';
-  @Input() icon?: string;
+  readonly title = input('Confirm Action');
+  readonly message = input('Are you sure you want to proceed?');
+  readonly confirmText = input('Confirm');
+  readonly cancelText = input('Cancel');
+  readonly variant = input<ConfirmationDialogVariant>('info');
+  readonly icon = input<string>();
 
-  @Output() confirmed = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly confirmed = output<void>();
+  readonly cancelled = output<void>();
 
   isOpen = signal(false);
   isProcessing = signal(false);
 
   get iconName(): string {
-    if (this.icon) return this.icon;
+    const icon = this.icon();
+    if (icon) return icon;
 
     // Default icons based on variant
-    switch (this.variant) {
+    switch (this.variant()) {
       case 'danger':
         return 'lucideCircleAlert';
       case 'warning':

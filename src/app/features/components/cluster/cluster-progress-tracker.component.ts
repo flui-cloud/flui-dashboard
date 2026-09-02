@@ -8,8 +8,8 @@
  * Custom success state with cluster-specific actions (Go to Cluster)
  */
 
-import { Component, OnInit, inject, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -26,13 +26,14 @@ import { ClusterService } from '../../service/cluster.service';
 @Component({
   selector: 'cluster-progress-tracker',
   standalone: true,
-  imports: [CommonModule, OperationProgressTrackerComponent, NgIcon],
+  imports: [OperationProgressTrackerComponent, NgIcon],
   providers: [
     provideIcons({
       lucideCheck,
       lucideArrowRight,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <app-operation-progress-tracker
       [operationId]="operationId"

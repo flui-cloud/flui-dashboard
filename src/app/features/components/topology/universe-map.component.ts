@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -7,11 +7,11 @@ import {
   ElementRef,
   HostListener,
   OnDestroy,
-  ViewChild,
   computed,
   effect,
   inject,
   signal,
+  viewChild
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -26,7 +26,7 @@ import { AppNode, GalaxyNode, LabelMode, ServerNode, ShowMode, ZoomLevel } from 
 @Component({
   selector: 'app-universe-map',
   standalone: true,
-  imports: [CommonModule, RouterLink, ScrambleTextComponent],
+  imports: [RouterLink, ScrambleTextComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div #container class="universe-host" (mouseleave)="onContainerLeave()">
@@ -191,8 +191,8 @@ import { AppNode, GalaxyNode, LabelMode, ServerNode, ShowMode, ZoomLevel } from 
   styleUrl: './universe-map.component.scss',
 })
 export class UniverseMapComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('container', { static: true }) containerRef!: ElementRef<HTMLElement>;
+  readonly canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
+  readonly containerRef = viewChild.required<ElementRef<HTMLElement>>('container');
 
   private readonly topology = inject(TopologyDashboardService);
   private readonly destroyRef = inject(DestroyRef);
@@ -252,8 +252,8 @@ export class UniverseMapComponent implements AfterViewInit, OnDestroy {
     try {
       const data = await this.topology.load();
       this.renderer = new FluiUniverseRenderer(
-        this.canvasRef.nativeElement,
-        this.containerRef.nativeElement,
+        this.canvasRef().nativeElement,
+        this.containerRef().nativeElement,
         {
           onAppHover: (a) => this.hoveredApp.set(a),
           onServerHover: (s) => this.hoveredServer.set(s),
@@ -264,7 +264,7 @@ export class UniverseMapComponent implements AfterViewInit, OnDestroy {
       );
       this.renderer.mount(data);
       this.resizeObs = new ResizeObserver(() => this.renderer?.handleResize());
-      this.resizeObs.observe(this.containerRef.nativeElement);
+      this.resizeObs.observe(this.containerRef().nativeElement);
 
       this.topology.events$
         .pipe(takeUntilDestroyed(this.destroyRef))

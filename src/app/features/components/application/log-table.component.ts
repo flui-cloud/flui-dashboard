@@ -1,5 +1,5 @@
-import { Component, input, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideRefreshCw, lucideChevronDown, lucideChevronRight,
@@ -21,13 +21,14 @@ const PAGE_SIZE = 50;
 @Component({
   selector: 'app-log-table',
   standalone: true,
-  imports: [CommonModule, NgIconComponent],
+  imports: [NgIconComponent],
   providers: [
     provideIcons({
       lucideRefreshCw, lucideChevronDown, lucideChevronRight,
       lucideAlertCircle, lucideActivity, lucideCopy, lucideCheck,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
 

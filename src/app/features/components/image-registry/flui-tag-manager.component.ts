@@ -1,5 +1,5 @@
-import { Component, input, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideX, lucidePlus, lucideLoader } from '@ng-icons/lucide';
@@ -7,8 +7,9 @@ import { lucideX, lucidePlus, lucideLoader } from '@ng-icons/lucide';
 @Component({
   selector: 'app-flui-tag-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [FormsModule, NgIcon],
   providers: [provideIcons({ lucideX, lucidePlus, lucideLoader })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-wrap items-center gap-1.5">
       @for (tag of tags(); track tag) {

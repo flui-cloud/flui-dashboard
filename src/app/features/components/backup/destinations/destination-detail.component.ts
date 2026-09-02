@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
 import {
@@ -15,7 +15,8 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
 @Component({
   selector: 'app-destination-detail',
   standalone: true,
-  imports: [ReadOnlySectionDirective, CommonModule, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  imports: [ReadOnlySectionDirective, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-4 max-w-3xl">
       <app-backup-back-link link="/management/backup/destinations" label="Back to destinations" />

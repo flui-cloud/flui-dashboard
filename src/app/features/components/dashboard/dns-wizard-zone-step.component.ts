@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -10,6 +10,7 @@ import { DnsSetupWizardService } from './dns-setup-wizard.service';
   standalone: true,
   imports: [FormsModule, RouterLink, NgIconComponent],
   providers: [provideIcons({ lucideLoader, lucideGlobe, lucideExternalLink, lucideMail })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <h3 class="text-sm font-semibold text-foreground mb-1">Which domain do you want to use?</h3>
 

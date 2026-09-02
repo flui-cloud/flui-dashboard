@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideEye } from '@ng-icons/lucide';
@@ -14,9 +14,10 @@ import { InstanceWithLabels } from '../../model/instance.models';
       lucideEye,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex items-center justify-center">
-      @if (isManaged) {
+      @if (isManaged()) {
         <button
           hlmBtn
           variant="ghost"
@@ -37,16 +38,16 @@ import { InstanceWithLabels } from '../../model/instance.models';
   `,
 })
 export class InstanceActionsComponent {
-  @Input({ required: true }) instance!: InstanceWithLabels;
-  @Input({ required: true }) isManaged!: boolean;
+  readonly instance = input.required<InstanceWithLabels>();
+  readonly isManaged = input.required<boolean>();
 
   constructor(private readonly router: Router) {}
 
   onViewDetails() {
     this.router.navigate([
       '/infrastructure/compute',
-      this.instance.provider,
-      this.instance.providerId,
+      this.instance().provider,
+      this.instance().providerId,
     ]);
   }
 }

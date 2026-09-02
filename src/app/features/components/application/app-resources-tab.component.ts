@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideAlertCircle } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
@@ -11,10 +11,11 @@ import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
 @Component({
   selector: 'app-resources-tab',
   standalone: true,
-  imports: [CommonModule, NgIconComponent, AppResourcesEditorComponent],
+  imports: [NgIconComponent, AppResourcesEditorComponent],
   providers: [
     provideIcons({ lucideLoader, lucideAlertCircle }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (app(); as app) {
       <div class="space-y-4">

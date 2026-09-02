@@ -1,5 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -10,7 +10,8 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
 @Component({
   selector: 'app-jobs-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  imports: [FormsModule, RouterLink, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-4">
       <app-backup-back-link link="/management/backup" label="Back to Backup" />

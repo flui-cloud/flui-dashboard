@@ -1,10 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Output,
   computed,
   input,
+  output
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -84,8 +83,8 @@ export class DocumentListComponent {
   /** Whether a further page exists (server reported more than pageSize rows). */
   readonly hasNext = input(false);
 
-  @Output() readonly prevPage = new EventEmitter<void>();
-  @Output() readonly nextPage = new EventEmitter<void>();
+  readonly prevPage = output<void>();
+  readonly nextPage = output<void>();
 
   protected readonly skeletonRows = Array.from({ length: 5 }, (_, i) => i);
 

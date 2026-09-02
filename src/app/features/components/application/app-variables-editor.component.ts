@@ -1,7 +1,10 @@
 import {
-  Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, signal
+  Component, OnChanges, SimpleChanges, signal,
+  input,
+  output,
+  ChangeDetectionStrategy
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -60,7 +63,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
 @Component({
   selector: 'app-variables-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent],
+  imports: [FormsModule, NgIconComponent],
   providers: [
     provideIcons({
       lucidePlus, lucideTrash2, lucideSave, lucideLock,
@@ -68,6 +71,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
       lucidePencil, lucideX, lucideCode, lucideList, lucideMaximize2,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
 
@@ -78,7 +82,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
             [name]="isSensitiveSection ? 'lucideLock' : 'lucideKey'"
             class="h-4 w-4 text-gray-500 dark:text-gray-400"
           />
-          <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ title }}</h4>
+          <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ title() }}</h4>
           @if (isSensitiveSection) {
             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
               Write-only
@@ -86,7 +90,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
           }
         </div>
         <div class="flex items-center gap-2">
-          @if (saving) {
+          @if (saving()) {
             <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-blue-600" />
           }
           @if (!isSensitiveSection) {
@@ -106,7 +110,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
             <button
               type="button"
               (click)="onSave()"
-              [disabled]="saving || !canSave()"
+              [disabled]="saving() || !canSave()"
               class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ng-icon name="lucideSave" class="h-3.5 w-3.5" />
@@ -378,13 +382,13 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
   `,
 })
 export class AppVariablesEditorComponent implements OnChanges {
-  @Input() title = 'Variables';
-  @Input() data: Record<string, string> = {};
-  @Input() sensitiveKeys: string[] = [];
-  @Input() pendingKeys: string[] = [];
-  @Input() saving = false;
+  readonly title = input('Variables');
+  readonly data = input<Record<string, string>>({});
+  readonly sensitiveKeys = input<string[]>([]);
+  readonly pendingKeys = input<string[]>([]);
+  readonly saving = input(false);
 
-  @Output() save = new EventEmitter<VariablesSavePayload>();
+  readonly save = output<VariablesSavePayload>();
 
   protected rows = signal<VarRow[]>([]);
   protected deletedKeys = signal<Set<string>>(new Set());
@@ -410,7 +414,7 @@ export class AppVariablesEditorComponent implements OnChanges {
   } | null>(null);
 
   get isSensitiveSection(): boolean {
-    return this.sensitiveKeys.length > 0 || this.pendingKeys.length > 0;
+    return this.sensitiveKeys().length > 0 || this.pendingKeys().length > 0;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -425,8 +429,8 @@ export class AppVariablesEditorComponent implements OnChanges {
   }
 
   private rebuildRows(): void {
-    const sensitiveSet = new Set(this.sensitiveKeys);
-    const configured = Object.entries(this.data).map(([key, value]) => ({
+    const sensitiveSet = new Set(this.sensitiveKeys());
+    const configured = Object.entries(this.data()).map(([key, value]) => ({
       key,
       value: sensitiveSet.has(key) ? '****' : value,
       originalValue: sensitiveSet.has(key) ? '****' : value,
@@ -441,7 +445,7 @@ export class AppVariablesEditorComponent implements OnChanges {
     // A pending key has no entry in `data` at all — same `****` sentinel as a
     // configured secret, so an untouched row is skipped on save exactly like
     // one (see isDirtyRow/onSave); only the display text tells them apart.
-    const pending = this.pendingKeys.map((key) => ({
+    const pending = this.pendingKeys().map((key) => ({
       key,
       value: '****',
       originalValue: '****',
@@ -459,8 +463,8 @@ export class AppVariablesEditorComponent implements OnChanges {
 
   private buildJsonText(): string {
     const plain: Record<string, string> = {};
-    for (const [k, v] of Object.entries(this.data)) {
-      if (!this.sensitiveKeys.includes(k)) plain[k] = v;
+    for (const [k, v] of Object.entries(this.data())) {
+      if (!this.sensitiveKeys().includes(k)) plain[k] = v;
     }
     return JSON.stringify(plain, null, 2);
   }
@@ -689,8 +693,8 @@ export class AppVariablesEditorComponent implements OnChanges {
     if (this.jsonMode()) {
       const parsed = this.jsonParsed();
       if (!parsed) return;
-      const deleteKeys = Object.keys(this.data).filter(
-        k => !this.sensitiveKeys.includes(k) && !(k in parsed),
+      const deleteKeys = Object.keys(this.data()).filter(
+        k => !this.sensitiveKeys().includes(k) && !(k in parsed),
       );
       this.save.emit({ data: parsed, deleteKeys });
       return;

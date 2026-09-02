@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, signal, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -22,7 +22,6 @@ import { InstanceWithLabels, getClusterInfo } from '../../model/instance.models'
   selector: 'app-instance-delete-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     NgIcon,
     HlmButtonDirective,
@@ -30,8 +29,8 @@ import { InstanceWithLabels, getClusterInfo } from '../../model/instance.models'
     HlmCardHeaderDirective,
     HlmCardTitleDirective,
     HlmCardDescriptionDirective,
-    HlmCardContentDirective,
-  ],
+    HlmCardContentDirective
+],
   providers: [
     provideIcons({
       lucideTriangleAlert,
@@ -40,6 +39,7 @@ import { InstanceWithLabels, getClusterInfo } from '../../model/instance.models'
       lucideLoader,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isOpen()) {
       <div
@@ -106,7 +106,7 @@ import { InstanceWithLabels, getClusterInfo } from '../../model/instance.models'
                         The recommended approach is to manage this server through the cluster.
                       </p>
                       <a
-                        [routerLink]="['/cluster', clusterInfo()?.clusterId]"
+                        [routerLink]="['/cluster', $safeNavigationMigration(clusterInfo()?.clusterId)]"
                         class="inline-flex items-center gap-1 text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:underline"
                       >
                         Go to cluster dashboard
@@ -138,7 +138,7 @@ import { InstanceWithLabels, getClusterInfo } from '../../model/instance.models'
                   hlmBtn
                   variant="outline"
                   (click)="onCancel()"
-                  [disabled]="isDeleting"
+                  [disabled]="isDeleting()"
                 >
                   Cancel
                 </button>
@@ -146,9 +146,9 @@ import { InstanceWithLabels, getClusterInfo } from '../../model/instance.models'
                   hlmBtn
                   variant="destructive"
                   (click)="onConfirm()"
-                  [disabled]="(clusterInfo() && !forceDelete()) || isDeleting"
+                  [disabled]="(clusterInfo() && !forceDelete()) || isDeleting()"
                 >
-                  @if (isDeleting) {
+                  @if (isDeleting()) {
                     <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
                     Deleting...
                   } @else {
@@ -169,10 +169,13 @@ export class InstanceDeleteDialogComponent {
     this._clusterInfo.set(value ? getClusterInfo(value) : null);
   }
 
-  @Input() isDeleting = false;
+  readonly isDeleting = input(false);
 
-  @Output() confirmed = new EventEmitter<{ instance: InstanceWithLabels; force: boolean }>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly confirmed = output<{
+    instance: InstanceWithLabels;
+    force: boolean;
+}>();
+  readonly cancelled = output<void>();
 
   private readonly _instance = signal<InstanceWithLabels | null>(null);
   private readonly _clusterInfo = signal<ReturnType<typeof getClusterInfo>>(null);

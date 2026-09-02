@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -60,6 +60,7 @@ function validatePrefix(value: string): string | null {
   providers: [
     provideIcons({ lucideEdit2, lucidePlus, lucideX, lucideLoader, lucideCheckCircle, lucideAlertCircle, lucideRefreshCw, lucideZap, lucideGlobe }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex items-start justify-between mb-1">
       <h3 class="text-sm font-semibold text-foreground">Configure app endpoints</h3>

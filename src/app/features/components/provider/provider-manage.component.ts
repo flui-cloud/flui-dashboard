@@ -1,7 +1,7 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -30,7 +30,7 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
 @Component({
   selector: 'provider-manage',
   standalone: true,
-  imports: [ReadOnlySectionDirective, CommonModule, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent, ProviderInferencePanelComponent],
+  imports: [ReadOnlySectionDirective, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent, ProviderInferencePanelComponent],
   providers: [
     provideIcons({
       lucideActivity,
@@ -47,6 +47,7 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
       lucideTriangleAlert,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="container mx-auto px-4 py-8 max-w-6xl">
       <a

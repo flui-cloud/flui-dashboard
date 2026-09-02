@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { PROJECT_FALLBACK_COLOR, Project } from '../../model/project.model';
 
 @Component({
@@ -6,6 +6,7 @@ import { PROJECT_FALLBACK_COLOR, Project } from '../../model/project.model';
   standalone: true,
   imports: [],
   host: { class: 'inline-flex' },
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @let p = project();
     @if (p) {

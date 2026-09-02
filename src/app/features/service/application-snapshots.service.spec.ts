@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
@@ -19,7 +19,7 @@ describe('ApplicationSnapshotsService', () => {
     TestBed.configureTestingModule({
       providers: [
         ApplicationSnapshotsService,
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: ApplicationsService, useValue: applicationsApi },
         { provide: AppConfigService, useValue: { apiBaseUrl: '' } },

@@ -174,8 +174,8 @@ export class ClusterScalingTabComponent {
   protected readonly clusterId = computed(() => this.params().get('id'));
 
   protected readonly rowRes = rxResource({
-    request: () => this.clusterId() ?? undefined,
-    loader: ({ request }) => this.api.row(request),
+    params: () => this.clusterId() ?? undefined,
+    stream: ({ params }) => this.api.row(params),
   });
 
   private readonly loaded = loadedOf<ClusterScalingRow>(

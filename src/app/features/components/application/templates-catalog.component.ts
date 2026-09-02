@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -108,13 +108,14 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
 @Component({
   selector: 'app-templates-catalog',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent],
+  imports: [FormsModule, NgIconComponent],
   providers: [
     provideIcons({
       lucideRefreshCw, lucideLoader, lucideSearch, lucideGitBranch,
       lucideServer, lucideArrowRight, lucidePackage, lucideRocket,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6 p-6 max-w-6xl mx-auto">
       <!-- Header -->

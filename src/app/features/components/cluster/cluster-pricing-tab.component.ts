@@ -1,5 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideCreditCard,
@@ -104,7 +104,7 @@ interface ClusterBilling {
 @Component({
   selector: 'cluster-pricing-tab',
   standalone: true,
-  imports: [CommonModule, NgIconComponent],
+  imports: [NgIconComponent],
   providers: [
     provideIcons({
       lucideCreditCard,
@@ -117,6 +117,7 @@ interface ClusterBilling {
       lucideHardDrive,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isLoading()) {
       <div class="animate-pulse space-y-6">

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { IamService } from '../../service/iam.service';
 import { GroupsTabComponent } from './groups-tab.component';
@@ -26,7 +26,7 @@ describe('deleting an access group', () => {
     await TestBed.configureTestingModule({
       imports: [GroupsTabComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: IamService, useValue: iam },
         { provide: PermissionService, useValue: { can: () => true } },

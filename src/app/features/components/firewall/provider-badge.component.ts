@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
 import { ProviderLogoService } from '../../../shared/services/provider-logo.service';
@@ -6,6 +6,7 @@ import { ProviderLogoService } from '../../../shared/services/provider-logo.serv
 @Component({
   selector: 'app-provider-badge',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="inline-flex items-center gap-1.5">
       @if (logoUrl()) {

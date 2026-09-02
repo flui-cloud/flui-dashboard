@@ -5,7 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -40,13 +40,12 @@ const SCAN_COUNT = 100;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     FormsModule,
     NgIcon,
     JsonViewerComponent,
     DbAssistantChatComponent,
-    GateNoticeComponent,
-  ],
+    GateNoticeComponent
+],
   viewProviders: [
     provideIcons({
       lucideArrowLeft,

@@ -1,5 +1,5 @@
-import { Component, computed, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTriangleAlert, lucideCircleAlert, lucideZap, lucidePlus } from '@ng-icons/lucide';
 import { AutoscaleStatus } from '../../model/autoscale.models';
@@ -7,10 +7,11 @@ import { AutoscaleStatus } from '../../model/autoscale.models';
 @Component({
   selector: 'app-autoscale-warning-banner',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [
     provideIcons({ lucideTriangleAlert, lucideCircleAlert, lucideZap, lucidePlus }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (visible()) {
       <div

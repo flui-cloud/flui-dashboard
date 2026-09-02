@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -27,7 +27,7 @@ const TODAY_PLUS_DAYS = (days: number): string => {
 @Component({
   selector: 'app-ghcr-pat-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent],
+  imports: [FormsModule, NgIconComponent],
   providers: [
     provideIcons({
       lucideKey,
@@ -39,6 +39,7 @@ const TODAY_PLUS_DAYS = (days: number): string => {
       lucideCalendar,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="onBackdrop($event)">
       <div class="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full shadow-xl" (click)="$event.stopPropagation()">
@@ -50,7 +51,7 @@ const TODAY_PLUS_DAYS = (days: number): string => {
         </div>
 
         <div class="p-5 space-y-3">
-          @if (mode !== 'update-expiry') {
+          @if (mode() !== 'update-expiry') {
             <a
               [href]="patCreateUrl"
               target="_blank"
@@ -91,7 +92,7 @@ const TODAY_PLUS_DAYS = (days: number): string => {
             </p>
           </div>
 
-          @if (mode !== 'update-expiry') {
+          @if (mode() !== 'update-expiry') {
             <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
               <p class="text-xs text-slate-500 dark:text-slate-400">
                 Required scopes: <span class="font-mono">read:packages</span>
@@ -129,7 +130,7 @@ const TODAY_PLUS_DAYS = (days: number): string => {
               <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
               <span>Saving…</span>
             } @else {
-              <ng-icon [name]="mode === 'rotate' ? 'lucideRefreshCw' : (mode === 'update-expiry' ? 'lucideCalendar' : 'lucideKey')" class="h-4 w-4" />
+              <ng-icon [name]="mode() === 'rotate' ? 'lucideRefreshCw' : (mode() === 'update-expiry' ? 'lucideCalendar' : 'lucideKey')" class="h-4 w-4" />
               <span>{{ submitLabel() }}</span>
             }
           </button>
@@ -139,11 +140,11 @@ const TODAY_PLUS_DAYS = (days: number): string => {
   `,
 })
 export class GhcrPatModalComponent implements OnInit {
-  @Input({ required: true }) mode: GhcrPatModalMode = 'create';
-  @Input() initialExpiresAt: string | null | undefined = null;
+  readonly mode = input.required<GhcrPatModalMode>();
+  readonly initialExpiresAt = input<string | null | undefined>(null);
 
-  @Output() cancelled = new EventEmitter<void>();
-  @Output() saved = new EventEmitter<void>();
+  readonly cancelled = output<void>();
+  readonly saved = output<void>();
 
   private readonly oauthApi = inject(GithubAppOAuthService);
 
@@ -157,15 +158,16 @@ export class GhcrPatModalComponent implements OnInit {
   errorMsg = signal<string | null>(null);
 
   ngOnInit(): void {
-    if (this.initialExpiresAt) {
-      this.expiresAt = this.initialExpiresAt.slice(0, 10);
+    const initialExpiresAt = this.initialExpiresAt();
+    if (initialExpiresAt) {
+      this.expiresAt = initialExpiresAt.slice(0, 10);
     } else {
       this.expiresAt = TODAY_PLUS_DAYS(30);
     }
   }
 
   title = computed(() => {
-    switch (this.mode) {
+    switch (this.mode()) {
       case 'rotate': return 'Rotate GHCR token';
       case 'update-expiry': return 'Update token expiration';
       default: return 'Connect GHCR token';
@@ -173,7 +175,7 @@ export class GhcrPatModalComponent implements OnInit {
   });
 
   submitLabel = computed(() => {
-    switch (this.mode) {
+    switch (this.mode()) {
       case 'rotate': return 'Rotate token';
       case 'update-expiry': return 'Update expiration';
       default: return 'Save token';
@@ -182,7 +184,7 @@ export class GhcrPatModalComponent implements OnInit {
 
   canSubmit(): boolean {
     if (!this.expiresAt) return false;
-    if (this.mode === 'update-expiry') return true;
+    if (this.mode() === 'update-expiry') return true;
     return this.token.trim().length > 0;
   }
 
@@ -197,9 +199,10 @@ export class GhcrPatModalComponent implements OnInit {
     this.errorMsg.set(null);
     const expiresIso = new Date(this.expiresAt).toISOString();
     try {
-      if (this.mode === 'create') {
+      const mode = this.mode();
+      if (mode === 'create') {
         await this.oauthApi.savePackagesPat(this.token.trim(), expiresIso);
-      } else if (this.mode === 'rotate') {
+      } else if (mode === 'rotate') {
         await this.oauthApi.rotatePackagesPat(this.token.trim(), expiresIso);
       } else {
         await this.oauthApi.updatePackagesPatExpiry(expiresIso);

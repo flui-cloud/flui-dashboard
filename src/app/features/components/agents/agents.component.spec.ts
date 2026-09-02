@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -151,7 +151,7 @@ describe('the agents section', () => {
     await TestBed.configureTestingModule({
       imports: [AgentsComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: AgentCycleService, useValue: cycle },
         { provide: ApiAuthService, useValue: keys },
@@ -240,7 +240,7 @@ describe('the agents section', () => {
           live({ id: 'p-done', status: PROPOSAL_STATUS.DENIED }),
         ],
       });
-      expect(findAll('request').length).toBe(1);
+      expect(findAll('request')).toHaveSize(1);
       expect(find('waiting-count')?.textContent).toContain('1 request');
       expect(find('waiting-count')?.textContent).toContain('1 expired');
     });
@@ -303,7 +303,7 @@ describe('the agents section', () => {
   describe('what stands, and taking it back', () => {
     it('lists what may be done without asking', async () => {
       await build({ concessions: [CONCESSION] });
-      expect(findAll('concession').length).toBe(1);
+      expect(findAll('concession')).toHaveSize(1);
       expect(find('granted-count')?.textContent).toContain('1 grant');
     });
 
@@ -314,7 +314,7 @@ describe('the agents section', () => {
           { ...CONCESSION, id: 'g-2', revokedAt: '2026-08-22T00:00:00.000Z' },
         ],
       });
-      expect(findAll('concession').length).toBe(1);
+      expect(findAll('concession')).toHaveSize(1);
     });
 
     it('asks what is still running before offering the revoke', async () => {
@@ -370,7 +370,7 @@ describe('the agents section', () => {
       expect(find('activity-error-banner')?.textContent).toContain(
         'no register for you',
       );
-      expect(findAll('request').length).toBe(1);
+      expect(findAll('request')).toHaveSize(1);
       expect(find('activity-count')?.textContent).toContain('could not be read');
     });
 

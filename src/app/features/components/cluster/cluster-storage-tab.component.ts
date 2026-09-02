@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+
+import { Component, OnInit, computed, effect, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -74,7 +74,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
 @Component({
   selector: 'cluster-storage-tab',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgIconComponent, ClusterOrphanedVolumesComponent],
+  imports: [RouterModule, NgIconComponent, ClusterOrphanedVolumesComponent],
   providers: [
     provideIcons({
       lucideHardDrive,
@@ -90,6 +90,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
       lucideLoader,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6">
       <!-- Header -->

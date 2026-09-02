@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, effect, inject, input, signal } from '@angular/core';
+
+import { Component, effect, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideLoader, lucideTrash2 } from '@ng-icons/lucide';
 
@@ -13,7 +13,7 @@ import {
 @Component({
   selector: 'cluster-orphaned-volumes',
   standalone: true,
-  imports: [CommonModule, NgIconComponent, CanDirective],
+  imports: [NgIconComponent, CanDirective],
   providers: [
     provideIcons({
       lucideCircleAlert,
@@ -21,6 +21,7 @@ import {
       lucideTrash2,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-inner p-4" data-testid="orphaned-volumes">
       <div class="flex items-start justify-between gap-4">

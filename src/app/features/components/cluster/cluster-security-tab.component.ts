@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -21,6 +21,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
       lucideCircle, lucideAlertTriangle,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6 max-w-2xl">
 
@@ -159,7 +160,7 @@ export class ClusterSecurityTabComponent implements OnInit {
   private readonly clusterService = inject(ClusterService);
   private readonly cfg = inject(AppConfigService);
 
-  @ViewChild('uninstallDialog') uninstallDialog!: ConfirmationDialogComponent;
+  readonly uninstallDialog = viewChild.required<ConfirmationDialogComponent>('uninstallDialog');
 
   protected isOidc = this.cfg.get().authMode === 'oidc';
   private readonly clusterId = signal('');
@@ -224,9 +225,9 @@ export class ClusterSecurityTabComponent implements OnInit {
   protected async onUninstall(): Promise<void> {
     const install = this.authzService.install();
     if (!install) return;
-    this.uninstallDialog.setProcessing(true);
+    this.uninstallDialog().setProcessing(true);
     await this.authzService.uninstallAuthz(install.id);
-    this.uninstallDialog.close();
+    this.uninstallDialog().close();
   }
 
   protected formatDate(iso: string): string {

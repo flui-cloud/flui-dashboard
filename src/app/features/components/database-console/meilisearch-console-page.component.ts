@@ -2,9 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
-  ViewChild,
   inject,
   signal,
+  viewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -236,7 +236,7 @@ export class MeilisearchConsolePageComponent implements OnInit {
   query = '';
   filter = '';
 
-  @ViewChild(RestConsoleComponent) private readonly shell?: RestConsoleComponent;
+  private readonly shell = viewChild(RestConsoleComponent);
 
   readonly rawSubmit: RawConsoleSubmit = (req) =>
     this.api.runRaw(this.applicationId() ?? '', req);
@@ -320,7 +320,7 @@ export class MeilisearchConsolePageComponent implements OnInit {
   onChatRun(ev: { code: string; mutation: boolean }): void {
     if (this.view() === 'console') {
       // Confirmed-in-chat write runs once as a one-off; reads honor the console toggle.
-      this.shell?.runText(ev.code, ev.mutation);
+      this.shell()?.runText(ev.code, ev.mutation);
       return;
     }
     this.applySearch(ev.code);
@@ -328,7 +328,7 @@ export class MeilisearchConsolePageComponent implements OnInit {
 
   onChatInsert(code: string): void {
     if (this.view() === 'console') {
-      this.shell?.setText(code);
+      this.shell()?.setText(code);
       return;
     }
     this.applySearch(code);

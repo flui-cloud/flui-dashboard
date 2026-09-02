@@ -29,8 +29,8 @@ export class ScalingGroupStore {
   readonly groupId = this.id.asReadonly();
 
   private readonly groupRes = rxResource({
-    request: () => this.id() ?? undefined,
-    loader: ({ request }) => this.api.group(request),
+    params: () => this.id() ?? undefined,
+    stream: ({ params }) => this.api.group(params),
   });
 
   readonly group = loadedOf<SectionGroup>(this.groupRes, 'This scaling group');
@@ -38,15 +38,15 @@ export class ScalingGroupStore {
   private readonly clusterId = computed(() => this.group().data?.clusterId);
 
   private readonly rowRes = rxResource({
-    request: () => this.clusterId(),
-    loader: ({ request }) => this.api.row(request),
+    params: () => this.clusterId(),
+    stream: ({ params }) => this.api.row(params),
   });
 
   readonly row = loadedOf<ClusterScalingRow>(this.rowRes, "The cluster's row");
 
   private readonly previewRes = rxResource({
-    request: () => this.id() ?? undefined,
-    loader: ({ request }) => this.api.preview(request),
+    params: () => this.id() ?? undefined,
+    stream: ({ params }) => this.api.preview(params),
   });
 
   readonly preview = loadedOf<ScalingPreview>(
@@ -55,8 +55,8 @@ export class ScalingGroupStore {
   );
 
   private readonly decisionsRes = rxResource({
-    request: () => this.id() ?? undefined,
-    loader: ({ request }) => this.api.decisions(request),
+    params: () => this.id() ?? undefined,
+    stream: ({ params }) => this.api.decisions(params),
   });
 
   readonly decisions = loadedOf<ScalingDecision[]>(
@@ -65,11 +65,11 @@ export class ScalingGroupStore {
   );
 
   private readonly catalogueRes = rxResource({
-    request: () => this.group().data?.id,
-    loader: ({ request }) => {
+    params: () => this.group().data?.id,
+    stream: ({ params }) => {
       const group = this.group().data;
       return group?.capability.hasCatalogue
-        ? this.api.outlook(request)
+        ? this.api.outlook(params)
         : of(noMarket(group?.provider ?? 'this provider'));
     },
   });
@@ -88,15 +88,15 @@ export class ScalingGroupStore {
   });
 
   private readonly historyRes = rxResource({
-    request: () => this.clusterId(),
-    loader: ({ request }) => this.api.history(request),
+    params: () => this.clusterId(),
+    stream: ({ params }) => this.api.history(params),
   });
 
   readonly history = loadedOf<FleetHistory>(this.historyRes, 'The fleet history');
 
   private readonly fleetRes = rxResource({
-    request: () => this.clusterId(),
-    loader: ({ request }) => this.api.fleet(request),
+    params: () => this.clusterId(),
+    stream: ({ params }) => this.api.fleet(params),
   });
 
   readonly fleet = loadedOf<FleetReading>(this.fleetRes, 'The fleet');

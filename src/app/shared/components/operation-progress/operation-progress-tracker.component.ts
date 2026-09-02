@@ -17,8 +17,8 @@
  * />
  */
 
-import { Component, OnInit, OnDestroy, input, output, computed, inject, signal, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, input, output, computed, inject, signal, effect, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -66,12 +66,11 @@ const DEFAULT_LABELS: OperationLabels = {
   selector: 'app-operation-progress-tracker',
   standalone: true,
   imports: [
-    CommonModule,
     NgIcon,
     OperationStepCardComponent,
     OperationProgressBarComponent,
-    OperationActivityFeedComponent,
-  ],
+    OperationActivityFeedComponent
+],
   providers: [
     provideIcons({
       lucideCheck,
@@ -83,6 +82,7 @@ const DEFAULT_LABELS: OperationLabels = {
       lucideArrowLeft,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-4xl mx-auto space-y-6">
       <!-- Header -->

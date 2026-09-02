@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -20,16 +20,16 @@ import { CrashDiagnosis } from '../../../model/crash-diagnosis.models';
   selector: 'app-pod-debug-tab',
   standalone: true,
   imports: [
-    CommonModule,
     NgIcon,
     HlmButtonDirective,
     PodCardComponent,
     PodDetailComponent,
-    DiagnosisDetailDialogComponent,
-  ],
+    DiagnosisDetailDialogComponent
+],
   providers: [
     provideIcons({ lucideRefreshCw, lucideCircleAlert, lucideBug, lucideClock }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
       <!-- Header -->

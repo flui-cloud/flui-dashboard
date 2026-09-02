@@ -1,10 +1,11 @@
 import {
   Component,
   OnInit,
-  ViewChild,
   computed,
   inject,
   signal,
+  viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -57,6 +58,7 @@ type ConnState = 'connecting' | 'connected' | 'error';
       lucideTriangleAlert,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-4 md:p-6">
       <div class="mb-4 flex items-center gap-3">
@@ -216,8 +218,7 @@ export class DbConsolePageComponent implements OnInit {
     /Mac|iP(hone|ad|od)/.test(navigator.userAgent || '');
   protected readonly runShortcut = this.isMac ? '⌘↵' : 'Ctrl+↵';
 
-  @ViewChild(SqlEditorComponent)
-  editor?: SqlEditorComponent;
+  readonly editor = viewChild(SqlEditorComponent);
 
   readonly applicationId = toSignal(
     this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
@@ -275,7 +276,7 @@ export class DbConsolePageComponent implements OnInit {
 
   run(forceWrite = false): void {
     const id = this.applicationId();
-    const sqlText = (this.editor?.currentQuery() ?? '').trim();
+    const sqlText = (this.editor()?.currentQuery() ?? '').trim();
     if (!id || !sqlText || this.running()) return;
     this.running.set(true);
     this.queryError.set(null);
@@ -304,7 +305,7 @@ export class DbConsolePageComponent implements OnInit {
 
   browseTable(schemaName: string, tableName: string): void {
     const qualified = `${this.quoteIdent(schemaName)}.${this.quoteIdent(tableName)}`;
-    this.editor?.setText(`SELECT * FROM ${qualified} LIMIT 100;`);
+    this.editor()?.setText(`SELECT * FROM ${qualified} LIMIT 100;`);
     this.run();
   }
 
@@ -320,11 +321,11 @@ export class DbConsolePageComponent implements OnInit {
   }
 
   onChatInsert(sql: string): void {
-    this.editor?.setText(sql);
+    this.editor()?.setText(sql);
   }
 
   onChatRun(e: { code: string; mutation: boolean }): void {
-    this.editor?.setText(e.code);
+    this.editor()?.setText(e.code);
     // Confirmed-in-chat write runs once as a one-off; the read-only toggle stays as the user left it.
     this.run(e.mutation);
   }
@@ -334,7 +335,7 @@ export class DbConsolePageComponent implements OnInit {
     const idx = target.value;
     if (idx !== '') {
       const item = this.history()[Number(idx)];
-      if (item) this.editor?.setText(item);
+      if (item) this.editor()?.setText(item);
     }
     target.value = '';
   }

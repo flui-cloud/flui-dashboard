@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { DeployWizardStateService } from '../../service/deploy-wizard-state.service';
 
@@ -12,7 +12,7 @@ const BUILD_TOOLS = ['maven', 'gradle'] as const;
 @Component({
   selector: 'app-runtime-config-step',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="space-y-5">
       @if (state.needsNodeConfig()) {

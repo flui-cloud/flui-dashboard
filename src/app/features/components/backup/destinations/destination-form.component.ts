@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -12,7 +12,8 @@ import { CreateBackupDestinationDto } from '../../../../core/api/model/createBac
 @Component({
   selector: 'app-destination-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-2xl space-y-6">
       <header class="flex items-center justify-between">

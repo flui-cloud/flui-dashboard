@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleCheck,
@@ -25,6 +25,7 @@ import {
       lucideTrash,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="relative group inline-flex items-center">
       <ng-icon
@@ -45,10 +46,10 @@ import {
   `,
 })
 export class InstanceStatusBadgeComponent {
-  @Input({ required: true }) status!: string;
+  readonly status = input.required<string>();
 
   getStatusIcon(): string {
-    switch (this.status) {
+    switch (this.status()) {
       case 'running':
         return 'lucideCircleCheck';
       case 'stopped':
@@ -70,7 +71,7 @@ export class InstanceStatusBadgeComponent {
   }
 
   getStatusIconClass(): string {
-    switch (this.status) {
+    switch (this.status()) {
       case 'running':
         return 'text-green-600 dark:text-green-400';
       case 'stopped':
@@ -92,7 +93,8 @@ export class InstanceStatusBadgeComponent {
   }
 
   getStatusLabel(): string {
-    switch (this.status) {
+    const status = this.status();
+    switch (status) {
       case 'running':
         return 'Running';
       case 'stopped':
@@ -114,7 +116,7 @@ export class InstanceStatusBadgeComponent {
       case 'deleting':
         return 'Deleting...';
       default:
-        return this.status;
+        return status;
     }
   }
 }

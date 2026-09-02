@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -33,6 +33,7 @@ import {
       lucideExternalLink,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="border border-gray-200 dark:border-gray-700 border-t-0 rounded-b-lg bg-gray-50/60 dark:bg-gray-900/20 -mt-2 p-4 space-y-6">
       <!-- Metadata + diagnosis link -->
@@ -273,11 +274,12 @@ import {
 })
 export class PodDetailComponent {
   @Input({ required: true }) pod!: PodDebugInfo;
-  @Output() openDiagnosis = new EventEmitter<string>();
+  readonly openDiagnosis = output<string>();
 
   stateSummary(c: ContainerDebugInfo): string {
     if (c.state.running) {
-      return `running${c.state.running.startedAt ? ` since ${this.formatDate(c.state.running.startedAt)}` : ''}`;
+      const since = c.state.running.startedAt ? ' since ' + this.formatDate(c.state.running.startedAt) : '';
+      return `running${since}`;
     }
     if (c.state.waiting) {
       const reason = c.state.waiting.reason ?? 'waiting';

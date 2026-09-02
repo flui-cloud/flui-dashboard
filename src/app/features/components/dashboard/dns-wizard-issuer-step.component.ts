@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideCheckCircle, lucideLoader, lucideAlertCircle, lucideInfo, lucideExternalLink } from '@ng-icons/lucide';
@@ -10,6 +10,7 @@ import { DashboardDnsService } from '../../service/dashboard-dns.service';
   standalone: true,
   imports: [NgIconComponent, FormsModule],
   providers: [provideIcons({ lucideCheckCircle, lucideLoader, lucideAlertCircle, lucideInfo, lucideExternalLink })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (wiz.certMode() === 'direct') {
       <!-- Direct / HTTP-01 mode -->

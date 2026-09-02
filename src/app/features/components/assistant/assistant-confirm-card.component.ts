@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideAlertTriangle,
@@ -28,6 +28,7 @@ interface ActionGroup {
       lucideX,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="mx-4 mb-3 rounded-xl border overflow-hidden text-sm"
       [class]="isDestructive()

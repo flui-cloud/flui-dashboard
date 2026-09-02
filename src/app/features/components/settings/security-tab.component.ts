@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideAlertCircle, lucideShield } from '@ng-icons/lucide';
@@ -38,6 +38,7 @@ function passwordMatchValidator(ctrl: AbstractControl): ValidationErrors | null 
     HlmLabelDirective,
   ],
   providers: [provideIcons({ lucideCheck, lucideAlertCircle, lucideShield })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div hlmCard>
       <div hlmCardHeader>

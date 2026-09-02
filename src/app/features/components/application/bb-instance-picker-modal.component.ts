@@ -1,13 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
   OnChanges,
-  Output,
   computed,
   inject,
   input,
   signal,
+  output
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -198,8 +197,8 @@ export class BbInstancePickerModalComponent implements OnChanges {
   readonly confirmLabel = input<string>('Connect');
   readonly submitting = input<boolean>(false);
 
-  @Output() readonly picked = new EventEmitter<string>();
-  @Output() readonly cancelled = new EventEmitter<void>();
+  readonly picked = output<string>();
+  readonly cancelled = output<void>();
 
   protected readonly allInstances = signal<CatalogReusableInstanceDto[]>([]);
   protected readonly loading = signal(false);

@@ -1,18 +1,15 @@
-import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 
-export interface SidebarNavItem {
-  label: string;
-  link: string;
-  routerLinkActive?: string;
-  icon?: string;
-}
+import { RouterModule } from '@angular/router';
+import { SidebarNavItem } from '@dawit-io/spartan-sidebar-core';
+
+export type { SidebarNavItem };
 
 @Component({
   selector: 'hlm-sidebar-group-tooltip',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div
       class="bg-popover text-popover-foreground rounded-md border border-border shadow-md z-50"

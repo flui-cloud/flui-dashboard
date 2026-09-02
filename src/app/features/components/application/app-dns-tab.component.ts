@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, ViewChild } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -33,6 +33,7 @@ import { accessOf } from '../../model/app-access';
       lucideAlertCircle, lucideCheckCircle,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6">
 
@@ -201,7 +202,7 @@ export class AppDnsTabComponent implements OnInit {
     () => this.authzInstall.install()?.status === AuthzInstallResponseDto.StatusEnum.Running,
   );
 
-  @ViewChild('deleteEndpointDialog') deleteEndpointDialog!: ConfirmationDialogComponent;
+  readonly deleteEndpointDialog = viewChild.required<ConfirmationDialogComponent>('deleteEndpointDialog');
 
   protected isLoading = signal(false);
   protected showEndpointForm = signal(false);
@@ -366,15 +367,15 @@ export class AppDnsTabComponent implements OnInit {
 
   protected deleteEndpoint(ep: AppEndpointResponseDto): void {
     this.endpointToDelete.set(ep);
-    this.deleteEndpointDialog.open();
+    this.deleteEndpointDialog().open();
   }
 
   protected async executeDeleteEndpoint(): Promise<void> {
     const ep = this.endpointToDelete();
     if (!ep) return;
-    this.deleteEndpointDialog.setProcessing(true);
+    this.deleteEndpointDialog().setProcessing(true);
     await this.appEndpointsService.deleteEndpoint(ep.id);
-    this.deleteEndpointDialog.close();
+    this.deleteEndpointDialog().close();
     this.endpointToDelete.set(null);
   }
 }

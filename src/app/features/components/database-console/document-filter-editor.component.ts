@@ -3,14 +3,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
   NgZone,
   OnDestroy,
-  Output,
-  ViewChild,
   inject,
   input,
   signal,
+  viewChild,
+  output
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DocumentField } from '../../model/document-console.models';
@@ -59,9 +58,9 @@ export class DocumentFilterEditorComponent implements AfterViewInit, OnDestroy {
   readonly fields = input<DocumentField[]>([]);
   readonly disabled = input(false);
 
-  @Output() readonly run = new EventEmitter<void>();
+  readonly run = output<void>();
 
-  @ViewChild('host', { static: true }) host!: ElementRef<HTMLDivElement>;
+  readonly host = viewChild.required<ElementRef<HTMLDivElement>>('host');
 
   readonly ready = signal(false);
   fallbackText = '';
@@ -195,7 +194,7 @@ export class DocumentFilterEditorComponent implements AfterViewInit, OnDestroy {
             }),
           ],
         }),
-        parent: this.host.nativeElement,
+        parent: this.host().nativeElement,
       });
       this.view = ev;
       this.ready.set(true);

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideX, lucideHammer, lucideRocket, lucideArrowRight, lucideCircleCheck, lucideCircleAlert } from '@ng-icons/lucide';
@@ -14,6 +14,7 @@ export interface RepoDeployChoiceRepo {
   standalone: true,
   imports: [CommonModule, NgIcon],
   providers: [provideIcons({ lucideX, lucideHammer, lucideRocket, lucideArrowRight, lucideCircleCheck, lucideCircleAlert })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="closed.emit()">
       <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-xl" (click)="$event.stopPropagation()">
@@ -23,7 +24,7 @@ export interface RepoDeployChoiceRepo {
               This repository already has an application
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">
-              {{ repo?.fullName }}
+              {{ repo()?.fullName }}
             </p>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
               We recommend triggering a new build on the existing application instead of deploying a new one.
@@ -35,7 +36,7 @@ export interface RepoDeployChoiceRepo {
         </div>
 
         <div class="p-6 overflow-y-auto max-h-[50vh] space-y-3">
-          @for (app of matchedApps; track app.id) {
+          @for (app of matchedApps(); track app.id) {
             <div class="flex items-center justify-between gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-400 dark:hover:border-blue-600 transition-colors">
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
@@ -78,11 +79,11 @@ export interface RepoDeployChoiceRepo {
   `,
 })
 export class RepoDeployChoiceModalComponent {
-  @Input() repo: RepoDeployChoiceRepo | null = null;
-  @Input() matchedApps: ApplicationResponseDto[] = [];
-  @Output() closed = new EventEmitter<void>();
-  @Output() triggerBuild = new EventEmitter<string>();
-  @Output() createNewApp = new EventEmitter<void>();
+  readonly repo = input<RepoDeployChoiceRepo | null>(null);
+  readonly matchedApps = input<ApplicationResponseDto[]>([]);
+  readonly closed = output<void>();
+  readonly triggerBuild = output<string>();
+  readonly createNewApp = output<void>();
 
   formatDate(date: string): string {
     const normalized = /Z$|[+-]\d{2}:\d{2}$/.test(date) ? date : date + 'Z';

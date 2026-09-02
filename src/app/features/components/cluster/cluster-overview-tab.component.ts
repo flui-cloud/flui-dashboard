@@ -1,5 +1,5 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule, Router } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -39,7 +39,7 @@ import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-bac
 @Component({
   selector: 'cluster-overview-tab',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgIconComponent, AutoscaleWarningBannerComponent, AttachVNetDialogComponent, AddWorkerDialogComponent, EnableBackupsModalComponent],
+  imports: [RouterModule, NgIconComponent, AutoscaleWarningBannerComponent, AttachVNetDialogComponent, AddWorkerDialogComponent, EnableBackupsModalComponent],
   providers: [
     provideIcons({
       lucideCircleAlert,
@@ -58,6 +58,7 @@ import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-bac
       lucideArchive,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
 
@@ -258,7 +259,7 @@ import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-bac
                 </div>
               } @else if (dnsZoneService.hasAssignment()) {
                 <div class="space-y-2 flex-1">
-                  <p class="font-medium text-foreground truncate text-sm" [title]="dnsZoneService.assignment()?.dnsZone?.zoneName">
+                  <p class="font-medium text-foreground truncate text-sm" [title]="$safeNavigationMigration(dnsZoneService.assignment()?.dnsZone?.zoneName)">
                     {{ dnsZoneService.assignment()?.dnsZone?.zoneName }}
                     @if (dnsZoneService.assignments().length > 1) {
                       <span class="text-xs text-muted-foreground font-normal">+{{ dnsZoneService.assignments().length - 1 }} more</span>
@@ -531,7 +532,7 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
     const id = this.cluster()?.id;
     if (id) this.router.navigate(['/cluster', id, 'nodes']);
   }
-  syncStatus = signal<any | null>(null);
+  syncStatus = signal<any>(null);
 
   readonly cpuPercent = computed(() => Number.parseFloat(String(this.monitoring.clusterStats()[0]?.value ?? '0')));
   readonly memPercent = computed(() => Number.parseFloat(String(this.monitoring.clusterStats()[1]?.value ?? '0')));

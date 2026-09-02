@@ -1,5 +1,5 @@
-import { Component, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+
 import { FirewallRuleResponseDto } from '../../../core/api/model/models';
 
 /**
@@ -11,7 +11,7 @@ import { FirewallRuleResponseDto } from '../../../core/api/model/models';
 @Component({
   selector: 'app-firewall-rule-comparison',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Desired Rules Column -->
@@ -87,6 +87,7 @@ import { FirewallRuleResponseDto } from '../../../core/api/model/models';
       </div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host {
       display: block;

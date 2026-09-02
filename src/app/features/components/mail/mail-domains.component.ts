@@ -2,10 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
-  ViewChild,
   computed,
   inject,
   signal,
+  viewChild
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -271,8 +271,7 @@ export class MailDomainsComponent implements OnInit {
   protected readonly pendingRemove = signal<string | null>(null);
   protected readonly removed = signal<MailRemoveResult | null>(null);
 
-  @ViewChild('removeDialog')
-  private readonly removeDialog?: ConfirmationDialogComponent;
+  private readonly removeDialog = viewChild<ConfirmationDialogComponent>('removeDialog');
 
   protected readonly removeTitle = computed(() => `Remove ${this.pendingRemove() ?? 'this domain'}`);
 
@@ -306,27 +305,27 @@ export class MailDomainsComponent implements OnInit {
 
   protected askRemove(domain: string): void {
     this.pendingRemove.set(domain);
-    this.removeDialog?.open();
+    this.removeDialog()?.open();
   }
 
   protected confirmRemove(): void {
     const domain = this.pendingRemove();
     if (!domain) return;
-    this.removeDialog?.setProcessing(true);
+    this.removeDialog()?.setProcessing(true);
     this.removing.set(true);
     this.api.removeDomain(domain).subscribe({
       next: (result) => {
         this.removed.set(result);
         this.removing.set(false);
         this.pendingRemove.set(null);
-        this.removeDialog?.close();
+        this.removeDialog()?.close();
         this.load();
       },
       error: (err) => {
         this.error.set(consoleError(err));
         this.removing.set(false);
-        this.removeDialog?.setProcessing(false);
-        this.removeDialog?.close();
+        this.removeDialog()?.setProcessing(false);
+        this.removeDialog()?.close();
       },
     });
   }

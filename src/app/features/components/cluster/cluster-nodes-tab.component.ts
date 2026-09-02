@@ -1,5 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideServer,
@@ -31,13 +31,12 @@ interface NodeRowMeta {
   selector: 'cluster-nodes-tab',
   standalone: true,
   imports: [
-    CommonModule,
     NgIconComponent,
     InstanceRowComponent,
     AddWorkerDialogComponent,
     RemoveWorkerDialogComponent,
-    ByosConnectNodeDialogComponent,
-  ],
+    ByosConnectNodeDialogComponent
+],
   providers: [
     provideIcons({
       lucideServer,
@@ -48,6 +47,7 @@ interface NodeRowMeta {
       lucideTrash,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (cluster(); as clusterData) {
       <div class="card-surface p-6">
@@ -154,7 +154,7 @@ interface NodeRowMeta {
     @if (showByosDialog() && cluster()?.id; as cid) {
       <app-byos-connect-node-dialog
         [clusterId]="cid"
-        [masterIp]="cluster()?.masterIpAddress"
+        [masterIp]="$safeNavigationMigration(cluster()?.masterIpAddress)"
         (closed)="showByosDialog.set(false); refreshNodes()"
       />
     }

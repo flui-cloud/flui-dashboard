@@ -1,5 +1,5 @@
-import { Component, input, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { ReconciliationStatus, getDriftIndicator } from '../../model/firewall-v2.models';
 
 /**
@@ -11,13 +11,14 @@ import { ReconciliationStatus, getDriftIndicator } from '../../model/firewall-v2
 @Component({
   selector: 'app-drift-indicator',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div [class]="containerClasses()" class="flex items-center gap-2 text-sm">
       <span [class]="iconClasses()" class="text-lg">{{ icon() }}</span>
       <span>{{ message() }}</span>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host {
       display: block;

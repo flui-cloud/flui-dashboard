@@ -1,5 +1,5 @@
-import { Component, OnInit, input, output, signal, computed, inject, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, input, output, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -31,7 +31,7 @@ import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-server-selector',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, InstanceStatusBadgeComponent],
+  imports: [FormsModule, NgIconComponent, InstanceStatusBadgeComponent],
   providers: [
     provideIcons({
       lucideServer,
@@ -42,6 +42,7 @@ import { firstValueFrom } from 'rxjs';
       lucideX,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
       <!-- Search Bar -->
@@ -55,101 +56,119 @@ import { firstValueFrom } from 'rxjs';
           (ngModelChange)="onSearchChange()"
           placeholder="Search servers by name..."
           class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+          />
       </div>
-
+    
       <!-- Loading State -->
-      <div *ngIf="isLoading()" class="flex items-center justify-center py-12">
-        <ng-icon name="lucideLoader" size="32" class="animate-spin text-blue-500"></ng-icon>
-      </div>
-
+      @if (isLoading()) {
+        <div class="flex items-center justify-center py-12">
+          <ng-icon name="lucideLoader" size="32" class="animate-spin text-blue-500"></ng-icon>
+        </div>
+      }
+    
       <!-- Error State -->
-      <div
-        *ngIf="error() && !isLoading()"
-        class="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg"
-      >
-        <ng-icon name="lucideCircleAlert" size="20"></ng-icon>
-        <span>{{ error() }}</span>
-      </div>
-
-      <!-- Servers List -->
-      <div *ngIf="!isLoading() && !error()" class="space-y-2 max-h-96 overflow-y-auto">
-        <!-- Server Cards -->
+      @if (error() && !isLoading()) {
         <div
-          *ngFor="let server of filteredServers()"
-          (click)="selectServer(server)"
-          [class]="getServerCardClass(server)"
-          class="p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3 flex-1 min-w-0">
-              <!-- Provider Icon -->
-              <div class="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                @if (server.provider === 'hetzner') {
-                  <img src="/logos/hetzner.png" alt="Hetzner" class="w-6 h-6 object-contain" />
-                } @else if (server.provider === 'contabo') {
-                  <img src="/logos/contabo.png" alt="Contabo" class="w-6 h-6 object-contain" />
-                } @else {
-                  <ng-icon name="lucideServer" size="24" class="text-slate-500"></ng-icon>
+          class="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg"
+          >
+          <ng-icon name="lucideCircleAlert" size="20"></ng-icon>
+          <span>{{ error() }}</span>
+        </div>
+      }
+    
+      <!-- Servers List -->
+      @if (!isLoading() && !error()) {
+        <div class="space-y-2 max-h-96 overflow-y-auto">
+          <!-- Server Cards -->
+          @for (server of filteredServers(); track server) {
+            <div
+              (click)="selectServer(server)"
+              [class]="getServerCardClass(server)"
+              class="p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md"
+              >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                  <!-- Provider Icon -->
+                  <div class="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                    @if (server.provider === 'hetzner') {
+                      <img src="/logos/hetzner.png" alt="Hetzner" class="w-6 h-6 object-contain" />
+                    } @else if (server.provider === 'contabo') {
+                      <img src="/logos/contabo.png" alt="Contabo" class="w-6 h-6 object-contain" />
+                    } @else {
+                      <ng-icon name="lucideServer" size="24" class="text-slate-500"></ng-icon>
+                    }
+                  </div>
+                  <!-- Server Info -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <h3 class="font-semibold text-slate-900 dark:text-white truncate">
+                        {{ server.displayName || server.name }}
+                      </h3>
+                      <app-instance-status-badge [status]="server.status || 'unknown'" />
+                    </div>
+                    <div class="flex items-center gap-4 mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      @if (server.ipConfig?.v4?.ip) {
+                        <span class="font-mono">{{ server.ipConfig?.v4?.ip }}</span>
+                      }
+                      @if (server.cpuCores) {
+                        <span>{{ server.cpuCores }} CPU</span>
+                      }
+                      @if (server.ramMb) {
+                        <span>{{ formatMemory(server.ramMb) }}</span>
+                      }
+                      @if (server.region) {
+                        <span class="capitalize">{{ server.region }}</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <!-- Selection Indicator -->
+                @if (isSelected(server)) {
+                  <ng-icon
+                    name="lucideCheck"
+                    size="24"
+                    class="flex-shrink-0 text-blue-600 dark:text-blue-400 ml-2"
+                  ></ng-icon>
                 }
               </div>
-
-              <!-- Server Info -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <h3 class="font-semibold text-slate-900 dark:text-white truncate">
-                    {{ server.displayName || server.name }}
-                  </h3>
-                  <app-instance-status-badge [status]="server.status || 'unknown'" />
-                </div>
-                <div class="flex items-center gap-4 mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  <span *ngIf="server.ipConfig?.v4?.ip" class="font-mono">{{ server.ipConfig?.v4?.ip }}</span>
-                  <span *ngIf="server.cpuCores">{{ server.cpuCores }} CPU</span>
-                  <span *ngIf="server.ramMb">{{ formatMemory(server.ramMb) }}</span>
-                  <span *ngIf="server.region" class="capitalize">{{ server.region }}</span>
-                </div>
-              </div>
             </div>
-
-            <!-- Selection Indicator -->
-            <ng-icon
-              *ngIf="isSelected(server)"
-              name="lucideCheck"
-              size="24"
-              class="flex-shrink-0 text-blue-600 dark:text-blue-400 ml-2"
-            ></ng-icon>
-          </div>
+          }
+          <!-- Empty State -->
+          @if (filteredServers().length === 0) {
+            <div
+              class="text-center py-12 text-slate-500 dark:text-slate-400"
+              >
+              <ng-icon name="lucideServer" size="48" class="mx-auto mb-3 opacity-30"></ng-icon>
+              @if (searchQuery()) {
+                <p>No servers found matching "{{ searchQuery() }}"</p>
+              }
+              @if (!searchQuery()) {
+                <p>No servers available</p>
+              }
+            </div>
+          }
         </div>
-
-        <!-- Empty State -->
-        <div
-          *ngIf="filteredServers().length === 0"
-          class="text-center py-12 text-slate-500 dark:text-slate-400"
-        >
-          <ng-icon name="lucideServer" size="48" class="mx-auto mb-3 opacity-30"></ng-icon>
-          <p *ngIf="searchQuery()">No servers found matching "{{ searchQuery() }}"</p>
-          <p *ngIf="!searchQuery()">No servers available</p>
-        </div>
-      </div>
-
+      }
+    
       <!-- Selected Count (Multi-select mode) -->
-      <div
-        *ngIf="multiSelect() && selectedServers().length > 0"
-        class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
-      >
-        <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
-          {{ selectedServers().length }} server(s) selected
-        </span>
-        <button
-          (click)="clearSelection()"
-          class="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-        >
-          <ng-icon name="lucideX" size="16"></ng-icon>
-          Clear
-        </button>
-      </div>
+      @if (multiSelect() && selectedServers().length > 0) {
+        <div
+          class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
+          >
+          <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
+            {{ selectedServers().length }} server(s) selected
+          </span>
+          <button
+            (click)="clearSelection()"
+            class="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+            >
+            <ng-icon name="lucideX" size="16"></ng-icon>
+            Clear
+          </button>
+        </div>
+      }
     </div>
-  `,
+    `,
 })
 export class ServerSelectorComponent implements OnInit {
   private readonly instancesApi = inject(VirtualInstancesService);
@@ -220,7 +239,7 @@ export class ServerSelectorComponent implements OnInit {
   constructor() {
     // Reload servers when provider changes
     effect(() => {
-      const currentProvider = this.provider();
+      this.provider();
       this.loadServers();
     });
   }
@@ -242,10 +261,7 @@ export class ServerSelectorComponent implements OnInit {
           undefined, // status
           undefined, // page
           undefined, // limit
-          provider,  // provider filter
-          undefined, // region
-          undefined, // name
-          undefined  // clusterId
+          provider   // provider filter
         )
       );
 

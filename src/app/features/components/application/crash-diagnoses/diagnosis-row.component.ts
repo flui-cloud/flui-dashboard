@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
@@ -27,7 +27,7 @@ import {
 @Component({
   selector: 'app-diagnosis-row',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [
     provideIcons({
       lucideCircleAlert,
@@ -43,6 +43,7 @@ import {
       lucideWand,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button
       type="button"
@@ -93,7 +94,7 @@ import {
 })
 export class DiagnosisRowComponent {
   @Input({ required: true }) diagnosis!: CrashDiagnosis;
-  @Output() clicked = new EventEmitter<CrashDiagnosis>();
+  readonly clicked = output<CrashDiagnosis>();
 
   get icon(): string {
     return categoryIcon(this.diagnosis.category);

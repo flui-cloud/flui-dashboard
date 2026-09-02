@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, signal, computed } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -46,6 +46,7 @@ const ALL_APP_ROWS: AppRow[] = [
       lucideRefreshCw,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (showWizard()) {
       <app-dns-setup-wizard (closed)="showWizard.set(false)" />

@@ -1,5 +1,5 @@
-import { Component, computed, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
+
 import {
   ArtifactLocationState,
   BackupJobStatus,
@@ -19,7 +19,8 @@ type Kind = 'health' | 'policy' | 'job' | 'location' | 'restore';
 @Component({
   selector: 'app-backup-status-badge',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <span
       class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium"

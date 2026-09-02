@@ -1,5 +1,5 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -22,12 +22,11 @@ import { PlatformComponentDetailPanelComponent } from './platform-component-deta
   selector: 'app-platform-components-list',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     NgIconComponent,
     PlatformComponentStatusBadgeComponent,
-    PlatformComponentDetailPanelComponent,
-  ],
+    PlatformComponentDetailPanelComponent
+],
   providers: [
     provideIcons({
       lucideRefreshCw,
@@ -40,6 +39,7 @@ import { PlatformComponentDetailPanelComponent } from './platform-component-deta
       lucideSearch,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4 p-4 sm:p-6">
 

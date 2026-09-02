@@ -5,6 +5,7 @@ import {
   inject,
   signal,
   viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -38,6 +39,7 @@ const FIELD =
     DeleteConfirmationDialogComponent,
   ],
   providers: [provideIcons({ lucideFolders, lucidePlus, lucideTrash2, lucideX })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-6xl mx-auto space-y-6">
       <div class="flex items-start justify-between gap-4">

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import {
   HlmCardDirective,
   HlmCardContentDirective,
@@ -10,6 +10,7 @@ import { IamService } from '../../service/iam.service';
   selector: 'app-roles-tab',
   standalone: true,
   imports: [HlmCardDirective, HlmCardContentDirective, HlmBadgeDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="grid gap-4 md:grid-cols-2">
       @for (r of iam.roles(); track r.key) {

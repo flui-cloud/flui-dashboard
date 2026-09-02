@@ -1,8 +1,11 @@
 import {
-  Component, Input, Output, EventEmitter, OnChanges, SimpleChanges,
-  signal, computed, ChangeDetectionStrategy, ElementRef, ViewChild,
+  Component, OnChanges, SimpleChanges,
+  signal, computed, ChangeDetectionStrategy, ElementRef,
+  input,
+  viewChild,
+  output
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 // ── CPU: 5m → 4000m, step 5m (800 steps, fully proportional) ─────────────────
 const CPU_MIN = 5;
@@ -82,7 +85,7 @@ function stepIndex(value: number, steps: number[]): number {
   selector: 'app-resource-slider',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [],
   styles: [`
     input[type=range] {
       -webkit-appearance: none;
@@ -132,7 +135,7 @@ function stepIndex(value: number, steps: number[]): number {
 
       <!-- Label + K8s value badge -->
       <div class="flex items-center justify-between">
-        <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ label }}</span>
+        <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ label() }}</span>
         @if (dirty()) {
           <div class="flex items-center gap-1 font-mono text-sm font-bold">
             <span class="text-gray-400 dark:text-gray-500">{{ originalValue }}</span>
@@ -163,7 +166,7 @@ function stepIndex(value: number, steps: number[]): number {
           [max]="stepsSignal().length - 1"
           [step]="1"
           [value]="currentIndex()"
-          [disabled]="disabled"
+          [disabled]="disabled()"
           (input)="onInput($event)"
           class="relative z-10 w-full"
           [style.background]="'transparent'"
@@ -184,14 +187,14 @@ function stepIndex(value: number, steps: number[]): number {
   `,
 })
 export class ResourceSliderComponent implements OnChanges {
-  @Input({ required: true }) label = '';
-  @Input({ required: true }) type: 'cpu' | 'memory' = 'cpu';
-  @Input() value = '';
-  @Input() disabled = false;
-  @Input() maxValue?: number;
-  @Output() valueChange = new EventEmitter<string>();
+  readonly label = input.required<string>();
+  readonly type = input.required<'cpu' | 'memory'>();
+  readonly value = input('');
+  readonly disabled = input(false);
+  readonly maxValue = input<number>();
+  readonly valueChange = output<string>();
 
-  @ViewChild('rangeInput') rangeInput?: ElementRef<HTMLInputElement>;
+  readonly rangeInput = viewChild<ElementRef<HTMLInputElement>>('rangeInput');
 
   protected stepsSignal = signal<number[]>(CPU_STEPS);
   protected snappedValue = signal(250);
@@ -205,11 +208,11 @@ export class ResourceSliderComponent implements OnChanges {
   });
 
   protected k8sValue = computed(() =>
-    this.type === 'cpu' ? formatCpu(this.snappedValue()) : formatMem(this.snappedValue())
+    this.type() === 'cpu' ? formatCpu(this.snappedValue()) : formatMem(this.snappedValue())
   );
 
   protected humanLabel = computed(() =>
-    this.type === 'cpu' ? cpuLabel(this.snappedValue()) : memLabel(this.snappedValue())
+    this.type() === 'cpu' ? cpuLabel(this.snappedValue()) : memLabel(this.snappedValue())
   );
 
   protected dirty = computed(() => this.k8sValue() !== this.originalValue);
@@ -219,13 +222,13 @@ export class ResourceSliderComponent implements OnChanges {
     const indices = [0, Math.floor(steps.length / 4), Math.floor(steps.length / 2), Math.floor(3 * steps.length / 4), steps.length - 1];
     return indices.map(i => ({
       index: i,
-      label: this.type === 'cpu' ? formatCpu(steps[i]) : formatMem(steps[i]),
+      label: this.type() === 'cpu' ? formatCpu(steps[i]) : formatMem(steps[i]),
     }));
   });
 
   private buildStepsArray(): number[] {
-    const max = this.maxValue ?? (this.type === 'cpu' ? CPU_MAX : MEM_MAX);
-    return this.type === 'cpu'
+    const max = this.maxValue() ?? (this.type() === 'cpu' ? CPU_MAX : MEM_MAX);
+    return this.type() === 'cpu'
       ? buildSteps(CPU_MIN, max, CPU_STEP)
       : buildSteps(MEM_MIN, max, MEM_STEP);
   }
@@ -234,9 +237,9 @@ export class ResourceSliderComponent implements OnChanges {
     if (changes['value'] || changes['type'] || changes['maxValue']) {
       const steps = this.buildStepsArray();
       this.stepsSignal.set(steps);
-      const parsed = this.type === 'cpu' ? parseCpu(this.value) : parseMem(this.value);
+      const parsed = this.type() === 'cpu' ? parseCpu(this.value()) : parseMem(this.value());
       const snapped = snapToStep(parsed, steps);
-      const formatted = this.type === 'cpu' ? formatCpu(snapped) : formatMem(snapped);
+      const formatted = this.type() === 'cpu' ? formatCpu(snapped) : formatMem(snapped);
 
       // Only reset originalValue when the parent pushes a genuinely new baseline
       // (i.e. disabled → enabled transition, type change, or first load).
@@ -247,16 +250,11 @@ export class ResourceSliderComponent implements OnChanges {
       // disabled going false→true means edit ended (cancel/save) or component reset
       const disabledBecameTrue = !!changes['disabled'] && changes['disabled'].currentValue === true;
 
-      if (isFirstChange || typeChanged || disabledBecameTrue) {
-        // Reset to new baseline unconditionally
-        this.snappedValue.set(snapped);
-        this.originalValue = formatted;
-      } else if (this.disabled) {
-        // Slider is disabled (readonly) — parent sent a new value, update baseline
-        this.snappedValue.set(snapped);
-        this.originalValue = formatted;
-      } else if (!this.dirty()) {
-        // Slider is enabled but clean (edit just started) → lock in original
+      // Reset to the new baseline when: the parent pushed a genuinely new
+      // value (first change / type change / disabled just became true), the
+      // slider is disabled (readonly, so any incoming value is authoritative),
+      // or the slider is enabled but still clean (edit just started).
+      if (isFirstChange || typeChanged || disabledBecameTrue || this.disabled() || !this.dirty()) {
         this.snappedValue.set(snapped);
         this.originalValue = formatted;
       }
@@ -268,7 +266,7 @@ export class ResourceSliderComponent implements OnChanges {
     const idx = Number.parseInt((event.target as HTMLInputElement).value, 10);
     const val = this.stepsSignal()[idx];
     this.snappedValue.set(val);
-    const k8s = this.type === 'cpu' ? formatCpu(val) : formatMem(val);
+    const k8s = this.type() === 'cpu' ? formatCpu(val) : formatMem(val);
     this.valueChange.emit(k8s);
   }
 }

@@ -1,5 +1,5 @@
-import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -16,7 +16,7 @@ import { VNetInfo, VNetStatus } from '../../model/vnet.models';
 @Component({
   selector: 'app-attach-vnet-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [FormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideX,
@@ -26,6 +26,7 @@ import { VNetInfo, VNetStatus } from '../../model/vnet.models';
       lucideCircleCheck,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div
       class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"

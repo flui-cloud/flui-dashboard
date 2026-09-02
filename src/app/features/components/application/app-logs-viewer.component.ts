@@ -1,5 +1,5 @@
-import { Component, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -22,13 +22,14 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
 @Component({
   selector: 'app-logs-viewer',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, LogDateRangePickerComponent, LogVolumeHistogramComponent, LogTableComponent],
+  imports: [FormsModule, NgIconComponent, LogDateRangePickerComponent, LogVolumeHistogramComponent, LogTableComponent],
   providers: [
     provideIcons({
       lucideSearch, lucideRefreshCw, lucideChevronDown,
       lucideDownload, lucideX, lucideAlertCircle, lucideActivity, lucideCalendar,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col gap-0 min-h-0">
 

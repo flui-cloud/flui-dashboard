@@ -3,15 +3,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
   NgZone,
   OnDestroy,
-  Output,
-  ViewChild,
   effect,
   inject,
   input,
   signal,
+  viewChild,
+  output
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DbEngine } from '../../model/db-engine';
@@ -59,13 +58,11 @@ export class SqlEditorComponent implements AfterViewInit, OnDestroy {
 
   readonly engine = input<DbEngine>('postgres');
 
-  @Output() readonly run = new EventEmitter<void>();
+  readonly run = output<void>();
 
-  @ViewChild('editorHost', { static: true })
-  editorHost!: ElementRef<HTMLDivElement>;
+  readonly editorHost = viewChild.required<ElementRef<HTMLDivElement>>('editorHost');
 
-  @ViewChild('sqlTextarea')
-  sqlTextarea?: ElementRef<HTMLTextAreaElement>;
+  readonly sqlTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('sqlTextarea');
 
   readonly editorReady = signal(false);
   sqlText = 'SELECT 1;';
@@ -116,7 +113,7 @@ export class SqlEditorComponent implements AfterViewInit, OnDestroy {
       }
       return '';
     }
-    const ta = this.sqlTextarea?.nativeElement;
+    const ta = this.sqlTextarea()?.nativeElement;
     if (!ta) return '';
     if (ta.selectionStart != null && ta.selectionStart !== ta.selectionEnd) {
       return (this.sqlText ?? '').slice(ta.selectionStart, ta.selectionEnd);
@@ -132,7 +129,7 @@ export class SqlEditorComponent implements AfterViewInit, OnDestroy {
       return;
     }
     if (!event.shiftKey && !event.altKey) {
-      const ta = this.sqlTextarea?.nativeElement;
+      const ta = this.sqlTextarea()?.nativeElement;
       if (ta && ta.selectionStart !== ta.selectionEnd) {
         event.preventDefault();
         this.run.emit();
@@ -217,7 +214,7 @@ export class SqlEditorComponent implements AfterViewInit, OnDestroy {
             }),
           ],
         }),
-        parent: this.editorHost.nativeElement,
+        parent: this.editorHost().nativeElement,
       });
       this.editorView = ev as unknown as MinimalEditorView;
       this.editorReady.set(true);

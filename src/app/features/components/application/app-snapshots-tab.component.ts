@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   ChangeDetectionStrategy,
   Component,
@@ -51,15 +51,14 @@ type StatusFilter = 'all' | SnapshotStatus;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     FormsModule,
     NgIconComponent,
     DbLogicalBackupComponent,
     DbPitrComponent,
     SnapshotCreateDialogComponent,
     SnapshotDeleteDialogComponent,
-    SnapshotRestoreDialogComponent,
-  ],
+    SnapshotRestoreDialogComponent
+],
   providers: [
     provideIcons({
       lucideCamera,

@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, output, signal } from '@angular/core';
+import { Component, computed, effect, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCopy, lucideDownload, lucideZap } from '@ng-icons/lucide';
 import { LogSourcesResult } from '../../service/assistant.service';
@@ -32,6 +32,7 @@ const TIME_WINDOWS = ['15m', '1h', '6h', '24h'] as const;
   standalone: true,
   imports: [NgIcon],
   providers: [provideIcons({ lucideCopy, lucideDownload, lucideZap })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isEmpty()) {
       <div class="mt-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2.5 text-xs space-y-1.5">

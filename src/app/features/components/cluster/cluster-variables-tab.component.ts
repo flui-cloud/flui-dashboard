@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -19,10 +19,11 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
 @Component({
   selector: 'app-cluster-variables-tab',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, AppVariablesEditorComponent],
+  imports: [FormsModule, NgIconComponent, AppVariablesEditorComponent],
   providers: [
     provideIcons({ lucideKey, lucideLock, lucideLoader, lucideAlertCircle, lucideChevronDown, lucideChevronRight, lucideRefreshCw }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface p-6 space-y-5">
 

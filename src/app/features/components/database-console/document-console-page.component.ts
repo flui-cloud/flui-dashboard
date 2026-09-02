@@ -2,9 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
-  ViewChild,
   inject,
   signal,
+  viewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -211,8 +211,8 @@ export class DocumentConsolePageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly docs = inject(DocumentConsoleService);
 
-  @ViewChild(DocumentShellComponent) private readonly shell?: DocumentShellComponent;
-  @ViewChild(DocumentQueryBarComponent) private readonly queryBar?: DocumentQueryBarComponent;
+  private readonly shell = viewChild(DocumentShellComponent);
+  private readonly queryBar = viewChild(DocumentQueryBarComponent);
 
   readonly applicationId = toSignal(
     this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
@@ -266,7 +266,7 @@ export class DocumentConsolePageComponent implements OnInit {
   }
 
   onChatInsert(statement: string): void {
-    this.shell?.insert(statement);
+    this.shell()?.insert(statement);
   }
 
   // Smart routing: a plain find on an available collection lands in the top query bar (main
@@ -281,7 +281,7 @@ export class DocumentConsolePageComponent implements OnInit {
     } else {
       // Writes/aggregate/admin run in the shell. A confirmed-in-chat write runs once as a
       // one-off (forceWrite) without arming the shell toggle; reads/aggregates honor it.
-      this.shell?.runStatement(e.code, e.mutation);
+      this.shell()?.runStatement(e.code, e.mutation);
     }
   }
 
@@ -295,7 +295,7 @@ export class DocumentConsolePageComponent implements OnInit {
       this.selectedCollection.set(find.collection);
       this.loadFields(find.collection);
     }
-    this.queryBar?.setQuery(find.filterText, find.projectionText, find.sortText);
+    this.queryBar()?.setQuery(find.filterText, find.projectionText, find.sortText);
   }
 
   // A shell write may have changed data or structure — refresh the browse pane.

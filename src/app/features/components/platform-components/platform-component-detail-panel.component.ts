@@ -1,5 +1,5 @@
-import { Component, input, output, signal, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, signal, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideChevronRight,
@@ -25,7 +25,7 @@ import type { AppLogEntryDto } from '../../service/application-logs.service';
 @Component({
   selector: 'app-platform-component-detail-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, PlatformComponentStatusBadgeComponent, LogTableComponent],
+  imports: [FormsModule, NgIconComponent, PlatformComponentStatusBadgeComponent, LogTableComponent],
   providers: [
     provideIcons({
       lucideChevronRight,
@@ -40,6 +40,7 @@ import type { AppLogEntryDto } from '../../service/application-logs.service';
       lucideSearch,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 px-4 py-3 space-y-3">
 
@@ -373,7 +374,7 @@ export class PlatformComponentDetailPanelComponent {
       }
 
       // Plain text line — try to extract timestamp prefix (e.g. "2026-03-03T10:00:00.000Z ")
-      const tsMatch = trimmed.match(/^(\d{4}-\d{2}-\d{2}T[\d:.]+Z)\s+(.*)/s);
+      const tsMatch = /^(\d{4}-\d{2}-\d{2}T[\d:.]+Z)\s+(.*)/s.exec(trimmed);
       if (tsMatch) {
         entries.push({
           timestamp: tsMatch[1],
@@ -386,7 +387,6 @@ export class PlatformComponentDetailPanelComponent {
           message: trimmed,
           pod: podName,
         });
-        if (!parseError) parseError = null; // plain text is fine, not an error
       }
     }
 

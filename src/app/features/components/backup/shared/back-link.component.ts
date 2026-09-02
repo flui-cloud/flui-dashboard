@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft } from '@ng-icons/lucide';
@@ -8,6 +8,7 @@ import { lucideArrowLeft } from '@ng-icons/lucide';
   standalone: true,
   imports: [RouterLink, NgIcon],
   providers: [provideIcons({ lucideArrowLeft })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <a
       [routerLink]="link()"

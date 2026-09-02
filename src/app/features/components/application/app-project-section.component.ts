@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideX } from '@ng-icons/lucide';
 import { ProjectsService } from '../../service/projects.service';
@@ -16,6 +16,7 @@ import {
   host: { class: 'block' },
   imports: [NgIcon, ProjectBadgeComponent, ProjectFormComponent],
   providers: [provideIcons({ lucidePlus, lucideX })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm">
       <div class="flex items-center gap-3 px-4 py-2.5">

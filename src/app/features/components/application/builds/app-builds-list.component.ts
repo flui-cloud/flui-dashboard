@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -16,8 +16,9 @@ import { AppBuildRowComponent } from './app-build-row.component';
 @Component({
   selector: 'app-builds-list',
   standalone: true,
-  imports: [CommonModule, NgIcon, AppBuildRowComponent],
+  imports: [NgIcon, AppBuildRowComponent],
   providers: [provideIcons({ lucideHammer, lucideLoader, lucideRefreshCw, lucideTriangleAlert })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-6">
       <!-- Header -->

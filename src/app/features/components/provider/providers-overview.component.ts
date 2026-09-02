@@ -5,8 +5,9 @@ import {
   OnInit,
   output,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideSearch,
@@ -33,7 +34,7 @@ interface ProviderItem {
 @Component({
   selector: 'providers-overview',
   standalone: true,
-  imports: [CommonModule, NgIcon, ProviderCardComponent],
+  imports: [NgIcon, ProviderCardComponent],
   providers: [
     provideIcons({
       lucideSearch,
@@ -47,6 +48,7 @@ interface ProviderItem {
       lucideChartBar,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6">
       <div

@@ -1,5 +1,5 @@
-import { Component, input, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import {
   MultiStatCardConfig,
   MultiStatCardData,
@@ -30,7 +30,7 @@ import {
 @Component({
   selector: 'app-multi-stat-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="multi-stat-card bg-card border border-border rounded-lg p-6">
       <!-- Header -->
@@ -71,6 +71,7 @@ import {
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .multi-stat-card {
       min-height: fit-content;

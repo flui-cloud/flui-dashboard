@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, input, effect, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -27,12 +27,11 @@ export interface TrafficRange {
   selector: 'app-traffic-section',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     NgIconComponent,
     TimeSeriesLineComponent,
-    MultiStatCardComponent,
-  ],
+    MultiStatCardComponent
+],
   providers: [
     provideIcons({
       lucideActivity,
@@ -41,6 +40,7 @@ export interface TrafficRange {
       lucideInfo,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
       <div class="flex items-start justify-between gap-4">

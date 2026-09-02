@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -15,7 +15,7 @@ import { Toast, ToastService } from '../services/toast.service';
 @Component({
   selector: 'app-toast-container',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgIcon],
+  imports: [RouterModule, NgIcon],
   providers: [
     provideIcons({
       lucideCircleCheck,
@@ -25,6 +25,7 @@ import { Toast, ToastService } from '../services/toast.service';
       lucideX,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none">
       @for (t of toastService.toasts(); track t.id) {

@@ -3,14 +3,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
   NgZone,
   OnDestroy,
-  Output,
-  ViewChild,
   inject,
   input,
   signal,
+  viewChild,
+  output
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -54,9 +53,9 @@ export class MongoShellInputComponent implements AfterViewInit, OnDestroy {
   readonly prompt = input('>');
   readonly disabled = input(false);
 
-  @Output() readonly run = new EventEmitter<string>();
+  readonly run = output<string>();
 
-  @ViewChild('host', { static: true }) host!: ElementRef<HTMLDivElement>;
+  readonly host = viewChild.required<ElementRef<HTMLDivElement>>('host');
 
   readonly ready = signal(false);
   fallbackText = '';
@@ -216,7 +215,7 @@ export class MongoShellInputComponent implements AfterViewInit, OnDestroy {
             }),
           ],
         }),
-        parent: this.host.nativeElement,
+        parent: this.host().nativeElement,
       });
       this.ready.set(true);
     } catch {

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, of } from 'rxjs';
@@ -87,7 +87,7 @@ describe('revoking a grant on the access screen', () => {
     await TestBed.configureTestingModule({
       imports: [AccessComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: IamService, useValue: iam },
         {
@@ -212,7 +212,7 @@ describe('the access screen says whose grants it is listing', () => {
     await TestBed.configureTestingModule({
       imports: [AccessComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: IamService, useValue: iamStub(preview) },
         {

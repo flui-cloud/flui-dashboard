@@ -5,8 +5,8 @@
  * Reusable across cluster creation, build agent creation, etc.
  */
 
-import { Component, input, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
@@ -26,7 +26,7 @@ import { ClusterCreationStep } from '../../../features/model/cluster.models';
 @Component({
   selector: 'app-operation-step-card',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [
     provideIcons({
       lucideCheck,
@@ -42,6 +42,7 @@ import { ClusterCreationStep } from '../../../features/model/cluster.models';
       lucideShield,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div [class]="getStepCardClass()" class="border border-border rounded-lg p-6 transition-all duration-300 mb-2">
       <div class="flex items-start space-x-4">

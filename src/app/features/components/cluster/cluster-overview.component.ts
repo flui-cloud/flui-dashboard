@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -20,7 +20,7 @@ import { ClusterListComponent } from './cluster-list.component';
 @Component({
   selector: 'cluster-overview',
   standalone: true,
-  imports: [CommonModule, RouterLink, NgIcon, ClusterListComponent],
+  imports: [RouterLink, NgIcon, ClusterListComponent],
   providers: [
     provideIcons({
       lucideCloud,

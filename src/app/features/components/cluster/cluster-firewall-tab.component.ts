@@ -1,5 +1,5 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -23,12 +23,11 @@ import { DriftIndicatorComponent } from '../firewall/drift-indicator.component';
   selector: 'cluster-firewall-tab',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     NgIconComponent,
     ReconciliationStatusBadgeComponent,
-    DriftIndicatorComponent,
-  ],
+    DriftIndicatorComponent
+],
   providers: [
     provideIcons({
       lucideShield,
@@ -39,6 +38,7 @@ import { DriftIndicatorComponent } from '../firewall/drift-indicator.component';
       lucideCheck,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface p-6">
       <div class="flex items-center justify-end mb-6">

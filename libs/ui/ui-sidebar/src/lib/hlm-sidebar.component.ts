@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { hlm } from '@spartan-ng/brain/core';
 import { BrnSidebarComponent } from '@dawit-io/spartan-sidebar-core';
 import { ClassValue } from 'clsx';
@@ -16,6 +16,7 @@ import { ClassValue } from 'clsx';
 			<ng-content />
 		</div>
 	`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styles: [`
 		:host {
 			scrollbar-width: thin;

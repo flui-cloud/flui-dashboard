@@ -2,17 +2,16 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
   OnInit,
-  Output,
-  ViewChild,
   computed,
   effect,
   inject,
   input,
   signal,
+  viewChild,
+  output
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -75,7 +74,7 @@ interface StoredChat {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
-  imports: [CommonModule, FormsModule, NgIcon, AssistantModelPickerComponent],
+  imports: [FormsModule, NgIcon, AssistantModelPickerComponent],
   viewProviders: [
     provideIcons({
       lucideChevronRight,
@@ -263,10 +262,13 @@ export class DbAssistantChatComponent implements OnInit {
   readonly codeNoun = input('query');
   readonly showInsert = input(false);
 
-  @Output() readonly insert = new EventEmitter<string>();
-  @Output() readonly run = new EventEmitter<{ code: string; mutation: boolean }>();
+  readonly insert = output<string>();
+  readonly run = output<{
+    code: string;
+    mutation: boolean;
+}>();
 
-  @ViewChild('scroll') scrollEl?: ElementRef<HTMLDivElement>;
+  readonly scrollEl = viewChild<ElementRef<HTMLDivElement>>('scroll');
 
   readonly messages = signal<ChatMessage[]>([]);
   readonly sessions = signal<ChatSession[]>([]);
@@ -294,7 +296,7 @@ export class DbAssistantChatComponent implements OnInit {
       this.messages();
       this.thinking();
       this.pendingRun();
-      const el = this.scrollEl?.nativeElement;
+      const el = this.scrollEl()?.nativeElement;
       if (el) requestAnimationFrame(() => (el.scrollTop = el.scrollHeight));
     });
   }

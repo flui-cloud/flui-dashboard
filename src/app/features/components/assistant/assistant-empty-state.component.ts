@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBot } from '@ng-icons/lucide';
@@ -10,6 +10,7 @@ import { RecommendedProviderDto } from '../../../core/api/model/recommendedProvi
   imports: [NgIcon, NgTemplateOutlet],
   providers: [provideIcons({ lucideBot })],
   styles: [':host { display: contents; }'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <ng-template #ctas>
       <div class="flex w-full max-w-[280px] flex-col gap-2">

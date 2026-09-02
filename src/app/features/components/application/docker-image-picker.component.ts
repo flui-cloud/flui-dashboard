@@ -1,5 +1,5 @@
-import { Component, Output, EventEmitter, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, inject, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -30,7 +30,7 @@ type PickerPhase = 'search' | 'tags' | 'verify';
 @Component({
   selector: 'app-docker-image-picker',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent],
+  imports: [FormsModule, NgIconComponent],
   providers: [
     provideIcons({
       lucideSearch, lucideLoader, lucideChevronLeft, lucideChevronRight,
@@ -38,6 +38,7 @@ type PickerPhase = 'search' | 'tags' | 'verify';
       lucideArrowLeft, lucideTag, lucideRefreshCw, lucideTriangleAlert, lucideInfo,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col gap-4">
 
@@ -284,7 +285,7 @@ type PickerPhase = 'search' | 'tags' | 'verify';
   `,
 })
 export class DockerImagePickerComponent {
-  @Output() imageSelected = new EventEmitter<string>();
+  readonly imageSelected = output<string>();
 
   private readonly imagesApi = inject(ImagesService);
 

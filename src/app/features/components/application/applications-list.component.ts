@@ -1,5 +1,5 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -37,7 +37,7 @@ interface FilterState {
 @Component({
   selector: 'app-applications-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent, ApplicationGroupRowComponent],
+  imports: [FormsModule, NgIconComponent, ApplicationGroupRowComponent],
   providers: [
     provideIcons({
       lucideRefreshCw,
@@ -52,6 +52,7 @@ interface FilterState {
       lucideShield,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6 p-6">
       <!-- Header -->

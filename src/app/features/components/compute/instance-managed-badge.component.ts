@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -19,8 +19,9 @@ import { InstanceOwnership } from '../../model/instance.models';
       lucideServerOff,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    @switch (ownership) {
+    @switch (ownership()) {
       @case ('self') {
         <span
           hlmBadge
@@ -56,5 +57,5 @@ import { InstanceOwnership } from '../../model/instance.models';
   `,
 })
 export class InstanceManagedBadgeComponent {
-  @Input({ required: true }) ownership!: InstanceOwnership;
+  readonly ownership = input.required<InstanceOwnership>();
 }

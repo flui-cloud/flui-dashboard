@@ -1,5 +1,5 @@
-import { Component, HostBinding, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, HostBinding, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -11,7 +11,7 @@ import { ThemeService } from '../../../../core/services/theme.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   styles: [`
     .login-bg {
       background: hsl(224, 50%, 6%);
@@ -144,6 +144,7 @@ import { ThemeService } from '../../../../core/services/theme.service';
     .btn-primary:active:not(:disabled) { transform: translateY(0); }
     .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="login-bg min-h-screen flex items-center justify-center">
       <!-- Floating particles -->

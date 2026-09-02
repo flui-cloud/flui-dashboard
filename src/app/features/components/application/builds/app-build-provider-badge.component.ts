@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideGithub, lucideBox, lucideFileCode, lucideHammer } from '@ng-icons/lucide';
 import { AppBuildResponseDto } from '../../../../core/api/model/appBuildResponseDto';
@@ -33,6 +33,7 @@ function metaFor(provider: Provider): ProviderMeta {
   standalone: true,
   imports: [NgIcon],
   providers: [provideIcons({ lucideGithub, lucideBox, lucideFileCode, lucideHammer })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <span [class]="meta().cssClass">
       <ng-icon [name]="meta().icon" class="h-3 w-3" />

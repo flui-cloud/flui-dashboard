@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   ChangeDetectionStrategy,
   Component,
@@ -32,7 +32,7 @@ import {
   selector: 'app-gateway-tab',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, NgIconComponent],
+  imports: [FormsModule, NgIconComponent],
   providers: [
     provideIcons({
       lucideNetwork,
@@ -541,7 +541,7 @@ export class AppGatewayTabComponent implements OnInit, OnDestroy {
     const id = this.appId();
     if (!id) return;
     const host = this.fHost().trim().toLowerCase();
-    if (!host || !host.includes('.')) {
+    if (!host?.includes('.')) {
       this.formError.set('A fully-qualified hostname is required.');
       return;
     }

@@ -1,7 +1,8 @@
-import { CommonModule } from '@angular/common';
+
 import {
   Component,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 
 @Component({
@@ -10,7 +11,8 @@ import {
     {{ text() }}
   </div>`,
   standalone: true,
-  imports: [CommonModule]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: []
 })
 export class HlmSidebarTooltipComponent {
   text = signal('');

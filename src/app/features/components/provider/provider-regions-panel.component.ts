@@ -1,5 +1,5 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, effect, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideGlobe, lucideLoader } from '@ng-icons/lucide';
 import { ProvidersService } from '../../service/providers.service';
@@ -8,8 +8,9 @@ import { ProviderConfigurationDto, ProviderDefinitionDto, ProviderRegionDto } fr
 @Component({
   selector: 'provider-regions-panel',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [provideIcons({ lucideGlobe, lucideLoader })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <section class="bg-card border border-border rounded-xl overflow-hidden">
       <header class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2">

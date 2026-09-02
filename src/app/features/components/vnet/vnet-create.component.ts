@@ -4,8 +4,8 @@
  * Form for creating a new Virtual Network with initial subnet configuration.
  */
 
-import { Component, signal, inject, OnInit, computed, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, inject, OnInit, computed, effect, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -26,7 +26,7 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
 @Component({
   selector: 'vnet-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [FormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -296,6 +296,7 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: []
 })
 export class VNetCreateComponent implements OnInit {

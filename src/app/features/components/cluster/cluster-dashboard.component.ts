@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -36,7 +36,7 @@ import {
 } from '../../../core/services/sandbox.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
-import { ClusterStatus, ClusterType } from '../../model/cluster.models';
+import { ClusterStatus, ClusterType, isControlClusterType } from '../../model/cluster.models';
 
 interface TabItem {
   label: string;
@@ -48,11 +48,10 @@ interface TabItem {
   selector: 'cluster-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     RouterModule,
-    NgIconComponent,
-  ],
+    NgIconComponent
+],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -80,6 +79,7 @@ interface TabItem {
       lucideZap,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6 p-6">
       <!-- Skeleton Loader -->
@@ -399,7 +399,7 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
   }
 
   isControlCluster(type?: ClusterType): boolean {
-    return type === ClusterType.CONTROL || type === ClusterType.OBSERVABILITY;
+    return isControlClusterType(type);
   }
 
   async stopCluster() {

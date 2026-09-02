@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideGlobe, lucideShieldCheck, lucideLock } from '@ng-icons/lucide';
@@ -14,6 +14,7 @@ interface TabItem {
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, NgIconComponent],
   providers: [provideIcons({ lucideGlobe, lucideShieldCheck, lucideLock })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-6">
       <!-- Header -->

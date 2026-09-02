@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { AppBuildResponseDto } from '../../../../core/api/model/appBuildResponseDto';
 
 const BASE = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
@@ -19,6 +19,7 @@ function statusClass(status: AppBuildResponseDto['status']): string {
 @Component({
   selector: 'app-build-status-badge',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<span [class]="cssClass()">{{ status() }}</span>`,
 })
 export class AppBuildStatusBadgeComponent {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -58,6 +58,7 @@ const TEXT_CLASS: Record<Severity, string> = {
       lucideRefreshCw,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="bg-card border border-border rounded-lg px-3 py-2 flex flex-col gap-0">
 

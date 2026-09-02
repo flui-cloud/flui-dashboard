@@ -1,5 +1,5 @@
 import { Component, OnInit, input, output, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideGithub,
@@ -26,7 +26,7 @@ const SUPPORTED_FRAMEWORKS = [
 @Component({
   selector: 'app-build-path-selector',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [
     provideIcons({ lucideGithub, lucidePackage, lucideTriangleAlert, lucideChevronDown, lucideCheck }),
   ],

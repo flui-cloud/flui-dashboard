@@ -2,9 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
-  ViewChild,
   inject,
   signal,
+  viewChild
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -221,9 +221,8 @@ export class ObjectStoreConsolePageComponent implements OnInit {
     { initialValue: this.route.snapshot.paramMap.get('applicationId') },
   );
 
-  @ViewChild('confirmDialog')
-  private readonly confirmDialog!: ConfirmationDialogComponent;
-  @ViewChild('inputDialog') private readonly inputDialog!: InputDialogComponent;
+  private readonly confirmDialog = viewChild.required<ConfirmationDialogComponent>('confirmDialog');
+  private readonly inputDialog = viewChild.required<InputDialogComponent>('inputDialog');
 
   protected readonly confirmTitle = signal('');
   protected readonly confirmMessage = signal('');
@@ -251,13 +250,13 @@ export class ObjectStoreConsolePageComponent implements OnInit {
     this.confirmVariant.set(opts.variant ?? 'danger');
     this.confirmCta.set(opts.cta ?? 'Delete');
     this.pendingConfirm = action;
-    this.confirmDialog.open();
+    this.confirmDialog().open();
   }
 
   protected onConfirmed(): void {
     const action = this.pendingConfirm;
     this.pendingConfirm = null;
-    this.confirmDialog.close();
+    this.confirmDialog().close();
     action?.();
   }
 
@@ -271,13 +270,13 @@ export class ObjectStoreConsolePageComponent implements OnInit {
     this.inputMessage.set(message);
     this.inputPlaceholder.set(placeholder);
     this.pendingInput = action;
-    this.inputDialog.open();
+    this.inputDialog().open();
   }
 
   protected onInputConfirmed(value: string): void {
     const action = this.pendingInput;
     this.pendingInput = null;
-    this.inputDialog.close();
+    this.inputDialog().close();
     action?.(value);
   }
 

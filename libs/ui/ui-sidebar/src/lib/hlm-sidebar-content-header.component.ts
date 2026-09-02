@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { hlm } from '@spartan-ng/brain/core';
 import { ClassValue } from 'clsx';
 
@@ -8,6 +8,7 @@ import { ClassValue } from 'clsx';
 	host: {
 		'[class]': '_computedClass()',
 	},
+	changeDetection: ChangeDetectionStrategy.Eager,
 	template: `
 		<ng-content />
 	`,

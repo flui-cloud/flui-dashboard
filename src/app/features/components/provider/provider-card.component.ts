@@ -1,4 +1,4 @@
-import { Component, computed, input, output, signal, inject } from '@angular/core';
+import { Component, computed, input, output, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
@@ -52,6 +52,7 @@ import { ProviderStatus } from '../../model/provider.models';
       lucideCalendar,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div
       class="group relative rounded-lg border border-border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md h-full flex flex-col"
@@ -117,7 +118,7 @@ import { ProviderStatus } from '../../model/provider.models';
                 <ng-icon name="lucideCalendar" class="h-4 w-4 mr-1" />
                 Configured
               </span>
-              <span class="font-medium">{{ getFormattedDate(configuration()?.createdAt) }}</span>
+              <span class="font-medium">{{ getFormattedDate($safeNavigationMigration(configuration()?.createdAt)) }}</span>
             </div>
           </div>
 
@@ -226,7 +227,7 @@ import { ProviderStatus } from '../../model/provider.models';
               <span class="text-sm text-muted-foreground">Starting from</span>
               <span class="font-semibold">
                 {{ monthlyPriceDisplay()?.currency }}
-                {{ monthlyPriceDisplay()?.price | number:'1.2-2' }}
+                {{ $safeNavigationMigration(monthlyPriceDisplay()?.price) | number:'1.2-2' }}
                 <span class="text-xs text-muted-foreground">/month</span>
               </span>
             </div>

@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -41,7 +41,6 @@ interface FilterState {
   selector: 'app-compute-instances',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     NgIcon,
     HlmCardDirective,
@@ -50,8 +49,8 @@ interface FilterState {
     HlmButtonDirective,
     HlmInputDirective,
     HlmLabelDirective,
-    InstanceRowComponent,
-  ],
+    InstanceRowComponent
+],
   providers: [
     provideIcons({
       lucideServer,
@@ -65,6 +64,7 @@ interface FilterState {
       lucideX,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-6">
       <div

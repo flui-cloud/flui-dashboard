@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, ViewChild, Injector, afterNextRender } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, Injector, afterNextRender, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideGlobe, lucideLoader, lucidePlusCircle, lucideRefreshCw, lucideAlertCircle } from '@ng-icons/lucide';
@@ -35,6 +35,7 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
   providers: [
     provideIcons({ lucideGlobe, lucideLoader, lucidePlusCircle, lucideRefreshCw, lucideAlertCircle }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface p-6 space-y-6">
 
@@ -195,9 +196,9 @@ export class ClusterDnsTabComponent implements OnInit {
   protected reconcilingZoneId = signal<string | null>(null);
   protected endpointToDelete = signal<AppEndpointResponseDto | null>(null);
 
-  @ViewChild('deleteEndpointDialog') deleteEndpointDialog!: ConfirmationDialogComponent;
-  @ViewChild('issuersSection') issuersSection!: ClusterCertificateIssuersComponent;
-  @ViewChild('zoneSection') zoneSection!: ClusterDnsZoneSectionComponent;
+  readonly deleteEndpointDialog = viewChild.required<ConfirmationDialogComponent>('deleteEndpointDialog');
+  readonly issuersSection = viewChild.required<ClusterCertificateIssuersComponent>('issuersSection');
+  readonly zoneSection = viewChild.required<ClusterDnsZoneSectionComponent>('zoneSection');
 
   protected clusterId = computed(() => this.clusterService.cluster()?.id ?? '');
   protected masterIp = computed(() => this.clusterService.cluster()?.masterIpAddress ?? '');
@@ -302,12 +303,12 @@ export class ClusterDnsTabComponent implements OnInit {
 
   protected onConfigureIssuers(): void {
     this.closeEndpointForm();
-    this.issuersSection.openForm();
+    this.issuersSection().openForm();
   }
 
   protected onConfigureWildcardIssuers(): void {
     this.closeEndpointForm();
-    this.zoneSection.openDnsIssuerSetupForm();
+    this.zoneSection().openDnsIssuerSetupForm();
   }
 
   protected closeEndpointForm(): void {
@@ -346,15 +347,15 @@ export class ClusterDnsTabComponent implements OnInit {
 
   protected deleteEndpoint(ep: AppEndpointResponseDto): void {
     this.endpointToDelete.set(ep);
-    this.deleteEndpointDialog.open();
+    this.deleteEndpointDialog().open();
   }
 
   protected async executeDeleteEndpoint(): Promise<void> {
     const ep = this.endpointToDelete();
     if (!ep) return;
-    this.deleteEndpointDialog.setProcessing(true);
+    this.deleteEndpointDialog().setProcessing(true);
     await this.appEndpointsService.deleteEndpoint(ep.id);
-    this.deleteEndpointDialog.close();
+    this.deleteEndpointDialog().close();
     this.endpointToDelete.set(null);
   }
 }

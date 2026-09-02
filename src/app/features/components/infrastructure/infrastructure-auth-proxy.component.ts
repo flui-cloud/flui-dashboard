@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, OnInit, ViewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal, OnInit, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -29,6 +29,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
       lucideCircleCheck, lucideCircle, lucideAlertCircle, lucideRefreshCw, lucideServer,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
 
@@ -245,7 +246,7 @@ export class InfrastructureAuthProxyComponent implements OnInit {
     return s === this.Status.Running || s === this.Status.Failed;
   });
 
-  @ViewChild('uninstallDialog') protected uninstallDialog!: ConfirmationDialogComponent;
+  protected readonly uninstallDialog = viewChild.required<ConfirmationDialogComponent>('uninstallDialog');
 
   constructor() {
     effect(() => {
@@ -292,9 +293,9 @@ export class InfrastructureAuthProxyComponent implements OnInit {
   async onUninstall(): Promise<void> {
     const install = this.authzService.install();
     if (!install) return;
-    this.uninstallDialog.setProcessing(true);
+    this.uninstallDialog().setProcessing(true);
     await this.authzService.uninstallAuthz(install.id);
-    this.uninstallDialog.close();
+    this.uninstallDialog().close();
   }
 
   protected formatDate(iso: string): string {

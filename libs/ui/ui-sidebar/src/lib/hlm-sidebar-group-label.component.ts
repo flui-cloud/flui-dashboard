@@ -9,6 +9,7 @@ import {
   OnDestroy,
   signal,
   ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronDown } from '@ng-icons/lucide';
@@ -38,6 +39,7 @@ import { Router } from '@angular/router';
     '[class]': '_computedClass()',
     '(click)': '_group.toggleExpansion()',
   },
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div
       #labelContainer

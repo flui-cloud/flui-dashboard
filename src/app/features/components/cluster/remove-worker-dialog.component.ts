@@ -1,5 +1,5 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, effect, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -18,7 +18,7 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
 @Component({
   selector: 'app-remove-worker-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [FormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideX,
@@ -29,6 +29,7 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
       lucideTriangleAlert,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="onCancel()">
       <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4">

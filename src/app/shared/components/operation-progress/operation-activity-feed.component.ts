@@ -5,8 +5,8 @@
  * Shows completed and running steps with timestamps.
  */
 
-import { Component, input, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideActivity } from '@ng-icons/lucide';
 import { ClusterCreationStep } from '../../../features/model/cluster.models';
@@ -19,12 +19,13 @@ export interface ActivityItem {
 @Component({
   selector: 'app-operation-activity-feed',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [
     provideIcons({
       lucideActivity,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="bg-card border border-border rounded-lg p-6">
       <h3 class="font-semibold mb-4 flex items-center">
@@ -73,7 +74,9 @@ export class OperationActivityFeedComponent {
     });
 
     // Sort by most recent first and take last 5
-    return activities.reverse().slice(0, 5);
+    const recent = activities.slice(-5);
+    recent.reverse();
+    return recent;
   });
 
   // Helper methods

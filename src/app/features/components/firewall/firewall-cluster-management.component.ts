@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FirewallV2Service } from '../../service/firewall-v2.service';
@@ -18,13 +18,13 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
   standalone: true,
   imports: [
     ReadOnlySectionDirective,
-    CommonModule,
     FormsModule,
     RouterLink,
     ReconciliationStatusBadgeComponent,
     DriftIndicatorComponent
-  ],
+],
   templateUrl: './firewall-cluster-management.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./firewall-cluster-management.component.scss']
 })
 export class FirewallClusterManagementComponent implements OnInit {

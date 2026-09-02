@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -20,7 +20,7 @@ import { WorkerError } from '../../model/worker-operation.models';
 @Component({
   selector: 'app-add-worker-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [FormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideX,
@@ -32,6 +32,7 @@ import { WorkerError } from '../../model/worker-operation.models';
       lucideTriangleAlert,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="onCancel()">
       <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4">

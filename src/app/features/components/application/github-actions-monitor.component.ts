@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -74,10 +74,11 @@ const BUILD_WARNING_MS = 25 * 60 * 1000;
 @Component({
   selector: 'app-github-actions-monitor',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [NgIcon],
   providers: [
     provideIcons({ lucideGithub, lucideLoader, lucideCheck, lucideX, lucideExternalLink, lucideRefreshCw, lucideRocket, lucideCircleCheck, lucideTriangleAlert }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-h-screen bg-background">
       <div class="max-w-2xl mx-auto px-6 py-12 space-y-8">
@@ -427,11 +428,6 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
     }
 
     switch (app.status) {
-      case ApplicationStatusEnum.Running:
-        this.stopPolling();
-        this.phase.set('live');
-        return;
-
       case ApplicationStatusEnum.Failed:
         this.stopPolling();
         this.buildError.set(
@@ -482,10 +478,11 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
         this.scheduleNextPoll(app.id);
         return;
 
+      case ApplicationStatusEnum.Running:
       default:
-        // Stopped / Degraded / RollingBack / Deleting / Deleted — no polling,
-        // these states are stable and the monitor screen isn't really meant
-        // for them anyway.
+        // Running, and Stopped / Degraded / RollingBack / Deleting / Deleted —
+        // no polling, these states are stable and the monitor screen isn't
+        // really meant for them anyway.
         this.stopPolling();
         this.phase.set('live');
         return;

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideBot, lucideClock } from '@ng-icons/lucide';
@@ -17,6 +17,7 @@ type AgentHookState = 'working' | 'idle' | 'none';
   standalone: true,
   imports: [RouterLink, NgIcon],
   providers: [provideIcons({ lucideArrowRight, lucideBot, lucideClock })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (loaded()) {
       @switch (state()) {

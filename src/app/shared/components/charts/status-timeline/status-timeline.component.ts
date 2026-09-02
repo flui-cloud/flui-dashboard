@@ -1,5 +1,5 @@
-import { Component, input, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import {
   StatusTimelineConfig,
   StatusTimelineData,
@@ -30,7 +30,7 @@ import {
 @Component({
   selector: 'app-status-timeline',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="status-timeline-card bg-card border border-border rounded-lg p-6">
       <!-- Header -->
@@ -118,6 +118,7 @@ import {
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .timeline-grid {
       display: grid;

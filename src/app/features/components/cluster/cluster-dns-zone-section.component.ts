@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output, signal, computed, ViewChild } from '@angular/core';
+import { Component, effect, inject, input, output, signal, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -32,6 +32,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
     lucideCheckCircle, lucideAlertCircle, lucidePlusCircle,
     lucideArrowUpCircle, lucideExternalLink
   })],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './cluster-dns-zone-section.component.html',
 })
 export class ClusterDnsZoneSectionComponent {
@@ -74,7 +75,7 @@ export class ClusterDnsZoneSectionComponent {
   /** True immediately after the user assigns a new zone — forces configure-issuer form open */
   protected justAssigned = signal(false);
   protected certProviders = CertificateProvider;
-  @ViewChild('dnsIssuerSetup') private readonly dnsIssuerSetup?: ClusterIssuerSetupComponent;
+  private readonly dnsIssuerSetup = viewChild<ClusterIssuerSetupComponent>('dnsIssuerSetup');
 
   protected assignForm = {
     dnsZoneId: '',
@@ -225,6 +226,6 @@ export class ClusterDnsZoneSectionComponent {
   }
 
   openDnsIssuerSetupForm(): void {
-    this.dnsIssuerSetup?.openForm();
+    this.dnsIssuerSetup()?.openForm();
   }
 }

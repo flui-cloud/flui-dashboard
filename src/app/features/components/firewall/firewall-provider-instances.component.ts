@@ -1,5 +1,5 @@
-import { Component, computed, effect, inject, signal, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, effect, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -30,7 +30,6 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
   selector: 'app-firewall-provider-instances',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     RouterLink,
     NgIcon,
@@ -45,8 +44,8 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
     UsageStatusBadgeComponent,
     BrnSelectModule,
     HlmSelectModule,
-    DeleteConfirmationDialogComponent,
-  ],
+    DeleteConfirmationDialogComponent
+],
   providers: [
     provideIcons({
       lucideSearch,
@@ -58,6 +57,7 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
       lucideArrowLeft,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="container mx-auto p-6 space-y-6">
       <!-- Back link -->
@@ -339,7 +339,7 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
   `,
 })
 export class FirewallProviderInstancesComponent {
-  @ViewChild(DeleteConfirmationDialogComponent) deleteDialog!: DeleteConfirmationDialogComponent;
+  readonly deleteDialog = viewChild.required(DeleteConfirmationDialogComponent);
 
   firewallService = inject(FirewallService);
   private readonly providersService = inject(ProvidersService);
@@ -439,7 +439,7 @@ export class FirewallProviderInstancesComponent {
       confirmButtonText: 'Delete Firewall',
     };
 
-    this.deleteDialog.open(deleteData);
+    this.deleteDialog().open(deleteData);
   }
 
   async confirmDelete(): Promise<void> {
@@ -453,12 +453,12 @@ export class FirewallProviderInstancesComponent {
     try {
       await this.firewallService.deleteProviderFirewall(firewall.provider, firewall.id);
       // Success - close dialog and reset state
-      this.deleteDialog.close();
+      this.deleteDialog().close();
       this.firewallToDelete = null;
     } catch (error: any) {
       const errorMessage = error?.error?.message || error?.message || 'An unexpected error occurred';
       alert(`Failed to delete firewall: ${errorMessage}`);
-      this.deleteDialog.close();
+      this.deleteDialog().close();
     } finally {
       this.deleting.set(null);
     }

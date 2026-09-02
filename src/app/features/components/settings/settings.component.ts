@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -67,6 +68,7 @@ interface SectionDef {
       lucideBot,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-6xl mx-auto space-y-6">
 
