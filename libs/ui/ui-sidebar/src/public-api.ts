@@ -9,6 +9,8 @@ import { HlmSidebarHeaderComponent } from './lib/hlm-sidebar-header.component';
 import { HlmSidebarInsetComponent } from './lib/hlm-sidebar-inset.component';
 import { HlmSidebarItemComponent } from './lib/hlm-sidebar-item.component';
 import { HlmSidebarNavComponent } from './lib/hlm-sidebar-nav.component';
+import { HlmSidebarPinnedComponent } from './lib/hlm-sidebar-pinned.component';
+import { HlmSidebarSearchComponent } from './lib/hlm-sidebar-search.component';
 import { HlmSidebarSectionTitleDirective } from './lib/hlm-sidebar-section-title.directive';
 import { HlmSidebarTriggerComponent } from './lib/hlm-sidebar-trigger.component';
 import { HlmSidebarComponent } from './lib/hlm-sidebar.component';
@@ -24,10 +26,13 @@ export * from './lib/hlm-sidebar-header.component';
 export * from './lib/hlm-sidebar-inset.component';
 export * from './lib/hlm-sidebar-item.component';
 export * from './lib/hlm-sidebar-nav.component';
+export * from './lib/hlm-sidebar-pinned.component';
+export * from './lib/hlm-sidebar-search.component';
 export * from './lib/hlm-sidebar-section-title.directive';
 export * from './lib/hlm-sidebar-trigger.component';
 export * from './lib/hlm-sidebar.component';
 export * from './lib/hlm-sidebar-group-tooltip.component';
+export * from './lib/utils/highlight-segments';
 
 
 export const HlmSidebarImports = [
@@ -45,6 +50,8 @@ export const HlmSidebarImports = [
   HlmSidebarInsetComponent,
   HlmSidebarSectionTitleDirective,
   HlmSidebarGroupTooltipComponent,
+  HlmSidebarSearchComponent,
+  HlmSidebarPinnedComponent,
 ] as const;
 
 @NgModule({

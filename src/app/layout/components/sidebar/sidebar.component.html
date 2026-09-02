@@ -30,10 +30,14 @@
   <hlm-sidebar-nav
     class="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin scrollbar-thumb-gray-300/30 scrollbar-track-transparent"
   >
+    <hlm-sidebar-search />
+
+    @if (homeHasMatch()) {
     <hlm-sidebar-item
       label="Home"
       routerLink="/dashboard"
       routerLinkActive="active"
+      [pinnable]="false"
     >
       <ng-icon
         hlm
@@ -41,8 +45,11 @@
         class="h-4 w-4 text-muted-foreground"
       />
     </hlm-sidebar-item>
+    }
 
-    @if (canSee('clusters')) {
+    <hlm-sidebar-pinned [items]="allNavItems()" />
+
+    @if (canSee('clusters') && clusterHasMatch()) {
     <div hlmSidebarSectionTitle>Cluster</div>
 
     <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1">
@@ -62,7 +69,7 @@
     </div>
     }
 
-    @if (canSee('workloads')) {
+    @if (canSee('workloads') && workloadsHasMatch()) {
     <div hlmSidebarSectionTitle>Workloads</div>
 
     <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1">
@@ -92,7 +99,7 @@
     </div>
     }
 
-    @if (canSee('deploy')) {
+    @if (canSee('deploy') && deployHasMatch()) {
     <div hlmSidebarSectionTitle>Deploy</div>
 
     <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1">
@@ -112,11 +119,11 @@
     </div>
     }
 
-    @if (infrastructureItems().length || canSee('firewall')) {
+    @if ((infrastructureItems().length && infrastructureHasMatch()) || (canSee('firewall') && firewallHasMatch())) {
     <div hlmSidebarSectionTitle>Infrastructure</div>
 
     <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1 space-y-1">
-      @if (infrastructureItems().length) {
+      @if (infrastructureItems().length && infrastructureHasMatch()) {
       <hlm-sidebar-group>
         <hlm-sidebar-group-label
           [label]="'Infrastructure'"
@@ -132,7 +139,7 @@
       </hlm-sidebar-group>
       }
 
-      @if (canSee('firewall')) {
+      @if (canSee('firewall') && firewallHasMatch()) {
       <hlm-sidebar-group>
         <hlm-sidebar-group-label
           [label]="'Firewall'"
@@ -150,7 +157,7 @@
     </div>
     }
 
-    @if (visibleManagementItems().length) {
+    @if (visibleManagementItems().length && managementHasMatch()) {
     <div hlmSidebarSectionTitle>Management</div>
 
     <div class="mx-1 rounded-lg bg-card border border-border px-1 py-1">

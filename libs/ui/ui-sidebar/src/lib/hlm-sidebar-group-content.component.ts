@@ -1,9 +1,10 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 import { hlm } from '@spartan-ng/brain/core';
 import {
   BrnSidebarGroupDirective,
+  BrnSidebarSearchService,
   BrnSidebarService,
 } from '@dawit-io/spartan-sidebar-core';
 import { ClassValue } from 'clsx';
@@ -14,25 +15,27 @@ import { SidebarNavItem } from './hlm-sidebar-group-tooltip.component';
 @Component({
   selector: 'hlm-sidebar-group-content',
   standalone: true,
-  imports: [CommonModule, RouterModule, HlmSidebarItemComponent, NgIcon],
+  imports: [RouterModule, HlmSidebarItemComponent, NgIcon],
   host: {
     '[class]': '_computedClass()',
     '[attr.data-state]':
       '_sidebarService.isExpanded() ? "expanded" : "collapsed"',
     '[attr.data-group-state]': '_group.isExpanded() ? "expanded" : "collapsed"',
   },
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div
       class="overflow-hidden transition-all duration-200"
       [class.opacity-100]="_group.isExpanded()"
       [class.opacity-0]="!_group.isExpanded()"
-      [class.max-h-[1000px]="_group.isExpanded()"
+      [class.max-h-\[1000px\]]="_group.isExpanded()"
       [class.max-h-0]="!_group.isExpanded()"
     >
       <div class="relative pl-6">
         <div class="bg-border absolute bottom-0 left-0 top-0 ml-2.5 w-px"></div>
-        @if (items().length > 0) { @for (item of items(); track item.link) {
+        @if (items().length > 0) { @for (item of _visibleItems(); track item.link) {
         <hlm-sidebar-item
+          [id]="item.id || ''"
           [label]="item.label"
           [routerLink]="item.link"
           [routerLinkActive]="item.routerLinkActive || ''"
@@ -55,9 +58,18 @@ import { SidebarNavItem } from './hlm-sidebar-group-tooltip.component';
 export class HlmSidebarGroupContentComponent {
   protected readonly _group = inject(BrnSidebarGroupDirective);
   protected readonly _sidebarService = inject(BrnSidebarService);
+  private readonly _searchService = inject(BrnSidebarSearchService);
 
   public readonly userClass = input<ClassValue>('');
   public readonly items = input<SidebarNavItem[]>([]);
+
+  protected readonly _visibleItems = computed(() =>
+    this.items().filter((item) => this._searchService.matches(item))
+  );
+
+  public readonly hasVisibleItems = computed(
+    () => this.items().length === 0 || this._visibleItems().length > 0
+  );
 
   protected readonly _computedClass = computed(() =>
     hlm(

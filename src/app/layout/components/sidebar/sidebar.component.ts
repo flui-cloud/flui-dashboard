@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, input, signal, viewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideLayoutDashboard,
@@ -56,6 +56,8 @@ import {
   HlmSidebarHeaderComponent,
   HlmSidebarItemComponent,
   HlmSidebarNavComponent,
+  HlmSidebarPinnedComponent,
+  HlmSidebarSearchComponent,
   HlmSidebarSectionTitleDirective,
   SidebarNavItem,
 } from '@dawit-io/spartan-sidebar';
@@ -68,6 +70,7 @@ import {
 } from '@spartan-ng/ui-menu-helm';
 import {
   BrnSidebarGroupDirective,
+  BrnSidebarSearchService,
   BrnSidebarService,
   CollapsibleMode,
   SidebarVariant,
@@ -104,6 +107,8 @@ import {
     HlmSidebarGroupContentComponent,
     HlmSidebarSectionTitleDirective,
     HlmSidebarFooterComponent,
+    HlmSidebarSearchComponent,
+    HlmSidebarPinnedComponent,
     RouterLink,
     RouterLinkActive,
     BrnMenuTriggerDirective,
@@ -160,13 +165,15 @@ import {
       lucideBookOpen,
     }),
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './sidebar.component.html',
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
   readonly sidebarVariant = input<SidebarVariant>('sidebar');
   readonly collapsibleMode = input<CollapsibleMode>('icon');
 
   protected readonly _sidebarService = inject(BrnSidebarService);
+  private readonly _search = inject(BrnSidebarSearchService);
   protected readonly _themeService = inject(ThemeService);
   private readonly _authService = inject(AuthService);
   private readonly _router = inject(Router);
@@ -182,10 +189,22 @@ export class SidebarComponent {
   readonly clusterItems = CLUSTER_ITEMS;
   private readonly allManagementItems = ALL_MANAGEMENT_ITEMS;
 
+  // A search query hides a whole section (title + card), not just the items
+  // inside it — these mirror each *Items array/signal above so the template
+  // can decide section-level visibility, since hlm-sidebar-group can only
+  // hide itself, not the title/card wrapper this app renders around it.
+  readonly clusterHasMatch = computed(() => this.clusterItems.some((item) => this._search.matches(item)));
+  readonly workloadsHasMatch = computed(() => this.workloadItems().some((item) => this._search.matches(item)));
+  readonly deployHasMatch = computed(() => this.deployItems.some((item) => this._search.matches(item)));
+  readonly firewallHasMatch = computed(() => this.firewallItems.some((item) => this._search.matches(item)));
+
   constructor() {
     this._perms.load();
-    void this._platformVersion.load();
     this._projects.loadProjects();
+  }
+
+  ngOnInit(): void {
+    void this._platformVersion.load();
   }
 
   canSee(section: string): boolean {
@@ -207,10 +226,18 @@ export class SidebarComponent {
     ),
   );
 
+  readonly managementHasMatch = computed(() =>
+    this.visibleManagementItems().some((item) => this._search.matches(item)),
+  );
+
   readonly infrastructureItems = computed<SidebarNavItem[]>(() =>
     INFRASTRUCTURE_ITEMS.filter((item) =>
       this.shows(item, INFRASTRUCTURE_SECTION_BY_LABEL[item.label]),
     ),
+  );
+
+  readonly infrastructureHasMatch = computed(() =>
+    this.infrastructureItems().some((item) => this._search.matches(item)),
   );
 
   protected readonly showSystemApps = signal<boolean>(this._readShowSystemApps());
@@ -308,4 +335,24 @@ export class SidebarComponent {
 
     return items;
   });
+
+  private readonly _homeItem: SidebarNavItem = {
+    label: 'Home',
+    link: '/dashboard',
+    routerLinkActive: 'active',
+    icon: 'lucideLayoutDashboard',
+    keywords: ['dashboard', 'overview', 'home'],
+  };
+
+  readonly homeHasMatch = computed(() => this._search.matches(this._homeItem));
+
+  readonly allNavItems = computed<SidebarNavItem[]>(() => [
+    this._homeItem,
+    ...this.clusterItems,
+    ...this.workloadItems(),
+    ...this.deployItems,
+    ...this.infrastructureItems(),
+    ...this.firewallItems,
+    ...this.visibleManagementItems(),
+  ]);
 }

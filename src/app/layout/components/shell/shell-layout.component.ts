@@ -1,4 +1,4 @@
-import { Component, HostBinding, inject, input } from '@angular/core';
+import { Component, HostBinding, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -8,6 +8,8 @@ import {
   SidebarVariant,
   CollapsibleMode,
   BrnSidebarService,
+  BrnSidebarSearchService,
+  BrnSidebarPinService,
 } from '@dawit-io/spartan-sidebar-core';
 import {
   HlmSidebarContentHeaderComponent,
@@ -47,6 +49,8 @@ import { SandboxService } from '../../../core/services/sandbox.service';
   ],
   providers: [
     BrnSidebarService,
+    BrnSidebarSearchService,
+    BrnSidebarPinService,
     provideIcons({ lucideSun, lucideMoon }),
   ],
   styles: [`
@@ -79,6 +83,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
       background: #02040d;
     }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex bg-background border-gray h-screen">
       <sidebar
