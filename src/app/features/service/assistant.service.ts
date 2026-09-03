@@ -3,6 +3,7 @@ import { Configuration } from '../../core/api';
 import { AssistantService } from '../../core/api/api/assistant.service';
 import { AgentRequestDto } from '../../core/api/model/agentRequestDto';
 import { AuthService } from '../../core/services/auth.service';
+import { CurrentSurfaceService } from '../../core/services/current-surface.service';
 
 type AgentStreamEvent =
   | { type: 'delta'; text?: string }
@@ -97,6 +98,7 @@ export class AssistantChatService {
   private readonly api = inject(AssistantService);
   private readonly config = inject(Configuration);
   private readonly auth = inject(AuthService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
   private _nextId = 1;
   private _abort: AbortController | null = null;
 
@@ -248,6 +250,14 @@ export class AssistantChatService {
     if (opts?.model) body.model = opts.model;
     if (opts?.provider) body.provider = opts.provider as AgentRequestDto.ProviderEnum;
     if (opts?.connectionId) body.connectionId = opts.connectionId;
+    // Present only when the page the user is chatting from has actually registered
+    // a snapshot (today: Application Detail) — absent everywhere else, which is
+    // correct: surface is optional, and most pages have no producer yet.
+    const surface = this.currentSurface.current();
+    if (surface) {
+      body.surface = surface as unknown as AgentRequestDto['surface'];
+      body.surfaceRevision = surface.surface.revision;
+    }
     return body;
   }
 

@@ -24,6 +24,14 @@ export interface AgentRequestDto {
      * Route to a BYO inference connection by id
      */
     connectionId?: string;
+    /**
+     * Semantic Surface snapshot of the page the user is chatting from. Invalid or stale snapshots are silently dropped, never rejected.
+     */
+    surface?: { [key: string]: any; };
+    /**
+     * The surface.revision in force when the message was sent, echoing the snapshot\'s own — a mismatch drops the snapshot.
+     */
+    surfaceRevision?: number;
 }
 export namespace AgentRequestDto {
     export const ProviderEnum = {

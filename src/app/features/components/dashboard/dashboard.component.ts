@@ -1,6 +1,13 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, inject, signal, computed, effect, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DashboardService } from '../../service/dashboard.service';
 import { DashboardDnsService } from '../../service/dashboard-dns.service';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  DashboardSurfaceInput,
+  DashboardSurfaceRevision,
+  buildDashboardSurface,
+  presentedContent,
+} from './dashboard-surface';
 import { DashboardPulseComponent } from './dashboard-pulse.component';
 import { DashboardOperationsComponent } from './dashboard-operations.component';
 import { DashboardProvidersComponent } from './dashboard-providers.component';
@@ -109,17 +116,57 @@ import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.compone
     </div>
   `,
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   private readonly dashboardService = inject(DashboardService);
   private readonly dnsService = inject(DashboardDnsService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   isInitializing = signal(true);
   certsFirst = computed(() => !this.dnsService.isFullyConfigured());
+
+  private readonly surfaceRevision = new DashboardSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: DashboardSurfaceInput = {
+      loading: this.isInitializing(),
+      backendHealth: this.dashboardService.backendHealth(),
+      activeOperations: this.dashboardService.clustersInOperation().length,
+      providersConnected: this.dashboardService.activeProvidersCount(),
+      clustersTotal: this.dashboardService.totalClusters(),
+      clustersActive: this.dashboardService.activeClusters(),
+      clustersUnhealthy: this.dashboardService.unhealthyClusters(),
+      clusterNodesTotal: this.dashboardService.totalNodes(),
+      appsTotal: this.dashboardService.userTotalApps(),
+      appsRunning: this.dashboardService.runningApps(),
+      appsFailed: this.dashboardService.failedApps(),
+      appsDatabases: this.dashboardService.databasesApps(),
+      appsApplications: this.dashboardService.applicationsApps(),
+      appsTools: this.dashboardService.toolsApps(),
+    };
+    const content = presentedContent(input);
+    return buildDashboardSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes. ngOnDestroy clears it, so the snapshot never outlives this
+    // page — same discipline as every other producer in this repo.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
 
   ngOnInit(): void {
     void (async () => {
       await this.dashboardService.initialize();
       this.isInitializing.set(false);
     })();
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 }

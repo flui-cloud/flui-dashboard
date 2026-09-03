@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@angular/animations": "^22.1.4",
+    "@flui-cloud/semantic-surface": "link:../semantic-surface",
     "@angular/cdk": "^22.1.4",
     "@angular/common": "^22.1.4",
     "@angular/compiler": "^22.1.4",
@@ -78,6 +79,7 @@
     "@spartan-ng/cli": "^0.0.1-alpha.465",
     "@tailwindcss/postcss": "^4.1.7",
     "@types/jasmine": "~5.1.0",
+    "ajv": "^8.20.0",
     "@types/node": "^25.6.2",
     "autoprefixer": "^10.4.21",
     "istanbul-lib-instrument": "^6.0.3",
