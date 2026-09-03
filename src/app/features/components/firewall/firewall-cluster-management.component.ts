@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,13 @@ import { DriftIndicatorComponent } from './drift-indicator.component';
 import { ReconciliationStatus, CoverageStatus, getCoverageStatusLabel } from '../../model/firewall-v2.models';
 import { FirewallClusterInfoDto, FirewallNodeInfoDto } from '../../../core/api/model/models';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  FirewallClusterManagementSurfaceInput,
+  FirewallClusterManagementSurfaceRevision,
+  buildFirewallClusterManagementSurface,
+  presentedContent,
+} from './firewall-cluster-management-surface';
 
 /**
  * Main component for listing and managing cluster firewalls
@@ -27,8 +34,11 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./firewall-cluster-management.component.scss']
 })
-export class FirewallClusterManagementComponent implements OnInit {
+export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
   private readonly firewallService = inject(FirewallV2Service);
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new FirewallClusterManagementSurfaceRevision();
+
   // Local state
   searchQuery = signal('');
   selectedStatus = signal<ReconciliationStatus | undefined>(undefined);
@@ -40,6 +50,34 @@ export class FirewallClusterManagementComponent implements OnInit {
   stats = this.firewallService.stats;
   loading = this.firewallService.loading;
   error = this.firewallService.error;
+
+  readonly surface = computed(() => {
+    const input: FirewallClusterManagementSurfaceInput = {
+      firewalls: this.firewalls(),
+      totalCount: this.firewallService.firewalls().length,
+      isLoading: this.loading(),
+      searchQuery: this.searchQuery(),
+      statusFilter: this.selectedStatus(),
+      coverageFilter: this.selectedCoverage(),
+    };
+    const content = presentedContent(input);
+    return buildFirewallClusterManagementSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot whenever it changes;
+    // ngOnDestroy clears it so the snapshot never outlives this page.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   // Status options for filter
   statusOptions = [

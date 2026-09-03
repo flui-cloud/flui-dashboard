@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, effect, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject, effect, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideTrash2, lucideGlobe, lucideAlertCircle, lucideRefreshCw, lucidePlus, lucideServer, lucideChevronDown, lucideChevronRight, lucideClock, lucideRadioTower } from '@ng-icons/lucide';
@@ -9,6 +9,13 @@ import { DnsZoneResponseDto } from '../../../core/api/model/dnsZoneResponseDto';
 import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
 import { ZoneReplicasComponent } from './zone-replicas.component';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  DnsZonesListSurfaceInput,
+  DnsZonesListSurfaceRevision,
+  buildDnsZonesListSurface,
+  presentedContent,
+} from './dns-zones-list-surface';
 
 @Component({
   selector: 'app-dns-zones-list',
@@ -208,10 +215,28 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
     />
   `,
 })
-export class DnsZonesListComponent implements OnInit {
+export class DnsZonesListComponent implements OnInit, OnDestroy {
   protected dnsZonesService = inject(DnsZonesService);
   private readonly refreshService = inject(DnsRefreshService);
   private readonly replicaService = inject(DnsReplicaService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new DnsZonesListSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: DnsZonesListSurfaceInput = {
+      zones: this.dnsZonesService.zones(),
+      isLoading: this.dnsZonesService.loading(),
+      expandedZoneId: this.expandedZoneId(),
+      providerCountOf: (id) => this.providerCountFor(id),
+      ttlOf: (id) => this.ttlFor(id),
+      assignedClusterCountOf: (id) => (this.assignmentsMap()[id] ?? []).length,
+    };
+    const content = presentedContent(input);
+    return buildDnsZonesListSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
 
   protected deletingId = signal<string | null>(null);
   protected loadingAssignments = signal(false);
@@ -225,6 +250,12 @@ export class DnsZonesListComponent implements OnInit {
   private readonly deleteDialog = viewChild.required<DeleteConfirmationDialogComponent>('deleteDialog');
 
   constructor() {
+    // Publish this page's own Semantic Surface snapshot whenever it changes;
+    // ngOnDestroy clears it so the snapshot never outlives this page.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+
     effect(() => {
       const trigger = this.refreshService.trigger();
       if (trigger > 0) {
@@ -241,6 +272,10 @@ export class DnsZonesListComponent implements OnInit {
       await this.dnsZonesService.loadZones();
       await Promise.all([this.loadAssignments(), this.loadEnriched()]);
     })();
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   refresh(): void {

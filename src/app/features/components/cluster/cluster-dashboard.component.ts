@@ -1,7 +1,9 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule, NavigationEnd } from '@angular/router';
+import { filter, map } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowLeft,
@@ -37,6 +39,13 @@ import {
 import { PermissionService } from '../../../core/services/permission.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 import { ClusterStatus, ClusterType, isControlClusterType } from '../../model/cluster.models';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  ClusterSurfaceInput,
+  ClusterSurfaceRevision,
+  buildClusterSurface,
+  presentedContent,
+} from './cluster-surface';
 
 interface TabItem {
   label: string;
@@ -348,6 +357,7 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
 
   private readonly sandbox = inject(SandboxService);
   protected readonly perms = inject(PermissionService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly readOnly = computed(
     () => this.sandbox.levelOf('cluster') !== 'full',
@@ -361,6 +371,43 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
   showDeleteModal = signal(false);
   isDeleting = signal(false);
   forceDelete = false;
+
+  // The Semantic Surface's tab scope reads this — the same source the routerLinkActive
+  // bindings in the template read from, not a second notion of "which tab is open".
+  // Same technique application-detail.component.ts already uses (§5 of the playbook).
+  private readonly activeTab = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map(() => this.route.snapshot.firstChild?.routeConfig?.path ?? null),
+    ),
+    { initialValue: this.route.snapshot.firstChild?.routeConfig?.path ?? null },
+  );
+
+  private readonly surfaceRevision = new ClusterSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: ClusterSurfaceInput = {
+      cluster: this.cluster(),
+      activeTab: this.activeTab(),
+      readOnly: this.readOnly(),
+      isControlCluster: isControlClusterType(this.cluster()?.clusterType),
+    };
+    const content = presentedContent(input);
+    if (!content) return null;
+    return buildClusterSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes. ngOnDestroy clears it, so the snapshot never outlives this
+    // page — same discipline as ApplicationDetailComponent.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
 
   ngOnInit(): void {
     void (async () => {
@@ -377,6 +424,7 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.autoscaleService.stopStatusPolling();
     this.autoscaleService.resetState();
+    this.currentSurface.set(null);
   }
 
   async loadClusterData(clusterId: string) {

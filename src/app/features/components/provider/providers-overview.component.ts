@@ -25,7 +25,7 @@ import { ProviderStatus } from '../../model/provider.models';
 import { ProvidersService } from '../../service/providers.service';
 import { ProviderManagementService, ProviderDefinitionDto } from '../../../core/api';
 
-interface ProviderItem {
+export interface ProviderItem {
   type: 'available' | 'configured';
   data: any;
   id: string;

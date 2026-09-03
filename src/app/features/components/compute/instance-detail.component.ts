@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed, inject, viewChild, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, viewChild, effect, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -40,6 +40,13 @@ import { InstanceDeleteDialogComponent } from './instance-delete-dialog.componen
 import { SshTerminalComponent } from './ssh-terminal.component';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterType, isControlClusterType } from '../../model/cluster.models';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  InstanceDetailSurfaceInput,
+  InstanceDetailSurfaceRevision,
+  buildInstanceDetailSurface,
+  presentedContent,
+} from './instance-detail-surface';
 
 @Component({
   selector: 'app-instance-detail',
@@ -485,18 +492,34 @@ import { ClusterType, isControlClusterType } from '../../model/cluster.models';
     </div>
   `,
 })
-export class InstanceDetailComponent implements OnInit {
+export class InstanceDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly virtualInstancesService = inject(VirtualInstancesService);
   private readonly infrastructureServersService = inject(InfrastructureServersService);
   private readonly clusterService = inject(ClusterService);
   private readonly maskMode = inject(MaskModeService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new InstanceDetailSurfaceRevision();
 
   private provider: string | null = null;
   private providerId: string | null = null;
 
   deleteDialog = viewChild<InstanceDeleteDialogComponent>('deleteDialog');
+
+  readonly surface = computed(() => {
+    const input: InstanceDetailSurfaceInput = {
+      instance: this.instance(),
+      ownership: this.ownership(),
+      clusterInfo: this.clusterInfo(),
+    };
+    const content = presentedContent(input);
+    if (!content) return null;
+    return buildInstanceDetailSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
 
   /**
    * `instance` (real public IP) is fetched once on entry, so a mask-mode
@@ -515,6 +538,17 @@ export class InstanceDetailComponent implements OnInit {
         this.loadInstance(this.provider, this.providerId);
       }
     });
+
+    // Publish this page's own Semantic Surface snapshot whenever it changes;
+    // ngOnDestroy clears it so the snapshot never outlives this page — same
+    // lifecycle as ApplicationDetailComponent's.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   instance = signal<InstanceWithLabels | null>(null);

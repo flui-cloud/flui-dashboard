@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
 
@@ -26,6 +26,8 @@ import { ProviderCredentialsPanelComponent } from './provider-credentials-panel.
 import { ProviderRegionsPanelComponent } from './provider-regions-panel.component';
 import { ProviderInferencePanelComponent } from './provider-inference-panel.component';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { ProviderSurfaceInput, ProviderSurfaceRevision, buildProviderSurface, presentedContent } from './provider-surface';
 
 @Component({
   selector: 'provider-manage',
@@ -280,11 +282,12 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
     </div>
   `,
 })
-export class ProviderManageComponent implements OnInit {
+export class ProviderManageComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly providersService = inject(ProvidersService);
   private readonly providerLogo = inject(ProviderLogoService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected providerId = signal<string>('');
   protected isLoading = signal<boolean>(true);
@@ -341,6 +344,30 @@ export class ProviderManageComponent implements OnInit {
     }
   });
 
+  private readonly surfaceRevision = new ProviderSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: ProviderSurfaceInput = {
+      provider: this.provider(),
+      configuration: this.configuration(),
+      health: this.health(),
+    };
+    const content = presentedContent(input);
+    if (!content) return null;
+    return buildProviderSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes — same pattern as ApplicationDetailComponent.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
   ngOnInit(): void {
     this.providerId.set(this.route.snapshot.paramMap.get('id') ?? '');
     if (!this.providersService.availableProviders().length) this.providersService.loadProviders();
@@ -349,6 +376,10 @@ export class ProviderManageComponent implements OnInit {
       this.isLoading.set(false);
       if (this.configuration()) this.refreshHealth();
     });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   onConfigUpdated(_config: ProviderConfigurationDto): void {

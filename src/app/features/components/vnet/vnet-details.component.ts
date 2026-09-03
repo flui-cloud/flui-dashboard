@@ -5,7 +5,7 @@
  * routes, and attached servers. Provides subnet management capabilities.
  */
 
-import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -36,6 +36,13 @@ import { InstanceWithLabels } from '../../model/instance.models';
 import { InstanceStatusBadgeComponent } from '../compute/instance-status-badge.component';
 import { firstValueFrom } from 'rxjs';
 import { ProviderWizardService } from '../../../shared/services/provider-wizard.service';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  VNetDetailSurfaceInput,
+  VNetDetailSurfaceRevision,
+  buildVNetDetailSurface,
+  presentedContent,
+} from './vnet-details-surface';
 
 @Component({
   selector: 'vnet-details',
@@ -537,16 +544,44 @@ import { ProviderWizardService } from '../../../shared/services/provider-wizard.
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: []
 })
-export class VNetDetailsComponent implements OnInit {
+export class VNetDetailsComponent implements OnInit, OnDestroy {
   private readonly vnetService = inject(VNetService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly instancesApi = inject(VirtualInstancesService);
   private readonly providerWizardService = inject(ProviderWizardService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new VNetDetailSurfaceRevision();
 
   readonly vnet = this.vnetService.selectedVNet;
   readonly isLoading = this.vnetService.loading;
   readonly errorMessage = this.vnetService.errorMessage;
+
+  readonly surface = computed(() => {
+    const input: VNetDetailSurfaceInput = {
+      vnet: this.vnet(),
+      totalAttachedServers: this.getAllAttachedServers(),
+      attachedInstances: Array.from(this.serversCache().values()),
+    };
+    const content = presentedContent(input);
+    if (!content) return null;
+    return buildVNetDetailSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot whenever it changes;
+    // ngOnDestroy clears it so the snapshot never outlives this page.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   readonly vnetTopology = computed(() => {
     const provider = this.vnet()?.provider;

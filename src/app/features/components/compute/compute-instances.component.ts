@@ -1,5 +1,5 @@
 
-import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -29,6 +29,13 @@ import {
 import { InstanceWithLabels } from '../../model/instance.models';
 import { ProvidersService } from '../../service/providers.service';
 import { InstanceRowComponent } from './instance-row.component';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  ComputeInstancesSurfaceInput,
+  ComputeInstancesSurfaceRevision,
+  buildComputeInstancesSurface,
+  presentedContent,
+} from './compute-instances-surface';
 
 interface FilterState {
   search: string;
@@ -297,9 +304,38 @@ interface FilterState {
     </div>
   `,
 })
-export class ComputeInstancesComponent implements OnInit {
+export class ComputeInstancesComponent implements OnInit, OnDestroy {
   private readonly virtualInstancesService = inject(VirtualInstancesService);
   private readonly providersService = inject(ProvidersService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new ComputeInstancesSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: ComputeInstancesSurfaceInput = {
+      visibleInstances: this.filteredInstances(),
+      totalCount: this.instances().length,
+      isLoading: this.isLoading(),
+      filters: this.filters(),
+    };
+    const content = presentedContent(input);
+    return buildComputeInstancesSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot whenever it changes;
+    // ngOnDestroy clears it so the snapshot never outlives this page — same
+    // lifecycle as ApplicationDetailComponent's.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   instances = signal<InstanceWithLabels[]>([]);
   partialErrors = signal<ProviderErrorDto[]>([]);

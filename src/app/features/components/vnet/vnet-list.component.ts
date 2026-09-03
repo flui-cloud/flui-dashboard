@@ -5,7 +5,7 @@
  * Follows the pattern established in ClusterListComponent.
  */
 
-import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +28,13 @@ import {
   getAllAttachedServerIds
 } from '../../model/vnet.models';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  VNetListSurfaceInput,
+  VNetListSurfaceRevision,
+  buildVNetListSurface,
+  presentedContent,
+} from './vnet-list-surface';
 
 @Component({
   selector: 'vnet-list',
@@ -336,10 +343,39 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: []
 })
-export class VNetListComponent implements OnInit {
+export class VNetListComponent implements OnInit, OnDestroy {
   private readonly vnetService = inject(VNetService);
   private readonly providersService = inject(ProvidersService);
   private readonly router = inject(Router);
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new VNetListSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: VNetListSurfaceInput = {
+      visibleVNets: this.filteredVNets(),
+      totalCount: this.vnets().length,
+      isLoading: this.isLoading(),
+      filters: this.filtersState(),
+      attachedServerCountOf: (v) => this.getTotalAttachedServers(v),
+    };
+    const content = presentedContent(input);
+    return buildVNetListSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot whenever it changes;
+    // ngOnDestroy clears it so the snapshot never outlives this page.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   // Local filter state
   private readonly filtersSignal = signal<VNetFilterState>({

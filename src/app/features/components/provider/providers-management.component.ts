@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal, viewChild, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -11,6 +11,14 @@ import { ProvidersOverviewComponent } from './providers-overview.component';
 import { ProviderConfigurationWizardComponent } from './provider-configuration-wizard.component';
 import { ProvidersService } from '../../service/providers.service';
 import { ProviderDefinitionDto } from '../../../core/api';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  ProvidersSurfaceInput,
+  ProvidersSurfaceRevision,
+  buildProvidersSurface,
+  presentedContent,
+} from './providers-list-surface';
+import type { ProviderListRow } from './providers-list-surface';
 
 type ViewMode = 'overview' | 'configure';
 
@@ -71,15 +79,23 @@ type ViewMode = 'overview' | 'configure';
     </div>
   `
 })
-export class ProvidersManagementComponent implements OnInit {
+export class ProvidersManagementComponent implements OnInit, OnDestroy {
   private readonly providersService = inject(ProvidersService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected currentView = signal<ViewMode>('overview');
   protected selectedProviderId = signal<string>('');
   protected showSuccessMessage = signal<boolean>(false);
   protected successMessage = signal<string>('');
+
+  // The overview grid owns its own search/status/credential-type filters and its own
+  // `filteredProviders` computed — the Semantic Surface reads those directly (via this
+  // view query) rather than re-deriving them, per the anti-drift rule (§3.4 of the
+  // producer playbook): it is undefined while the configure wizard is open, which is
+  // exactly when there is no filtered list on screen to describe.
+  private readonly overview = viewChild(ProvidersOverviewComponent);
 
   readonly selectedProvider = computed((): ProviderDefinitionDto | null => {
     const providerId = this.selectedProviderId();
@@ -97,11 +113,51 @@ export class ProvidersManagementComponent implements OnInit {
     return null;
   });
 
+  private readonly surfaceRevision = new ProvidersSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const overview = this.overview();
+    const filteredRows: ProviderListRow[] = overview
+      ? overview.filteredProviders().map((item) => {
+          const definition = overview.getProviderDefinition(item);
+          const providerId = overview.getProviderId(item);
+          const status = item.type === 'available' ? 'not_configured' : String(item.data.status);
+          return { providerId, displayName: definition?.displayName ?? providerId, status };
+        })
+      : [];
+    const input: ProvidersSurfaceInput = {
+      filteredRows,
+      totalProvidersCount: this.providersService.availableProviders().length,
+      searchTerm: overview?.searchTerm() ?? '',
+      statusFilter: overview?.statusFilter() ?? '',
+      credentialTypeFilter: overview?.credentialTypeFilter() ?? '',
+      isLoading: this.providersService.isLoading(),
+      configuringProvider: this.currentView() === 'configure' ? this.selectedProvider() : null,
+    };
+    const content = presentedContent(input);
+    return buildProvidersSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes — same pattern as ApplicationDetailComponent.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
   ngOnInit(): void {
     const configureId = this.route.snapshot.queryParamMap.get('configure');
     if (configureId) {
       this.startConfiguration(configureId);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   startConfiguration(providerId: string): void {

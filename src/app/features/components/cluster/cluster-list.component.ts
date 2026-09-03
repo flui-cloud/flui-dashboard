@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -30,6 +30,13 @@ import { ProvidersService } from '../../service/providers.service';
 import { ClusterInfo, ClusterStatus, ClusterType, ProviderType } from '../../model/cluster.models';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { CanDirective } from '../../../core/directives/can.directive';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  ClusterListSurfaceInput,
+  ClusterListSurfaceRevision,
+  buildClusterListSurface,
+  presentedContent,
+} from './cluster-list-surface';
 
 interface FilterState {
   search: string;
@@ -429,10 +436,11 @@ interface FilterState {
     }
   `,
 })
-export class ClusterListComponent implements OnInit {
+export class ClusterListComponent implements OnInit, OnDestroy {
   private readonly clusterService = inject(ClusterService);
   private readonly providersService = inject(ProvidersService);
   private readonly router = inject(Router);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   readonly availableProviders = computed(() => this.providersService.availableProviders());
 
@@ -498,11 +506,40 @@ export class ClusterListComponent implements OnInit {
     return count;
   });
 
+  private readonly surfaceRevision = new ClusterListSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: ClusterListSurfaceInput = {
+      allClusters: this.allClusters(),
+      filteredClusters: this.filteredClusters(),
+      filters: this.filtersState(),
+      loading: this.isLoading(),
+    };
+    const content = presentedContent(input);
+    return buildClusterListSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes. ngOnDestroy clears it, so the snapshot never outlives this
+    // page — same discipline as ApplicationDetailComponent/ClusterDashboardComponent.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
   ngOnInit(): void {
     void (async () => {
       this.providersService.loadProviders();
       await this.loadClusters();
     })();
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   async loadClusters() {
