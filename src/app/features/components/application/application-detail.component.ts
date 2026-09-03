@@ -1,8 +1,8 @@
 import { Component, OnDestroy, inject, signal, computed, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { Router, ActivatedRoute, RouterModule } from '@angular/router';
-import { map } from 'rxjs/operators';
+import { Router, ActivatedRoute, RouterModule, NavigationEnd } from '@angular/router';
+import { filter, map } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowLeft,
@@ -51,6 +51,13 @@ import { isActionAvailable } from '../../model/app-status-actions';
 import { isBuildingBlock } from '../../model/app-exposure';
 import { databaseEngineOf } from '../../model/db-engine';
 import { accessOf, allowsTab } from '../../model/app-access';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  ApplicationSurfaceInput,
+  ApplicationSurfaceRevision,
+  buildApplicationSurface,
+  presentedContent,
+} from './application-surface';
 
 interface TabItem {
   label: string;
@@ -430,6 +437,7 @@ export class ApplicationDetailComponent implements OnDestroy {
   private readonly ws = inject(AppRuntimeWebSocketService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   readonly diagnosesCount = computed(() => this.diagnosesService.unresolvedRecent().length);
 
@@ -471,6 +479,16 @@ export class ApplicationDetailComponent implements OnDestroy {
     { initialValue: this.route.snapshot.paramMap.get('id') },
   );
 
+  // The Semantic Surface's tab scope reads this — the same source the routerLinkActive
+  // bindings in the template read from, not a second notion of "which tab is open".
+  private readonly activeTab = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map(() => this.route.snapshot.firstChild?.routeConfig?.path ?? null),
+    ),
+    { initialValue: this.route.snapshot.firstChild?.routeConfig?.path ?? null },
+  );
+
   constructor() {
     effect(() => {
       const kind = this.application()?.kind;
@@ -490,6 +508,13 @@ export class ApplicationDetailComponent implements OnDestroy {
       const id = this.routeId();
       if (!id) return;
       untracked(() => this.loadApplication(id));
+    });
+
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes. ngOnDestroy clears it, so the snapshot never outlives
+    // this page (e.g. the assistant widget staying open across a navigation away).
+    effect(() => {
+      this.currentSurface.set(this.surface());
     });
   }
 
@@ -574,6 +599,25 @@ export class ApplicationDetailComponent implements OnDestroy {
 
   readonly access = computed(() => accessOf(this.application()));
 
+  private readonly surfaceRevision = new ApplicationSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: ApplicationSurfaceInput = {
+      application: this.application(),
+      runtime: this.runtime(),
+      replicaCounts: this.replicaCounts(),
+      diagnosesCount: this.diagnosesCount(),
+      access: this.access(),
+      activeTab: this.activeTab(),
+    };
+    const content = presentedContent(input);
+    if (!content) return null;
+    return buildApplicationSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
   ngOnDestroy(): void {
     if (this.pollingAppId) {
       this.monitoringService.stopPolling();
@@ -581,6 +625,7 @@ export class ApplicationDetailComponent implements OnDestroy {
     }
     this.diagnosesService.clear();
     this.appService.clearSelectedApplication();
+    this.currentSurface.set(null);
   }
 
   backToList() {

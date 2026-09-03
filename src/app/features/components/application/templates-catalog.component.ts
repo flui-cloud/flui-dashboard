@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -35,6 +35,13 @@ import { TemplateService } from '../../service/template.service';
 import { RepositoryService } from '../../service/repository.service';
 import { ClusterService } from '../../service/cluster.service';
 import { TemplateResponseDto } from '../../../core/api/model/templateResponseDto';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  TemplatesCatalogSurfaceInput,
+  TemplatesCatalogSurfaceRevision,
+  buildTemplatesCatalogSurface,
+  presentedContent,
+} from './templates-catalog-surface';
 
 /**
  * UI category taxonomy. `generic` is a Flui-only category we surface in the UI
@@ -268,13 +275,14 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
 
   `,
 })
-export class TemplatesCatalogComponent implements OnInit {
+export class TemplatesCatalogComponent implements OnInit, OnDestroy {
   templateService = inject(TemplateService);
   repositoryService = inject(RepositoryService);
   private readonly clusterService = inject(ClusterService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   searchQuery = signal('');
   categoryFilter = signal<'' | Category>('');
@@ -325,6 +333,38 @@ export class TemplatesCatalogComponent implements OnInit {
       return apiCat;
     }
     return 'generic';
+  }
+
+  private readonly surfaceRevision = new TemplatesCatalogSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: TemplatesCatalogSurfaceInput = {
+      allTemplates: this.templateService.templates(),
+      filteredTemplates: this.filteredTemplates(),
+      categoryOf: (template) => this.getCategory(template),
+      categoryFilter: this.categoryFilter(),
+      hasActiveSearch: this.searchQuery().trim().length > 0,
+      highlightedFramework: this.highlightedFramework(),
+      isLoading: this.isLoading(),
+      hasLoadError: !!this.templateService.errorMessage(),
+    };
+    return buildTemplatesCatalogSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry whenever
+    // it changes — same pattern as ApplicationDetailComponent. ngOnDestroy clears it so the
+    // snapshot never outlives this page.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   ngOnInit(): void {

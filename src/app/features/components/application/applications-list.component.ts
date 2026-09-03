@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +26,13 @@ import {
   getKindLabel,
 } from '../../model/application.models';
 import { ApplicationGroupRowComponent } from './application-group-row.component';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  ApplicationsListSurfaceInput,
+  ApplicationsListSurfaceRevision,
+  buildApplicationsListSurface,
+  presentedContent,
+} from './applications-list-surface';
 
 interface FilterState {
   search: string;
@@ -252,11 +259,12 @@ interface FilterState {
     }
   `,
 })
-export class ApplicationsListComponent implements OnInit {
+export class ApplicationsListComponent implements OnInit, OnDestroy {
   private readonly appService = inject(ApplicationService);
   private readonly clusterService = inject(ClusterService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   skeletonRows = [1, 2, 3, 4, 5];
 
@@ -372,6 +380,35 @@ export class ApplicationsListComponent implements OnInit {
     return (f.search ? 1 : 0) + (f.category ? 1 : 0) + (f.status ? 1 : 0) + (f.cluster ? 1 : 0);
   });
 
+  private readonly surfaceRevision = new ApplicationsListSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: ApplicationsListSurfaceInput = {
+      kind: this.kind(),
+      filteredGroups: this.filteredGroups(),
+      totalForKind: this.kindScopedGroups().length,
+      runningCount: this.kindRunningCount(),
+      failedCount: this.kindFailedCount(),
+      filters: this.filtersState(),
+      activeFiltersCount: this.activeFiltersCount(),
+      isInitialLoading: this.isInitialLoading(),
+      hasLoadError: !!this.errorMessage() && !this.isLoading(),
+    };
+    return buildApplicationsListSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry whenever
+    // it changes — same pattern as ApplicationDetailComponent. ngOnDestroy clears it so the
+    // snapshot never outlives this page.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
   ngOnInit(): void {
     void (async () => {
       try {
@@ -380,6 +417,10 @@ export class ApplicationsListComponent implements OnInit {
         console.error('Failed to load applications:', error);
       }
     })();
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   async refreshApplications() {

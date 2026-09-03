@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -23,6 +23,13 @@ import {
   GithubSetupWizardService,
   SetupMethod,
 } from '../../service/github-setup-wizard.service';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  GithubSetupWizardSurfaceInput,
+  GithubSetupWizardSurfaceRevision,
+  buildGithubSetupWizardSurface,
+  presentedContent,
+} from './github-setup-wizard-surface';
 
 const PAT_DEEP_LINK =
   'https://github.com/settings/tokens/new' +
@@ -461,14 +468,42 @@ const PAT_DEEP_LINK =
     </app-wizard-shell>
   `,
 })
-export class GithubSetupWizardComponent implements OnInit {
+export class GithubSetupWizardComponent implements OnInit, OnDestroy {
   readonly wizardService = inject(GithubSetupWizardService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   readonly currentStepIndex = signal(0);
   readonly manualMode = signal(false);
   readonly patDeepLink = PAT_DEEP_LINK;
+
+  private readonly surfaceRevision = new GithubSetupWizardSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: GithubSetupWizardSurfaceInput = {
+      currentStepIndex: this.currentStepIndex(),
+      selectedMethod: this.wizardService.selectedMethod(),
+      manualMode: this.manualMode(),
+      configuredStatus: this.wizardService.configuredStatus(),
+      patValidation: this.wizardService.patValidation(),
+      hasError: !!this.wizardService.error(),
+    };
+    return buildGithubSetupWizardSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   readonly methodLabel = computed(() => {
     switch (this.wizardService.selectedMethod()) {

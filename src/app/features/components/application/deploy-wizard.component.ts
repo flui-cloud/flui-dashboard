@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -77,6 +77,13 @@ import {
 import { EnvVarDetectionResultDto } from '../../../core/api/model/envVarDetectionResultDto';
 import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
 import { ClusterInfo } from '../../model/cluster.models';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  DeployWizardSurfaceInput,
+  DeployWizardSurfaceRevision,
+  buildDeployWizardSurface,
+  presentedContent,
+} from './deploy-wizard-surface';
 import { internalHostingErrorMessage } from '../../model/app-exposure';
 import { stripHyphenEdges } from '../../../shared/utils/slug';
 import { AuthzInstallService } from '../../service/authz-install.service';
@@ -2055,7 +2062,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
     </div>
   `,
 })
-export class DeployWizardComponent implements OnInit {
+export class DeployWizardComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   repoService = inject(RepositoryService);
@@ -2069,6 +2076,7 @@ export class DeployWizardComponent implements OnInit {
   protected authzInstall = inject(AuthzInstallService);
   private readonly toast = inject(ToastService);
   private readonly platformVersion = inject(PlatformVersionService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   /**
    * What a coding agent needs in order to write the manifest: where the
@@ -2226,6 +2234,17 @@ export class DeployWizardComponent implements OnInit {
         void this.authzInstall.loadForCluster(clusterId);
       }
     });
+
+    // Publish this page's own Semantic Surface snapshot into the shared registry whenever
+    // it changes — same pattern as ApplicationDetailComponent. ngOnDestroy clears it so the
+    // snapshot never outlives this page.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   readonly canDeploy = computed(() => {
@@ -2599,6 +2618,29 @@ export class DeployWizardComponent implements OnInit {
   });
 
   readonly currentStep = computed(() => this.steps()[this.currentStepIndex()]);
+
+  private readonly surfaceRevision = new DeployWizardSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const repo = this.selectedRepo();
+    const template = this.state.selectedTemplate();
+    const cluster = this.selectedCluster();
+    const input: DeployWizardSurfaceInput = {
+      currentStepId: this.currentStepId(),
+      currentStepTitle: this.currentStep()?.title ?? null,
+      sourceType: this.sourceType(),
+      flowSubtype: this.flowSubtype(),
+      selectedCluster: cluster?.id && cluster?.name ? { id: cluster.id, name: cluster.name } : null,
+      selectedRepositoryFullName: repo?.fullName ?? null,
+      selectedTemplate: template ? { framework: template.framework, displayName: template.displayName } : null,
+    };
+    const content = presentedContent(input);
+    if (!content) return null;
+    return buildDeployWizardSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
 
   ngOnInit(): void {
     // Idempotent, and the prompt below is wrong without it: the schema URL is

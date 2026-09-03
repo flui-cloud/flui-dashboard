@@ -1,7 +1,9 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   computed,
+  effect,
   inject,
   signal,
   viewChild,
@@ -24,6 +26,8 @@ import { PermissionService } from '../../../core/services/permission.service';
 import { Project } from '../../model/project.model';
 import { AppAttributes } from '../../model/iam.model';
 import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { ProjectsSurfaceInput, ProjectsSurfaceRevision, buildProjectsSurface, presentedContent } from './projects-surface';
 
 const FIELD =
   'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
@@ -173,9 +177,10 @@ const FIELD =
     />
   `,
 })
-export class ProjectsComponent implements OnInit {
+export class ProjectsComponent implements OnInit, OnDestroy {
   protected readonly projects = inject(ProjectsService);
   private readonly perms = inject(PermissionService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
   protected readonly fieldClass = FIELD;
   protected readonly selectClass = FIELD + ' h-9 pr-8 appearance-none';
   protected readonly hexFieldClass =
@@ -205,9 +210,35 @@ export class ProjectsComponent implements OnInit {
 
   readonly canCreate = computed(() => this.newName().trim().length > 0);
 
+  private readonly surfaceRevision = new ProjectsSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: ProjectsSurfaceInput = {
+      projects: this.projects.projects(),
+      apps: this.projects.apps(),
+    };
+    const content = presentedContent(input);
+    return buildProjectsSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes — same pattern as ApplicationDetailComponent.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
   ngOnInit(): void {
     this.perms.load();
     this.projects.refresh();
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   value(e: Event): string {

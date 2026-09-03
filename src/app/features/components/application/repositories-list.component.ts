@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, effect, viewChild, ChangeDetectionStrategy } from '@angular/core';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -41,6 +41,13 @@ import { ApplicationService } from '../../service/application.service';
 import { ApplicationResponseDto } from '../../../core/api/model/applicationResponseDto';
 import { RepoDeployChoiceModalComponent } from './repo-deploy-choice-modal.component';
 import { PermissionService } from '../../../core/services/permission.service';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  RepositoriesListSurfaceInput,
+  RepositoriesListSurfaceRevision,
+  buildRepositoriesListSurface,
+  presentedContent,
+} from './repositories-list-surface';
 
 @Component({
   selector: 'app-repositories-list',
@@ -950,12 +957,13 @@ import { PermissionService } from '../../../core/services/permission.service';
     }
   `,
 })
-export class RepositoriesListComponent implements OnInit {
+export class RepositoriesListComponent implements OnInit, OnDestroy {
   private readonly repoService = inject(RepositoryService);
   private readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly appService = inject(ApplicationService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   readonly disconnectDialog = viewChild.required<ConfirmationDialogComponent>('disconnectDialog');
   readonly removePatDialog = viewChild.required<ConfirmationDialogComponent>('removePatDialog');
@@ -1093,6 +1101,40 @@ export class RepositoriesListComponent implements OnInit {
       default: return 'text-slate-500 dark:text-slate-400';
     }
   });
+
+  private readonly surfaceRevision = new RepositoriesListSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: RepositoriesListSurfaceInput = {
+      pageState: this.pageState(),
+      authMethod: this.setupStatus()?.authMethod ? String(this.setupStatus()?.authMethod) : undefined,
+      gitHubUsername: this.gitHubUsername(),
+      allRepos: this.allRepos(),
+      connectedCount: this.connectedCount(),
+      autoDeployCount: this.autoDeployCount(),
+      importModalOpen: this.showImportModalFlag(),
+      importSelectedCount: this.selectedReposForImport().length,
+      deleteModalOpen: this.showDeleteModalFlag(),
+      repoToDelete: this.repoToDelete(),
+    };
+    return buildRepositoriesListSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry whenever
+    // it changes — same pattern as ApplicationDetailComponent. ngOnDestroy clears it so the
+    // snapshot never outlives this page.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     void (async () => {
