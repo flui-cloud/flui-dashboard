@@ -1,10 +1,17 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
+import {
+  RestoreListSurfaceInput,
+  RestoreListSurfaceRevision,
+  buildRestoreListSurface,
+  presentedContent,
+} from './restore-list-surface';
 
 @Component({
   selector: 'app-restore-list',
@@ -67,8 +74,29 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
     </div>
   `,
 })
-export class RestoreListComponent implements OnInit {
+export class RestoreListComponent implements OnInit, OnDestroy {
   protected readonly backup = inject(BackupService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
+
+  private readonly surfaceRevision = new RestoreListSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: RestoreListSurfaceInput = { restoreJobs: this.backup.restoreJobs() };
+    return buildRestoreListSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     void (async () => {

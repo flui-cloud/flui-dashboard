@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -8,6 +8,13 @@ import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupProgressModalComponent } from '../shared/progress-modal.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
+import {
+  PolicyDetailSurfaceInput,
+  PolicyDetailSurfaceRevision,
+  buildPolicyDetailSurface,
+  presentedContent,
+} from './policy-detail-surface';
 
 @Component({
   selector: 'app-policy-detail',
@@ -114,16 +121,39 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
     </div>
   `,
 })
-export class PolicyDetailComponent implements OnInit {
+export class PolicyDetailComponent implements OnInit, OnDestroy {
   private readonly backup = inject(BackupService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly policy = signal<BackupPolicy | null>(null);
   protected readonly running = signal(false);
   protected readonly toggling = signal(false);
   protected readonly activeOpId = signal<string | null>(null);
+
+  private readonly surfaceRevision = new PolicyDetailSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: PolicyDetailSurfaceInput = { policy: this.policy() };
+    const content = presentedContent(input);
+    if (!content) return null;
+    return buildPolicyDetailSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     void (async () => {

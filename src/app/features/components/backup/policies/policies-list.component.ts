@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -7,6 +7,13 @@ import { ClusterService } from '../../../service/cluster.service';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
+import {
+  PoliciesListSurfaceInput,
+  PoliciesListSurfaceRevision,
+  buildPoliciesListSurface,
+  presentedContent,
+} from './policies-list-surface';
 
 @Component({
   selector: 'app-policies-list',
@@ -87,9 +94,10 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
     </div>
   `,
 })
-export class PoliciesListComponent implements OnInit {
+export class PoliciesListComponent implements OnInit, OnDestroy {
   protected readonly backup = inject(BackupService);
   private readonly clusterService = inject(ClusterService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   readonly clusters = this.clusterService.clusters;
   clusterFilter = '';
@@ -99,6 +107,31 @@ export class PoliciesListComponent implements OnInit {
     const all = this.backup.policies();
     return id ? all.filter((p) => p.clusterId === id) : all;
   });
+
+  private readonly surfaceRevision = new PoliciesListSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: PoliciesListSurfaceInput = {
+      rows: this.filtered().map((policy) => ({ policy, clusterName: this.clusterName(policy.clusterId) })),
+      totalPolicies: this.backup.policies().length,
+      clusterFilterName: this.clusterFilter ? this.clusterName(this.clusterFilter) : null,
+      loading: this.backup.loading(),
+    };
+    return buildPoliciesListSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     void (async () => {

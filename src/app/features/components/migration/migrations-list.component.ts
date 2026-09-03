@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
   viewChild,
@@ -24,6 +26,13 @@ import { ClusterService } from '../../service/cluster.service';
 import { MigrationRow, MigrationService } from '../../service/migration.service';
 import { MigrationLaunchModalComponent } from './migration-launch-modal.component';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  MigrationsListSurfaceInput,
+  MigrationsListSurfaceRevision,
+  buildMigrationsListSurface,
+  presentedContent,
+} from './migrations-list-surface';
 
 type PendingAction = { kind: 'abort' | 'destroy'; row: MigrationRow };
 
@@ -221,10 +230,11 @@ const ABORTABLE = new Set([
     />
   `,
 })
-export class MigrationsListComponent implements OnInit {
+export class MigrationsListComponent implements OnInit, OnDestroy {
   private readonly migrationService = inject(MigrationService);
   private readonly clusterService = inject(ClusterService);
   private readonly toast = inject(ToastService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   private readonly launchModal = viewChild(MigrationLaunchModalComponent);
   private readonly confirmDialog = viewChild(ConfirmationDialogComponent);
@@ -234,6 +244,30 @@ export class MigrationsListComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly busyId = signal<string | null>(null);
   readonly pending = signal<PendingAction | null>(null);
+
+  private readonly surfaceRevision = new MigrationsListSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: MigrationsListSurfaceInput = {
+      migrations: this.migrations(),
+      loading: this.loading(),
+      hasLoadError: !!this.error(),
+    };
+    return buildMigrationsListSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   readonly confirmTitle = computed(() =>
     this.pending()?.kind === 'destroy' ? 'Destroy source' : 'Abort migration',

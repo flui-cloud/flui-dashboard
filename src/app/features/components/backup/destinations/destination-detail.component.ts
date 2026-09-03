@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -11,6 +11,13 @@ import {
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
+import {
+  DestinationDetailSurfaceInput,
+  DestinationDetailSurfaceRevision,
+  buildDestinationDetailSurface,
+  presentedContent,
+} from './destination-detail-surface';
 
 @Component({
   selector: 'app-destination-detail',
@@ -96,15 +103,38 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
     </div>
   `,
 })
-export class DestinationDetailComponent implements OnInit {
+export class DestinationDetailComponent implements OnInit, OnDestroy {
   private readonly backup = inject(BackupService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly dest = signal<BackupDestination | null>(null);
   protected readonly loading = signal(false);
   protected readonly providerLabel = providerLabel;
   protected readonly formatBytes = formatBytes;
+
+  private readonly surfaceRevision = new DestinationDetailSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: DestinationDetailSurfaceInput = { destination: this.dest() };
+    const content = presentedContent(input);
+    if (!content) return null;
+    return buildDestinationDetailSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     void (async () => {

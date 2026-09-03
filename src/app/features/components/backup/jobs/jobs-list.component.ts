@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -6,6 +6,13 @@ import { BackupService } from '../../../service/backup.service';
 import { ClusterService } from '../../../service/cluster.service';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
+import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
+import {
+  JobsListSurfaceInput,
+  JobsListSurfaceRevision,
+  buildJobsListSurface,
+  presentedContent,
+} from './jobs-list-surface';
 
 @Component({
   selector: 'app-jobs-list',
@@ -74,13 +81,39 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
     </div>
   `,
 })
-export class JobsListComponent implements OnInit {
+export class JobsListComponent implements OnInit, OnDestroy {
   private readonly backup = inject(BackupService);
   private readonly clusterService = inject(ClusterService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   readonly clusters = this.clusterService.clusters;
   readonly jobs = this.backup.jobs;
   clusterFilter = '';
+
+  private readonly surfaceRevision = new JobsListSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: JobsListSurfaceInput = {
+      jobs: this.jobs(),
+      clusterFilterName: this.clusterFilter
+        ? (this.clusters().find((c) => c.id === this.clusterFilter)?.name ?? this.clusterFilter)
+        : null,
+    };
+    return buildJobsListSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     void (async () => {

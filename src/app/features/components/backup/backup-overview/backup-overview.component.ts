@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,13 @@ import { formatBytes } from '../../../model/backup.models';
 import { EnableBackupsModalComponent } from '../enable-backups/enable-backups-modal.component';
 import { PlatformBackupCardComponent } from '../platform/platform-backup-card.component';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
+import {
+  BackupOverviewSurfaceInput,
+  BackupOverviewSurfaceRevision,
+  buildBackupOverviewSurface,
+  presentedContent,
+} from './backup-overview-surface';
 
 interface OverviewCard {
   title: string;
@@ -132,9 +139,10 @@ interface OverviewCard {
     </div>
   `,
 })
-export class BackupOverviewComponent implements OnInit {
+export class BackupOverviewComponent implements OnInit, OnDestroy {
   private readonly backup = inject(BackupService);
   private readonly clusterService = inject(ClusterService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly showEnableModal = signal(false);
   protected selectedClusterId = '';
@@ -146,6 +154,34 @@ export class BackupOverviewComponent implements OnInit {
   readonly restoreCount = computed(() => this.backup.restoreJobs().length);
   readonly totalUsage = computed(() => formatBytes(this.backup.totalUsageBytes()));
   readonly error = this.backup.error;
+
+  private readonly surfaceRevision = new BackupOverviewSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: BackupOverviewSurfaceInput = {
+      destinationsCount: this.destinationsCount(),
+      policiesCount: this.policiesCount(),
+      degradedPoliciesCount: this.degradedCount(),
+      restoreJobsCount: this.restoreCount(),
+      totalUsageText: this.totalUsage(),
+      clustersAvailable: this.clusters().length,
+      hasLoadError: !!this.error(),
+    };
+    return buildBackupOverviewSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   openEnableModal(): void {
     if (!this.selectedClusterId) return;

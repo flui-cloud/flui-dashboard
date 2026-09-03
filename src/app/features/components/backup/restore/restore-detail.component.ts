@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -6,6 +6,13 @@ import { RestoreJob } from '../../../model/backup.models';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupProgressModalComponent } from '../shared/progress-modal.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
+import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
+import {
+  RestoreDetailSurfaceInput,
+  RestoreDetailSurfaceRevision,
+  buildRestoreDetailSurface,
+  presentedContent,
+} from './restore-detail-surface';
 
 @Component({
   selector: 'app-restore-detail',
@@ -60,12 +67,35 @@ import { BackupBackLinkComponent } from '../shared/back-link.component';
     </div>
   `,
 })
-export class RestoreDetailComponent implements OnInit {
+export class RestoreDetailComponent implements OnInit, OnDestroy {
   private readonly backup = inject(BackupService);
   private readonly route = inject(ActivatedRoute);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly job = signal<RestoreJob | null>(null);
   protected readonly opId = signal<string | null>(null);
+
+  private readonly surfaceRevision = new RestoreDetailSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: RestoreDetailSurfaceInput = { job: this.job() };
+    const content = presentedContent(input);
+    if (!content) return null;
+    return buildRestoreDetailSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     void (async () => {
