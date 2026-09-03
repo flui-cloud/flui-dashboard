@@ -58,6 +58,7 @@ const iamStub = (
   kinds: signal([]),
   groups: signal([]),
   users: signal([]),
+  usersError: signal(null),
   refresh: jasmine.createSpy('refresh'),
   removeGrant,
   revocationPreview: jasmine

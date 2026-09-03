@@ -1,6 +1,7 @@
 import {
   Component,
   DestroyRef,
+  OnDestroy,
   OnInit,
   computed,
   effect,
@@ -20,6 +21,15 @@ import {
 } from '@ng-icons/lucide';
 import { AuthService } from '../../../core/services/auth.service';
 import { AppConfigService } from '../../../core/services/app-config.service';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { InferenceSettingsService } from '../../service/inference-settings.service';
+import {
+  SettingsSurfaceInput,
+  SettingsSurfaceRevision,
+  SettingsTabId,
+  buildSettingsSurface,
+  presentedContent,
+} from './settings-surface';
 import {
   HlmCardDirective,
   HlmCardContentDirective,
@@ -171,12 +181,14 @@ interface SectionDef {
     </div>
   `,
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly cfg = inject(AppConfigService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly inference = inject(InferenceSettingsService);
 
   readonly activeSection = signal<SectionId>('profile');
 
@@ -217,6 +229,33 @@ export class SettingsComponent implements OnInit {
     this.sections.filter((s) => s.visible()),
   );
 
+  private readonly surfaceRevision = new SettingsSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const user = this.authService.currentUser();
+    const input: SettingsSurfaceInput = {
+      userId: user?.userId ?? null,
+      displayName: this._displayName() || null,
+      email: this._email() || null,
+      isAdmin: this._isAdmin(),
+      authMode: this._authMode(),
+      activeTab: this.activeSection() as SettingsTabId,
+      inferenceConnections: this.inference.connections().map((c) => ({
+        id: c.id,
+        label: c.label,
+        baseUrl: c.baseUrl,
+        modelsCount: c.models.length,
+        isDefault: c.isDefault,
+      })),
+    };
+    const content = presentedContent(input);
+    if (!content) return null;
+    return buildSettingsSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
   constructor() {
     effect(() => {
       const visible = this.visibleSections();
@@ -224,6 +263,16 @@ export class SettingsComponent implements OnInit {
         this.activeSection.set(visible[0]?.id ?? 'profile');
       }
     });
+
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes — same pattern as ApplicationDetailComponent.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   protected readonly _displayName = computed(() => {

@@ -1,4 +1,4 @@
-import { Component, signal, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, signal, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -27,6 +27,13 @@ import { ProviderLogoService } from '../../shared/services/provider-logo.service
 import { ProvidersService } from '../service/providers.service';
 import { ReadOnlySectionDirective } from '../../shared/directives/read-only-section.directive';
 import { sandboxFailureMessage } from '../../core/services/sandbox.service';
+import { CurrentSurfaceService } from '../../core/services/current-surface.service';
+import {
+  SshKeysSurfaceInput,
+  SshKeysSurfaceRevision,
+  buildSshKeysSurface,
+  presentedContent,
+} from './ssh-keys-surface';
 
 type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway';
 
@@ -722,7 +729,28 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway';
     }
     `
 })
-export class SshKeysComponent {
+export class SshKeysComponent implements OnDestroy {
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new SshKeysSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: SshKeysSurfaceInput = {
+      keys: this.sortedSshKeys(),
+      isLoading: this.isLoading(),
+      selectedKeyIds: this.selectedKeys(),
+      dateSort: this.dateSort(),
+    };
+    const content = presentedContent(input);
+    return buildSshKeysSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
+
   showAddModal = false;
   showDeleteModal = false;
   keyToDelete: SSHKeyDto | null = null;
@@ -793,6 +821,12 @@ export class SshKeysComponent {
           this.providerLogos.update((map) => ({ ...map, [id]: url }));
         });
       }
+    });
+
+    // Publish this page's own Semantic Surface snapshot whenever it changes;
+    // ngOnDestroy clears it so the snapshot never outlives this page.
+    effect(() => {
+      this.currentSurface.set(this.surface());
     });
 
     this.addKeyForm = this.fb.group({

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, effect, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
@@ -20,6 +20,8 @@ import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { IamService } from '../../service/iam.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { AppConfigService } from '../../../core/services/app-config.service';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { AccessSurfaceInput, AccessSurfaceRevision, AccessTabId, buildAccessSurface, presentedContent } from './access-surface';
 import { CanDirective } from '../../../core/directives/can.directive';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { GrantBuilderComponent } from './grant-builder.component';
@@ -209,12 +211,13 @@ interface TabDef {
     </div>
   `,
 })
-export class AccessComponent implements OnInit {
+export class AccessComponent implements OnInit, OnDestroy {
   protected readonly iam = inject(IamService);
   private readonly perms = inject(PermissionService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly appConfig = inject(AppConfigService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   /**
    * Decision 111: the screen listed `iam_role_bindings` and read as exhaustive.
@@ -225,9 +228,41 @@ export class AccessComponent implements OnInit {
    */
   protected readonly identityProvider = this.appConfig.authMode === 'oidc';
 
+  private readonly surfaceRevision = new AccessSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: AccessSurfaceInput = {
+      activeTab: this.activeTab() as AccessTabId,
+      grants: this.iam.grants(),
+      users: this.iam.users(),
+      usersError: this.iam.usersError(),
+      groups: this.iam.groups(),
+      roles: this.iam.roles(),
+      roleName: (role) => this.iam.roleName(role),
+      scopeText: (binding) => this.scopeText(binding),
+    };
+    const content = presentedContent(input);
+    return buildAccessSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes — same pattern as ApplicationDetailComponent.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
   ngOnInit(): void {
     this.perms.load();
     this.iam.refresh();
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
   }
 
   readonly tabs: TabDef[] = [

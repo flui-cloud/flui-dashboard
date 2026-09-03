@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -17,6 +17,14 @@ import { PlatformComponentsService } from '../../service/platform-components.ser
 import { PlatformComponentResponseDto } from '../../../core/api/model/platformComponentResponseDto';
 import { PlatformComponentStatusBadgeComponent } from './platform-component-status-badge.component';
 import { PlatformComponentDetailPanelComponent } from './platform-component-detail-panel.component';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  PlatformComponentsListSurfaceInput,
+  PlatformComponentsListSurfaceRevision,
+  VisibleComponent,
+  buildPlatformComponentsListSurface,
+  presentedContent,
+} from './platform-components-list-surface';
 
 @Component({
   selector: 'app-platform-components-list',
@@ -290,9 +298,11 @@ import { PlatformComponentDetailPanelComponent } from './platform-component-deta
     </div>
   `,
 })
-export class PlatformComponentsListComponent implements OnInit {
+export class PlatformComponentsListComponent implements OnInit, OnDestroy {
   readonly service = inject(PlatformComponentsService);
   private readonly clusterService = inject(ClusterService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new PlatformComponentsListSurfaceRevision();
 
   searchQuery = '';
   statusFilter = '';
@@ -300,6 +310,45 @@ export class PlatformComponentsListComponent implements OnInit {
 
   private readonly expandedKeys = signal<Set<string>>(new Set());
   confirmModal = signal<{ clusterId: string; componentKey: string; panel: PlatformComponentDetailPanelComponent } | null>(null);
+
+  /** Exactly the rows the template renders: the flattened, per-cluster-filtered union of
+   * `entryFilteredComponents(clusterId)` over `visibleEntries()` — read from the same
+   * signals and plain filter fields the template itself reads (playbook §3.4, anti-drift). */
+  private readonly surfaceVisibleComponents = computed<VisibleComponent[]>(() =>
+    this.visibleEntries()
+      .filter((e) => this.clusterFilter === '' || this.clusterFilter === e.clusterId)
+      .flatMap((e) => this.entryFilteredComponents(e.clusterId)),
+  );
+
+  readonly surface = computed(() => {
+    const input: PlatformComponentsListSurfaceInput = {
+      visibleComponents: this.surfaceVisibleComponents(),
+      totalCount: this.service.allComponents().length,
+      isLoading: this.service.globalLoading(),
+      searchQuery: this.searchQuery,
+      statusFilter: this.statusFilter,
+      clusterFilter: this.clusterFilter,
+      expandedKeys: this.expandedKeys(),
+      createdAtOf: (c) => this.getCreatedAt(c),
+    };
+    const content = presentedContent(input);
+    return buildPlatformComponentsListSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot whenever it changes;
+    // ngOnDestroy clears it so the snapshot never outlives this page.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   readonly availableClusters = computed(() =>
     this.service.entries().map(e => ({ id: e.clusterId, name: e.clusterName }))

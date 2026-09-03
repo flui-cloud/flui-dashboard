@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -15,6 +17,7 @@ import {
   AgentActivityPage,
   AgentIdentityActivity,
   identityNamesByAccount,
+  namedActor,
 } from '../../model/agent-activity.models';
 import {
   AgentConcession,
@@ -33,6 +36,15 @@ import { AgentRequestCardComponent } from './agent-request-card.component';
 import { AgentRevokeDialogComponent } from './agent-revoke-dialog.component';
 import { AgentSkill, AgentSkillService } from '../settings/agent-keys/agent-skill.service';
 import { ConnectAgentComponent } from '../settings/agent-keys/connect-agent.component';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  AgentGrantRow,
+  AgentRequestRow,
+  AgentsSurfaceInput,
+  AgentsSurfaceRevision,
+  buildAgentsSurface,
+  presentedContent,
+} from './agents-surface';
 
 @Component({
   selector: 'app-agents',
@@ -202,12 +214,13 @@ import { ConnectAgentComponent } from '../settings/agent-keys/connect-agent.comp
     }
   `,
 })
-export class AgentsComponent implements OnInit {
+export class AgentsComponent implements OnInit, OnDestroy {
   private readonly cycle = inject(AgentCycleService);
   private readonly keys = inject(ApiAuthService);
   private readonly perms = inject(PermissionService);
   private readonly route = inject(ActivatedRoute);
   private readonly skills = inject(AgentSkillService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly skill = signal<AgentSkill | null>(null);
   protected readonly skillError = signal<string | null>(null);
@@ -282,6 +295,47 @@ export class AgentsComponent implements OnInit {
     const grants = count === 1 ? '1 grant' : `${count} grants`;
     return `${grants} · all revocable`;
   });
+
+  private readonly surfaceRevision = new AgentsSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const target = this.followed();
+    const input: AgentsSurfaceInput = {
+      ceiling: this.ceiling(),
+      waitingRows: this.waiting().map(
+        (proposal): AgentRequestRow => ({ proposal, agentName: this.agentName(proposal.keyId) }),
+      ),
+      loadingWaiting: this.loading(),
+      followedProposalId: target,
+      followedAnsweredStatus: this.answered()?.status ?? null,
+      expiredCount: expiredCount(this.proposals()),
+      grantRows: standingConcessions(this.concessions()).map(
+        (concession): AgentGrantRow => ({ concession, agentName: this.agentName(concession.keyId) }),
+      ),
+      activityTotal: this.activity().total,
+      activityScope: this.activity().scope,
+      activityShownCount: this.activity().entries.length,
+      actorRows: this.actingIdentities().map((identity) => ({
+        identity,
+        name: namedActor(identity, this.keyNames(), this.identityNames()),
+      })),
+      revokeTarget: this.revokeTarget(),
+    };
+    return buildAgentsSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     this.perms.load();

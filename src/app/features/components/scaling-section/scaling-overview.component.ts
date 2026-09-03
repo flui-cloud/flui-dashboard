@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import { ClusterScalingRow } from '../../model/scaling-section.models';
@@ -10,6 +10,13 @@ import {
   SectionFailureComponent,
   SectionSkeletonComponent,
 } from './section-states.component';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  ScalingSurfaceInput,
+  ScalingSurfaceRevision,
+  buildScalingSurface,
+  presentedContent,
+} from './scaling-surface';
 
 @Component({
   selector: 'app-scaling-overview',
@@ -92,8 +99,9 @@ import {
     </div>
   `,
 })
-export class ScalingOverviewComponent {
+export class ScalingOverviewComponent implements OnDestroy {
   private readonly api = inject(ScalingApiService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly rowsRes = rxResource({
     stream: () => this.api.rows(),
@@ -110,4 +118,33 @@ export class ScalingOverviewComponent {
   protected readonly absent = computed(() => this.loaded().absent);
 
   protected readonly rows = computed(() => this.loaded().data ?? []);
+
+  private readonly surfaceRevision = new ScalingSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: ScalingSurfaceInput = {
+      rows: this.rows(),
+      loading: this.loading(),
+      absent: this.absent(),
+      failed: this.failed() !== null,
+    };
+    const content = presentedContent(input);
+    return buildScalingSurface(input, {
+      revision: this.surfaceRevision.next(content),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes. ngOnDestroy clears it, so the snapshot never outlives this
+    // page — same discipline as every other producer in this repo.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 }
