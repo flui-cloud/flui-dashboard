@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@angular/animations": "^22.1.4",
-    "@flui-cloud/semantic-surface": "link:../semantic-surface",
+    "@flui-cloud/semantic-surface": "file:vendor/flui-cloud-semantic-surface-0.1.0.tgz",
     "@angular/cdk": "^22.1.4",
     "@angular/common": "^22.1.4",
     "@angular/compiler": "^22.1.4",
