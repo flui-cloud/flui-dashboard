@@ -73,10 +73,28 @@ interface WizardDestination {
           </select>
         </label>
         <label class="block">
+          <span class="text-sm font-medium">Engine</span>
+          <select
+            [(ngModel)]="form.engineClass"
+            (ngModelChange)="onEngineClassChange($event)"
+            class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          >
+            <option value="volume">Volume — Velero snapshot</option>
+            <option value="database">Database — continuous pgbackrest backup for one Postgres app</option>
+            <option value="platform">Platform — the Flui control-plane database itself</option>
+          </select>
+          @if (form.engineClass === 'database') {
+          <p class="mt-1 text-xs text-muted-foreground">
+            Targets exactly one application, one destination (no replicas).
+          </p>
+          }
+        </label>
+        <label class="block">
           <span class="text-sm font-medium">Scope</span>
           <select
             [(ngModel)]="form.scope"
-            class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            [disabled]="form.engineClass === 'database'"
+            class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-50"
           >
             <option value="cluster_all">Entire cluster</option>
             <option value="namespaces">Specific namespaces</option>
@@ -91,6 +109,17 @@ interface WizardDestination {
             [(ngModel)]="namespacesText"
             class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             placeholder="prod, app-prod"
+          />
+        </label>
+        } @if (form.scope === 'applications') {
+        <label class="block">
+          <span class="text-sm font-medium">
+            {{ form.engineClass === 'database' ? 'Application ID' : 'Application IDs (comma-separated)' }}
+          </span>
+          <input
+            [(ngModel)]="applicationIds"
+            class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
+            placeholder="8b2b8f1a-0398-45fc-9ffd-143830cf722e"
           />
         </label>
         } @if (form.scope === 'label_selector') {
@@ -166,7 +195,8 @@ interface WizardDestination {
           @for (d of destinations(); track d.destinationId; let i = $index) {
           <div class="flex items-center gap-2 rounded-md border border-border p-2">
             <select
-              [(ngModel)]="d.destinationId"
+              [ngModel]="d.destinationId"
+              (ngModelChange)="setDestinationField(i, 'destinationId', $event)"
               class="flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm"
             >
               <option value="">— Select destination —</option>
@@ -175,7 +205,8 @@ interface WizardDestination {
               }
             </select>
             <select
-              [(ngModel)]="d.role"
+              [ngModel]="d.role"
+              (ngModelChange)="setDestinationField(i, 'role', $event)"
               class="rounded-md border border-border bg-background px-2 py-1 text-sm"
             >
               <option value="primary">Primary</option>
@@ -186,6 +217,7 @@ interface WizardDestination {
             </button>
           </div>
           }
+          @if (form.engineClass !== 'database' || destinations().length === 0) {
           <button
             type="button"
             class="text-sm text-primary hover:underline"
@@ -193,6 +225,7 @@ interface WizardDestination {
           >
             + Add destination
           </button>
+          }
         </div>
 
         @if (validationError(); as v) {
@@ -210,7 +243,11 @@ interface WizardDestination {
         <div class="rounded-md border border-border p-3 space-y-1">
           <div><span class="text-muted-foreground">Name:</span> {{ form.name }}</div>
           <div><span class="text-muted-foreground">Cluster:</span> {{ clusterName(form.clusterId) }}</div>
+          <div><span class="text-muted-foreground">Engine:</span> {{ form.engineClass }}</div>
           <div><span class="text-muted-foreground">Scope:</span> {{ form.scope }}</div>
+          @if (form.scope === 'applications') {
+          <div><span class="text-muted-foreground">Applications:</span> {{ applicationIds || '—' }}</div>
+          }
           <div><span class="text-muted-foreground">Schedule:</span> {{ form.cronSchedule || 'on-demand' }}</div>
           <div><span class="text-muted-foreground">Retention:</span> {{ form.retentionDays }}d / {{ form.retentionMaxCopies || '∞' }} copies</div>
           <div><span class="text-muted-foreground">Profile:</span> {{ inferredProfile() }}</div>
@@ -284,6 +321,7 @@ export class PolicyWizardComponent implements OnInit {
     name: '',
     clusterId: '',
     scope: 'cluster_all' as BackupScope,
+    engineClass: 'volume',
     includePvcs: true,
     includeEtcdL1: false,
     cronSchedule: '',
@@ -292,6 +330,14 @@ export class PolicyWizardComponent implements OnInit {
     profile: 'mirrored' as BackupPolicyProfile,
     destinations: [],
   };
+
+  /** database-class policies target exactly one app on exactly one destination. */
+  onEngineClassChange(engineClass: CreateBackupPolicyDto.EngineClassEnum): void {
+    if (engineClass === 'database') {
+      this.form.scope = 'applications' as BackupScope;
+      this.destinations.update((list) => list.slice(0, 1).map((d) => ({ ...d, role: 'primary' as const })));
+    }
+  }
 
   readonly inferredProfile = computed(() => inferProfile(this.destinations()));
   readonly validationError = computed(() => {
@@ -302,7 +348,12 @@ export class PolicyWizardComponent implements OnInit {
         role: d.role,
         priority: i,
       }));
-    return validatePolicyDestinations(list);
+    const base = validatePolicyDestinations(list);
+    if (base) return base;
+    if (this.form.engineClass === 'database' && list.length > 1) {
+      return 'A database-class policy supports only a single (primary) destination.';
+    }
+    return null;
   });
 
   ngOnInit(): void {
@@ -323,7 +374,11 @@ export class PolicyWizardComponent implements OnInit {
   }
 
   canAdvance(): boolean {
-    if (this.step() === 1) return !!this.form.name && !!this.form.clusterId;
+    if (this.step() === 1) {
+      if (!this.form.name || !this.form.clusterId) return false;
+      if (this.form.scope === 'applications' && !this.applicationIds.trim()) return false;
+      return true;
+    }
     if (this.step() === 3) return !this.validationError();
     return true;
   }
@@ -344,6 +399,18 @@ export class PolicyWizardComponent implements OnInit {
 
   removeDestination(i: number): void {
     this.destinations.update((list) => list.filter((_, idx) => idx !== i));
+  }
+
+  /**
+   * Mutating `d.destinationId` in place (the old [(ngModel)] binding) never
+   * marks the `destinations` signal dirty, so `validationError` — a
+   * `computed()` — never recomputes and Step 3 stays stuck on "at least one
+   * destination is required" forever. Replace, don't mutate.
+   */
+  setDestinationField(i: number, field: 'destinationId' | 'role', value: string): void {
+    this.destinations.update((list) =>
+      list.map((item, idx) => (idx === i ? { ...item, [field]: value } : item)),
+    );
   }
 
   destName(id: string): string {
