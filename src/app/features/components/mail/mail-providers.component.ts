@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
   viewChild
@@ -39,6 +41,13 @@ import {
 } from '../../model/mail-console.models';
 import { consoleError } from './mail-format';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  MailProvidersSurfaceInput,
+  MailProvidersSurfaceRevision,
+  buildMailProvidersSurface,
+  presentedContent,
+} from './mail-providers-surface';
 
 const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
   {
@@ -630,8 +639,9 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
     </div>
   `,
 })
-export class MailProvidersComponent implements OnInit {
+export class MailProvidersComponent implements OnInit, OnDestroy {
   private readonly api = inject(MailConsoleService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly scopes = SCOPES;
   protected readonly connections = signal<MailConnection[]>([]);
@@ -683,6 +693,30 @@ export class MailProvidersComponent implements OnInit {
       'Delivery outcomes already collected are kept — they carry their own provider name.',
     ];
   });
+
+  private readonly surfaceRevision = new MailProvidersSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: MailProvidersSurfaceInput = {
+      connections: this.connections(),
+      loading: this.loading(),
+      hasLoadError: !!this.error(),
+    };
+    return buildMailProvidersSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     this.load();

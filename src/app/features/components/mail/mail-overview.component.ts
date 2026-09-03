@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -24,6 +24,13 @@ import {
   formatRate,
 } from '../../model/mail-console.models';
 import { shortWhen, whenLabel } from './mail-format';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  MailOverviewSurfaceInput,
+  MailOverviewSurfaceRevision,
+  buildMailOverviewSurface,
+  presentedContent,
+} from './mail-overview-surface';
 
 @Component({
   selector: 'app-mail-overview',
@@ -302,9 +309,35 @@ import { shortWhen, whenLabel } from './mail-format';
     </div>
   `,
 })
-export class MailOverviewComponent implements OnInit {
+export class MailOverviewComponent implements OnInit, OnDestroy {
   protected readonly s = inject(MailOverviewStateService);
   protected readonly windows = MAIL_WINDOWS;
+  private readonly currentSurface = inject(CurrentSurfaceService);
+
+  private readonly surfaceRevision = new MailOverviewSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: MailOverviewSurfaceInput = {
+      overview: this.s.overview(),
+      window: this.s.window(),
+      loading: this.s.loading(),
+      hasLoadError: !!this.s.error(),
+    };
+    return buildMailOverviewSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     this.s.load();

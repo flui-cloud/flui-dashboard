@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
   viewChild
@@ -20,6 +22,13 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 import { MailConsoleService } from '../../service/mail-console.service';
 import { MailSuppression } from '../../model/mail-console.models';
 import { consoleError, whenLabel } from './mail-format';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  MailSuppressionsSurfaceInput,
+  MailSuppressionsSurfaceRevision,
+  buildMailSuppressionsSurface,
+  presentedContent,
+} from './mail-suppressions-surface';
 
 const REASON_LABEL: Record<string, string> = {
   bounce: 'Bounced',
@@ -185,8 +194,9 @@ const REASON_LABEL: Record<string, string> = {
     </div>
   `,
 })
-export class MailSuppressionsComponent implements OnInit {
+export class MailSuppressionsComponent implements OnInit, OnDestroy {
   private readonly api = inject(MailConsoleService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected query = '';
   protected readonly search = signal('');
@@ -210,6 +220,31 @@ export class MailSuppressionsComponent implements OnInit {
     'Reasonable when a mailbox that was full has room again, or when the entry was added by hand.',
     'If it bounced because the mailbox does not exist, it will bounce again and land straight back here.',
   ];
+
+  private readonly surfaceRevision = new MailSuppressionsSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: MailSuppressionsSurfaceInput = {
+      entries: this.entries(),
+      shownCount: this.shown().length,
+      loading: this.loading(),
+      hasLoadError: !!this.error(),
+    };
+    return buildMailSuppressionsSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     this.load();

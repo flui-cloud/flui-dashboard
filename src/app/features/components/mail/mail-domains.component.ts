@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
   viewChild
@@ -31,6 +33,13 @@ import {
 } from '../../model/mail-console.models';
 import { consoleError } from './mail-format';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  MailDomainsSurfaceInput,
+  MailDomainsSurfaceRevision,
+  buildMailDomainsSurface,
+  presentedContent,
+} from './mail-domains-surface';
 
 @Component({
   selector: 'app-mail-domains',
@@ -258,8 +267,9 @@ import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-s
     </div>
   `,
 })
-export class MailDomainsComponent implements OnInit {
+export class MailDomainsComponent implements OnInit, OnDestroy {
   private readonly api = inject(MailConsoleService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly domains = signal<MailDomainProofs[]>([]);
   protected readonly loading = signal(true);
@@ -283,6 +293,30 @@ export class MailDomainsComponent implements OnInit {
     'The MX and DMARC records stay. Nothing recorded whether Flui created them, and deleting an MX it did not create stops inbound mail.',
     'Delivery history and the suppression list are untouched.',
   ];
+
+  private readonly surfaceRevision = new MailDomainsSurfaceRevision();
+
+  readonly surface = computed(() => {
+    const input: MailDomainsSurfaceInput = {
+      domains: this.domains(),
+      loading: this.loading(),
+      hasLoadError: !!this.error(),
+    };
+    return buildMailDomainsSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     this.load();
