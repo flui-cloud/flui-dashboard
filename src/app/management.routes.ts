@@ -57,6 +57,14 @@ export const managementRoutes: Routes = [
     title: 'Projects - flui.cloud',
   },
   {
+    path: 'updates',
+    loadComponent: () =>
+      import(
+        './features/components/platform-updates/platform-updates.component'
+      ).then((m) => m.PlatformUpdatesComponent),
+    title: 'Updates - flui.cloud',
+  },
+  {
     path: 'migrations',
     loadComponent: () =>
       import(

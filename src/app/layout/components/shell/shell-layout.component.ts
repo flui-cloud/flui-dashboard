@@ -27,12 +27,14 @@ import { AssistantWidgetComponent } from '../../../features/components/assistant
 import { FluiBackdropComponent } from '../../../shared/components/flui-backdrop/flui-backdrop.component';
 import { SandboxBannerComponent } from './sandbox-banner.component';
 import { SandboxSectionNoticeComponent } from './sandbox-section-notice.component';
+import { PlatformUpdateWatcherComponent } from '../../../features/components/platform-updates/platform-update-watcher.component';
 import { SandboxService } from '../../../core/services/sandbox.service';
 
 @Component({
   selector: 'app-shell-layout',
   standalone: true,
   imports: [
+    PlatformUpdateWatcherComponent,
     SandboxSectionNoticeComponent,
     SidebarComponent,
     HlmSidebarContentHeaderComponent,
@@ -112,6 +114,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
     <app-quick-ssh-overlay />
     <app-quick-ssh-dock />
     <app-toast-container />
+    <app-platform-update-watcher />
     <!-- Hide the global Flui assistant where a section has its own assistant
          (e.g. the SQL console), to avoid two floating assistants competing. -->
     @if (!hideAssistant()) {

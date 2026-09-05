@@ -40,6 +40,7 @@ import {
   lucideStore,
   lucideArchive,
   lucideArrowRightLeft,
+  lucideDownload,
   lucideMail,
   lucideGithub,
   lucideBot,
@@ -120,6 +121,7 @@ import {
   ],
   providers: [
     provideIcons({
+      lucideDownload,
       lucideLayoutDashboard,
       lucideServer,
       lucideHardDrive,

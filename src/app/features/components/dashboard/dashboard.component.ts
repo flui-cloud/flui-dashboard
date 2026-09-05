@@ -17,6 +17,7 @@ import { DashboardCertsComponent } from './dashboard-certs.component';
 import { DashboardActivityComponent } from './dashboard-activity.component';
 import { DashboardBackupsComponent } from './dashboard-backups.component';
 import { DashboardCredentialsBannerComponent } from './dashboard-credentials-banner.component';
+import { PlatformUpdateBannerComponent } from '../platform-updates/platform-update-banner.component';
 import { DashboardAgentStatusComponent } from './dashboard-agent-status.component';
 import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.component';
 
@@ -33,6 +34,7 @@ import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.compone
     DashboardActivityComponent,
     DashboardBackupsComponent,
     DashboardCredentialsBannerComponent,
+    PlatformUpdateBannerComponent,
     DashboardAgentStatusComponent,
     SandboxGuideCardComponent,
   ],
@@ -48,6 +50,9 @@ import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.compone
 
       <!-- Credentials status banner (only shown when something needs attention) -->
       <app-dashboard-credentials-banner />
+
+      <!-- Shown only while a Flui release is waiting to be applied -->
+      <app-platform-update-banner />
 
       <!-- Renders itself only inside a sandbox tenancy -->
       <app-sandbox-guide-card />

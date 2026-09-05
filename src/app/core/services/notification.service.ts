@@ -21,6 +21,7 @@ export type NotificationCategory =
   | 'snapshot'
   | 'backup'
   | 'alert'
+  | 'platform-update'
   | 'general';
 
 export interface NotificationLink {

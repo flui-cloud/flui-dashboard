@@ -10,6 +10,7 @@ export const MANAGEMENT_SECTION_BY_LABEL: Record<string, string> = {
   'GitHub Setup': 'providers',
   Access: 'access',
   Projects: 'projects',
+  Updates: 'infrastructure',
   Settings: 'settings',
 };
 
@@ -172,6 +173,13 @@ export const ALL_MANAGEMENT_ITEMS: SidebarNavItem[] = [
     routerLinkActive: 'active',
     icon: 'lucideFolders',
     keywords: ['organization', 'workspace', 'team'],
+  },
+  {
+    label: 'Updates',
+    link: '/management/updates',
+    routerLinkActive: 'active',
+    icon: 'lucideDownload',
+    keywords: ['upgrade', 'release', 'version', 'platform'],
   },
   {
     label: 'How it is run',
