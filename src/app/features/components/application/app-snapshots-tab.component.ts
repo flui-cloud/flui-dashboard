@@ -83,10 +83,12 @@ type StatusFilter = 'all' | SnapshotStatus;
         <div>
           <h2 class="text-lg font-semibold flex items-center gap-2">
             <ng-icon name="lucideCamera" class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-            Snapshots
+            Volume copies
           </h2>
           <p class="text-sm text-muted-foreground mt-0.5">
-            Point-in-time copies of this app's data. They live on the same disk that hosts the app, so they take up space there.
+            A file copy of this app's volume, taken as it is unless the app was stopped first.
+            These live on the same disk as the app, so deleting the app deletes them too — and
+            they cost storage while they exist.
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -120,7 +122,7 @@ type StatusFilter = 'all' | SnapshotStatus;
               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-              Create snapshot
+              Take a copy
             </button>
           }
         </div>
@@ -139,7 +141,7 @@ type StatusFilter = 'all' | SnapshotStatus;
           <div class="flex items-start gap-3">
             <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
             <div>
-              <p class="text-sm font-medium text-amber-800 dark:text-amber-200">Snapshots are not available on this cluster</p>
+              <p class="text-sm font-medium text-amber-800 dark:text-amber-200">Volume copies are not available on this cluster</p>
               <p class="text-sm text-amber-700 dark:text-amber-300 mt-1">
                 {{ snapshotCapability()?.reason }}
               </p>
@@ -158,15 +160,15 @@ type StatusFilter = 'all' | SnapshotStatus;
           <ng-icon name="lucideCamera" class="h-10 w-10 text-muted-foreground mx-auto mb-3" />
           <p class="text-sm font-medium">
             @if (filter() === 'all') {
-              No snapshots yet
+              No copies yet
             } @else {
-              No snapshots match the selected filter
+              No copies match the selected filter
             }
           </p>
           @if (filter() === 'all') {
             <p class="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-              Create a snapshot to capture the current state of this application's volume.
-              Snapshots consume disk space inside the cluster's shared volume.
+              Take a copy to keep this volume's contents as they are now. Each copy is a
+              full second copy of the data, on the same storage the application uses.
             </p>
           }
         </div>

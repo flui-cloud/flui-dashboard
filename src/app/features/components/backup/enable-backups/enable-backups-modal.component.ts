@@ -121,10 +121,17 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
                 <ul class="list-disc ml-4 text-foreground space-y-0.5">
                   @if (scope.k8sResources) {
                   <li>Application configuration and settings</li>
-                  } @if (scope.persistentVolumes) {
-                  <li>Application data and storage volumes</li>
+                  } @if (scope.persistentVolumes === 'shared-storage-only') {
+                  <li>Data on shared storage volumes</li>
                   }
                 </ul>
+                @if (scope.persistentVolumes === 'shared-storage-only') {
+                <p class="text-amber-700 dark:text-amber-400">
+                  <strong>Not database data.</strong> Volumes on dedicated storage — which is
+                  what databases use — are not captured here. Protect a Postgres database with
+                  continuous backup, and any other volume with a copy.
+                </p>
+                }
                 <p class="text-muted-foreground">
                   Container images and resources outside the cluster are not included.
                 </p>

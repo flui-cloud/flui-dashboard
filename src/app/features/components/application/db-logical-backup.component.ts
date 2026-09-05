@@ -22,7 +22,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
  * Logical (engine-native) database backup/restore for the snapshots tab. Renders only for
  * supported DB apps (the backend `info` reports the engine); non-DB apps stay hidden. The dump
  * is a portable SQL/RDB file (download); restore streams a dump back in (destructive, confirmed).
- * Complements the volume snapshots below it. Low-coupling — drop-in via `[appId]`.
+ * Complements the volume copies below it. Low-coupling — drop-in via `[appId]`.
  */
 @Component({
   selector: 'app-db-logical-backup',
@@ -51,7 +51,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               </h3>
               <p class="mt-0.5 text-sm text-muted-foreground">
                 A portable engine-native dump{{ i.database ? ' of "' + i.database + '"' : '' }} — restore it here, on
-                another Flui database, or anywhere. Complements the volume snapshots below.
+                another Flui database, or anywhere. Complements the volume copies below.
               </p>
 
               <div class="mt-3 flex flex-wrap items-center gap-2">

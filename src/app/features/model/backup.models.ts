@@ -101,6 +101,14 @@ export interface BackupPolicy {
   };
   includePvcs: boolean;
   includeEtcdL1: boolean;
+  /**
+   * Which engine runs this policy, and therefore what it actually protects.
+   * The three behave nothing alike — Velero captures Kubernetes objects and
+   * the volumes it can read, the database engine ships WAL continuously, and
+   * the platform engine dumps Flui's own control plane — so a list that does
+   * not show it is a list of rows that look interchangeable and are not.
+   */
+  engineClass?: 'volume' | 'database' | 'platform' | 'volume_copy';
   cronSchedule?: string | null;
   retentionDays: number;
   retentionMaxCopies?: number | null;
@@ -476,7 +484,12 @@ export interface ProviderReadiness {
 
 export interface BackupScopeInfo {
   k8sResources: boolean;
-  persistentVolumes: boolean;
+  /**
+   * Never a plain `true`: Velero's file-system backup cannot read hostPath
+   * volumes, so volumes on the dedicated storage class (what databases use)
+   * are not captured while shared-storage ones are.
+   */
+  persistentVolumes: 'shared-storage-only' | false;
   method: string;
   notes: string;
 }

@@ -19,7 +19,7 @@ export function kindLabel(snap: ApplicationSnapshot): string {
 export function kindTooltip(snap: ApplicationSnapshot): string {
   return getSnapshotKind(snap) === 'native'
     ? 'CSI VolumeSnapshot — block-level diff against the source volume.'
-    : 'Copy-pod fallback — full file-level copy of the PVC, consumes equivalent space in the shared volume.';
+    : 'A full file-level copy of the volume, taking as much space again on the same storage.';
 }
 
 export function kindBadgeClass(snap: ApplicationSnapshot): string {

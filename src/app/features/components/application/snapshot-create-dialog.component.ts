@@ -23,7 +23,7 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
         <div class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6" (click)="$event.stopPropagation()">
           <div class="flex items-start justify-between mb-4">
             <div>
-              <h3 class="text-lg font-semibold">Create snapshot</h3>
+              <h3 class="text-lg font-semibold">Take a copy of this volume</h3>
               <p class="text-xs text-muted-foreground mt-1">
                 Captures the current data of this application's volume.
               </p>

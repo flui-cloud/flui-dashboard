@@ -95,11 +95,15 @@ export class PlatformBackupService {
   /** Most recent job (by finish, else create time) belonging to any of the given policies. */
   async lastPlatformJob(policyIds: string[]): Promise<PlatformBackupJob | null> {
     if (policyIds.length === 0) return null;
-    const ids = new Set(policyIds);
-    const jobs = await firstValueFrom(
-      this.http.get<PlatformBackupJob[]>(this.url('backup-jobs')),
+    // One request per policy — the route is scoped to a single policyId, no bulk endpoint exists.
+    const perPolicy = await Promise.all(
+      policyIds.map((id) =>
+        firstValueFrom(
+          this.http.get<PlatformBackupJob[]>(this.url(`backup-jobs/policy/${id}`)),
+        ).catch(() => [] as PlatformBackupJob[]),
+      ),
     );
-    const mine = (jobs ?? []).filter((j) => j.policyId != null && ids.has(j.policyId));
+    const mine = perPolicy.flat();
     if (mine.length === 0) return null;
     return mine.reduce(
       (latest, job) => (this.jobTime(job) > this.jobTime(latest) ? job : latest),

@@ -64,6 +64,7 @@ import {
             <tr>
               <th class="text-left px-4 py-2">Name</th>
               <th class="text-left px-4 py-2">Cluster</th>
+              <th class="text-left px-4 py-2">Protects</th>
               <th class="text-left px-4 py-2">Profile</th>
               <th class="text-left px-4 py-2">Schedule</th>
               <th class="text-left px-4 py-2">Status</th>
@@ -78,6 +79,7 @@ import {
                 </a>
               </td>
               <td class="px-4 py-2 text-muted-foreground">{{ clusterName(p.clusterId) }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ engineLabel(p.engineClass) }}</td>
               <td class="px-4 py-2 text-muted-foreground capitalize">{{ p.profile }}</td>
               <td class="px-4 py-2 text-muted-foreground font-mono text-xs">
                 {{ p.cronSchedule || 'on-demand' }}
@@ -141,5 +143,17 @@ export class PoliciesListComponent implements OnInit, OnDestroy {
 
   clusterName(id: string): string {
     return this.clusters().find((c) => c.id === id)?.name ?? id.slice(0, 8);
+  }
+
+  /** What the policy actually protects — the three engines behave nothing alike. */
+  engineLabel(engineClass?: string): string {
+    switch (engineClass) {
+      case 'database':
+        return 'Database (continuous)';
+      case 'platform':
+        return 'Control plane';
+      default:
+        return 'Cluster state';
+    }
   }
 }

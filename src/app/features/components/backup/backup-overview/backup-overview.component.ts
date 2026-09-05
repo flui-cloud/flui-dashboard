@@ -34,14 +34,45 @@ interface OverviewCard {
         <div>
           <h1 class="text-2xl font-semibold">Backup &amp; Restore</h1>
           <p class="text-sm text-muted-foreground mt-1">
-            EU sovereignty by default. Activate backups in 1 click per cluster — backups use your existing provider credentials.
+            Your data stays in the EU, on storage you own. What you protect it with depends
+            on what it is — the three below cover different things and do not replace each other.
           </p>
         </div>
       </header>
 
-      <!-- One-click activation -->
       <section class="space-y-2" appReadOnlySection="backup">
-        <h2 class="text-sm font-semibold">Activate backups on a cluster</h2>
+        <h2 class="text-sm font-semibold">What do you want to protect?</h2>
+        <div class="grid gap-4 md:grid-cols-3">
+          <div class="rounded-lg border border-border bg-card p-4 flex flex-col">
+            <div class="text-sm font-semibold">A cluster</div>
+            <p class="text-xs text-muted-foreground mt-1 flex-1">
+              Its Kubernetes objects, and the contents of shared-storage volumes.
+              <span class="text-amber-700 dark:text-amber-400">Not database volumes</span> —
+              those sit on dedicated storage this engine cannot read.
+            </p>
+            <div class="text-xs text-muted-foreground mt-2">Runs on a schedule</div>
+          </div>
+          <div class="rounded-lg border border-border bg-card p-4 flex flex-col">
+            <div class="text-sm font-semibold">A database</div>
+            <p class="text-xs text-muted-foreground mt-1 flex-1">
+              Every change shipped off-cluster as it happens, so it can be restored to any
+              moment in the window — not just to last night.
+            </p>
+            <div class="text-xs text-muted-foreground mt-2">
+              Open the database → <span class="font-medium">Backup</span>
+            </div>
+          </div>
+          <div class="rounded-lg border border-border bg-card p-4 flex flex-col">
+            <div class="text-sm font-semibold">Flui itself</div>
+            <p class="text-xs text-muted-foreground mt-1 flex-1">
+              The control-plane database, sealed to a recipient you hold. This is what a
+              rebuild starts from when the cluster running Flui is gone.
+            </p>
+            <div class="text-xs text-muted-foreground mt-2">Set up below</div>
+          </div>
+        </div>
+
+        <h2 class="text-sm font-semibold pt-2">Protect a cluster</h2>
         <div class="rounded-lg border border-border bg-card p-5">
           @if (clusters().length === 0) {
           <p class="text-sm text-muted-foreground">
@@ -49,7 +80,8 @@ interface OverviewCard {
           </p>
           } @else {
           <p class="text-sm text-muted-foreground mb-1">
-            Pick a cluster and we'll provision destinations, install Velero and run the first backup automatically.
+            Pick a cluster and Flui provisions the destination, installs the engine and takes
+            the first backup. Each run records which volumes it captured and which it skipped.
           </p>
           <p class="text-xs text-muted-foreground mb-3">
             Requires a configured Scaleway provider —
