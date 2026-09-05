@@ -7,8 +7,16 @@ export interface PlatformComponentUpdate {
   key: string;
   name: string;
   role: string;
+  /** The workload as it is named on the cluster, e.g. `flui-web`. */
+  deploymentName: string;
+  /** False for an optional component this installation never installed. */
+  installed: boolean;
+  /** False when the version is a pin rather than something read from the cluster. */
+  observed: boolean;
   installedVersion: string | null;
   targetVersion: string | null;
+  /** False when the running image is a commit build or a moving tag. */
+  installedIsRelease: boolean;
   changed: boolean;
   restartsControlPlane: boolean;
 }
@@ -99,6 +107,18 @@ export class PlatformUpdateService {
   /** True exactly while the API is being replaced under our feet. */
   readonly controlPlaneRestarting = computed(
     () => this.operationData()?.awaitingSelfRestart === true,
+  );
+  /**
+   * The check itself failed. Distinct from "no update": an installation whose
+   * manifest is unreachable knows nothing about what exists, and saying "you
+   * are on the latest release" there is a claim nobody made.
+   */
+  readonly checkFailed = computed(() => !!this.statusData()?.checkError);
+  /** Components pinned to something that is not a release version. */
+  readonly offReleaseComponents = computed(() =>
+    (this.statusData()?.components ?? []).filter(
+      (c) => c.installed && !!c.installedVersion && !c.installedIsRelease,
+    ),
   );
   readonly blockers = computed(
     () => this.statusData()?.advisories.filter((a) => a.level === 'blocker') ?? [],

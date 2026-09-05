@@ -69,7 +69,14 @@ import { PlatformUpdateHistoryComponent } from './platform-update-history.compon
           <div class="card-surface" [class.border-primary]="status.updateAvailable">
             <div class="flex flex-wrap items-start justify-between gap-5 p-5">
               <div class="space-y-1.5">
-                @if (status.updateAvailable) {
+                @if (updates.checkFailed()) {
+                  <span class="badge badge-in-progress">Not checked</span>
+                  <h2 class="text-lg font-semibold">Could not check for updates</h2>
+                  <p class="text-sm text-muted-foreground">
+                    This installation runs Flui <span class="font-mono">{{ status.installedVersion }}</span>.
+                    Whether anything newer exists is unknown until the release manifest can be read.
+                  </p>
+                } @else if (status.updateAvailable) {
                   <span class="badge bg-primary/10 text-primary">Update available</span>
                   <h2 class="text-lg font-semibold">Flui {{ status.availableVersion }}</h2>
                   <p class="text-sm text-muted-foreground">
@@ -81,11 +88,11 @@ import { PlatformUpdateHistoryComponent } from './platform-update-history.compon
                   <span class="badge badge-success">Up to date</span>
                   <h2 class="text-lg font-semibold">You are on the latest release</h2>
                   <p class="text-sm text-muted-foreground">
-                    Flui <span class="font-mono">{{ status.installedVersion }}</span> — every component is on its release version.
+                    Flui <span class="font-mono">{{ status.installedVersion }}</span> — {{ componentSummary() }}
                   </p>
                 }
               </div>
-              @if (status.updateAvailable) {
+              @if (status.updateAvailable && !updates.checkFailed()) {
                 <button type="button" (click)="openConfirm()" [disabled]="!status.applicable"
                         class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
                   <ng-icon name="lucideDownload" class="h-4 w-4" />
@@ -99,21 +106,31 @@ import { PlatformUpdateHistoryComponent } from './platform-update-history.compon
             </div>
             @for (component of status.components; track component.key) {
               <div class="grid grid-cols-[180px_1fr_220px_110px] items-center gap-3 border-t border-border px-5 py-3"
-                   [class.opacity-60]="!component.changed">
-                <div class="font-mono text-sm font-medium">{{ component.key }}</div>
+                   [class.opacity-60]="!component.changed || !component.installed">
+                <div class="font-mono text-sm font-medium">{{ component.deploymentName }}</div>
                 <div class="text-xs text-muted-foreground">
                   {{ component.role }}@if (component.restartsControlPlane) { · restarts once }
                 </div>
                 <div class="font-mono text-xs">
-                  @if (component.changed) {
-                    <span class="text-muted-foreground">{{ component.installedVersion }}</span>
-                    <span class="mx-1.5 text-muted-foreground/50">&rarr;</span>
+                  @if (!component.installed) {
+                    <span class="font-sans text-muted-foreground">Not installed</span>
+                  } @else {
+                    @if (component.changed) {
+                      <span class="text-muted-foreground">{{ component.installedVersion }}</span>
+                      <span class="mx-1.5 text-muted-foreground/50">&rarr;</span>
+                    }
+                    <span class="font-semibold">{{ component.targetVersion ?? component.installedVersion ?? '—' }}</span>
+                    @if (!component.installedIsRelease && !component.changed) {
+                      <span class="ml-1.5 font-sans text-[11px] text-amber-600 dark:text-amber-400">build</span>
+                    }
+                    @if (!component.observed) {
+                      <span class="ml-1.5 font-sans text-[11px] text-muted-foreground">pinned, not read from the cluster</span>
+                    }
                   }
-                  <span class="font-semibold">{{ component.targetVersion ?? component.installedVersion }}</span>
                 </div>
                 <div>
                   <span class="badge" [class]="component.changed ? 'bg-primary/10 text-primary' : 'badge-in-progress'">
-                    {{ component.changed ? 'Will update' : 'Unchanged' }}
+                    {{ changeLabel(component, status.availableVersion) }}
                   </span>
                 </div>
               </div>
@@ -228,6 +245,16 @@ export class PlatformUpdatesComponent implements OnInit, OnDestroy {
     () => this.updates.status()?.components.filter((c) => c.changed) ?? [],
   );
   protected readonly changedCount = computed(() => this.changedComponents().length);
+
+  /** What the table below actually shows, said in one line and never assumed. */
+  protected readonly componentSummary = computed(() => {
+    const off = this.updates.offReleaseComponents();
+    if (off.length === 0) return 'every installed component is on its release version.';
+    const names = off.map((c) => c.deploymentName).join(', ');
+    return off.length === 1
+      ? `${names} is running a build rather than a release image.`
+      : `${names} are running builds rather than release images.`;
+  });
   protected readonly migrations = computed(() => this.updates.status()?.migrations ?? 0);
   protected readonly warnings = computed(
     () => this.updates.status()?.advisories.filter((a) => a.level !== 'info') ?? [],
@@ -246,6 +273,16 @@ export class PlatformUpdatesComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Other surfaces keep the poll alive while an update runs; only stop a finished one.
     if (!this.updates.running()) this.updates.stopPolling();
+  }
+
+  /** "Unchanged" is a comparison; without a release there was none to make. */
+  protected changeLabel(
+    component: PlatformComponentUpdate,
+    availableVersion: string | null,
+  ): string {
+    if (!component.installed) return 'Absent';
+    if (!availableVersion) return 'Not compared';
+    return component.changed ? 'Will update' : 'Unchanged';
   }
 
   protected async check(): Promise<void> {
