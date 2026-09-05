@@ -95,12 +95,53 @@ interface MappingEntry {
               <option value="cluster">Whole cluster</option>
               <option value="namespace">Namespace</option>
               <option value="application">Application</option>
-              <option value="control">Control</option>
             </select>
           </label>
         </div>
 
-        @if (form.targetKind === 'namespace') {
+        <fieldset class="space-y-2">
+          <legend class="text-sm font-medium">Where should it go?</legend>
+          <label class="flex items-start gap-2 text-sm">
+            <input type="radio" name="placement" value="new" [(ngModel)]="form.placement" class="mt-1" />
+            <span>
+              <strong>Beside the original.</strong>
+              <span class="text-muted-foreground">
+                Nothing existing is touched. Needs a namespace mapping below, or a different target cluster.
+              </span>
+            </span>
+          </label>
+          <label class="flex items-start gap-2 text-sm">
+            <input type="radio" name="placement" value="existing" [(ngModel)]="form.placement" class="mt-1" />
+            <span>
+              <strong>Replace what is there.</strong>
+              <span class="text-muted-foreground">
+                Removes the objects Flui created in the target and restores them from the backup.
+                Volumes are kept — this backup does not carry their data.
+              </span>
+            </span>
+          </label>
+          @if (form.placement === 'existing' && form.targetKind === 'cluster') {
+          <p class="text-amber-700 dark:text-amber-400 text-xs">
+            A whole cluster cannot be replaced in place. Pick a namespace or an application,
+            or restore beside the original into another cluster.
+          </p>
+          }
+        </fieldset>
+
+        @if (form.targetKind === 'namespace' && form.placement === 'existing') {
+        <label class="block">
+          <span class="text-sm font-medium">Namespaces to replace</span>
+          <input
+            [(ngModel)]="namespacesToReplace"
+            placeholder="prod, app-prod"
+            class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+          <span class="text-xs text-muted-foreground">
+            Comma-separated. The objects Flui created in these namespaces are removed, then
+            restored from the backup. Volumes are kept.
+          </span>
+        </label>
+        } @if (form.targetKind === 'namespace' && form.placement === 'new') {
         <div class="space-y-2">
           <span class="text-sm font-medium">Namespace mapping</span>
           @for (m of mappings(); track $index; let i = $index) {
@@ -163,6 +204,7 @@ export class RestoreWizardComponent implements OnInit {
     sourceDestinationId: '',
     targetClusterId: '',
     targetKind: 'namespace' as CreateRestoreJobDto.TargetKindEnum,
+    placement: 'new' as CreateRestoreJobDto.PlacementEnum,
   };
 
   ngOnInit(): void {
@@ -183,6 +225,8 @@ export class RestoreWizardComponent implements OnInit {
     this.mappings.update((list) => list.filter((_, idx) => idx !== i));
   }
 
+  namespacesToReplace = '';
+
   async onPreview(): Promise<void> {
     this.previewing.set(true);
     this.preview.set(
@@ -199,13 +243,24 @@ export class RestoreWizardComponent implements OnInit {
     this.submitError.set(null);
     const dto: CreateRestoreJobDto = { ...this.form };
     if (this.form.targetKind === 'namespace') {
-      const mapping: Record<string, string> = {};
-      for (const m of this.mappings()) {
-        if (m.from && m.to) mapping[m.from] = m.to;
+      if (this.form.placement === 'existing') {
+        // Replacing needs to know what to empty first; a mapping would send the
+        // restore somewhere else entirely, which is the opposite of in place.
+        dto.targetSelector = {
+          namespaces: this.namespacesToReplace
+            .split(',')
+            .map((n) => n.trim())
+            .filter(Boolean),
+        };
+      } else {
+        const mapping: Record<string, string> = {};
+        for (const m of this.mappings()) {
+          if (m.from && m.to) mapping[m.from] = m.to;
+        }
+        dto.targetSelector = {
+          namespaceMapping: Object.keys(mapping).length ? mapping : undefined,
+        };
       }
-      dto.targetSelector = {
-        namespaceMapping: Object.keys(mapping).length ? mapping : undefined,
-      };
     }
     const result = await this.backup.createRestore(dto);
     this.submitting.set(false);

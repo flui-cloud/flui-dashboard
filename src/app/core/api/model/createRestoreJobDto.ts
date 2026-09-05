@@ -14,6 +14,7 @@ export interface CreateRestoreJobDto {
     sourceDestinationId: string;
     targetClusterId: string;
     targetKind: CreateRestoreJobDto.TargetKindEnum;
+    placement?: CreateRestoreJobDto.PlacementEnum;
     targetSelector?: object;
     strategy?: CreateRestoreJobDto.StrategyEnum;
     /**
@@ -22,6 +23,11 @@ export interface CreateRestoreJobDto {
     recoveryTargetTime?: string;
 }
 export namespace CreateRestoreJobDto {
+    export const PlacementEnum = {
+        New: 'new',
+        Existing: 'existing'
+    } as const;
+    export type PlacementEnum = typeof PlacementEnum[keyof typeof PlacementEnum];
     export const TargetKindEnum = {
         Cluster: 'cluster',
         Namespace: 'namespace',
