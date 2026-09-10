@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed, effect, viewChild, ChangeDetectionStrategy } from '@angular/core';
 
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { take } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -29,6 +29,7 @@ import {
   lucideTriangleAlert,
   lucideArrowRight,
   lucideKey,
+  lucideLayers,
 } from '@ng-icons/lucide';
 
 import { RepositoryService, ConnectedRepository } from '../../service/repository.service';
@@ -52,7 +53,7 @@ import {
 @Component({
   selector: 'app-repositories-list',
   standalone: true,
-  imports: [FormsModule, NgIconComponent, ConfirmationDialogComponent, GithubConnectComponent, GhcrPatModalComponent, RepoDeployChoiceModalComponent],
+  imports: [FormsModule, RouterLink, NgIconComponent, ConfirmationDialogComponent, GithubConnectComponent, GhcrPatModalComponent, RepoDeployChoiceModalComponent],
   providers: [
     provideIcons({
       lucideGitBranch,
@@ -79,6 +80,7 @@ import {
       lucideTriangleAlert,
       lucideArrowRight,
       lucideKey,
+      lucideLayers,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -592,6 +594,13 @@ import {
                       }
                       Deploy
                     </button>
+                    <a
+                      [routerLink]="['/apps/repositories', repo.id, 'map']"
+                      class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <ng-icon name="lucideLayers" class="h-4 w-4" />
+                      Readiness map
+                    </a>
                     <button
                       (click)="confirmDelete(repo)"
                       class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"

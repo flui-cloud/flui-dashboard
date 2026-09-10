@@ -203,6 +203,14 @@ export const appsRoutes: Routes = [
           ).then((m) => m.GithubSetupWizardComponent),
         title: 'Setup GitHub Integration - flui.cloud',
       },
+      {
+        path: ':id/map',
+        loadComponent: () =>
+          import(
+            './features/components/repo-map/repo-map.component'
+          ).then((m) => m.RepoMapComponent),
+        title: 'Deployment Readiness - flui.cloud',
+      },
     ],
   },
   {

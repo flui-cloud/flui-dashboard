@@ -46,10 +46,28 @@ export function boolObservation(key: string, value: boolean, source: Observation
   return { key, presentedAs: { value }, source };
 }
 
+/**
+ * A trailing part of a scope id, never a whole one — the id's first character comes from the
+ * page id, which is why this does not enforce the schema's leading-character rule.
+ *
+ * The schema's `identifier` pattern (`^[A-Za-z0-9][A-Za-z0-9._:-]*$`) rejects the `/` that real
+ * row keys carry — a repository unit is `services/api`, an image is `ghcr.io/owner/name` — so a
+ * row keyed on one of those would produce a snapshot that fails validation. Collapsing every
+ * rejected character to `_` is deterministic and, since the row's own `ref` still carries the
+ * true id percent-encoded, nothing identifying is lost.
+ */
+export function scopeIdPart(value: string): string {
+  return value.replace(/[^A-Za-z0-9._:-]/g, '_');
+}
+
 export interface SurfaceListRow {
   /** Row scope id, unique within the list — e.g. `${listId}:${rowKey}`. */
   id: string;
-  ref: string;
+  /** Omitted when the row is not (yet) a Flui domain entity — a repository unit that no
+   * application exists for until an apply runs, a candidate service that is still only a
+   * catalog match. Playbook §4, fifth case: minting a `flui://` ref for one of those would
+   * let "deploy this" resolve onto something no Flui tool can address. */
+  ref?: string;
   label?: string;
   /** Default 'related'. Only a real, per-instance product state (a checkbox, an expanded
    * panel) earns 'selected' — never invented to make attention richer (playbook §4). */
@@ -106,7 +124,9 @@ export function buildSurfaceList(input: SurfaceListInput): SurfaceListResult {
     parentId: input.listId,
     kind: 'region',
     ...(row.label ? { label: row.label } : {}),
-    entities: [{ ref: row.ref, ...(row.label ? { label: row.label } : {}), role: row.role ?? 'related' }],
+    ...(row.ref
+      ? { entities: [{ ref: row.ref, ...(row.label ? { label: row.label } : {}), role: row.role ?? 'related' }] }
+      : {}),
     ...(row.observations?.length ? { observations: row.observations } : {}),
   }));
 

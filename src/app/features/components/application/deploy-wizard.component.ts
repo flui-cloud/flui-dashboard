@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
 
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { firstValueFrom } from 'rxjs';
@@ -40,6 +40,8 @@ import {
   lucideDatabase,
   lucideSlidersHorizontal,
   lucideCopy,
+  lucideLayers,
+  lucideCircleHelp,
 } from '@ng-icons/lucide';
 import { RepositoryService, ConnectedRepository, RepositoryFluiManifest, RepositoryManifestEntry } from '../../service/repository.service';
 import { ClusterService } from '../../service/cluster.service';
@@ -49,6 +51,7 @@ import { ApplicationsService } from '../../../core/api/api/applications.service'
 import { ImagesService } from '../../../core/api/api/images.service';
 import { InfrastructureClustersService } from '../../../core/api/api/infrastructureClusters.service';
 import { CreateApplicationDto } from '../../../core/api/model/createApplicationDto';
+import { ManifestCheckDto } from '../../../core/api/model/manifestCheckDto';
 import { ResourceProfileDto } from '../../../core/api/model/resourceProfileDto';
 import { ResourceAvailabilityResponseDto } from '../../../core/api/model/resourceAvailabilityResponseDto';
 import { TemplateResponseDto } from '../../../core/api/model/templateResponseDto';
@@ -94,6 +97,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     NgIcon,
     WizardStepperComponent,
     DockerImagePickerComponent,
@@ -146,6 +150,8 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
       lucideDatabase,
       lucideSlidersHorizontal,
       lucideCopy,
+      lucideLayers,
+      lucideCircleHelp,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -696,8 +702,23 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                           Flui deploys repositories from a <span class="font-mono">flui.yaml</span> manifest, and branch <span class="font-mono">{{ selectedBranch() }}</span> doesn't have one — neither at the repository root nor in a subdirectory (monorepo).
                         </p>
 
+                        <div class="p-3 rounded-md border border-amber-300 dark:border-amber-700 bg-amber-100/50 dark:bg-amber-900/20 space-y-2">
+                          <p class="text-xs font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-1.5">
+                            <ng-icon name="lucideLayers" class="h-3.5 w-3.5" />
+                            Let Flui read the repository
+                          </p>
+                          <p class="text-xs text-amber-700 dark:text-amber-300">
+                            Flui reads branch <span class="font-mono">{{ selectedBranch() }}</span> and proposes a <span class="font-mono">flui.yaml</span> — with what it found, what it's unsure of, and why. You review it and decide; this doesn't write to your repository and it doesn't deploy anything, it's a read-only map. Applying what it proposes is a separate step.
+                          </p>
+                          <a [routerLink]="['/apps/repositories', selectedRepo()!.id, 'map']" [queryParams]="{ branch: selectedBranch() }"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-600 dark:bg-amber-700 text-white text-[11px] font-medium hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors">
+                            <ng-icon name="lucideLayers" class="h-3.5 w-3.5" />
+                            View readiness map
+                          </a>
+                        </div>
+
                         <div class="space-y-1.5">
-                          <p class="text-xs font-semibold text-amber-900 dark:text-amber-100">Let your coding agent write it</p>
+                          <p class="text-xs font-semibold text-amber-900 dark:text-amber-100">Or, let your coding agent write it</p>
                           <p class="text-xs text-amber-700 dark:text-amber-300">
                             Nothing to install and nothing to log into. Paste this into the agent in your editor:
                           </p>
@@ -877,7 +898,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                       <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-primary mr-2" />
                       <span class="text-sm text-muted-foreground">Loading branches...</span>
                     </div>
-                  } @else {
+                  } @else if (availableBranches().length > 0) {
                     <select
                       [value]="selectedBranch()"
                       (change)="selectBranch($any($event.target).value)"
@@ -887,6 +908,19 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                         <option [value]="branch">{{ branch }}</option>
                       }
                     </select>
+                  } @else {
+                    <input
+                      type="text"
+                      [value]="selectedBranch()"
+                      (input)="selectBranch($any($event.target).value)"
+                      placeholder="branch name"
+                      class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                    @if (branchesFailed()) {
+                      <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                        Branches could not be listed — type the one you want to deploy.
+                      </p>
+                    }
                   }
                   <p class="text-xs text-muted-foreground mt-1">
                     Framework and runtime come from the Dockerfile in your repository.
@@ -1863,6 +1897,46 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                 }
               </div>
 
+              <!-- Manifest-first: installation checks (what only this install can say) -->
+              @if (flowSubtype() === 'existing-repo') {
+                <div class="border border-border rounded-lg p-4">
+                  <h4 class="font-medium mb-1 flex items-center">
+                    <ng-icon name="lucideCircleCheck" class="h-4 w-4 mr-2" />
+                    Installation checks
+                  </h4>
+                  <p class="text-xs text-muted-foreground mb-3">
+                    What only this installation can say about this manifest — target cluster, connected repository, build credentials, live capacity. A check marked <span class="font-medium text-foreground">unknown</span> means Flui could not answer here, not that the manifest is wrong.
+                  </p>
+                  @if (manifestChecksLoading()) {
+                    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                      <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+                      Running checks...
+                    </div>
+                  } @else if (manifestChecksError()) {
+                    <p class="text-xs text-amber-700 dark:text-amber-400">{{ manifestChecksError() }}</p>
+                  } @else if (manifestChecks(); as checks) {
+                    @if (checks.length === 0) {
+                      <p class="text-xs text-muted-foreground">No checks reported.</p>
+                    } @else {
+                      <ul class="space-y-2.5">
+                        @for (check of checks; track check.id) {
+                          <li class="flex items-start gap-2 text-xs">
+                            <ng-icon [name]="checkStatusIcon(check.status)" class="h-4 w-4 shrink-0 mt-0.5" [class]="checkStatusClass(check.status)" />
+                            <div>
+                              <span class="font-medium" [class]="checkStatusClass(check.status)">{{ check.title }}</span>
+                              @if (check.status === 'unknown') {
+                                <span class="ml-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">not answered here — not a failure</span>
+                              }
+                              <p class="text-muted-foreground mt-0.5">{{ check.detail }}</p>
+                            </div>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  }
+                </div>
+              }
+
               <!-- Marketplace: resource footprint + capacity check + overrides -->
               @if (flowSubtype() === 'marketplace') {
                 <app-catalog-resources-review />
@@ -2165,7 +2239,10 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   // Step 2: Branch & Framework
   isLoadingBranches = signal<boolean>(false);
   availableBranches = signal<string[]>([]);
-  selectedBranch = signal<string>('main');
+  selectedBranch = signal<string>('');
+  /** True when the provider would not list them: the field degrades to free text rather than
+   * offering names nobody read from the repository. */
+  branchesFailed = signal<boolean>(false);
 
   // Step 3: Environment Variables
   envMode = signal<'key-value' | 'json'>('key-value');
@@ -2299,6 +2376,15 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   manifestsForSelector = signal<RepositoryManifestEntry[] | null>(null);
   selectedManifestPath = signal<string | null>(null);
   manifestFetchError = signal<string | null>(null);
+
+  /** Installation checks (target cluster, connected repo, build credentials,
+   *  live capacity...) — what only this installation can say about the
+   *  manifest, run against POST /applications/manifest/validate at the review
+   *  step once a cluster is picked. `unknown` is not a failure: it means this
+   *  installation could not answer, never that the manifest is wrong. */
+  manifestChecks = signal<ManifestCheckDto[] | null>(null);
+  manifestChecksLoading = signal<boolean>(false);
+  manifestChecksError = signal<string | null>(null);
 
   /** Valid (kind: Application) manifests — the deployables of this repo. */
   readonly validManifests = computed<RepositoryManifestEntry[]>(() =>
@@ -2792,6 +2878,10 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     const clusterId = this.selectedCluster()?.id;
     if (!clusterId) return;
 
+    if (sub === 'existing-repo') {
+      this.runManifestChecks(clusterId);
+    }
+
     if (sub !== 'marketplace') {
       // Re-run the runtime resource check whenever the user advances PAST the
       // config step (where they could have changed profile/replicas) OR into
@@ -3025,7 +3115,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   clearPublicRepo(): void {
     this.selectedPublicRepo.set(null);
     this.availableBranches.set([]);
-    this.selectedBranch.set('main');
+    this.branchesFailed.set(false);
+    this.selectedBranch.set('');
   }
 
   getSourceTypeCardClass(type: string): string {
@@ -3074,22 +3165,25 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
         branchNames = branches.map((b: any) => b.name || b);
       }
       this.availableBranches.set(branchNames);
+      this.branchesFailed.set(false);
 
-      // Set default branch (prefer 'main', then 'master', then first available)
+      // The repository's own default branch wins over any name we might favour: `main` is a
+      // convention, not a fact, and a repository that calls it something else was being sent to a
+      // branch it does not have.
       const currentBranch = this.selectedBranch();
       if (branchNames.length > 0 && !branchNames.includes(currentBranch)) {
-        if (branchNames.includes('main')) {
-          this.selectedBranch.set('main');
-        } else if (branchNames.includes('master')) {
-          this.selectedBranch.set('master');
-        } else {
-          this.selectedBranch.set(branchNames[0]);
-        }
+        const declaredDefault = publicRepo?.default_branch ?? connectedRepo?.branch;
+        this.selectedBranch.set(
+          declaredDefault && branchNames.includes(declaredDefault) ? declaredDefault : branchNames[0],
+        );
       }
     } catch (error) {
+      // This used to offer `['main', 'master', 'develop']` — three names nobody had read from the
+      // repository, presented in the same select as the real ones. A branch that does not exist
+      // fails the deploy much later, with nothing pointing back here.
       console.error('Failed to load branches:', error);
-      this.availableBranches.set(['main', 'master', 'develop']);
-      this.selectedBranch.set('main');
+      this.availableBranches.set([]);
+      this.branchesFailed.set(true);
     } finally {
       this.isLoadingBranches.set(false);
     }
@@ -3146,6 +3240,61 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
       this.manifestFetchError.set(error?.message || 'Failed to read flui.yaml manifests');
     } finally {
       this.isCheckingManifest.set(false);
+    }
+  }
+
+  /**
+   * Review step (Flow C): what only this installation can say about the
+   * chosen flui.yaml against the chosen cluster — target cluster, connected
+   * repository, build credentials, live capacity — via the dedicated
+   * validate-only endpoint. Never blocks the deploy button on its own: a
+   * `fail` still surfaces, but it is read alongside the checks, not gating.
+   */
+  private async runManifestChecks(clusterId: string): Promise<void> {
+    const repo = this.selectedRepo();
+    const manifest = this.manifestForSelector();
+    if (!repo || !manifest?.valid || !manifest.content) {
+      this.manifestChecks.set(null);
+      return;
+    }
+
+    this.manifestChecksLoading.set(true);
+    this.manifestChecksError.set(null);
+    try {
+      const response = await firstValueFrom(
+        this.applicationsApi.applicationsControllerValidateManifest({
+          yaml: manifest.content,
+          clusterId,
+          repoFullName: repo.fullName,
+          branch: this.selectedBranch() || undefined,
+        })
+      );
+      this.manifestChecks.set(response.checks ?? null);
+    } catch (error: any) {
+      this.manifestChecksError.set(
+        error?.error?.message || error?.message || 'Could not run installation checks.'
+      );
+      this.manifestChecks.set(null);
+    } finally {
+      this.manifestChecksLoading.set(false);
+    }
+  }
+
+  checkStatusIcon(status: ManifestCheckDto.StatusEnum): string {
+    switch (status) {
+      case ManifestCheckDto.StatusEnum.Pass: return 'lucideCircleCheck';
+      case ManifestCheckDto.StatusEnum.Warn: return 'lucideTriangleAlert';
+      case ManifestCheckDto.StatusEnum.Fail: return 'lucideCircleX';
+      default: return 'lucideCircleHelp';
+    }
+  }
+
+  checkStatusClass(status: ManifestCheckDto.StatusEnum): string {
+    switch (status) {
+      case ManifestCheckDto.StatusEnum.Pass: return 'text-green-600 dark:text-green-400';
+      case ManifestCheckDto.StatusEnum.Warn: return 'text-amber-600 dark:text-amber-400';
+      case ManifestCheckDto.StatusEnum.Fail: return 'text-red-600 dark:text-red-400';
+      default: return 'text-muted-foreground';
     }
   }
 
