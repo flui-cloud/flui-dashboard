@@ -138,7 +138,6 @@ internal-docs/
 
 # ---------- Tooling residue ----------
 /tools/*
-!/tools/visual-bench
 structure.sh
 build.log
 build-output.log
