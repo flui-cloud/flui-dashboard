@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -29,6 +29,13 @@ import {
   DeleteConfirmationDialogComponent,
 } from '../../../shared/components/delete-confirmation-dialog.component';
 import { ProjectFormComponent, ProjectFormValue } from './project-form.component';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  ProjectWorkloadsSurfaceInput,
+  ProjectWorkloadsSurfaceRevision,
+  buildProjectWorkloadsSurface,
+  presentedContent as projectWorkloadsPresentedContent,
+} from './project-workloads-surface';
 
 interface ProjectSection {
   project: Project | null;
@@ -276,7 +283,7 @@ const SELECT =
     />
   `,
 })
-export class ProjectWorkloadsComponent implements OnInit {
+export class ProjectWorkloadsComponent implements OnInit, OnDestroy {
   private readonly appService = inject(ApplicationService);
   private readonly projectsService = inject(ProjectsService);
   private readonly perms = inject(PermissionService);
@@ -355,6 +362,60 @@ export class ProjectWorkloadsComponent implements OnInit {
     }
     return sections;
   });
+
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new ProjectWorkloadsSurfaceRevision();
+
+  /** Read from the same computeds the template renders — `sections()`, `summary()`,
+   * `isCollapsed()` — never a second pass over the application store (playbook §5). */
+  private readonly surfaceInput = computed<ProjectWorkloadsSurfaceInput>(() => {
+    const editingId = this.editingId();
+    const editing = editingId ? this.projects().find((p) => p.id === editingId) : undefined;
+    const appDelete = this.pendingAppDelete();
+    const projectDelete = this.pendingProjectDelete();
+    return {
+      sections: this.sections().map((s) => ({
+        projectId: s.project?.id ?? null,
+        name: s.project?.name ?? 'Unassigned',
+        slug: s.project?.slug,
+        summary: this.summary(s),
+        collapsed: this.isCollapsed(s.project?.id ?? '__unassigned'),
+        groups: s.groups,
+      })),
+      projectCount: this.projects().length,
+      isLoading: this.isLoading(),
+      isRefreshing: this.isRefreshing(),
+      canManage: this.canManage(),
+      hasSearch: this.search().trim().length > 0,
+      kindFilter: this.kindFilter(),
+      includeSystem: this.includeSystem(),
+      hideEmpty: this.hideEmpty(),
+      createOpen: this.showCreate(),
+      editing: editing ? { id: editing.id, name: editing.name } : null,
+      pendingProjectDelete: projectDelete ? { id: projectDelete.id, name: projectDelete.name } : null,
+      pendingAppDelete: appDelete ? { id: appDelete.id, name: appDelete.name } : null,
+    };
+  });
+
+  protected readonly surface = computed(() => {
+    const input = this.surfaceInput();
+    return buildProjectWorkloadsSurface(input, {
+      revision: this.surfaceRevision.next(projectWorkloadsPresentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's snapshot whenever it changes; ngOnDestroy clears it so it never
+    // outlives the page it describes.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     this.perms.load();

@@ -4,6 +4,7 @@ import {
   OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -23,6 +24,13 @@ import {
 } from '../../service/platform-update.service';
 import { PlatformUpdateProgressComponent } from './platform-update-progress.component';
 import { PlatformUpdateHistoryComponent } from './platform-update-history.component';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  PlatformUpdatesSurfaceInput,
+  PlatformUpdatesSurfaceRevision,
+  buildPlatformUpdatesSurface,
+  presentedContent,
+} from './platform-updates-surface';
 
 @Component({
   selector: 'app-platform-updates',
@@ -237,9 +245,37 @@ import { PlatformUpdateHistoryComponent } from './platform-update-history.compon
 })
 export class PlatformUpdatesComponent implements OnInit, OnDestroy {
   protected readonly updates = inject(PlatformUpdateService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly confirming = signal(false);
   protected readonly acknowledged = signal(false);
+
+  private readonly surfaceRevision = new PlatformUpdatesSurfaceRevision();
+
+  protected readonly surface = computed(() => {
+    const input: PlatformUpdatesSurfaceInput = {
+      loading: this.updates.loading(),
+      checking: this.updates.checking(),
+      apiUnreachable: this.updates.apiUnreachable(),
+      status: this.updates.status(),
+      operation: this.updates.operation(),
+      history: this.updates.history(),
+      confirming: this.confirming(),
+      acknowledged: this.acknowledged(),
+    };
+    return buildPlatformUpdatesSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes — same pattern as SettingsComponent.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
 
   protected readonly changedComponents = computed<PlatformComponentUpdate[]>(
     () => this.updates.status()?.components.filter((c) => c.changed) ?? [],
@@ -273,6 +309,7 @@ export class PlatformUpdatesComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Other surfaces keep the poll alive while an update runs; only stop a finished one.
     if (!this.updates.running()) this.updates.stopPolling();
+    this.currentSurface.set(null);
   }
 
   /** "Unchanged" is a comparison; without a release there was none to make. */

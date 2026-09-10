@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
   effect,
@@ -56,6 +57,13 @@ const DETAIL_TABS = [
   'Releases',
   'Snapshots',
 ];
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  AppRecapSurfaceInput,
+  AppRecapSurfaceRevision,
+  buildAppRecapSurface,
+  presentedContent as appRecapPresentedContent,
+} from './app-recap-surface';
 
 @Component({
   selector: 'app-recap',
@@ -210,7 +218,7 @@ const DETAIL_TABS = [
     </div>
   `,
 })
-export class AppRecapComponent implements OnInit {
+export class AppRecapComponent implements OnInit, OnDestroy {
   private readonly appService = inject(ApplicationService);
   private readonly endpointsService = inject(AppEndpointsService);
   private readonly clusterService = inject(ClusterService);
@@ -338,7 +346,65 @@ export class AppRecapComponent implements OnInit {
     return this.clusterService.clusters().find((c) => c.id === clusterId)?.name ?? '';
   });
 
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new AppRecapSurfaceRevision();
+
+  /** Reads the same computeds the card renders. `connInfo()`, `endpointHost()`, `imageRef()`
+   * and the Namespace fact are deliberately not among them — see app-recap-surface.ts. */
+  private readonly surfaceInput = computed<AppRecapSurfaceInput>(() => {
+    const g = this.group();
+    const p = this.primary();
+    return {
+      groupId: this.id(),
+      group: g
+        ? {
+            id: g.id,
+            name: g.name,
+            type: g.type,
+            status: g.status,
+            category: g.category,
+            createdAt: g.createdAt,
+            clusterId: g.clusterId,
+            clusterName: this.clusterName() || undefined,
+          }
+        : null,
+      primary: p
+        ? {
+            id: p.id,
+            slug: p.slug,
+            kindLabel: this.kindLabel(p.kind),
+            sourceLabel: getSourceTypeLabel(p.sourceType),
+            exposure: p.exposure,
+            replicas: p.replicas ?? 0,
+            catalogVersion: p.catalogVersion,
+          }
+        : null,
+      accessKind: this.accessKind(),
+      notFound: this.loadAttempted() && !g,
+      isLoading: !this.loadAttempted(),
+      extraDatabases: this.extraDbApps().map((db) => ({ id: db.id, name: db.name, status: db.status })),
+    };
+  });
+
+  protected readonly surface = computed(() => {
+    const input = this.surfaceInput();
+    return buildAppRecapSurface(input, {
+      revision: this.surfaceRevision.next(appRecapPresentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
+
   constructor() {
+    // Publish this page's snapshot whenever it changes; ngOnDestroy clears it so it never
+    // outlives the page it describes.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+
     effect(() => {
       for (const db of this.dbComponents()) {
         if (this.connRequested.has(db.id)) continue;

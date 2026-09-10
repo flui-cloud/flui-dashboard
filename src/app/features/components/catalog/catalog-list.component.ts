@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -18,6 +18,13 @@ import { CatalogService } from '../../service/catalog.service';
 import { CatalogResponseDto } from '../../../core/api/model/models';
 import { CatalogCardComponent } from './catalog-card.component';
 import { ApplicationKind, ApplicationKindEnum, getKindLabel } from '../../model/application.models';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  CatalogListSurfaceInput,
+  CatalogListSurfaceRevision,
+  buildCatalogListSurface,
+  presentedContent as catalogListPresentedContent,
+} from './catalog-list-surface';
 
 const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
 
@@ -311,7 +318,7 @@ const KIND_ORDER: ApplicationKind[] = [
     </div>
   `,
 })
-export class CatalogListComponent {
+export class CatalogListComponent implements OnDestroy {
   protected readonly catalog = inject(CatalogService);
   private readonly route = inject(ActivatedRoute);
 
@@ -445,7 +452,56 @@ export class CatalogListComponent {
       .map((k) => ({ kind: k, label: getKindLabel(k), apps: buckets.get(k)! }));
   });
 
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new CatalogListSurfaceRevision();
+
+  /** The rows are `kindGroups()`/`filteredApps()` — what the grid draws after the filters —
+   * and the badges come from the same service calls the card itself makes (playbook §5). */
+  private readonly surfaceInput = computed<CatalogListSurfaceInput>(() => {
+    const scoped = this.scopedKind();
+    const row = (app: CatalogResponseDto) => ({
+      slug: app.slug,
+      name: app.name,
+      category: app.category,
+      installedCount: this.catalog.getInstalledFor(app.slug).length,
+      updateAvailable: this.catalog.hasUpdateAvailable(app.slug, app.version),
+    });
+    return {
+      heroTitle: this.heroTitle(),
+      scopedKind: scoped,
+      hasQuery: this.searchQuery().trim() !== '',
+      activeCategory: this.activeCategory(),
+      activeTagCount: this.activeTags().length,
+      showSystemApps: this.showSystemApps(),
+      totalCount: this.catalog.catalog().length,
+      shownCount: this.filteredApps().length,
+      groups: scoped
+        ? [{ kind: scoped, label: getKindLabel(scoped), rows: this.filteredApps().map(row) }]
+        : this.kindGroups().map((g) => ({ kind: g.kind, label: g.label, rows: g.apps.map(row) })),
+      isLoading: this.catalog.listLoading(),
+      hasListError: Boolean(this.catalog.listError()),
+    };
+  });
+
+  readonly surface = computed(() => {
+    const input = this.surfaceInput();
+    return buildCatalogListSurface(input, {
+      revision: this.surfaceRevision.next(catalogListPresentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
+
   constructor() {
+    // Publish this page's snapshot whenever it changes; ngOnDestroy clears it so it never
+    // outlives the page it describes.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+
     effect(() => {
       const cat = this.activeCategory();
       const kind = this.scopedKind();

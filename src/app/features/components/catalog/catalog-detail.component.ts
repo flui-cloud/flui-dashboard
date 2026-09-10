@@ -34,6 +34,13 @@ interface Ratings {
   euFit?: number;
   community?: number;
 }
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  CatalogDetailSurfaceInput,
+  CatalogDetailSurfaceRevision,
+  buildCatalogDetailSurface,
+  presentedContent as catalogDetailPresentedContent,
+} from './catalog-detail-surface';
 
 @Component({
   selector: 'app-catalog-detail',
@@ -430,16 +437,72 @@ export class CatalogDetailComponent implements OnDestroy {
     this.returnTo() ? 'Back' : 'Back to catalog',
   );
 
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new CatalogDetailSurfaceRevision();
+
+  /** Reads the same signals the template renders — `detail()`, `installedInstances()`,
+   * `activeTab()`, `links()` — never a second fetch (playbook §5). Prompt and env NAMES are
+   * counted, never carried: see the redaction note in catalog-detail-surface.ts. */
+  private readonly surfaceInput = computed<CatalogDetailSurfaceInput>(() => {
+    const app = this.detail();
+    const links = this.links();
+    return {
+      slug: this.slug(),
+      detail: app
+        ? {
+            slug: app.slug,
+            name: app.name,
+            version: app.version,
+            license: app.license,
+            category: app.category,
+            alternativeCount: app.alternativeTo.length,
+            tagCount: app.tags.length,
+            hasWebsite: Boolean(links.website),
+            hasDocs: Boolean(links.docs),
+            hasSource: Boolean(links.source),
+            promptCount: app.userInputPrompts.length,
+            sensitivePromptCount: app.userInputPrompts.filter((p) => p.sensitive).length,
+            editableEnvCount: app.editableEnv.length,
+          }
+        : null,
+      isLoading: this.catalog.detailLoading(),
+      hasDetailError: Boolean(this.catalog.detailError()),
+      activeTab: this.activeTab(),
+      instances: this.installedInstances().map((i) => ({
+        id: i.id,
+        name: i.name,
+        status: i.status,
+        catalogVersion: i.catalogVersion,
+      })),
+      updateAvailable: this.updateAvailable(),
+    };
+  });
+
+  protected readonly surface = computed(() => {
+    const input = this.surfaceInput();
+    return buildCatalogDetailSurface(input, {
+      revision: this.surfaceRevision.next(catalogDetailPresentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
   constructor() {
     effect(() => {
       const slug = this.slug();
       if (slug) this.catalog.loadDetail(slug);
     });
     queueMicrotask(() => this.catalog.ensureApplicationsLoaded());
+
+    // Publish this page's snapshot whenever it changes; ngOnDestroy clears it so it never
+    // outlives the page it describes.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
   }
 
   ngOnDestroy(): void {
     this.catalog.resetDetail();
+    this.currentSurface.set(null);
   }
 
   setTab(tab: DetailTab): void {

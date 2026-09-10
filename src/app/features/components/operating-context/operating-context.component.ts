@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -20,6 +22,7 @@ import {
 import { Observable } from 'rxjs';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { InfrastructureClustersService } from '../../../core/api/api/infrastructureClusters.service';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { ClusterOption } from '../../model/iam.model';
 import {
@@ -39,6 +42,12 @@ import {
 import { ContextNoteCardComponent } from './context-note-card.component';
 import { ContextNoteFormComponent } from './context-note-form.component';
 import { ExplainComponent } from '../../../shared/components/explain.component';
+import {
+  OperatingContextSurfaceInput,
+  OperatingContextSurfaceRevision,
+  buildOperatingContextSurface,
+  presentedContent,
+} from './operating-context-surface';
 
 type ContextTab = 'attention' | 'holding' | 'archive';
 
@@ -429,10 +438,11 @@ type ContextTab = 'attention' | 'holding' | 'archive';
     </div>
   `,
 })
-export class OperatingContextComponent implements OnInit {
+export class OperatingContextComponent implements OnInit, OnDestroy {
   private readonly api = inject(OperatingContextService);
   private readonly clusterApi = inject(InfrastructureClustersService);
   private readonly sandbox = inject(SandboxService);
+  private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly fieldClass =
     'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
@@ -446,7 +456,7 @@ export class OperatingContextComponent implements OnInit {
 
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
-  private readonly conflictsUnread = signal(false);
+  protected readonly conflictsUnread = signal(false);
 
   protected readonly writing = signal(false);
   protected readonly saving = signal(false);
@@ -517,6 +527,49 @@ export class OperatingContextComponent implements OnInit {
   protected readonly firstRun = computed(
     () => !this.loading() && !this.entries().length && !this.focused(),
   );
+
+  private readonly surfaceRevision = new OperatingContextSurfaceRevision();
+
+  protected readonly surface = computed(() => {
+    const input: OperatingContextSurfaceInput = {
+      loading: this.loading(),
+      hasError: !!this.loadError(),
+      firstRun: this.firstRun(),
+      focusSlug: this.focusSlug(),
+      focusClusterId: this.focusCluster(),
+      focusClusterName: this.focusCluster()
+        ? this.clusterNames()[this.focusCluster()]
+        : undefined,
+      clusterNames: this.clusterNames(),
+      activeTab: this.tab(),
+      writeRefused: this.readOnlyHere(),
+      review: this.review(),
+      holding: this.holding(),
+      conflicts: this.conflicts(),
+      conflictsUnread: this.conflictsUnread(),
+      archive: {
+        loading: this.archiveLoading(),
+        hasError: !!this.archiveError(),
+        entries: this.archived(),
+      },
+    };
+    return buildOperatingContextSurface(input, {
+      revision: this.surfaceRevision.next(presentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's own Semantic Surface snapshot into the shared registry
+    // whenever it changes — same pattern as SettingsComponent.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   protected chooseTab(id: ContextTab): void {
     this.chosen = true;

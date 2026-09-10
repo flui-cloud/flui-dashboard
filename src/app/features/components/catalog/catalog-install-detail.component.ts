@@ -34,6 +34,13 @@ const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
   CatalogInstallResponseDto.StatusEnum.Failed,
   CatalogInstallResponseDto.StatusEnum.Uninstalled,
 ]);
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  CatalogInstallSurfaceInput,
+  CatalogInstallSurfaceRevision,
+  buildCatalogInstallSurface,
+  presentedContent as catalogInstallPresentedContent,
+} from './catalog-install-surface';
 
 @Component({
   selector: 'app-catalog-install-detail',
@@ -272,6 +279,12 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   private pollingAbort = false;
 
   constructor() {
+    // Publish this page's snapshot whenever it changes; ngOnDestroy clears it so it never
+    // outlives the page it describes.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+
     effect(() => {
       const inst = this.install();
       if (!inst?.resolvedFqdn || !inst.clusterId) return;
@@ -364,10 +377,55 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
     })();
   }
 
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new CatalogInstallSurfaceRevision();
+
+  /** Reads the same signals the template renders. `connInfo()` and `resolvedFqdn` are
+   * deliberately not among them — see the redaction note in catalog-install-surface.ts. */
+  private readonly surfaceInput = computed<CatalogInstallSurfaceInput>(() => {
+    const inst = this.install();
+    const readiness = this.readiness();
+    return {
+      installId: this.id(),
+      install: inst
+        ? {
+            id: inst.id,
+            slug: inst.slug,
+            displayName: inst.displayName,
+            status: inst.status,
+            skipEndpoint: inst.skipEndpoint,
+            hasEndpoint: Boolean(inst.resolvedFqdn),
+            hasError: Boolean(inst.errorMessage),
+          }
+        : null,
+      isLoading: this.loading(),
+      hasLoadError: Boolean(this.errorMessage()),
+      progressPct: this.progressPct(),
+      endpointState: this.matchedEndpoint() ? readiness.state : null,
+      endpointReady: readiness.isReady,
+      components: this.components().map((c) => ({
+        id: c.id,
+        name: c.name,
+        status: c.status,
+        isPrimary: c.id === this.primaryId(),
+      })),
+      databaseComponentCount: this.dbApps().length,
+    };
+  });
+
+  protected readonly surface = computed(() => {
+    const input = this.surfaceInput();
+    return buildCatalogInstallSurface(input, {
+      revision: this.surfaceRevision.next(catalogInstallPresentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
   ngOnDestroy(): void {
     this.pollingAbort = true;
     this.endpointPollingAbort = true;
     this.catalog.resetInstall();
+    this.currentSurface.set(null);
   }
 
   private async bootstrapEndpointReadiness(clusterId: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -9,6 +9,13 @@ import {
 import { ImageRegistryFeatureService } from '../../service/image-registry.service';
 import { ImageResponseDto } from '../../../core/api/model/imageResponseDto';
 import { FluiTagManagerComponent } from './flui-tag-manager.component';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  ImageRegistrySurfaceInput,
+  ImageRegistrySurfaceRevision,
+  buildImageRegistrySurface,
+  presentedContent as imageRegistryPresentedContent,
+} from './image-registry-surface';
 
 @Component({
   selector: 'app-image-registry-list',
@@ -169,13 +176,22 @@ import { FluiTagManagerComponent } from './flui-tag-manager.component';
     </div>
   `,
 })
-export class ImageRegistryListComponent implements OnInit {
+export class ImageRegistryListComponent implements OnInit, OnDestroy {
   service = inject(ImageRegistryFeatureService);
 
   searchQuery = signal('');
   tagFilter = signal('');
   actionBusy = signal(false);
-  confirmAction = signal<{ title: string; message: string; action: () => Promise<void> } | null>(null);
+  /** The dialog is always about ONE image; it now says which, so the page's own state
+   * answers "what is this dialog about" instead of that living only in the message string. */
+  confirmAction = signal<{
+    kind: 'deploy' | 'delete';
+    imageId: string;
+    imageLabel: string;
+    title: string;
+    message: string;
+    action: () => Promise<void>;
+  } | null>(null);
 
   filteredImages = computed(() => {
     let images = this.service.images();
@@ -194,6 +210,54 @@ export class ImageRegistryListComponent implements OnInit {
     }
     return images;
   });
+
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new ImageRegistrySurfaceRevision();
+
+  /** Reads `filteredImages()` — the rows on the screen — and the same truncation the table
+   * prints, never the full registry reference (playbook §5 and §6 point 4). */
+  private readonly surfaceInput = computed<ImageRegistrySurfaceInput>(() => {
+    const confirm = this.confirmAction();
+    return {
+      rows: this.filteredImages().map((img) => ({
+        id: img.id,
+        displayRef: this.truncateRef(img.imageRef),
+        commitShortSha: img.commitSha?.slice(0, 7) ?? '',
+        branch: img.branch,
+        tagCount: img.fluiTags.length,
+        isCurrentlyDeployed: img.isCurrentlyDeployed,
+        createdAt: img.createdAt,
+      })),
+      totalCount: this.service.images().length,
+      hasSearch: this.searchQuery().trim() !== '',
+      hasTagFilter: this.tagFilter().trim() !== '',
+      isLoading: this.service.loading(),
+      refused: this.service.refused(),
+      hasError: Boolean(this.service.errorMessage()),
+      confirm: confirm ? { kind: confirm.kind, imageId: confirm.imageId, label: confirm.imageLabel } : null,
+      actionBusy: this.actionBusy(),
+    };
+  });
+
+  readonly surface = computed(() => {
+    const input = this.surfaceInput();
+    return buildImageRegistrySurface(input, {
+      revision: this.surfaceRevision.next(imageRegistryPresentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's snapshot whenever it changes; ngOnDestroy clears it so it never
+    // outlives the page it describes.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     void (async () => {
@@ -229,6 +293,9 @@ export class ImageRegistryListComponent implements OnInit {
 
   onDeploy(img: ImageResponseDto): void {
     this.confirmAction.set({
+      kind: 'deploy',
+      imageId: img.id,
+      imageLabel: this.truncateRef(img.imageRef),
       title: 'Deploy Image',
       message: `Deploy ${this.truncateRef(img.imageRef)} (${img.commitSha?.slice(0, 7)})? This will replace the currently running version.`,
       action: async () => {
@@ -241,6 +308,9 @@ export class ImageRegistryListComponent implements OnInit {
   onDelete(img: ImageResponseDto): void {
     if (img.isCurrentlyDeployed) return;
     this.confirmAction.set({
+      kind: 'delete',
+      imageId: img.id,
+      imageLabel: this.truncateRef(img.imageRef),
       title: 'Delete Image',
       message: `Permanently delete ${this.truncateRef(img.imageRef)}? This cannot be undone.`,
       action: async () => {

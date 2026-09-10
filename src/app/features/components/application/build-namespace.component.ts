@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -77,6 +77,13 @@ function getPodPhaseClass(phase: string): string {
     default:          return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
   }
 }
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import {
+  BuildNamespaceSurfaceInput,
+  BuildNamespaceSurfaceRevision,
+  buildBuildNamespaceSurface,
+  presentedContent as buildNamespacePresentedContent,
+} from './build-namespace-surface';
 
 @Component({
   selector: 'app-build-namespace',
@@ -404,7 +411,7 @@ function getPodPhaseClass(phase: string): string {
     </div>
   `,
 })
-export class BuildNamespaceComponent implements OnInit {
+export class BuildNamespaceComponent implements OnInit, OnDestroy {
   private readonly buildNamespaceApi = inject(BuildNamespaceService);
   private readonly clustersApi = inject(InfrastructureClustersService);
 
@@ -430,6 +437,84 @@ export class BuildNamespaceComponent implements OnInit {
   readonly getPodPhaseClass = getPodPhaseClass;
   readonly getQueuedStatusClass = getQueuedStatusClass;
   readonly getQueuedStatusLabel = getQueuedStatusLabel;
+
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new BuildNamespaceSurfaceRevision();
+
+  /** Reads the same signals the three tables render. The Kubernetes object names they carry
+   * are deliberately left behind — see the naming note in build-namespace-surface.ts. */
+  private readonly surfaceInput = computed<BuildNamespaceSurfaceInput>(() => {
+    const res = this.resources();
+    const preview = this.cleanupPreview();
+    const clusterId = this.selectedClusterId();
+    return {
+      clusterCount: this.clusters().length,
+      selectedClusterId: clusterId,
+      selectedClusterName: this.clusters().find((c) => c.id === clusterId)?.name,
+      isLoadingClusters: this.isLoadingClusters(),
+      isLoadingResources: this.isLoadingResources(),
+      hasError: Boolean(this.error()),
+      refused: Boolean(this.refusal()),
+      resources: res
+        ? {
+            queued: res.queuedBuilds.map((q) => ({
+              buildId: q.buildId,
+              applicationId: q.applicationId,
+              appSlug: q.appSlug,
+              branch: q.branch,
+              commitShortSha: q.commitSha ? q.commitSha.substring(0, 7) : null,
+              ageMinutes: q.ageMinutes,
+              status: q.status,
+            })),
+            tasks: res.jobs.map((j) => ({
+              buildId: j.buildId,
+              appSlug: j.appSlug,
+              purpose: j.purpose,
+              status: j.status,
+              ageMinutes: j.ageMinutes,
+              cpuRequest: j.cpuRequest,
+              memoryRequest: j.memoryRequest,
+            })),
+            workers: res.pods.map((p) => ({
+              buildId: p.buildId,
+              appSlug: p.appSlug,
+              phase: p.phase,
+              ageMinutes: p.ageMinutes,
+              containerCount: p.containers.length,
+            })),
+            totalCpuRequestMillicores: res.totalCpuRequestMillicores,
+            totalMemoryRequestMiB: res.totalMemoryRequestMiB,
+          }
+        : null,
+      cleanup: {
+        open: this.showCleanupPanel(),
+        olderThanMinutes: this.olderThanMinutes(),
+        running: this.isRunningCleanup(),
+        previewTaskCount: preview ? preview.deletedJobs.length : null,
+        previewWorkerCount: preview ? preview.deletedPods.length : null,
+      },
+    };
+  });
+
+  readonly surface = computed(() => {
+    const input = this.surfaceInput();
+    return buildBuildNamespaceSurface(input, {
+      revision: this.surfaceRevision.next(buildNamespacePresentedContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  constructor() {
+    // Publish this page's snapshot whenever it changes; ngOnDestroy clears it so it never
+    // outlives the page it describes.
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.currentSurface.set(null);
+  }
 
   ngOnInit(): void {
     void (async () => {
