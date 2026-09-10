@@ -34,6 +34,8 @@ import { PublicRepositoryAnalyzeDto } from '../model/publicRepositoryAnalyzeDto'
 import { RepositoryAnalysisDto } from '../model/repositoryAnalysisDto';
 // @ts-ignore
 import { RepositoryManifestsDto } from '../model/repositoryManifestsDto';
+// @ts-ignore
+import { RepositoryMapResponseDto } from '../model/repositoryMapResponseDto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -53,7 +55,7 @@ export class RepositoriesService extends BaseService {
 
     /**
      * Analyze a public GitHub repository
-     * Clones a public GitHub repository without requiring it to be imported. Detects the framework and generates a build plan. No authentication required.
+     * Clones a public GitHub repository without requiring it to be imported. Detects the framework and generates a build plan. Authentication is required: the repository is public, the caller is not.
      * @endpoint post /api/v1/repositories/github/public/analyze
      * @param publicRepositoryAnalyzeDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -1012,6 +1014,89 @@ export class RepositoriesService extends BaseService {
         return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Map the repository: units, services, verdict and rendered manifests
+     * Reads the repository as one in-memory archive of one commit — no clone, symlinks refused, ceilings declared in the response — and returns what it says about itself: deployable units, the services it wants, required inputs, external dependencies, blockers, caveats, open questions and the decisions taken on its behalf, each with its file:line evidence and its confidence; the verdict with its reason and remedy; and one rendered flui.yaml per unit. Read-only: nothing is deployed, provisioned or written.
+     * @endpoint post /api/v1/repositories/{id}/map
+     * @param id 
+     * @param branch Git ref to read from (defaults to the default branch)
+     * @param clusterId Weigh the map against this cluster. Omitted, the verdict answers only the repository half and says so in verdict.capacity.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public repositoriesControllerMapRepository(id: string, branch?: string, clusterId?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RepositoryMapResponseDto>;
+    public repositoriesControllerMapRepository(id: string, branch?: string, clusterId?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RepositoryMapResponseDto>>;
+    public repositoriesControllerMapRepository(id: string, branch?: string, clusterId?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RepositoryMapResponseDto>>;
+    public repositoriesControllerMapRepository(id: string, branch?: string, clusterId?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling repositoriesControllerMapRepository.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'branch',
+            <any>branch,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'clusterId',
+            <any>clusterId,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/repositories/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/map`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<RepositoryMapResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

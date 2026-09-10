@@ -17,6 +17,8 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
+import { SecretReadResultDto } from '../model/secretReadResultDto';
+// @ts-ignore
 import { SecretsDeleteDto } from '../model/secretsDeleteDto';
 // @ts-ignore
 import { SecretsListDto } from '../model/secretsListDto';
@@ -241,10 +243,10 @@ export class SecretsConsoleService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public secretsConsoleControllerRead(id: string, secretsReadDto: SecretsReadDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public secretsConsoleControllerRead(id: string, secretsReadDto: SecretsReadDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public secretsConsoleControllerRead(id: string, secretsReadDto: SecretsReadDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public secretsConsoleControllerRead(id: string, secretsReadDto: SecretsReadDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public secretsConsoleControllerRead(id: string, secretsReadDto: SecretsReadDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SecretReadResultDto>;
+    public secretsConsoleControllerRead(id: string, secretsReadDto: SecretsReadDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SecretReadResultDto>>;
+    public secretsConsoleControllerRead(id: string, secretsReadDto: SecretsReadDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SecretReadResultDto>>;
+    public secretsConsoleControllerRead(id: string, secretsReadDto: SecretsReadDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling secretsConsoleControllerRead.');
         }
@@ -255,6 +257,7 @@ export class SecretsConsoleService extends BaseService {
         let localVarHeaders = this.defaultHeaders;
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -287,7 +290,7 @@ export class SecretsConsoleService extends BaseService {
 
         let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/secrets/read`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<SecretReadResultDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 body: secretsReadDto,

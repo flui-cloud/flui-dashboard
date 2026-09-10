@@ -515,7 +515,7 @@ export class ApplicationsService extends BaseService {
 
     /**
      * Archive an application volume to S3-compatible storage
-     * Spawns a copy-pod Job that streams the live PVC contents to S3 via rclone. When &#x60;destination&#x60; is omitted the bucket is auto-provisioned via the cluster provider object storage (Scaleway: full-auto using compute key; Hetzner: requires Object Storage credentials connected).
+     * Spawns a copy-pod Job that streams the live PVC contents to S3 via rclone. Pass &#x60;destinationId&#x60; to archive into a registered backup destination — the copy is then linked to it in the ledger and can be listed and restored like any other backup. Raw &#x60;destination&#x60; credentials still work. With neither, the bucket is auto-provisioned via the cluster provider object storage (Scaleway: full-auto using the compute key; Hetzner: requires Object Storage credentials connected; BYOS: no provisioner, pass one of the above).
      * @endpoint post /api/v1/applications/{id}/backups
      * @param id Application ID
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

@@ -35,7 +35,8 @@ export namespace CreateBackupPolicyDto {
     export const EngineClassEnum = {
         Volume: 'volume',
         Database: 'database',
-        Platform: 'platform'
+        Platform: 'platform',
+        VolumeCopy: 'volume_copy'
     } as const;
     export type EngineClassEnum = typeof EngineClassEnum[keyof typeof EngineClassEnum];
     export const ProfileEnum = {

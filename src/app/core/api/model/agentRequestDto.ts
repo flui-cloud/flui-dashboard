@@ -27,7 +27,7 @@ export interface AgentRequestDto {
     /**
      * Semantic Surface snapshot of the page the user is chatting from. Invalid or stale snapshots are silently dropped, never rejected.
      */
-    surface?: { [key: string]: any; };
+    surface?: object;
     /**
      * The surface.revision in force when the message was sent, echoing the snapshot\'s own — a mismatch drops the snapshot.
      */

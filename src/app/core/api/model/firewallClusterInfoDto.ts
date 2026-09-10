@@ -41,7 +41,8 @@ export namespace FirewallClusterInfoDto {
         Error: 'error',
         Deleting: 'deleting',
         DeletionFailed: 'deletion_failed',
-        Deleted: 'deleted'
+        Deleted: 'deleted',
+        Lost: 'lost'
     } as const;
     export type ClusterStatusEnum = typeof ClusterStatusEnum[keyof typeof ClusterStatusEnum];
 }

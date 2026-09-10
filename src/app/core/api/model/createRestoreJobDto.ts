@@ -14,6 +14,9 @@ export interface CreateRestoreJobDto {
     sourceDestinationId: string;
     targetClusterId: string;
     targetKind: CreateRestoreJobDto.TargetKindEnum;
+    /**
+     * Beside the original (`new`) or onto it, replacing what is there (`existing`). Required for cluster, namespace and application restores, where both are possible and the old default was neither. Derived for the engines that have only one meaning: a database PITR always builds a new install.
+     */
     placement?: CreateRestoreJobDto.PlacementEnum;
     targetSelector?: object;
     strategy?: CreateRestoreJobDto.StrategyEnum;
@@ -23,11 +26,6 @@ export interface CreateRestoreJobDto {
     recoveryTargetTime?: string;
 }
 export namespace CreateRestoreJobDto {
-    export const PlacementEnum = {
-        New: 'new',
-        Existing: 'existing'
-    } as const;
-    export type PlacementEnum = typeof PlacementEnum[keyof typeof PlacementEnum];
     export const TargetKindEnum = {
         Cluster: 'cluster',
         Namespace: 'namespace',
@@ -37,10 +35,16 @@ export namespace CreateRestoreJobDto {
         Database: 'database'
     } as const;
     export type TargetKindEnum = typeof TargetKindEnum[keyof typeof TargetKindEnum];
+    export const PlacementEnum = {
+        New: 'new',
+        Existing: 'existing'
+    } as const;
+    export type PlacementEnum = typeof PlacementEnum[keyof typeof PlacementEnum];
     export const StrategyEnum = {
         VeleroRebuild: 'velero_rebuild',
         OsSnapshot: 'os_snapshot',
-        PgPitr: 'pg_pitr'
+        PgPitr: 'pg_pitr',
+        MariadbPitr: 'mariadb_pitr'
     } as const;
     export type StrategyEnum = typeof StrategyEnum[keyof typeof StrategyEnum];
 }

@@ -65,6 +65,12 @@ import { OrphanedClaimsDto } from '../model/orphanedClaimsDto';
 // @ts-ignore
 import { ProviderFirewallDto } from '../model/providerFirewallDto';
 // @ts-ignore
+import { RebuildClusterDto } from '../model/rebuildClusterDto';
+// @ts-ignore
+import { RebuildClusterResponseDto } from '../model/rebuildClusterResponseDto';
+// @ts-ignore
+import { RebuildPlanResponseDto } from '../model/rebuildPlanResponseDto';
+// @ts-ignore
 import { ReconcileFirewallsDto } from '../model/reconcileFirewallsDto';
 // @ts-ignore
 import { ReconcileFirewallsResponseDto } from '../model/reconcileFirewallsResponseDto';
@@ -1839,6 +1845,156 @@ export class InfrastructureClustersService extends BaseService {
         return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Re-materialise a lost cluster’s applications onto a live one
+     * Runs the plan first and refuses with 400 if it has any refusal, so a reason reaches the caller instead of a job. Then, per application: re-point the records, put the data back, deploy, re-point the endpoints. Never rolls back — a partial rebuild is an honest state a re-run continues from. Returns an operation to follow.
+     * @endpoint post /api/v1/infrastructure/clusters/{id}/rebuild
+     * @param id The lost cluster
+     * @param rebuildClusterDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clustersControllerRebuild(id: string, rebuildClusterDto: RebuildClusterDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RebuildClusterResponseDto>;
+    public clustersControllerRebuild(id: string, rebuildClusterDto: RebuildClusterDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RebuildClusterResponseDto>>;
+    public clustersControllerRebuild(id: string, rebuildClusterDto: RebuildClusterDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RebuildClusterResponseDto>>;
+    public clustersControllerRebuild(id: string, rebuildClusterDto: RebuildClusterDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling clustersControllerRebuild.');
+        }
+        if (rebuildClusterDto === null || rebuildClusterDto === undefined) {
+            throw new Error('Required parameter rebuildClusterDto was null or undefined when calling clustersControllerRebuild.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/rebuild`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<RebuildClusterResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: rebuildClusterDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * What rebuilding this cluster onto another would do
+     * Reads the applications recorded against the lost cluster and says, per application, whether it can come back and what it will come back with. &#x60;refusals&#x60; is empty when the rebuild can start; anything in it stops the whole operation, including the source still answering — a reachable cluster is not lost, and moving one is a migration, not a rebuild.
+     * @endpoint get /api/v1/infrastructure/clusters/{id}/rebuild-plan
+     * @param id The lost cluster
+     * @param to The destination cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clustersControllerRebuildPlan(id: string, to: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RebuildPlanResponseDto>;
+    public clustersControllerRebuildPlan(id: string, to: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RebuildPlanResponseDto>>;
+    public clustersControllerRebuildPlan(id: string, to: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RebuildPlanResponseDto>>;
+    public clustersControllerRebuildPlan(id: string, to: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling clustersControllerRebuildPlan.');
+        }
+        if (to === null || to === undefined) {
+            throw new Error('Required parameter to was null or undefined when calling clustersControllerRebuildPlan.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'to',
+            <any>to,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/rebuild-plan`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<RebuildPlanResponseDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

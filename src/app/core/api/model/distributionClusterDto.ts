@@ -42,7 +42,8 @@ export namespace DistributionClusterDto {
         Error: 'error',
         Deleting: 'deleting',
         DeletionFailed: 'deletion_failed',
-        Deleted: 'deleted'
+        Deleted: 'deleted',
+        Lost: 'lost'
     } as const;
     export type StatusEnum = typeof StatusEnum[keyof typeof StatusEnum];
     export const ClusterTypeEnum = {

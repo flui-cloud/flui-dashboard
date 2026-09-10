@@ -64,6 +64,10 @@ export interface CreateApplicationDto {
      */
     configFiles?: Array<string>;
     /**
+     * Containers that ride with the application without being it, and the pod volumes they need. Set by the catalog at install; not user input.
+     */
+    companions?: object;
+    /**
      * K8s-style labels
      */
     labels?: object;

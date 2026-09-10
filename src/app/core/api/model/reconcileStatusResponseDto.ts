@@ -48,7 +48,8 @@ export namespace ReconcileStatusResponseDto {
         Error: 'error',
         Deleting: 'deleting',
         DeletionFailed: 'deletion_failed',
-        Deleted: 'deleted'
+        Deleted: 'deleted',
+        Lost: 'lost'
     } as const;
     export type PreviousStatusEnum = typeof PreviousStatusEnum[keyof typeof PreviousStatusEnum];
     export const NewStatusEnum = {
@@ -59,7 +60,8 @@ export namespace ReconcileStatusResponseDto {
         Error: 'error',
         Deleting: 'deleting',
         DeletionFailed: 'deletion_failed',
-        Deleted: 'deleted'
+        Deleted: 'deleted',
+        Lost: 'lost'
     } as const;
     export type NewStatusEnum = typeof NewStatusEnum[keyof typeof NewStatusEnum];
 }
