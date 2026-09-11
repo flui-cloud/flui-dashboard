@@ -232,9 +232,15 @@ export class PlatformUpdateService {
 
     if (after || this.apiUnreachable()) return;
 
-    // The operation left the running set: re-read status so every surface settles, and stop.
-    this.stopPolling();
+    // The operation left the running set: re-read status so every surface settles.
+    // Don't stop polling until that read actually lands — the instant an update
+    // finishes is also the instant flui-api may still be finishing its own
+    // restart, and a status fetch landing in that gap must retry on the next
+    // tick rather than freezing the page on stale data forever.
     await Promise.all([this.loadStatus(), this.loadHistory()]);
+    if (this.apiUnreachable()) return;
+
+    this.stopPolling();
     if (before?.components.some((c) => c.key === 'fluiWeb' && c.status === 'done')) {
       // The dashboard itself was replaced; this tab is running the old bundle.
       window.location.reload();

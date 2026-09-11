@@ -3,7 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { AppConfigService } from '../../core/services/app-config.service';
 import {
   PlatformUpdateOperation,
@@ -124,4 +124,45 @@ describe('PlatformUpdateService', () => {
     expect(service.updateAvailable()).toBe(false);
     expect(service.running()).toBe(false);
   });
+
+  it(
+    'keeps polling if the status read fails right as the operation finishes',
+    fakeAsync(() => {
+      // The instant an update's last component completes is also the instant
+      // flui-api may still be mid-restart: the /current call can succeed (the
+      // new pod is up enough to say "nothing running") while the very next
+      // request lands in the gap and fails. That must not be the last attempt.
+      service.startPolling();
+      const runTick = () =>
+        void (service as unknown as { tick(): Promise<void> }).tick();
+      const pollTimer = () => (service as unknown as { pollTimer: unknown }).pollTimer;
+
+      runTick();
+      flushMicrotasks();
+      http.expectOne('/api/v1/platform/updates/current').flush(null);
+      flushMicrotasks();
+      http
+        .expectOne('/api/v1/platform/updates')
+        .error(new ProgressEvent('error'), { status: 0, statusText: '' });
+      http.expectOne('/api/v1/platform/updates/history?limit=20').flush([]);
+      flushMicrotasks();
+
+      expect(pollTimer()).not.toBeNull();
+      expect(service.apiUnreachable()).toBe(true);
+
+      runTick();
+      flushMicrotasks();
+      http.expectOne('/api/v1/platform/updates/current').flush(null);
+      flushMicrotasks();
+      http
+        .expectOne('/api/v1/platform/updates')
+        .flush({ ...STATUS, updateAvailable: false, availableVersion: null });
+      http.expectOne('/api/v1/platform/updates/history?limit=20').flush([]);
+      flushMicrotasks();
+
+      expect(pollTimer()).toBeNull();
+      expect(service.apiUnreachable()).toBe(false);
+      expect(service.updateAvailable()).toBe(false);
+    }),
+  );
 });
