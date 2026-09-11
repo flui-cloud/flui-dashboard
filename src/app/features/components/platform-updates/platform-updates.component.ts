@@ -11,6 +11,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideChevronDown,
   lucideCircleCheck,
   lucideDownload,
   lucideInfo,
@@ -38,6 +39,7 @@ import {
   imports: [DatePipe, NgIcon, PlatformUpdateProgressComponent, PlatformUpdateHistoryComponent],
   providers: [
     provideIcons({
+      lucideChevronDown,
       lucideCircleCheck,
       lucideDownload,
       lucideInfo,
@@ -82,7 +84,6 @@ import {
                   <h2 class="text-lg font-semibold">Could not check for updates</h2>
                   <p class="text-sm text-muted-foreground">
                     This installation runs Flui <span class="font-mono">{{ status.installedVersion }}</span>.
-                    Whether anything newer exists is unknown until the release manifest can be read.
                   </p>
                 } @else if (status.updateAvailable) {
                   <span class="badge bg-primary/10 text-primary">Update available</span>
@@ -90,89 +91,101 @@ import {
                   <p class="text-sm text-muted-foreground">
                     You are on <span class="font-mono">{{ status.installedVersion }}</span>
                     @if (status.publishedAt) { · released {{ status.publishedAt | date: 'd MMM y' }} }
-                    · {{ changedCount() }} of {{ status.components.length }} components change
                   </p>
                 } @else {
                   <span class="badge badge-success">Up to date</span>
                   <h2 class="text-lg font-semibold">You are on the latest release</h2>
                   <p class="text-sm text-muted-foreground">
-                    Flui <span class="font-mono">{{ status.installedVersion }}</span> — {{ componentSummary() }}
+                    Flui <span class="font-mono">{{ status.installedVersion }}</span>
                   </p>
                 }
               </div>
               @if (status.updateAvailable && !updates.checkFailed()) {
-                <button type="button" (click)="openConfirm()" [disabled]="!status.applicable"
-                        class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
-                  <ng-icon name="lucideDownload" class="h-4 w-4" />
-                  Update now
-                </button>
-              }
-            </div>
-
-            <div class="grid grid-cols-[180px_1fr_220px_110px] gap-3 bg-muted px-5 py-2 text-label">
-              <div>Component</div><div>Role</div><div>Version</div><div>Change</div>
-            </div>
-            @for (component of status.components; track component.key) {
-              <div class="grid grid-cols-[180px_1fr_220px_110px] items-center gap-3 border-t border-border px-5 py-3"
-                   [class.opacity-60]="!component.changed || !component.installed">
-                <div class="font-mono text-sm font-medium">{{ component.deploymentName }}</div>
-                <div class="text-xs text-muted-foreground">
-                  {{ component.role }}@if (component.restartsControlPlane) { · restarts once }
-                </div>
-                <div class="font-mono text-xs">
-                  @if (!component.installed) {
-                    <span class="font-sans text-muted-foreground">Not installed</span>
-                  } @else {
-                    @if (component.changed) {
-                      <span class="text-muted-foreground">{{ component.installedVersion }}</span>
-                      <span class="mx-1.5 text-muted-foreground/50">&rarr;</span>
-                    }
-                    <span class="font-semibold">{{ component.targetVersion ?? component.installedVersion ?? '—' }}</span>
-                    @if (!component.installedIsRelease && !component.changed) {
-                      <span class="ml-1.5 font-sans text-[11px] text-amber-600 dark:text-amber-400">build</span>
-                    }
-                    @if (!component.observed) {
-                      <span class="ml-1.5 font-sans text-[11px] text-muted-foreground">pinned, not read from the cluster</span>
-                    }
-                  }
-                </div>
-                <div>
-                  <span class="badge" [class]="component.changed ? 'bg-primary/10 text-primary' : 'badge-in-progress'">
-                    {{ changeLabel(component, status.availableVersion) }}
-                  </span>
-                </div>
-              </div>
-            }
-
-            @if (status.advisories.length > 0) {
-              <div class="grid gap-3 border-t border-border p-5 sm:grid-cols-2">
-                @for (advisory of status.advisories; track advisory.title) {
-                  <div class="flex items-start gap-2.5">
-                    <ng-icon [name]="advisory.level === 'info' ? 'lucideInfo' : 'lucideTriangleAlert'"
-                             class="mt-0.5 h-4 w-4 shrink-0"
-                             [class]="advisory.level === 'blocker' ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'" />
-                    <div>
-                      <p class="text-sm">{{ advisory.title }}</p>
-                      <p class="text-xs text-muted-foreground mt-0.5">{{ advisory.detail }}</p>
-                    </div>
+                @if (status.applicable) {
+                  <button type="button" (click)="openConfirm()"
+                          class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+                    <ng-icon name="lucideDownload" class="h-4 w-4" />
+                    Update now
+                  </button>
+                } @else {
+                  <div class="text-right">
+                    <span class="badge badge-in-progress">Needs the CLI</span>
+                    <button type="button" (click)="detailsOpen.set(true)"
+                            class="block mt-1 text-xs text-primary hover:underline">Why?</button>
                   </div>
                 }
-              </div>
-            }
-          </div>
-        }
-
-        @if (status.notes.length > 0 && status.updateAvailable) {
-          <div class="card-surface p-5">
-            <h3 class="text-sm font-semibold mb-3">In this release</h3>
-            <ul class="space-y-2">
-              @for (note of status.notes; track note) {
-                <li class="flex gap-2.5 text-sm text-foreground/90">
-                  <span class="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40"></span>
-                  <span>{{ note }}</span>
-                </li>
               }
-            </ul>
+            </div>
+
+            @if (status.notes.length > 0 && status.updateAvailable) {
+              <ul class="space-y-1.5 border-t border-border px-5 py-4">
+                @for (note of status.notes; track note) {
+                  <li class="flex gap-2.5 text-sm text-foreground/90">
+                    <span class="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40"></span>
+                    <span>{{ note }}</span>
+                  </li>
+                }
+              </ul>
+            }
+
+            <button type="button" (click)="detailsOpen.set(!detailsOpen())"
+                    class="flex w-full items-center gap-1.5 border-t border-border px-5 py-2.5 text-xs text-muted-foreground hover:text-foreground">
+              <ng-icon name="lucideChevronDown" class="h-3.5 w-3.5 transition-transform" [class.rotate-180]="detailsOpen()" />
+              {{ detailsOpen() ? 'Hide details' : 'Details' }}
+            </button>
+
+            @if (detailsOpen()) {
+              <div class="grid grid-cols-[180px_1fr_220px_110px] gap-3 border-t border-border bg-muted px-5 py-2 text-label">
+                <div>Component</div><div>Role</div><div>Version</div><div>Change</div>
+              </div>
+              @for (component of status.components; track component.key) {
+                <div class="grid grid-cols-[180px_1fr_220px_110px] items-center gap-3 border-t border-border px-5 py-3"
+                     [class.opacity-60]="!component.changed || !component.installed">
+                  <div class="font-mono text-sm font-medium">{{ component.deploymentName }}</div>
+                  <div class="text-xs text-muted-foreground">
+                    {{ component.role }}@if (component.restartsControlPlane) { · restarts once }
+                  </div>
+                  <div class="font-mono text-xs">
+                    @if (!component.installed) {
+                      <span class="font-sans text-muted-foreground">Not installed</span>
+                    } @else {
+                      @if (component.changed) {
+                        <span class="text-muted-foreground">{{ component.installedVersion }}</span>
+                        <span class="mx-1.5 text-muted-foreground/50">&rarr;</span>
+                      }
+                      <span class="font-semibold">{{ component.targetVersion ?? component.installedVersion ?? '—' }}</span>
+                      @if (!component.installedIsRelease && !component.changed) {
+                        <span class="ml-1.5 font-sans text-[11px] text-amber-600 dark:text-amber-400">build</span>
+                      }
+                      @if (!component.observed) {
+                        <span class="ml-1.5 font-sans text-[11px] text-muted-foreground">pinned, not read from the cluster</span>
+                      }
+                    }
+                  </div>
+                  <div>
+                    <span class="badge" [class]="component.changed ? 'bg-primary/10 text-primary' : 'badge-in-progress'">
+                      {{ changeLabel(component, status.availableVersion) }}
+                    </span>
+                  </div>
+                </div>
+              }
+
+              @if (status.advisories.length > 0) {
+                <div class="grid gap-3 border-t border-border p-5 sm:grid-cols-2">
+                  @for (advisory of status.advisories; track advisory.title) {
+                    <div class="flex items-start gap-2.5">
+                      <ng-icon [name]="advisory.level === 'info' ? 'lucideInfo' : 'lucideTriangleAlert'"
+                               class="mt-0.5 h-4 w-4 shrink-0"
+                               [class]="advisory.level === 'blocker' ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'" />
+                      <div>
+                        <p class="text-sm">{{ advisory.title }}</p>
+                        <p class="text-xs text-muted-foreground mt-0.5">{{ advisory.detail }}</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            }
           </div>
         }
       } @else if (updates.loading()) {
@@ -249,6 +262,7 @@ export class PlatformUpdatesComponent implements OnInit, OnDestroy {
 
   protected readonly confirming = signal(false);
   protected readonly acknowledged = signal(false);
+  protected readonly detailsOpen = signal(false);
 
   private readonly surfaceRevision = new PlatformUpdatesSurfaceRevision();
 
@@ -280,17 +294,6 @@ export class PlatformUpdatesComponent implements OnInit, OnDestroy {
   protected readonly changedComponents = computed<PlatformComponentUpdate[]>(
     () => this.updates.status()?.components.filter((c) => c.changed) ?? [],
   );
-  protected readonly changedCount = computed(() => this.changedComponents().length);
-
-  /** What the table below actually shows, said in one line and never assumed. */
-  protected readonly componentSummary = computed(() => {
-    const off = this.updates.offReleaseComponents();
-    if (off.length === 0) return 'every installed component is on its release version.';
-    const names = off.map((c) => c.deploymentName).join(', ');
-    return off.length === 1
-      ? `${names} is running a build rather than a release image.`
-      : `${names} are running builds rather than release images.`;
-  });
   protected readonly migrations = computed(() => this.updates.status()?.migrations ?? 0);
   protected readonly warnings = computed(
     () => this.updates.status()?.advisories.filter((a) => a.level !== 'info') ?? [],

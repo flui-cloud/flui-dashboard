@@ -114,12 +114,6 @@ export class PlatformUpdateService {
    * are on the latest release" there is a claim nobody made.
    */
   readonly checkFailed = computed(() => !!this.statusData()?.checkError);
-  /** Components pinned to something that is not a release version. */
-  readonly offReleaseComponents = computed(() =>
-    (this.statusData()?.components ?? []).filter(
-      (c) => c.installed && !!c.installedVersion && !c.installedIsRelease,
-    ),
-  );
   readonly blockers = computed(
     () => this.statusData()?.advisories.filter((a) => a.level === 'blocker') ?? [],
   );
