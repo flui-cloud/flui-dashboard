@@ -33,10 +33,18 @@ export interface InfrastructureOperationFailedDto {
   timestamp: string;
 }
 
+export interface InfrastructureOperationLogDto {
+  operationId: string;
+  resourceId: string;
+  chunk: string;
+  timestamp: string;
+}
+
 export interface ResourceCallbacks {
   onProgress?: (event: InfrastructureOperationProgressDto) => void;
   onCompleted?: (event: InfrastructureOperationCompletedDto) => void;
   onFailed?: (event: InfrastructureOperationFailedDto) => void;
+  onLog?: (event: InfrastructureOperationLogDto) => void;
 }
 
 /**
@@ -107,6 +115,11 @@ export class InfrastructureWebSocketService implements OnDestroy {
       console.error(`❌ Operation failed: ${dto.error}`);
       this.resourceCallbacks.get(dto.resourceId)?.onFailed?.(dto);
       this.operationCallbacks.get(dto.operationId)?.onFailed?.(dto);
+    });
+
+    this.socket.on('infrastructure:operation:log', (dto: InfrastructureOperationLogDto) => {
+      this.resourceCallbacks.get(dto.resourceId)?.onLog?.(dto);
+      this.operationCallbacks.get(dto.operationId)?.onLog?.(dto);
     });
   }
 

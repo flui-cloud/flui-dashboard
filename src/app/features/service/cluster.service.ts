@@ -11,6 +11,7 @@ import {
   mapClusterNodeToInstance,
 } from '../model/instance.models';
 import { InfrastructureWebSocketService } from './infrastructure-websocket.service';
+import { InstallLogService } from './install-log.service';
 
 export interface ProviderInfo {
   id: string;
@@ -29,6 +30,7 @@ export class ClusterService {
   private readonly instancesApi = inject(VirtualInstancesService);
   private readonly providersApi = inject(ProviderManagementService);
   private readonly infrastructureWs = inject(InfrastructureWebSocketService);
+  private readonly installLogApi = inject(InstallLogService);
 
   private readonly clusterInfo = signal<ClusterInfo | null>(null);
   private readonly isLoading = signal<boolean>(false);
@@ -42,6 +44,7 @@ export class ClusterService {
   private readonly currentStepProgress = signal<number>(0);
   private readonly stepMessages: Set<string> = new Set();
   private readonly operationStatus = signal<OperationStatus | null>(null);
+  private readonly installLogText = signal<string>('');
 
   private readonly clustersList = signal<ClusterInfo[]>([]);
   private readonly selectedClusterId = signal<string | null>(null);
@@ -64,6 +67,8 @@ export class ClusterService {
   readonly stepsTotal = this.totalSteps.asReadonly();
   readonly stepProgress = this.currentStepProgress.asReadonly();
   readonly operation = this.operationStatus.asReadonly();
+  /** Bootstrap output tailed live from the master node while it's created — see InstallLogService on the API side. */
+  readonly installLog = this.installLogText.asReadonly();
 
   private readonly deletionProgressMap = signal<Record<string, number>>({});
   readonly deletionProgress = this.deletionProgressMap.asReadonly();
@@ -228,6 +233,7 @@ export class ClusterService {
     this.currentStepIndex.set(0);
     this.totalSteps.set(0);
     this.currentStepProgress.set(0);
+    this.installLogText.set('');
 
     try {
       const createClusterDto: CreateClusterDto = {
@@ -256,6 +262,11 @@ export class ClusterService {
       );
 
       this.currentOperationId.set(response.operation_id);
+      // Master-node creation only, for now — the install log pane has nothing
+      // to show for other operation types.
+      this.infrastructureWs.subscribeToOperation(response.operation_id, {
+        onLog: (dto) => this.installLogText.update((text) => text + dto.chunk),
+      });
 
       const newCluster: ClusterInfo = {
         id: response.cluster_id,
@@ -289,6 +300,26 @@ export class ClusterService {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  /**
+   * Covers a page reload or a direct/shared link to the progress page: the WS
+   * subscription only sees chunks from here on, so whatever was captured
+   * before this page existed would otherwise never show. Only fills in an
+   * empty pane — never overwrites text a WS chunk may have already appended
+   * while this request was in flight, and a 404 (nothing captured yet, or
+   * never will be for this operation type) is silently ignored.
+   */
+  private seedInstallLogFromApi(operationId: string): void {
+    this.installLogApi.download(operationId).subscribe({
+      next: (blob) =>
+        void blob.text().then((text) => {
+          this.installLogText.update((current) => current || text);
+        }),
+      error: () => {
+        /* nothing captured (yet, or ever) for this operation — fine */
+      },
+    });
   }
 
   private addDynamicStep(
@@ -373,6 +404,7 @@ export class ClusterService {
       if (pollCount >= MAX_POLLS) {
         this.error.set(messages.timeout);
         this.creationMessage.set('Operation timeout');
+        this.infrastructureWs.unsubscribeFromOperation(operationId);
         return;
       }
 
@@ -418,6 +450,7 @@ export class ClusterService {
             messages.success,
             operationType === 'create' ? 'Your cluster is ready to use' : 'Operation completed'
           );
+          this.infrastructureWs.unsubscribeFromOperation(operationId);
           await this.fetchClusterDetails(clusterId);
           return;
         } else if (status.status === 'FAILED') {
@@ -426,6 +459,7 @@ export class ClusterService {
           this.error.set(errorMsg);
           this.creationMessage.set(errorMsg);
           this.failLastRunningStep(errorMsg);
+          this.infrastructureWs.unsubscribeFromOperation(operationId);
 
           if (operationType === 'create' || operationType === 'delete') {
             this.clusterInfo.update((cluster) =>
@@ -450,6 +484,15 @@ export class ClusterService {
     const MAX_POLLS = 600;
     let pollCount = 0;
     let clusterId: string | null = null;
+
+    // Idempotent re-subscribe: covers a direct/reloaded visit to the progress
+    // page, where createCluster()'s own subscribeToOperation call never ran in
+    // this session. Doesn't reset installLogText — createCluster() already did
+    // that at the true start of the operation, and this may just be resuming it.
+    this.infrastructureWs.subscribeToOperation(operationId, {
+      onLog: (dto) => this.installLogText.update((text) => text + dto.chunk),
+    });
+    this.seedInstallLogFromApi(operationId);
 
     const poll = async (): Promise<void> => {
       if (pollCount >= MAX_POLLS) {
@@ -500,6 +543,7 @@ export class ClusterService {
           this.creationMessage.set('Operation completed successfully!');
           this.completeLastRunningStep();
           this.appendFinalStep('Operation completed successfully!', 'Your cluster is ready to use');
+          this.infrastructureWs.unsubscribeFromOperation(operationId);
 
           if (clusterId) {
             await this.fetchClusterDetails(clusterId);
@@ -511,6 +555,7 @@ export class ClusterService {
           this.error.set(errorMsg);
           this.creationMessage.set(errorMsg);
           this.failLastRunningStep(errorMsg);
+          this.infrastructureWs.unsubscribeFromOperation(operationId);
 
           if (clusterId) {
             this.clusterInfo.update((cluster) =>
