@@ -86,7 +86,7 @@ export interface WizardStep {
         </div>
     
         <!-- Navigation Buttons -->
-        <div class="flex items-center justify-between">
+        <div class="sticky bottom-0 z-10 flex items-center justify-between border-t border-slate-200 bg-background pt-3 pb-1 dark:border-slate-700">
           @if (currentStepIndex() > 0) {
             <button
               (click)="onPrevious()"

@@ -3,6 +3,8 @@ import { Component, computed, effect, inject, input, output, signal, untracked, 
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
+  lucideChevronDown,
+  lucideChevronUp,
   lucideCircleAlert,
   lucideLoader,
   lucideMapPin,
@@ -25,6 +27,8 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
   providers: [
     provideIcons({
       lucideCheck,
+      lucideChevronDown,
+      lucideChevronUp,
       lucideCircleAlert,
       lucideLoader,
       lucideMapPin,
@@ -135,7 +139,7 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
           <div
             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
             >
-            @for (serverType of filteredServerTypes(); track serverType) {
+            @for (serverType of displayedServerTypes(); track serverType) {
               <button
                 type="button"
                 (click)="selectServerType(serverType)"
@@ -198,8 +202,29 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
               </button>
             }
           </div>
+
+          @if (!isShowingAll() && hiddenServerTypeCount() > 0) {
+            <button
+              type="button"
+              (click)="showAllSizes.set(true)"
+              class="mt-3 flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+              <span>Show all {{ filteredServerTypes().length }} sizes</span>
+              <ng-icon name="lucideChevronDown" class="h-3.5 w-3.5" />
+            </button>
+          }
+          @if (showAllSizes() && hiddenServerTypeCount() > 0) {
+            <button
+              type="button"
+              (click)="showAllSizes.set(false)"
+              class="mt-3 flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+              <span>Show fewer sizes</span>
+              <ng-icon name="lucideChevronUp" class="h-3.5 w-3.5" />
+            </button>
+          }
         }
-    
+
         @if (selectedRegion() && !wizardService.isServerTypeLoading() && filteredServerTypes().length === 0) {
           <div
             class="text-center py-8 text-sm text-muted-foreground"
@@ -244,6 +269,61 @@ export class RegionServerSelectorComponent {
     return types.filter((type) => type.cpuType === filter);
   });
 
+  private static readonly CURATED_SIZE_COUNT = 6;
+
+  readonly showAllSizes = signal(false);
+
+  private sampleSpread(sorted: ServerTypeOption[], count: number): ServerTypeOption[] {
+    const total = sorted.length;
+    if (count >= total) return sorted;
+    const picked: ServerTypeOption[] = [];
+    const seenIndexes = new Set<number>();
+    for (let i = 0; i < count; i++) {
+      const index = Math.round((i * (total - 1)) / (count - 1));
+      if (seenIndexes.has(index)) continue;
+      seenIndexes.add(index);
+      picked.push(sorted[index]);
+    }
+    return picked;
+  }
+
+  readonly curatedServerTypes = computed<ServerTypeOption[]>(() => {
+    const sorted = this.filteredServerTypes();
+    const budget = RegionServerSelectorComponent.CURATED_SIZE_COUNT;
+    if (sorted.length <= budget) return sorted;
+
+    const groups = [
+      sorted.filter((type) => type.cpuType === 'shared'),
+      sorted.filter((type) => type.cpuType === 'dedicated'),
+    ].filter((group) => group.length > 0);
+
+    if (groups.length <= 1) {
+      return this.sampleSpread(sorted, budget);
+    }
+
+    const perGroup = Math.floor(budget / groups.length);
+    const remainder = budget - perGroup * groups.length;
+    const picked = groups.flatMap((group, i) =>
+      this.sampleSpread(group, perGroup + (i < remainder ? 1 : 0))
+    );
+    return picked.sort((a, b) => a.pricePerHour - b.pricePerHour);
+  });
+
+  readonly hiddenServerTypeCount = computed<number>(
+    () => this.filteredServerTypes().length - this.curatedServerTypes().length
+  );
+
+  readonly isShowingAll = computed<boolean>(() => {
+    if (this.showAllSizes()) return true;
+    const selectedId = this.selectedServerTypeId();
+    if (!selectedId) return false;
+    return !this.curatedServerTypes().some((type) => type.id === selectedId);
+  });
+
+  readonly displayedServerTypes = computed<ServerTypeOption[]>(() =>
+    this.isShowingAll() ? this.filteredServerTypes() : this.curatedServerTypes()
+  );
+
   readonly cheapestByRegion = computed<Record<string, number>>(() => {
     const provider = this.selectedProvider();
     const catalog = this.wizardService.serverTypesData();
@@ -283,6 +363,11 @@ export class RegionServerSelectorComponent {
           (error) => console.error('Failed to load server catalog:', error)
         );
       });
+    });
+
+    effect(() => {
+      this.selectedRegion();
+      untracked(() => this.showAllSizes.set(false));
     });
   }
 
