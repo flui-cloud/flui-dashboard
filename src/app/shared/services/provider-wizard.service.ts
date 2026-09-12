@@ -304,8 +304,10 @@ export class ProviderWizardService {
       const nodeSizesDto = await firstValueFrom(
         this.providerManagementService.managementControllerGetProviderNodeSizes(
           provider as 'hetzner' | 'contabo',
-          region,  // Filter node sizes by selected region
-          true  // skipCache: always fetch fresh data from provider
+          region  // Filter node sizes by selected region
+          // skipCache omitted: metadata (CPU/RAM/price) is safe to serve from
+          // the backend's 24h cache — live availability is fetched by the
+          // backend unconditionally for providers that have one
         )
       );
 
@@ -355,48 +357,76 @@ export class ProviderWizardService {
     this.serverTypesError.set(null);
 
     try {
-      let anyFailure = false;
-      const perRegion = await Promise.all(
-        regions.map((region) =>
-          this.loadServerTypes(provider, region.id).then(
-            (list) => ({ region, list }),
-            () => {
-              anyFailure = true;
-              return { region, list: [] as ServerTypeOption[] };
-            }
-          )
+      // One request for every region instead of one PER region: the backend
+      // already returns region-scoped prices/availability for the full
+      // catalog, so region membership can be derived client-side.
+      const nodeSizesDto = await firstValueFrom(
+        this.providerManagementService.managementControllerGetProviderNodeSizes(
+          provider as 'hetzner' | 'contabo'
         )
       );
+      const catalog = nodeSizesDto.filter((nodeSize) => !nodeSize.deprecated);
 
       const regionIdsByType: Record<string, string[]> = {};
-      for (const { region, list } of perRegion) {
-        for (const serverType of list) {
-          (regionIdsByType[serverType.id] ??= []).push(region.id);
+      for (const region of regions) {
+        for (const nodeSize of catalog) {
+          if (this.isAvailableInRegion(nodeSize, region.id)) {
+            (regionIdsByType[nodeSize.id] ??= []).push(region.id);
+          }
         }
       }
 
       const updates: Record<string, ServerTypeOption[]> = {};
-      for (const { region, list } of perRegion) {
-        updates[`${provider}:${region.id}`] = list.map((serverType) => ({
+      for (const region of regions) {
+        const availableInRegion = catalog.filter((nodeSize) =>
+          this.isAvailableInRegion(nodeSize, region.id)
+        );
+        updates[`${provider}:${region.id}`] = this.mapNodeSizesToServerTypes(
+          availableInRegion,
+          region.id
+        ).map((serverType) => ({
           ...serverType,
           availableRegionIds: regionIdsByType[serverType.id] ?? [region.id],
         }));
       }
 
       this.serverTypes.update((current) => ({ ...current, ...updates }));
-
-      const hasAnyData = perRegion.some((entry) => entry.list.length > 0);
-      if (anyFailure && !hasAnyData) {
-        this.serverTypesError.set('Failed to load server types. Please try again.');
-      } else {
-        this.serverTypesError.set(null);
-        this.allRegionsLoadedFor.add(provider);
-      }
+      this.serverTypesError.set(null);
+      this.allRegionsLoadedFor.add(provider);
 
       return regions;
+    } catch (error) {
+      console.error(
+        `❌ [ProviderWizardService] Failed to load server types for ${provider}:`,
+        error
+      );
+      this.serverTypesError.set('Failed to load server types. Please try again.');
+      throw error;
     } finally {
       this.isLoadingServerTypes.set(false);
     }
+  }
+
+  /** Mirrors the region-availability rule management.service.ts applies server-side for a single region. */
+  private isAvailableInRegion(nodeSize: NodeSizeOptionDto, region: string): boolean {
+    if (!nodeSize.availability || !Array.isArray(nodeSize.availability)) {
+      const location = nodeSize.locations?.find((loc) => loc.name === region);
+      if (!location) return false;
+      if (!location.deprecation) return true;
+      return new Date() < new Date(location.deprecation.unavailable_after);
+    }
+
+    const locationAvailability = nodeSize.availability.find((av) => av.location === region);
+    if (!locationAvailability) return false;
+
+    if (locationAvailability.deprecated) {
+      const location = nodeSize.locations?.find((loc) => loc.name === region);
+      if (location?.deprecation && new Date() >= new Date(location.deprecation.unavailable_after)) {
+        return false;
+      }
+    }
+
+    return locationAvailability.available;
   }
 
   /**

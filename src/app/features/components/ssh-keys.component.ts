@@ -35,7 +35,7 @@ import {
   presentedContent,
 } from './ssh-keys-surface';
 
-type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway';
+type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
 
 @Component({
   selector: 'app-ssh-keys',
