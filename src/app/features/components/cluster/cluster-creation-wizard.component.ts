@@ -46,6 +46,7 @@ import {
 import { WizardStep, NodeSizeOption, ClusterConfiguration, ProviderType, isControlClusterType } from '../../model/cluster.models';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
+import { ClusterNameAvailabilityService } from '../../service/cluster-name-availability.service';
 import { AutoscaleDefaults } from '../../model/autoscale.models';
 import { AccessManagementService } from '../../../core/api/api/accessManagement.service';
 import { VNetInfo, AddSubnetConfiguration } from '../../model/vnet.models';
@@ -218,8 +219,14 @@ interface FirewallRuleDto {
                     @if (basicConfigForm.get('name')?.errors?.['nameExists']) {
                       <p class="text-sm text-red-500 mt-1">A cluster with this name already exists. Please choose a different name.</p>
                     }
+                    @if (basicConfigForm.get('name')?.errors?.['providerCollision']) {
+                      <p class="text-sm text-red-500 mt-1">{{ basicConfigForm.get('name')?.errors?.['providerCollision'] }}</p>
+                    }
                   }
-                  @if (!basicConfigForm.get('name')?.errors && basicConfigForm.get('name')?.value) {
+                  @if (basicConfigForm.get('name')?.pending) {
+                    <p class="text-sm text-muted-foreground mt-1">Checking availability…</p>
+                  }
+                  @if (basicConfigForm.get('name')?.valid && basicConfigForm.get('name')?.value) {
                     <p class="text-sm text-green-600 mt-1">✓ Name available</p>
                   }
                 </div>
@@ -1371,6 +1378,7 @@ export class ClusterCreationWizardComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly clusterService = inject(ClusterService);
   private readonly autoscaleService = inject(ClusterAutoscaleService);
+  private readonly nameAvailabilityService = inject(ClusterNameAvailabilityService);
   private readonly wizardService = inject(ProviderWizardService);
   private readonly vnetService = inject(VNetService);
   private readonly accessManagementService = inject(AccessManagementService);
@@ -1662,15 +1670,37 @@ export class ClusterCreationWizardComponent implements OnInit {
    * Generate a unique cluster name by checking against existing clusters.
    * Pattern: workload-cluster-1, workload-cluster-2, workload-cluster-3, etc.
    * Called when user clicks the "Auto-generate Name" button.
+   *
+   * A name free in our own (non-deleted) records isn't proof it's free at the
+   * provider too — a soft-deleted cluster whose server survived a force
+   * delete leaves exactly that gap. Each candidate is re-checked against the
+   * provider before being offered, so the suggestion never walks the user
+   * into a collision ~8 minutes into provisioning. Bounded at 50 attempts so
+   * a provider outage degrades to "keep the client-side guess" instead of
+   * hanging the button.
    */
-  generateUniqueClusterName(): void {
+  async generateUniqueClusterName(): Promise<void> {
     const existingClusters = this.clusterService.clusters();
     const existingNames = new Set(existingClusters.map((c) => c.name?.toLowerCase() || ''));
+    const provider = this.selectedProvider();
 
     let counter = 1;
     let suggestedName = `workload-cluster-${counter}`;
 
-    while (existingNames.has(suggestedName.toLowerCase())) {
+    for (let attempt = 0; attempt < 50; attempt++) {
+      while (existingNames.has(suggestedName.toLowerCase())) {
+        counter++;
+        suggestedName = `workload-cluster-${counter}`;
+      }
+
+      if (!provider) break;
+      try {
+        const availability = await this.nameAvailabilityService.check(suggestedName, provider);
+        if (availability.available) break;
+      } catch {
+        break; // Can't verify — offer the client-side guess rather than block the button.
+      }
+
       counter++;
       suggestedName = `workload-cluster-${counter}`;
     }
@@ -1680,27 +1710,33 @@ export class ClusterCreationWizardComponent implements OnInit {
   }
 
   /**
-   * Async validator to ensure cluster name is unique.
-   * Checks against existing cluster names in real-time.
+   * Async validator to ensure cluster name is unique — both in our own
+   * records and at the cloud provider (see generateUniqueClusterName for
+   * why the provider check matters).
    */
   private clusterNameAsyncValidator(): AsyncValidatorFn {
     return (control: AbstractControl): Promise<ValidationErrors | null> => {
-      return new Promise((resolve) => {
-        if (!control.value) {
-          resolve(null);
-          return;
-        }
+      return (async () => {
+        if (!control.value) return null;
 
         const existingClusters = this.clusterService.clusters();
         const existingNames = existingClusters.map((c) => c.name?.toLowerCase() || '');
         const inputName = control.value.toLowerCase();
 
         if (existingNames.includes(inputName)) {
-          resolve({ nameExists: true });
-        } else {
-          resolve(null);
+          return { nameExists: true };
         }
-      });
+
+        const provider = this.selectedProvider();
+        if (!provider) return null;
+
+        try {
+          const availability = await this.nameAvailabilityService.check(control.value, provider);
+          return availability.available ? null : { providerCollision: availability.reason };
+        } catch {
+          return null; // Can't verify — the deep provisioning-time check is still the backstop.
+        }
+      })();
     };
   }
 
