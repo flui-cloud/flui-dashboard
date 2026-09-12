@@ -20,9 +20,9 @@ export interface DeployFromYamlDto {
      */
     clusterId: string;
     /**
-     * GitHub repository full name (owner/repo)
+     * GitHub repository full name (owner/repo). Required to deploy; optional with validateOnly, where omitting it leaves the repository checks unanswered instead of failing them.
      */
-    repoFullName: string;
+    repoFullName?: string;
     /**
      * Git branch to deploy from
      */

@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { RemovalPreviewVolumeDto } from './removalPreviewVolumeDto';
+import { RemovalSnapshotOfferDto } from './removalSnapshotOfferDto';
 import { RemovalPreviewApplicationDto } from './removalPreviewApplicationDto';
 
 
@@ -30,6 +31,10 @@ export interface RemovalPreviewDto {
      * Why the volumes could not be listed, when they could not.
      */
     note?: string;
+    /**
+     * Services this application attached, each with the way to keep its data before the removal takes it. Empty when it attached none.
+     */
+    snapshotOffer: Array<RemovalSnapshotOfferDto>;
 }
 export namespace RemovalPreviewDto {
     export const RemovesEnum = {

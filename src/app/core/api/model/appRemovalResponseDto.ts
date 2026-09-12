@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { RemovalSnapshotOfferDto } from './removalSnapshotOfferDto';
 
 
 export interface AppRemovalResponseDto { 
@@ -34,6 +35,14 @@ export interface AppRemovalResponseDto {
      * Human-readable label for a progress widget.
      */
     label?: string;
+    /**
+     * The services this application had attached to itself, uninstalled with it. Present on the RESPONSE and not only on the preview on purpose: a cascade that takes a database away must say so even to a caller that never asked for the preview.
+     */
+    attachedServicesRemoved: Array<RemovalSnapshotOfferDto>;
+    /**
+     * The same sentence the preview gives, as it stood the moment the removal started. Null only when the removal provably took no storage.
+     */
+    dataWarning?: string;
 }
 export namespace AppRemovalResponseDto {
     export const RemovedEnum = {

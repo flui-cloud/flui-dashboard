@@ -57,6 +57,7 @@ export namespace ProviderCredentialsDto {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
         Scaleway: 'scaleway',
+        Ovh: 'ovh',
         Byos: 'byos'
     } as const;
     export type ProviderEnum = typeof ProviderEnum[keyof typeof ProviderEnum];

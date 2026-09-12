@@ -32,6 +32,7 @@ export namespace UpdateSSHKeyDto {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
         Scaleway: 'scaleway',
+        Ovh: 'ovh',
         Byos: 'byos'
     } as const;
     export type SyncProvidersEnum = typeof SyncProvidersEnum[keyof typeof SyncProvidersEnum];
@@ -39,6 +40,7 @@ export namespace UpdateSSHKeyDto {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
         Scaleway: 'scaleway',
+        Ovh: 'ovh',
         Byos: 'byos'
     } as const;
     export type UnsyncProvidersEnum = typeof UnsyncProvidersEnum[keyof typeof UnsyncProvidersEnum];

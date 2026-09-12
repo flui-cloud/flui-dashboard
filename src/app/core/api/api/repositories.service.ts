@@ -33,6 +33,10 @@ import { PublicRepositoryAnalyzeDto } from '../model/publicRepositoryAnalyzeDto'
 // @ts-ignore
 import { RepositoryAnalysisDto } from '../model/repositoryAnalysisDto';
 // @ts-ignore
+import { RepositoryApplyDto } from '../model/repositoryApplyDto';
+// @ts-ignore
+import { RepositoryApplyResponseDto } from '../model/repositoryApplyResponseDto';
+// @ts-ignore
 import { RepositoryManifestsDto } from '../model/repositoryManifestsDto';
 // @ts-ignore
 import { RepositoryMapResponseDto } from '../model/repositoryMapResponseDto';
@@ -187,6 +191,80 @@ export class RepositoriesService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: analyzeRepositoryDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Apply the map: cut a Flui branch, commit the manifests, build
+     * Reads the repository at the given branch, refuses unless the verdict allows a deploy, then creates a branch &#x60;flui/deploy-&lt;sha7&gt;&#x60; **at the exact commit the map was read from** and lands ONE commit on it containing the rendered flui.yaml of every deployable unit plus a build workflow for each. That commit triggers the builds. One Application is created per unit, on the Flui branch — a distinct identity from anything deployed from the author’s own branch, so an apply can never overwrite a production application. The author’s branch is never written to. A failure before the commit deletes the Flui branch but does NOT delete the applications already created: preparing one provisions the services its manifest declares, and a service is only removed through the removal preview. Those applications are named in the error and reused by the next apply.
+     * @endpoint post /api/v1/repositories/{id}/map/apply
+     * @param id 
+     * @param repositoryApplyDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public repositoriesControllerApplyRepositoryMap(id: string, repositoryApplyDto: RepositoryApplyDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RepositoryApplyResponseDto>;
+    public repositoriesControllerApplyRepositoryMap(id: string, repositoryApplyDto: RepositoryApplyDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RepositoryApplyResponseDto>>;
+    public repositoriesControllerApplyRepositoryMap(id: string, repositoryApplyDto: RepositoryApplyDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RepositoryApplyResponseDto>>;
+    public repositoriesControllerApplyRepositoryMap(id: string, repositoryApplyDto: RepositoryApplyDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling repositoriesControllerApplyRepositoryMap.');
+        }
+        if (repositoryApplyDto === null || repositoryApplyDto === undefined) {
+            throw new Error('Required parameter repositoryApplyDto was null or undefined when calling repositoriesControllerApplyRepositoryMap.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/repositories/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/map/apply`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<RepositoryApplyResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: repositoryApplyDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

@@ -85,6 +85,7 @@ export namespace SSHKeyDto {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
         Scaleway: 'scaleway',
+        Ovh: 'ovh',
         Byos: 'byos'
     } as const;
     export type SourceEnum = typeof SourceEnum[keyof typeof SourceEnum];
@@ -92,6 +93,7 @@ export namespace SSHKeyDto {
         Contabo: 'contabo',
         Hetzner: 'hetzner',
         Scaleway: 'scaleway',
+        Ovh: 'ovh',
         Byos: 'byos'
     } as const;
     export type AvailableOnProviderEnum = typeof AvailableOnProviderEnum[keyof typeof AvailableOnProviderEnum];

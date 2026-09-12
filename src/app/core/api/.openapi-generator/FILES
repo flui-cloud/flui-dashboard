@@ -164,6 +164,7 @@ model/applicationResponseDto.ts
 model/applicationScalingDto.ts
 model/applicationTrafficDto.ts
 model/appliedServerDto.ts
+model/appliedUnitDto.ts
 model/assignDnsZoneDto.ts
 model/assistantRecommendationsDto.ts
 model/attachClusterToVNetResponseDto.ts
@@ -343,8 +344,6 @@ model/deployOverridesDto.ts
 model/deprecationInfoDto.ts
 model/detachServerFromSubnetDto.ts
 model/detectedEnvVarDto.ts
-model/detectedNumberDto.ts
-model/detectedStringDto.ts
 model/detectionResultDto.ts
 model/diskMetricsDto.ts
 model/distributionAppDto.ts
@@ -478,6 +477,7 @@ model/networkingConfigDto.ts
 model/nodeBillingSegmentDto.ts
 model/nodeMonthToDateDto.ts
 model/nodeRequirementResponseDto.ts
+model/nodeSizeLocationAvailabilityDto.ts
 model/nodeSizeLocationDto.ts
 model/nodeSizeOptionDto.ts
 model/nodeSizePriceDto.ts
@@ -570,6 +570,7 @@ model/registerDnsReplicaDto.ts
 model/removalPreviewApplicationDto.ts
 model/removalPreviewDto.ts
 model/removalPreviewVolumeDto.ts
+model/removalSnapshotOfferDto.ts
 model/removeWorkerResponseDto.ts
 model/renderDto.ts
 model/renderNoteDto.ts
@@ -584,6 +585,8 @@ model/replicaStatusDto.ts
 model/replicaStatusMetricsDto.ts
 model/replicateDto.ts
 model/repositoryAnalysisDto.ts
+model/repositoryApplyDto.ts
+model/repositoryApplyResponseDto.ts
 model/repositoryFrameworkInfoDto.ts
 model/repositoryManifestEntryDto.ts
 model/repositoryManifestsDto.ts
@@ -697,6 +700,8 @@ model/triggerScheduledJobResponseDto.ts
 model/triggerStandaloneBuildDto.ts
 model/unitBuildDto.ts
 model/unitEnvVarDto.ts
+model/unitFactNumberDto.ts
+model/unitFactStringDto.ts
 model/unitVerdictDto.ts
 model/unschedulablePodsDto.ts
 model/updateApiKeyApplicationsDto.ts

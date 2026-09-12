@@ -96,10 +96,10 @@ export class ProvidersService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public providerSchemasControllerOne(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderSchemaDto>;
-    public providerSchemasControllerOne(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderSchemaDto>>;
-    public providerSchemasControllerOne(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderSchemaDto>>;
-    public providerSchemasControllerOne(provider: 'contabo' | 'hetzner' | 'scaleway' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public providerSchemasControllerOne(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProviderSchemaDto>;
+    public providerSchemasControllerOne(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProviderSchemaDto>>;
+    public providerSchemasControllerOne(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProviderSchemaDto>>;
+    public providerSchemasControllerOne(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling providerSchemasControllerOne.');
         }
@@ -129,7 +129,7 @@ export class ProvidersService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/providers/schemas/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'byos'", dataFormat: undefined})}`;
+        let localVarPath = `/api/v1/providers/schemas/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos'", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProviderSchemaDto>('get', `${basePath}${localVarPath}`,
             {

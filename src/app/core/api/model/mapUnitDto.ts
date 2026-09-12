@@ -7,11 +7,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { DetectedNumberDto } from './detectedNumberDto';
+import { UnitFactNumberDto } from './unitFactNumberDto';
 import { UnitBuildDto } from './unitBuildDto';
 import { UnitEnvVarDto } from './unitEnvVarDto';
 import { EvidenceDto } from './evidenceDto';
-import { DetectedStringDto } from './detectedStringDto';
+import { UnitFactStringDto } from './unitFactStringDto';
 
 
 export interface MapUnitDto { 
@@ -29,14 +29,14 @@ export interface MapUnitDto {
     /**
      * The port read from the repository, with its citation. null when nothing stated one — never a convention
      */
-    port: DetectedNumberDto | null;
+    port: UnitFactNumberDto | null;
     /**
      * The health path read from the repository. null when the engine refused to promote a route it could not recognise
      */
-    healthPath: DetectedStringDto | null;
+    healthPath: UnitFactStringDto | null;
     env: Array<UnitEnvVarDto>;
     /**
-     * A flui.yaml this unit already carries, when it has one
+     * The dependency manifest that governs this unit — package.json, go.mod, pom.xml. Not a flui.yaml: a unit that already declares one is reported through the rendered manifest, not here
      */
     manifest: string | null;
     manifests?: Array<string>;

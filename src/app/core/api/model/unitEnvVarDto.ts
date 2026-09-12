@@ -25,6 +25,10 @@ export interface UnitEnvVarDto {
      */
     fromService?: string;
     source: string;
+    /**
+     * Whose reading proved this fact. `own` — a file inside the unit itself. `inherited` — a repository-wide file that sits above it, so a sibling unit may hold the same fact for the same reason. `declared` — another unit named this one, which outranks position.
+     */
+    provenance: UnitEnvVarDto.ProvenanceEnum;
     evidence: Array<EvidenceDto>;
 }
 export namespace UnitEnvVarDto {
@@ -35,6 +39,12 @@ export namespace UnitEnvVarDto {
         BuildTime: 'build-time'
     } as const;
     export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];
+    export const ProvenanceEnum = {
+        Own: 'own',
+        Inherited: 'inherited',
+        Declared: 'declared'
+    } as const;
+    export type ProvenanceEnum = typeof ProvenanceEnum[keyof typeof ProvenanceEnum];
 }
 
 

@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { NodeSizeLocationAvailabilityDto } from './nodeSizeLocationAvailabilityDto';
 import { NodeSizePriceDto } from './nodeSizePriceDto';
 import { NodeSizeLocationDto } from './nodeSizeLocationDto';
 
@@ -76,6 +77,10 @@ export interface NodeSizeOptionDto {
      * Supported locations for this server type
      */
     locations: Array<NodeSizeLocationDto>;
+    /**
+     * Real-time per-location availability. Absent for providers with no live stock signal.
+     */
+    availability?: Array<NodeSizeLocationAvailabilityDto>;
 }
 export namespace NodeSizeOptionDto {
     export const StorageTypeEnum = {
