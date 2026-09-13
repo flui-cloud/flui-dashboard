@@ -196,85 +196,26 @@ export interface RestorePreviewResult {
   bytesAtPrefix?: number;
 }
 
-// ===== Provider presets (UX prefill) =====
+// ===== Destination catalogue (served by the API) =====
 
-export interface ProviderRegionOption {
+export interface ObjectStorageRegionOption {
   value: string;
   label: string;
   endpoint: string;
 }
 
-export interface ProviderPreset {
-  id: StorageBackendProvider;
+/** Mirrors the API's ObjectStoragePresetDto; fetch via BackupService.loadPresets(). */
+export interface ObjectStoragePreset {
+  provider: StorageBackendProvider;
   label: string;
-  endpoint: string;
-  defaultRegion: string;
-  forcePathStyle: boolean;
-  usableForEtcdL1: boolean;
   description: string;
   badge?: string;
-  regions?: ProviderRegionOption[];
-}
-
-/**
- * EU-first card lineup. AWS / Wasabi / Backblaze / Cloudflare R2 / IDrive E2
- * are still supported via the Generic S3 card — they remain valid backend
- * enum values, just not promoted in the UI.
- */
-export const PROVIDER_PRESETS: ProviderPreset[] = [
-  {
-    id: 'scaleway_object_storage',
-    label: 'Scaleway Object Storage',
-    endpoint: 'https://s3.fr-par.scw.cloud',
-    defaultRegion: 'fr-par',
-    forcePathStyle: false,
-    usableForEtcdL1: true,
-    badge: 'Recommended primary',
-    description: 'EU sovereignty (France / Netherlands / Poland). Default Object Storage for app-level backups.',
-    regions: [
-      { value: 'fr-par', label: 'Paris (fr-par)', endpoint: 'https://s3.fr-par.scw.cloud' },
-      { value: 'nl-ams', label: 'Amsterdam (nl-ams)', endpoint: 'https://s3.nl-ams.scw.cloud' },
-      { value: 'pl-waw', label: 'Warsaw (pl-waw)', endpoint: 'https://s3.pl-waw.scw.cloud' },
-    ],
-  },
-  {
-    id: 'hetzner_object_storage',
-    label: 'Hetzner Object Storage',
-    endpoint: 'https://nbg1.your-objectstorage.com',
-    defaultRegion: 'nbg1',
-    forcePathStyle: true,
-    usableForEtcdL1: true,
-    badge: 'Advanced only',
-    description: 'EU sovereignty (Germany / Finland). Available via advanced setup — not offered in 1-click flow during MVP (flat-fee billing model).',
-    regions: [
-      { value: 'nbg1', label: 'Nuremberg (nbg1)', endpoint: 'https://nbg1.your-objectstorage.com' },
-      { value: 'fsn1', label: 'Falkenstein (fsn1)', endpoint: 'https://fsn1.your-objectstorage.com' },
-      { value: 'hel1', label: 'Helsinki (hel1)', endpoint: 'https://hel1.your-objectstorage.com' },
-    ],
-  },
-  {
-    id: 'minio',
-    label: 'MinIO (self-hosted)',
-    endpoint: '',
-    defaultRegion: 'us-east-1',
-    forcePathStyle: true,
-    usableForEtcdL1: true,
-    badge: 'Full sovereignty',
-    description: 'Your own infrastructure. Total data control, on your terms.',
-  },
-  {
-    id: 'generic_s3',
-    label: 'Generic S3',
-    endpoint: '',
-    defaultRegion: '',
-    forcePathStyle: true,
-    usableForEtcdL1: false,
-    description: 'Any S3-compatible endpoint — AWS, Wasabi, Backblaze B2, Cloudflare R2, IDrive E2, MinIO server, …',
-  },
-];
-
-export function getProviderPreset(id: StorageBackendProvider): ProviderPreset | undefined {
-  return PROVIDER_PRESETS.find((p) => p.id === id);
+  defaultRegion?: string;
+  defaultEndpoint?: string;
+  forcePathStyle: boolean;
+  usableForEtcdL1: boolean;
+  provisioning: 'full_auto' | 'semi_auto' | 'none';
+  regions?: ObjectStorageRegionOption[];
 }
 
 // ===== Helpers =====
@@ -421,8 +362,15 @@ export function restoreStatusBadge(status: RestoreJobStatus): BadgeStyle {
   }
 }
 
-export function providerLabel(provider: StorageBackendProvider): string {
-  return getProviderPreset(provider)?.label ?? provider;
+/**
+ * Presets come from the API, so callers pass what they have loaded. Falls back
+ * to the raw provider id rather than inventing a name.
+ */
+export function providerLabel(
+  provider: StorageBackendProvider,
+  presets: ObjectStoragePreset[] = [],
+): string {
+  return presets.find((p) => p.provider === provider)?.label ?? provider;
 }
 
 export interface ActiveOperation {

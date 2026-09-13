@@ -12,7 +12,10 @@ import {
   destinationEntityRef,
   presentedContent,
 } from './destinations-list-surface';
-import type { BackupDestination } from '../../../model/backup.models';
+import type {
+  BackupDestination,
+  ObjectStoragePreset,
+} from '../../../model/backup.models';
 
 const DEST: BackupDestination = {
   id: 'dest-1',
@@ -34,8 +37,26 @@ const DEST: BackupDestination = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
+/** The catalogue the API serves; the row renders its label, not the raw id. */
+const PRESETS: ObjectStoragePreset[] = [
+  {
+    provider: 'scaleway_object_storage' as BackupDestination['provider'],
+    label: 'Scaleway Object Storage',
+    description: 'EU sovereignty.',
+    forcePathStyle: false,
+    usableForEtcdL1: true,
+    provisioning: 'full_auto',
+  },
+];
+
 function input(over: Partial<DestinationsListSurfaceInput> = {}): DestinationsListSurfaceInput {
-  return { destinations: [DEST], loading: false, hasLoadError: false, ...over };
+  return {
+    destinations: [DEST],
+    loading: false,
+    hasLoadError: false,
+    presets: PRESETS,
+    ...over,
+  };
 }
 
 function snapshotOf(over: Partial<DestinationsListSurfaceInput> = {}): SurfaceSnapshot {

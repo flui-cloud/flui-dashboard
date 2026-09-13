@@ -29,6 +29,7 @@ export namespace CreateBackupDestinationDto {
     export const ProviderEnum = {
         HetznerObjectStorage: 'hetzner_object_storage',
         ScalewayObjectStorage: 'scaleway_object_storage',
+        OvhObjectStorage: 'ovh_object_storage',
         Minio: 'minio',
         GenericS3: 'generic_s3'
     } as const;

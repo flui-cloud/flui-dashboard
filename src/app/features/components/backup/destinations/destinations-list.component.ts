@@ -2,7 +2,11 @@ import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeD
 
 import { Router, RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
-import { formatBytes, providerLabel } from '../../../model/backup.models';
+import {
+  formatBytes,
+  providerLabel,
+  type StorageBackendProvider,
+} from '../../../model/backup.models';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
@@ -136,7 +140,8 @@ export class DestinationsListComponent implements OnInit, OnDestroy {
   private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly busy = signal<Set<string>>(new Set());
-  protected readonly providerLabel = providerLabel;
+  protected readonly providerLabel = (p: StorageBackendProvider): string =>
+    providerLabel(p, this.backup.presets());
   protected readonly formatBytes = formatBytes;
 
   private readonly surfaceRevision = new DestinationsListSurfaceRevision();
@@ -146,6 +151,7 @@ export class DestinationsListComponent implements OnInit, OnDestroy {
       destinations: this.backup.destinations(),
       loading: this.backup.loading(),
       hasLoadError: !!this.backup.error(),
+      presets: this.backup.presets(),
     };
     return buildDestinationsListSurface(input, {
       revision: this.surfaceRevision.next(presentedContent(input)),
@@ -165,7 +171,10 @@ export class DestinationsListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void (async () => {
-      await this.backup.loadDestinations();
+      await Promise.all([
+        this.backup.loadPresets(),
+        this.backup.loadDestinations(),
+      ]);
     })();
   }
 

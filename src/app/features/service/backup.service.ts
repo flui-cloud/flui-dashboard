@@ -14,6 +14,7 @@ import {
   BackupJob,
   BackupPolicy,
   BackupStatus,
+  ObjectStoragePreset,
   RestoreJob,
   RestorePreviewResult,
   SetupOptions,
@@ -43,6 +44,7 @@ export class BackupService {
   private readonly appConfig = inject(AppConfigService);
 
   private readonly _destinations = signal<BackupDestination[]>([]);
+  private readonly _presets = signal<ObjectStoragePreset[]>([]);
   private readonly _policies = signal<BackupPolicy[]>([]);
   private readonly _jobs = signal<BackupJob[]>([]);
   private readonly _restoreJobs = signal<RestoreJob[]>([]);
@@ -57,6 +59,7 @@ export class BackupService {
   private readonly _error = signal<string | null>(null);
 
   readonly destinations = this._destinations.asReadonly();
+  readonly presets = this._presets.asReadonly();
   readonly policies = this._policies.asReadonly();
   readonly jobs = this._jobs.asReadonly();
   readonly restoreJobs = this._restoreJobs.asReadonly();
@@ -79,6 +82,27 @@ export class BackupService {
 
   policiesByCluster(clusterId: string): BackupPolicy[] {
     return this._policies().filter((p) => p.clusterId === clusterId);
+  }
+
+  /**
+   * The catalogue of destinations the API offers. Endpoints and regions belong
+   * to the backend — the dashboard holds none of its own, so a provider moving
+   * a hostname needs no release here.
+   */
+  async loadPresets(): Promise<void> {
+    if (this._presets().length) return;
+    try {
+      const res = await firstValueFrom(
+        this.http.get<ObjectStoragePreset[]>(
+          `${this.appConfig.apiBaseUrl}/api/v1/backup-destinations/presets`,
+        ),
+      );
+      this._presets.set(res ?? []);
+    } catch {
+      // A missing catalogue must not blank the page: names fall back to the
+      // raw provider id and the manual form still takes a typed endpoint.
+      this._presets.set([]);
+    }
   }
 
   async loadDestinations(): Promise<void> {
