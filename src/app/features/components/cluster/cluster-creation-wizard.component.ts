@@ -202,11 +202,17 @@ interface FirewallRuleDto {
                     <button
                       type="button"
                       (click)="generateUniqueClusterName()"
-                      class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors whitespace-nowrap"
+                      [disabled]="generatingName()"
+                      class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
                       title="Auto-generate unique name"
                       >
-                      <ng-icon name="lucideWand" class="h-4 w-4" />
-                      Generate
+                      @if (generatingName()) {
+                        <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
+                        Generating…
+                      } @else {
+                        <ng-icon name="lucideWand" class="h-4 w-4" />
+                        Generate
+                      }
                     </button>
                   </div>
                   @if (basicConfigForm.get('name')?.errors && basicConfigForm.get('name')?.touched) {
@@ -1400,6 +1406,7 @@ export class ClusterCreationWizardComponent implements OnInit {
 
   // Selected values
   selectedProvider = signal<string>('');
+  generatingName = signal(false);
   selectedRegion = signal<string>('');
   selectedServerTypeId = signal<string>('');
   selectedSshKeyId = signal<string | undefined>(undefined);
@@ -1680,33 +1687,37 @@ export class ClusterCreationWizardComponent implements OnInit {
    * hanging the button.
    */
   async generateUniqueClusterName(): Promise<void> {
-    const existingClusters = this.clusterService.clusters();
-    const existingNames = new Set(existingClusters.map((c) => c.name?.toLowerCase() || ''));
-    const provider = this.selectedProvider();
+    this.generatingName.set(true);
+    try {
+      const existingClusters = this.clusterService.clusters();
+      const existingNames = new Set(existingClusters.map((c) => c.name?.toLowerCase() || ''));
+      const provider = this.selectedProvider();
 
-    let counter = 1;
-    let suggestedName = `workload-cluster-${counter}`;
+      let counter = 1;
+      let suggestedName = `workload-cluster-${counter}`;
 
-    for (let attempt = 0; attempt < 50; attempt++) {
-      while (existingNames.has(suggestedName.toLowerCase())) {
+      for (let attempt = 0; attempt < 50; attempt++) {
+        while (existingNames.has(suggestedName.toLowerCase())) {
+          counter++;
+          suggestedName = `workload-cluster-${counter}`;
+        }
+
+        if (!provider) break;
+        try {
+          const availability = await this.nameAvailabilityService.check(suggestedName, provider);
+          if (availability.available) break;
+        } catch {
+          break; // Can't verify — offer the client-side guess rather than block the button.
+        }
+
         counter++;
         suggestedName = `workload-cluster-${counter}`;
       }
 
-      if (!provider) break;
-      try {
-        const availability = await this.nameAvailabilityService.check(suggestedName, provider);
-        if (availability.available) break;
-      } catch {
-        break; // Can't verify — offer the client-side guess rather than block the button.
-      }
-
-      counter++;
-      suggestedName = `workload-cluster-${counter}`;
+      this.basicConfigForm.patchValue({ name: suggestedName });
+    } finally {
+      this.generatingName.set(false);
     }
-
-    // Set the generated name in the form
-    this.basicConfigForm.patchValue({ name: suggestedName });
   }
 
   /**
