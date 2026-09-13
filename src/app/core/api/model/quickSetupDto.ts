@@ -14,6 +14,7 @@ export interface QuickSetupDto {
     cronSchedule?: string;
     retentionDays?: number;
     runFirstBackup?: boolean;
+    primaryProvider?: string;
 }
 export namespace QuickSetupDto {
     export const ProfileEnum = {

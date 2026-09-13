@@ -84,7 +84,7 @@ interface OverviewCard {
             the first backup. Each run records which volumes it captured and which it skipped.
           </p>
           <p class="text-xs text-muted-foreground mb-3">
-            Requires a configured Scaleway provider —
+            Requires a storage provider on a different cloud than the cluster —
             <a routerLink="/management/providers" class="text-primary hover:underline">manage providers</a>.
           </p>
           <div class="flex flex-col sm:flex-row gap-2">

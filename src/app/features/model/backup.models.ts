@@ -460,6 +460,8 @@ export interface SetupOptionsEstimate {
 export interface SetupOptions {
   currentProvider: string;
   primary: ProviderReadiness;
+  /** Every destination this cluster may use. Never includes its own cloud. */
+  eligible?: ProviderReadiness[];
   recommendedReplicas: ProviderReadiness[];
   estimate: SetupOptionsEstimate;
 }

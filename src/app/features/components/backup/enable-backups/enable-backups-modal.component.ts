@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
 import {
+  ProviderReadiness,
   SetupOptions,
   centsToEur,
   providerLabel,
@@ -78,9 +79,24 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
             }
 
             <div class="rounded-md border border-border bg-card p-3 text-xs space-y-1">
-              <div class="flex justify-between">
+              <div class="flex justify-between items-center">
                 <span class="text-muted-foreground">Storage provider</span>
+                @if ((opts.eligible?.length ?? 0) > 1) {
+                <select
+                  [ngModel]="chosenProvider() ?? opts.primary.provider"
+                  (ngModelChange)="chosenProvider.set($event)"
+                  name="primaryProvider"
+                  class="rounded border border-border bg-background px-2 py-1 text-xs font-medium"
+                >
+                  @for (c of opts.eligible; track c.provider) {
+                  <option [value]="c.provider" [disabled]="!c.ready">
+                    {{ providerLabel(c.provider) }}{{ c.ready ? '' : ' — not connected' }}
+                  </option>
+                  }
+                </select>
+                } @else {
                 <span class="font-medium">{{ providerLabel(opts.primary.provider) }}</span>
+                }
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Estimated data</span>
@@ -249,6 +265,9 @@ export class EnableBackupsModalComponent implements OnInit {
   readonly open = input<boolean>(false);
   readonly closed = output<{ activated: boolean }>();
 
+  /** Null until the operator picks one; the backend's own choice stands. */
+  protected readonly chosenProvider = signal<string | null>(null);
+
   protected readonly step = signal<Step>('loading');
   protected readonly options = signal<SetupOptions | null>(null);
   protected readonly submitting = signal(false);
@@ -258,16 +277,35 @@ export class EnableBackupsModalComponent implements OnInit {
   protected cronSchedule = '0 2 * * *';
 
   protected readonly centsToEur = centsToEur;
-  protected readonly providerLabel = providerLabel;
+  protected readonly providerLabel = (p: string): string =>
+    providerLabel(p as never, this.backup.presets());
 
   /**
-   * Activate is allowed only when the backend reports the primary provider as ready.
-   * `ready=false` (for any reason) blocks the POST — server would 400.
+   * The destination this activation would use: whichever the operator picked,
+   * otherwise the one the backend proposed.
    */
-  protected readonly canActivate = computed<boolean>(() => !!this.options()?.primary?.ready);
+  private readonly effectiveProvider = computed<ProviderReadiness | undefined>(
+    () => {
+      const opts = this.options();
+      if (!opts) return undefined;
+      const chosen = this.chosenProvider();
+      return (
+        (chosen && opts.eligible?.find((c) => c.provider === chosen)) ||
+        opts.primary
+      );
+    },
+  );
+
+  /**
+   * Activate is allowed only when the backend reports the chosen destination as
+   * ready. `ready=false` (for any reason) blocks the POST — server would 400.
+   */
+  protected readonly canActivate = computed<boolean>(
+    () => !!this.effectiveProvider()?.ready,
+  );
 
   protected readonly readinessMessage = computed<string>(() => {
-    const p = this.options()?.primary;
+    const p = this.effectiveProvider();
     return providerReadinessMessage(p?.reason, p?.message);
   });
 
@@ -286,7 +324,7 @@ export class EnableBackupsModalComponent implements OnInit {
 
   ngOnInit(): void {
     void (async () => {
-      await this.loadOptions();
+      await Promise.all([this.backup.loadPresets(), this.loadOptions()]);
     })();
   }
 
@@ -311,6 +349,7 @@ export class EnableBackupsModalComponent implements OnInit {
       cronSchedule: this.cronSchedule || undefined,
       retentionDays: 30,
       runFirstBackup: true,
+      ...(this.chosenProvider() ? { primaryProvider: this.chosenProvider()! } : {}),
     };
 
     const res = await this.backup.startQuickSetup(this.clusterId(), dto);
