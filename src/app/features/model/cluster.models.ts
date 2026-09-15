@@ -98,6 +98,9 @@ export interface ClusterConfiguration {
     subnetId?: string;
     autoAssignIp?: boolean;
   };
+  /** Ask Flui to build the private network rather than attach to one the
+   *  provider offers. Only on providers that declare it. */
+  fluiManagedNetwork?: { ipRange?: string };
   endpointHostnameMode?: 'ip' | 'domain';
   sharedStorageEnabled?: boolean;
   sharedStorageVolumeSizeGb?: number;

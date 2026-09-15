@@ -633,6 +633,7 @@ export * from './useTemplateResponseDto';
 export * from './userProfileDto';
 export * from './vNetAttachmentDto';
 export * from './vNetAttachmentInfoDto';
+export * from './fluiManagedNetworkDto';
 export * from './vNetConfigDto';
 export * from './vNetListResponseDto';
 export * from './vNetResponseDto';

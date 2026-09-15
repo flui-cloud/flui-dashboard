@@ -33,6 +33,10 @@ export interface ProviderCapabilitiesDto {
      * Whether a workload may target a provider different from the control cluster provider
      */
     crossClusterAllowed: boolean;
+    /**
+     * Whether Flui can build the private network itself on this provider, as an alternative to the one the provider offers. Says the choice exists; the choice itself is made per cluster.
+     */
+    supportsFluiManagedVNet?: boolean;
 }
 export namespace ProviderCapabilitiesDto {
     export const CredentialTypeEnum = {

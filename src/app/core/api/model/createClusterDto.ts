@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { VNetConfigDto } from './vNetConfigDto';
+import { FluiManagedNetworkDto } from './fluiManagedNetworkDto';
 import { FirewallRuleDto } from './firewallRuleDto';
 
 
@@ -84,6 +85,10 @@ export interface CreateClusterDto {
      * VNet configuration for cluster nodes. If provided, all cluster nodes (master and workers) will be attached to the specified VNet. The VNet must exist in the same provider and region as the cluster.
      */
     vnetConfig?: VNetConfigDto;
+    /**
+     * Ask Flui to build the private network instead of attaching to one the provider offers. For an estate whose machines share no network — every node gets an address on an encrypted mesh and K3s binds to it, so pod traffic stops crossing the internet in clear. Only on providers that declare `supportsFluiManagedVNet`.
+     */
+    fluiManagedNetwork?: FluiManagedNetworkDto;
     /**
      * Default hostname source for endpoints (system services and user apps). IP uses nip.io against the master public IP — zero external DNS required, ideal for testing. DOMAIN requires a DNS zone to be assigned to the cluster afterwards. Defaults to IP.
      */

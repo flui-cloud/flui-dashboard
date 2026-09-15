@@ -548,6 +548,52 @@ interface FirewallRuleDto {
         <!-- Step 3: Network Configuration (VNet & Subnet) -->
         @case (3) {
           <div class="space-y-6">
+            <!-- Only where the provider has no private network of its own. -->
+            @if (canBuildNetwork()) {
+              <div class="grid grid-cols-2 gap-3">
+                <button type="button" (click)="fluiBuildsNetwork.set(false)"
+                  [class]="!fluiBuildsNetwork()
+                    ? 'p-4 border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-left'
+                    : 'p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-left hover:border-slate-300'">
+                  <div class="font-medium text-slate-900 dark:text-white">Use an existing network</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">The machines already share one</div>
+                </button>
+                <button type="button" (click)="fluiBuildsNetwork.set(true)"
+                  [class]="fluiBuildsNetwork()
+                    ? 'p-4 border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-left'
+                    : 'p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-left hover:border-slate-300'">
+                  <div class="font-medium text-slate-900 dark:text-white">Let Flui build one</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">The machines share nothing</div>
+                </button>
+              </div>
+
+              @if (fluiBuildsNetwork()) {
+                <div class="space-y-3">
+                  <button type="button" (click)="showNetworkHelp.set(!showNetworkHelp())"
+                    class="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                    {{ showNetworkHelp() ? 'Hide details' : 'What does this do?' }}
+                  </button>
+                  @if (showNetworkHelp()) {
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Every node gets an address on an encrypted network Flui builds
+                      between them, and Kubernetes binds to it. Without one, traffic
+                      between your applications crosses the public internet unencrypted.
+                    </p>
+                  }
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Address range <span class="text-slate-400 font-normal">(optional)</span>
+                    </label>
+                    <input type="text" [value]="fluiNetworkCidr()"
+                      (input)="fluiNetworkCidr.set($any($event.target).value)"
+                      placeholder="10.201.0.0/24"
+                      class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-sm" />
+                  </div>
+                </div>
+              }
+            }
+
+            @if (!fluiBuildsNetwork()) {
             @if (autoScalingEnabled() && !vnetRequired()) {
               <div class="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20 p-3 flex items-start gap-2">
                 <ng-icon name="lucideInfo" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
@@ -735,6 +781,7 @@ interface FirewallRuleDto {
                   </div>
                 }
               </div>
+            }
             }
           </div>
         }
@@ -1503,21 +1550,37 @@ export class ClusterCreationWizardComponent implements OnInit {
     return observability?.provider ?? null;
   });
 
-  readonly lockedProvider = computed<string | null>(() => {
-    const control = this.controlClusterProvider();
-    if (!control) return null;
-    const def = this.wizardService.getProviderDefinition(control);
-    // Control provider not in the provisionable set (e.g. BYOS): don't lock
-    // client-side — the backend authoritatively gates cross-provider creation.
-    if (!def) return null;
-    return def.capabilities?.crossClusterAllowed ? null : control;
-  });
+  /**
+   * Nothing is locked here any more.
+   *
+   * Whether two clusters can reach each other privately is the API's question
+   * to answer, per installation. A copy of that rule here would refuse a
+   * topology the API accepts, in the browser, without ever showing the reason.
+   *
+   * Kept as a computed rather than deleted: the input it feeds is how the
+   * provider step is told a choice was made for it, and a future lock with a
+   * real reason belongs here.
+   */
+  readonly lockedProvider = computed<string | null>(() => null);
 
   readonly vnetRequired = computed<boolean>(() => {
     const provider = this.selectedProvider();
     if (!provider) return false;
     return this.wizardService.getProviderDefinition(provider)?.capabilities?.vnetRequired ?? false;
   });
+
+  /** Only some providers can offer this: the ones with no private network of
+   *  their own, where pod traffic would otherwise cross the internet in clear. */
+  readonly canBuildNetwork = computed<boolean>(() => {
+    const provider = this.selectedProvider();
+    if (!provider) return false;
+    return this.wizardService.getProviderDefinition(provider)?.capabilities
+      ?.supportsFluiManagedVNet ?? false;
+  });
+
+  readonly fluiBuildsNetwork = signal(false);
+  readonly fluiNetworkCidr = signal('');
+  readonly showNetworkHelp = signal(false);
 
   private readonly controlCluster = computed(() =>
     this.clusterService.clusters().find(c => isControlClusterType(c.clusterType)) ?? null,
@@ -2297,11 +2360,16 @@ export class ClusterCreationWizardComponent implements OnInit {
       sshKeys: this.selectedSshKeyId() ? [this.selectedSshKeyId()!] : [],
       diskSizeGb: this.needsDiskConfig() ? this.diskSizeGb() : undefined,
       firewallRules: this.buildFirewallRules(),
-      vnetConfig: this.selectedVNetId() && this.selectedSubnetId() ? {
+      vnetConfig: !this.fluiBuildsNetwork() && this.selectedVNetId() && this.selectedSubnetId() ? {
         vnetId: this.selectedVNetId()!,
         subnetId: this.selectedSubnetId()!,
         autoAssignIp: true
       } : undefined,
+      fluiManagedNetwork: this.fluiBuildsNetwork()
+        ? (this.fluiNetworkCidr().trim()
+            ? { ipRange: this.fluiNetworkCidr().trim() }
+            : {})
+        : undefined,
       endpointHostnameMode: this.endpointHostnameMode(),
       sharedStorageEnabled: this.sharedStorageEnabled(),
       sharedStorageVolumeSizeGb: this.sharedStorageEnabled()
@@ -2337,8 +2405,10 @@ export class ClusterCreationWizardComponent implements OnInit {
     const body = error?.error;
     switch (body?.code) {
       case 'CROSS_PROVIDER_NOT_ALLOWED':
+        // The API's own message names what is missing: a control cluster with
+        // a reachable address, and the overlay switched on.
         return body.message
-          ?? 'This workload must use the same provider as the control cluster.';
+          ?? 'No private path is available between this provider and the control cluster.';
       case 'VNET_REQUIRED':
         return body.message
           ?? 'This provider requires a VNet/Subnet selection.';
