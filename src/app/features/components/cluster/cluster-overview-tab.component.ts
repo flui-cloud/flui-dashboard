@@ -123,7 +123,10 @@ import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-bac
                     <span class="h-1.5 w-1.5 rounded-full flex-shrink-0" [class]="nodeStatusDot(node.status)"></span>
                     <span class="text-value truncate">{{ node.name }}</span>
                     @if (node.status) {
-                      <span class="ml-auto text-sub capitalize flex-shrink-0">{{ node.status }}</span>
+                      <span class="ml-auto flex-shrink-0 capitalize"
+                        [class]="node.status === 'error' ? 'text-red-600 dark:text-red-400' : 'text-sub'">
+                        {{ node.status === 'error' ? 'never joined' : node.status }}
+                      </span>
                     }
                   </div>
                 }
@@ -660,11 +663,26 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
     return 'status-pending';
   }
 
+  /**
+   * The node's own status, not the machine's: the values here are
+   * `creating | joining | ready | error | deleting`, while `running` and `off`
+   * describe the server at the provider. A node whose bootstrap failed is still
+   * `running` there, so a provider status must never read as healthy.
+   */
   nodeStatusDot(status?: string): string {
     if (!status) return 'dot-pending';
-    const s = status.toLowerCase();
-    if (s === 'running' || s === 'active') return 'dot-healthy';
-    if (s === 'stopped' || s === 'off') return 'dot-pending';
-    return 'dot-degraded';
+    switch (status.toLowerCase()) {
+      case 'ready':
+        return 'dot-healthy';
+      case 'creating':
+      case 'joining':
+      case 'deleting':
+        return 'dot-pending';
+      case 'error':
+        return 'dot-degraded';
+      default:
+        // An unrecognised value is not a promise of health.
+        return 'dot-pending';
+    }
   }
 }
