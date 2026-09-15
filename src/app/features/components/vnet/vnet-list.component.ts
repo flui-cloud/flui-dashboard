@@ -281,7 +281,11 @@ import {
                     <div>
                       <div class="text-xs text-gray-500 dark:text-gray-400">Provider</div>
                       <div class="text-sm font-medium text-gray-900 dark:text-white mt-1 capitalize">
-                        {{ vnet.provider }}
+                        @if (vnet.implementation === 'wireguard') {
+                          <span class="text-blue-600 dark:text-blue-400">Built by Flui</span>
+                        } @else {
+                          {{ vnet.provider }}
+                        }
                       </div>
                     </div>
                     <div>

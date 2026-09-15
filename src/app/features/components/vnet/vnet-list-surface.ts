@@ -65,6 +65,14 @@ function rowOf(vnet: VNetInfo, attachedServerCountOf: (v: VNetInfo) => number): 
     observations: [
       textObservation('flui.vnet.status', vnet.status, 'api'),
       textObservation('flui.vnet.provider', vnet.provider, 'api'),
+      // Who built it, which `provider` does not answer: a network Flui built
+      // reads `byos` there, because on a network row that field means "whose
+      // network is this" and the answer is nobody's cloud.
+      textObservation(
+        'flui.vnet.implementation',
+        vnet.implementation ?? 'provider-native',
+        'api',
+      ),
       valueObservation('flui.vnet.subnet_count', vnet.subnets.length, 'api'),
       valueObservation('flui.vnet.attached_server_count', attachedServerCountOf(vnet), 'derived'),
       valueObservation('flui.vnet.label_count', vnet.labels.length, 'derived'),

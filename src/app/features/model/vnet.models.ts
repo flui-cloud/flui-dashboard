@@ -57,6 +57,9 @@ export interface RouteInfo {
 export interface VNetInfo {
   id: string;
   providerResourceId: string;
+  /** Who built the network: the provider, or Flui over an encrypted mesh.
+   *  Separate from `provider`, which says whose machines these are. */
+  implementation?: 'provider-native' | 'wireguard';
   name: string;
   provider: string;
   ipRange: string;

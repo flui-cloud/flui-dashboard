@@ -34,6 +34,10 @@ export interface VNetResponseDto {
      */
     ipRange: string;
     /**
+     * Who built the network: the provider, or Flui over an encrypted mesh. Separate from `provider`, which says whose machines these are.
+     */
+    implementation?: VNetResponseDto.ImplementationEnum;
+    /**
      * Labels
      */
     labels: Array<VNetResponseDtoLabelsInner>;
@@ -63,6 +67,11 @@ export interface VNetResponseDto {
     updatedAt: string;
 }
 export namespace VNetResponseDto {
+    export const ImplementationEnum = {
+        ProviderNative: 'provider-native',
+        Wireguard: 'wireguard'
+    } as const;
+    export type ImplementationEnum = typeof ImplementationEnum[keyof typeof ImplementationEnum];
     export const ProviderEnum = {
         Contabo: 'contabo',
         Hetzner: 'hetzner',

@@ -11,7 +11,7 @@
 
 export interface EnsureByosVNetDto { 
     /**
-     * CIDR of the private network the nodes share. Omit to derive it from the cluster (existing declaration, or the /24 of the master private IP).
+     * Range for the network Flui builds, if the default would collide with something you already run. Not a description of a network you have: Flui never infers one from an address a machine happens to carry.
      */
     ipRange?: string;
 }

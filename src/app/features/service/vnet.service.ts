@@ -564,6 +564,7 @@ export class VNetService {
       name: dto.name,
       provider: dto.provider,
       ipRange: dto.ipRange,
+      implementation: dto.implementation,
       labels: dto.labels
         .filter(l => l.key !== undefined && l.value !== undefined)
         .map(l => ({ key: l.key!, value: l.value! })),

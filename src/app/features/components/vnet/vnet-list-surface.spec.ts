@@ -77,6 +77,17 @@ describe('vnet list surface producer', () => {
     expect(obs.find((o) => o.key === 'flui.vnet.label_count')?.presentedAs.value).toBe(1);
   });
 
+  it('says who built the network, which the provider field cannot: a Flui-built one reads byos there', () => {
+    const obs = rowScopes(snapshotOf({ visibleVNets: [vnet({ provider: 'byos' as VNetInfo['provider'], implementation: 'wireguard' })] }))[0].observations!;
+    expect(obs.find((o) => o.key === 'flui.vnet.provider')?.presentedAs.text).toBe('byos');
+    expect(obs.find((o) => o.key === 'flui.vnet.implementation')?.presentedAs.text).toBe('wireguard');
+  });
+
+  it('reads a network with no implementation as provider-native', () => {
+    const obs = rowScopes(snapshotOf())[0].observations!;
+    expect(obs.find((o) => o.key === 'flui.vnet.implementation')?.presentedAs.text).toBe('provider-native');
+  });
+
   it('redacts: the VNet CIDR, subnet CIDR and gateway never reach the snapshot (unclassified backend field — see producer comment)', () => {
     const json = JSON.stringify(snapshotOf());
     expect(json).not.toContain('10.0.0.0/16');
