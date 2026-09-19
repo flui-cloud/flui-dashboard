@@ -27,6 +27,8 @@ import {
 } from '../../model/application.models';
 import { ApplicationGroupRowComponent } from './application-group-row.component';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { SandboxService } from '../../../core/services/sandbox.service';
+import { accessOf } from '../../model/app-access';
 import {
   ApplicationsListSurfaceInput,
   ApplicationsListSurfaceRevision,
@@ -101,7 +103,7 @@ interface FilterState {
       <div class="grid grid-cols-3 gap-3">
         <div class="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/50 rounded-lg px-4 py-3">
           <p class="text-xs text-gray-500 dark:text-gray-400">Total</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ kindScopedGroups().length }}</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ kindOwnGroups().length }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800/60 border border-green-200 dark:border-gray-700/50 rounded-lg px-4 py-3">
           <p class="text-xs text-green-600 dark:text-green-400">Running</p>
@@ -183,7 +185,7 @@ interface FilterState {
           @for (i of skeletonRows; track i) {
             <div class="animate-pulse bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg h-14"></div>
           }
-        } @else if (filteredGroups().length === 0) {
+        } @else if (ownGroups().length === 0) {
           <div class="flex flex-col items-center justify-center py-16">
             <ng-icon name="lucidePackage" class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
             <p class="text-sm font-medium text-gray-900 dark:text-white mb-1">{{ emptyTitle() }}</p>
@@ -205,7 +207,7 @@ interface FilterState {
             }
           </div>
         } @else {
-          @for (group of filteredGroups(); track group.id) {
+          @for (group of ownGroups(); track group.id) {
             <app-application-group-row
               [group]="group"
               [refreshing]="isRefreshing()"
@@ -216,9 +218,37 @@ interface FilterState {
         }
       </div>
 
-      @if (filteredGroups().length > 0) {
+      <!-- The showcase: not yours, read-only, and said once for the whole group -->
+      @if (showcaseGroups().length > 0) {
+        <div class="space-y-2">
+          <div class="flex items-baseline gap-2">
+            <h2 class="text-sm font-semibold text-gray-900 dark:text-white">In the showcase</h2>
+            @if (showcaseReadOnly()) {
+              <span
+                class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:text-gray-300"
+              >
+                read-only
+              </span>
+            }
+          </div>
+          @if (showcaseWhy()) {
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ showcaseWhy() }}</p>
+          }
+          <div class="flex flex-col gap-0.5">
+            @for (group of showcaseGroups(); track group.id) {
+              <app-application-group-row
+                [group]="group"
+                [refreshing]="isRefreshing()"
+                (open)="openRecap($event)"
+              />
+            }
+          </div>
+        </div>
+      }
+
+      @if (ownGroups().length > 0) {
         <p class="text-center text-xs text-gray-500 dark:text-gray-400">
-          Showing {{ filteredGroups().length }} of {{ kindScopedGroups().length }} application(s)
+          Showing {{ ownGroups().length }} of {{ kindOwnGroups().length }} application(s)
         </p>
       }
     </div>
@@ -265,6 +295,7 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly sandbox = inject(SandboxService);
 
   skeletonRows = [1, 2, 3, 4, 5];
 
@@ -343,11 +374,19 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   kindScopedGroups = computed(() =>
     this.allGroups().filter((g) => this.groupKind(g) === this.kind()),
   );
+  /**
+   * The three numbers count what is the caller's, not what is on the page: the
+   * showcase belongs to whoever runs this instance, and counting it made the
+   * header say "Total 1" over a list that said "no applications found".
+   */
+  kindOwnGroups = computed(() =>
+    this.kindScopedGroups().filter((g) => !this.isShowcase(g)),
+  );
   kindRunningCount = computed(
-    () => this.kindScopedGroups().filter((g) => g.status === 'running').length,
+    () => this.kindOwnGroups().filter((g) => g.status === 'running').length,
   );
   kindFailedCount = computed(
-    () => this.kindScopedGroups().filter((g) => g.status === 'failed').length,
+    () => this.kindOwnGroups().filter((g) => g.status === 'failed').length,
   );
 
   clusterNames = computed(() =>
@@ -368,6 +407,40 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
       return true;
     });
   });
+
+  /**
+   * The showcase is drawn apart from the rest, under its own heading.
+   *
+   * It is read off `access.showcase`, which the API decides — the interface is
+   * not entitled to a second opinion about what is on display. Something a
+   * person did not create, shown unlabelled among the things they did, reads as
+   * the leftovers of somebody else; a heading says it once for the whole group
+   * rather than asking every row to carry the explanation.
+   */
+  private isShowcase(g: AppGroupView): boolean {
+    const primary =
+      g.components.find((c) => c.id === g.primaryComponentId) ?? g.components[0];
+    return !!accessOf(primary)?.showcase;
+  }
+
+  ownGroups = computed(() => this.filteredGroups().filter((g) => !this.isShowcase(g)));
+  showcaseGroups = computed(() => this.filteredGroups().filter((g) => this.isShowcase(g)));
+
+  /**
+   * "read-only" is a fact about the caller, not about the showcase: the
+   * operator who runs these applications owns them and may change them, and
+   * telling them otherwise would be false on their own screen.
+   */
+  showcaseReadOnly = computed(() =>
+    this.showcaseGroups().every((g) => {
+      const primary =
+        g.components.find((c) => c.id === g.primaryComponentId) ?? g.components[0];
+      return !!accessOf(primary)?.readOnly;
+    }),
+  );
+
+  /** The showcase's own sentence, served by the API so three surfaces cannot drift. */
+  showcaseWhy = computed(() => this.sandbox.whyFor('showcase'));
 
   private groupKind(g: AppGroupView): ApplicationKind {
     const primary =

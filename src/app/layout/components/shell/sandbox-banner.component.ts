@@ -30,9 +30,13 @@ import { SandboxSaveActionComponent } from './sandbox-save-action.component';
         } @else {
           <span class="font-medium">Guest sandbox</span>
           <span class="opacity-80">
-            — everything here is deleted in
+            — this area is deleted in
             <span class="font-semibold tabular-nums">{{ remaining() }}</span
             >, and there is no way to extend it.
+            @if (workloadHours()) {
+              Anything you deploy goes {{ workloadHours() }} hours after you
+              start it.
+            }
           </span>
         }
 
@@ -53,6 +57,15 @@ export class SandboxBannerComponent {
 
   protected readonly remaining = computed(() =>
     formatCountdown(this.sandbox.secondsRemaining()),
+  );
+
+  /**
+   * Said here rather than left for the visitor to discover when a workload
+   * disappears. Absent on an instance that does not serve the number, in which
+   * case the sentence simply is not made.
+   */
+  protected readonly workloadHours = computed(() =>
+    this.sandbox.workloadTtlHours(),
   );
 
   protected readonly icon = computed(() =>

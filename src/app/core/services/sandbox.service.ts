@@ -7,6 +7,13 @@ export interface SandboxSession {
   expiresAt: string;
   secondsRemaining: number;
   ttlHours: number;
+  /**
+   * How long what the guest deploys lasts — shorter than the area itself, and
+   * the number the banner states. Optional because an older instance does not
+   * send it, and a screen that invents a deadline is worse than one that keeps
+   * quiet about it.
+   */
+  workloadTtlHours?: number;
   loginUrl: string;
 }
 
@@ -79,6 +86,9 @@ export class SandboxService {
   readonly areas = this._areas.asReadonly();
   readonly inSandbox = computed(() => this._session() !== null);
   readonly secondsRemaining = this._secondsRemaining.asReadonly();
+  readonly workloadTtlHours = computed(
+    () => this._session()?.workloadTtlHours ?? null,
+  );
 
   readonly urgent = computed(
     () => this.inSandbox() && this._secondsRemaining() < 3600,
@@ -249,8 +259,20 @@ export function sandboxFailureMessage(
   return isSandboxRefusal(error) ? null : fallback;
 }
 
+/**
+ * A deadline a person can read at a glance.
+ *
+ * Days appear above two of them because an area now lasts a week, and
+ * `167:59:42` is a number somebody has to divide before it means anything. The
+ * ticking clock stays for the last day, where the seconds are the point.
+ */
 export function formatCountdown(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));
+  const days = Math.floor(s / 86_400);
+  if (days >= 2) {
+    const hours = Math.floor((s % 86_400) / 3600);
+    return hours > 0 ? `${days} days ${hours}h` : `${days} days`;
+  }
   const hours = Math.floor(s / 3600);
   const minutes = Math.floor((s % 3600) / 60);
   const seconds = s % 60;

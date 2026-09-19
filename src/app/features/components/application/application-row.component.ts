@@ -16,6 +16,7 @@ import {
   ApplicationStatusEnum,
   getStatusLabel,
 } from '../../model/application.models';
+import { accessOf } from '../../model/app-access';
 import { ProjectsService } from '../../service/projects.service';
 import { ProjectBadgeComponent } from '../projects/project-badge.component';
 
@@ -89,7 +90,7 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
       </span>
 
       <!-- Delete action -->
-      @if (!app().systemProtected) {
+      @if (!app().systemProtected && !isReadOnly()) {
         @if (app().status === 'deleting') {
           <span class="w-7 flex-shrink-0 flex items-center justify-center" title="Deleting...">
             <ng-icon name="lucideLoader" class="h-4 w-4 text-gray-400 animate-spin" />
@@ -118,6 +119,13 @@ export class ApplicationRowComponent {
   delete = output<Application>();
 
   private readonly projectsService = inject(ProjectsService);
+
+  /**
+   * Offering a control the API will refuse is worse than not offering it: the
+   * person learns they cannot do it by being told no. `access` is the API's own
+   * statement about this caller and this application, so it is what decides.
+   */
+  readonly isReadOnly = computed(() => !!accessOf(this.app())?.readOnly);
 
   readonly project = computed(() => {
     const projectId = this.app().projectId;

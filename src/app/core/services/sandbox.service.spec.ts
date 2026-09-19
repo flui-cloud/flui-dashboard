@@ -18,6 +18,18 @@ describe('formatCountdown', () => {
     expect(formatCountdown(9)).toBe('00:09');
   });
 
+  // An area lasts a week now, and 167:59:42 is a number somebody has to divide
+  // before it means anything.
+  it('counts in days once there are more than two of them', () => {
+    expect(formatCountdown(7 * 86_400)).toBe('7 days');
+    expect(formatCountdown(7 * 86_400 - 1)).toBe('6 days 23h');
+    expect(formatCountdown(2 * 86_400)).toBe('2 days');
+  });
+
+  it('keeps the ticking clock for the last day, where the seconds are the point', () => {
+    expect(formatCountdown(2 * 86_400 - 1)).toBe('47:59:59');
+  });
+
   it('never renders a negative clock', () => {
     expect(formatCountdown(0)).toBe('00:00');
     expect(formatCountdown(-120)).toBe('00:00');
