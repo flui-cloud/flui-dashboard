@@ -32,6 +32,8 @@ export interface PlatformUpdateStatus {
   availableVersion: string | null;
   updateAvailable: boolean;
   applicable: boolean;
+  /** Informational: the CLI that could re-run the bootstrap for this release. */
+  requiredCliVersion: string | null;
   publishedAt: string | null;
   notes: string[];
   migrations: number;

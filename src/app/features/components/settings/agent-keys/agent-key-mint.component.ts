@@ -3,6 +3,8 @@ import {
   Component,
   computed,
   input,
+  ElementRef,
+  effect,
   output,
   signal,
   viewChild,
@@ -77,7 +79,7 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (minted(); as key) {
-      <div class="space-y-3">
+      <div class="space-y-3" #result>
         <div class="flex items-start gap-2">
           <ng-icon name="lucideCheck" class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p class="text-sm font-medium text-foreground">{{ key.name }} is ready.</p>
@@ -99,7 +101,8 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
               id="key-name"
               data-testid="key-name"
               type="text"
-              [(ngModel)]="name"
+              [ngModel]="name()"
+              (ngModelChange)="name.set($event)"
               [disabled]="disabled()"
               placeholder="Claude Code on my laptop"
               class="w-full"
@@ -283,15 +286,49 @@ export class AgentKeyMintComponent {
   readonly dismiss = output<void>();
 
   protected readonly lifetimes = LIFETIMES;
-  protected name = '';
+  /**
+   * A signal, like everything else `canSubmit` reads.
+   *
+   * It was a plain property bound with `[(ngModel)]`, and `canSubmit` is a
+   * `computed` — which re-runs only when a *signal* it read changes. Typing the
+   * name therefore never re-enabled the button: it stayed disabled until some
+   * other signal moved, and toggling a permission group was the thing that
+   * happened to move one. So the button looked broken, and the way to unstick it
+   * was to fiddle with the groups, which is what it took to mint a key today.
+   *
+   * The two pickers in this folder already bind their filter this way.
+   */
+  protected readonly name = signal('');
   protected lifetime = '30d';
   protected readonly picked = signal<ReadonlySet<string>>(new Set());
   protected readonly limitToApps = signal(false);
   protected readonly pickedApps = signal<string[]>([]);
+  /**
+   * The key is shown once and is never recoverable, so it must not appear
+   * somewhere nobody is looking.
+   *
+   * The result replaces the form rather than joining it, and the form is long:
+   * somebody who scrolled down to reach the Create button is left, the instant
+   * it is pressed, staring at the empty space below a much shorter block, with
+   * the key above them and no reason to suspect it. Reported from the dashboard
+   * as "a strange scroll — I had to scroll to find the token". A person who does
+   * not scroll has minted a credential they do not have.
+   */
+  private readonly result = viewChild<ElementRef<HTMLElement>>('result');
+
   private readonly appPicker = viewChild<AgentKeyApplicationPickerComponent>('appPicker');
   protected readonly limitToProjects = signal(false);
   protected readonly pickedProjects = signal<string[]>([]);
   private readonly projectPicker = viewChild<AgentKeyProjectPickerComponent>('projectPicker');
+
+  constructor() {
+    effect(() => {
+      this.result()?.nativeElement.scrollIntoView({
+        block: 'start',
+        behavior: 'smooth',
+      });
+    });
+  }
 
   protected readonly grantableCount = computed(
     () => this.catalogue().filter((g) => g.grantable).length,
@@ -319,7 +356,7 @@ export class AgentKeyMintComponent {
       !this.busy() &&
       !this.disabled() &&
       this.picked().size > 0 &&
-      this.name.trim().length > 0,
+      this.name().trim().length > 0,
   );
 
   protected toggle(key: string): void {
@@ -332,7 +369,7 @@ export class AgentKeyMintComponent {
     if (!this.canSubmit()) return;
     const days = LIFETIMES.find((l) => l.id === this.lifetime)?.days ?? null;
     this.create.emit({
-      name: this.name.trim(),
+      name: this.name().trim(),
       groups: [...this.picked()],
       expiresAt:
         days === null
@@ -344,7 +381,7 @@ export class AgentKeyMintComponent {
   }
 
   reset(): void {
-    this.name = '';
+    this.name.set('');
     this.lifetime = '30d';
     this.picked.set(new Set());
     this.limitToApps.set(false);

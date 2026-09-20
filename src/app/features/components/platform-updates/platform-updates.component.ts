@@ -87,6 +87,11 @@ import {
                   </p>
                 } @else if (status.updateAvailable) {
                   <span class="badge bg-primary/10 text-primary">Update available</span>
+                  @if (status.requiredCliVersion) {
+                    <span class="badge badge-in-progress ml-1.5" title="The CLI on this release is the one that can re-run the bootstrap. Nothing here is gated on it.">
+                      CLI {{ status.requiredCliVersion }}
+                    </span>
+                  }
                   <h2 class="text-lg font-semibold">Flui {{ status.availableVersion }}</h2>
                   <p class="text-sm text-muted-foreground">
                     You are on <span class="font-mono">{{ status.installedVersion }}</span>

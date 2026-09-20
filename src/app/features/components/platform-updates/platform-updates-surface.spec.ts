@@ -42,6 +42,7 @@ function status(over: Partial<PlatformUpdateStatus> = {}): PlatformUpdateStatus 
     availableVersion: null,
     updateAvailable: false,
     applicable: true,
+    requiredCliVersion: '0.14.0',
     publishedAt: null,
     notes: [],
     migrations: 0,

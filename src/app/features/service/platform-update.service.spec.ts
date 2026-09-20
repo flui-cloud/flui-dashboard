@@ -16,6 +16,7 @@ const STATUS: PlatformUpdateStatus = {
   availableVersion: '0.14.0',
   updateAvailable: true,
   applicable: true,
+  requiredCliVersion: '0.14.0',
   publishedAt: '2026-09-02T09:00:00.000Z',
   notes: [],
   migrations: 2,

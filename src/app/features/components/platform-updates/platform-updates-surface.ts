@@ -162,6 +162,9 @@ export function presentedContent(input: PlatformUpdatesSurfaceInput): PresentedC
       status ? textObservation('flui.platform_update.available_version', status.availableVersion, 'api') : null,
       status ? boolObservation('flui.platform_update.update_available', status.updateAvailable, 'api') : null,
       status ? boolObservation('flui.platform_update.applicable', status.applicable, 'api') : null,
+      status && status.updateAvailable
+        ? textObservation('flui.platform_update.required_cli_version', status.requiredCliVersion, 'api')
+        : null,
       status ? textObservation('flui.platform_update.published_at', status.publishedAt, 'api') : null,
       status ? textObservation('flui.platform_update.checked_at', status.checkedAt, 'api') : null,
       status ? boolObservation('flui.platform_update.check_failed', checkFailed, 'derived') : null,

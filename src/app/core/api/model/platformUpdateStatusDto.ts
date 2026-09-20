@@ -22,9 +22,13 @@ export interface PlatformUpdateStatusDto {
     availableVersion: string | null;
     updateAvailable: boolean;
     /**
-     * True when the available release can be applied from the dashboard. False with a blocker advisory when it needs the CLI.
+     * True when the available release can be applied from the dashboard. False only when something makes the release genuinely unappliable — the manifest could not be read, or the release refuses this starting version. A release that also changes the host manifests stays applicable: the images move and an advisory says what will not arrive.
      */
     applicable: boolean;
+    /**
+     * The CLI version needed to re-run the bootstrap for this release, shown for information and never enforced.
+     */
+    requiredCliVersion?: string | null;
     publishedAt?: string | null;
     /**
      * Release notes, newest release only.
