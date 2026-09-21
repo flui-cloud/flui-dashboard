@@ -64,6 +64,10 @@ export interface ClusterResponseDto {
      */
     masterIpAddress?: string;
     /**
+     * Why the cluster is in this state, when the state alone does not say. Present on a failure — a refused deletion carries the provider\'s own sentence, which usually names the remedy as well as the cause.
+     */
+    statusReason?: string;
+    /**
      * VNet UUID if cluster is attached to a VNet
      */
     vnetId?: string;

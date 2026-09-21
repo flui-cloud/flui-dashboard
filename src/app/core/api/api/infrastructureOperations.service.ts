@@ -93,6 +93,65 @@ export class InfrastructureOperationsService extends BaseService {
     }
 
     /**
+     * Download the captured install log for an operation
+     * Bootstrap output captured while a master node was created, as plain text — available live and after completion or failure. 404 if the operation never reached the tailing window (predates this feature, or was a node type not yet covered).
+     * @endpoint get /api/v1/infrastructure/operations/{operationId}/log
+     * @param operationId Operation ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public infrastructureOperationsControllerDownloadLog(operationId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public infrastructureOperationsControllerDownloadLog(operationId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public infrastructureOperationsControllerDownloadLog(operationId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public infrastructureOperationsControllerDownloadLog(operationId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (operationId === null || operationId === undefined) {
+            throw new Error('Required parameter operationId was null or undefined when calling infrastructureOperationsControllerDownloadLog.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/operations/${this.configuration.encodeParam({name: "operationId", value: operationId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/log`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Get infrastructure operation status
      * Returns status and progress of an infrastructure operation you started (servers, clusters, deploys). Operators who hold the infrastructure section at its full level see every operation on the instance.
      * @endpoint get /api/v1/infrastructure/operations/{operationId}

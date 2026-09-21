@@ -15,7 +15,14 @@ export interface SandboxClaimResultDto {
      * Seconds left. The countdown is the only channel the sandbox has — there is no email to warn anyone.
      */
     secondsRemaining: number;
+    /**
+     * How long the area itself lasts.
+     */
     ttlHours: number;
+    /**
+     * How long what the guest deploys lasts, which is the shorter of the two and the one that costs. Served rather than assumed, so the screen that states the rule and the sweep that enforces it cannot end up saying different numbers.
+     */
+    workloadTtlHours: number;
     /**
      * Where this tenancy is opened. Present on the session too, so a visitor coming back can be sent straight in instead of claiming another one.
      */

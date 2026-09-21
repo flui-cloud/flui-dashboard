@@ -44,10 +44,10 @@ export class CAManagementService extends BaseService {
     }
 
     /**
-     * Generate ephemeral certificate for testing (DEV ONLY)
-     * Generates an ephemeral certificate for manual SSH testing. Returns private key and certificate that can be used with ssh command line.
+     * Generate ephemeral certificate for manual SSH testing (admin only)
+     * Generates a short-lived certificate for manual SSH testing. Returns a private key and certificate usable from the ssh command line. Admin only: the certificate authenticates as root on every node trusting this CA.
      * @endpoint post /api/v1/access/ca/test-certificate
-     * @param ttl Certificate TTL in seconds (default: 180)
+     * @param ttl Certificate TTL in seconds (default: 180, maximum: 600)
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options

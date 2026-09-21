@@ -65,7 +65,6 @@ api/me.service.ts
 api/messagingConsole.service.ts
 api/objectStoreConsole.service.ts
 api/objectStoreShare.service.ts
-api/observability.service.ts
 api/operatingContext.service.ts
 api/platformUpdates.service.ts
 api/projects.service.ts
@@ -179,6 +178,7 @@ model/availabilityOutlookDto.ts
 model/availableRepositoryDto.ts
 model/availableVersionDto.ts
 model/availableVersionsResponseDto.ts
+model/backupScopeSelectorDto.ts
 model/bearerTokenDto.ts
 model/billingBreakdownDto.ts
 model/billingPeriodDto.ts
@@ -379,6 +379,7 @@ model/firewallRuleDto.ts
 model/firewallRuleResponseDto.ts
 model/fleetHistoryDto.ts
 model/fleetHistoryPointDto.ts
+model/fluiManagedNetworkDto.ts
 model/fulltextAssistDto.ts
 model/fulltextRawDto.ts
 model/fulltextSearchDto.ts
@@ -472,6 +473,7 @@ model/messagingPublishDto.ts
 model/metricsDataPointDto.ts
 model/models.ts
 model/monthToDateDto.ts
+model/nameAvailabilityResponseDto.ts
 model/networkMetricsDto.ts
 model/networkingConfigDto.ts
 model/nodeBillingSegmentDto.ts
@@ -481,6 +483,8 @@ model/nodeSizeLocationAvailabilityDto.ts
 model/nodeSizeLocationDto.ts
 model/nodeSizeOptionDto.ts
 model/nodeSizePriceDto.ts
+model/objectStoragePresetDto.ts
+model/objectStorageRegionOptionDto.ts
 model/observabilityEndpointsDto.ts
 model/oidcReadinessDto.ts
 model/openAlarmDto.ts
@@ -515,7 +519,6 @@ model/platformUpdateStatusDto.ts
 model/policyDestinationInputDto.ts
 model/priceDetailDto.ts
 model/pricingResponseDto.ts
-model/prometheusTargetDto.ts
 model/providerCapabilitiesDto.ts
 model/providerConfigurationDto.ts
 model/providerCredentialsDto.ts
@@ -605,7 +608,9 @@ model/resourceOverrideMemoryDto.ts
 model/resourceOverridesDto.ts
 model/resourceProfileDto.ts
 model/resourceProfilesResponseDto.ts
+model/restoreNewInstallDto.ts
 model/restorePreviewDto.ts
+model/restoreTargetSelectorDto.ts
 model/rollbackApplicationDto.ts
 model/runRateDto.ts
 model/sSHKeyDto.ts

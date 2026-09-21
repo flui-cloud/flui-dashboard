@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { ProviderRegionDto } from './providerRegionDto';
 
 
 export interface ValidationResultDto { 
@@ -25,6 +26,6 @@ export interface ValidationResultDto {
     /**
      * Available regions discovered
      */
-    availableRegions?: Array<object>;
+    availableRegions?: Array<ProviderRegionDto>;
 }
 

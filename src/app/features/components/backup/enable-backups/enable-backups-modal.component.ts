@@ -266,7 +266,11 @@ export class EnableBackupsModalComponent implements OnInit {
   readonly closed = output<{ activated: boolean }>();
 
   /** Null until the operator picks one; the backend's own choice stands. */
-  protected readonly chosenProvider = signal<string | null>(null);
+  // Typed as the DTO's own enum, not a bare string: the generated client now
+  // narrows this field, and an untyped signal only defers the mismatch to the
+  // call that sends it.
+  protected readonly chosenProvider =
+    signal<QuickSetupDto.PrimaryProviderEnum | null>(null);
 
   protected readonly step = signal<Step>('loading');
   protected readonly options = signal<SetupOptions | null>(null);

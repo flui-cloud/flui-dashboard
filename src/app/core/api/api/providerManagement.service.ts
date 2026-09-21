@@ -33,6 +33,8 @@ import { ProviderCredentialsDto } from '../model/providerCredentialsDto';
 // @ts-ignore
 import { ProviderDefinitionDto } from '../model/providerDefinitionDto';
 // @ts-ignore
+import { ProviderRegionDto } from '../model/providerRegionDto';
+// @ts-ignore
 import { UpdateCredentialsExpiryDto } from '../model/updateCredentialsExpiryDto';
 // @ts-ignore
 import { UpdateProviderRegionsDto } from '../model/updateProviderRegionsDto';
@@ -844,9 +846,9 @@ export class ProviderManagementService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<object>>;
-    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<object>>>;
-    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<object>>>;
+    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ProviderRegionDto>>;
+    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ProviderRegionDto>>>;
+    public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ProviderRegionDto>>>;
     public managementControllerGetProviderRegions(provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (provider === null || provider === undefined) {
             throw new Error('Required parameter provider was null or undefined when calling managementControllerGetProviderRegions.');
@@ -882,7 +884,7 @@ export class ProviderManagementService extends BaseService {
 
         let localVarPath = `/api/v1/management/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos'", dataFormat: undefined})}/regions`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Array<object>>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<ProviderRegionDto>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

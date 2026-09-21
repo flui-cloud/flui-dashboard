@@ -26,7 +26,7 @@ export interface PlatformUpdateStatusDto {
      */
     applicable: boolean;
     /**
-     * The CLI version needed to re-run the bootstrap for this release, shown for information and never enforced.
+     * The CLI version needed to re-run the bootstrap for this release, shown for information and never enforced. The CLI installs the ref and tags pinned in its own build, so an older CLI would reinstall its own release; the API cannot see which one the operator has.
      */
     requiredCliVersion?: string | null;
     publishedAt?: string | null;

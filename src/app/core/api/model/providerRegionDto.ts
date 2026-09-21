@@ -13,12 +13,35 @@ export interface ProviderRegionDto {
     id: string;
     name: string;
     displayName: string;
+    /**
+     * What the provider calls the country. Hetzner answers with an ISO code and OVH with a name, so this is display text and nothing may be decided from it.
+     */
     country: string;
     available: boolean;
     flagEmoji?: string;
     location: string;
     description?: string;
+    /**
+     * ISO 3166-1 alpha-2. The macro-region is derived from this.
+     */
+    countryCode?: string;
+    /**
+     * Derived from the country code, never declared by the provider. Absent when the country is not recognised.
+     */
+    macroRegion?: ProviderRegionDto.MacroRegionEnum;
     latitude?: number;
     longitude?: number;
 }
+export namespace ProviderRegionDto {
+    export const MacroRegionEnum = {
+        Europe: 'europe',
+        NorthAmerica: 'north-america',
+        SouthAmerica: 'south-america',
+        Asia: 'asia',
+        Oceania: 'oceania',
+        Africa: 'africa'
+    } as const;
+    export type MacroRegionEnum = typeof MacroRegionEnum[keyof typeof MacroRegionEnum];
+}
+
 

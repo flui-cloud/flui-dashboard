@@ -46,8 +46,8 @@ export class GatewayService extends BaseService {
     }
 
     /**
-     * List all gateway routes on a cluster
-     * Read-only global view: every route across all applications with its policies and owning app. Operate on routes from the owning application scope.
+     * List gateway routes on a cluster
+     * Every route on the cluster that you may see, with its policies and owning app — scoped to the applications you can read. Operate on routes from the owning application scope.
      * @endpoint get /api/v1/clusters/{clusterId}/gateway/routes
      * @param clusterId Cluster ID
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

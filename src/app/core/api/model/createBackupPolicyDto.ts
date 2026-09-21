@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { PolicyDestinationInputDto } from './policyDestinationInputDto';
+import { BackupScopeSelectorDto } from './backupScopeSelectorDto';
 
 
 export interface CreateBackupPolicyDto { 
@@ -15,7 +16,7 @@ export interface CreateBackupPolicyDto {
     clusterId: string;
     scope: CreateBackupPolicyDto.ScopeEnum;
     engineClass?: CreateBackupPolicyDto.EngineClassEnum;
-    scopeSelector?: object;
+    scopeSelector?: BackupScopeSelectorDto;
     includePvcs?: boolean;
     includeEtcdL1?: boolean;
     cronSchedule?: string;

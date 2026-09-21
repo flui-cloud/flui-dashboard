@@ -86,7 +86,7 @@ export interface CreateClusterDto {
      */
     vnetConfig?: VNetConfigDto;
     /**
-     * Ask Flui to build the private network instead of attaching to one the provider offers. For an estate whose machines share no network — every node gets an address on an encrypted mesh and K3s binds to it, so pod traffic stops crossing the internet in clear. Only on providers that declare `supportsFluiManagedVNet`.
+     * Settings for the network Flui builds. On a provider that offers no private network of its own (`supportsFluiManagedVNet`) Flui builds one either way — every node gets an address on an encrypted mesh and K3s binds to it, so pod traffic stops crossing the internet in clear. This only chooses the range; on any other provider it is ignored.
      */
     fluiManagedNetwork?: FluiManagedNetworkDto;
     /**

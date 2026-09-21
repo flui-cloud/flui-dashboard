@@ -349,14 +349,26 @@ export class AuthService extends BaseService {
      * The skill that teaches an agent how to work on this instance
      * Markdown, versioned by its content. Hand it to the agent alongside the credential — it never contains one itself, and asking for it again is how an agent that has gone stale catches up.
      * @endpoint get /api/v1/auth/agent-skill
+     * @param surface How the reader reached this. &#x60;tool&#x60; is an agent coming through the get_started tool, which holds no credential of its own and cannot be told to make an HTTP call. Defaults to &#x60;http&#x60;.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public agentSkillControllerSkill(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<AgentSkillDto>;
-    public agentSkillControllerSkill(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<AgentSkillDto>>;
-    public agentSkillControllerSkill(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<AgentSkillDto>>;
-    public agentSkillControllerSkill(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public agentSkillControllerSkill(surface?: 'http' | 'tool', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<AgentSkillDto>;
+    public agentSkillControllerSkill(surface?: 'http' | 'tool', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<AgentSkillDto>>;
+    public agentSkillControllerSkill(surface?: 'http' | 'tool', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<AgentSkillDto>>;
+    public agentSkillControllerSkill(surface?: 'http' | 'tool', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'surface',
+            <any>surface,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -391,6 +403,7 @@ export class AuthService extends BaseService {
         return this.httpClient.request<AgentSkillDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

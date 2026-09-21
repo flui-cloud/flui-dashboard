@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { RestoreTargetSelectorDto } from './restoreTargetSelectorDto';
 
 
 export interface CreateRestoreJobDto { 
@@ -18,7 +19,7 @@ export interface CreateRestoreJobDto {
      * Beside the original (`new`) or onto it, replacing what is there (`existing`). Required for cluster, namespace and application restores, where both are possible and the old default was neither. Derived for the engines that have only one meaning: a database PITR always builds a new install.
      */
     placement?: CreateRestoreJobDto.PlacementEnum;
-    targetSelector?: object;
+    targetSelector?: RestoreTargetSelectorDto;
     strategy?: CreateRestoreJobDto.StrategyEnum;
     /**
      * PG_PITR only: ISO-8601 instant to recover to; omit for latest (end of WAL).

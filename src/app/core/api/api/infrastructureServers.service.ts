@@ -253,6 +253,91 @@ export class InfrastructureServersService extends BaseService {
     }
 
     /**
+     * Read the server\&#39;s serial console output
+     * Fetches the instance\&#39;s serial/virtual console via the provider\&#39;s own API — no SSH or network reachability to the guest required. The one diagnostic that can tell \&quot;the network is down\&quot; apart from \&quot;the guest never got this far\&quot;. Only OVH implements this today.
+     * @endpoint get /api/v1/infrastructure/servers/{id}/console-output
+     * @param id Server ID from cloud provider
+     * @param provider Cloud provider to query
+     * @param length Number of lines to return from the end of the console buffer
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public serversControllerGetConsoleOutput(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', length?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public serversControllerGetConsoleOutput(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', length?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public serversControllerGetConsoleOutput(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', length?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public serversControllerGetConsoleOutput(id: string, provider: 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos', length?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling serversControllerGetConsoleOutput.');
+        }
+        if (provider === null || provider === undefined) {
+            throw new Error('Required parameter provider was null or undefined when calling serversControllerGetConsoleOutput.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'length',
+            <any>length,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'provider',
+            <any>provider,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/servers/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/console-output`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Get server details by ID
      * Returns detailed server information from cloud provider
      * @endpoint get /api/v1/infrastructure/servers/{id}
