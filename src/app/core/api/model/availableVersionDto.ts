@@ -50,5 +50,13 @@ export interface AvailableVersionDto {
      * True when this is the most recent release ever attempted on the app (regardless of outcome). Distinct from isCurrentlyDeployed: a FAILED release can be the latest but not currently deployed.
      */
     isLatestRelease: boolean;
+    /**
+     * Whether this application can actually be asked to run this version. False for an image built from another branch, or for a row that is only a moving tag.
+     */
+    releasable: boolean;
+    /**
+     * Why it cannot be released, in one sentence. Null when it can.
+     */
+    notReleasableReason: string | null;
 }
 

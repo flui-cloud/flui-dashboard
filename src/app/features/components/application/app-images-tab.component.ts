@@ -50,6 +50,11 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                 Update available
               </span>
             }
+            @if (autoDeployOnPush()) {
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
+                <ng-icon name="lucideRefreshCw" class="h-3 w-3" /> Auto-deploy on push
+              </span>
+            }
           </div>
           <p class="text-xs text-muted-foreground">
             Each version. Track which is currently deployed and the outcome of past releases.
@@ -60,6 +65,33 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
           Refresh
         </button>
       </div>
+
+      @if (autoDeployOnPush()) {
+        <div class="p-3 rounded-md border border-violet-300 bg-violet-50 dark:border-violet-700/60 dark:bg-violet-950/40 space-y-2">
+          <p class="text-sm text-violet-900 dark:text-violet-100">
+            This application follows
+            @if (deployBranch(); as b) { <span class="font-mono">{{ b }}</span> } @else { its branch }
+            on its own: every successful build is rolled out within seconds. Releasing an older
+            version from here would be undone, so those buttons are off.
+          </p>
+          <button hlmBtn variant="ghost" size="sm" (click)="showPinHelp.set(!showPinHelp())"
+            class="text-violet-800 dark:text-violet-200 -ml-2">
+            {{ showPinHelp() ? 'Hide' : 'How do I change what runs?' }}
+          </button>
+          @if (showPinHelp()) {
+            <div class="text-sm text-violet-800/90 dark:text-violet-200/80 space-y-1.5">
+              <p>Push to the branch. The build that succeeds is what runs — that is the whole update path.</p>
+              <p>
+                To pin an older version instead, auto-deploy has to be off first. It is a property of
+                the application, and today it can only be changed through the API:
+              </p>
+              <p class="font-mono text-xs break-all">
+                PATCH /api/v1/applications/{{ appIdForHelp() }} &#123;"deployOnPush": false&#125;
+              </p>
+            </div>
+          }
+        </div>
+      }
 
       @if (githubAppMissing()) {
         <div class="p-4 rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700/60 dark:bg-amber-950/40">
@@ -99,7 +131,7 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
         </div>
       } @else {
         <div class="space-y-2">
-          @for (v of versioning.versions(); track v.imageRef) {
+          @for (v of shownVersions(); track v.imageRef) {
             <div [class]="rowClass(v)">
               <div class="flex-1 min-w-0 space-y-1.5">
                 <!-- Tags row -->
@@ -128,6 +160,12 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                 <p class="text-xs text-muted-foreground font-mono break-all" [title]="v.imageRef">
                   {{ v.imageRef }}
                 </p>
+
+                @if (!isReleasable(v) && v.notReleasableReason) {
+                  <p class="text-xs text-amber-700 dark:text-amber-300">
+                    {{ v.notReleasableReason }}
+                  </p>
+                }
 
                 <!-- Failure reason for the latest release on this image -->
                 @if (lastReleaseFor(v); as lr) {
@@ -171,6 +209,8 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
               <div class="shrink-0 flex items-center gap-2">
                 @if (isCurrentRow(v)) {
                   <!-- No action: this version is already deployed. -->
+                } @else if (!isReleasable(v)) {
+                  <!-- No action: offering it would deploy something this app cannot run. -->
                 } @else if (isReleasing(v)) {
                   <span class="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400">
                     <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
@@ -178,7 +218,8 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                   </span>
                 } @else {
                   <button hlmBtn variant="outline" size="sm" (click)="openDeploy(v)"
-                    [disabled]="busy() || !!deployState.deployInFlight() || deletingVersionId() !== null">
+                    [disabled]="autoDeployOnPush() || busy() || !!deployState.deployInFlight() || deletingVersionId() !== null"
+                    [title]="autoDeployOnPush() ? 'Auto-deploy on push is on: this application always runs the newest successful build of its branch.' : ''">
                     <ng-icon name="lucideRocket" class="h-3 w-3 mr-1" /> Deploy
                   </button>
                   @if (v.versionId != null) {
@@ -194,6 +235,17 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
             </div>
           }
         </div>
+
+        @if (hiddenCount() > 0) {
+          <div class="flex justify-center pt-1">
+            <button hlmBtn variant="ghost" size="sm" (click)="showAll.set(!showAll())"
+              class="text-muted-foreground">
+              {{ showAll()
+                ? 'Hide versions this application cannot run'
+                : 'Show ' + hiddenCount() + ' version' + (hiddenCount() === 1 ? '' : 's') + ' it cannot run' }}
+            </button>
+          </div>
+        }
 
         <!-- Load more (DockerHub pagination) -->
         @if (versioning.hasMore()) {
@@ -355,6 +407,53 @@ export class AppImagesTabComponent implements OnInit {
   statusMessage = signal<{ text: string; type: 'success' | 'error' } | null>(null);
   deployTarget = signal<AvailableVersionDto | null>(null);
   deployReason = '';
+
+  showPinHelp = signal(false);
+  showAll = signal(false);
+
+  /**
+   * Older installations do not send the field. Absent means "not judged", which
+   * has to read as releasable — otherwise upgrading the dashboard ahead of the
+   * API empties every list.
+   */
+  isReleasable(v: AvailableVersionDto): boolean {
+    return v.releasable !== false;
+  }
+
+  /**
+   * The list is what this application can actually be asked to run. A row that
+   * cannot be pressed teaches people not to trust the rows that can, so the
+   * rest waits behind a count.
+   */
+  readonly shownVersions = computed(() =>
+    this.showAll()
+      ? this.versioning.versions()
+      : this.versioning.versions().filter((v) => this.isReleasable(v)),
+  );
+
+  readonly hiddenCount = computed(
+    () => this.versioning.versions().filter((v) => !this.isReleasable(v)).length,
+  );
+
+  /**
+   * The application redeploys itself from its branch, so a release chosen here
+   * loses to the next reconcile rather than failing — which is why the buttons
+   * go off rather than staying live and being undone.
+   */
+  readonly autoDeployOnPush = computed(
+    () => this.appService.selectedApplication()?.deployOnPush === true,
+  );
+
+  readonly deployBranch = computed(() => {
+    const cfg = this.appService.selectedApplication()?.sourceConfig as
+      | { branch?: string }
+      | undefined;
+    return cfg?.branch ?? null;
+  });
+
+  readonly appIdForHelp = computed(
+    () => this.appService.selectedApplication()?.id ?? '<app-id>',
+  );
 
   deleteTarget = signal<AvailableVersionDto | null>(null);
   forceOverride = signal<boolean>(false);
