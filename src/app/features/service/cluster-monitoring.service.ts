@@ -16,6 +16,9 @@ export interface ServerMetricsState {
   memory: { current: number; previous: number; used: number; total: number };
   disk: { current: number; previous: number; used: number; total: number };
   network: { bytesIn: number; bytesOut: number };
+  /** Load average over 1/5/15 minutes; null when node-exporter does not report it. */
+  load: { one: number; five: number; fifteen: number } | null;
+  uptimeSeconds: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -44,6 +47,10 @@ export class ClusterMonitoringService {
 
   // Server metrics state
   private readonly serverMetrics = signal<ServerMetricsState[]>([]);
+
+  /** Which cluster the stored readings belong to — this service outlives the page. */
+  private readonly loadedFor = signal<string | null>(null);
+  private pendingFor: string | null = null;
   readonly servers = this.serverMetrics.asReadonly();
 
   // Public readonly signals
@@ -156,6 +163,14 @@ export class ClusterMonitoringService {
       return;
     }
 
+    // Another cluster's readings must never be shown under this one's name.
+    if (this.loadedFor() !== clusterId) {
+      this.serverMetrics.set([]);
+      this.healthState.set(null);
+      this.loadedFor.set(null);
+    }
+    this.pendingFor = clusterId;
+
     try {
       this.isLoadingSignal.set(true);
       this.errorSignal.set(null);
@@ -165,8 +180,11 @@ export class ClusterMonitoringService {
         firstValueFrom(this.healthApi.clusterHealthControllerGetClusterHealth(clusterId)),
       ]);
 
+      // A slow answer for the cluster we left must not overwrite the one we opened.
+      if (this.pendingFor !== clusterId) return;
       this.healthState.set(healthResponse);
       this.updateServerMetrics(metricsResponse);
+      this.loadedFor.set(clusterId);
 
       // Reset error counters on success
       this.consecutiveErrorCount.set(0);
@@ -175,6 +193,8 @@ export class ClusterMonitoringService {
       }
     } catch (error: any) {
       console.error('Failed to load cluster metrics:', error);
+      // A failure for the cluster we left must not pause polling on this one.
+      if (this.pendingFor !== clusterId) return;
 
       const isHttpError = error?.status >= 400 && error?.status < 600;
       if (isHttpError) {
@@ -234,6 +254,14 @@ export class ClusterMonitoringService {
           bytesIn: server.network?.bytes_in || 0,
           bytesOut: server.network?.bytes_out || 0,
         },
+        load: server.system?.load
+          ? {
+              one: server.system.load.load1,
+              five: server.system.load.load5,
+              fifteen: server.system.load.load15,
+            }
+          : null,
+        uptimeSeconds: server.system?.uptime_seconds ?? null,
       };
     });
 

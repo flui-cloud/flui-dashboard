@@ -162,6 +162,12 @@ export interface TimeSeriesChartConfig extends BaseChartConfig {
   timeFormatter?: (timestamp: Date) => string;
   /** Show data points (circles on line) */
   showDataPoints?: boolean;
+  /**
+   * Draw the data's title inside the plot. Off where the card around the chart
+   * already names it: the same words twice cost a line of height and read as
+   * two different things.
+   */
+  showTitle?: boolean;
   /** Threshold lines (horizontal lines at specific values) */
   thresholds?: {
     warning?: number;
@@ -190,6 +196,7 @@ export const DEFAULT_TIMESERIES_CONFIG: Required<Omit<TimeSeriesChartConfig, 'th
   timeRange: '1h',
   unit: '',
   showDataPoints: false,
+  showTitle: true,
 };
 
 /**
@@ -456,3 +463,39 @@ export const DISTRIBUTION_PALETTE = [
   '#a855f7', // purple
   '#84cc16', // lime
 ];
+
+/**
+ * Per-node series palette for cluster metrics.
+ * Validated for colour-vision deficiency separation and 3:1 contrast against
+ * both the light and dark card surfaces; kept apart from the status hues
+ * (success/warning/danger) so a series is never mistaken for a health state.
+ * Assigned by node index, in this fixed order, never cycled by rank. Four is
+ * the ceiling this palette can honestly reach — no larger set of hues clears
+ * colour-vision separation against these surfaces — so past four nodes the
+ * charts summarise rather than name each node by colour.
+ */
+export const NODE_SERIES_COLORS = ['#2259F1', '#0D9488', '#B5179E', '#8A6D00'];
+
+/** Horizontal usage bar with optional warning/danger tick marks. */
+export interface MeterBarConfig {
+  warning?: number;
+  danger?: number;
+  /** Width of the track in pixels; omit to fill the container. */
+  width?: number;
+  height?: number;
+}
+
+/** A compact headline figure with a sparkline underneath. */
+export interface StatTileData {
+  label: string;
+  value: string;
+  unit?: string;
+  /** Signed change against the window's typical value, already formatted. */
+  delta?: string;
+  deltaTone?: 'up' | 'down' | 'flat';
+  /** What the change is measured against, e.g. "vs typical in the last hour". */
+  deltaHint?: string;
+  footnote?: string;
+  spark?: number[];
+  color?: string;
+}

@@ -19,6 +19,13 @@ export { ProportionBarComponent } from './proportion-bar/proportion-bar.componen
 
 // Stat Components
 export { MultiStatCardComponent } from './multi-stat-card/multi-stat-card.component';
+export { StatTileComponent } from './stat-tile/stat-tile.component';
+export { SparkLineComponent } from './spark-line/spark-line.component';
+export { MeterBarComponent } from './meter-bar/meter-bar.component';
+
+// Layout
+export { ChartPanelComponent } from './chart-panel/chart-panel.component';
+export type { ChartPanelContext } from './chart-panel/chart-panel.component';
 export { StatusTimelineComponent } from './status-timeline/status-timeline.component';
 
 // Log Volume

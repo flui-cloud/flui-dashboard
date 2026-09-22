@@ -149,9 +149,15 @@ export class TimeSeriesLineComponent implements OnDestroy {
       };
     }
 
+    const withTitle = cfg.showTitle !== false;
+
     return {
+      // The card behind the chart carries its own surface, in both themes. The
+      // built-in dark theme paints one of its own, which showed as a lighter
+      // rectangle sitting inside the card.
+      backgroundColor: 'transparent',
       title: {
-        text: chartData.title,
+        text: withTitle ? chartData.title : '',
         left: 'left',
         textStyle: {
           fontSize: 16,
@@ -180,8 +186,8 @@ export class TimeSeriesLineComponent implements OnDestroy {
 
   private buildLegendConfig(cfg: any, chartData: TimeSeriesChartData, isDark: boolean): object {
     return {
-      show: cfg.showLegend && chartData.series.length > 1,
-      top: 35,
+      show: this.hasLegend(cfg, chartData),
+      top: this.titleHeight(cfg),
       left: 'left',
       textStyle: {
         color: isDark ? '#9ca3af' : '#6b7280'
@@ -189,12 +195,31 @@ export class TimeSeriesLineComponent implements OnDestroy {
     };
   }
 
+  /** Height the title takes above everything else, or nothing where it is not drawn. */
+  private titleHeight(cfg: any): number {
+    return cfg.showTitle === false ? 0 : 38;
+  }
+
+  private hasLegend(cfg: any, chartData: TimeSeriesChartData): boolean {
+    return Boolean(cfg.showLegend) && chartData.series.length > 1;
+  }
+
+  /**
+   * Room above the plot: the title where it is drawn, then the legend under it.
+   * Both are measured from the same numbers as the legend's own offset, so
+   * dropping the title moves the legend up instead of onto the axis labels.
+   */
+  private plotTop(cfg: any, chartData: TimeSeriesChartData): number {
+    const legend = this.hasLegend(cfg, chartData) ? 26 : 0;
+    return Math.max(12, this.titleHeight(cfg) + legend + 10);
+  }
+
   private buildGridConfig(cfg: any, chartData: TimeSeriesChartData): object {
     return {
       left: '3%',
       right: '4%',
       bottom: '3%',
-      top: cfg.showLegend && chartData.series.length > 1 ? 70 : 50,
+      top: this.plotTop(cfg, chartData),
       containLabel: true
     };
   }
