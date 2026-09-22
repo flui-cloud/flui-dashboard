@@ -5,7 +5,8 @@ import { infrastructureRoutes } from './infrastructure.routes';
 import { appsRoutes } from './apps.routes';
 import { managementRoutes } from './management.routes';
 import { clusterRoutes } from './cluster.routes';
-import { scalingFixtureRoutes, scalingRoutes } from './scaling.routes';
+import { scalingRoutes } from './scaling.routes';
+import { environment } from '../environments/environment';
 import { agentsRoutes } from './agents.routes';
 
 export const routes: Routes = [
@@ -33,11 +34,19 @@ export const routes: Routes = [
       ),
     title: 'Open a live Flui',
   },
-  {
-    path: 'mock/scaling-section',
-    children: scalingFixtureRoutes,
-    title: 'Scaling section — fixture',
-  },
+  // Fixtures, for the visual bench. Left out of a production build entirely:
+  // the route sits outside the authenticated shell, so shipping it would put
+  // invented cluster data on an open page.
+  ...(environment.production
+    ? []
+    : [
+        {
+          path: 'mock/scaling-section',
+          loadChildren: () =>
+            import('./scaling-fixture.routes').then((m) => m.scalingFixtureRoutes),
+          title: 'Scaling section — fixture',
+        },
+      ]),
   {
     path: 'repositories',
     redirectTo: '/apps/repositories',

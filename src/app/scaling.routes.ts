@@ -1,6 +1,4 @@
 import { Routes } from '@angular/router';
-import { ScalingApiService } from './features/service/scaling-api.service';
-import { ScalingFixtureService } from './features/service/scaling-fixture.service';
 
 export const scalingRoutes: Routes = [
   {
@@ -49,13 +47,5 @@ export const scalingRoutes: Routes = [
           ),
       },
     ],
-  },
-];
-
-export const scalingFixtureRoutes: Routes = [
-  {
-    path: '',
-    providers: [{ provide: ScalingApiService, useClass: ScalingFixtureService }],
-    children: scalingRoutes,
   },
 ];
