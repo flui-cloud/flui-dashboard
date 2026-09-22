@@ -15,6 +15,7 @@ import {
   ScalingPreview,
   StandingOrder,
   StandingOrderKind,
+  WriteScalingGroup,
 } from '../model/scaling-group.models';
 import {
   CatalogueReadingState,
@@ -266,6 +267,27 @@ export class ScalingApiService {
         { params: { days, stepHours } },
       )
       .pipe(map(toHistory));
+  }
+
+  /**
+   * The figure a person agrees to: how large this cluster may become and how
+   * much it may spend with nobody in the room. One shape writes and rewrites
+   * it, because raising a ceiling is the same act as setting one.
+   */
+  createGroup(clusterId: string, body: WriteScalingGroup): Observable<SectionGroup> {
+    return this.http
+      .post<WireGroup>(`${this.base}/clusters/${clusterId}/scaling-groups`, body)
+      .pipe(map(toGroup));
+  }
+
+  updateGroup(groupId: string, body: WriteScalingGroup): Observable<SectionGroup> {
+    return this.http
+      .patch<WireGroup>(`${this.base}/scaling-groups/${groupId}`, body)
+      .pipe(map(toGroup));
+  }
+
+  deleteGroup(groupId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/scaling-groups/${groupId}`);
   }
 
   fleet(clusterId: string): Observable<FleetReading> {

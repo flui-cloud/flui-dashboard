@@ -57,6 +57,7 @@ export interface ClusterInfo {
   minNodes?: number;
   maxNodes?: number;
   nodeSize?: NodeSize;
+  /** Still returned by the API; decides nothing about growth. */
   autoScalingEnabled?: boolean;
   masterIpAddress?: string;
   createdAt?: Date;
@@ -78,10 +79,6 @@ export interface ClusterConfiguration {
   nodeTypeId: string;
   minNodes: number;
   maxNodes: number;
-  autoScalingEnabled: boolean;
-  scaleUpMemoryPct?: number;
-  scaleUpCpuPct?: number;
-  cooldownSeconds?: number;
   sshKeys?: string[];
   diskSizeGb?: number;
   networkType?: 'public' | 'private';

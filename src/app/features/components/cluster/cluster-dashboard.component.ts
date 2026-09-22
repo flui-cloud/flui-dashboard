@@ -1,9 +1,9 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule, NavigationEnd } from '@angular/router';
-import { filter, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowLeft,
@@ -332,6 +332,7 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
   private readonly autoscaleService = inject(ClusterAutoscaleService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
   ClusterStatus = ClusterStatus;
 
@@ -341,8 +342,7 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
     { label: 'Network', route: 'network', icon: 'lucideNetwork' },
     { label: 'Storage', route: 'storage', icon: 'lucideHardDrive' },
     { label: 'Nodes', route: 'nodes', icon: 'lucideServer' },
-    { label: 'Autoscaling', route: 'autoscaling', icon: 'lucideZap' },
-    { label: 'Scaling (mock)', route: 'scaling', icon: 'lucideSettings2' },
+    { label: 'Scaling', route: 'scaling', icon: 'lucideSettings2' },
     { label: 'Firewall', route: 'firewall', icon: 'lucideShield' },
     { label: 'DNS', route: 'dns', icon: 'lucideGlobe' },
     { label: 'Variables', route: 'variables', icon: 'lucideKey' },
@@ -410,21 +410,34 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    void (async () => {
-      const id = this.route.snapshot.paramMap.get('id');
-      if (id) {
-        this.clusterId.set(id);
-        await this.loadClusterData(id);
-        this.autoscaleService.startStatusPolling(id);
-        void this.autoscaleService.loadDefaults().catch(() => undefined);
-      }
-    })();
+    // Angular reuses this component when only :id changes, so ngOnInit runs once
+    // across a cluster-to-cluster navigation. Follow the parameter instead of
+    // reading it a single time, or the page keeps serving the cluster we left.
+    this.route.paramMap
+      .pipe(
+        map((params) => params.get('id')),
+        filter((id): id is string => !!id),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((id) => this.openCluster(id));
   }
 
   ngOnDestroy(): void {
     this.autoscaleService.stopStatusPolling();
     this.autoscaleService.resetState();
     this.currentSurface.set(null);
+  }
+
+  private openCluster(clusterId: string): void {
+    void (async () => {
+      this.autoscaleService.stopStatusPolling();
+      this.autoscaleService.resetState();
+      this.clusterId.set(clusterId);
+      await this.loadClusterData(clusterId);
+      this.autoscaleService.startStatusPolling(clusterId);
+      void this.autoscaleService.loadDefaults().catch(() => undefined);
+    })();
   }
 
   async loadClusterData(clusterId: string) {

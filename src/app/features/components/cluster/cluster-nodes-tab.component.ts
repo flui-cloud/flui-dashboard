@@ -239,7 +239,7 @@ export class ClusterNodesTabComponent implements OnInit {
     if (this.isByos()) return 'Connect an existing Linux host as a worker (over SSH).';
     const max = this.maxNodes();
     if (max != null && this.workerCount() >= max) {
-      return `maxNodes=${max} reached: raise the limit from the Autoscaling tab first.`;
+      return `maxNodes=${max} reached: raise the ceiling from the Scaling tab first.`;
     }
     return 'Add a new worker to this cluster.';
   });

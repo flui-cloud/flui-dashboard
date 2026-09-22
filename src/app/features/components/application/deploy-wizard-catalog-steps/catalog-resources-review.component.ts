@@ -100,10 +100,10 @@ import {
             <ng-icon name="lucideTriangleAlert" class="h-4 w-4 mt-0.5 text-amber-600 dark:text-amber-400" />
             <div class="flex-1">
               <p class="font-medium text-amber-800 dark:text-amber-200">
-                Cluster will autoscale to fit
+                A node will be added to fit this
               </p>
               <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                Current capacity is tight, but cluster autoscaling is enabled and will add a node when the install starts.
+                {{ av.reasonMessage ?? 'Capacity is tight, but this cluster grows on its own: the install stays pending until the new node joins.' }}
               </p>
             </div>
           </div>
@@ -112,6 +112,9 @@ import {
             <ng-icon name="lucideCircleX" class="h-4 w-4 mt-0.5 text-red-600 dark:text-red-400" />
             <div class="flex-1">
               <p class="font-medium text-red-700 dark:text-red-300">Insufficient cluster capacity</p>
+              @if (av.reasonMessage) {
+                <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">{{ av.reasonMessage }}</p>
+              }
               <div class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4">
                 <span>Required:</span><span class="text-right font-mono">{{ av.required.cpu }} · {{ av.required.memory }}</span>
                 <span>Available (after 10% reserve):</span><span class="text-right font-mono">{{ av.available.cpu }} · {{ av.available.memory }}</span>

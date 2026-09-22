@@ -154,3 +154,22 @@ export interface ScalingPreview {
   chosen: LadderRung | null;
   asks?: string | null;
 }
+
+/**
+ * What the dashboard sends when it writes a group. The same shape creates and
+ * changes one: raising a ceiling is the same act as setting one, and the API
+ * asks the same question of both.
+ *
+ * The node requirement stays out: the dashboard sets bounds and consent, and
+ * leaves shape-level detail to the places that already edit it.
+ */
+export interface WriteScalingGroup {
+  name: string;
+  bounds: ScalingBounds;
+  regions?: string[];
+  shapes?: string[];
+  strategy?: PlacementStrategy;
+  settleSeconds?: number;
+  limits?: { hourlyBillingOnly?: boolean; maxMonthlyCost?: number | null };
+  provision?: ProvisionMode;
+}

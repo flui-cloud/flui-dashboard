@@ -76,12 +76,12 @@ export class AutoscaleWarningBannerComponent {
     const s = this.status();
     if (!s) return '';
     if (s.warning === 'DANGER_NEEDS_SCALE') {
-      return s.autoscalingEnabled
-        ? 'Critical pressure — scale-up required'
-        : 'Critical pressure — enable autoscaling or add a worker now';
+      return s.actuation === 'automatic'
+        ? 'Critical pressure — a node should be on its way'
+        : 'Critical pressure — add a worker or raise the ceiling now';
     }
     if (s.warning === 'WARN_NEEDS_AUTOSCALE') {
-      return 'Cluster under sustained pressure — autoscaling recommended';
+      return 'Cluster under sustained pressure — it will not grow on its own';
     }
     return '';
   });

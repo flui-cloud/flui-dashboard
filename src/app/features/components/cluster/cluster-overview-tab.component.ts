@@ -33,13 +33,12 @@ import { ProviderType } from '../../model/cluster.models';
 import { BackupPolicy } from '../../model/backup.models';
 import { AutoscaleWarningBannerComponent } from './autoscale-warning-banner.component';
 import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
-import { AddWorkerDialogComponent } from './add-worker-dialog.component';
 import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-backups-modal.component';
 
 @Component({
   selector: 'cluster-overview-tab',
   standalone: true,
-  imports: [RouterModule, NgIconComponent, AutoscaleWarningBannerComponent, AttachVNetDialogComponent, AddWorkerDialogComponent, EnableBackupsModalComponent],
+  imports: [RouterModule, NgIconComponent, AutoscaleWarningBannerComponent, AttachVNetDialogComponent, EnableBackupsModalComponent],
   providers: [
     provideIcons({
       lucideCircleAlert,
@@ -65,8 +64,8 @@ import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-bac
       <!-- Autoscale warning banner (only when warning != NONE) -->
       <app-autoscale-warning-banner
         [status]="autoscaleStatus()"
-        (configure)="goToAutoscaling()"
-        (addWorker)="openAddWorker()"
+        (configure)="goToScaling()"
+        (addWorker)="goToScaling()"
       />
 
       <!-- Health Bar (slim, link → monitoring) -->
@@ -460,15 +459,6 @@ import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-bac
         />
       }
 
-      @if (showAddWorkerDialog() && cluster()?.id; as cid) {
-        <app-add-worker-dialog
-          [clusterId]="cid"
-          [currentNodes]="autoscaleStatus()?.currentNodes ?? (cluster()?.nodeCount ?? 0)"
-          [maxNodes]="autoscaleStatus()?.maxNodes ?? cluster()?.maxNodes ?? null"
-          (closed)="showAddWorkerDialog.set(false)"
-        />
-      }
-
       @if (showEnableBackups() && cluster()?.id; as cid) {
         <app-enable-backups-modal
           [clusterId]="cid"
@@ -495,7 +485,6 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
   cluster = this.clusterService.cluster;
   autoscaleStatus = this.autoscaleService.status;
   showAttachDialog = signal<boolean>(false);
-  showAddWorkerDialog = signal<boolean>(false);
   showEnableBackups = signal<boolean>(false);
   clusterPolicies = signal<BackupPolicy[]>([]);
 
@@ -518,17 +507,14 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
     this.showAttachDialog.set(true);
   }
 
-  openAddWorker(): void {
-    this.showAddWorkerDialog.set(true);
-  }
 
   onVNetAttached(): void {
     this.showAttachDialog.set(false);
   }
 
-  goToAutoscaling(): void {
+  goToScaling(): void {
     const id = this.cluster()?.id;
-    if (id) this.router.navigate(['/cluster', id, 'autoscaling']);
+    if (id) this.router.navigate(['/cluster', id, 'scaling']);
   }
 
   goToNodes(): void {

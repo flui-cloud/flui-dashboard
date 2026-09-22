@@ -261,7 +261,7 @@ export class AddWorkerDialogComponent {
     if (max == null) return null;
     const projected = this.currentNodes() + this.count();
     if (projected > max) {
-      return `Adding ${this.count()} would exceed maxNodes=${max} (current: ${this.currentNodes()}). Raise the limit from the Autoscaling tab first.`;
+      return `Adding ${this.count()} would exceed maxNodes=${max} (current: ${this.currentNodes()}). Raise the ceiling from the Scaling tab first.`;
     }
     return null;
   });

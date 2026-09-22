@@ -377,161 +377,33 @@ interface FirewallRuleDto {
               }
             </div>
     
-            <!-- Auto-scaling Configuration -->
+            <!-- Nodes -->
             <div class="border-t pt-6">
               <h3 class="font-medium mb-4 flex items-center">
                 <ng-icon name="lucideZap" class="h-5 w-5 mr-2" />
-                Auto-scaling Configuration
+                Nodes
               </h3>
-    
+
               <div class="space-y-4">
-                <div class="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="autoScaling"
-                    [checked]="autoScalingEnabled()"
-                    (change)="toggleAutoScaling()"
-                    class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                  <label for="autoScaling" class="text-sm font-medium">
-                    Enable Auto-scaling
-                  </label>
-                </div>
-    
-                @if (autoScalingEnabled()) {
-                  <div class="grid grid-cols-2 gap-4 pl-6">
-                    <div>
-                      <label class="text-sm font-medium block mb-2">Minimum Nodes</label>
-                      <select
-                        [value]="minNodes()"
-                        (change)="setMinNodes(+$any($event.target).value)"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                        @for (num of [1,2,3]; track num) {
-                          <option [value]="num">{{ num }}</option>
-                        }
-                      </select>
-                    </div>
-                    <div>
-                      <label class="text-sm font-medium block mb-2">Maximum Nodes</label>
-                      <select
-                        [value]="maxNodes()"
-                        (change)="setMaxNodes(+$any($event.target).value)"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                        @for (num of [3,5,10,20]; track num) {
-                          <option [value]="num">{{ num }}</option>
-                        }
-                      </select>
-                    </div>
-                  </div>
-    
-                  <!-- Auto-create VNet info banner -->
-                  <div class="ml-6 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20 p-3 flex items-start gap-2">
-                    <ng-icon name="lucideInfo" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                    <p class="text-xs text-blue-900 dark:text-blue-200">
-                      A dedicated VNet will be created automatically so future auto-scaled
-                      nodes can communicate over a private network. You can still pick an
-                      existing VNet in the Network step.
-                    </p>
-                  </div>
-    
-                  <!-- Advanced thresholds (collapsible) -->
-                  <div class="pl-6">
-                    <button
-                      type="button"
-                      (click)="advancedThresholdsOpen.set(!advancedThresholdsOpen())"
-                      class="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-blue-600"
-                      >
-                      <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
-                      Advanced thresholds (optional)
-                    </button>
-    
-                    @if (advancedThresholdsOpen()) {
-                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3 p-3 rounded-lg border border-border bg-muted/40">
-                        <div>
-                          <label class="text-xs font-medium text-sub block mb-1.5">
-                            Scale-up memory %
-                          </label>
-                          <input
-                            type="number"
-                            min="50"
-                            max="95"
-                            [value]="scaleUpMemoryPct() ?? ''"
-                            (input)="setScaleUpMemoryPct($any($event.target).value)"
-                            [placeholder]="(autoscaleDefaults()?.scaleUpMemoryPct ?? 80) + ''"
-                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                            />
-                          <p class="text-xs text-sub mt-1">
-                            Default: {{ autoscaleDefaults()?.scaleUpMemoryPct ?? 80 }}%
-                          </p>
-                        </div>
-                        <div>
-                          <label class="text-xs font-medium text-sub block mb-1.5">
-                            Scale-up CPU %
-                          </label>
-                          <input
-                            type="number"
-                            min="50"
-                            max="95"
-                            [value]="scaleUpCpuPct() ?? ''"
-                            (input)="setScaleUpCpuPct($any($event.target).value)"
-                            [placeholder]="(autoscaleDefaults()?.scaleUpCpuPct ?? 75) + ''"
-                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                            />
-                          <p class="text-xs text-sub mt-1">
-                            Default: {{ autoscaleDefaults()?.scaleUpCpuPct ?? 75 }}%
-                          </p>
-                        </div>
-                        <div>
-                          <label class="text-xs font-medium text-sub block mb-1.5">
-                            Cooldown (seconds)
-                          </label>
-                          <input
-                            type="number"
-                            min="60"
-                            max="3600"
-                            [value]="cooldownSeconds() ?? ''"
-                            (input)="setCooldownSeconds($any($event.target).value)"
-                            [placeholder]="(autoscaleDefaults()?.cooldownSeconds ?? 300) + ''"
-                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                            />
-                          <p class="text-xs text-sub mt-1">
-                            Default: {{ autoscaleDefaults()?.cooldownSeconds ?? 300 }}s
-                          </p>
-                        </div>
-                      </div>
+                <div class="w-32">
+                  <label for="clusterNodes" class="text-sm font-medium block mb-2">Nodes</label>
+                  <select
+                    id="clusterNodes"
+                    [value]="fixedNodes()"
+                    (change)="setFixedNodes(+$any($event.target).value)"
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                    @for (num of [1,2,3,5]; track num) {
+                      <option [value]="num">{{ num }}</option>
                     }
-                  </div>
-                } @else {
-                  <div class="pl-6">
-                    <div class="w-32">
-                      <label class="text-sm font-medium block mb-2">Fixed Nodes</label>
-                      <select
-                        [value]="fixedNodes()"
-                        (change)="setFixedNodes(+$any($event.target).value)"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                        @for (num of [1,2,3,5]; track num) {
-                          <option [value]="num">{{ num }}</option>
-                        }
-                      </select>
-                    </div>
-                  </div>
-    
-                  <!-- Single-node warning -->
-                  @if (fixedNodes() <= 1) {
-                    <div class="ml-6 rounded-lg border border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20 p-3 flex items-start gap-2">
-                      <ng-icon name="lucideInfo" class="h-4 w-4 text-yellow-700 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                      <p class="text-xs text-yellow-900 dark:text-yellow-200">
-                        You're creating a cluster without autoscaling and with a single
-                        worker. Under sudden load the cluster won't self-adjust — consider
-                        enabling autoscaling, or be ready to add workers manually when
-                        warnings appear.
-                      </p>
-                    </div>
-                  }
-                }
+                  </select>
+                </div>
+
+                <p class="text-xs text-muted-foreground max-w-prose">
+                  Counted across every node, master included. How far this cluster may grow
+                  later, and whether Flui may grow it on its own, are set in its Scaling
+                  section once it exists.
+                </p>
               </div>
             </div>
           </div>
@@ -594,16 +466,6 @@ interface FirewallRuleDto {
             }
 
             @if (!fluiBuildsNetwork()) {
-            @if (autoScalingEnabled() && !vnetRequired()) {
-              <div class="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20 p-3 flex items-start gap-2">
-                <ng-icon name="lucideInfo" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <p class="text-xs text-blue-900 dark:text-blue-200">
-                  Autoscaling is enabled — a VNet will be created automatically if you
-                  skip this step. Pick an existing VNet only if you need to share the
-                  network with other resources.
-                </p>
-              </div>
-            }
             <!-- VNet Selection -->
             <div>
               <app-vnet-selector
@@ -1256,27 +1118,12 @@ interface FirewallRuleDto {
     
               <!-- Scaling Configuration -->
               <div class="border border-border rounded-lg p-4">
-                <h4 class="font-medium mb-3">Scaling Configuration</h4>
+                <h4 class="font-medium mb-3">Nodes</h4>
                 <div class="space-y-3 text-sm">
                   <div class="flex items-center justify-between">
-                    <span class="text-muted-foreground">Auto-scaling:</span>
-                    <span class="font-medium">{{ autoScalingEnabled() ? 'Enabled' : 'Disabled' }}</span>
+                    <span class="text-muted-foreground">Nodes:</span>
+                    <span class="font-medium">{{ fixedNodes() }}</span>
                   </div>
-                  @if (autoScalingEnabled()) {
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Minimum nodes:</span>
-                      <span class="font-medium">{{ minNodes() }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Maximum nodes:</span>
-                      <span class="font-medium">{{ maxNodes() }}</span>
-                    </div>
-                  } @else {
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Fixed nodes:</span>
-                      <span class="font-medium">{{ fixedNodes() }}</span>
-                    </div>
-                  }
                 </div>
               </div>
     
@@ -1390,21 +1237,10 @@ interface FirewallRuleDto {
                   Cost Estimation
                 </h4>
                 <div class="space-y-3 text-sm">
-                  @if (autoScalingEnabled()) {
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Minimum cost ({{ minNodes() }} node{{ minNodes() > 1 ? 's' : '' }}):</span>
-                      <span class="font-medium text-green-700 dark:text-green-400">€{{ getEstimatedMonthlyCost() }}/month</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Maximum cost ({{ maxNodes() }} nodes):</span>
-                      <span class="font-medium text-green-700 dark:text-green-400">€{{ getMaxMonthlyCost() }}/month</span>
-                    </div>
-                  } @else {
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Monthly cost ({{ fixedNodes() }} node{{ fixedNodes() > 1 ? 's' : '' }}):</span>
-                      <span class="font-medium text-green-700 dark:text-green-400">€{{ getEstimatedMonthlyCost() }}/month</span>
-                    </div>
-                  }
+                  <div class="flex items-center justify-between">
+                    <span class="text-muted-foreground">Monthly cost ({{ fixedNodes() }} node{{ fixedNodes() > 1 ? 's' : '' }}):</span>
+                    <span class="font-medium text-green-700 dark:text-green-400">€{{ getEstimatedMonthlyCost() }}/month</span>
+                  </div>
                 </div>
                 <p class="text-xs text-green-600 dark:text-green-400 mt-3 pt-3 border-t border-green-200 dark:border-green-800">
                   * Estimates based on 24/7 usage. Actual costs may vary.
@@ -1466,17 +1302,11 @@ export class ClusterCreationWizardComponent implements OnInit {
   addSubnetError = signal<string | null>(null);
   addSubnetZone = '';
   addSubnetIpRange = '';
-
-  autoScalingEnabled = signal<boolean>(false);
   minNodes = signal<number>(1);
   maxNodes = signal<number>(3);
   fixedNodes = signal<number>(1);
 
   // Advanced autoscale thresholds (optional overrides — fall back to defaults server-side)
-  scaleUpMemoryPct = signal<number | null>(null);
-  scaleUpCpuPct = signal<number | null>(null);
-  cooldownSeconds = signal<number | null>(null);
-  advancedThresholdsOpen = signal<boolean>(false);
   autoscaleDefaults = signal<AutoscaleDefaults | null>(null);
 
   // Disk size (only for network storage types)
@@ -2034,9 +1864,6 @@ export class ClusterCreationWizardComponent implements OnInit {
   }
 
   // Scaling configuration
-  toggleAutoScaling(): void {
-    this.autoScalingEnabled.update(enabled => !enabled);
-  }
 
   setMinNodes(count: number): void {
     this.minNodes.set(count);
@@ -2048,36 +1875,6 @@ export class ClusterCreationWizardComponent implements OnInit {
 
   setFixedNodes(count: number): void {
     this.fixedNodes.set(count);
-  }
-
-  setScaleUpMemoryPct(value: string): void {
-    const trimmed = (value ?? '').trim();
-    if (!trimmed) {
-      this.scaleUpMemoryPct.set(null);
-      return;
-    }
-    const n = Number(trimmed);
-    this.scaleUpMemoryPct.set(Number.isFinite(n) ? n : null);
-  }
-
-  setScaleUpCpuPct(value: string): void {
-    const trimmed = (value ?? '').trim();
-    if (!trimmed) {
-      this.scaleUpCpuPct.set(null);
-      return;
-    }
-    const n = Number(trimmed);
-    this.scaleUpCpuPct.set(Number.isFinite(n) ? n : null);
-  }
-
-  setCooldownSeconds(value: string): void {
-    const trimmed = (value ?? '').trim();
-    if (!trimmed) {
-      this.cooldownSeconds.set(null);
-      return;
-    }
-    const n = Number(trimmed);
-    this.cooldownSeconds.set(Number.isFinite(n) ? n : null);
   }
 
   setDiskSizeGb(value: number): void {
@@ -2118,15 +1915,7 @@ export class ClusterCreationWizardComponent implements OnInit {
     const serverType = this.getSelectedServerType();
     if (!serverType) return '0.00';
 
-    const nodes = this.autoScalingEnabled() ? this.minNodes() : this.fixedNodes();
-    return this.pricingService.formatClusterMonthlyCost(serverType.pricePerHour, nodes);
-  }
-
-  getMaxMonthlyCost(): string {
-    const serverType = this.getSelectedServerType();
-    if (!serverType) return '0.00';
-
-    const nodes = this.autoScalingEnabled() ? this.maxNodes() : this.fixedNodes();
+    const nodes = this.fixedNodes();
     return this.pricingService.formatClusterMonthlyCost(serverType.pricePerHour, nodes);
   }
 
@@ -2351,12 +2140,8 @@ export class ClusterCreationWizardComponent implements OnInit {
       provider: this.selectedProvider() as ProviderType,
       region: this.selectedRegion(),
       nodeTypeId: serverType.id,
-      minNodes: this.autoScalingEnabled() ? this.minNodes() : this.fixedNodes(),
-      maxNodes: this.autoScalingEnabled() ? this.maxNodes() : this.fixedNodes(),
-      autoScalingEnabled: this.autoScalingEnabled(),
-      scaleUpMemoryPct: this.autoScalingEnabled() ? this.scaleUpMemoryPct() ?? undefined : undefined,
-      scaleUpCpuPct: this.autoScalingEnabled() ? this.scaleUpCpuPct() ?? undefined : undefined,
-      cooldownSeconds: this.autoScalingEnabled() ? this.cooldownSeconds() ?? undefined : undefined,
+      minNodes: this.fixedNodes(),
+      maxNodes: this.fixedNodes(),
       sshKeys: this.selectedSshKeyId() ? [this.selectedSshKeyId()!] : [],
       diskSizeGb: this.needsDiskConfig() ? this.diskSizeGb() : undefined,
       firewallRules: this.buildFirewallRules(),

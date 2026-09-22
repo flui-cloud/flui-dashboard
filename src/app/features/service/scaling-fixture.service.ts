@@ -4,6 +4,7 @@ import {
   AvailabilityOutlook,
   ScalingDecision,
   ScalingPreview,
+  WriteScalingGroup,
 } from '../model/scaling-group.models';
 import {
   ClusterScalingRow,
@@ -483,6 +484,46 @@ export class ScalingFixtureService extends ScalingApiService {
 
   override fleet(): Observable<FleetReading> {
     return of(FLEET);
+  }
+
+  /**
+   * The fixture keeps the written group in memory for the life of the page, so
+   * the form can be driven end to end without an API behind it.
+   */
+  override createGroup(clusterId: string, body: WriteScalingGroup): Observable<SectionGroup> {
+    return of(this.remember('g-written', clusterId, body));
+  }
+
+  override updateGroup(groupId: string, body: WriteScalingGroup): Observable<SectionGroup> {
+    const existing = GROUPS[groupId] ?? GROUPS['g-prod'];
+    return of(this.remember(groupId, existing.clusterId, body));
+  }
+
+  override deleteGroup(groupId: string): Observable<void> {
+    delete GROUPS[groupId];
+    return of(undefined);
+  }
+
+  private remember(groupId: string, clusterId: string, body: WriteScalingGroup): SectionGroup {
+    const base = GROUPS[groupId] ?? GROUPS['g-prod'];
+    const written: SectionGroup = {
+      ...base,
+      id: groupId,
+      clusterId,
+      name: body.name,
+      bounds: body.bounds,
+      regions: body.regions ?? base.regions,
+      shapes: body.shapes ?? base.shapes,
+      strategy: body.strategy ?? base.strategy,
+      settleSeconds: body.settleSeconds ?? base.settleSeconds,
+      limits: {
+        hourlyBillingOnly: body.limits?.hourlyBillingOnly ?? base.limits.hourlyBillingOnly,
+        maxMonthlyCost: body.limits?.maxMonthlyCost ?? base.limits.maxMonthlyCost,
+      },
+      provision: body.provision ?? base.provision,
+    };
+    GROUPS[groupId] = written;
+    return written;
   }
 }
 

@@ -165,7 +165,7 @@ const TEXT_CLASS: Record<Severity, string> = {
                     >{{ c.clusterName }}</a>
                     @if (autoscaleWarning(c.clusterId); as level) {
                       <a
-                        [routerLink]="['/cluster', c.clusterId, 'autoscaling']"
+                        [routerLink]="['/cluster', c.clusterId, 'scaling']"
                         [title]="autoscaleWarningTitle(level)"
                         class="text-[9px] font-semibold uppercase tracking-wider px-1 py-0.5 rounded flex-shrink-0 hover:opacity-80 transition-opacity"
                         [class]="level === 'DANGER_NEEDS_SCALE'
@@ -272,8 +272,8 @@ export class DashboardPulseComponent implements OnInit, OnDestroy {
 
   autoscaleWarningTitle(level: AutoscaleWarningLevel): string {
     return level === 'DANGER_NEEDS_SCALE'
-      ? 'Critical pressure — open Autoscaling tab'
-      : 'Sustained pressure — open Autoscaling tab';
+      ? 'Critical pressure — open Scaling'
+      : 'Sustained pressure — open Scaling';
   }
 
   refreshedAt = computed(() => {

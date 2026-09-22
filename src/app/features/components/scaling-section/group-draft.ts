@@ -126,9 +126,18 @@ export class GroupDraft {
   }
 }
 
+/**
+ * Bounds count every node, master included, and the master can never be
+ * removed — so one is the smallest a live cluster can be, and the API refuses
+ * anything outside this range on either of its doors.
+ */
+const MIN_FLEET_NODES = 1;
+const MAX_FLEET_NODES = 20;
+
 function whole(value: FieldValue): number | null {
   if (value === null || value === '') return null;
   const parsed = Math.round(Number(value));
-  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  if (!Number.isFinite(parsed)) return null;
+  if (parsed < MIN_FLEET_NODES || parsed > MAX_FLEET_NODES) return null;
   return parsed;
 }

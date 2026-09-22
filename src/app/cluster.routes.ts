@@ -75,11 +75,11 @@ export const clusterRoutes: Routes = [
           ),
       },
       {
+        // Autoscaling and Scaling steered the same node count from two places.
+        // The section that can actually act kept the job; this keeps old links alive.
         path: 'autoscaling',
-        loadComponent: () =>
-          import('./features/components/cluster/cluster-autoscaling-tab.component').then(
-            (m) => m.ClusterAutoscalingTabComponent
-          ),
+        redirectTo: 'scaling',
+        pathMatch: 'full',
       },
       {
         path: 'scaling',
