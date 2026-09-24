@@ -34,16 +34,10 @@ export class GroupChoicesService {
     if (this.regionsByProvider()[provider]) return;
     try {
       const regions = await this.wizard.loadServerTypesAllRegions(provider);
-      const machines = new Map<string, ServerTypeOption>();
-      for (const region of regions) {
-        for (const machine of this.wizard.getServerTypes(provider, region.id)) {
-          machines.set(machine.id, machine);
-        }
-      }
       this.regionsByProvider.update((all) => ({ ...all, [provider]: regions }));
       this.machinesByProvider.update((all) => ({
         ...all,
-        [provider]: [...machines.values()],
+        [provider]: this.wizard.getCatalogue(provider),
       }));
     } catch {
       // Left unset: every reader treats a missing catalogue as "no list", which
@@ -101,7 +95,7 @@ export class GroupChoicesService {
           a.pricePerHour - b.pricePerHour,
       )
       .map((machine) => ({
-        value: machine.id,
+        value: machine.name,
         label: machine.name,
         note: `${machine.vcpu} vCPU · ${machine.ram} GB · \u20ac${this.pricing.formatMonthlyPrice(machine.pricePerHour)}/mo`,
         unavailable: !offeredHere(machine),
@@ -117,7 +111,7 @@ export class GroupChoicesService {
     const machines = this.machinesByProvider()[provider];
     if (!machines?.length) return null;
     const eligible = shapes.length
-      ? machines.filter((machine) => shapes.includes(machine.id))
+      ? machines.filter((machine) => shapes.includes(machine.name))
       : machines;
     if (!eligible.length) return null;
     return Math.min(
@@ -134,7 +128,7 @@ export class GroupChoicesService {
       out[region.id] = `${region.flagEmoji} ${region.name}`;
     }
     for (const machine of this.machinesByProvider()[provider] ?? []) {
-      out[machine.id] =
+      out[machine.name] =
         `${machine.vcpu} vCPU · ${machine.ram} GB · \u20ac${this.pricing.formatMonthlyPrice(machine.pricePerHour)}/mo`;
     }
     return out;

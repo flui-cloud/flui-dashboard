@@ -82,6 +82,13 @@ export class ProviderWizardService {
 
   // Server Types (keyed by "provider:region")
   private readonly serverTypes = signal<Record<string, ServerTypeOption[]>>({});
+  /**
+   * Every size the provider sells, sold out or not, each with the regions it
+   * can be ordered in right now — possibly none. The per-region lists above
+   * keep only what can be ordered there, which suits creating a cluster and
+   * hides from anyone looking at a sold-out machine that it exists at all.
+   */
+  private readonly catalogues = signal<Record<string, ServerTypeOption[]>>({});
   private readonly isLoadingServerTypes = signal<boolean>(false);
   private readonly serverTypesError = signal<string | null>(null);
   private readonly allRegionsLoadedFor = new Set<string>();
@@ -346,6 +353,11 @@ export class ProviderWizardService {
     return this.serverTypes()[cacheKey] || [];
   }
 
+  /** Every size the provider sells, including those that cannot be ordered anywhere right now. */
+  getCatalogue(provider: string): ServerTypeOption[] {
+    return this.catalogues()[provider] ?? [];
+  }
+
   async loadServerTypesAllRegions(provider: string): Promise<ProviderRegion[]> {
     const regions = await this.loadRegions(provider);
 
@@ -391,6 +403,15 @@ export class ProviderWizardService {
       }
 
       this.serverTypes.update((current) => ({ ...current, ...updates }));
+      this.catalogues.update((current) => ({
+        ...current,
+        [provider]: this.mapNodeSizesToServerTypes(catalog, regions[0]?.id ?? '').map(
+          (serverType) => ({
+            ...serverType,
+            availableRegionIds: regionIdsByType[serverType.id] ?? [],
+          })
+        ),
+      }));
       this.serverTypesError.set(null);
       this.allRegionsLoadedFor.add(provider);
 

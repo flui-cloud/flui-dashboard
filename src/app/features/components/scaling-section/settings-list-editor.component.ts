@@ -142,7 +142,7 @@ export interface ListChoice {
               [attr.data-testid]="kind() + '-add-select'"
             >
               <option value="">
-                {{ available().length ? 'choose…' : 'every one is already listed' }}
+                {{ available().length ? 'choose…' : 'all listed' }}
               </option>
               @for (choice of all; track choice.value) {
                 <option
