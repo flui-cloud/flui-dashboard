@@ -4,7 +4,10 @@ import {
   computed,
   inject,
 } from '@angular/core';
-import { ScalingDecision } from '../../model/scaling-group.models';
+import {
+  DecisionOperation,
+  ScalingDecision,
+} from '../../model/scaling-group.models';
 import {
   FleetHistoryPoint,
   SectionGroup,
@@ -137,6 +140,21 @@ interface LogRow {
                           <span class="flex flex-col gap-0.5">
                             <span>{{ row.decision.did }}</span>
                             <span [class]="t.note">{{ row.decision.why }}</span>
+                            @if (row.decision.operation; as op) {
+                              <span
+                                class="inline-flex flex-wrap items-center gap-1.5 text-[12px]"
+                                [attr.data-testid]="'decision-operation-' + row.decision.id"
+                              >
+                                <span [class]="operationTone(op.state)">{{
+                                  operationLabel(op)
+                                }}</span>
+                                @if (operationDetail(op); as detail) {
+                                  <span class="text-muted-foreground"
+                                    >— {{ detail }}</span
+                                  >
+                                }
+                              </span>
+                            }
                           </span>
                         </td>
                       </tr>
@@ -261,6 +279,33 @@ export class ScalingHistoryTabComponent {
         outcomePill: this.outcomePill(decision.outcome),
       }));
   });
+
+  /** What became of the machine a decision ordered or gave back. */
+  protected operationLabel(op: DecisionOperation): string {
+    switch (op.state) {
+      case 'running':
+        return `In progress · ${op.progress}%`;
+      case 'pending':
+        return 'Queued';
+      case 'completed':
+        return 'Done';
+      case 'failed':
+        return 'Failed';
+      default:
+        return 'Cancelled';
+    }
+  }
+
+  protected operationDetail(op: DecisionOperation): string | null {
+    if (op.state === 'failed') return op.error;
+    return op.state === 'running' || op.state === 'pending' ? op.step : null;
+  }
+
+  protected operationTone(state: DecisionOperation['state']): string {
+    if (state === 'failed') return 'font-medium text-red-600 dark:text-red-400';
+    if (state === 'completed') return 'font-medium status-healthy';
+    return 'font-medium text-sky-600 dark:text-sky-400';
+  }
 
   private outcomePill(outcome: ScalingDecision['outcome']): string {
     switch (outcome) {

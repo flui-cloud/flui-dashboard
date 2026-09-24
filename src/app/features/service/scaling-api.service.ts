@@ -10,6 +10,7 @@ import {
   PlacementStrategy,
   ProvisionMode,
   ScalingBounds,
+  DecisionOperation,
   ScalingDecision,
   ScalingLimits,
   ScalingPreview,
@@ -149,6 +150,7 @@ interface WireDecision {
   shape: string | null;
   region: string | null;
   hourlyEur: number | null;
+  operation?: DecisionOperation | null;
 }
 
 interface WireOrderedShape {
@@ -441,6 +443,7 @@ function toDecision(wire: WireDecision): ScalingDecision {
     shape: wire.shape ?? undefined,
     region: wire.region ?? undefined,
     hourlyEur: wire.hourlyEur,
+    operation: wire.operation ?? null,
   };
 }
 

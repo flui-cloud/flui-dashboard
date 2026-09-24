@@ -292,6 +292,7 @@ const DECISIONS: Record<string, ScalingDecision[]> = {
       shape: 'cx42',
       region: 'fsn1',
       hourlyEur: 0.0148,
+      operation: null,
     },
     {
       id: 'd-2',
@@ -304,6 +305,7 @@ const DECISIONS: Record<string, ScalingDecision[]> = {
       shape: 'cx32',
       region: 'fsn1',
       hourlyEur: 0.0074,
+      operation: null,
     },
     {
       id: 'd-3',
@@ -316,6 +318,7 @@ const DECISIONS: Record<string, ScalingDecision[]> = {
       shape: 'cx32',
       region: 'fsn1',
       hourlyEur: 0.0074,
+      operation: null,
     },
   ],
   'g-batch': [
@@ -330,6 +333,7 @@ const DECISIONS: Record<string, ScalingDecision[]> = {
       shape: 'cx42',
       region: 'fsn1',
       hourlyEur: 0.0148,
+      operation: null,
     },
   ],
 };

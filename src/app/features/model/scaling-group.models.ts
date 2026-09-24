@@ -129,6 +129,17 @@ export interface ScalingDecision {
   shape?: string;
   region?: string;
   hourlyEur?: number | null;
+  /** The purchase or removal this decision started, as it stands now. */
+  operation: DecisionOperation | null;
+}
+
+export interface DecisionOperation {
+  id: string;
+  state: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  progress: number;
+  step: string | null;
+  error: string | null;
+  finishedAt: string | null;
 }
 
 export interface LadderRung {
