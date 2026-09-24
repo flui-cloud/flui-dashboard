@@ -133,7 +133,7 @@ export interface ListChoice {
 
       <span class="flex items-center gap-2">
         @if (choices(); as all) {
-          @if (available().length) {
+          @if (all.length) {
             <select
               [class]="field"
               [ngModel]="draft()"
@@ -141,9 +141,16 @@ export interface ListChoice {
               [attr.aria-label]="'Add a ' + kind()"
               [attr.data-testid]="kind() + '-add-select'"
             >
-              <option value="">choose…</option>
-              @for (choice of available(); track choice.value) {
-                <option [value]="choice.value">{{ optionText(choice) }}</option>
+              <option value="">
+                {{ available().length ? 'choose…' : 'every one is already listed' }}
+              </option>
+              @for (choice of all; track choice.value) {
+                <option
+                  [value]="choice.value"
+                  [disabled]="listed(choice.value)"
+                >
+                  {{ optionText(choice) }}
+                </option>
               }
             </select>
           } @else {
@@ -151,7 +158,7 @@ export interface ListChoice {
               class="text-[12px] text-muted-foreground"
               [attr.data-testid]="kind() + '-all-listed'"
             >
-              {{ all.length ? 'every one is already listed' : exhausted() }}
+              {{ exhausted() }}
             </span>
           }
         } @else {
@@ -217,15 +224,25 @@ export class SettingsListEditorComponent {
     return all.filter((choice) => !this.items().includes(choice.value));
   });
 
+  /**
+   * Kept in the menu and greyed out rather than hidden: a machine missing from
+   * the list reads as one that does not exist.
+   */
+  protected listed(value: string): boolean {
+    return this.items().includes(value);
+  }
+
   protected label(value: string): string {
     return this.labels()[value] ?? value;
   }
 
   protected optionText(choice: ListChoice): string {
-    const note = choice.unavailable
-      ? `${choice.note ? choice.note + ' · ' : ''}unavailable`
-      : choice.note;
-    return note ? `${choice.label} — ${note}` : choice.label;
+    const marks = [
+      choice.note,
+      choice.unavailable ? 'unavailable' : null,
+      this.listed(choice.value) ? 'already in the list' : null,
+    ].filter(Boolean);
+    return marks.length ? `${choice.label} — ${marks.join(' · ')}` : choice.label;
   }
 
   protected readonly field =
