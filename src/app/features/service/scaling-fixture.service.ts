@@ -535,6 +535,9 @@ export class ScalingFixtureService extends ScalingApiService {
         maxMonthlyCost: body.limits?.maxMonthlyCost ?? base.limits.maxMonthlyCost,
       },
       provision: body.provision ?? base.provision,
+      standingOrders: body.standingOrders
+        ? body.standingOrders.map((order) => ({ ...order, outlook: null, drainable: null }))
+        : base.standingOrders,
     };
     GROUPS[groupId] = written;
     return written;

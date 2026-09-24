@@ -4,7 +4,11 @@ import {
   computed,
   inject,
   input,
+  signal,
 } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { ScalingApiService } from '../../service/scaling-api.service';
+import { withoutOrder } from './standing-order-write';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import { ReplacePlan, StandingOrder } from '../../model/scaling-group.models';
 import { SectionGroup } from '../../model/scaling-section.models';
@@ -111,6 +115,17 @@ interface OrderRow {
                       @if (row.kindNote) {
                         <span [class]="t.note">{{ row.kindNote }}</span>
                       }
+                      @if (row.order.kind === 'expand') {
+                        <button
+                          type="button"
+                          class="w-fit text-[12px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+                          [disabled]="cancelling()"
+                          (click)="cancel(row.order)"
+                          [attr.data-testid]="'order-cancel-' + row.order.shape"
+                        >
+                          Cancel, and lower the target back
+                        </button>
+                      }
                     </span>
                   </th>
                   <td [class]="t.td">
@@ -197,6 +212,23 @@ interface OrderRow {
 })
 export class ScalingNowOrdersComponent {
   private readonly store = inject(ScalingGroupStore);
+  private readonly api = inject(ScalingApiService);
+
+  protected readonly cancelling = signal(false);
+
+  protected async cancel(order: StandingOrder): Promise<void> {
+    const index = this.group().standingOrders.indexOf(order);
+    if (index < 0) return;
+    this.cancelling.set(true);
+    try {
+      await firstValueFrom(
+        this.api.updateGroup(this.group().id, withoutOrder(this.group(), index)),
+      );
+      this.store.reload();
+    } finally {
+      this.cancelling.set(false);
+    }
+  }
 
   readonly group = input.required<SectionGroup>();
 

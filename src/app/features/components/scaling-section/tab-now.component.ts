@@ -9,6 +9,7 @@ import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingNowFleetComponent } from './now-fleet.component';
 import { ScalingNowLadderComponent } from './now-ladder.component';
 import { ScalingNowOrdersComponent } from './now-orders.component';
+import { ScalingNowAddOrderComponent } from './now-add-order.component';
 import { ScalingNowSummaryComponent } from './now-summary.component';
 import { ScalingGroupStore } from './scaling-group.store';
 
@@ -20,6 +21,7 @@ import { ScalingGroupStore } from './scaling-group.store';
     ScalingNowFleetComponent,
     ScalingNowLadderComponent,
     ScalingNowOrdersComponent,
+    ScalingNowAddOrderComponent,
     ScalingNowSummaryComponent,
   ],
   host: { class: 'block' },
@@ -41,6 +43,7 @@ import { ScalingGroupStore } from './scaling-group.store';
         <app-scaling-now-summary [group]="g" />
         <app-scaling-now-ladder [group]="g" />
         <app-scaling-now-orders [group]="g" />
+        <app-scaling-now-add-order [group]="g" />
         <app-scaling-now-fleet [group]="g" />
       </div>
     } @else {

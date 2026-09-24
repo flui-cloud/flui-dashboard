@@ -183,4 +183,14 @@ export interface WriteScalingGroup {
   settleSeconds?: number;
   limits?: { hourlyBillingOnly?: boolean; maxMonthlyCost?: number | null };
   provision?: ProvisionMode;
+  /** Replaced whole when present; left out, the stored orders are kept. */
+  standingOrders?: WriteStandingOrder[];
+}
+
+export interface WriteStandingOrder {
+  kind: StandingOrderKind;
+  shape: string;
+  region: string;
+  wanted: number;
+  replaces: string | null;
 }
