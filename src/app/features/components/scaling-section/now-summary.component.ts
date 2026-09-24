@@ -4,13 +4,18 @@ import {
   computed,
   inject,
   input,
+  signal,
 } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
+import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { ScalingApiService } from '../../service/scaling-api.service';
 import {
   lucideBell,
   lucideCircleAlert,
   lucideCircleCheck,
   lucidePause,
+  lucideRotateCcw,
 } from '@ng-icons/lucide';
 import {
   ClusterScalingRow,
@@ -33,13 +38,19 @@ interface StatCard {
 @Component({
   selector: 'app-scaling-now-summary',
   standalone: true,
-  imports: [NgIcon, SectionFailureComponent, SectionSkeletonComponent],
+  imports: [
+    NgIcon,
+    HlmButtonDirective,
+    SectionFailureComponent,
+    SectionSkeletonComponent,
+  ],
   providers: [
     provideIcons({
       lucideBell,
       lucideCircleAlert,
       lucideCircleCheck,
       lucidePause,
+      lucideRotateCcw,
     }),
   ],
   host: { class: 'block' },
@@ -102,7 +113,44 @@ interface StatCard {
           <span class="text-foreground">{{ state() }}</span>
         </p>
 
-        @if (alarm(); as open) {
+        @if (group().purchaseHeld; as hold) {
+          <div
+            class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-amber-500/40 bg-amber-500/[0.06] px-3 py-2 text-sm"
+            data-testid="purchase-held"
+          >
+            <ng-icon
+              name="lucideBell"
+              class="h-4 w-4 shrink-0 text-amber-500"
+            />
+            <div class="min-w-0 flex-1">
+              <p class="m-0 text-foreground">
+                A purchase failed {{ heldAge() }} ago — nothing more is bought
+                until you try again.
+              </p>
+              @if (hold.error) {
+                <p class="m-0 break-words text-[13px] text-muted-foreground">
+                  {{ hold.error }}
+                </p>
+              }
+              @if (retryError()) {
+                <p class="m-0 text-[13px] text-red-600 dark:text-red-400">
+                  {{ retryError() }}
+                </p>
+              }
+            </div>
+            <button
+              hlmBtn
+              size="sm"
+              variant="outline"
+              [disabled]="retrying()"
+              (click)="retry()"
+              data-testid="retry-purchase"
+            >
+              <ng-icon name="lucideRotateCcw" class="mr-1.5 h-3.5 w-3.5" />
+              {{ retrying() ? 'Asking…' : 'Try again' }}
+            </button>
+          </div>
+        } @else if (alarm(); as open) {
           <p
             class="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-amber-500/40 bg-amber-500/[0.06] px-3 py-2 text-sm"
             data-testid="open-alarm"
@@ -135,6 +183,7 @@ interface StatCard {
 })
 export class ScalingNowSummaryComponent {
   protected readonly store = inject(ScalingGroupStore);
+  private readonly api = inject(ScalingApiService);
 
   readonly group = input.required<SectionGroup>();
 
@@ -161,6 +210,32 @@ export class ScalingNowSummaryComponent {
   private readonly withheld = computed(
     () => this.group().capability.canProvision && !this.group().acts.acts,
   );
+
+  protected readonly retrying = signal(false);
+  protected readonly retryError = signal<string | null>(null);
+
+  protected readonly heldAge = computed(() => {
+    const hold = this.group().purchaseHeld;
+    return hold ? ago(hold.failedAt.toISOString(), Date.now()) : '';
+  });
+
+  /**
+   * Buys nothing by itself: the group may buy again from the next pass, inside
+   * the same ceilings, and the page shows what that pass decides.
+   */
+  protected async retry(): Promise<void> {
+    this.retrying.set(true);
+    this.retryError.set(null);
+    try {
+      await firstValueFrom(this.api.retryPurchase(this.group().id));
+      this.store.reload();
+    } catch (err: unknown) {
+      const e = err as { error?: { message?: string }; message?: string };
+      this.retryError.set(e?.error?.message ?? e?.message ?? 'Could not ask the group to try again.');
+    } finally {
+      this.retrying.set(false);
+    }
+  }
 
   protected readonly alarm = computed<{ asks: string; age: string } | null>(
     () => {

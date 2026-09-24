@@ -167,6 +167,7 @@ const GROUPS: Record<string, SectionGroup> = {
       says: 'This group buys through the provider API on its own, up to €60 a month and 6 nodes.',
     },
     requirement: null,
+    purchaseHeld: null,
     standingOrders: [
       {
         kind: 'replace',
@@ -223,6 +224,7 @@ const GROUPS: Record<string, SectionGroup> = {
       says: 'This group decides and does not act. Set it to buy automatically for anything it decides to reach a provider.',
     },
     requirement: null,
+    purchaseHeld: null,
     standingOrders: [],
   },
 };
@@ -499,6 +501,12 @@ export class ScalingFixtureService extends ScalingApiService {
   override updateGroup(groupId: string, body: WriteScalingGroup): Observable<SectionGroup> {
     const existing = GROUPS[groupId] ?? GROUPS['g-prod'];
     return of(this.remember(groupId, existing.clusterId, body));
+  }
+
+  override retryPurchase(groupId: string): Observable<SectionGroup> {
+    const existing = GROUPS[groupId] ?? GROUPS['g-prod'];
+    GROUPS[groupId] = { ...existing, purchaseHeld: null };
+    return of(GROUPS[groupId]);
   }
 
   override deleteGroup(groupId: string): Observable<void> {

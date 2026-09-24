@@ -90,6 +90,7 @@ interface WireGroup {
   standingOrders: WireStandingOrder[];
   requirement: NodeRequirement | null;
   acts: WireActuation;
+  purchaseHeld?: { failedAt: string; error: string | null } | null;
 }
 
 interface WireActuation {
@@ -287,6 +288,13 @@ export class ScalingApiService {
       .pipe(map(toGroup));
   }
 
+  /** Lets a group held back by a failed purchase buy again; buys nothing itself. */
+  retryPurchase(groupId: string): Observable<SectionGroup> {
+    return this.http
+      .post<WireGroup>(`${this.base}/scaling-groups/${groupId}/retry-purchase`, {})
+      .pipe(map(toGroup));
+  }
+
   deleteGroup(groupId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/scaling-groups/${groupId}`);
   }
@@ -371,6 +379,9 @@ function toGroup(wire: WireGroup): SectionGroup {
     standingOrders: wire.standingOrders.map(toStandingOrder),
     requirement: wire.requirement,
     acts: wire.acts,
+    purchaseHeld: wire.purchaseHeld
+      ? { failedAt: new Date(wire.purchaseHeld.failedAt), error: wire.purchaseHeld.error }
+      : null,
   };
 }
 

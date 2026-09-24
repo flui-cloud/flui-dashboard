@@ -58,6 +58,16 @@ export interface SectionGroup extends ScalingGroup {
   buyableRegions: string[] | null;
   acts: GroupActuation;
   requirement: NodeRequirement | null;
+  /**
+   * Set while a failed purchase holds the group back: it buys nothing more
+   * until a person asks it to try again, or a later purchase goes through.
+   */
+  purchaseHeld: PurchaseHold | null;
+}
+
+export interface PurchaseHold {
+  failedAt: Date;
+  error: string | null;
 }
 
 export type CatalogueReadingState =
