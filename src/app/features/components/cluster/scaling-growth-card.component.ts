@@ -1,4 +1,10 @@
-import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  input,
+  output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ClusterScalingRow } from '../../model/scaling-section.models';
 
 /**
@@ -13,9 +19,14 @@ import { ClusterScalingRow } from '../../model/scaling-section.models';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface p-5 flex flex-col gap-3" data-testid="growth-card">
-      <h3 class="m-0 text-sm font-semibold text-foreground">How this cluster grows</h3>
+      <h3 class="m-0 text-sm font-semibold text-foreground">
+        How this cluster grows
+      </h3>
 
-      <p class="m-0 max-w-[62ch] text-sm leading-relaxed text-foreground" data-testid="growth-sentence">
+      <p
+        class="m-0 max-w-[62ch] text-sm leading-relaxed text-foreground"
+        data-testid="growth-sentence"
+      >
         {{ sentence() }}
       </p>
 
@@ -61,9 +72,13 @@ import { ClusterScalingRow } from '../../model/scaling-section.models';
       </div>
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ScalingGrowthCardComponent {
   readonly row = input.required<ClusterScalingRow | null>();
@@ -89,11 +104,16 @@ export class ScalingGrowthCardComponent {
     }
 
     if (!row.acts) {
-      return 'Flui raises an alarm when a pod cannot be placed, and names the machine that would fit. It does not buy one.';
+      return 'Flui raises an alarm when an app has nowhere to run, and names the machine that would fit. It does not buy one.';
     }
 
-    const ceiling = row.bounds ? `up to ${row.bounds.max} nodes` : 'within its limits';
-    const cap = row.monthlyCap != null ? ` and €${row.monthlyCap.toFixed(0)} a month` : '';
-    return `Flui buys a node when a pod cannot be placed, ${ceiling}${cap}, without asking you. It gives one back when the work fits without it.`;
+    const ceiling = row.bounds
+      ? `up to ${row.bounds.max} nodes`
+      : 'within its limits';
+    const cap =
+      row.monthlyCap != null
+        ? ` and €${row.monthlyCap.toFixed(0)} a month`
+        : '';
+    return `Flui buys a node when an app has nowhere to run, ${ceiling}${cap}, without asking you. It gives one back when the work fits without it.`;
   });
 }

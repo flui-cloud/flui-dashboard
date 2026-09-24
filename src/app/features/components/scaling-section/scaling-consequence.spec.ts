@@ -30,7 +30,11 @@ describe('consequenceOf', () => {
 
   it('counts the room from the nodes the cluster already has, not from the floor', () => {
     const reading = consequenceOf(
-      draft({ bounds: { min: 1, desired: 3, max: 4 }, provision: 'automatic', limits: { maxMonthlyCost: 45 } }),
+      draft({
+        bounds: { min: 1, desired: 3, max: 4 },
+        provision: 'automatic',
+        limits: { maxMonthlyCost: 45 },
+      }),
       3,
     );
     expect(reading.sentence).toContain('1 more node');
@@ -38,7 +42,11 @@ describe('consequenceOf', () => {
 
   it('never claims room a cluster already past its ceiling does not have', () => {
     const reading = consequenceOf(
-      draft({ bounds: { min: 1, desired: 2, max: 2 }, provision: 'automatic', limits: { maxMonthlyCost: 20 } }),
+      draft({
+        bounds: { min: 1, desired: 2, max: 2 },
+        provision: 'automatic',
+        limits: { maxMonthlyCost: 20 },
+      }),
       5,
     );
     expect(reading.sentence).toContain('0 more nodes');
@@ -58,7 +66,11 @@ describe('consequenceOf', () => {
 
   it('repeats the wait and the floor, the two things a reader forgets', () => {
     const reading = consequenceOf(
-      draft({ provision: 'automatic', settleSeconds: 60, limits: { maxMonthlyCost: 45 } }),
+      draft({
+        provision: 'automatic',
+        settleSeconds: 60,
+        limits: { maxMonthlyCost: 45 },
+      }),
       1,
     );
     expect(reading.clauses[0]).toContain('60 seconds');

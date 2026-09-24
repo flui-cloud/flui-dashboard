@@ -88,7 +88,8 @@ export function xAt(stamp: number, domain: Domain, plot: PlotBox): number {
   const t = Math.min(Math.max(stamp, domain.start), domain.end);
   return (
     plot.left +
-    ((t - domain.start) / (domain.end - domain.start)) * (plot.right - plot.left)
+    ((t - domain.start) / (domain.end - domain.start)) *
+      (plot.right - plot.left)
   );
 }
 
@@ -111,9 +112,7 @@ export function stepPoints(
     }
     out.push(`${round1(x)},${round1(yAt(v, yMax, plot))}`);
   });
-  out.push(
-    `${round1(plot.right)},${round1(yAt(values.at(-1)!, yMax, plot))}`,
-  );
+  out.push(`${round1(plot.right)},${round1(yAt(values.at(-1)!, yMax, plot))}`);
   return out;
 }
 
@@ -177,9 +176,7 @@ export function whenLabel(iso: string): string {
   });
 }
 
-export function outcomeBadgeClass(
-  outcome: ScalingDecision['outcome'],
-): string {
+export function outcomeBadgeClass(outcome: ScalingDecision['outcome']): string {
   switch (outcome) {
     case 'added':
     case 'replaced':

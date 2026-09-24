@@ -54,7 +54,11 @@ function valueObservation(
   return { key, presentedAs: { value, ...(unit ? { unit } : {}) }, source };
 }
 
-function textObservation(key: string, value: string, source: ObservationSource): Observation {
+function textObservation(
+  key: string,
+  value: string,
+  source: ObservationSource,
+): Observation {
   return { key, presentedAs: { text: value }, source };
 }
 
@@ -65,14 +69,31 @@ function situationObservations(rows: ClusterScalingRow[]): Observation[] {
   const needing = rows.filter((r) => r.needsPerson !== null).length;
   const alarms = rows.filter((r) => r.openAlarm !== null).length;
   const priced = rows.filter((r) => r.monthlyEur !== null);
-  const tracked = priced.length ? priced.reduce((sum, r) => sum + (r.monthlyEur as number), 0) : null;
+  const tracked = priced.length
+    ? priced.reduce((sum, r) => sum + (r.monthlyEur as number), 0)
+    : null;
 
   return [
-    valueObservation('flui.scaling.needs_person_count', needing, undefined, 'derived'),
-    valueObservation('flui.scaling.open_alarms_count', alarms, undefined, 'derived'),
+    valueObservation(
+      'flui.scaling.needs_person_count',
+      needing,
+      undefined,
+      'derived',
+    ),
+    valueObservation(
+      'flui.scaling.open_alarms_count',
+      alarms,
+      undefined,
+      'derived',
+    ),
     tracked === null
       ? textObservation('flui.scaling.billed_monthly', 'no bill', 'derived')
-      : valueObservation('flui.scaling.billed_monthly', Math.round(tracked * 100) / 100, 'EUR', 'derived'),
+      : valueObservation(
+          'flui.scaling.billed_monthly',
+          Math.round(tracked * 100) / 100,
+          'EUR',
+          'derived',
+        ),
   ];
 }
 
@@ -81,18 +102,38 @@ function rowObservations(row: ClusterScalingRow): Observation[] {
   const observations: Observation[] = [
     textObservation('flui.scaling.mode', mode.label, 'ui'),
     valueObservation('flui.scaling.nodes', row.nodes, undefined, 'api'),
-    valueObservation('flui.scaling.has_group', row.groupId !== null, undefined, 'api'),
+    valueObservation(
+      'flui.scaling.has_group',
+      row.groupId !== null,
+      undefined,
+      'api',
+    ),
   ];
   if (row.bounds) {
     observations.push(
-      textObservation('flui.scaling.bounds', `${row.bounds.min}·${row.bounds.desired}·${row.bounds.max}`, 'derived'),
+      textObservation(
+        'flui.scaling.bounds',
+        `${row.bounds.min}·${row.bounds.desired}·${row.bounds.max}`,
+        'derived',
+      ),
     );
   }
   if (row.monthlyEur !== null) {
-    observations.push(valueObservation('flui.scaling.monthly_eur', row.monthlyEur, 'EUR', 'api'));
+    observations.push(
+      valueObservation(
+        'flui.scaling.monthly_eur',
+        row.monthlyEur,
+        'EUR',
+        'api',
+      ),
+    );
   } else {
     observations.push(
-      textObservation('flui.scaling.monthly_eur', row.capability.billing === 'none' ? 'no bill' : 'not priced', 'derived'),
+      textObservation(
+        'flui.scaling.monthly_eur',
+        row.capability.billing === 'none' ? 'no bill' : 'not priced',
+        'derived',
+      ),
     );
   }
   if (row.openAlarm) {
@@ -107,7 +148,9 @@ function rowObservations(row: ClusterScalingRow): Observation[] {
   // free text (backend-authored prose per row) — same redaction discipline as
   // application-surface.ts excluding app.reconciliationError.
   if (row.needsPerson !== null) {
-    observations.push(valueObservation('flui.scaling.needs_person', true, undefined, 'api'));
+    observations.push(
+      valueObservation('flui.scaling.needs_person', true, undefined, 'api'),
+    );
   }
   return observations;
 }
@@ -117,7 +160,13 @@ function rowScope(row: ClusterScalingRow): SemanticScopeSnapshot {
     id: `${LIST_ID}:${row.clusterId}`,
     parentId: LIST_ID,
     kind: 'region',
-    entities: [{ ref: clusterEntityRef(row.clusterId), label: row.clusterName, role: 'related' }],
+    entities: [
+      {
+        ref: clusterEntityRef(row.clusterId),
+        label: row.clusterName,
+        role: 'related',
+      },
+    ],
     observations: rowObservations(row),
   };
 }
@@ -175,7 +224,10 @@ export function buildScalingSurface(
   const content = presentedContent(input);
   return {
     schemaVersion: '0.2',
-    app: { id: SURFACE_APP_ID, ...(context.appVersion ? { version: context.appVersion } : {}) },
+    app: {
+      id: SURFACE_APP_ID,
+      ...(context.appVersion ? { version: context.appVersion } : {}),
+    },
     surface: {
       id: 'scaling-overview',
       route: 'scaling',

@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideClock } from '@ng-icons/lucide';
@@ -53,13 +58,19 @@ interface MarketRow {
   template: `
     @if (group(); as g) {
       <section class="space-y-3" data-testid="market-tab">
-        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <div
+          class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
+        >
           <h2 class="text-label m-0">Catalogue</h2>
-          <p class="m-0 text-[12px] text-muted-foreground" data-testid="market-provider">
+          <p
+            class="m-0 text-[12px] text-muted-foreground"
+            data-testid="market-provider"
+          >
             Read from
-            <span class="font-mono text-foreground">{{ g.capability.provider }}</span
-            >, which owns it — not from {{ g.clusterName }}. Another provider's
-            catalogue can disagree with this one.
+            <span class="font-mono text-foreground">{{
+              g.capability.provider
+            }}</span
+            >.
           </p>
         </div>
 
@@ -69,10 +80,9 @@ interface MarketRow {
               There is no market to read.
             </p>
             <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
-              {{ g.clusterName }} runs your own machines. {{ g.capability.provider }}
-              publishes no shapes and no prices, and it never will, so there is
-              nothing here to be up or down. What a node has to hold is on the
-              group tab instead.
+              {{ g.clusterName }} runs your own machines, so there are no prices
+              and no availability to read. What a machine has to hold is on the
+              group tab.
             </p>
             <a
               [routerLink]="['/scaling', g.id, 'group']"
@@ -90,14 +100,21 @@ interface MarketRow {
             testid="market"
           />
         } @else if (failed()) {
-          <app-section-failure [message]="failed() ?? ''" testid="market" (retry)="store.reload()" />
+          <app-section-failure
+            [message]="failed() ?? ''"
+            testid="market"
+            (retry)="store.reload()"
+          />
         } @else {
-          <p class="m-0 max-w-prose text-[13px] leading-relaxed text-muted-foreground"
-             data-testid="informs-not-decides">
-            The catalogue informs; it never decides. {{ g.capability.provider }}
-            accepts or refuses at the moment of purchase, with your credentials —
-            a shape listed as up here can still be refused.
-          </p>
+          <app-explain
+            [floating]="true"
+            label="The catalogue informs; it never decides."
+            labelClass="text-[13px] text-muted-foreground"
+            testid="informs-not-decides"
+          >
+            A machine listed as up can still be refused when Flui tries to buy
+            it.
+          </app-explain>
 
           @if (unread(); as catalogue) {
             <p
@@ -106,20 +123,6 @@ interface MarketRow {
               data-testid="market-reading"
             >
               {{ catalogue.says }}
-            </p>
-          }
-
-          @if (refusesEverything()) {
-            <p
-              class="m-0 max-w-prose border-l-2 border-l-destructive py-1 pl-3 text-[13px] leading-relaxed text-destructive"
-              data-testid="market-refused-banner"
-            >
-              Every shape below is excluded before availability is even consulted:
-              this group accepts hourly billing only and
-              {{ g.capability.provider }} bills by the month.
-              <a [routerLink]="['/scaling', g.id, 'group']" class="underline">
-                Turn that limit off on the group tab.
-              </a>
             </p>
           }
 
@@ -132,19 +135,18 @@ interface MarketRow {
                 </caption>
                 <thead>
                   <tr [class]="t.headRow">
-                    <th scope="col" [class]="t.th">Shape</th>
+                    <th scope="col" [class]="t.th">Machine</th>
                     <th scope="col" [class]="t.th">State</th>
                     <th scope="col" [class]="t.th">Up in</th>
                     <th scope="col" [class]="t.th">Down in</th>
                     <th scope="col" [class]="t.thNum">
                       <app-explain
+                        [floating]="true"
                         label="Read"
                         labelClass="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
                         testid="read-why"
                       >
-                        How old this reading is. It is never omitted and never
-                        rounded to "now": a shape read ten minutes ago may have
-                        sold out since, and the purchase is what finds out.
+                        A machine read ten minutes ago may have sold out since.
                       </app-explain>
                     </th>
                     <th scope="col" [class]="t.th">In this group</th>
@@ -174,9 +176,13 @@ interface MarketRow {
                             @for (region of row.up; track region) {
                               <span
                                 class="status-healthy inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px]"
-                                [attr.data-testid]="'up-' + row.shape + '-' + region"
+                                [attr.data-testid]="
+                                  'up-' + row.shape + '-' + region
+                                "
                               >
-                                <span class="dot-healthy h-1.5 w-1.5 rounded-full"></span>
+                                <span
+                                  class="dot-healthy h-1.5 w-1.5 rounded-full"
+                                ></span>
                                 {{ region }}
                               </span>
                             }
@@ -191,9 +197,13 @@ interface MarketRow {
                             @for (region of row.down; track region) {
                               <span
                                 class="status-error inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px]"
-                                [attr.data-testid]="'down-' + row.shape + '-' + region"
+                                [attr.data-testid]="
+                                  'down-' + row.shape + '-' + region
+                                "
                               >
-                                <span class="dot-error h-1.5 w-1.5 rounded-full"></span>
+                                <span
+                                  class="dot-error h-1.5 w-1.5 rounded-full"
+                                ></span>
                                 {{ region }}
                               </span>
                             }
@@ -229,21 +239,31 @@ interface MarketRow {
                               </span>
                             }
                             @case ('refused-by-limit') {
-                              <span class="text-destructive">refused by limit</span>
+                              <span class="text-destructive"
+                                >refused by limit</span
+                              >
                             }
                             @default {
-                              <span class="text-muted-foreground">not on the list</span>
+                              <span class="text-muted-foreground"
+                                >not on the list</span
+                              >
                             }
                           }
                           @if (row.awaited) {
-                            <span [class]="t.note">a standing order waits on it</span>
+                            <span [class]="t.note"
+                              >a standing order waits on it</span
+                            >
                           }
                         </span>
                       </td>
                     </tr>
                   } @empty {
                     <tr [class]="t.row">
-                      <td [class]="t.tdMuted" colspan="6" data-testid="market-empty">
+                      <td
+                        [class]="t.tdMuted"
+                        colspan="6"
+                        data-testid="market-empty"
+                      >
                         {{ emptyLine() }}
                       </td>
                     </tr>
@@ -256,13 +276,21 @@ interface MarketRow {
       </section>
     } @else {
       <section class="card-surface p-6" data-testid="market-tab-unknown">
-        <h2 class="m-0 text-base font-medium text-foreground">No such scaling group</h2>
+        <h2 class="m-0 text-base font-medium text-foreground">
+          No such scaling group
+        </h2>
         <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
           Nothing is configured under
-          <span class="font-mono text-foreground">{{ groupId() ?? 'no id' }}</span
+          <span class="font-mono text-foreground">{{
+            groupId() ?? 'no id'
+          }}</span
           >, so there is no provider whose catalogue to read.
         </p>
-        <a routerLink="/scaling" class="card-link" data-testid="back-to-scaling">
+        <a
+          routerLink="/scaling"
+          class="card-link"
+          data-testid="back-to-scaling"
+        >
           Back to every cluster
         </a>
       </section>
@@ -285,7 +313,9 @@ export class ScalingMarketTabComponent {
     return this.drafts.draft(id)?.group() ?? this.store.group().data;
   });
 
-  protected readonly reading = computed(() => this.store.catalogue().data ?? null);
+  protected readonly reading = computed(
+    () => this.store.catalogue().data ?? null,
+  );
 
   protected readonly unread = computed(() => {
     const catalogue = this.reading();
@@ -294,7 +324,9 @@ export class ScalingMarketTabComponent {
 
   protected readonly refusesEverything = computed(() => {
     const g = this.group();
-    return g ? refusesWholeCatalogue(g.capability, g.limits.hourlyBillingOnly) : false;
+    return g
+      ? refusesWholeCatalogue(g.capability, g.limits.hourlyBillingOnly)
+      : false;
   });
 
   protected readonly rows = computed<MarketRow[]>(() => {
@@ -320,7 +352,9 @@ export class ScalingMarketTabComponent {
       return {
         shape,
         state,
-        stateLabel: held ? `${STATE_LABEL[state]} · ${held}` : STATE_LABEL[state],
+        stateLabel: held
+          ? `${STATE_LABEL[state]} · ${held}`
+          : STATE_LABEL[state],
         up: reading?.upIn ?? [],
         down: reading?.downIn ?? [],
         age: readingAge(age),
@@ -332,11 +366,15 @@ export class ScalingMarketTabComponent {
     });
   });
 
+  /**
+   * The banner above already carries the reading's own sentence, so an unread
+   * catalogue says here only that the rows are missing for that reason.
+   */
   protected readonly emptyLine = computed(() => {
     const catalogue = this.reading();
     if (!catalogue) return 'Nothing has been read yet.';
-    if (catalogue.reading !== 'read') return catalogue.says;
-    return `${catalogue.provider}'s catalogue was read and names no shape this group could buy. That is an answer about the group's list, not about the market.`;
+    if (catalogue.reading !== 'read') return 'Nothing to list.';
+    return `Read, and it names no machine this group may buy — an answer about the group's list, not about the market.`;
   });
 
   protected pill(state: CatalogueState): string {

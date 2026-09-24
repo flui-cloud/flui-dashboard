@@ -1,7 +1,21 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBell, lucideCircleAlert, lucideCircleCheck, lucidePause } from '@ng-icons/lucide';
-import { ClusterScalingRow, SectionGroup } from '../../model/scaling-section.models';
+import {
+  lucideBell,
+  lucideCircleAlert,
+  lucideCircleCheck,
+  lucidePause,
+} from '@ng-icons/lucide';
+import {
+  ClusterScalingRow,
+  SectionGroup,
+} from '../../model/scaling-section.models';
 import { ScalingGroupStore } from './scaling-group.store';
 import { ago, eurMonth } from './now-format';
 import {
@@ -21,7 +35,12 @@ interface StatCard {
   standalone: true,
   imports: [NgIcon, SectionFailureComponent, SectionSkeletonComponent],
   providers: [
-    provideIcons({ lucideBell, lucideCircleAlert, lucideCircleCheck, lucidePause }),
+    provideIcons({
+      lucideBell,
+      lucideCircleAlert,
+      lucideCircleCheck,
+      lucidePause,
+    }),
   ],
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,10 +53,17 @@ interface StatCard {
         testid="strip"
       />
     } @else if (failed()) {
-      <app-section-failure [message]="failed() ?? ''" testid="strip" (retry)="store.reload()" />
+      <app-section-failure
+        [message]="failed() ?? ''"
+        testid="strip"
+        (retry)="store.reload()"
+      />
     } @else {
       <div class="space-y-3">
-        <dl class="m-0 grid grid-cols-2 gap-3 xl:grid-cols-4" data-testid="strip">
+        <dl
+          class="m-0 grid grid-cols-2 gap-3 xl:grid-cols-4"
+          data-testid="strip"
+        >
           @for (card of cards(); track card.id) {
             <div
               class="rounded-lg border border-border bg-card px-4 py-3"
@@ -85,7 +111,9 @@ interface StatCard {
               name="lucideBell"
               class="h-4 w-4 shrink-0 translate-y-0.5 text-amber-500"
             />
-            <span class="text-foreground">Open {{ open.age }} — {{ open.asks }}</span>
+            <span class="text-foreground"
+              >Open {{ open.age }} — {{ open.asks }}</span
+            >
           </p>
         }
 
@@ -126,16 +154,22 @@ export class ScalingNowSummaryComponent {
     () => this.preview()?.opportunityHeldBecause ?? null,
   );
 
-  private readonly manual = computed(() => !this.group().capability.canProvision);
+  private readonly manual = computed(
+    () => !this.group().capability.canProvision,
+  );
 
   private readonly withheld = computed(
     () => this.group().capability.canProvision && !this.group().acts.acts,
   );
 
-  protected readonly alarm = computed<{ asks: string; age: string } | null>(() => {
-    const open = this.row()?.openAlarm ?? null;
-    return open ? { asks: open.asks, age: ago(open.since, Date.now()) } : null;
-  });
+  protected readonly alarm = computed<{ asks: string; age: string } | null>(
+    () => {
+      const open = this.row()?.openAlarm ?? null;
+      return open
+        ? { asks: open.asks, age: ago(open.since, Date.now()) }
+        : null;
+    },
+  );
 
   protected readonly cards = computed<StatCard[]>(() => {
     const row = this.row();
@@ -195,7 +229,9 @@ export class ScalingNowSummaryComponent {
 
     const unpriced = row.unpricedNodes;
     const nodeWord = unpriced === 1 ? 'node carries' : 'nodes carry';
-    const floor = unpriced ? `at least — ${unpriced} ${nodeWord} no price · ` : '';
+    const floor = unpriced
+      ? `at least — ${unpriced} ${nodeWord} no price · `
+      : '';
 
     return {
       id: 'spend',
@@ -207,18 +243,18 @@ export class ScalingNowSummaryComponent {
 
   private pendingCard(): StatCard {
     const group = this.group();
-    const pod = this.pending();
+    const stuck = this.pending();
     const row = this.row();
-    const unasked = row !== null && row.pendingPods === null && !pod;
-    const alreadyPending = pod ? 1 : 0;
+    const unasked = row !== null && row.pendingPods === null && !stuck;
+    const alreadyPending = stuck ? 1 : 0;
     const counted = row ? Math.max(row.pendingPods ?? 0, alreadyPending) : null;
-    const waiting = pod
-      ? `${pod.app} · ${pod.cpu} · ${pod.memory}, past the ${group.settleSeconds}s settle window`
-      : `${group.settleSeconds}s settle window`;
+    const waiting = stuck
+      ? `${stuck.app} · ${stuck.cpu} · ${stuck.memory}, waited more than ${group.settleSeconds}s`
+      : `after ${group.settleSeconds}s of waiting`;
 
     return {
       id: 'pending',
-      label: 'Pods pending',
+      label: 'Nowhere to run',
       value: counted === null || unasked ? '—' : `${counted}`,
       caption: unasked ? 'the cluster could not be asked' : waiting,
     };
@@ -226,7 +262,9 @@ export class ScalingNowSummaryComponent {
 
   private ordersCard(): StatCard {
     const orders = this.group().standingOrders;
-    const blocked = orders.filter((o) => o.drainable !== null && !o.drainable.ok).length;
+    const blocked = orders.filter(
+      (o) => o.drainable !== null && !o.drainable.ok,
+    ).length;
     const blockedCaption = blocked ? `${blocked} blocked` : 'none blocked';
 
     return {
@@ -239,7 +277,7 @@ export class ScalingNowSummaryComponent {
 
   protected readonly state = computed(() => {
     const group = this.group();
-    const pod = this.pending();
+    const stuck = this.pending();
     const chosen = this.preview()?.chosen ?? null;
     const fleet = this.row()?.nodes ?? null;
 
@@ -248,24 +286,24 @@ export class ScalingNowSummaryComponent {
         ? ` The fleet is also ${fleet} where the floor is ${group.bounds.min}, and the floor is held now rather than approached.`
         : '';
 
-    if (!pod) {
+    if (!stuck) {
       if (fleet !== null && fleet < group.bounds.min) {
-        return `Nothing is pending, but the fleet is ${fleet} where the floor is ${group.bounds.min}. The floor is held immediately, so this is already an alarm.`;
+        return `Everything is running, but the fleet is ${fleet} where the floor is ${group.bounds.min}. The floor is held immediately, so this is already an alarm.`;
       }
-      return 'Nothing is pending. Urgency is idle and the ladder does not run.';
+      return 'Everything is running. Nothing for Flui to do.';
     }
 
-    const stuck = `${pod.app} is past the settle window`;
+    const since = `${stuck.app} has nowhere to run`;
 
     if (!chosen) {
-      return `${stuck} — no rung wins, so it raises an alarm and buys nothing.${under}`;
+      return `${since} — no machine fits, so it raises an alarm and buys nothing.${under}`;
     }
     if (this.manual()) {
-      return `${stuck} — it would name ${chosen.shape} in ${chosen.region} and raise an alarm. Nothing here can buy it.${under}`;
+      return `${since} — it would name ${chosen.shape} in ${chosen.region} and raise an alarm. Nothing here can buy it.${under}`;
     }
     if (this.withheld()) {
-      return `${stuck} — the ladder picks ${chosen.shape} in ${chosen.region} on rung ${chosen.step}, and stops there: this group is set to decide and not to act.${under}`;
+      return `${since} — a ${chosen.shape} in ${chosen.region} would fit, and this group is set to tell you rather than buy it.${under}`;
     }
-    return `${stuck} — urgency would buy ${chosen.shape} in ${chosen.region}, on rung ${chosen.step}.${under}`;
+    return `${since} — Flui would buy a ${chosen.shape} in ${chosen.region}.${under}`;
   });
 }

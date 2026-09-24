@@ -1,4 +1,9 @@
-import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  input,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ScalingDecision } from '../../model/scaling-group.models';
 
 type Tone = 'acted' | 'alerted' | 'quiet';
@@ -25,9 +30,14 @@ interface DecisionRow {
   template: `
     <div class="card-surface" data-testid="decisions">
       <div class="flex items-baseline justify-between gap-4 px-5 pt-4 pb-3">
-        <h3 class="m-0 text-sm font-semibold text-foreground">What Flui decided</h3>
+        <h3 class="m-0 text-sm font-semibold text-foreground">
+          What Flui decided
+        </h3>
         @if (groupId(); as id) {
-          <a [href]="'/scaling/' + id + '/history'" class="text-xs font-semibold text-primary hover:underline">
+          <a
+            [href]="'/scaling/' + id + '/history'"
+            class="text-xs font-semibold text-primary hover:underline"
+          >
             Full history →
           </a>
         }
@@ -35,29 +45,49 @@ interface DecisionRow {
 
       @if (rows().length === 0) {
         <p class="m-0 px-5 pb-5 text-sm text-sub">
-          Nothing decided yet. Flui writes a line here every time it looks at this cluster.
+          Nothing decided yet. Flui writes a line here every time it looks at
+          this cluster.
         </p>
       } @else {
         <div class="overflow-x-auto">
           <table class="w-full min-w-[720px] text-left">
             <thead>
-              <tr class="text-[10px] font-semibold uppercase tracking-wider text-sub">
-                <th scope="col" class="px-5 pb-2 font-semibold w-[96px]">When</th>
-                <th scope="col" class="px-3 pb-2 font-semibold">What Flui saw</th>
-                <th scope="col" class="px-5 pb-2 font-semibold w-[280px]">What happened</th>
+              <tr
+                class="text-[10px] font-semibold uppercase tracking-wider text-sub"
+              >
+                <th scope="col" class="px-5 pb-2 font-semibold w-[96px]">
+                  When
+                </th>
+                <th scope="col" class="px-3 pb-2 font-semibold">
+                  What Flui saw
+                </th>
+                <th scope="col" class="px-5 pb-2 font-semibold w-[280px]">
+                  What happened
+                </th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track row.id) {
                 <tr class="border-t border-border align-middle">
-                  <td class="px-5 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{{ row.when }}</td>
-                  <td class="px-3 py-3 text-[13px] text-foreground">{{ row.saw }}</td>
+                  <td
+                    class="px-5 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap"
+                  >
+                    {{ row.when }}
+                  </td>
+                  <td class="px-3 py-3 text-[13px] text-foreground">
+                    {{ row.saw }}
+                  </td>
                   <td class="px-5 py-3">
                     <div class="flex items-center gap-2">
-                      <span class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold" [class]="badge(row.tone)">
+                      <span
+                        class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                        [class]="badge(row.tone)"
+                      >
                         {{ row.outcome }}
                       </span>
-                      <span class="text-xs text-muted-foreground">{{ row.did }}</span>
+                      <span class="text-xs text-muted-foreground">{{
+                        row.did
+                      }}</span>
                     </div>
                   </td>
                 </tr>
@@ -68,9 +98,13 @@ interface DecisionRow {
       }
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ScalingDecisionsTableComponent {
   readonly decisions = input<ScalingDecision[]>([]);
@@ -86,7 +120,7 @@ export class ScalingDecisionsTableComponent {
         did: d.did,
         outcome: d.outcome,
         tone: this.toneOf(d.outcome),
-      }))
+      })),
   );
 
   badge(tone: Tone): string {
@@ -101,7 +135,8 @@ export class ScalingDecisionsTableComponent {
   }
 
   private toneOf(outcome: ScalingDecision['outcome']): Tone {
-    if (outcome === 'added' || outcome === 'replaced' || outcome === 'removed') return 'acted';
+    if (outcome === 'added' || outcome === 'replaced' || outcome === 'removed')
+      return 'acted';
     return outcome === 'alerted' ? 'alerted' : 'quiet';
   }
 

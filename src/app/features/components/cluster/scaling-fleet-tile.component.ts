@@ -1,4 +1,11 @@
-import { Component, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 import { getClusterInfo, getClusterNodeId } from '../../model/instance.models';
@@ -16,8 +23,13 @@ import { RemoveWorkerDialogComponent } from './remove-worker-dialog.component';
   imports: [AddWorkerDialogComponent, RemoveWorkerDialogComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="card-surface p-4 flex flex-col gap-2 h-full" data-testid="tile-fleet">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-sub">Nodes</div>
+    <div
+      class="card-surface p-4 flex flex-col gap-2 h-full"
+      data-testid="tile-fleet"
+    >
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-sub">
+        Nodes
+      </div>
 
       <div class="flex items-center gap-2">
         <button
@@ -31,7 +43,10 @@ import { RemoveWorkerDialogComponent } from './remove-worker-dialog.component';
           <span aria-hidden="true" class="text-base leading-none">&minus;</span>
         </button>
 
-        <span class="text-2xl font-semibold tracking-tight text-foreground min-w-7 text-center" data-testid="tile-value-fleet">
+        <span
+          class="text-2xl font-semibold tracking-tight text-foreground min-w-7 text-center"
+          data-testid="tile-value-fleet"
+        >
           {{ nodes() }}
         </span>
 
@@ -47,7 +62,9 @@ import { RemoveWorkerDialogComponent } from './remove-worker-dialog.component';
         </button>
       </div>
 
-      <p class="m-0 mt-auto text-[11px] leading-relaxed text-sub">{{ note() }}</p>
+      <p class="m-0 mt-auto text-[11px] leading-relaxed text-sub">
+        {{ note() }}
+      </p>
     </div>
 
     @if (showAdd() && clusterId(); as cid) {
@@ -70,9 +87,13 @@ import { RemoveWorkerDialogComponent } from './remove-worker-dialog.component';
       }
     }
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ScalingFleetTileComponent {
   private readonly clusterService = inject(ClusterService);
@@ -84,12 +105,20 @@ export class ScalingFleetTileComponent {
   readonly showAdd = signal(false);
   readonly showRemove = signal(false);
 
-  readonly clusterId = computed(() => this.clusterService.cluster()?.id ?? null);
-  readonly nodes = computed(() => this.autoscale.status()?.currentNodes ?? this.clusterService.nodes().length);
+  readonly clusterId = computed(
+    () => this.clusterService.cluster()?.id ?? null,
+  );
+  readonly nodes = computed(
+    () =>
+      this.autoscale.status()?.currentNodes ??
+      this.clusterService.nodes().length,
+  );
   readonly ceiling = computed(() => this.autoscale.status()?.maxNodes ?? null);
 
   private readonly workers = computed(() =>
-    this.clusterService.nodes().filter((n) => getClusterInfo(n)?.nodeType !== 'master')
+    this.clusterService
+      .nodes()
+      .filter((n) => getClusterInfo(n)?.nodeType !== 'master'),
   );
 
   /** The last worker that is neither going away nor broken. */
@@ -125,13 +154,17 @@ export class ScalingFleetTileComponent {
   });
 
   readonly addTooltip = computed(() =>
-    this.canAdd() ? 'Add a worker to this cluster' : `The ceiling of ${this.ceiling()} nodes is reached — raise it first`
+    this.canAdd()
+      ? 'Add a worker to this cluster'
+      : `The ceiling of ${this.ceiling()} nodes is reached — raise it first`,
   );
 
   readonly removeTooltip = computed(() => {
-    if (this.workers().length === 0) return 'This cluster has no worker to remove';
+    if (this.workers().length === 0)
+      return 'This cluster has no worker to remove';
     if (!this.candidate()) return 'Every worker is busy';
-    if (!this.canRemove()) return `Removing one would go below the floor of ${this.autoscale.status()?.minNodes} nodes`;
+    if (!this.canRemove())
+      return `Removing one would go below the floor of ${this.autoscale.status()?.minNodes} nodes`;
     return `Remove ${this.candidateName()}`;
   });
 

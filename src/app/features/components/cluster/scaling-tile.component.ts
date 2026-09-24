@@ -11,13 +11,22 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
   imports: [],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="card-surface p-4 flex flex-col gap-2 h-full" [attr.data-testid]="'tile-' + testid()">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-sub">{{ label() }}</div>
+    <div
+      class="card-surface p-4 flex flex-col gap-2 h-full"
+      [attr.data-testid]="'tile-' + testid()"
+    >
+      <div class="text-[10px] font-semibold uppercase tracking-wider text-sub">
+        {{ label() }}
+      </div>
 
       <div class="flex items-baseline gap-1.5">
         <span
           class="text-2xl font-semibold tracking-tight"
-          [class]="attention() ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'"
+          [class]="
+            attention()
+              ? 'text-amber-600 dark:text-amber-400'
+              : 'text-foreground'
+          "
           [attr.data-testid]="'tile-value-' + testid()"
         >
           {{ value() }}
@@ -27,12 +36,18 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
         }
       </div>
 
-      <p class="m-0 mt-auto text-[11px] leading-relaxed text-sub">{{ note() }}</p>
+      <p class="m-0 mt-auto text-[11px] leading-relaxed text-sub">
+        {{ note() }}
+      </p>
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ScalingTileComponent {
   readonly label = input.required<string>();

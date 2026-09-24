@@ -1,4 +1,12 @@
-import { Component, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 
@@ -16,7 +24,10 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
   changeDetection: ChangeDetectionStrategy.Eager,
   host: { '(document:keydown.escape)': 'close()' },
   template: `
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4" (click)="close()">
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4"
+      (click)="close()"
+    >
       <div
         role="dialog"
         aria-modal="true"
@@ -28,13 +39,16 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
         <div class="flex flex-col gap-1">
           <h3 class="m-0 text-lg font-semibold text-foreground">Node limits</h3>
           <p class="m-0 text-sm text-sub">
-            Flui will not take this cluster outside these, and neither will the buttons on the page.
+            Flui will not take this cluster outside these, and neither will the
+            buttons on the page.
           </p>
         </div>
 
         <div class="flex items-end gap-4">
           <div class="flex flex-col gap-1.5">
-            <label for="floor" class="text-xs font-semibold text-foreground">Floor</label>
+            <label for="floor" class="text-xs font-semibold text-foreground"
+              >Floor</label
+            >
             <input
               id="floor"
               type="number"
@@ -44,7 +58,9 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="ceiling" class="text-xs font-semibold text-foreground">Ceiling</label>
+            <label for="ceiling" class="text-xs font-semibold text-foreground"
+              >Ceiling</label
+            >
             <input
               id="ceiling"
               type="number"
@@ -54,12 +70,18 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
             />
           </div>
           <p class="m-0 pb-3 text-[11px] leading-relaxed text-sub">
-            Counted across every node, master included — the number shown on the page.
+            Counted across every node, master included — the number shown on the
+            page.
           </p>
         </div>
 
         @if (problem(); as message) {
-          <p class="m-0 text-sm text-red-600 dark:text-red-400" data-testid="limits-error">{{ message }}</p>
+          <p
+            class="m-0 text-sm text-red-600 dark:text-red-400"
+            data-testid="limits-error"
+          >
+            {{ message }}
+          </p>
         }
 
         <div class="flex gap-2">
@@ -82,9 +104,13 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
       </div>
     </div>
   `,
-  styles: [`
-    :host { display: contents; }
-  `],
+  styles: [
+    `
+      :host {
+        display: contents;
+      }
+    `,
+  ],
 })
 export class ScalingLimitsDialogComponent {
   private readonly autoscale = inject(ClusterAutoscaleService);
@@ -103,8 +129,10 @@ export class ScalingLimitsDialogComponent {
     if (saved) return saved;
     const floor = Number(this.floor());
     const ceiling = Number(this.ceiling());
-    if (!Number.isInteger(floor) || floor < 1) return 'The floor is at least one node.';
-    if (!Number.isInteger(ceiling) || ceiling < 1) return 'The ceiling is at least one node.';
+    if (!Number.isInteger(floor) || floor < 1)
+      return 'The floor is at least one node.';
+    if (!Number.isInteger(ceiling) || ceiling < 1)
+      return 'The ceiling is at least one node.';
     if (ceiling < floor) return 'The ceiling cannot be below the floor.';
     if (ceiling > 20) return 'A cluster may hold at most 20 nodes.';
     return null;
@@ -119,7 +147,11 @@ export class ScalingLimitsDialogComponent {
       });
       this.close();
     } catch (error: unknown) {
-      this.failure.set(error instanceof Error ? error.message : 'The limits could not be saved.');
+      this.failure.set(
+        error instanceof Error
+          ? error.message
+          : 'The limits could not be saved.',
+      );
     }
   }
 

@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 import { GroupDraft } from './group-draft';
 import { TABLE } from './scaling-tabs-format';
 import { GroupBoundsRowsComponent } from './group-bounds-rows.component';
@@ -21,7 +26,9 @@ import { GroupCatalogueRowsComponent } from './group-catalogue-rows.component';
             <tr [class]="t.headRow">
               <th scope="col" [class]="t.th">Setting</th>
               <th scope="col" [class]="t.th">Value</th>
-              <th scope="col" [class]="t.th">What it means on {{ provider() }}</th>
+              <th scope="col" [class]="t.th">
+                What it means on {{ provider() }}
+              </th>
             </tr>
           </thead>
           <tbody app-group-bounds-rows [draft]="draft()"></tbody>

@@ -8,12 +8,16 @@ import { Reading } from './overview-format';
   template: `
     <span
       class="whitespace-nowrap tabular-nums"
-      [class]="reading().attention ? 'status-degraded font-medium' : 'text-foreground'"
-      >{{ reading().value
-      }}@if (reading().sub; as sub) {<span class="ml-1.5 text-xs font-normal text-muted-foreground">{{
-        sub
-      }}</span>}</span
-    >
+      [class]="
+        reading().attention ? 'status-degraded font-medium' : 'text-foreground'
+      "
+      >{{ reading().value }}
+      @if (reading().sub; as sub) {
+        <span class="ml-1.5 text-xs font-normal text-muted-foreground">{{
+          sub
+        }}</span>
+      }
+    </span>
   `,
 })
 export class OverviewReadingComponent {

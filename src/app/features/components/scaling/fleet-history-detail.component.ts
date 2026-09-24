@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { ScalingDecision } from '../../model/scaling-group.models';
 import { outcomeBadgeClass, whenLabel } from './fleet-history.geometry';
@@ -25,7 +30,8 @@ import { outcomeBadgeClass, whenLabel } from './fleet-history.geometry';
         </span>
         @if (decision().shape) {
           <span hlmBadge variant="outline" class="text-xs">
-            {{ decision().shape }}@if (decision().region) {
+            {{ decision().shape }}
+            @if (decision().region) {
               · {{ decision().region }}
             }
           </span>
@@ -48,10 +54,7 @@ import { outcomeBadgeClass, whenLabel } from './fleet-history.geometry';
           {{ decision().did }}
         </dd>
         <dt class="text-label m-0 pt-0.5">Why</dt>
-        <dd
-          class="m-0 text-sm text-muted-foreground"
-          data-testid="detail-why"
-        >
+        <dd class="m-0 text-sm text-muted-foreground" data-testid="detail-why">
           {{ decision().why }}
         </dd>
       </dl>

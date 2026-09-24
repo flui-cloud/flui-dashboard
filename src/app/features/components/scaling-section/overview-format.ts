@@ -1,10 +1,7 @@
 import { ProviderScalingCapability } from '../../model/scaling-section.models';
 
 export type ScalingMode =
-  | 'flui-buys'
-  | 'flui-decides'
-  | 'you-buy'
-  | 'you-attach';
+  'flui-buys' | 'flui-decides' | 'you-buy' | 'you-attach';
 
 export interface ModeCopy {
   id: ScalingMode;
@@ -18,25 +15,25 @@ export const MODES: Record<ScalingMode, ModeCopy> = {
     id: 'flui-buys',
     label: 'Flui buys',
     pill: 'bg-primary/10 text-primary',
-    how: 'Flui creates the server through the provider API and it joins on its own. Prices are hourly.',
+    how: 'Flui buys the machine and it joins on its own. Billed by the hour.',
   },
   'flui-decides': {
     id: 'flui-decides',
     label: 'Flui decides only',
     pill: 'bg-muted text-foreground',
-    how: 'Flui could create the server here, and will not: either this group is set only to decide, or nothing was granted to this installation to spend. It names what it would have bought and stops.',
+    how: 'Flui could buy here and will not — by choice, or for want of a budget. It names the machine and stops.',
   },
   'you-buy': {
     id: 'you-buy',
     label: 'You buy, Flui asks',
     pill: 'bg-muted text-foreground',
-    how: 'There is a catalogue but no create API, so an alarm names a shape and a price. You order it; Flui cannot. Billing is monthly.',
+    how: 'Flui can read prices but cannot buy here. An alarm names the machine and its price; you order it.',
   },
   'you-attach': {
     id: 'you-attach',
     label: 'You attach the machine',
     pill: 'bg-muted text-muted-foreground',
-    how: 'No catalogue, so no shape to name and no price to quote. An alarm can only state what the machine has to hold, and Flui never sees a bill for it.',
+    how: 'No prices to read here, so an alarm can only say what the machine has to hold.',
   },
 };
 

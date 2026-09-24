@@ -6,7 +6,10 @@ import {
   ScalingBounds,
   StrategyCopy,
 } from '../../model/scaling-group.models';
-import { NodeRequirement, SectionGroup } from '../../model/scaling-section.models';
+import {
+  NodeRequirement,
+  SectionGroup,
+} from '../../model/scaling-section.models';
 import { refusesWholeCatalogue } from './scaling-tabs-format';
 
 export type BoundRole = keyof ScalingBounds;
@@ -34,8 +37,13 @@ export class GroupDraft {
 
   readonly provider = computed(() => this.group().capability.provider);
 
+  readonly buyableRegions = computed(() => this.group().buyableRegions);
+
   readonly refusesEverything = computed(() =>
-    refusesWholeCatalogue(this.group().capability, this.group().limits.hourlyBillingOnly),
+    refusesWholeCatalogue(
+      this.group().capability,
+      this.group().limits.hourlyBillingOnly,
+    ),
   );
 
   readonly chosenStrategy = computed<StrategyCopy | null>(
@@ -79,7 +87,9 @@ export class GroupDraft {
 
   addShape(shape: string): void {
     this.state.update((group) =>
-      group.shapes.includes(shape) ? group : { ...group, shapes: [...group.shapes, shape] },
+      group.shapes.includes(shape)
+        ? group
+        : { ...group, shapes: [...group.shapes, shape] },
     );
   }
 
@@ -120,7 +130,10 @@ export class GroupDraft {
 
   setRequirement(part: keyof NodeRequirement, value: string): void {
     this.state.update((group) => {
-      const current: NodeRequirement = group.requirement ?? { cpu: '', memory: '' };
+      const current: NodeRequirement = group.requirement ?? {
+        cpu: '',
+        memory: '',
+      };
       return { ...group, requirement: { ...current, [part]: value } };
     });
   }

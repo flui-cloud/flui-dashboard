@@ -79,10 +79,17 @@ interface FleetRow {
             testid="fleet"
           />
         } @else if (failed()) {
-          <app-section-failure [message]="failed() ?? ''" testid="fleet" (retry)="store.reload()" />
+          <app-section-failure
+            [message]="failed() ?? ''"
+            testid="fleet"
+            (retry)="store.reload()"
+          />
         } @else if (unavailable()) {
           <div [class]="t.card" id="fleet-nodes">
-            <p class="m-0 max-w-prose text-sm text-foreground" data-testid="fleet-unlisted">
+            <p
+              class="m-0 max-w-prose text-sm text-foreground"
+              data-testid="fleet-unlisted"
+            >
               The machines cannot be named yet.
             </p>
             <p class="m-0 mt-1.5 max-w-prose text-[13px] text-muted-foreground">
@@ -104,15 +111,23 @@ interface FleetRow {
                 </thead>
                 <tbody>
                   @for (row of rows(); track row.node.id) {
-                    <tr [class]="t.row" [attr.data-testid]="'node-' + row.node.id">
+                    <tr
+                      [class]="t.row"
+                      [attr.data-testid]="'node-' + row.node.id"
+                    >
                       <th scope="row" [class]="t.td + ' font-normal'">
                         <span [class]="t.mono">{{ row.node.name }}</span>
                       </th>
                       <td [class]="t.td">
-                        <span [class]="t.mono">{{ row.node.shape }} · {{ row.node.region }}</span>
+                        <span [class]="t.mono"
+                          >{{ row.node.shape }} · {{ row.node.region }}</span
+                        >
                       </td>
                       <td [class]="t.tdMuted">{{ row.node.role }}</td>
-                      <td [class]="t.tdNum" [attr.data-testid]="'node-price-' + row.node.id">
+                      <td
+                        [class]="t.tdNum"
+                        [attr.data-testid]="'node-price-' + row.node.id"
+                      >
                         {{ row.price }}
                       </td>
                       <td [class]="t.td">
@@ -123,9 +138,14 @@ interface FleetRow {
                                 class="flex flex-col gap-0.5"
                                 [attr.data-testid]="flag.id + '-' + row.node.id"
                               >
-                                <span [class]="t.pill + ' ' + flag.pill + ' w-fit'">
+                                <span
+                                  [class]="t.pill + ' ' + flag.pill + ' w-fit'"
+                                >
                                   @if (flag.icon) {
-                                    <ng-icon [name]="flag.icon" class="h-3 w-3" />
+                                    <ng-icon
+                                      [name]="flag.icon"
+                                      class="h-3 w-3"
+                                    />
                                   }
                                   {{ flag.label }}
                                 </span>
@@ -138,7 +158,13 @@ interface FleetRow {
                     </tr>
                   } @empty {
                     <tr [class]="t.row">
-                      <td [class]="t.tdMuted" colspan="5" data-testid="fleet-empty">No nodes.</td>
+                      <td
+                        [class]="t.tdMuted"
+                        colspan="5"
+                        data-testid="fleet-empty"
+                      >
+                        No nodes.
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -181,7 +207,9 @@ export class ScalingNowFleetComponent {
     for (const node of this.fleet()) {
       counts.set(node.shape, (counts.get(node.shape) ?? 0) + 1);
     }
-    const mix = [...counts.entries()].map(([shape, n]) => `${n}× ${shape}`).join(' · ');
+    const mix = [...counts.entries()]
+      .map(([shape, n]) => `${n}× ${shape}`)
+      .join(' · ');
     return `${nodes} node${nodes === 1 ? '' : 's'}${mix ? ' · ' + mix : ''}`;
   });
 
@@ -204,7 +232,8 @@ export class ScalingNowFleetComponent {
         });
       }
 
-      const blockers = claim?.drainable?.ok === false ? claim.drainable.blockers : [];
+      const blockers =
+        claim?.drainable?.ok === false ? claim.drainable.blockers : [];
       for (const blocker of blockers) {
         flags.push({
           id: 'drain-blocker',
@@ -227,7 +256,8 @@ export class ScalingNowFleetComponent {
 
       return {
         node,
-        price: node.hourlyEur === null ? "operator's own" : eurHour(node.hourlyEur),
+        price:
+          node.hourlyEur === null ? "operator's own" : eurHour(node.hourlyEur),
         flags,
       };
     });

@@ -36,8 +36,7 @@ export const TABLE = {
   tdMuted: 'py-2 pr-4 align-top text-muted-foreground',
   note: 'm-0 text-[12px] leading-snug text-muted-foreground',
   mono: 'whitespace-nowrap font-mono text-[13px] text-foreground',
-  pill:
-    'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium',
+  pill: 'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium',
   field:
     'rounded-md border border-input bg-background px-2.5 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
 } as const;
@@ -51,9 +50,21 @@ export function heldFor(hours: number | null): string {
   return hours >= 48 ? `${Math.round(hours / 24)}d` : `${hours}h`;
 }
 
+/**
+ * Whether one setting refuses the entire catalogue.
+ *
+ * Only where Flui can buy at all: on a provider with no create API nothing is
+ * bought either way, and naming a limit there hides the real reason. No
+ * provider Flui buys from bills by the month, so this is false everywhere
+ * today — it is kept for the one that might.
+ */
 export function refusesWholeCatalogue(
   capability: ProviderScalingCapability,
   hourlyBillingOnly: boolean,
 ): boolean {
-  return hourlyBillingOnly && capability.billing === 'monthly';
+  return (
+    capability.canProvision &&
+    hourlyBillingOnly &&
+    capability.billing === 'monthly'
+  );
 }

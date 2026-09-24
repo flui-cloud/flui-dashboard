@@ -76,8 +76,18 @@ interface ShellTab {
 
       @if (loading()) {
         <div class="space-y-5" data-testid="group-loading">
-          <app-section-skeleton variant="lines" [count]="2" label="this scaling group" testid="group-header" />
-          <app-section-skeleton variant="table" [count]="4" label="this scaling group" testid="group-body" />
+          <app-section-skeleton
+            variant="lines"
+            [count]="2"
+            label="this scaling group"
+            testid="group-header"
+          />
+          <app-section-skeleton
+            variant="table"
+            [count]="4"
+            label="this scaling group"
+            testid="group-body"
+          />
         </div>
       } @else if (failed()) {
         <app-section-failure
@@ -109,7 +119,10 @@ interface ShellTab {
               </span>
             </div>
 
-            <p class="m-0 text-[13px] text-muted-foreground" data-testid="group-line">
+            <p
+              class="m-0 text-[13px] text-muted-foreground"
+              data-testid="group-line"
+            >
               {{ line() }}
             </p>
 
@@ -118,9 +131,8 @@ interface ShellTab {
                 class="m-0 text-[13px] text-muted-foreground"
                 data-testid="no-market-note"
               >
-                No Market tab: {{ g.provider }} publishes no catalogue, so there are
-                no shapes and no prices to read — what this group asks for is a
-                requirement instead.
+                No Market tab: {{ g.provider }} publishes no prices, so this
+                group asks for a requirement instead.
               </p>
             }
           </header>
@@ -176,15 +188,21 @@ interface ShellTab {
           </div>
 
           <router-outlet />
-          } @else {
-          <section class="card-surface space-y-2 p-6" data-testid="no-such-group">
-            <h1 class="m-0 text-lg font-semibold text-foreground">No such group</h1>
+        } @else {
+          <section
+            class="card-surface space-y-2 p-6"
+            data-testid="no-such-group"
+          >
+            <h1 class="m-0 text-lg font-semibold text-foreground">
+              No such group
+            </h1>
             <p class="m-0 max-w-prose text-sm text-muted-foreground">
               Nothing is configured under
-              <span class="font-mono text-foreground">{{ groupId() ?? '—' }}</span
-              >. A cluster with no scaling group is a real state — it will not grow,
-              and nothing will raise an alarm when it should have — so the overview
-              lists it rather than hiding it.
+              <span class="font-mono text-foreground">{{
+                groupId() ?? '—'
+              }}</span
+              >. A cluster without one will not grow, and will raise no alarm
+              when it should have.
             </p>
             <a
               routerLink="/scaling"
@@ -221,11 +239,10 @@ export class ScalingGroupShellComponent {
     () => this.store.group().data,
   );
 
+  /** What this group does, and nothing else. */
   protected readonly line = computed(() => {
     const g = this.group();
-    if (!g) return '';
-    if (!g.capability.hasCatalogue) return this.buys(g);
-    return `${this.buys(g)} It reads ${g.provider}'s catalogue, which informs and never decides.`;
+    return g ? this.buys(g) : '';
   });
 
   private buys(g: SectionGroup): string {
@@ -234,7 +251,7 @@ export class ScalingGroupShellComponent {
       return first.endsWith('.') ? first : `${first}.`;
     }
     if (g.capability.hasCatalogue) {
-      return 'Flui can name a shape and raise an alarm; only a person can buy it.';
+      return 'Flui can name a machine and raise an alarm; only a person can buy it.';
     }
     return 'Flui can only ask for a machine; a person attaches it.';
   }
@@ -244,7 +261,12 @@ export class ScalingGroupShellComponent {
     if (!g) return [];
 
     const tabs: ShellTab[] = [
-      { path: 'now', label: 'Now', icon: 'lucideGauge', marker: this.nowMarker(g) },
+      {
+        path: 'now',
+        label: 'Now',
+        icon: 'lucideGauge',
+        marker: this.nowMarker(g),
+      },
       {
         path: 'group',
         label: 'Group',
@@ -276,12 +298,14 @@ export class ScalingGroupShellComponent {
     const preview = this.store.preview().data;
     const nodes = this.store.row().data?.nodes ?? null;
     const blocked = g.standingOrders.filter(
-      (o) => o.drainable !== null && !o.drainable.ok
+      (o) => o.drainable !== null && !o.drainable.ok,
     ).length;
 
     const why: string[] = [];
     if (preview?.pending && !preview.chosen) {
-      why.push('a pod is pending and no rung wins, so this only alerts');
+      why.push(
+        'an app has nowhere to run and no machine fits, so this only alerts',
+      );
     }
     if (nodes !== null && nodes < g.bounds.min) {
       why.push(`the fleet is ${nodes} where the floor is ${g.bounds.min}`);
@@ -297,7 +321,7 @@ export class ScalingGroupShellComponent {
     const why: string[] = [];
     if (g.limits.hourlyBillingOnly && g.capability.billing === 'monthly') {
       why.push(
-        `hourly billing only is on, and ${g.provider} bills by the month — it refuses every shape this provider has`,
+        `hourly billing only is on, and ${g.provider} bills by the month — it refuses every machine this provider has`,
       );
     }
     if (g.capability.canProvision && !g.acts.acts) {
@@ -317,7 +341,7 @@ export class ScalingGroupShellComponent {
     return unread
       ? {
           count: unread,
-          why: `${unread} preferred shape is up nowhere the catalogue can see`,
+          why: `${unread} first-choice machine is up nowhere the catalogue can see`,
         }
       : null;
   }

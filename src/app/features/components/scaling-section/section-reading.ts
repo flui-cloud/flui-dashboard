@@ -28,7 +28,9 @@ export function loadedOf<T>(
 
 export function reasonOf(error: unknown): string {
   if (!(error instanceof HttpErrorResponse)) {
-    return error instanceof Error ? error.message : 'the request did not complete';
+    return error instanceof Error
+      ? error.message
+      : 'the request did not complete';
   }
   if (error.status === 0) return 'the API did not answer';
   if (error.status === 401 || error.status === 403) {
@@ -41,6 +43,7 @@ export function reasonOf(error: unknown): string {
       ? (body as { message?: unknown }).message
       : null;
 
-  if (typeof message === 'string' && message) return `${error.status} · ${message}`;
+  if (typeof message === 'string' && message)
+    return `${error.status} · ${message}`;
   return `${error.status} error`;
 }

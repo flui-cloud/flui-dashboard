@@ -111,6 +111,7 @@ interface DecisionMarker {
             </div>
           } @else {
             <app-explain
+              [floating]="true"
               label="Hourly rate, monthly scale"
               labelClass="text-[12px] text-muted-foreground"
               testid="spend-why"
@@ -279,6 +280,7 @@ interface DecisionMarker {
               did not
             </span>
             <app-explain
+              [floating]="true"
               label="Why a decline is a marker"
               labelClass="text-[12px] text-muted-foreground"
               testid="declines-why"
@@ -290,6 +292,7 @@ interface DecisionMarker {
           </div>
         } @else {
           <app-explain
+            [floating]="true"
             label="Nothing bought or sold yet"
             labelClass="text-sm text-muted-foreground"
             testid="no-history"

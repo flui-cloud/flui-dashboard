@@ -47,7 +47,12 @@ interface OverviewRow {
   standalone: true,
   imports: [NgIcon, OverviewReadingComponent, RouterLink],
   providers: [
-    provideIcons({ lucideArrowRight, lucideBellRing, lucidePlus, lucideTriangleAlert }),
+    provideIcons({
+      lucideArrowRight,
+      lucideBellRing,
+      lucidePlus,
+      lucideTriangleAlert,
+    }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -60,7 +65,11 @@ interface OverviewRow {
               <th scope="col" [class]="t.th">Who can add a node</th>
               <th scope="col" [class]="t.thNum">Nodes</th>
               <th scope="col" [class]="t.thNum">Spend</th>
-              <th scope="col" [class]="t.th + ' pr-4'" aria-label="Actions"></th>
+              <th
+                scope="col"
+                [class]="t.th + ' pr-4'"
+                aria-label="Actions"
+              ></th>
             </tr>
           </thead>
 
@@ -77,7 +86,9 @@ interface OverviewRow {
                 <th scope="row" [class]="t.td + ' pl-4 font-normal'">
                   <span [class]="t.mono"
                     >{{ row.name
-                    }}<span class="font-sans text-muted-foreground"> · {{ row.provider }}</span></span
+                    }}<span class="font-sans text-muted-foreground">
+                      · {{ row.provider }}</span
+                    ></span
                   >
                   @if (row.highlighted) {
                     <span
@@ -135,7 +146,9 @@ interface OverviewRow {
               @if (row.needsPerson || row.alarmAge) {
                 <tr>
                   <td colspan="5" class="px-4 pb-2 pt-0">
-                    <p class="m-0 flex flex-wrap items-baseline gap-x-2 text-[13px] leading-snug">
+                    <p
+                      class="m-0 flex flex-wrap items-baseline gap-x-2 text-[13px] leading-snug"
+                    >
                       <ng-icon
                         name="lucideTriangleAlert"
                         class="status-degraded h-3.5 w-3.5 shrink-0 translate-y-0.5"
@@ -153,9 +166,13 @@ interface OverviewRow {
                       <span
                         class="font-medium text-foreground"
                         [attr.data-testid]="'needs-person-' + row.id"
-                        >Needs a person<span class="ml-2 font-normal text-muted-foreground">{{
-                          row.needsPerson ?? 'An alarm is open, and it stands until this group decides something else.'
-                        }}</span></span
+                        >Needs a person<span
+                          class="ml-2 font-normal text-muted-foreground"
+                          >{{
+                            row.needsPerson ??
+                              'An alarm is open, and it stands until this group decides something else.'
+                          }}</span
+                        ></span
                       >
                     </p>
                   </td>
@@ -167,7 +184,10 @@ interface OverviewRow {
                   <td colspan="5" class="px-4 pb-3 pt-0">
                     <p
                       [id]="'setup-panel-' + row.id"
-                      [class]="t.note + ' max-w-prose rounded-md border border-border p-3'"
+                      [class]="
+                        t.note +
+                        ' max-w-prose rounded-md border border-border p-3'
+                      "
                       [attr.data-testid]="'setup-panel-' + row.id"
                     >
                       {{ row.setupCopy }}
@@ -208,9 +228,13 @@ export class OverviewClusterTableComponent {
 
   protected readonly setupOpen = signal<string | null>(null);
 
-  private readonly params = toSignal(this.route.queryParamMap, { initialValue: null });
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: null,
+  });
 
-  private readonly cameFrom = computed(() => this.params()?.get('cluster') ?? null);
+  private readonly cameFrom = computed(
+    () => this.params()?.get('cluster') ?? null,
+  );
 
   protected readonly legend = computed<ModeCopy[]>(() => {
     const seen = new Map<string, ModeCopy>();
@@ -230,7 +254,11 @@ export class OverviewClusterTableComponent {
     this.setupOpen.update((open) => (open === clusterId ? null : clusterId));
   }
 
-  private view(row: ClusterScalingRow, now: number, came: string | null): OverviewRow {
+  private view(
+    row: ClusterScalingRow,
+    now: number,
+    came: string | null,
+  ): OverviewRow {
     const mode = modeOf(row.capability, row);
     return {
       id: row.clusterId,
@@ -281,9 +309,9 @@ export class OverviewClusterTableComponent {
     const bounds = `Setting up scaling for ${row.clusterName} would ask for three bounds: a floor held immediately, a target approached only when the market allows, and a ceiling urgency may reach right now.`;
     const provider: Partial<Record<ScalingMode, string>> = {
       'flui-buys': `${row.capability.provider} can create servers through its own API, so this cluster would buy for itself instead of waiting on you.`,
-      'you-buy': `${row.capability.provider} publishes a catalogue but has no create API, so the group would name a shape and its price and raise an alarm for you to act on.`,
+      'you-buy': `${row.capability.provider} publishes a catalogue but has no create API, so the group would name a machine and its price and raise an alarm for you to act on.`,
       'you-attach':
-        'There is no catalogue here, so the group would state what a machine has to hold rather than name a shape, and raise an alarm.',
+        'There is no catalogue here, so the group would state what a machine has to hold rather than name one, and raise an alarm.',
     };
     return `${bounds} ${provider[mode] ?? ''} Writing one is not on this screen yet — \`flui scaling apply -f\` takes the same object as a file.`;
   }

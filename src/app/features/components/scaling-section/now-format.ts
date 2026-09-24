@@ -34,8 +34,7 @@ export const TABLE = {
   tdMuted: 'py-2 pr-4 align-top text-muted-foreground',
   note: 'm-0 text-[12px] leading-snug text-muted-foreground',
   mono: 'whitespace-nowrap font-mono text-[13px] text-foreground',
-  pill:
-    'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium',
+  pill: 'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium',
 } as const;
 
 export function eurHour(value: number | null): string {

@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+} from '@angular/core';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingNowFleetComponent } from './now-fleet.component';
@@ -23,15 +28,14 @@ import { ScalingGroupStore } from './scaling-group.store';
     @if (group(); as g) {
       <div class="space-y-6" data-testid="tab-now">
         <app-explain
-          label="Two forces, one fleet"
+          [floating]="true"
+          [label]="mode(g)"
           labelClass="text-label"
-          testid="two-forces"
+          testid="scaling-mode"
         >
-          Urgency runs when a pod cannot schedule: seconds, one pass, never
-          waiting for a better price. Opportunity runs when a preferred or
-          cheaper shape comes back: hours or days, and the waiting is the whole
-          mechanism. Urgency always wins, and while a pod is pending the patient
-          side stands down entirely.
+          {{ g.acts.says }} An app with nowhere to run is answered in seconds; a
+          cheaper machine coming back is waited for, and that wait stops while
+          anything is stuck.
         </app-explain>
 
         <app-scaling-now-summary [group]="g" />
@@ -40,7 +44,10 @@ import { ScalingGroupStore } from './scaling-group.store';
         <app-scaling-now-fleet [group]="g" />
       </div>
     } @else {
-      <p class="m-0 text-sm text-muted-foreground" data-testid="tab-now-no-group">
+      <p
+        class="m-0 text-sm text-muted-foreground"
+        data-testid="tab-now-no-group"
+      >
         No such group.
       </p>
     }
@@ -52,4 +59,10 @@ export class ScalingNowTabComponent {
   protected readonly group = computed<SectionGroup | null>(
     () => this.store.group().data,
   );
+
+  /** Which of the three kinds of scaling is armed here. */
+  protected mode(group: SectionGroup): string {
+    if (!group.capability.canProvision) return 'Alarms only';
+    return group.acts.acts ? 'Buys on its own' : 'Alarms, does not buy';
+  }
 }

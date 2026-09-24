@@ -79,6 +79,7 @@ interface WireGroup {
   clusterName: string;
   provider: string;
   capability: WireCapability;
+  buyableRegions: string[] | null;
   bounds: WireBounds;
   regions: string[];
   shapes: string[];
@@ -359,6 +360,7 @@ function toGroup(wire: WireGroup): SectionGroup {
     clusterName: wire.clusterName,
     provider: wire.provider,
     capability: toCapability(wire.capability),
+    buyableRegions: wire.buyableRegions ?? null,
     bounds: toBounds(wire.bounds),
     regions: wire.regions,
     shapes: wire.shapes,

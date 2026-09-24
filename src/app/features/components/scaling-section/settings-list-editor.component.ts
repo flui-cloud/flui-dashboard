@@ -1,27 +1,66 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowDown, lucideArrowUp, lucidePlus, lucideX } from '@ng-icons/lucide';
+import {
+  lucideArrowDown,
+  lucideArrowUp,
+  lucidePlus,
+  lucideX,
+} from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { ListMove } from './group-draft';
+
+/**
+ * One thing that may be added, described rather than spelled.
+ *
+ * A provider's codes are not names: `fsn1` and `hel1` tell a reader nothing
+ * about where they are, and a list of them is a quiz. `unavailable` marks
+ * rather than blocks — availability moves, and the reading here is minutes old
+ * at best, so a region down now may well be up when scaling next fires.
+ */
+export interface ListChoice {
+  value: string;
+  label: string;
+  note?: string;
+  unavailable?: boolean;
+}
 
 @Component({
   selector: 'app-settings-list-editor',
   standalone: true,
   imports: [FormsModule, NgIcon, HlmButtonDirective],
-  providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucidePlus, lucideX })],
+  providers: [
+    provideIcons({ lucideArrowDown, lucideArrowUp, lucidePlus, lucideX }),
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span class="flex flex-col gap-2">
       @if (ordered()) {
         @for (item of items(); track item; let i = $index) {
-          <span class="flex items-center gap-2" [attr.data-testid]="kind() + '-' + item">
+          <span
+            class="flex items-center gap-2"
+            [attr.data-testid]="kind() + '-' + item"
+          >
             <span
               class="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] tabular-nums text-muted-foreground"
             >
               {{ i + 1 }}
             </span>
-            <span class="w-16 font-mono text-[13px] text-foreground">{{ item }}</span>
+            <span class="font-mono text-[13px] text-foreground">{{
+              item
+            }}</span>
+            @if (label(item) !== item) {
+              <span class="truncate text-[12px] text-muted-foreground">{{
+                label(item)
+              }}</span>
+            }
             <button
               type="button"
               (click)="move.emit({ index: i, by: -1 })"
@@ -53,7 +92,10 @@ import { ListMove } from './group-draft';
             </button>
           </span>
         } @empty {
-          <span class="text-muted-foreground" [attr.data-testid]="'no-' + kind() + 's'">
+          <span
+            class="text-muted-foreground"
+            [attr.data-testid]="'no-' + kind() + 's'"
+          >
             {{ emptyNote() }}
           </span>
         }
@@ -65,6 +107,9 @@ import { ListMove } from './group-draft';
               [attr.data-testid]="kind() + '-' + item"
             >
               <span class="font-mono text-foreground">{{ item }}</span>
+              @if (label(item) !== item) {
+                <span class="text-muted-foreground">{{ label(item) }}</span>
+              }
               <button
                 type="button"
                 (click)="remove.emit(item)"
@@ -76,7 +121,10 @@ import { ListMove } from './group-draft';
               </button>
             </span>
           } @empty {
-            <span class="text-muted-foreground" [attr.data-testid]="'no-' + kind() + 's'">
+            <span
+              class="text-muted-foreground"
+              [attr.data-testid]="'no-' + kind() + 's'"
+            >
               {{ emptyNote() }}
             </span>
           }
@@ -84,20 +132,45 @@ import { ListMove } from './group-draft';
       }
 
       <span class="flex items-center gap-2">
-        <input
-          [class]="field"
-          [placeholder]="kind()"
-          [ngModel]="draft()"
-          (ngModelChange)="draft.set($event)"
-          (keydown.enter)="submit()"
-          [attr.aria-label]="'Add a ' + kind()"
-          [attr.data-testid]="kind() + '-add-input'"
-        />
+        @if (choices(); as all) {
+          @if (available().length) {
+            <select
+              [class]="field"
+              [ngModel]="draft()"
+              (ngModelChange)="draft.set($event)"
+              [attr.aria-label]="'Add a ' + kind()"
+              [attr.data-testid]="kind() + '-add-select'"
+            >
+              <option value="">choose…</option>
+              @for (choice of available(); track choice.value) {
+                <option [value]="choice.value">{{ optionText(choice) }}</option>
+              }
+            </select>
+          } @else {
+            <span
+              class="text-[12px] text-muted-foreground"
+              [attr.data-testid]="kind() + '-all-listed'"
+            >
+              {{ all.length ? 'every one is already listed' : exhausted() }}
+            </span>
+          }
+        } @else {
+          <input
+            [class]="field"
+            [placeholder]="kind()"
+            [ngModel]="draft()"
+            (ngModelChange)="draft.set($event)"
+            (keydown.enter)="submit()"
+            [attr.aria-label]="'Add a ' + kind()"
+            [attr.data-testid]="kind() + '-add-input'"
+          />
+        }
         <button
           hlmBtn
           size="sm"
           variant="outline"
           type="button"
+          [disabled]="!!choices() && !available().length"
           (click)="submit()"
           [attr.data-testid]="kind() + '-add'"
         >
@@ -115,6 +188,21 @@ export class SettingsListEditorComponent {
 
   readonly ordered = input(false);
 
+  /**
+   * The only values that may be added, or null where anything goes.
+   *
+   * An empty list is not the same as null: it means the choices are known and
+   * there are none, which is a state worth saying out loud rather than one to
+   * offer a free field for.
+   */
+  readonly choices = input<readonly ListChoice[] | null>(null);
+
+  /** How a value already chosen should read, where a bare code would not. */
+  readonly labels = input<Record<string, string>>({});
+
+  /** Said where the list of choices is known and empty. */
+  readonly exhausted = input('nothing to choose from');
+
   readonly emptyNote = input('nothing here');
 
   readonly add = output<string>();
@@ -122,6 +210,23 @@ export class SettingsListEditorComponent {
   readonly move = output<ListMove>();
 
   protected readonly draft = signal('');
+
+  protected readonly available = computed(() => {
+    const all = this.choices();
+    if (!all) return [];
+    return all.filter((choice) => !this.items().includes(choice.value));
+  });
+
+  protected label(value: string): string {
+    return this.labels()[value] ?? value;
+  }
+
+  protected optionText(choice: ListChoice): string {
+    const note = choice.unavailable
+      ? `${choice.note ? choice.note + ' · ' : ''}unavailable`
+      : choice.note;
+    return note ? `${choice.label} — ${note}` : choice.label;
+  }
 
   protected readonly field =
     'w-32 rounded-md border border-input bg-background px-2.5 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';

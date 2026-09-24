@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+} from '@angular/core';
 import { ScalingDecision } from '../../model/scaling-group.models';
 import {
   FleetHistoryPoint,
@@ -31,7 +36,10 @@ interface LogRow {
   template: `
     @if (group(); as g) {
       <div class="space-y-6" data-testid="tab-history">
-        <p class="m-0 max-w-prose text-[13px] text-muted-foreground" data-testid="history-lead">
+        <p
+          class="m-0 max-w-prose text-[13px] text-muted-foreground"
+          data-testid="history-lead"
+        >
           {{ lead() }}
         </p>
 
@@ -56,13 +64,19 @@ interface LogRow {
           />
 
           @if (unpricedNote(); as note) {
-            <p class="m-0 max-w-prose text-[13px] text-muted-foreground" data-testid="unbilled-note">
+            <p
+              class="m-0 max-w-prose text-[13px] text-muted-foreground"
+              data-testid="unbilled-note"
+            >
               {{ note }}
             </p>
           }
 
           @if (orphanNote(); as note) {
-            <p class="m-0 max-w-prose text-[13px] text-muted-foreground" data-testid="orphan-note">
+            <p
+              class="m-0 max-w-prose text-[13px] text-muted-foreground"
+              data-testid="orphan-note"
+            >
               {{ note }}
             </p>
           }
@@ -89,10 +103,7 @@ interface LogRow {
               <div [class]="t.scroll">
                 <table [class]="t.table">
                   <caption [class]="t.captionTop">
-                    Newest first, and every row carries its age. The latest row is
-                    where the group stands: an alarm is replaced by whatever it
-                    decides next, including the pass after somebody attached a
-                    machine by hand.
+                    Newest first. The top row is where the group stands now.
                   </caption>
                   <thead>
                     <tr [class]="t.headRow">
@@ -109,12 +120,16 @@ interface LogRow {
                         [attr.data-testid]="'decision-row-' + row.decision.id"
                         [attr.data-outcome]="row.decision.outcome"
                       >
-                        <th scope="row" [class]="t.td + ' whitespace-nowrap font-normal'">
+                        <th
+                          scope="row"
+                          [class]="t.td + ' whitespace-nowrap font-normal'"
+                        >
                           <span class="tabular-nums">{{ row.when }}</span>
                         </th>
                         <td [class]="t.td">
                           <span [class]="t.pill + ' w-fit ' + row.outcomePill">
-                            {{ row.decision.force }} · {{ row.decision.outcome }}
+                            {{ row.decision.force }} ·
+                            {{ row.decision.outcome }}
                           </span>
                         </td>
                         <td [class]="t.tdMuted">{{ row.decision.saw }}</td>
@@ -127,10 +142,12 @@ interface LogRow {
                       </tr>
                     } @empty {
                       <tr [class]="t.row">
-                        <td [class]="t.tdMuted" colspan="4" data-testid="log-empty">
-                          Nothing decided yet. A group that has never had to act has
-                          no record, which is not the same as a group that failed to
-                          look.
+                        <td
+                          [class]="t.tdMuted"
+                          colspan="4"
+                          data-testid="log-empty"
+                        >
+                          Nothing decided yet — it has never had to act.
                         </td>
                       </tr>
                     }
@@ -142,7 +159,10 @@ interface LogRow {
         </section>
       </div>
     } @else {
-      <p class="m-0 text-sm text-muted-foreground" data-testid="tab-history-no-group">
+      <p
+        class="m-0 text-sm text-muted-foreground"
+        data-testid="tab-history-no-group"
+      >
         No such group.
       </p>
     }
@@ -157,10 +177,18 @@ export class ScalingHistoryTabComponent {
     () => this.store.group().data,
   );
 
-  protected readonly historyLoading = computed(() => this.store.history().loading);
-  protected readonly historyFailed = computed(() => this.store.history().failed);
-  protected readonly decisionsLoading = computed(() => this.store.decisions().loading);
-  protected readonly decisionsFailed = computed(() => this.store.decisions().failed);
+  protected readonly historyLoading = computed(
+    () => this.store.history().loading,
+  );
+  protected readonly historyFailed = computed(
+    () => this.store.history().failed,
+  );
+  protected readonly decisionsLoading = computed(
+    () => this.store.decisions().loading,
+  );
+  protected readonly decisionsFailed = computed(
+    () => this.store.decisions().failed,
+  );
 
   private readonly history = computed(() => this.store.history().data);
 
@@ -173,7 +201,7 @@ export class ScalingHistoryTabComponent {
   );
 
   protected readonly cap = computed<number | null>(
-    () => this.group()?.limits.maxMonthlyCost ?? null
+    () => this.group()?.limits.maxMonthlyCost ?? null,
   );
 
   protected readonly unpricedNote = computed<string | null>(() => {
@@ -208,11 +236,11 @@ export class ScalingHistoryTabComponent {
     if (!g) return '';
 
     if (g.capability.canProvision) {
-      return 'Every purchase, replacement, removal, decline and alarm on one axis, against the fleet it changed. The bands are one per shape, because a total says "3 nodes" and which three is what tells you whether the next pod fits.';
+      return 'Every purchase, replacement, removal, decline and alarm on one axis, against the fleet it changed. One band per machine type, because "3 nodes" does not tell you whether the next app will fit.';
     }
 
     const what = g.capability.hasCatalogue
-      ? 'an alarm Flui raised, naming a shape, or a machine somebody bought from the provider panel and joined'
+      ? 'an alarm Flui raised, naming a machine, or one somebody bought from the provider panel and joined'
       : 'an alarm Flui raised, naming a requirement, or a machine somebody attached';
 
     return `Nothing here bought anything. Every entry is ${what} — which makes this the only record of who changed the fleet and why, and the most useful of the four tabs on a cluster like this one.`;

@@ -78,7 +78,13 @@ describe('fleet-history geometry', () => {
     it('leaves one node of headroom above the peak', () => {
       const scale = nodeScale([1, 3, 2]);
       expect(scale.yMax).toBe(4);
-      expect(scale.ticks.map((t) => t.label)).toEqual(['0', '1', '2', '3', '4']);
+      expect(scale.ticks.map((t) => t.label)).toEqual([
+        '0',
+        '1',
+        '2',
+        '3',
+        '4',
+      ]);
     });
 
     it('still draws an axis for an empty fleet', () => {

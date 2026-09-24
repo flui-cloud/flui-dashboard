@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBan,
@@ -6,17 +14,15 @@ import {
   lucideCircleCheck,
   lucideCircleDashed,
   lucideEuro,
+  lucideListOrdered,
   lucidePause,
+  lucideSettings,
 } from '@ng-icons/lucide';
-import { ExplainComponent } from '../../../shared/components/explain.component';
-import {
-  LadderRung,
-  STRATEGIES,
-  ScalingPreview,
-} from '../../model/scaling-group.models';
+import { ScalingPreview } from '../../model/scaling-group.models';
 import { SectionGroup } from '../../model/scaling-section.models';
+import { LadderRow, ladderRows, rowsAgree } from './ladder-rows';
+import { ScalingLadderDialogComponent } from './now-ladder-dialog.component';
 import { ScalingGroupStore } from './scaling-group.store';
-import { TABLE, eurHour, heldFor, readingAge } from './now-format';
 import {
   SectionFailureComponent,
   SectionSkeletonComponent,
@@ -30,22 +36,20 @@ const EMPTY_PREVIEW: ScalingPreview = {
   asks: null,
 };
 
-interface LadderRow {
-  rung: LadderRung;
-  chosen: boolean;
-  offer: string;
-  verdict: string;
-  why: string;
-  icon: string;
-  tone: string;
-}
-
+/**
+ * What would happen if a node were needed, in one line.
+ *
+ * The search behind it has five rungs and, whenever it fails, five copies of
+ * the same reason; reading them is a deliberate act and belongs behind a
+ * button. On the page there is only the answer.
+ */
 @Component({
   selector: 'app-scaling-now-ladder',
   standalone: true,
   imports: [
     NgIcon,
-    ExplainComponent,
+    RouterLink,
+    ScalingLadderDialogComponent,
     SectionFailureComponent,
     SectionSkeletonComponent,
   ],
@@ -56,7 +60,9 @@ interface LadderRow {
       lucideCircleCheck,
       lucideCircleDashed,
       lucideEuro,
+      lucideListOrdered,
       lucidePause,
+      lucideSettings,
     }),
   ],
   host: { class: 'block' },
@@ -67,106 +73,78 @@ interface LadderRow {
 
       @if (loading()) {
         <app-section-skeleton
-          variant="table"
-          [count]="3"
+          variant="cards"
+          [count]="1"
           label="the urgency ladder"
           testid="ladder"
         />
-      } @else if (failed()) {
-        <app-section-failure [message]="failed() ?? ''" testid="ladder" (retry)="store.reload()" />
-      } @else {
-        <div [class]="t.card">
-          <div [class]="t.scroll">
-            <table [class]="t.table">
-              <caption [class]="t.captionTop" data-testid="ladder-caption">
-                {{ caption() }}
-              </caption>
-              <thead>
-                <tr [class]="t.headRow">
-                  <th scope="col" [class]="t.th + ' pl-2'">What it tries, in order</th>
-                  @if (hasCatalogue()) {
-                    <th scope="col" [class]="t.th">Shape · region · price</th>
-                  } @else {
-                    <th scope="col" [class]="t.th">Asks for</th>
-                  }
-                  <th scope="col" [class]="t.th">
-                    <app-explain
-                      label="Verdict"
-                      labelClass="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-                      testid="verdict-why"
-                    >
-                      Fitting is a precondition, not a preference: a shape that
-                      cannot hold the pending pod is not a candidate at all,
-                      whatever it costs.
-                    </app-explain>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of rows(); track row.rung.step) {
-                  <tr
-                    [class]="t.row"
-                    [attr.aria-current]="row.chosen ? 'true' : null"
-                    [attr.data-testid]="'rung-' + row.rung.step"
-                    [attr.data-outcome]="row.rung.outcome"
-                  >
-                    <th
-                      scope="row"
-                      [class]="
-                        t.td +
-                        ' border-l-2 pl-2 ' +
-                        (row.chosen
-                          ? 'border-l-primary font-medium'
-                          : 'border-l-transparent font-normal text-muted-foreground')
-                      "
-                    >
-                      {{ row.rung.step }}. {{ row.rung.describes }}
-                    </th>
-                    @if (hasCatalogue()) {
-                      <td [class]="t.td">
-                        @if (row.offer) {
-                          <span [class]="t.mono + ' tabular-nums'">{{ row.offer }}</span>
-                        }
-                      </td>
-                    } @else {
-                      <td [class]="t.td" data-testid="rung-requirement">
-                        <span [class]="t.mono">{{ requirement() }}</span>
-                      </td>
-                    }
-                    <td [class]="t.td">
-                      <span class="flex flex-col gap-0.5">
-                        <span
-                          class="inline-flex items-center gap-1.5 text-[13px] font-medium"
-                          [class]="row.tone"
-                          [attr.data-testid]="'rung-outcome-' + row.rung.step"
-                        >
-                          <ng-icon [name]="row.icon" class="h-4 w-4" />
-                          {{ row.verdict }}
-                        </span>
-                        <span [class]="t.note" [attr.data-testid]="'rung-why-' + row.rung.step">
-                          {{ row.why }}
-                        </span>
-                      </span>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          @if (hasCatalogue()) {
-            <p [class]="t.note + ' mt-2'" data-testid="catalogue-age">
-              Every price above is one catalogue reading, {{ age() }}. Nothing
-              here is live.
-            </p>
-          }
+      } @else if (failed(); as message) {
+        <app-section-failure
+          [message]="message"
+          testid="ladder"
+          (retry)="store.reload()"
+        />
+      } @else if (unsearchable()) {
+        <div
+          class="card-surface flex flex-wrap items-center gap-x-4 gap-y-3 p-4"
+          data-testid="ladder-unsearchable"
+        >
+          <span
+            class="inline-flex items-center gap-1.5 text-[13px] font-medium text-amber-600 dark:text-amber-400"
+          >
+            <ng-icon name="lucideSettings" class="h-4 w-4 shrink-0" />
+            Not set up
+          </span>
+          <span class="min-w-0 flex-1 text-[13px] leading-relaxed text-sub">
+            No machines are chosen, so there is nothing Flui may buy and nothing
+            for it to name when an app has nowhere to run.
+          </span>
+          <a
+            routerLink="../group"
+            class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            data-testid="ladder-choose-machines"
+          >
+            Choose machines
+          </a>
         </div>
+      } @else if (rows().length) {
+        <div
+          class="card-surface flex flex-wrap items-center gap-x-4 gap-y-3 p-4"
+        >
+          <span
+            class="inline-flex items-center gap-1.5 text-[13px] font-medium"
+            [class]="headline().tone"
+            data-testid="ladder-verdict"
+          >
+            <ng-icon [name]="headline().icon" class="h-4 w-4 shrink-0" />
+            {{ headline().verdict }}
+          </span>
 
-        @if (asks(); as sentence) {
-          <p class="m-0 max-w-prose text-[13px] text-muted-foreground" data-testid="ladder-asks">
-            {{ sentence }}
-          </p>
-        }
+          <span
+            class="min-w-0 flex-1 text-[13px] leading-relaxed text-sub"
+            data-testid="ladder-why"
+          >
+            {{ headline().why }}
+          </span>
+
+          <button
+            type="button"
+            class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            data-testid="ladder-open-steps"
+            (click)="stepping.set(true)"
+          >
+            <ng-icon name="lucideListOrdered" class="h-3.5 w-3.5" />
+            See the {{ rows().length }} steps
+          </button>
+        </div>
+      }
+
+      @if (stepping()) {
+        <app-scaling-ladder-dialog
+          [rows]="rows()"
+          [subtitle]="subtitle()"
+          (closed)="stepping.set(false)"
+        />
       }
     </section>
   `,
@@ -176,7 +154,7 @@ export class ScalingNowLadderComponent {
 
   readonly group = input.required<SectionGroup>();
 
-  protected readonly t = TABLE;
+  protected readonly stepping = signal(false);
 
   protected readonly loading = computed(() => this.store.preview().loading);
   protected readonly failed = computed(() => this.store.preview().failed);
@@ -184,172 +162,56 @@ export class ScalingNowLadderComponent {
   private readonly preview = computed<ScalingPreview>(
     () => this.store.preview().data ?? EMPTY_PREVIEW,
   );
-  private readonly outlook = computed(() => this.store.outlook());
-  private readonly manual = computed(() => !this.group().capability.canProvision);
 
-  private readonly withheld = computed(
-    () => this.group().capability.canProvision && !this.group().acts.acts,
+  protected readonly rows = computed<LadderRow[]>(() =>
+    ladderRows({
+      group: this.group(),
+      preview: this.preview(),
+      outlook: this.store.outlook(),
+      read: this.store.catalogue().data?.reading === 'read',
+    }),
   );
 
-  protected readonly hasCatalogue = computed(() => this.group().capability.hasCatalogue);
+  /**
+   * The rung that decided, or — where none did — the first one, whose reason is
+   * the whole story when every rung repeats it. Where they disagree, the line
+   * says so rather than promoting one failure over the others.
+   */
+  protected readonly headline = computed<LadderRow>(() => {
+    const rows = this.rows();
+    const chosen = rows.find((r) => r.chosen);
+    if (chosen) return this.withOffer(chosen);
 
-  protected readonly requirement = computed(() => {
-    const req = this.group().requirement;
-    return req ? `≥ ${req.cpu} vCPU · ${req.memory} free` : 'a machine that holds the shortfall';
+    const first = rows[0];
+    if (rowsAgree(rows)) return first;
+
+    return {
+      ...first,
+      why: `Nothing this group may buy fits, each for its own reason. ${rows.length} steps were tried.`,
+    };
   });
 
-  protected readonly caption = computed(() => {
-    const group = this.group();
-    const pod = this.preview().pending;
-    const strategy = STRATEGIES.find((s) => s.id === group.strategy);
-
-    const against = pod
-      ? `Measured against ${pod.cpu} · ${pod.memory}.`
-      : 'Nothing is pending — this is the ladder the next stuck pod would meet.';
-
-    if (!this.hasCatalogue()) {
-      return `${against} ${group.provider} publishes no catalogue, so no rung can name a shape or a price. What the alarm asks for is the group's own requirement.`;
-    }
-
-    const picks = strategy
-      ? `Among the shapes that fit, it picks for ${strategy.optimises} (${strategy.label.toLowerCase()}).`
-      : '';
-    const ends = this.manual()
-      ? `${group.provider} has no API to create servers, so every rung ends in an alarm — one that still names a shape and a price, because the catalogue is there to read.`
-      : 'Tried in order, in one pass — no rung waits for a better price.';
-
-    return `${against} ${picks} ${ends}`;
+  /**
+   * No rung ever named a machine, so no search happened and there is no ladder
+   * to read — only a setup that was never finished. Derived from the rungs
+   * rather than the group's own fields, so whatever leaves the engine with no
+   * candidate to weigh lands here.
+   */
+  protected readonly unsearchable = computed(() => {
+    const deciding = this.rows().filter((r) => r.rung.outcome !== 'alert');
+    return deciding.length > 0 && deciding.every((r) => !r.rung.shape);
   });
 
-  protected readonly asks = computed<string | null>(() => {
-    if (this.preview().chosen || !this.hasCatalogue()) return null;
-
-    const written = this.preview().asks;
-    if (written) return written;
-
-    const named = this.preview()
-      .ladder.filter((r) => r.shape !== null)
-      .map((r) => `${r.shape}${r.region ? ' in ' + r.region : ''}`);
-
-    return named.length
-      ? `No rung wins, so nothing is bought. The alarm still names what would have been bought — ${named.join(' or ')} — because the catalogue is readable even where the create API is not.`
-      : 'No rung wins, so nothing is bought and the alarm carries no shape.';
+  protected readonly subtitle = computed(() => {
+    const waiting = this.preview().pending;
+    return waiting
+      ? `Measured against ${waiting.cpu} · ${waiting.memory}.`
+      : 'Nothing is waiting — this is what the next stuck app would meet.';
   });
 
-  protected readonly rows = computed<LadderRow[]>(() => {
-    const chosenStep = this.preview().chosen?.step ?? null;
-
-    return this.preview().ladder.map((rung) => ({
-      rung,
-      chosen: rung.step === chosenStep,
-      offer: this.offer(rung),
-      verdict: this.verdict(rung),
-      why: this.why(rung),
-      icon: this.icon(rung.outcome),
-      tone: this.tone(rung, rung.step === chosenStep),
-    }));
-  });
-
-  protected readonly age = computed(() => {
-    const catalogue = this.store.catalogue();
-    if (catalogue.failed) return 'and the catalogue could not be read just now';
-    return readingAge(catalogue.data?.ageSeconds ?? null);
-  });
-
-  private offer(rung: LadderRung): string {
-    if (!rung.shape) return '';
-    const where = rung.region ? ` · ${rung.region}` : '';
-    return `${rung.shape}${where} · ${eurHour(rung.hourlyEur)}`;
-  }
-
-  private verdict(rung: LadderRung): string {
-    switch (rung.outcome) {
-      case 'would-buy':
-        if (this.manual()) return 'Would alert';
-        return this.withheld() ? 'Wins, buys nothing' : 'Would buy';
-      case 'unavailable':
-        return 'Unavailable';
-      case 'does-not-fit':
-        return 'Does not fit';
-      case 'over-budget':
-        return 'Over budget';
-      case 'refused-by-limit':
-        return 'Refused by a limit';
-      case 'alert':
-        return 'Alerts you';
-    }
-  }
-
-  private why(rung: LadderRung): string {
-    const group = this.group();
-
-    switch (rung.outcome) {
-      case 'would-buy':
-        return this.whyWouldBuy();
-      case 'unavailable':
-        return this.whyUnavailable(rung);
-      case 'does-not-fit': {
-        const pod = this.preview().pending;
-        return pod
-          ? `Cannot hold ${pod.memory} — not a candidate.`
-          : 'Cannot hold the pending pod — not a candidate.';
-      }
-      case 'over-budget': {
-        const cap = group.limits.maxMonthlyCost;
-        return cap === null ? 'Over the cost limit.' : `Would take the fleet past €${cap}/month.`;
-      }
-      case 'refused-by-limit':
-        return rung.note ?? "The group's own rules exclude it.";
-      case 'alert':
-        return this.whyAlert();
-    }
-  }
-
-  private whyWouldBuy(): string {
-    if (this.manual()) {
-      return 'Fits and is available — but nothing here can buy it.';
-    }
-    return this.withheld()
-      ? 'Fits, available, inside the ceiling — and this group buys nothing.'
-      : 'Fits, available, inside the ceiling.';
-  }
-
-  private whyUnavailable(rung: LadderRung): string {
-    const state = rung.shape ? this.outlook()[rung.shape] : undefined;
-    const where = state?.downIn.length ? `down in ${state.downIn.join(', ')}` : 'not on offer';
-    const since = state?.sinceHours ? ` for ${heldFor(state.sinceHours)}` : '';
-    return `${where}${since}.`;
-  }
-
-  private whyAlert(): string {
-    if (this.hasCatalogue()) {
-      return 'Nothing left below. Flui names the shape and stops.';
-    }
-    const req = this.group().requirement;
-    return req
-      ? `A machine with at least ${req.cpu} vCPU and ${req.memory} free. That requirement is the whole of the alarm.`
-      : 'Another machine. Nothing here can name a shape.';
-  }
-
-  private icon(outcome: LadderRung['outcome']): string {
-    switch (outcome) {
-      case 'would-buy':
-        return this.withheld() ? 'lucidePause' : 'lucideCircleCheck';
-      case 'unavailable':
-        return 'lucideCircleDashed';
-      case 'does-not-fit':
-      case 'refused-by-limit':
-        return 'lucideBan';
-      case 'over-budget':
-        return 'lucideEuro';
-      case 'alert':
-        return 'lucideBell';
-    }
-  }
-
-  private tone(rung: LadderRung, chosen: boolean): string {
-    if (rung.outcome === 'alert') return 'text-amber-600 dark:text-amber-400';
-    if (chosen && this.withheld()) return 'text-foreground';
-    return chosen ? 'status-healthy' : 'text-muted-foreground';
+  /** A winning rung names a machine, and the machine is the point of the line. */
+  private withOffer(row: LadderRow): LadderRow {
+    if (!row.offer) return row;
+    return { ...row, why: `${row.offer} — ${row.why}` };
   }
 }

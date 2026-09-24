@@ -40,11 +40,12 @@ export function consequenceOf(
     currentNodes === undefined
       ? `to at most ${draft.bounds.max} nodes`
       : `up to ${nodeWord(Math.max(0, draft.bounds.max - currentNodes))}`;
-  const spend = cap == null ? 'an unlimited amount' : `at most €${cap.toFixed(0)} a month`;
+  const spend =
+    cap == null ? 'an unlimited amount' : `at most €${cap.toFixed(0)} a month`;
   return {
     sentence: `Flui may grow this cluster ${growth}, spending ${spend}, without asking you again.`,
     clauses: [
-      `It acts only when a pod has waited ${draft.settleSeconds ?? 30} seconds for a place.`,
+      `It acts only when an app has been stuck for ${draft.settleSeconds ?? 30} seconds.`,
       `It gives a node back when the work fits without it, never going below ${draft.bounds.min}.`,
       `Every decision is written down, whether or not it acted.`,
     ],

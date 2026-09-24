@@ -50,6 +50,12 @@ export interface GroupActuation {
 
 export interface SectionGroup extends ScalingGroup {
   capability: ProviderScalingCapability;
+  /**
+   * The regions a node bought for this cluster could join it from, or null
+   * where geography fences nothing. Not what the provider sells: a machine can
+   * be on offer somewhere this cluster's private network cannot be reached.
+   */
+  buyableRegions: string[] | null;
   acts: GroupActuation;
   requirement: NodeRequirement | null;
 }

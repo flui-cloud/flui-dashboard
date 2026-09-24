@@ -92,7 +92,10 @@ export class ScalingGroupStore {
     stream: ({ params }) => this.api.history(params),
   });
 
-  readonly history = loadedOf<FleetHistory>(this.historyRes, 'The fleet history');
+  readonly history = loadedOf<FleetHistory>(
+    this.historyRes,
+    'The fleet history',
+  );
 
   private readonly fleetRes = rxResource({
     params: () => this.clusterId(),

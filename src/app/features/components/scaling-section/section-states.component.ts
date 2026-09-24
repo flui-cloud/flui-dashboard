@@ -42,7 +42,9 @@ import { lucideRotateCw, lucideUnplug } from '@ng-icons/lucide';
             }
           </div>
           @for (row of slots(); track row) {
-            <div class="flex gap-4 border-b border-border/50 py-3 last:border-0">
+            <div
+              class="flex gap-4 border-b border-border/50 py-3 last:border-0"
+            >
               @for (cell of [1, 2, 3, 4]; track cell) {
                 <div class="skeleton h-4 flex-1"></div>
               }
@@ -57,7 +59,10 @@ import { lucideRotateCw, lucideUnplug } from '@ng-icons/lucide';
           aria-hidden="true"
         >
           @for (line of slots(); track line) {
-            <div class="skeleton h-4" [class]="line === 1 ? 'w-2/3' : 'w-full'"></div>
+            <div
+              class="skeleton h-4"
+              [class]="line === 1 ? 'w-2/3' : 'w-full'"
+            ></div>
           }
         </div>
       }
