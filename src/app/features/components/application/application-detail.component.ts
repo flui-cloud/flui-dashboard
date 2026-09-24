@@ -537,7 +537,6 @@ export class ApplicationDetailComponent implements OnDestroy {
       this.pollingAppId = id;
       this.runtimeService.loadRuntime(id);
       this.ws.onDiagnosis(id, d => this.diagnosesService.pushRealtime(d));
-      this.ws.onAutoRemediation(id, e => this.diagnosesService.applyAutoRemediation(e));
       this.ws.ensureAppSubscription(id);
       this.diagnosesService.loadList(id, { limit: 10 });
     } catch (error: any) {

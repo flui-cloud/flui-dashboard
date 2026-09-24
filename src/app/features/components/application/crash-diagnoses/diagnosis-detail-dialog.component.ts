@@ -125,12 +125,6 @@ import {
                         {{ diagnosis.suggestedAction.message }}
                       </p>
                     </div>
-                    @if (redeployInProgress()) {
-                      <div class="flex items-center gap-2 text-xs text-purple-800 dark:text-purple-300">
-                        <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                        Redeploy in progress
-                      </div>
-                    }
                   </div>
                 } @else {
                   <div class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 p-4 space-y-3">
@@ -140,7 +134,20 @@ import {
                         {{ diagnosis.suggestedAction.message }}
                       </p>
                     </div>
-                    @if (showUserInputCta()) {
+                    @if (canApply()) {
+                      <button hlmBtn size="sm" (click)="onApply()" [disabled]="applying()">
+                        @if (applying()) {
+                          <ng-icon name="lucideLoader" class="h-3.5 w-3.5 mr-2 animate-spin" />
+                          Applying…
+                        } @else {
+                          <ng-icon name="lucideWand" class="h-3.5 w-3.5 mr-2" />
+                          Apply
+                        }
+                      </button>
+                      @if (applyError()) {
+                        <p class="text-xs text-red-700 dark:text-red-400">{{ applyError() }}</p>
+                      }
+                    } @else if (showUserInputCta()) {
                       <button hlmBtn size="sm" (click)="gotoConfiguration()">
                         <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 mr-2" />
                         {{ userInputCtaLabel() }}
@@ -287,12 +294,13 @@ export class DiagnosisDetailDialogComponent {
     return this._diagnosis;
   }
   readonly applicationId = input<string | null>(null);
-  /** True when the app is currently in an UPDATING/PROVISIONING status
-   * driven by the actuator's auto-remediation redeploy. */
-  readonly redeployInProgress = input(false);
 
   readonly closed = output<void>();
   readonly dismiss = output<CrashDiagnosis>();
+  readonly apply = output<CrashDiagnosis>();
+
+  readonly applying = input(false);
+  readonly applyError = input<string | null>(null);
 
   dismissing = signal(false);
 
@@ -311,6 +319,18 @@ export class DiagnosisDetailDialogComponent {
   autoFix = computed<AutoFixActionPayload | null>(() =>
     this.diagnosis ? autoFixPayload(this.diagnosis) : null,
   );
+
+  canApply(): boolean {
+    return (
+      this.diagnosis?.suggestedAction?.type === 'resources' &&
+      !this.diagnosis.resolvedAt
+    );
+  }
+
+  onApply(): void {
+    if (!this.diagnosis) return;
+    this.apply.emit(this.diagnosis);
+  }
 
   showUserInputCta(): boolean {
     return this.diagnosis?.suggestedAction?.type === 'user_input';

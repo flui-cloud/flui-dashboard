@@ -10,13 +10,11 @@ import {
 } from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { CrashDiagnosesService } from '../../../service/crash-diagnoses.service';
-import { ApplicationService } from '../../../service/application.service';
 import {
   CrashCategory,
   CrashDiagnosis,
   CrashSeverity,
   categoryLabel,
-  isAutoRemediated,
 } from '../../../model/crash-diagnosis.models';
 import { DiagnosisRowComponent } from './diagnosis-row.component';
 import { DiagnosisDetailDialogComponent } from './diagnosis-detail-dialog.component';
@@ -148,16 +146,17 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
     <app-diagnosis-detail-dialog
       [diagnosis]="selected()"
       [applicationId]="appId"
-      [redeployInProgress]="redeployInProgress()"
       (closed)="closeDetail()"
       (dismiss)="onDismiss($event)"
+      (apply)="onApply($event)"
+      [applying]="service.applyingId() === selected()?.id"
+      [applyError]="service.applyError()"
     />
   `,
 })
 export class AppDiagnosesTabComponent implements OnInit {
   service = inject(CrashDiagnosesService);
   private readonly route = inject(ActivatedRoute);
-  private readonly appService = inject(ApplicationService);
 
   readonly categories = ALL_CATEGORIES;
   readonly severities = ALL_SEVERITIES;
@@ -171,13 +170,6 @@ export class AppDiagnosesTabComponent implements OnInit {
   categoryFilter = signal<CrashCategory | null>(null);
 
   readonly selected = this.service.selected;
-
-  readonly redeployInProgress = computed(() => {
-    const sel = this.selected();
-    if (!sel || !isAutoRemediated(sel)) return false;
-    const status = this.appService.selectedApplication()?.status;
-    return status === 'updating' || status === 'provisioning';
-  });
 
   readonly filtered = computed(() => {
     const sev = this.severityFilter();
@@ -234,6 +226,11 @@ export class AppDiagnosesTabComponent implements OnInit {
   async onDismiss(d: CrashDiagnosis) {
     if (!this.appId) return;
     await this.service.dismiss(this.appId, d.id);
+  }
+
+  async onApply(d: CrashDiagnosis) {
+    if (!this.appId) return;
+    await this.service.apply(this.appId, d.id);
   }
 
   onCategoryChange(ev: Event) {

@@ -3,10 +3,9 @@ import { io, Socket } from 'socket.io-client';
 import { AppConfigService } from '../../core/services/app-config.service';
 import { WebSocketAuthService } from '../../core/services/websocket-auth.service';
 import { AppRuntimeResponseDto } from '../../core/api/model/appRuntimeResponseDto';
-import { CrashDiagnosis, AutoRemediationPayload } from '../model/crash-diagnosis.models';
+import { CrashDiagnosis } from '../model/crash-diagnosis.models';
 
 export type CrashDiagnosisEvent = CrashDiagnosis;
-export type AutoRemediationEvent = AutoRemediationPayload;
 
 export interface RolloutProgressEvent {
   appId: string;
@@ -186,15 +185,6 @@ export class AppRuntimeWebSocketService implements OnDestroy {
   // Per-app crash diagnosis callbacks
   private readonly diagnosisCallbacks = new Map<string, (e: CrashDiagnosisEvent) => void>();
 
-  // Per-app auto-remediation callbacks (phase 3)
-  private readonly autoRemediationCallbacks = new Map<string, (e: AutoRemediationEvent) => void>();
-
-  // Recent auto-remediation timestamps per appId. Used by notification service
-  // to suppress redundant "deploy started/succeeded" toasts that are triggered
-  // by the Actuator rather than by the user.
-  private readonly recentAutoRemediations = new Map<string, number>();
-  private readonly AUTO_REMEDIATION_WINDOW_MS = 2 * 60_000;
-
   // Standalone build callbacks (keyed by buildId, not appId)
   private readonly subscribedBuilds = new Set<string>();
   private readonly standaloneBuildLogCbs  = new Map<string, (e: BuildLogEvent) => void>();
@@ -214,7 +204,6 @@ export class AppRuntimeWebSocketService implements OnDestroy {
   private readonly globalBuildCompletedCbs: ((e: BuildCompletedEvent) => void)[] = [];
   private readonly globalBuildFailedCbs: ((e: BuildFailedEvent) => void)[] = [];
   private readonly globalDiagnosisCbs: ((e: CrashDiagnosisEvent) => void)[] = [];
-  private readonly globalAutoRemediationCbs: ((e: AutoRemediationEvent) => void)[] = [];
 
   // App name registry: populated externally so notifications can show the app name
   private readonly appNameRegistry = new Map<string, string>();
@@ -269,21 +258,6 @@ export class AppRuntimeWebSocketService implements OnDestroy {
 
   onGlobalDiagnosis(cb: (e: CrashDiagnosisEvent) => void): void {
     this.globalDiagnosisCbs.push(cb);
-  }
-
-  onAutoRemediation(appId: string, cb: (e: AutoRemediationEvent) => void): void {
-    this.autoRemediationCallbacks.set(appId, cb);
-  }
-
-  onGlobalAutoRemediation(cb: (e: AutoRemediationEvent) => void): void {
-    this.globalAutoRemediationCbs.push(cb);
-  }
-
-  /** True if an auto-remediation event was received for appId in the last ~2 minutes. */
-  hasRecentAutoRemediation(appId: string): boolean {
-    const ts = this.recentAutoRemediations.get(appId);
-    if (!ts) return false;
-    return Date.now() - ts < this.AUTO_REMEDIATION_WINDOW_MS;
   }
 
   private ensureConnected(): void {
@@ -387,12 +361,6 @@ export class AppRuntimeWebSocketService implements OnDestroy {
       this.globalDiagnosisCbs.forEach(cb => cb(d));
     });
 
-    this.socket.on('application:auto-remediation', (d: AutoRemediationEvent) => {
-      this.recentAutoRemediations.set(d.appId, Date.now());
-      this.autoRemediationCallbacks.get(d.appId)?.(d);
-      this.globalAutoRemediationCbs.forEach(cb => cb(d));
-    });
-
     // Standalone build events (room: build:{buildId})
     this.socket.on('build:log', (d: BuildLogEvent) => {
       this.standaloneBuildLogCbs.get(d.buildId)?.(d);
@@ -475,7 +443,6 @@ export class AppRuntimeWebSocketService implements OnDestroy {
     this.buildHeartbeatCbs.delete(appId);
     this.reconnectCbs.delete(appId);
     this.diagnosisCallbacks.delete(appId);
-    this.autoRemediationCallbacks.delete(appId);
   }
 
   subscribeToBuildEvents(

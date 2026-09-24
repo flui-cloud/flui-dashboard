@@ -1,9 +1,10 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationsService } from '../../core/api/api/applications.service';
+import { Configuration } from '../../core/api/configuration';
 import {
   CrashDiagnosis,
-  AutoRemediationPayload,
   isRecent,
   isUnresolved,
 } from '../model/crash-diagnosis.models';
@@ -11,6 +12,8 @@ import {
 @Injectable({ providedIn: 'root' })
 export class CrashDiagnosesService {
   private readonly api = inject(ApplicationsService);
+  private readonly http = inject(HttpClient);
+  private readonly apiConfig = inject(Configuration);
 
   private readonly diagnosesData = signal<CrashDiagnosis[]>([]);
   private readonly loadingData = signal(false);
@@ -18,6 +21,8 @@ export class CrashDiagnosesService {
   private readonly selectedData = signal<CrashDiagnosis | null>(null);
   private readonly totalLoadedData = signal(0);
   private readonly dismissingIdData = signal<string | null>(null);
+  private readonly applyingIdData = signal<string | null>(null);
+  private readonly applyErrorData = signal<string | null>(null);
   private readonly currentAppIdData = signal<string | null>(null);
 
   readonly diagnoses = this.diagnosesData.asReadonly();
@@ -26,6 +31,8 @@ export class CrashDiagnosesService {
   readonly selected = this.selectedData.asReadonly();
   readonly totalLoaded = this.totalLoadedData.asReadonly();
   readonly dismissingId = this.dismissingIdData.asReadonly();
+  readonly applyingId = this.applyingIdData.asReadonly();
+  readonly applyError = this.applyErrorData.asReadonly();
 
   readonly unresolved = computed(() => this.diagnosesData().filter(isUnresolved));
 
@@ -97,57 +104,35 @@ export class CrashDiagnosesService {
     }
   }
 
+  /** Accept the resource change a diagnosis proposes; the API applies it and resolves the diagnosis. */
+  async apply(appId: string, id: string): Promise<boolean> {
+    this.applyingIdData.set(id);
+    this.applyErrorData.set(null);
+    try {
+      const updated = await firstValueFrom(
+        this.http.post<CrashDiagnosis>(
+          `${this.apiConfig.basePath}/api/v1/applications/${encodeURIComponent(appId)}/crash-diagnoses/${encodeURIComponent(id)}/apply`,
+          {},
+        ),
+      );
+      this.upsert(updated);
+      if (this.selectedData()?.id === id) this.selectedData.set(updated);
+      return true;
+    } catch (err: unknown) {
+      this.applyErrorData.set(this.extractErrorMessage(err, 'Failed to apply the proposed change'));
+      return false;
+    } finally {
+      this.applyingIdData.set(null);
+    }
+  }
+
   pushRealtime(diagnosis: CrashDiagnosis): void {
     this.upsert(diagnosis);
   }
 
-  /**
-   * Handle a realtime `application:auto-remediation` event (phase 3).
-   * Optimistically upgrades the matching diagnosis to `type: 'auto'` so the
-   * UI flips to the auto-remediated rendering without waiting on the refetch,
-   * then refetches the diagnosis to pick up the authoritative `suggestedAction`.
-   */
-  applyAutoRemediation(event: AutoRemediationPayload): void {
-    this.diagnosesData.update(list =>
-      list.map(d => {
-        if (d.id !== event.diagnosisId) return d;
-        return {
-          ...d,
-          suggestedAction: {
-            type: 'auto',
-            message: `Memory limit automatically increased from ${event.previousMemoryLimit} to ${event.newMemoryLimit}. The app is being redeployed.`,
-            payload: {
-              autoFix: true,
-              previousMemoryLimit: event.previousMemoryLimit,
-              newMemoryLimit: event.newMemoryLimit,
-            },
-          },
-        };
-      }),
-    );
-    if (this.selectedData()?.id === event.diagnosisId) {
-      const current = this.selectedData();
-      if (current) {
-        this.selectedData.set({
-          ...current,
-          suggestedAction: {
-            type: 'auto',
-            message: `Memory limit automatically increased from ${event.previousMemoryLimit} to ${event.newMemoryLimit}. The app is being redeployed.`,
-            payload: {
-              autoFix: true,
-              previousMemoryLimit: event.previousMemoryLimit,
-              newMemoryLimit: event.newMemoryLimit,
-            },
-          },
-        });
-      }
-    }
-    // Refetch in background so we pick up any other authoritative changes.
-    void this.loadOne(event.appId, event.diagnosisId);
-  }
-
   select(d: CrashDiagnosis | null): void {
     this.selectedData.set(d);
+    this.applyErrorData.set(null);
   }
 
   clear(): void {

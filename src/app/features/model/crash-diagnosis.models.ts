@@ -13,7 +13,8 @@ export type CrashCategory =
 
 export type CrashSeverity = 'critical' | 'warning' | 'info';
 
-export type SuggestedActionType = 'user_input' | 'redeploy' | 'manual' | 'auto';
+/** `resources` carries a change Flui applies when accepted; `auto` only appears on diagnoses from before that. */
+export type SuggestedActionType = 'user_input' | 'redeploy' | 'manual' | 'resources' | 'auto';
 
 export interface CrashEvidenceEvent {
   type: string;
@@ -44,20 +45,6 @@ export interface AutoFixActionPayload {
   autoFix: true;
   previousMemoryLimit: string;
   newMemoryLimit: string;
-}
-
-/**
- * Realtime WebSocket event published by the Actuator when it applies an
- * automatic remediation to a crashing application (phase 3).
- */
-export interface AutoRemediationPayload {
-  appId: string;
-  diagnosisId: string;
-  reason: 'OOMKilled';
-  action: 'memory-limit-increase';
-  previousMemoryLimit: string;
-  newMemoryLimit: string;
-  timestamp: string;
 }
 
 export interface CrashDiagnosis {

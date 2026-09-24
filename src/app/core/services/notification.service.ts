@@ -16,7 +16,6 @@ export type NotificationCategory =
   | 'app-delete'
   | 'app-deploy'
   | 'crash-diagnosis'
-  | 'auto-remediation'
   | 'cluster-scaling'
   | 'snapshot'
   | 'backup'
@@ -156,22 +155,6 @@ export class NotificationService implements OnDestroy {
 
     this.runtimeWs.onGlobalOperationCompleted(e => this.handleOperationCompleted(e));
     this.runtimeWs.onGlobalOperationFailed(e => this.handleOperationFailed(e));
-
-    this.runtimeWs.onGlobalAutoRemediation(e => {
-      const appName = this.runtimeWs.getAppName(e.appId);
-      const prefix = appName ? `${appName}: ` : '';
-      this.add({
-        title: `${prefix}Memory increased automatically`,
-        body: `Flui raised the memory limit from ${e.previousMemoryLimit} to ${e.newMemoryLimit} to recover from the crash. Redeploy in progress.`,
-        link: {
-          label: 'Open diagnosis',
-          route: `/apps/applications/${e.appId}/diagnoses`,
-        },
-        type: 'info',
-        source: 'websocket',
-        category: 'auto-remediation',
-      });
-    });
 
     this.runtimeWs.onGlobalDiagnosis(e => {
       const appName = this.runtimeWs.getAppName(e.applicationId);
@@ -355,9 +338,6 @@ export class NotificationService implements OnDestroy {
     imageRef?: string;
     revisionNumber?: number;
   }): void {
-    if (e.operationType === 'deploy' && this.runtimeWs.hasRecentAutoRemediation(e.appId)) {
-      return;
-    }
     const spec = this.buildCompletedSpec(e);
     if (!spec) return;
     this.add({ ...spec, type: 'success', source: 'websocket' });

@@ -116,6 +116,9 @@ import { CrashDiagnosis } from '../../../model/crash-diagnosis.models';
       [applicationId]="appId"
       (closed)="diagnosesService.select(null)"
       (dismiss)="onDismissDiagnosis($event)"
+      (apply)="onApplyDiagnosis($event)"
+      [applying]="diagnosesService.applyingId() === diagnosesService.selected()?.id"
+      [applyError]="diagnosesService.applyError()"
     />
   `,
 })
@@ -153,6 +156,13 @@ export class AppPodDebugTabComponent implements OnInit {
   async onDismissDiagnosis(d: CrashDiagnosis) {
     if (!this.appId) return;
     await this.diagnosesService.dismiss(this.appId, d.id);
+  }
+
+  async onApplyDiagnosis(d: CrashDiagnosis) {
+    if (!this.appId) return;
+    if (await this.diagnosesService.apply(this.appId, d.id)) {
+      await this.service.loadAll(this.appId);
+    }
   }
 
   formatFetched(ms: number): string {
