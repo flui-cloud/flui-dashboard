@@ -297,7 +297,7 @@ const DECISIONS: Record<string, ScalingDecision[]> = {
       force: 'urgency',
       outcome: 'added',
       saw: '1 pod(s) the scheduler could not place, waiting for 64s.',
-      did: 'Bought a cx32 in fsn1 and set it to join.',
+      did: 'Ordered a cx32 in fsn1; it joins once provisioned.',
       why: 'Would add a cx32 in fsn1 at €0.0074/h, about €5.4 a month. This group buys automatically, and the ladder chose within its ceilings.',
       shape: 'cx32',
       region: 'fsn1',
