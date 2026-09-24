@@ -7,6 +7,11 @@ import {
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { ScalingDecision } from '../../model/scaling-group.models';
 import { outcomeBadgeClass, whenLabel } from './fleet-history.geometry';
+import {
+  operationDetail,
+  operationLabel,
+  operationTone,
+} from './decision-operation';
 
 @Component({
   selector: 'app-fleet-history-detail',
@@ -57,6 +62,15 @@ import { outcomeBadgeClass, whenLabel } from './fleet-history.geometry';
         <dd class="m-0 text-sm text-muted-foreground" data-testid="detail-why">
           {{ decision().why }}
         </dd>
+        @if (decision().operation; as op) {
+          <dt class="text-label m-0 pt-0.5">Then</dt>
+          <dd class="m-0 text-sm" data-testid="detail-operation">
+            <span [class]="tone(op.state)">{{ label(op) }}</span>
+            @if (detail(op); as text) {
+              <span class="text-muted-foreground"> — {{ text }}</span>
+            }
+          </dd>
+        }
       </dl>
     </div>
   `,
@@ -70,4 +84,8 @@ export class FleetHistoryDetailComponent {
   );
 
   protected readonly when = computed(() => whenLabel(this.decision().at));
+
+  protected readonly label = operationLabel;
+  protected readonly detail = operationDetail;
+  protected readonly tone = operationTone;
 }
