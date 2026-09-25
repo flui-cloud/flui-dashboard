@@ -11,6 +11,7 @@ import {
   ProvisionMode,
   ScalingBounds,
   DecisionOperation,
+  FleetRoom,
   ScalingDecision,
   ScalingLimits,
   ScalingPreview,
@@ -136,6 +137,7 @@ interface WirePreview {
   ladder: WireRung[];
   chosen: WireRung | null;
   asks: string | null;
+  room?: FleetRoom | null;
 }
 
 interface WireDecision {
@@ -428,6 +430,7 @@ function toPreview(wire: WirePreview): ScalingPreview {
     ladder: wire.ladder.map(toRung),
     chosen: wire.chosen ? toRung(wire.chosen) : null,
     asks: wire.asks,
+    room: wire.room ?? null,
   };
 }
 

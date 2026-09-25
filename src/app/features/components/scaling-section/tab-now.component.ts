@@ -11,6 +11,7 @@ import { ScalingNowLadderComponent } from './now-ladder.component';
 import { ScalingNowOrdersComponent } from './now-orders.component';
 import { ScalingNowAddOrderComponent } from './now-add-order.component';
 import { ScalingNowSummaryComponent } from './now-summary.component';
+import { ScalingNowRoomComponent } from './now-room.component';
 import { ScalingGroupStore } from './scaling-group.store';
 
 @Component({
@@ -23,6 +24,7 @@ import { ScalingGroupStore } from './scaling-group.store';
     ScalingNowOrdersComponent,
     ScalingNowAddOrderComponent,
     ScalingNowSummaryComponent,
+    ScalingNowRoomComponent,
   ],
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +43,7 @@ import { ScalingGroupStore } from './scaling-group.store';
         </app-explain>
 
         <app-scaling-now-summary [group]="g" />
+        <app-scaling-now-room [group]="g" />
         <app-scaling-now-ladder [group]="g" />
         <app-scaling-now-orders [group]="g" />
         <app-scaling-now-add-order [group]="g" />

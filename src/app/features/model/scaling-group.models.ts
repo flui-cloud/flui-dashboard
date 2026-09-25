@@ -164,6 +164,27 @@ export interface ScalingPreview {
   ladder: LadderRung[];
   chosen: LadderRung | null;
   asks?: string | null;
+  /** Room each node has left for new apps; null when the cluster could not be asked. */
+  room?: FleetRoom | null;
+}
+
+export interface RoomAmount {
+  cpuMillicores: number;
+  memoryMi: number;
+}
+
+export interface NodeRoom {
+  name: string;
+  role: 'master' | 'worker';
+  takesWork: boolean;
+  allocatable: RoomAmount;
+  requested: RoomAmount;
+  free: RoomAmount;
+}
+
+export interface FleetRoom {
+  nodes: NodeRoom[];
+  largestFit: (RoomAmount & { node: string }) | null;
 }
 
 /**
