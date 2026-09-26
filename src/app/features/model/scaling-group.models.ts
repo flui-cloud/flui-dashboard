@@ -121,8 +121,23 @@ export interface FleetNode {
 export interface ScalingDecision {
   id: string;
   at: string;
-  force: 'urgency' | 'opportunity';
-  outcome: 'added' | 'replaced' | 'removed' | 'declined' | 'alerted';
+  force: 'urgency' | 'opportunity' | 'person' | 'fleet';
+  outcome:
+    | 'added'
+    | 'replaced'
+    | 'removed'
+    | 'declined'
+    | 'alerted'
+    | 'changed'
+    | 'node-ordered'
+    | 'node-joined'
+    | 'purchase-failed'
+    | 'node-drained'
+    | 'node-removed';
+  /** How many identical decisions in a row this one stands for. */
+  repeats?: number;
+  /** When the first of them was taken, when it stands for more than one. */
+  since?: string;
   saw: string;
   did: string;
   why: string;
@@ -158,12 +173,27 @@ export interface LadderRung {
   note?: string;
 }
 
+export interface AlarmExit {
+  kind: 'raise-cap' | 'raise-max-nodes' | 'add-shape' | 'attach';
+  label: string;
+  toEur: number | null;
+  toNodes: number | null;
+  shape: string | null;
+}
+
+export interface AlarmBlock {
+  headline: string;
+  exits: AlarmExit[];
+}
+
 export interface ScalingPreview {
   pending: { app: string; cpu: string; memory: string } | null;
   opportunityHeldBecause: string | null;
   ladder: LadderRung[];
   chosen: LadderRung | null;
   asks?: string | null;
+  /** The main block and the ways out, computed by the API; null when something would be bought. */
+  blocked?: AlarmBlock | null;
   /** Room each node has left for new apps; null when the cluster could not be asked. */
   room?: FleetRoom | null;
 }
@@ -179,6 +209,12 @@ export interface NodeRoom {
   takesWork: boolean;
   allocatable: RoomAmount;
   requested: RoomAmount;
+  /** What the same apps may grow to, each at its limit. Absent from an older API. */
+  limits?: RoomAmount;
+  /** What they use right now; null when it could not be read. */
+  used?: RoomAmount | null;
+  /** The applications with a replica here. Absent from an older API. */
+  apps?: string[];
   free: RoomAmount;
 }
 

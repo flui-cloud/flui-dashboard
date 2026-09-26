@@ -84,6 +84,29 @@ export function spendScale(values: number[], cap: number | null): Scale {
   return { yMax, ticks };
 }
 
+/** The moment under a horizontal position on the plot: the inverse of `xAt`, held to the plot. */
+export function stampAt(x: number, domain: Domain, plot: PlotBox): number {
+  const clamped = Math.min(Math.max(x, plot.left), plot.right);
+  return domain.start + ((clamped - plot.left) / (plot.right - plot.left)) * (domain.end - domain.start);
+}
+
+/**
+ * The stretch a drag picked, earliest first, or null when it was a click: a
+ * drag narrower than a few pixels is a hand that meant to press a marker.
+ */
+export function draggedStretch(
+  fromX: number,
+  toX: number,
+  domain: Domain,
+  plot: PlotBox,
+  minPixels = 8,
+): { from: Date; to: Date } | null {
+  if (Math.abs(toX - fromX) < minPixels) return null;
+  const a = stampAt(Math.min(fromX, toX), domain, plot);
+  const b = stampAt(Math.max(fromX, toX), domain, plot);
+  return { from: new Date(a), to: new Date(b) };
+}
+
 export function xAt(stamp: number, domain: Domain, plot: PlotBox): number {
   const t = Math.min(Math.max(stamp, domain.start), domain.end);
   return (
@@ -167,6 +190,13 @@ export function dayLabel(at: Date): string {
   return at.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+/** The day across days, the time within one: a short window labelled by day says the same thing at every tick. */
+export function axisLabel(at: Date, spanMs: number): string {
+  return spanMs < 2 * 24 * 60 * 60 * 1000
+    ? at.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    : dayLabel(at);
+}
+
 export function whenLabel(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
     month: 'short',
@@ -176,15 +206,28 @@ export function whenLabel(iso: string): string {
   });
 }
 
+export function outcomeText(outcome: ScalingDecision['outcome']): string {
+  return outcome.replaceAll('-', ' ');
+}
+
 export function outcomeBadgeClass(outcome: ScalingDecision['outcome']): string {
   switch (outcome) {
     case 'added':
     case 'replaced':
+    case 'node-joined':
       return 'badge badge-success';
+    case 'purchase-failed':
+      return 'badge badge-error';
+    case 'node-ordered':
+    case 'node-drained':
+    case 'node-removed':
+      return 'badge bg-sky-500/15 text-sky-700 dark:text-sky-300';
     case 'removed':
       return 'badge badge-in-progress';
     case 'alerted':
       return 'badge badge-error';
+    case 'changed':
+      return 'badge bg-violet-500/15 text-violet-700 dark:text-violet-300';
     default:
       return 'badge bg-amber-500/15 text-amber-600 dark:text-amber-400';
   }

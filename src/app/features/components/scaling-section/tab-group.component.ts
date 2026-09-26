@@ -13,6 +13,8 @@ import { GroupDraftStore } from './group-draft.store';
 import { GroupSettingsTableComponent } from './group-settings-table.component';
 import { consequenceOf } from './scaling-consequence';
 import { ScalingApiService } from '../../service/scaling-api.service';
+import { ScalingGroupStore } from './scaling-group.store';
+import { ToastService } from '../../../shared/services/toast.service';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { WriteScalingGroup } from '../../model/scaling-group.models';
 
@@ -61,11 +63,11 @@ import { WriteScalingGroup } from '../../model/scaling-group.models';
             <button
               type="button"
               (click)="save(d)"
-              [disabled]="!!problem(d) || saving()"
+              [disabled]="!!problem(d) || saving() || !changed(d)"
               class="min-h-11 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
               data-testid="group-save-button"
             >
-              {{ saving() ? 'Saving…' : 'Save' }}
+              {{ saving() ? 'Saving…' : changed(d) ? 'Save' : 'Saved' }}
             </button>
           </div>
         </div>
@@ -97,6 +99,8 @@ export class ScalingGroupTabComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly drafts = inject(GroupDraftStore);
   private readonly api = inject(ScalingApiService);
+  private readonly store = inject(ScalingGroupStore);
+  private readonly toast = inject(ToastService);
 
   private readonly params = this.route.parent?.paramMap ?? this.route.paramMap;
 
@@ -146,6 +150,14 @@ export class ScalingGroupTabComponent {
     return null;
   }
 
+  protected changed(draft: GroupDraft): boolean {
+    const saved = this.store.group().data;
+    return (
+      !saved ||
+      JSON.stringify(bodyOf(draft.group())) !== JSON.stringify(bodyOf(saved))
+    );
+  }
+
   protected async save(draft: GroupDraft): Promise<void> {
     this.failure.set(null);
     this.saving.set(true);
@@ -153,14 +165,19 @@ export class ScalingGroupTabComponent {
       await firstValueFrom(
         this.api.updateGroup(draft.group().id, bodyOf(draft.group())),
       );
+      this.store.reload();
+      this.toast.showSuccess({
+        title: 'Group saved',
+        message: this.consequence(draft).sentence,
+      });
     } catch (error: unknown) {
       const body = (error as { error?: { message?: string | string[] } })?.error
         ?.message;
-      this.failure.set(
-        Array.isArray(body)
-          ? body.join('. ')
-          : (body ?? 'This group could not be saved.'),
-      );
+      const message = Array.isArray(body)
+        ? body.join('. ')
+        : (body ?? 'This group could not be saved.');
+      this.failure.set(message);
+      this.toast.showError({ title: 'Group not saved', message });
     } finally {
       this.saving.set(false);
     }

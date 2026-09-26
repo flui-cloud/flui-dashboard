@@ -264,7 +264,7 @@ export class ScalingNowOrdersComponent {
 
       return {
         order,
-        shape: `${order.shape} · ${order.region} ×${order.wanted}`,
+        shape: `${order.shape} · ${order.region === 'any' ? 'any region' : order.region} ×${order.wanted}`,
         kindNote:
           order.kind === 'expand'
             ? ''
@@ -300,7 +300,9 @@ export class ScalingNowOrdersComponent {
   ): OrderStatus {
     if (this.held()) return 'Stood down';
     if (blocked.length) return 'Blocked';
-    return order.outlook?.upIn.includes(order.region) ? 'Ready' : 'Waiting';
+    const up = order.outlook?.upIn ?? [];
+    const ready = order.region === 'any' ? up.length > 0 : up.includes(order.region);
+    return ready ? 'Ready' : 'Waiting';
   }
 
   protected pill(state: CatalogueState): string {

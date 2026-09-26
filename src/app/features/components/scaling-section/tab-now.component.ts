@@ -4,7 +4,7 @@ import {
   computed,
   inject,
 } from '@angular/core';
-import { ExplainComponent } from '../../../shared/components/explain.component';
+import { ScalingModeComponent } from './scaling-mode.component';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingNowFleetComponent } from './now-fleet.component';
 import { ScalingNowLadderComponent } from './now-ladder.component';
@@ -12,37 +12,34 @@ import { ScalingNowOrdersComponent } from './now-orders.component';
 import { ScalingNowAddOrderComponent } from './now-add-order.component';
 import { ScalingNowSummaryComponent } from './now-summary.component';
 import { ScalingNowRoomComponent } from './now-room.component';
+import { ScalingNowBlockedComponent } from './now-blocked.component';
 import { ScalingGroupStore } from './scaling-group.store';
 
 @Component({
   selector: 'app-scaling-now-tab',
   standalone: true,
   imports: [
-    ExplainComponent,
+    ScalingModeComponent,
     ScalingNowFleetComponent,
     ScalingNowLadderComponent,
     ScalingNowOrdersComponent,
     ScalingNowAddOrderComponent,
     ScalingNowSummaryComponent,
     ScalingNowRoomComponent,
+    ScalingNowBlockedComponent,
   ],
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (group(); as g) {
       <div class="space-y-6" data-testid="tab-now">
-        <app-explain
-          [floating]="true"
-          [label]="mode(g)"
-          labelClass="text-label"
-          testid="scaling-mode"
-        >
-          {{ g.acts.says }} An app with nowhere to run is answered in seconds; a
-          cheaper machine coming back is waited for, and that wait stops while
-          anything is stuck.
-        </app-explain>
+        <app-scaling-mode [group]="g" (switched)="store.reload()">
+          An app with nowhere to run is answered in seconds; a cheaper machine
+          coming back is waited for, and that wait stops while anything is stuck.
+        </app-scaling-mode>
 
         <app-scaling-now-summary [group]="g" />
+        <app-scaling-now-blocked [group]="g" />
         <app-scaling-now-room [group]="g" />
         <app-scaling-now-ladder [group]="g" />
         <app-scaling-now-orders [group]="g" />
@@ -60,15 +57,10 @@ import { ScalingGroupStore } from './scaling-group.store';
   `,
 })
 export class ScalingNowTabComponent {
-  private readonly store = inject(ScalingGroupStore);
+  protected readonly store = inject(ScalingGroupStore);
 
   protected readonly group = computed<SectionGroup | null>(
     () => this.store.group().data,
   );
 
-  /** Which of the three kinds of scaling is armed here. */
-  protected mode(group: SectionGroup): string {
-    if (!group.capability.canProvision) return 'Alarms only';
-    return group.acts.acts ? 'Buys on its own' : 'Alarms, does not buy';
-  }
 }

@@ -10,7 +10,7 @@ import { ScalingGroupStore } from './scaling-group.store';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import { TABLE } from './now-format';
 import { NodeRoom } from '../../model/scaling-group.models';
-import { TIGHT_PERCENT, cores, gib, roomLine, share } from './room-format';
+import { TIGHT_PERCENT, cores, gib, nodeUsageLine, roomLine, share } from './room-format';
 
 /**
  * How much room each node has left for new apps.
@@ -36,7 +36,8 @@ import { TIGHT_PERCENT, cores, gib, roomLine, share } from './room-format';
           >
             What apps reserve on each node against what it can hold, after the
             reserve kept for the system. This is what decides whether the next
-            app fits or Flui buys a node — not what the apps actually use.
+            app fits or Flui buys a node. Below each node: what the apps use now,
+            and what they may grow to at their limits.
           </app-explain>
         </h2>
 
@@ -78,7 +79,31 @@ import { TIGHT_PERCENT, cores, gib, roomLine, share } from './room-format';
                       <span class="tabular-nums text-muted-foreground">{{ bar.text }}</span>
                     </span>
                   }
+                  @if (usage(node); as u) {
+                    <span
+                      class="text-[12px]"
+                      [class]="u.overcommitted ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'"
+                      [attr.data-testid]="'room-usage-' + node.name"
+                    >{{ u.text }}</span>
+                  }
+                  @if (node.apps?.length) {
+                    <span class="truncate text-[12px] text-muted-foreground" [title]="node.apps!.join(', ')" [attr.data-testid]="'room-apps-' + node.name">
+                      Runs {{ node.apps!.length === 1 ? node.apps![0] : node.apps!.length + ' apps: ' + node.apps!.join(', ') }}
+                    </span>
+                  }
                 </span>
+              </li>
+            }
+            @if (group().purchase?.state === 'buying') {
+              <li
+                class="grid grid-cols-[minmax(10rem,18rem)_1fr] items-center gap-x-4 gap-y-1 opacity-60"
+                data-testid="room-node-joining"
+              >
+                <span class="min-w-0">
+                  <span [class]="t.mono" class="block truncate">{{ group().purchase?.shape ?? 'new node' }}{{ group().purchase?.region ? ' · ' + group().purchase?.region : '' }}</span>
+                  <span class="text-[12px] text-muted-foreground">worker · joining ({{ group().purchase?.progress }}%)</span>
+                </span>
+                <span class="text-[12px] text-muted-foreground">Takes apps once it has joined.</span>
               </li>
             }
           </ul>
@@ -96,8 +121,14 @@ export class ScalingNowRoomComponent {
 
   protected readonly line = computed(() => {
     const room = this.room();
-    return room ? roomLine(room, this.store.preview().data?.pending ?? null) : '';
+    return room
+      ? roomLine(room, this.store.preview().data?.pending ?? null, this.group().acts.acts)
+      : '';
   });
+
+  protected usage(node: NodeRoom) {
+    return nodeUsageLine(node);
+  }
 
   protected bars(node: NodeRoom) {
     const memory = share(node.requested.memoryMi, node.allocatable.memoryMi);

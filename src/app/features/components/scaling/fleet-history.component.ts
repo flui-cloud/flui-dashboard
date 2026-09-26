@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   input,
+  output,
   signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -18,7 +19,6 @@ import {
   HOURS_PER_MONTH,
   PlotBox,
   areaPath,
-  dayLabel,
   fleetDomain,
   linePath,
   nodeScale,
@@ -26,10 +26,12 @@ import {
   spendScale,
   stackTotal,
   tickAnchor,
+  axisLabel,
   tickIndexes,
   whenLabel,
   xAt,
   yAt,
+  draggedStretch,
 } from './fleet-history.geometry';
 
 type HistoryMode = 'nodes' | 'spend';
@@ -126,11 +128,15 @@ interface DecisionMarker {
         @if (points().length) {
           <svg
             [attr.viewBox]="'0 0 ' + W + ' ' + H"
-            class="block h-auto w-full"
+            class="block h-auto w-full touch-none select-none"
             preserveAspectRatio="xMidYMid meet"
             role="group"
-            aria-label="Fleet over time, with each scaling decision on the same axis"
+            aria-label="Fleet over time, with each scaling decision on the same axis. Drag across it to zoom into a stretch."
             data-testid="chart"
+            (pointerdown)="dragBegin($event)"
+            (pointermove)="dragMove($event)"
+            (pointerup)="dragEnd($event)"
+            (pointerleave)="dragCancel()"
           >
             @for (t of yTicks(); track t.v) {
               <line
@@ -222,6 +228,18 @@ interface DecisionMarker {
               >
                 {{ t.label }}
               </text>
+            }
+
+            @if (selection(); as sel) {
+              <rect
+                [attr.x]="sel.x"
+                [attr.y]="plotT"
+                [attr.width]="sel.width"
+                [attr.height]="plotB - plotT"
+                class="fill-primary/15 stroke-primary"
+                stroke-width="1"
+                data-testid="zoom-selection"
+              />
             }
 
             @for (m of markers(); track m.id) {
@@ -332,6 +350,21 @@ export class FleetHistoryComponent {
   protected readonly hovered = signal<string | null>(null);
   protected readonly pinned = signal<string | null>(null);
 
+  /** A stretch picked by dragging across the chart. */
+  readonly zoomed = output<{ from: Date; to: Date }>();
+
+  private readonly dragFrom = signal<number | null>(null);
+  private readonly dragTo = signal<number | null>(null);
+
+  protected readonly selection = computed(() => {
+    const a = this.dragFrom();
+    const b = this.dragTo();
+    if (a === null || b === null) return null;
+    const left = Math.max(Math.min(a, b), this.plotL);
+    const right = Math.min(Math.max(a, b), this.plotR);
+    return right > left ? { x: left, width: right - left } : null;
+  });
+
   readonly points = input<FleetPoint[]>([]);
   readonly decisions = input<ScalingDecision[]>([]);
   readonly monthlyCap = input<number | null>(null);
@@ -353,6 +386,12 @@ export class FleetHistoryComponent {
     removed: { color: DEFAULT_CHART_COLORS.neutral[0], acted: true },
     declined: { color: DEFAULT_CHART_COLORS.warning[0], acted: false },
     alerted: { color: DEFAULT_CHART_COLORS.danger[0], acted: false },
+    changed: { color: DEFAULT_CHART_COLORS.neutral[0], acted: false },
+    'node-ordered': { color: DEFAULT_CHART_COLORS.info[0], acted: true },
+    'node-joined': { color: DEFAULT_CHART_COLORS.success[0], acted: true },
+    'purchase-failed': { color: DEFAULT_CHART_COLORS.danger[0], acted: true },
+    'node-drained': { color: DEFAULT_CHART_COLORS.neutral[0], acted: true },
+    'node-removed': { color: DEFAULT_CHART_COLORS.neutral[0], acted: true },
   };
 
   private readonly shapes = computed(() =>
@@ -397,9 +436,10 @@ export class FleetHistoryComponent {
     const pts = this.points();
     if (!pts.length) return [];
     const picks = tickIndexes(pts.length);
+    const span = pts.at(-1)!.at.getTime() - pts[0].at.getTime();
     return picks.map((i, n) => ({
       x: this.x(pts[i].at.getTime()),
-      label: dayLabel(pts[i].at),
+      label: axisLabel(pts[i].at, span),
       anchor: tickAnchor(i, n, picks.length),
     }));
   });
@@ -475,6 +515,39 @@ export class FleetHistoryComponent {
   protected pick(id: string, event?: Event): void {
     event?.preventDefault();
     this.pinned.set(id);
+  }
+
+  protected dragBegin(event: PointerEvent): void {
+    if ((event.target as Element | null)?.closest('[role="button"]')) return;
+    const x = this.viewX(event);
+    if (x < this.plotL || x > this.plotR) return;
+    (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
+    this.dragFrom.set(x);
+    this.dragTo.set(x);
+  }
+
+  protected dragMove(event: PointerEvent): void {
+    if (this.dragFrom() === null) return;
+    this.dragTo.set(this.viewX(event));
+  }
+
+  protected dragEnd(event: PointerEvent): void {
+    const from = this.dragFrom();
+    if (from === null) return;
+    const stretch = draggedStretch(from, this.viewX(event), this.domain(), this.plot);
+    this.dragCancel();
+    if (stretch) this.zoomed.emit(stretch);
+  }
+
+  protected dragCancel(): void {
+    this.dragFrom.set(null);
+    this.dragTo.set(null);
+  }
+
+  /** The pointer in the chart's own coordinates; the SVG scales uniformly to its width. */
+  private viewX(event: PointerEvent): number {
+    const box = (event.currentTarget as Element).getBoundingClientRect();
+    return box.width ? ((event.clientX - box.left) / box.width) * this.W : 0;
   }
 
   private x(stamp: number): number {

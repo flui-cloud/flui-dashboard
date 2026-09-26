@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import {
@@ -13,7 +13,7 @@ import {
   SectionGroup,
   ShapeCatalogue,
 } from '../../model/scaling-section.models';
-import { ScalingApiService } from '../../service/scaling-api.service';
+import { HistoryWindow, HistoryZoom, ScalingApiService } from '../../service/scaling-api.service';
 import { loadedOf } from './section-reading';
 
 @Injectable()
@@ -87,9 +87,17 @@ export class ScalingGroupStore {
     return byShape;
   });
 
+  /** The span the History tab reads; kept here so a reload keeps it. */
+  readonly historyWindow = signal<HistoryWindow>('30d');
+  /** A stretch picked on the chart; it wins over the window until it is reset. */
+  readonly historyZoom = signal<HistoryZoom | null>(null);
+
   private readonly historyRes = rxResource({
-    params: () => this.clusterId(),
-    stream: ({ params }) => this.api.history(params),
+    params: () => {
+      const id = this.clusterId();
+      return id ? { id, window: this.historyWindow(), zoom: this.historyZoom() } : undefined;
+    },
+    stream: ({ params }) => this.api.history(params.id, params.window, params.zoom),
   });
 
   readonly history = loadedOf<FleetHistory>(
@@ -104,6 +112,44 @@ export class ScalingGroupStore {
 
   readonly fleet = loadedOf<FleetReading>(this.fleetRes, 'The fleet');
 
+  /** Seconds between live reads: fast while something is on its way, calm otherwise. */
+  readonly refreshSeconds = computed(() => {
+    const buying = this.group().data?.purchase?.state === 'buying';
+    const waiting = (this.preview().data?.pending ?? null) !== null;
+    return buying || waiting ? LIVE_FAST_SECONDS : LIVE_CALM_SECONDS;
+  });
+
+  private timer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    effect((onCleanup) => {
+      if (!this.id()) return;
+      const seconds = this.refreshSeconds();
+      this.timer = setTimeout(() => this.refreshLive(), seconds * 1000);
+      onCleanup(() => {
+        if (this.timer) clearTimeout(this.timer);
+      });
+    });
+    inject(DestroyRef).onDestroy(() => {
+      if (this.timer) clearTimeout(this.timer);
+    });
+  }
+
+  private refreshLive(): void {
+    const visible = typeof document === 'undefined' || !document.hidden;
+    if (visible) {
+      this.groupRes.reload();
+      this.rowRes.reload();
+      this.previewRes.reload();
+      this.decisionsRes.reload();
+      this.fleetRes.reload();
+    }
+    this.timer = setTimeout(
+      () => this.refreshLive(),
+      untracked(() => this.refreshSeconds()) * 1000,
+    );
+  }
+
   reload(): void {
     this.groupRes.reload();
     this.rowRes.reload();
@@ -114,6 +160,9 @@ export class ScalingGroupStore {
     this.fleetRes.reload();
   }
 }
+
+const LIVE_FAST_SECONDS = 5;
+const LIVE_CALM_SECONDS = 30;
 
 function noMarket(provider: string): ShapeCatalogue {
   return {

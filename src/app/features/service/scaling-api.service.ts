@@ -18,16 +18,19 @@ import {
   StandingOrder,
   StandingOrderKind,
   WriteScalingGroup,
+  AlarmBlock,
 } from '../model/scaling-group.models';
 import {
   CatalogueReadingState,
   ClusterScalingRow,
   FleetHistory,
   FleetHistoryPoint,
+  FleetLoad,
   FleetReading,
   NodeRequirement,
   OpenAlarm,
   ProviderScalingCapability,
+  ScalingModeLabel,
   SectionGroup,
   ShapeCatalogue,
 } from '../model/scaling-section.models';
@@ -92,12 +95,26 @@ interface WireGroup {
   standingOrders: WireStandingOrder[];
   requirement: NodeRequirement | null;
   acts: WireActuation;
-  purchaseHeld?: { failedAt: string; error: string | null } | null;
+  purchaseHeld?: { failedAt: string; error: string | null; until?: string | null } | null;
+  purchase?: WirePurchase | null;
+}
+
+interface WirePurchase {
+  decisionId: string;
+  decidedAt: string;
+  shape: string | null;
+  region: string | null;
+  state: 'buying' | 'joined' | 'failed';
+  says: string;
+  operation: { id: string; progress: number; finishedAt: string | null };
 }
 
 interface WireActuation {
   acts: boolean;
   says: string;
+  mode?: ScalingModeLabel['mode'];
+  label?: string;
+  attention?: boolean;
 }
 
 interface WireRow {
@@ -113,6 +130,7 @@ interface WireRow {
   monthlyCap: number | null;
   pendingPods: number | null;
   acts: boolean;
+  mode?: ScalingModeLabel | null;
   openOrders: number;
   blockedOrders: number;
   openAlarm: OpenAlarm | null;
@@ -137,12 +155,15 @@ interface WirePreview {
   ladder: WireRung[];
   chosen: WireRung | null;
   asks: string | null;
+  blocked?: AlarmBlock | null;
   room?: FleetRoom | null;
 }
 
 interface WireDecision {
   id: string;
   at: string;
+  repeats?: number;
+  since?: string;
   force: ScalingDecision['force'];
   outcome: ScalingDecision['outcome'];
   saw: string;
@@ -160,6 +181,7 @@ interface WireOrderedShape {
   allowed: boolean;
   outlook: WireOutlook | null;
   why: string;
+  facts?: { cores: number; memoryMi: number; hourlyEur: number | null; monthlyEur: number | null } | null;
 }
 
 interface WireCatalogue {
@@ -178,6 +200,7 @@ interface WireHistoryPoint {
   nodes: number;
   hourlyEur: number;
   unpricedNodes: number;
+  load?: FleetLoad | null;
 }
 
 interface WireNode {
@@ -205,6 +228,22 @@ interface WireHistory {
   orphanedOpenIntervals: number;
   message: string | null;
 }
+
+export type HistoryWindow = '1h' | '24h' | '7d' | '30d';
+
+/** A stretch picked on the History chart. */
+export interface HistoryZoom {
+  from: Date;
+  to: Date;
+}
+
+/** Each window read at a step that keeps a short-lived node visible in it. */
+export const HISTORY_WINDOWS: Record<HistoryWindow, Record<string, number>> = {
+  '1h': { hours: 1, stepMinutes: 2 },
+  '24h': { hours: 24, stepMinutes: 15 },
+  '7d': { days: 7, stepHours: 2 },
+  '30d': { days: 30, stepHours: 24 },
+};
 
 @Injectable({ providedIn: 'root' })
 export class ScalingApiService {
@@ -239,10 +278,19 @@ export class ScalingApiService {
       .pipe(map(toPreview));
   }
 
-  decisions(groupId: string, limit = 50): Observable<ScalingDecision[]> {
+  decisions(
+    groupId: string,
+    limit = 50,
+    filter: { outcome?: string; before?: string; since?: string; until?: string } = {},
+  ): Observable<ScalingDecision[]> {
+    const params: Record<string, string | number> = { limit, collapse: 'true' };
+    if (filter.outcome) params['outcome'] = filter.outcome;
+    if (filter.before) params['before'] = filter.before;
+    if (filter.since) params['since'] = filter.since;
+    if (filter.until) params['until'] = filter.until;
     return this.http
       .get<WireDecision[]>(`${this.base}/scaling-groups/${groupId}/decisions`, {
-        params: { limit },
+        params,
       })
       .pipe(map((rows) => rows.map(toDecision)));
   }
@@ -264,13 +312,16 @@ export class ScalingApiService {
 
   history(
     clusterId: string,
-    days = 30,
-    stepHours = 24,
+    window: HistoryWindow = '30d',
+    zoom: HistoryZoom | null = null,
   ): Observable<FleetHistory> {
+    const params: Record<string, string | number> = zoom
+      ? { from: zoom.from.toISOString(), to: zoom.to.toISOString() }
+      : HISTORY_WINDOWS[window];
     return this.http
       .get<WireHistory>(
         `${this.appConfig.apiBaseUrl}/api/v1/infrastructure/clusters/${clusterId}/fleet/history`,
-        { params: { days, stepHours } },
+        { params },
       )
       .pipe(map(toHistory));
   }
@@ -290,6 +341,14 @@ export class ScalingApiService {
     return this.http
       .patch<WireGroup>(`${this.base}/scaling-groups/${groupId}`, body)
       .pipe(map(toGroup));
+  }
+
+  /** Buys, once, the machine a manual group proposes; the group stays manual. */
+  approvePurchase(groupId: string, machine: { shape: string; region: string }): Observable<{ did: string }> {
+    return this.http.post<{ did: string }>(
+      `${this.base}/scaling-groups/${groupId}/approve-purchase`,
+      machine,
+    );
   }
 
   /** Lets a group held back by a failed purchase buy again; buys nothing itself. */
@@ -384,7 +443,26 @@ function toGroup(wire: WireGroup): SectionGroup {
     requirement: wire.requirement,
     acts: wire.acts,
     purchaseHeld: wire.purchaseHeld
-      ? { failedAt: new Date(wire.purchaseHeld.failedAt), error: wire.purchaseHeld.error }
+      ? {
+          failedAt: new Date(wire.purchaseHeld.failedAt),
+          error: wire.purchaseHeld.error,
+          until: wire.purchaseHeld.until ? new Date(wire.purchaseHeld.until) : null,
+        }
+      : null,
+    purchase: wire.purchase
+      ? {
+          decisionId: wire.purchase.decisionId,
+          decidedAt: new Date(wire.purchase.decidedAt),
+          shape: wire.purchase.shape,
+          region: wire.purchase.region,
+          state: wire.purchase.state,
+          says: wire.purchase.says,
+          operationId: wire.purchase.operation.id,
+          progress: wire.purchase.operation.progress,
+          finishedAt: wire.purchase.operation.finishedAt
+            ? new Date(wire.purchase.operation.finishedAt)
+            : null,
+        }
       : null,
   };
 }
@@ -403,6 +481,7 @@ function toRow(wire: WireRow): ClusterScalingRow {
     monthlyCap: wire.monthlyCap,
     pendingPods: wire.pendingPods,
     acts: wire.acts,
+    mode: wire.mode ?? null,
     openOrders: wire.openOrders,
     blockedOrders: wire.blockedOrders,
     openAlarm: wire.openAlarm,
@@ -430,6 +509,7 @@ function toPreview(wire: WirePreview): ScalingPreview {
     ladder: wire.ladder.map(toRung),
     chosen: wire.chosen ? toRung(wire.chosen) : null,
     asks: wire.asks,
+    blocked: wire.blocked ?? null,
     room: wire.room ?? null,
   };
 }
@@ -447,6 +527,8 @@ function toDecision(wire: WireDecision): ScalingDecision {
     region: wire.region ?? undefined,
     hourlyEur: wire.hourlyEur,
     operation: wire.operation ?? null,
+    repeats: wire.repeats,
+    since: wire.since,
   };
 }
 
@@ -462,6 +544,7 @@ function toCatalogue(wire: WireCatalogue): ShapeCatalogue {
       allowed: shape.allowed,
       outlook: shape.outlook ? toOutlook(shape.outlook) : null,
       why: shape.why,
+      facts: shape.facts ?? null,
     })),
   };
 }
@@ -469,6 +552,7 @@ function toCatalogue(wire: WireCatalogue): ShapeCatalogue {
 function toHistoryPoint(wire: WireHistoryPoint): FleetHistoryPoint {
   return {
     at: new Date(wire.at),
+    load: wire.load ?? null,
     byShape: wire.byShape,
     nodes: wire.nodes,
     hourlyEur: wire.hourlyEur,

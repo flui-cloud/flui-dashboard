@@ -16,6 +16,7 @@ import { ScalingGroupStore } from './scaling-group.store';
 import { GroupDraft } from './group-draft';
 import { TABLE } from './scaling-tabs-format';
 import { SettingsListEditorComponent } from './settings-list-editor.component';
+import { ShapeSpec } from '../../model/scaling-section.models';
 
 /**
  * What this group may buy and how it chooses: regions and shapes where the
@@ -265,10 +266,13 @@ export class GroupCatalogueRowsComponent {
     const cap = this.draft().group().limits.maxMonthlyCost;
     if (cap === null) return null;
 
-    const cheapest = this.catalogue.cheapestMonthly(
-      this.draft().provider(),
-      this.draft().group().shapes,
-    );
+    const shapes = this.draft().group().shapes;
+    const priced = shapes
+      .map((shape) => this.listed().get(shape)?.monthlyEur)
+      .filter((v): v is number => typeof v === 'number');
+    const cheapest = priced.length
+      ? Math.min(...priced)
+      : this.catalogue.cheapestMonthly(this.draft().provider(), shapes);
     if (cheapest === null) return null;
 
     const committed = this.store.row().data?.monthlyEur ?? 0;
@@ -291,16 +295,33 @@ export class GroupCatalogueRowsComponent {
     ),
   );
 
-  protected readonly machineChoices = computed(() =>
-    this.catalogue.machineChoices(
-      this.draft().provider(),
-      this.draft().group().regions,
-    ),
+  /**
+   * The machines as the API prices them — the price the spend ceiling counts.
+   * The wizard's catalogue stays the fallback for a shape the API did not read.
+   */
+  private readonly listed = computed(
+    () =>
+      new Map(
+        (this.store.catalogue().data?.shapes ?? [])
+          .filter((s) => s.facts)
+          .map((s) => [s.shape, s.facts!]),
+      ),
   );
 
-  protected readonly labels = computed(() =>
-    this.catalogue.labels(this.draft().provider()),
+  protected readonly machineChoices = computed(() =>
+    this.catalogue
+      .machineChoices(this.draft().provider(), this.draft().group().regions)
+      ?.map((choice) => {
+        const spec = this.listed().get(choice.value);
+        return spec ? { ...choice, note: specNote(spec) } : choice;
+      }) ?? null,
   );
+
+  protected readonly labels = computed(() => {
+    const out = { ...this.catalogue.labels(this.draft().provider()) };
+    for (const [shape, spec] of this.listed()) out[shape] = specNote(spec);
+    return out;
+  });
 
   readonly draft = input.required<GroupDraft>();
 
@@ -310,4 +331,9 @@ export class GroupCatalogueRowsComponent {
   protected readonly d = this.draft;
   protected readonly g = computed(() => this.draft().group());
   protected readonly provider = computed(() => this.draft().provider());
+}
+
+function specNote(spec: ShapeSpec): string {
+  const monthly = spec.monthlyEur === null ? '' : ` · €${spec.monthlyEur.toFixed(2)}/mo`;
+  return `${spec.cores} vCPU · ${Math.round(spec.memoryMi / 1024)} GB${monthly}`;
 }

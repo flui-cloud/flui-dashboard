@@ -83,7 +83,7 @@ interface DecisionRow {
                         class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
                         [class]="badge(row.tone)"
                       >
-                        {{ row.outcome }}
+                        {{ row.outcome.replaceAll('-', ' ') }}
                       </span>
                       <span class="text-xs text-muted-foreground">{{
                         row.did
@@ -135,9 +135,9 @@ export class ScalingDecisionsTableComponent {
   }
 
   private toneOf(outcome: ScalingDecision['outcome']): Tone {
-    if (outcome === 'added' || outcome === 'replaced' || outcome === 'removed')
+    if (outcome === 'added' || outcome === 'replaced' || outcome === 'removed' || outcome === 'node-joined' || outcome === 'node-removed')
       return 'acted';
-    return outcome === 'alerted' ? 'alerted' : 'quiet';
+    return outcome === 'alerted' || outcome === 'purchase-failed' ? 'alerted' : 'quiet';
   }
 
   private clock(iso: string): string {

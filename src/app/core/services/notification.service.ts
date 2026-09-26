@@ -80,6 +80,11 @@ export class NotificationService implements OnDestroy {
 
     // Periodic TTL cleanup every 5 minutes
     this.cleanupInterval = setInterval(() => this.applyTtlFilter(), 5 * 60_000);
+
+    effect(() => {
+      const userId = this.authService.currentUser()?.userId;
+      if (userId) this.userEvents.connect(userId);
+    });
   }
 
   bootstrapWebSocketListeners(): void {
@@ -183,18 +188,11 @@ export class NotificationService implements OnDestroy {
   }
 
   /**
-   * Connects the per-user WebSocket channel (when an authenticated user is
-   * available) and surfaces user-scoped events as toasts. Currently covers
-   * the post-callback `github:connected` event from the GitHub App U2S flow.
+   * Surfaces the per-user channel's events. The listeners are registered at
+   * start; the channel itself connects once the signed-in user is known (see
+   * the constructor), which on a page load is after this runs.
    */
   private bootstrapUserEvents(): void {
-    const user = this.authService.currentUser();
-    if (!user?.userId) {
-      // Not authenticated yet — UserEventsService will be connected on next
-      // login via the AuthService; see effect in loadCurrentUser.
-      return;
-    }
-    this.userEvents.connect(user.userId);
     this.userEvents.onGithubConnected((payload) => {
       this.add({
         title: 'GitHub connected',
@@ -222,6 +220,20 @@ export class NotificationService implements OnDestroy {
         type: firing ? this.alertType(payload.severity) : 'success',
         source: 'websocket',
         category: 'alert',
+      });
+    });
+    this.userEvents.onScaling((payload) => {
+      const openLabel = payload.tab === 'now' ? 'Open Now' : 'Open History';
+      this.add({
+        title: payload.title,
+        body: payload.body,
+        link: {
+          label: payload.retry ? 'Open Now to try again' : openLabel,
+          route: `/scaling/${payload.groupId}/${payload.tab}`,
+        },
+        type: payload.tone,
+        source: 'websocket',
+        category: 'cluster-scaling',
       });
     });
   }

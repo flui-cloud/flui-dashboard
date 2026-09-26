@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { ResourceAmountStringDto } from './resourceAmountStringDto';
+import { WhatIfAnswerDto } from './whatIfAnswerDto';
 
 
 export interface ResourceAvailabilityResponseDto { 
@@ -16,7 +17,7 @@ export interface ResourceAvailabilityResponseDto {
      */
     canDeploy: boolean;
     /**
-     * Machine-readable reason when resources are not freely available. null = ok; \"insufficient_resources\" = not enough capacity, autoscaling OFF; \"autoscaling_pending\" = not enough capacity now but autoscaling will handle it.
+     * Machine-readable reason when resources are not freely available. null = ok; \"insufficient_resources\" = not enough capacity, autoscaling OFF; \"autoscaling_pending\" = not enough capacity now and the scaling group will buy the machine named in `placement`.
      */
     reason?: ResourceAvailabilityResponseDto.ReasonEnum | null;
     /**
@@ -48,6 +49,10 @@ export interface ResourceAvailabilityResponseDto {
      * Plain sentence for the reason above, including whether a node will actually appear. null when the request fits.
      */
     reasonMessage?: string | null;
+    /**
+     * Where it would run when the free total is not enough: on a node already there, on a machine a scaling group would buy or only propose, or nowhere yet — with the reason machine by machine. Null when it fits or when scaling could not be asked.
+     */
+    placement?: WhatIfAnswerDto | null;
 }
 export namespace ResourceAvailabilityResponseDto {
     export const ReasonEnum = {

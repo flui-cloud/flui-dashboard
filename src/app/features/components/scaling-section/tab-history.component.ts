@@ -2,8 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
+  signal,
+  untracked,
 } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
+import { HistoryWindow, HistoryZoom, ScalingApiService } from '../../service/scaling-api.service';
 import { ScalingDecision } from '../../model/scaling-group.models';
 import {
   operationDetail,
@@ -14,7 +20,9 @@ import {
   FleetHistoryPoint,
   SectionGroup,
 } from '../../model/scaling-section.models';
+import { FleetLoadChartComponent } from '../scaling/fleet-load-chart.component';
 import { FleetHistoryComponent } from '../scaling/fleet-history.component';
+import { outcomeText } from '../scaling/fleet-history.geometry';
 import { ScalingGroupStore } from './scaling-group.store';
 import { TABLE, ago } from './now-format';
 import {
@@ -28,11 +36,14 @@ interface LogRow {
   outcomePill: string;
 }
 
+const PAGE = 50;
+
 @Component({
   selector: 'app-scaling-history-tab',
   standalone: true,
   imports: [
     FleetHistoryComponent,
+    FleetLoadChartComponent,
     SectionFailureComponent,
     SectionSkeletonComponent,
   ],
@@ -62,11 +73,37 @@ interface LogRow {
             (retry)="store.reload()"
           />
         } @else {
+          <div class="mb-2 flex flex-wrap gap-1.5" role="group" aria-label="Span" data-testid="history-window">
+            @for (w of windows; track w) {
+              <button
+                type="button"
+                class="rounded-full border px-2.5 py-0.5 text-[12px]"
+                [class]="store.historyWindow() === w ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground'"
+                (click)="store.historyWindow.set(w); store.historyZoom.set(null)"
+                [attr.data-testid]="'history-window-' + w"
+              >{{ windowLabel[w] }}</button>
+            }
+          </div>
+          @if (store.historyZoom(); as z) {
+            <p class="m-0 mb-2 flex flex-wrap items-center gap-2 text-[12px] text-muted-foreground" data-testid="history-zoom">
+              <span>Zoomed to {{ zoomLabel(z) }}</span>
+              <button
+                type="button"
+                class="rounded-full border border-border px-2.5 py-0.5 text-foreground hover:bg-muted"
+                (click)="store.historyZoom.set(null)"
+                data-testid="history-zoom-reset"
+              >Reset</button>
+            </p>
+          } @else {
+            <p class="m-0 mb-2 text-[12px] text-muted-foreground">Drag across the chart to zoom into a stretch.</p>
+          }
           <app-fleet-history
             [points]="points()"
-            [decisions]="decisions()"
+            [decisions]="chartDecisions()"
             [monthlyCap]="cap()"
+            (zoomed)="store.historyZoom.set($event)"
           />
+          <app-fleet-load-chart [points]="points()" />
 
           @if (unpricedNote(); as note) {
             <p
@@ -104,6 +141,17 @@ interface LogRow {
               (retry)="store.reload()"
             />
           } @else {
+            <div class="mb-2 flex flex-wrap gap-1.5" role="group" aria-label="Show" data-testid="decision-filter">
+              @for (f of filters; track f.key) {
+                <button
+                  type="button"
+                  class="rounded-full border px-2.5 py-0.5 text-[12px]"
+                  [class]="filter() === f.key ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground'"
+                  (click)="setFilter(f.key)"
+                  [attr.data-testid]="'decision-filter-' + f.key"
+                >{{ f.label }}</button>
+              }
+            </div>
             <div [class]="t.card">
               <div [class]="t.scroll">
                 <table [class]="t.table">
@@ -134,7 +182,7 @@ interface LogRow {
                         <td [class]="t.td">
                           <span [class]="t.pill + ' w-fit ' + row.outcomePill">
                             {{ row.decision.force }} ·
-                            {{ row.decision.outcome }}
+                            {{ outcomeText(row.decision.outcome) }}
                           </span>
                         </td>
                         <td [class]="t.tdMuted">{{ row.decision.saw }}</td>
@@ -142,7 +190,7 @@ interface LogRow {
                           <span class="flex flex-col gap-0.5">
                             <span>{{ row.decision.did }}</span>
                             <span [class]="t.note">{{ row.decision.why }}</span>
-                            @if (row.decision.operation; as op) {
+                            @if (row.decision.force !== 'fleet' && row.decision.operation; as op) {
                               <span
                                 class="inline-flex flex-wrap items-center gap-1.5 text-[12px]"
                                 [attr.data-testid]="'decision-operation-' + row.decision.id"
@@ -175,6 +223,15 @@ interface LogRow {
                 </table>
               </div>
             </div>
+            @if (more()) {
+              <button
+                type="button"
+                class="mt-2 rounded-md border border-border px-3 py-1.5 text-[13px] text-muted-foreground hover:text-foreground disabled:opacity-50"
+                [disabled]="paging()"
+                (click)="loadOlder()"
+                data-testid="decisions-older"
+              >{{ paging() ? 'Loading…' : 'Load older' }}</button>
+            }
           }
         </section>
       </div>
@@ -190,6 +247,28 @@ interface LogRow {
 })
 export class ScalingHistoryTabComponent {
   protected readonly store = inject(ScalingGroupStore);
+  private readonly api = inject(ScalingApiService);
+
+  protected readonly windows: HistoryWindow[] = ['1h', '24h', '7d', '30d'];
+  protected readonly windowLabel: Record<HistoryWindow, string> = {
+    '1h': 'Last hour',
+    '24h': '24 hours',
+    '7d': '7 days',
+    '30d': '30 days',
+  };
+
+  protected readonly filters = [
+    { key: 'all', label: 'All', outcome: undefined },
+    { key: 'nodes', label: 'Nodes', outcome: 'nodes' },
+    { key: 'alarms', label: 'Alarms', outcome: 'alerted' },
+    { key: 'declines', label: 'Declines', outcome: 'declined' },
+    { key: 'changes', label: 'Changes', outcome: 'changed' },
+  ] as const;
+  protected readonly filter = signal<(typeof this.filters)[number]['key']>('all');
+  /** Rows read past the store's first page, or for a filter the store does not apply. */
+  private readonly extra = signal<ScalingDecision[] | null>(null);
+  protected readonly paging = signal(false);
+  private readonly exhausted = signal(false);
 
   protected readonly t = TABLE;
 
@@ -219,6 +298,83 @@ export class ScalingHistoryTabComponent {
   protected readonly decisions = computed<ScalingDecision[]>(
     () => this.store.decisions().data ?? [],
   );
+
+  /** Decisions of the zoomed stretch itself, not the latest page, so the markers read for it. */
+  private readonly zoomDecisions = rxResource({
+    params: () => {
+      const g = this.group();
+      const z = this.store.historyZoom();
+      return g && z ? { id: g.id, since: z.from.toISOString(), until: z.to.toISOString() } : undefined;
+    },
+    stream: ({ params }) =>
+      this.api.decisions(params.id, 200, { since: params.since, until: params.until }),
+  });
+
+  protected readonly chartDecisions = computed<ScalingDecision[]>(() =>
+    this.store.historyZoom() ? (this.zoomDecisions.value() ?? []) : this.decisions(),
+  );
+
+  protected zoomLabel(z: HistoryZoom): string {
+    const day = (d: Date) => d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+    const time = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return day(z.from) === day(z.to)
+      ? `${day(z.from)}, ${time(z.from)} – ${time(z.to)}`
+      : `${day(z.from)} ${time(z.from)} – ${day(z.to)} ${time(z.to)}`;
+  }
+
+  private readonly groupId = computed(() => this.group()?.id ?? null);
+
+  private readonly shown = computed<ScalingDecision[]>(() =>
+    this.filter() === 'all' && this.extra() === null ? this.decisions() : (this.extra() ?? []),
+  );
+
+  protected readonly more = computed(
+    () => !this.exhausted() && this.shown().length >= PAGE,
+  );
+
+  constructor() {
+    effect(() => {
+      this.groupId();
+      untracked(() => {
+        this.extra.set(null);
+        this.exhausted.set(false);
+        this.filter.set('all');
+      });
+    });
+  }
+
+  protected async setFilter(key: (typeof this.filters)[number]['key']): Promise<void> {
+    this.filter.set(key);
+    this.exhausted.set(false);
+    if (key === 'all') {
+      this.extra.set(null);
+      return;
+    }
+    this.extra.set(await this.page());
+  }
+
+  protected async loadOlder(): Promise<void> {
+    const rows = this.shown();
+    const last = rows.reduce<string | undefined>(
+      (min, d) => (!min || Date.parse(d.at) < Date.parse(min) ? d.at : min),
+      undefined,
+    );
+    this.paging.set(true);
+    try {
+      const older = await this.page(last);
+      if (older.length < PAGE) this.exhausted.set(true);
+      this.extra.set([...rows, ...older]);
+    } finally {
+      this.paging.set(false);
+    }
+  }
+
+  private async page(before?: string): Promise<ScalingDecision[]> {
+    const g = this.group();
+    if (!g) return [];
+    const outcome = this.filters.find((f) => f.key === this.filter())?.outcome;
+    return firstValueFrom(this.api.decisions(g.id, PAGE, { outcome, before }));
+  }
 
   protected readonly cap = computed<number | null>(
     () => this.group()?.limits.maxMonthlyCost ?? null,
@@ -268,7 +424,7 @@ export class ScalingHistoryTabComponent {
 
   protected readonly log = computed<LogRow[]>(() => {
     const now = Date.now();
-    return [...this.decisions()]
+    return [...this.shown()]
       .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
       .map((decision) => ({
         decision,
@@ -277,12 +433,17 @@ export class ScalingHistoryTabComponent {
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
-        })} · ${ago(decision.at, now)} ago`,
+        })} · ${ago(decision.at, now)} ago${
+          decision.repeats && decision.repeats > 1 && decision.since
+            ? ` · ×${decision.repeats} since ${new Date(decision.since).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+            : ''
+        }`,
         outcomePill: this.outcomePill(decision.outcome),
       }));
   });
 
   protected readonly operationLabel = operationLabel;
+  protected readonly outcomeText = outcomeText;
   protected readonly operationDetail = operationDetail;
   protected readonly operationTone = operationTone;
 
@@ -297,6 +458,16 @@ export class ScalingHistoryTabComponent {
         return 'badge-error';
       case 'declined':
         return 'bg-amber-500/15 text-amber-600 dark:text-amber-400';
+      case 'changed':
+        return 'bg-violet-500/15 text-violet-700 dark:text-violet-300';
+      case 'node-joined':
+        return 'badge-success';
+      case 'purchase-failed':
+        return 'badge-error';
+      case 'node-ordered':
+      case 'node-drained':
+      case 'node-removed':
+        return 'bg-sky-500/15 text-sky-700 dark:text-sky-300';
     }
   }
 }

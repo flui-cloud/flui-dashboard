@@ -23,6 +23,9 @@ import { SectionGroup } from '../../model/scaling-section.models';
 import { LadderRow, ladderRows, rowsAgree } from './ladder-rows';
 import { ScalingLadderDialogComponent } from './now-ladder-dialog.component';
 import { ScalingGroupStore } from './scaling-group.store';
+import { firstValueFrom } from 'rxjs';
+import { ScalingApiService } from '../../service/scaling-api.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import {
   SectionFailureComponent,
   SectionSkeletonComponent,
@@ -127,6 +130,32 @@ const EMPTY_PREVIEW: ScalingPreview = {
             {{ headline().why }}
           </span>
 
+          @if (buyable(); as machine) {
+            @if (!confirmBuy()) {
+              <button
+                type="button"
+                class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground hover:opacity-90"
+                data-testid="ladder-buy-once"
+                (click)="confirmBuy.set(true)"
+              >
+                Buy this {{ machine.shape }}
+              </button>
+            } @else {
+              <span class="inline-flex flex-wrap items-center gap-2 text-[12px]" data-testid="ladder-buy-confirm">
+                Buy one {{ machine.shape }} in {{ machine.region }}{{ machine.price }}? The group stays manual.
+                <button
+                  type="button"
+                  class="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground disabled:opacity-50"
+                  [disabled]="buying()"
+                  (click)="buyOnce(machine.shape, machine.region)"
+                  data-testid="ladder-buy-confirm-yes"
+                >
+                  {{ buying() ? 'Ordering…' : 'Buy' }}
+                </button>
+                <button type="button" class="text-muted-foreground" [disabled]="buying()" (click)="confirmBuy.set(false)">Cancel</button>
+              </span>
+            }
+          }
           <button
             type="button"
             class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -155,6 +184,42 @@ export class ScalingNowLadderComponent {
   readonly group = input.required<SectionGroup>();
 
   protected readonly stepping = signal(false);
+  private readonly api = inject(ScalingApiService);
+  private readonly toast = inject(ToastService);
+  protected readonly confirmBuy = signal(false);
+  protected readonly buying = signal(false);
+
+  protected readonly buyable = computed(() => {
+    const g = this.group();
+    const preview = this.store.preview().data;
+    const chosen = preview?.chosen;
+    if (!g.capability.canProvision || g.provision !== 'manual') return null;
+    if (!preview?.pending || !chosen?.shape || !chosen.region || g.purchase?.state === 'buying') return null;
+    const price = chosen.hourlyEur === null ? '' : ` at €${chosen.hourlyEur}/h`;
+    return { shape: chosen.shape, region: chosen.region, price };
+  });
+
+  protected async buyOnce(shape: string, region: string): Promise<void> {
+    this.buying.set(true);
+    try {
+      const decision = await firstValueFrom(
+        this.api.approvePurchase(this.group().id, { shape, region }),
+      );
+      this.toast.showSuccess({ title: 'Purchase ordered', message: decision.did });
+      this.confirmBuy.set(false);
+      this.store.reload();
+    } catch (err: unknown) {
+      const e = err as { error?: { message?: string | string[] }; message?: string };
+      const message = e?.error?.message ?? e?.message ?? 'Nothing was bought.';
+      this.toast.showError({
+        title: 'Nothing bought',
+        message: Array.isArray(message) ? message.join(' ') : message,
+      });
+      this.store.reload();
+    } finally {
+      this.buying.set(false);
+    }
+  }
 
   protected readonly loading = computed(() => this.store.preview().loading);
   protected readonly failed = computed(() => this.store.preview().failed);

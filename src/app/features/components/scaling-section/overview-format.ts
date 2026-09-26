@@ -1,4 +1,4 @@
-import { ProviderScalingCapability } from '../../model/scaling-section.models';
+import { ProviderScalingCapability, ScalingModeLabel } from '../../model/scaling-section.models';
 
 export type ScalingMode =
   'flui-buys' | 'flui-decides' | 'you-buy' | 'you-attach';
@@ -13,15 +13,15 @@ export interface ModeCopy {
 export const MODES: Record<ScalingMode, ModeCopy> = {
   'flui-buys': {
     id: 'flui-buys',
-    label: 'Flui buys',
+    label: 'Automatic — Flui buys',
     pill: 'bg-primary/10 text-primary',
     how: 'Flui buys the machine and it joins on its own. Billed by the hour.',
   },
   'flui-decides': {
     id: 'flui-decides',
-    label: 'Flui decides only',
-    pill: 'bg-muted text-foreground',
-    how: 'Flui could buy here and will not — by choice, or for want of a budget. It names the machine and stops.',
+    label: 'Manual — Flui does not buy',
+    pill: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200',
+    how: 'Flui could buy here and is set not to. It names the machine and a person buys it, or switches the group to automatic.',
   },
   'you-buy': {
     id: 'you-buy',
@@ -38,6 +38,19 @@ export const MODES: Record<ScalingMode, ModeCopy> = {
 };
 
 export function modeOf(
+  capability: ProviderScalingCapability,
+  row?: { acts: boolean; groupCount: number; mode?: ScalingModeLabel | null },
+): ModeCopy {
+  const base = baseModeOf(capability, row);
+  if (!row?.mode) return base;
+  return {
+    ...base,
+    label: row.mode.label,
+    pill: row.mode.attention ? MODES['flui-decides'].pill : base.pill,
+  };
+}
+
+function baseModeOf(
   capability: ProviderScalingCapability,
   row?: { acts: boolean; groupCount: number },
 ): ModeCopy {

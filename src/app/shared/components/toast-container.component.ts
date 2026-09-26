@@ -27,7 +27,7 @@ import { Toast, ToastService } from '../services/toast.service';
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none">
+    <div class="fixed top-16 right-4 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none">
       @for (t of toastService.toasts(); track t.id) {
         <div
           class="pointer-events-auto rounded-lg border shadow-lg px-3 py-2.5 flex items-start gap-2.5 animate-in slide-in-from-right duration-200"

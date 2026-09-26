@@ -15,6 +15,8 @@ import {
   tickIndexes,
   xAt,
   yAt,
+  stampAt,
+  draggedStretch,
 } from './fleet-history.geometry';
 
 const PLOT: PlotBox = { left: 40, right: 740, top: 0, bottom: 200 };
@@ -194,5 +196,27 @@ describe('fleet-history geometry', () => {
         outcomeBadgeClass('held' as Parameters<typeof outcomeBadgeClass>[0]),
       ).toContain('badge');
     });
+  });
+});
+
+
+describe('reading a drag on the plot', () => {
+  const plot = { left: 40, right: 740, top: 10, bottom: 200 };
+  const domain = { start: 0, end: 7_000 };
+
+  it('turns a position back into the moment under it', () => {
+    expect(stampAt(40, domain, plot)).toBe(0);
+    expect(stampAt(390, domain, plot)).toBe(3_500);
+    expect(stampAt(900, domain, plot)).toBe(7_000);
+  });
+
+  it('gives the stretch earliest first, whichever way it was dragged', () => {
+    const s = draggedStretch(390, 140, domain, plot)!;
+    expect(s.from.getTime()).toBe(1_000);
+    expect(s.to.getTime()).toBe(3_500);
+  });
+
+  it('reads a tiny drag as a click', () => {
+    expect(draggedStretch(200, 204, domain, plot)).toBeNull();
   });
 });

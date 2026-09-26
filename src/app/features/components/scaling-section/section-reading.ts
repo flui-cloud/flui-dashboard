@@ -17,9 +17,10 @@ export function loadedOf<T>(
     const absent = error instanceof HttpErrorResponse && error.status === 404;
     const idle = resource.status() === 'idle';
 
+    const data = resource.value() ?? null;
     return {
-      data: resource.value() ?? null,
-      loading: resource.isLoading() || idle,
+      data,
+      loading: (resource.isLoading() && data === null) || idle,
       failed: error && !absent ? `${what} — ${reasonOf(error)}` : null,
       absent,
     };

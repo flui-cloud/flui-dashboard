@@ -14,9 +14,11 @@ import {
   lucideBell,
   lucideCircleAlert,
   lucideCircleCheck,
+  lucideLoader,
   lucidePause,
   lucideRotateCcw,
 } from '@ng-icons/lucide';
+import { InstallLogService } from '../../service/install-log.service';
 import {
   ClusterScalingRow,
   SectionGroup,
@@ -49,6 +51,7 @@ interface StatCard {
       lucideBell,
       lucideCircleAlert,
       lucideCircleCheck,
+      lucideLoader,
       lucidePause,
       lucideRotateCcw,
     }),
@@ -101,6 +104,42 @@ interface StatCard {
           }
         </dl>
 
+        @if (group().purchase; as purchase) {
+          <div
+            class="rounded-lg border px-3 py-2 text-sm"
+            [class]="purchaseClass(purchase.state)"
+            data-testid="purchase-progress"
+          >
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <ng-icon
+                [name]="purchase.state === 'buying' ? 'lucideLoader' : purchase.state === 'joined' ? 'lucideCircleCheck' : 'lucideCircleAlert'"
+                class="h-4 w-4 shrink-0"
+                [class.animate-spin]="purchase.state === 'buying'"
+              />
+              <span class="min-w-0 flex-1 text-foreground">
+                {{ purchase.says }}
+                @if (purchase.state === 'joined' && purchase.finishedAt) {
+                  <span class="text-muted-foreground"> · joined at {{ clock(purchase.finishedAt) }}</span>
+                }
+              </span>
+              <button
+                type="button"
+                class="text-[13px] font-medium underline underline-offset-2 disabled:opacity-50"
+                [disabled]="downloadingLog()"
+                (click)="downloadLog(purchase.operationId)"
+                data-testid="purchase-log"
+              >
+                {{ downloadingLog() ? 'Downloading…' : 'Install log' }}
+              </button>
+            </div>
+            @if (purchase.state === 'buying') {
+              <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-primary/15">
+                <div class="h-1 rounded-full bg-primary transition-all" [style.width.%]="purchase.progress"></div>
+              </div>
+            }
+          </div>
+        }
+
         <p
           class="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-border bg-card px-3 py-2 text-sm"
           data-testid="state-line"
@@ -123,10 +162,17 @@ interface StatCard {
               class="h-4 w-4 shrink-0 text-amber-500"
             />
             <div class="min-w-0 flex-1">
-              <p class="m-0 text-foreground">
-                A purchase failed {{ heldAge() }} ago — nothing more is bought
-                until you try again.
-              </p>
+              @if (hold.until) {
+                <p class="m-0 text-foreground">
+                  The machine was sold out {{ heldAge() }} ago and nothing was
+                  created. Flui reads availability again at {{ clockOf(hold.until) }}.
+                </p>
+              } @else {
+                <p class="m-0 text-foreground">
+                  A purchase failed {{ heldAge() }} ago — nothing more is bought
+                  until you try again.
+                </p>
+              }
               @if (hold.error) {
                 <p class="m-0 break-words text-[13px] text-muted-foreground">
                   {{ hold.error }}
@@ -160,7 +206,7 @@ interface StatCard {
               class="h-4 w-4 shrink-0 translate-y-0.5 text-amber-500"
             />
             <span class="text-foreground"
-              >Open {{ open.age }} — {{ open.asks }}</span
+              >Alarm open {{ open.age }}@if (!preview()?.blocked) { — {{ open.asks }}}</span
             >
           </p>
         }
@@ -195,7 +241,7 @@ export class ScalingNowSummaryComponent {
     () => this.store.preview().failed ?? this.store.row().failed,
   );
 
-  private readonly preview = computed(() => this.store.preview().data);
+  protected readonly preview = computed(() => this.store.preview().data);
   private readonly row = computed(() => this.store.row().data);
 
   protected readonly pending = computed(() => this.preview()?.pending ?? null);
@@ -213,6 +259,10 @@ export class ScalingNowSummaryComponent {
 
   protected readonly retrying = signal(false);
   protected readonly retryError = signal<string | null>(null);
+
+  protected clockOf(at: Date): string {
+    return at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
 
   protected readonly heldAge = computed(() => {
     const hold = this.group().purchaseHeld;
@@ -325,7 +375,7 @@ export class ScalingNowSummaryComponent {
     const counted = row ? Math.max(row.pendingPods ?? 0, alreadyPending) : null;
     const waiting = stuck
       ? `${stuck.app} · ${stuck.cpu} · ${stuck.memory}, waited more than ${group.settleSeconds}s`
-      : `after ${group.settleSeconds}s of waiting`;
+      : `after ${group.settleSeconds}s of waiting, checked every minute`;
 
     return {
       id: 'pending',
@@ -350,8 +400,42 @@ export class ScalingNowSummaryComponent {
     };
   }
 
+  private readonly installLog = inject(InstallLogService);
+  protected readonly downloadingLog = signal(false);
+
+  protected purchaseClass(state: 'buying' | 'joined' | 'failed'): string {
+    if (state === 'buying') return 'border-primary/40 bg-primary/[0.05]';
+    if (state === 'joined') return 'border-green-500/40 bg-green-500/[0.06]';
+    return 'border-red-500/40 bg-red-500/[0.06]';
+  }
+
+  protected clock(at: Date): string {
+    return at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  protected downloadLog(operationId: string): void {
+    this.downloadingLog.set(true);
+    this.installLog.download(operationId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `install-${operationId}.log`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.downloadingLog.set(false);
+      },
+      error: () => this.downloadingLog.set(false),
+    });
+  }
+
   protected readonly state = computed(() => {
     const group = this.group();
+    if (group.purchase?.state === 'buying') {
+      return this.pending()
+        ? `${this.pending()!.app} waits for the ${group.purchase.shape ?? 'node'} on its way.`
+        : 'A node is on its way.';
+    }
     const stuck = this.pending();
     const chosen = this.preview()?.chosen ?? null;
     const fleet = this.row()?.nodes ?? null;
@@ -371,7 +455,10 @@ export class ScalingNowSummaryComponent {
     const since = `${stuck.app} has nowhere to run`;
 
     if (!chosen) {
-      return `${since} — no machine fits, so it raises an alarm and buys nothing.${under}`;
+      const blocked = this.preview()?.blocked?.headline;
+      return blocked
+        ? `${since}. ${blocked}.${under}`
+        : `${since} — nothing this group may buy can be had, so it raises an alarm and buys nothing.${under}`;
     }
     if (this.manual()) {
       return `${since} — it would name ${chosen.shape} in ${chosen.region} and raise an alarm. Nothing here can buy it.${under}`;

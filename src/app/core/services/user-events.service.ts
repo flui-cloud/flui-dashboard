@@ -19,6 +19,18 @@ export interface AlertTransitionEvent {
   startsAt: string;
 }
 
+export interface ScalingEvent {
+  id: string;
+  clusterId: string;
+  groupId: string;
+  outcome: string;
+  tone: 'info' | 'success' | 'warning' | 'error';
+  title: string;
+  body: string;
+  tab: 'now' | 'history';
+  retry: boolean;
+}
+
 /**
  * WebSocket client for the `/user` gateway. Lets the dashboard receive events
  * scoped to the current Flui user (e.g. after the GitHub App install/authorize
@@ -37,6 +49,7 @@ export class UserEventsService implements OnDestroy {
   private githubConnectedListeners: Array<(e: GithubConnectedEvent) => void> =
     [];
   private alertListeners: Array<(e: AlertTransitionEvent) => void> = [];
+  private scalingListeners: Array<(e: ScalingEvent) => void> = [];
 
   connect(userId: string): void {
     if (this.socket && this.subscribedUserId === userId) return;
@@ -67,6 +80,9 @@ export class UserEventsService implements OnDestroy {
     this.socket.on('disconnect', () => this.connectedSignal.set(false));
     this.socket.on('github:connected', (payload: GithubConnectedEvent) => {
       this.githubConnectedListeners.forEach((cb) => cb(payload));
+    });
+    this.socket.on('scaling:event', (payload: ScalingEvent) => {
+      this.scalingListeners.forEach((cb) => cb(payload));
     });
     this.socket.on('alert:transition', (payload: AlertTransitionEvent) => {
       this.alertListeners.forEach((cb) => cb(payload));
@@ -100,6 +116,13 @@ export class UserEventsService implements OnDestroy {
     this.alertListeners.push(cb);
     return () => {
       this.alertListeners = this.alertListeners.filter((fn) => fn !== cb);
+    };
+  }
+
+  onScaling(cb: (e: ScalingEvent) => void): () => void {
+    this.scalingListeners.push(cb);
+    return () => {
+      this.scalingListeners = this.scalingListeners.filter((fn) => fn !== cb);
     };
   }
 

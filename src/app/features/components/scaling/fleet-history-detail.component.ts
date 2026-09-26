@@ -25,7 +25,7 @@ import {
     >
       <div class="flex flex-wrap items-center gap-2">
         <span [class]="badgeClass()" data-testid="detail-outcome">
-          {{ decision().outcome }}
+          {{ decision().outcome.replaceAll('-', ' ') }}
         </span>
         <span
           class="font-mono text-[11px] text-muted-foreground"

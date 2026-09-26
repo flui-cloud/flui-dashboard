@@ -9,7 +9,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideClock } from '@ng-icons/lucide';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import { AvailabilityOutlook } from '../../model/scaling-group.models';
-import { SectionGroup } from '../../model/scaling-section.models';
+import { SectionGroup, ShapeSpec } from '../../model/scaling-section.models';
 import { GroupDraftStore } from './group-draft.store';
 import { ScalingGroupStore } from './scaling-group.store';
 import {
@@ -40,6 +40,7 @@ interface MarketRow {
   allowance: Allowance;
   rank: number | null;
   awaited: boolean;
+  spec: string | null;
 }
 
 @Component({
@@ -161,6 +162,9 @@ interface MarketRow {
                     >
                       <th scope="row" [class]="t.td + ' font-normal'">
                         <span [class]="t.mono">{{ row.shape }}</span>
+                        @if (row.spec) {
+                          <span class="block text-[12px] text-muted-foreground" [attr.data-testid]="'spec-' + row.shape">{{ row.spec }}</span>
+                        }
                       </th>
                       <td [class]="t.td">
                         <span
@@ -334,6 +338,9 @@ export class ScalingMarketTabComponent {
     if (!g) return [];
 
     const outlook = this.store.outlook();
+    const facts = new Map(
+      (this.store.catalogue().data?.shapes ?? []).map((s) => [s.shape, s.facts]),
+    );
     const awaited = new Set(g.standingOrders.map((o) => o.shape));
     const refused = this.refusesEverything();
     const allowed = g.shapes;
@@ -362,6 +369,7 @@ export class ScalingMarketTabComponent {
         allowance: this.allowance(onList, refused),
         rank: onList ? index + 1 : null,
         awaited: awaited.has(shape),
+        spec: specLine(facts.get(shape)),
       };
     });
   });
@@ -385,4 +393,13 @@ export class ScalingMarketTabComponent {
     if (!onList) return 'not-listed';
     return refused ? 'refused-by-limit' : 'preferred';
   }
+}
+
+/** The price the spend ceiling counts, beside what the machine holds. */
+function specLine(spec: ShapeSpec | null | undefined): string | null {
+  if (!spec) return null;
+  const parts = [`${spec.cores} vCPU`, `${Math.round(spec.memoryMi / 1024)} GB`];
+  if (spec.hourlyEur !== null) parts.push(`€${spec.hourlyEur.toFixed(4)}/h`);
+  if (spec.monthlyEur !== null) parts.push(`€${spec.monthlyEur.toFixed(2)}/mo`);
+  return parts.join(' · ');
 }

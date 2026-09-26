@@ -19,9 +19,20 @@ import { ClusterScalingRow } from '../../model/scaling-section.models';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface p-5 flex flex-col gap-3" data-testid="growth-card">
-      <h3 class="m-0 text-sm font-semibold text-foreground">
-        How this cluster grows
-      </h3>
+      <div class="flex flex-wrap items-center gap-2">
+        <h3 class="m-0 text-sm font-semibold text-foreground">
+          How this cluster grows
+        </h3>
+        @if (row()?.mode; as mode) {
+          <span
+            class="rounded-md px-2 py-0.5 text-xs font-semibold"
+            [class]="mode.attention
+              ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200'
+              : 'bg-primary/10 text-primary'"
+            data-testid="growth-mode"
+          >{{ mode.label }}</span>
+        }
+      </div>
 
       <p
         class="m-0 max-w-[62ch] text-sm leading-relaxed text-foreground"
@@ -104,7 +115,9 @@ export class ScalingGrowthCardComponent {
     }
 
     if (!row.acts) {
-      return 'Flui raises an alarm when an app has nowhere to run, and names the machine that would fit. It does not buy one.';
+      return row.capability.canProvision
+        ? 'Flui names the machine that would fit when an app has nowhere to run, and buys nothing: the group is manual. Switch it to automatic in the scaling section, or add the machine yourself.'
+        : 'Flui raises an alarm when an app has nowhere to run, and names the machine that would fit. It cannot buy one here.';
     }
 
     const ceiling = row.bounds
