@@ -1,9 +1,11 @@
 import {
   Component,
   computed,
+  effect,
   inject,
   input,
   signal,
+  untracked,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { ClusterService } from '../../service/cluster.service';
@@ -72,7 +74,7 @@ import { RemoveWorkerDialogComponent } from './remove-worker-dialog.component';
         [clusterId]="cid"
         [currentNodes]="nodes()"
         [maxNodes]="ceiling()"
-        (closed)="showAdd.set(false)"
+        (closed)="showAdd.set(false); reloadNodes()"
       />
     }
 
@@ -82,7 +84,7 @@ import { RemoveWorkerDialogComponent } from './remove-worker-dialog.component';
           [clusterId]="cid"
           [nodeId]="nodeId"
           [workerName]="candidateName()"
-          (closed)="showRemove.set(false)"
+          (closed)="showRemove.set(false); reloadNodes()"
         />
       }
     }
@@ -108,6 +110,20 @@ export class ScalingFleetTileComponent {
   readonly clusterId = computed(
     () => this.clusterService.cluster()?.id ?? null,
   );
+
+  constructor() {
+    effect(() => {
+      const id = this.clusterId();
+      if (id) {
+        untracked(() => this.reloadNodes());
+      }
+    });
+  }
+
+  reloadNodes(): void {
+    const id = this.clusterId();
+    if (id) this.clusterService.loadClusterNodes(id).catch(() => undefined);
+  }
   readonly nodes = computed(
     () =>
       this.autoscale.status()?.currentNodes ??
@@ -150,7 +166,7 @@ export class ScalingFleetTileComponent {
   readonly canRemove = computed(() => {
     const floor = this.autoscale.status()?.minNodes;
     if (this.workers().length === 0 || !this.candidate()) return false;
-    return floor == null || this.workers().length > floor;
+    return floor == null || this.nodes() > floor;
   });
 
   readonly addTooltip = computed(() =>
