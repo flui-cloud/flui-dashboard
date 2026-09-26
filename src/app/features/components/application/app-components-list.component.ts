@@ -63,6 +63,8 @@ export class AppComponentsListComponent {
         return `${base} bg-red-500`;
       case 'degraded':
         return `${base} bg-orange-500`;
+      case 'waiting_for_room':
+        return `${base} bg-amber-400 animate-pulse`;
       case 'deleting':
         return `${base} bg-gray-400 animate-pulse`;
       case 'stopped':

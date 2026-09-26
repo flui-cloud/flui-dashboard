@@ -34,11 +34,13 @@ import { BackupPolicy } from '../../model/backup.models';
 import { AutoscaleWarningBannerComponent } from './autoscale-warning-banner.component';
 import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
 import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-backups-modal.component';
+import { ClusterMaintenanceCardComponent } from '../maintenance/cluster-maintenance-card.component';
 
 @Component({
   selector: 'cluster-overview-tab',
   standalone: true,
-  imports: [RouterModule, NgIconComponent, AutoscaleWarningBannerComponent, AttachVNetDialogComponent, EnableBackupsModalComponent],
+  imports: [
+    ClusterMaintenanceCardComponent,RouterModule, NgIconComponent, AutoscaleWarningBannerComponent, AttachVNetDialogComponent, EnableBackupsModalComponent],
   providers: [
     provideIcons({
       lucideCircleAlert,
@@ -467,6 +469,9 @@ import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-bac
         />
       }
 
+      @if (cluster(); as mc) {
+        <app-cluster-maintenance-card [clusterId]="mc.id ?? null" />
+      }
     </div>
   `,
 })

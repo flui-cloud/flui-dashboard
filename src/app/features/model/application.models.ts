@@ -87,6 +87,7 @@ export function getStatusLabel(status: ApplicationStatus): string {
     pending: 'Pending',
     awaiting_build: 'Awaiting Build',
     provisioning: 'Provisioning',
+    waiting_for_room: 'Waiting for room',
     running: 'Running',
     degraded: 'Degraded',
     stopped: 'Stopped',
@@ -105,6 +106,7 @@ export function getStatusColor(status: ApplicationStatus): string {
     pending: 'yellow',
     awaiting_build: 'blue',
     provisioning: 'blue',
+    waiting_for_room: 'yellow',
     updating: 'blue',
     rolling_back: 'orange',
     degraded: 'orange',
@@ -184,6 +186,8 @@ export function getStatusBadgeClass(status: ApplicationStatus): string {
       return `${base} bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400`;
     case ApplicationStatusEnum.Degraded:
       return `${base} bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400`;
+    case ApplicationStatusEnum.WaitingForRoom:
+      return `${base} bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300`;
     default:
       return `${base} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
   }
@@ -374,4 +378,20 @@ export interface WizardStep {
   icon: string;
   isValid: boolean;
   isCompleted: boolean;
+}
+
+export interface Availability {
+  state: 'available' | 'disabled' | 'hidden';
+  reason: string | null;
+}
+
+/** What the API says about a tab or action in the app's current state; available when it says nothing. */
+export function availabilityOf(
+  app: { availability?: Array<{ key: string; state: string; reason: string | null }> } | null | undefined,
+  key: string,
+): Availability {
+  const entry = app?.availability?.find((e) => e.key === key);
+  return entry
+    ? { state: entry.state as Availability['state'], reason: entry.reason }
+    : { state: 'available', reason: null };
 }

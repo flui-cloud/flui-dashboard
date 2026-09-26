@@ -4,7 +4,7 @@
 
     <app-diagnoses-banner [applicationId]="app.id" />
 
-    <app-latest-release-card [appId]="app.id" />
+    <app-latest-release-card [appId]="app.id" [canRollback]="rollbackAvailable()" />
 
     <app-project-section [application]="app" />
 
@@ -175,6 +175,21 @@
           {{ replicaCounts().ready }}<span class="text-sm font-normal text-gray-400 dark:text-gray-500"> / {{ replicaCounts().desired }}</span>
         </p>
         <p class="text-xs text-gray-500 dark:text-gray-400">ready / desired</p>
+        @if (runtime()?.pods?.length) {
+          <ul class="mt-2 space-y-0.5 text-xs text-gray-600 dark:text-gray-300" data-testid="replica-nodes">
+            @for (pod of runtime()!.pods!; track pod.name) {
+              <li class="flex items-center gap-1.5 min-w-0">
+                <span class="h-1.5 w-1.5 shrink-0 rounded-full" [class]="pod.ready ? 'bg-green-500' : 'bg-amber-500'"></span>
+                @if (pod.node) {
+                  <span class="truncate font-mono" [title]="pod.name">{{ pod.node }}</span>
+                  <span class="shrink-0 text-gray-400 dark:text-gray-500">{{ [pod.serverType, pod.region].filter(isSet).join(' · ') }}</span>
+                } @else {
+                  <span class="text-amber-700 dark:text-amber-400" [title]="pod.name">waiting for a node</span>
+                }
+              </li>
+            }
+          </ul>
+        }
         <a [routerLink]="['../resources']" class="mt-auto pt-2 flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
           Edit <ng-icon name="lucideArrowRight" class="h-3 w-3" />
         </a>

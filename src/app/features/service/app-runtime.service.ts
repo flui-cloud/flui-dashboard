@@ -1,7 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationManagementService } from '../../core/api/api/applicationManagement.service';
-import { ClusterMetricsLogsService } from '../../core/api/api/clusterMetricsLogs.service';
+import { HttpClient } from '@angular/common/http';
+import { AppConfigService } from '../../core/services/app-config.service';
+import { ToastService } from '../../shared/services/toast.service';
 import { AppRuntimeResponseDto } from '../../core/api/model/appRuntimeResponseDto';
 import { UpdateResourcesDto } from '../../core/api/model/updateResourcesDto';
 import { UpdateReplicasDto } from '../../core/api/model/updateReplicasDto';
@@ -10,6 +12,40 @@ import {
   RolloutProgressEvent,
 } from './app-runtime-websocket.service';
 
+export interface ResourceProposal {
+  containerName: string;
+  currentRequests: { cpu: string | null; memory: string | null };
+  currentLimits: { cpu: string | null; memory: string | null };
+  reasons: { kind: 'oom' | 'near-limit' | 'above-request'; sentence: string }[];
+  consequence: ResourcesConsequence;
+  restart: string;
+  configurationNote: string | null;
+  diagnosisId: string | null;
+}
+
+export interface ResourceProposalAnswer {
+  proposal: ResourceProposal | null;
+  usageRead: boolean;
+}
+
+export type PlacementVerdict = 'fits' | 'buys' | 'proposes' | 'nothing-hosts' | 'unknown';
+
+export interface ResourcesConsequence {
+  requests: { cpu: string | null; memory: string | null };
+  limits: { cpu: string | null; memory: string | null };
+  problem: string | null;
+  placement: {
+    verdict: PlacementVerdict;
+    sentence: string;
+    node: string | null;
+    shape: string | null;
+    region: string | null;
+    monthlyEur: number | null;
+    why: string | null;
+    largest: { shape: string | null; cpuMillicores: number; memoryMi: number } | null;
+  };
+}
+
 export interface RolloutState {
   active: boolean;
   operation: string;
@@ -17,12 +53,15 @@ export interface RolloutState {
   readyReplicas: number;
   desiredReplicas: number;
   message: string;
+  waitingForRoom?: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AppRuntimeService {
   private readonly api = inject(ApplicationManagementService);
-  private readonly metricsApi = inject(ClusterMetricsLogsService);
+  private readonly http = inject(HttpClient);
+  private readonly appConfig = inject(AppConfigService);
+  private readonly toast = inject(ToastService);
   private readonly ws = inject(AppRuntimeWebSocketService);
 
   private readonly runtimeData = signal<AppRuntimeResponseDto | null>(null);
@@ -31,8 +70,6 @@ export class AppRuntimeService {
   private readonly savingResourcesData = signal(false);
   private readonly savingRestartData = signal(false);
   private readonly errorData = signal<string | null>(null);
-  private readonly maxCpuMcData = signal(4000);
-  private readonly maxMemMibData = signal(4096);
   private readonly rolloutData = signal<RolloutState | null>(null);
   private currentAppId: string | null = null;
 
@@ -42,25 +79,7 @@ export class AppRuntimeService {
   readonly savingResources = this.savingResourcesData.asReadonly();
   readonly savingRestart = this.savingRestartData.asReadonly();
   readonly error = this.errorData.asReadonly();
-  readonly maxCpuMc = this.maxCpuMcData.asReadonly();
-  readonly maxMemMib = this.maxMemMibData.asReadonly();
   readonly rollout = this.rolloutData.asReadonly();
-
-  async loadClusterCapacity(clusterId: string): Promise<void> {
-    try {
-      const result = await firstValueFrom(
-        this.metricsApi.serverMetricsControllerGetClusterMetrics(clusterId)
-      );
-      const servers = result?.servers ?? [];
-      if (!servers.length) return;
-      const totalCores = servers.reduce((s, n) => s + (n.cpu?.cores ?? 0), 0);
-      const totalBytes = servers.reduce((s, n) => s + (n.memory?.total_bytes ?? 0), 0);
-      this.maxCpuMcData.set(Math.floor(totalCores * 1000 * 0.8));
-      this.maxMemMibData.set(Math.floor((totalBytes / (1024 * 1024)) * 0.8));
-    } catch {
-      // silently keep defaults on error
-    }
-  }
 
   async loadRuntime(appId: string): Promise<void> {
     this.loadingData.set(true);
@@ -86,13 +105,64 @@ export class AppRuntimeService {
       );
       this.runtimeData.set(result ?? null);
       this.watchRollout(appId, 'update-resources');
+      const written = result?.containers.find(c => c.name === dto.containerName) ?? result?.containers[0];
+      this.toast.showSuccess({
+        title: 'Resources saved — the app restarts with them',
+        message: written
+          ? `CPU ${written.requests.cpu ?? '—'} reserved, ${written.limits.cpu ?? '—'} at most · memory ${written.requests.memory ?? '—'} reserved, ${written.limits.memory ?? '—'} at most`
+          : 'The new values are being applied.',
+      });
       return true;
     } catch (err: unknown) {
-      this.errorData.set(this.extractErrorMessage(err, 'Failed to update resources'));
+      const message = this.extractErrorMessage(err, 'Failed to update resources');
+      this.errorData.set(message);
+      this.toast.showError({ title: 'Resources not saved', message });
       return false;
     } finally {
       this.savingResourcesData.set(false);
     }
+  }
+
+  proposal(appId: string): Promise<ResourceProposalAnswer> {
+    return firstValueFrom(
+      this.http.get<ResourceProposalAnswer>(
+        `${this.appConfig.apiBaseUrl}/api/v1/applications/${appId}/resources/proposal`,
+      ),
+    );
+  }
+
+  async applyProposal(appId: string, proposal: ResourceProposal): Promise<ResourceProposalAnswer | null> {
+    this.savingResourcesData.set(true);
+    try {
+      const answer = await firstValueFrom(
+        this.http.post<ResourceProposalAnswer>(
+          `${this.appConfig.apiBaseUrl}/api/v1/applications/${appId}/resources/proposal/apply`,
+          {},
+        ),
+      );
+      this.watchRollout(appId, 'update-resources');
+      this.toast.showSuccess({
+        title: 'Proposal applied — the app restarts with it',
+        message: `Memory ${proposal.consequence.requests.memory ?? '—'} reserved, ${proposal.consequence.limits.memory ?? '—'} at most`,
+      });
+      await this.loadRuntime(appId);
+      return answer;
+    } catch (err: unknown) {
+      const message = this.extractErrorMessage(err, 'Failed to apply the proposal');
+      this.toast.showError({ title: 'Proposal not applied', message });
+      return null;
+    } finally {
+      this.savingResourcesData.set(false);
+    }
+  }
+
+  consequence(appId: string, dto: UpdateResourcesDto): Promise<ResourcesConsequence> {
+    return firstValueFrom(
+      this.http.post<ResourcesConsequence>(
+        `${this.appConfig.apiBaseUrl}/api/v1/applications/${appId}/resources/consequence`,
+        dto,
+      ),
+    );
   }
 
   async updateReplicas(appId: string, dto: UpdateReplicasDto): Promise<boolean> {
@@ -168,6 +238,7 @@ export class AppRuntimeService {
           readyReplicas: e.readyReplicas,
           desiredReplicas: e.desiredReplicas,
           message: e.message,
+          waitingForRoom: e.waitingForRoom ?? 0,
         });
       },
       onCompleted: (e) => {

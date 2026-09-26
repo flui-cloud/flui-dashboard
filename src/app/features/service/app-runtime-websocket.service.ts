@@ -14,6 +14,7 @@ export interface RolloutProgressEvent {
   readyReplicas: number;
   desiredReplicas: number;
   message: string;
+  waitingForRoom?: number;
   timestamp: string;
 }
 

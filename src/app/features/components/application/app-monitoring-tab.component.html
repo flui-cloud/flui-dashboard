@@ -2,16 +2,15 @@
   <!-- Disk usage + near-full alert (DB apps with a volume; hidden otherwise) -->
   <app-db-disk-usage [appId]="appId()" />
 
-  <!-- Header with refresh button -->
-  <div class="flex items-center justify-between">
+  <div class="flex flex-wrap items-start justify-between gap-4">
     <div>
-      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Application Monitoring</h2>
-      <div class="flex items-center gap-2">
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+      <h2 class="text-xl font-semibold text-foreground">Monitoring</h2>
+      <div class="flex items-center gap-2 mt-1">
+        <p class="text-sm text-sub">
           @if (pollingPaused()) {
             <span class="text-orange-600 dark:text-orange-400 font-medium">Auto-refresh paused</span>
           } @else {
-            Real-time metrics updated every 5 seconds
+            Live values every 5 seconds · history over the {{ rangeLabel() }}
           }
         </p>
         @if (!pollingPaused() && !isLoading()) {
@@ -19,17 +18,37 @@
         }
       </div>
     </div>
-    <button
-      (click)="refreshMetrics()"
-      [disabled]="isLoading() || (pollingPaused() && !canRetry())"
-      [title]="pollingPaused() ? 'Retry' : 'Refresh'"
-      class="inline-flex items-center p-1.5 rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      [class]="pollingPaused() && canRetry()
-        ? 'border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-        : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'"
-    >
-      <ng-icon name="lucideRefreshCw" [class.animate-spin]="isLoading()" class="h-3.5 w-3.5" />
-    </button>
+
+    <div class="flex items-center gap-2">
+      <div class="inline-flex p-0.5 gap-0.5 bg-muted rounded-lg">
+        @for (range of ranges; track range.value) {
+          <button
+            type="button"
+            (click)="setTimeRange(range.value)"
+            [attr.aria-pressed]="timeRange() === range.value"
+            class="px-3 py-1 rounded-md text-xs font-semibold transition-colors"
+            [class]="timeRange() === range.value
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'"
+          >
+            {{ range.label }}
+          </button>
+        }
+      </div>
+      <button
+        type="button"
+        (click)="refreshMetrics()"
+        [disabled]="isLoading() || (pollingPaused() && !canRetry())"
+        [title]="pollingPaused() ? 'Retry' : 'Refresh'"
+        [attr.aria-label]="pollingPaused() ? 'Retry' : 'Refresh'"
+        class="inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        [class]="pollingPaused() && canRetry()
+          ? 'border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+          : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'"
+      >
+        <ng-icon name="lucideRefreshCw" [class.animate-spin]="isLoading()" class="h-3.5 w-3.5" />
+      </button>
+    </div>
   </div>
 
   <!-- Error message -->
@@ -98,106 +117,63 @@
       </div>
     }
 
-    <!-- Health card -->
-    @if (m.health) {
-      <div class="bg-card border border-border rounded-lg p-4">
-        <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
-          <ng-icon name="lucideHeartPulse" class="h-4 w-4" />
-          Health
-        </h3>
-        @if ((m.health.unavailable_pods ?? 0) > 0) {
-          <div class="flex items-start gap-3">
-            <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-orange-700 dark:text-orange-400">
-                {{ m.health.unavailable_pods }} pod(s) unavailable out of {{ m.health.total_pods }}
-              </p>
-              @if (m.health.condition_message) {
-                <p class="text-xs text-muted-foreground mt-1">{{ m.health.condition_message }}</p>
-              }
-            </div>
-          </div>
-        } @else {
-          <div class="flex items-center gap-3">
-            <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-green-500 shrink-0" />
-            <p class="text-sm font-medium text-green-700 dark:text-green-400">
-              {{ m.health.ready_pods }}/{{ m.health.total_pods }} pods operational
-            </p>
-          </div>
-        }
-        @if (m.health.checked_at) {
-          <p class="text-xs text-muted-foreground mt-2">Last check: {{ formatHealthDate(m.health.checked_at) }}</p>
-        }
-      </div>
-    }
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-        <app-grade-gauge [data]="cpuGaugeData()" [config]="cpuGaugeConfig" />
-        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-center">
-          <div class="grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Usage</p>
-              <p class="font-semibold text-gray-900 dark:text-gray-100">{{ formatCpu(activeCpu()?.usage_cores ?? 0) }}</p>
-            </div>
-            <div>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Limit</p>
-              <p class="font-semibold text-gray-900 dark:text-gray-100">{{ formatCpu(activeCpu()?.limits_cores ?? 0) }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-        <app-grade-gauge [data]="memoryGaugeData()" [config]="memoryGaugeConfig" />
-        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-center">
-          <div class="grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Usage</p>
-              <p class="font-semibold text-gray-900 dark:text-gray-100">{{ formatBytes(activeMemory()?.usage_bytes ?? 0) }}</p>
-            </div>
-            <div>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Limit</p>
-              <p class="font-semibold text-gray-900 dark:text-gray-100">{{ formatBytes(activeMemory()?.limits_bytes ?? 0) }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Replicas - Compact Inline -->
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Replicas</h3>
-        <div class="flex items-center gap-3 text-sm">
-          <div class="flex items-center gap-1.5">
-            <span class="text-gray-600 dark:text-gray-400">Ready:</span>
-            <span class="font-bold" [class]="replicaStats().ready > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-              {{ replicaStats().ready }}
-            </span>
-          </div>
-          <span class="text-gray-400">/</span>
-          <div class="flex items-center gap-1.5">
-            <span class="text-gray-600 dark:text-gray-400">Desired:</span>
-            <span class="font-bold text-blue-600 dark:text-blue-400">
-              {{ replicaStats().desired }}
-            </span>
-          </div>
-          @if (replicaStats().unavailable > 0) {
-            <span class="text-gray-400">/</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-gray-600 dark:text-gray-400">Unavailable:</span>
-              <span class="font-bold text-red-600 dark:text-red-400">
-                {{ replicaStats().unavailable }}
-              </span>
-            </div>
+    @if ((m.health?.unavailable_pods ?? 0) > 0) {
+      <div class="flex items-start gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
+        <ng-icon name="lucideTriangleAlert" class="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+        <div class="min-w-0 text-sm">
+          <p class="m-0 font-medium text-orange-700 dark:text-orange-400">
+            {{ m.health!.unavailable_pods }} of {{ m.health!.total_pods }} pods unavailable
+          </p>
+          @if (m.health!.condition_message) {
+            <p class="m-0 mt-0.5 text-xs text-muted-foreground">{{ m.health!.condition_message }}</p>
           }
         </div>
       </div>
+    }
 
-      <app-multi-stat-card [data]="restartStats()" [config]="{ layout: 'horizontal' }" />
-      <app-multi-stat-card [data]="networkStats()" [config]="{ layout: 'horizontal' }" />
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4" data-testid="app-metrics-summary">
+      @for (tile of tiles(); track tile.label) {
+        <app-stat-tile [data]="tile" [sparkWidth]="112" />
+      }
     </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="app-metrics-grid">
+      @if (cpuHistory(); as cpu) {
+        <app-chart-panel title="CPU" subtitle="of its limit" [value]="cpuNow()" [body]="cpuBody"
+          [inlineHeight]="inlineHeight" [expandedHeight]="expandedHeight">
+          <ng-template #cpuBody let-mode>
+            <app-time-series-line [data]="cpu" [config]="pick(cpuConfig, mode)" />
+          </ng-template>
+        </app-chart-panel>
+      }
+      @if (memoryHistory(); as memory) {
+        <app-chart-panel title="Memory" subtitle="of its limit" [value]="memoryNow()" [body]="memoryBody"
+          [inlineHeight]="inlineHeight" [expandedHeight]="expandedHeight">
+          <ng-template #memoryBody let-mode>
+            <app-time-series-line [data]="memory" [config]="pick(memoryConfig, mode)" />
+          </ng-template>
+        </app-chart-panel>
+      }
+      @if (networkHistory(); as network) {
+        <app-chart-panel title="Network" subtitle="in and out" [value]="networkNow()" [body]="networkBody"
+          [inlineHeight]="inlineHeight" [expandedHeight]="expandedHeight">
+          <ng-template #networkBody let-mode>
+            <app-time-series-line [data]="network" [config]="pick(networkConfig, mode)" />
+          </ng-template>
+        </app-chart-panel>
+      }
+      @if (replicasHistory(); as replicas) {
+        <app-chart-panel title="Replicas" subtitle="ready of desired" [value]="replicasNow()" [body]="replicasBody"
+          [inlineHeight]="inlineHeight" [expandedHeight]="expandedHeight">
+          <ng-template #replicasBody let-mode>
+            <app-time-series-line [data]="replicas" [config]="pick(replicasConfig, mode)" />
+          </ng-template>
+        </app-chart-panel>
+      }
+    </div>
+    @if (loadingHistory() && !cpuHistory()) {
+      <p class="text-sm text-muted-foreground">Loading history…</p>
+    }
 
     <!-- Per-replica breakdown: shown only with 2+ replicas -->
     @if (availableReplicas().length > 1) {
@@ -333,64 +309,6 @@
       </div>
     }
   }
-
-  <!-- Historical Metrics Charts -->
-  <div class="space-y-6">
-    <!-- Time range selector -->
-    <div class="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Historical Metrics</h3>
-      <div class="flex gap-2">
-        @for (range of ['1h', '2h', '3h', '6h', '1d']; track range) {
-          <button
-            (click)="setTimeRange($any(range))"
-            [class.bg-blue-600]="timeRange() === range"
-            [class.text-white]="timeRange() === range"
-            [class.bg-gray-200]="timeRange() !== range"
-            [class.dark:bg-gray-700]="timeRange() !== range"
-            [class.text-gray-700]="timeRange() !== range"
-            [class.dark:text-gray-300]="timeRange() !== range"
-            class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
-          >
-            {{ range === '1d' ? '1 Day' : range === '1h' ? '1 Hour' : range === '2h' ? '2 Hours' : range === '3h' ? '3 Hours' : '6 Hours' }}
-          </button>
-        }
-      </div>
-    </div>
-
-    <!-- CPU History Chart -->
-    @if (cpuHistory()) {
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h4 class="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">CPU Usage Over Time</h4>
-        <app-time-series-line [data]="cpuHistory()!" [config]="cpuTsConfig" />
-      </div>
-    }
-
-    <!-- Memory History Chart -->
-    @if (memoryHistory()) {
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h4 class="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">Memory Usage Over Time</h4>
-        <app-time-series-line [data]="memoryHistory()!" [config]="memoryTsConfig" />
-      </div>
-    }
-
-    <!-- Network History Chart -->
-    @if (networkHistory()) {
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h4 class="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">Network I/O Over Time</h4>
-        <app-time-series-line [data]="networkHistory()!" [config]="networkTsConfig" />
-      </div>
-    }
-
-    <!-- Loading state for history -->
-    @if (loadingHistory() && !cpuHistory()) {
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12">
-        <div class="text-center">
-          <ng-icon name="lucideRefreshCw" class="h-12 w-12 text-gray-400 mx-auto mb-3 animate-spin" />
-          <p class="text-gray-600 dark:text-gray-400">Loading historical metrics...</p>
-        </div>
-      </div>
-    }
-  </div>
 
   <!-- Traffic -->
   <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">

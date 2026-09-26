@@ -49,6 +49,10 @@ export interface ApplicationGroupDto {
      */
     componentCount: number;
     /**
+     * Replicas asked for across every component; null when no component says.
+     */
+    replicas?: number | null;
+    /**
      * Component apps; a single-element array for standalone groups.
      */
     components: Array<ApplicationResponseDto>;
@@ -65,6 +69,7 @@ export namespace ApplicationGroupDto {
         Pending: 'pending',
         AwaitingBuild: 'awaiting_build',
         Provisioning: 'provisioning',
+        WaitingForRoom: 'waiting_for_room',
         Running: 'running',
         Degraded: 'degraded',
         Stopped: 'stopped',

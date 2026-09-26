@@ -1,3 +1,4 @@
+import { availabilityOf } from '../../model/application.models';
 import { Component, OnInit, inject, computed, signal, effect, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -34,6 +35,7 @@ import { ClientConnectionSectionComponent } from './client-connection-section.co
 import { InternalServiceInfoComponent, InternalServiceMode } from './internal-service-info.component';
 import { AppLatestReleaseCardComponent } from './app-latest-release-card.component';
 import { AppProjectSectionComponent } from './app-project-section.component';
+import { replicaCountsOf } from './replica-counts';
 
 @Component({
   selector: 'app-overview-tab',
@@ -78,6 +80,10 @@ export class AppOverviewTabComponent implements OnInit {
   readonly catalogService = inject(CatalogService);
 
   readonly app = this.appService.selectedApplication;
+
+  readonly rollbackAvailable = computed(
+    () => availabilityOf(this.app(), 'rollback').state === 'available',
+  );
   readonly runtime = this.runtimeService.runtime;
 
   readonly deleteDialog = viewChild.required<ConfirmationDialogComponent>('deleteDialog');
@@ -164,15 +170,15 @@ export class AppOverviewTabComponent implements OnInit {
     return 'not-configured';
   });
 
-  readonly replicaCounts = computed(() => {
-    const status = this.monitoringService.statusMetrics();
-    const rt = this.runtime();
-    const app = this.app();
-    const ready = status?.replicas_ready ?? rt?.replicas?.ready ?? 0;
-    const desired =
-      status?.replicas_desired ?? rt?.replicas?.desired ?? app?.replicas ?? 0;
-    return { ready, desired };
-  });
+  protected readonly isSet = (v: string | null): v is string => !!v;
+
+  readonly replicaCounts = computed(() =>
+    replicaCountsOf(
+      this.runtime(),
+      this.monitoringService.statusMetrics(),
+      this.app()?.replicas,
+    ),
+  );
 
   readonly recentEvents = computed(() => this.revisionsService.events().slice(0, 3));
 
@@ -233,7 +239,8 @@ export class AppOverviewTabComponent implements OnInit {
     return `${bytes.toFixed(0)}B`;
   }
 
-  private resolveStatus(m: AppMetricsDto): 'healthy' | 'degraded' | 'down' {
+  private resolveStatus(m: AppMetricsDto): 'healthy' | 'degraded' | 'down' | 'waiting' {
+    if (this.app()?.status === 'waiting_for_room') return 'waiting';
     const s = m.status;
     if (s.replicas_ready == null && s.replicas_desired == null) {
       const running = m.pods?.some(p => p.phase === 'Running' && (p.count ?? 0) > 0) ?? false;
@@ -248,6 +255,7 @@ export class AppOverviewTabComponent implements OnInit {
 
   statusLabel(m: AppMetricsDto): string {
     const r = this.resolveStatus(m);
+    if (r === 'waiting') return 'Waiting for room';
     if (r === 'down') return 'Down';
     if (r === 'degraded') return 'Degraded';
     return 'Healthy';
@@ -255,6 +263,7 @@ export class AppOverviewTabComponent implements OnInit {
 
   statusColor(m: AppMetricsDto): string {
     const r = this.resolveStatus(m);
+    if (r === 'waiting') return 'text-amber-600 dark:text-amber-400';
     if (r === 'down') return 'text-red-600 dark:text-red-400';
     if (r === 'degraded') return 'text-orange-500 dark:text-orange-400';
     return 'text-green-600 dark:text-green-400';
@@ -262,6 +271,7 @@ export class AppOverviewTabComponent implements OnInit {
 
   statusDotColor(m: AppMetricsDto): string {
     const r = this.resolveStatus(m);
+    if (r === 'waiting') return 'bg-amber-400';
     if (r === 'down') return 'bg-red-500';
     if (r === 'degraded') return 'bg-orange-400';
     return 'bg-green-500';

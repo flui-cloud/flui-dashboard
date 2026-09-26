@@ -26,6 +26,7 @@ export namespace DistributionAppDto {
         Pending: 'pending',
         AwaitingBuild: 'awaiting_build',
         Provisioning: 'provisioning',
+        WaitingForRoom: 'waiting_for_room',
         Running: 'running',
         Degraded: 'degraded',
         Stopped: 'stopped',

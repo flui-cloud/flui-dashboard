@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { AvailabilityEntryDto } from './availabilityEntryDto';
 import { ApplicationAccessDto } from './applicationAccessDto';
 import { AppOperationResponseDto } from './appOperationResponseDto';
 
@@ -125,6 +126,10 @@ export interface ApplicationResponseDto {
      */
     lastOperation?: AppOperationResponseDto;
     /**
+     * Which tabs and actions make sense in the state the application is in: `available`, `disabled` with the reason, or `hidden`. The routes that act refuse with the same reason.
+     */
+    availability?: Array<AvailabilityEntryDto>;
+    /**
      * Catalog slug when this app was installed via the catalog (e.g. \"postgresql\", \"vaultwarden\"). Undefined for apps created outside the catalog. Drives the \"Installed · N\" badge and \"Your instances\" cross-reference on the catalog pages.
      */
     catalogSlug?: string;
@@ -175,6 +180,7 @@ export namespace ApplicationResponseDto {
         Pending: 'pending',
         AwaitingBuild: 'awaiting_build',
         Provisioning: 'provisioning',
+        WaitingForRoom: 'waiting_for_room',
         Running: 'running',
         Degraded: 'degraded',
         Stopped: 'stopped',

@@ -88,54 +88,64 @@ import {
     }),
   ],
   template: `
-    <div class="mx-auto max-w-3xl space-y-6 p-6">
-      <a
-        [routerLink]="backLink()"
-        class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        {{ backLabel() }}
-      </a>
-
+    <div class="space-y-6 p-6">
       @let g = group();
+      @if (!g) {
+        <a
+          [routerLink]="backLink()"
+          [attr.aria-label]="backLabel()"
+          [title]="backLabel()"
+          class="inline-flex p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <ng-icon name="lucideArrowLeft" class="h-5 w-5" />
+        </a>
+      }
       @if (g) {
         @let primaryApp = primary();
-        <section class="rounded-2xl border border-border bg-card p-6">
-          <div class="flex flex-wrap items-start justify-between gap-4">
-            <div class="min-w-0">
-              <h1 class="text-xl font-bold text-foreground">{{ g.name }}</h1>
-              <p class="text-xs text-muted-foreground">
-                {{ primaryApp?.slug ?? g.id }} · Created {{ formatDate(g.createdAt) }}
-              </p>
-            </div>
-            <div class="flex items-center gap-2">
+        <div class="flex items-start gap-4" data-testid="recap-header">
+          <a
+            [routerLink]="backLink()"
+            [attr.aria-label]="backLabel()"
+            [title]="backLabel()"
+            class="mt-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <ng-icon name="lucideArrowLeft" class="h-5 w-5" />
+          </a>
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ g.name }}</h1>
               <span [class]="getCategoryBadgeClass(g.category)">
                 {{ getCategoryLabel(g.category) }}
               </span>
+            </div>
+            <div class="mt-2 flex flex-wrap items-center gap-3">
               <span [class]="statusBadge(g.status)" class="inline-flex items-center gap-1">
                 {{ statusText(g.status) }}
               </span>
+              <span class="font-mono text-sm text-muted-foreground">
+                {{ primaryApp?.slug ?? g.id }} · Created {{ formatDate(g.createdAt) }}
+              </span>
             </div>
           </div>
+        </div>
+
+        <section class="rounded-2xl border border-border bg-card p-6">
 
           @if (accessKind() === 'db' && primaryApp) {
             <app-db-connect-card [app]="primaryApp" [connInfo]="connInfoFor(primaryApp.id)" />
           } @else if (accessKind() === 'web' && primaryApp) {
-            <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-4">
-              <div class="min-w-0 flex-1">
-                <p class="text-xs uppercase tracking-wide text-muted-foreground">Endpoint</p>
-                <p class="mt-0.5 truncate text-sm font-mono">{{ endpointHost() }}</p>
-              </div>
+            <div class="rounded-lg border border-border bg-muted/30 p-4">
+              <p class="text-xs uppercase tracking-wide text-muted-foreground">Endpoint</p>
               <a
                 [href]="openUrl()"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium
-                       text-primary-foreground hover:bg-primary/90"
+                class="mt-0.5 inline-flex max-w-full items-center gap-1.5 text-sm font-mono text-primary hover:underline"
+                title="Open in a new tab"
+                data-testid="recap-endpoint"
               >
-                <ng-icon name="lucideRocket" class="h-4 w-4" />
-                Open app
-                <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
+                <span class="truncate">{{ endpointHost() }}</span>
+                <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 shrink-0" />
               </a>
             </div>
           }

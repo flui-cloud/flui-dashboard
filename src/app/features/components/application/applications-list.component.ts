@@ -100,7 +100,7 @@ interface FilterState {
       </div>
 
       <!-- Stats -->
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid gap-3" [class]="kindWaitingCount() ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'">
         <div class="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/50 rounded-lg px-4 py-3">
           <p class="text-xs text-gray-500 dark:text-gray-400">Total</p>
           <p class="text-xl font-bold text-gray-900 dark:text-white">{{ kindOwnGroups().length }}</p>
@@ -113,6 +113,14 @@ interface FilterState {
           <p class="text-xs text-red-600 dark:text-red-400">Failed</p>
           <p class="text-xl font-bold text-red-700 dark:text-red-400">{{ kindFailedCount() }}</p>
         </div>
+        @if (kindWaitingCount()) {
+          <button type="button" (click)="updateFilter('status', 'waiting_for_room')"
+            class="text-left bg-white dark:bg-gray-800/60 border border-amber-200 dark:border-gray-700/50 rounded-lg px-4 py-3 hover:bg-amber-50 dark:hover:bg-amber-900/10"
+            data-testid="stat-waiting-for-room">
+            <p class="text-xs text-amber-700 dark:text-amber-400">Waiting for room</p>
+            <p class="text-xl font-bold text-amber-700 dark:text-amber-400">{{ kindWaitingCount() }}</p>
+          </button>
+        }
       </div>
 
       <!-- Filters -->
@@ -144,6 +152,7 @@ interface FilterState {
           <option value="">All Statuses</option>
           <option value="running">Running</option>
           <option value="provisioning">Provisioning</option>
+          <option value="waiting_for_room">Waiting for room</option>
           <option value="pending">Pending</option>
           <option value="degraded">Degraded</option>
           <option value="stopped">Stopped</option>
@@ -387,6 +396,9 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   );
   kindFailedCount = computed(
     () => this.kindOwnGroups().filter((g) => g.status === 'failed').length,
+  );
+  kindWaitingCount = computed(
+    () => this.kindOwnGroups().filter((g) => g.status === 'waiting_for_room').length,
   );
 
   clusterNames = computed(() =>

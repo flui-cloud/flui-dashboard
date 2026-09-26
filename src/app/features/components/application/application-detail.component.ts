@@ -47,6 +47,7 @@ import {
   getStatusBadgeClass,
   getCategoryBadgeClass,
   getReconciliationBadgeClass,
+  availabilityOf,
 } from '../../model/application.models';
 import { isActionAvailable } from '../../model/app-status-actions';
 import { isBuildingBlock } from '../../model/app-exposure';
@@ -59,6 +60,7 @@ import {
   buildApplicationSurface,
   presentedContent,
 } from './application-surface';
+import { replicaCountsOf } from './replica-counts';
 
 interface TabItem {
   label: string;
@@ -246,18 +248,26 @@ interface TabItem {
 
           <!-- Quick actions toolbar -->
           <div class="flex items-center gap-1 mt-1 flex-shrink-0">
+            @let pending = runtimeService.runtime()?.restartPending;
             <button
               (click)="onRollingRestart(app.id)"
-              [disabled]="runtimeService.savingRestart() || !canRestart(app.status)"
-              class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Rolling restart"
+              [disabled]="runtimeService.savingRestart() || !canRestart(app.status) || !!restartOff()"
+              [class]="pending
+                ? 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+                : 'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed'"
+              [title]="restartOff() ?? (pending ? 'Saved changes the running pods do not have yet: ' + (pending.changes.join(', ') || 'variables') : 'Rolling restart')"
+              data-testid="app-restart"
             >
               @if (runtimeService.savingRestart()) {
                 <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
               } @else {
                 <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
               }
-              Restart
+              @if (pending) {
+                Restart to apply{{ pending.changes.length ? ' — ' + pending.changes.length + (pending.changes.length === 1 ? ' change' : ' changes') : '' }}
+              } @else {
+                Restart
+              }
             </button>
           </div>
         </div>
@@ -293,6 +303,14 @@ interface TabItem {
                 / {{ replicaCounts().desired }}</span
               >
             </p>
+            @if (runtimeService.runtime()?.waitingForRoom; as wait) {
+              <a
+                routerLink="/scaling"
+                class="mt-1 block text-xs text-amber-700 hover:underline dark:text-amber-400"
+                [title]="wait.says"
+                data-testid="replicas-waiting"
+              >{{ wait.replicas }} waiting for a node with room →</a>
+            }
           </div>
           <a [routerLink]="['images']" class="bg-white dark:bg-gray-800 border rounded-lg p-4 min-w-0 block hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
             <p class="text-sm text-gray-600 dark:text-gray-400">Image</p>
@@ -358,6 +376,17 @@ interface TabItem {
           <div class="border-b border-gray-200 dark:border-gray-700 relative flex items-stretch">
             <nav class="flex -mb-px gap-1 overflow-x-auto scrollbar-none flex-1 min-w-0 items-stretch">
               @for (tab of tabs(); track tab.route) {
+                @if (tabOff(tab.route); as reason) {
+                  <span
+                    [title]="reason"
+                    [attr.aria-disabled]="true"
+                    [attr.data-testid]="'tab-off-' + tab.route"
+                    class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 border-transparent whitespace-nowrap flex-shrink-0 text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                  >
+                    <ng-icon [name]="tab.icon" class="h-4 w-4 flex-shrink-0" />
+                    <span class="hidden md:inline">{{ tab.label }}</span>
+                  </span>
+                } @else {
                 <a
                   [routerLink]="[tab.route]"
                   routerLinkActive
@@ -374,6 +403,7 @@ interface TabItem {
                   <ng-icon [name]="tab.icon" class="h-4 w-4 flex-shrink-0" />
                   <span class="hidden md:inline">{{ tab.label }}</span>
                 </a>
+                }
               }
             </nav>
             <!-- Advanced dropdown (outside nav scroll so the menu isn't clipped) -->
@@ -459,15 +489,13 @@ export class ApplicationDetailComponent implements OnDestroy {
   runtime = this.runtimeService.runtime;
 
   /** Live replica counts — prefer polled metrics, fall back to runtime snapshot. */
-  readonly replicaCounts = computed(() => {
-    const status = this.monitoringService.statusMetrics();
-    const rt = this.runtimeService.runtime();
-    const app = this.application();
-    const ready = status?.replicas_ready ?? rt?.replicas?.ready ?? 0;
-    const desired =
-      status?.replicas_desired ?? rt?.replicas?.desired ?? app?.replicas ?? 0;
-    return { ready, desired };
-  });
+  readonly replicaCounts = computed(() =>
+    replicaCountsOf(
+      this.runtimeService.runtime(),
+      this.monitoringService.statusMetrics(),
+      this.application()?.replicas,
+    ),
+  );
 
   private pollingAppId: string | null = null;
 
@@ -693,6 +721,17 @@ export class ApplicationDetailComponent implements OnDestroy {
     this.copiedId.set(true);
     setTimeout(() => this.copiedId.set(false), 2000);
   }
+
+  /** The API's reason a tab is off in this state, or null when it is on. */
+  tabOff(route: string): string | null {
+    const a = availabilityOf(this.application(), route);
+    return a.state === 'disabled' ? (a.reason ?? 'Not available in this state') : null;
+  }
+
+  readonly restartOff = computed(() => {
+    const a = availabilityOf(this.application(), 'restart');
+    return a.state === 'available' ? null : a.reason;
+  });
 
   canRestart(status: ApplicationStatus): boolean {
     return isActionAvailable(status, 'deploy');

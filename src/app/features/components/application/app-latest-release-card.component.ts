@@ -101,7 +101,7 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
               >
                 Release history
               </a>
-              @if (r.status === 'FAILED') {
+              @if (r.status === 'FAILED' && canRollback()) {
                 <a
                   [routerLink]="['/apps/applications', r.applicationId, 'revisions']"
                   class="inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-400 hover:underline"
@@ -119,6 +119,7 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
 })
 export class AppLatestReleaseCardComponent implements OnChanges {
   readonly appId = input.required<string>();
+  readonly canRollback = input(true);
 
   private readonly releaseService = inject(AppReleaseService);
   private readonly buildsApi = inject(AppBuildsService);

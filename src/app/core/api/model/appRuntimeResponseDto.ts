@@ -9,6 +9,7 @@
  */
 import { ReplicaStatusDto } from './replicaStatusDto';
 import { ContainerRuntimeDetailDto } from './containerRuntimeDetailDto';
+import { RoomWaitDto } from './roomWaitDto';
 
 
 export interface AppRuntimeResponseDto { 
@@ -17,5 +18,25 @@ export interface AppRuntimeResponseDto {
     namespace: string;
     replicas: ReplicaStatusDto;
     containers: Array<ContainerRuntimeDetailDto>;
+    /**
+     * Set when some replicas wait for a node with room: that is a wait, not a failure, and it lasts as long as scaling takes.
+     */
+    waitingForRoom?: RoomWaitDto | null;
+    /**
+     * Each replica and the node it runs on, or null while it waits for room
+     */
+    /**
+     * Saved variables the running pods do not have yet; a restart applies them.
+     */
+    restartPending?: { changes: string[] } | null;
+    pods?: Array<{
+        name: string;
+        node: string | null;
+        role: 'master' | 'worker' | null;
+        serverType: string | null;
+        region: string | null;
+        phase: string;
+        ready: boolean;
+    }>;
 }
 

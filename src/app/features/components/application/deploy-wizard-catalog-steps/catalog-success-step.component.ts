@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { AppConfigService } from '../../../../core/services/app-config.service';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
@@ -42,7 +45,34 @@ interface InternalReadiness {
   ],
   template: `
     @let inst = install();
-    @if (inst) {
+    @if (inst && waiting(); as wait) {
+      <div class="flex flex-col items-center gap-4 py-6 text-center" data-testid="install-waiting-for-room">
+        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10">
+          <ng-icon name="lucideLoader" class="h-8 w-8 text-amber-500 animate-spin" />
+        </div>
+        <div class="space-y-1 max-w-lg">
+          <h3 class="text-lg font-semibold text-foreground">
+            {{ inst.displayName }} is installed and waiting for room
+          </h3>
+          <p class="text-sm text-muted-foreground">
+            {{ wait.says ?? 'No node has room for what it reserves yet. It starts on its own as soon as one joins.' }}
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <a [routerLink]="['/cluster', inst.clusterId, 'scaling']"
+            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
+            Open scaling
+          </a>
+          @if (detailRoute(); as route) {
+            <a [routerLink]="route"
+              class="inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted">
+              <ng-icon name="lucideLayoutDashboard" class="h-4 w-4" />
+              {{ isComposedInstall() ? 'Bundle details' : 'App details' }}
+            </a>
+          }
+        </div>
+      </div>
+    } @else if (inst) {
       <div class="flex flex-col items-center gap-4 py-6 text-center">
         <div class="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10">
           <ng-icon name="lucideCircleCheck" class="h-8 w-8 text-green-500" />
@@ -179,6 +209,12 @@ export class CatalogSuccessStepComponent implements OnDestroy {
   protected readonly state = inject(DeployWizardStateService);
   protected readonly endpointsService = inject(AppEndpointsService);
   private readonly applicationService = inject(ApplicationService);
+  private readonly http = inject(HttpClient);
+  private readonly appConfig = inject(AppConfigService);
+
+  /** Set when an installed app is declared but no node has room for it yet. */
+  protected readonly waiting = signal<{ says: string | null } | null>(null);
+  private waitingChecked: string | null = null;
 
   protected readonly install = computed(() => this.state.currentInstall());
   protected readonly firstAppId = computed(
@@ -283,6 +319,13 @@ export class CatalogSuccessStepComponent implements OnDestroy {
   });
 
   constructor() {
+    effect(() => {
+      const installId = this.install()?.id;
+      if (!installId || this.waitingChecked === installId) return;
+      this.waitingChecked = installId;
+      void this.checkWaiting(installId);
+    });
+
     // Public apps: load endpoints when the install's cluster becomes known,
     // then poll cert status while it's still issuing.
     effect(() => {
@@ -304,6 +347,28 @@ export class CatalogSuccessStepComponent implements OnDestroy {
       this.internalAppLoaded.set(appId);
       this.bootstrapInternalReadiness(appId);
     });
+  }
+
+  private async checkWaiting(installId: string): Promise<void> {
+    const api = `${this.appConfig.apiBaseUrl}/api/v1`;
+    const base = `${api}/applications`;
+    const fresh = await firstValueFrom(
+      this.http.get<{ applicationIds?: string[] }>(`${api}/catalog/installs/${installId}`),
+    ).catch(() => null);
+    const ids = fresh?.applicationIds ?? this.install()?.applicationIds ?? [];
+    for (const id of ids) {
+      try {
+        const app = await firstValueFrom(this.http.get<{ status?: string }>(`${base}/${id}`));
+        if (app?.status !== 'waiting_for_room') continue;
+        const runtime = await firstValueFrom(
+          this.http.get<{ waitingForRoom?: { says: string } | null }>(`${base}/${id}/runtime`),
+        ).catch(() => null);
+        this.waiting.set({ says: runtime?.waitingForRoom?.says ?? null });
+        return;
+      } catch {
+        continue;
+      }
+    }
   }
 
   ngOnDestroy(): void {

@@ -239,7 +239,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                   <ng-icon name="lucideGitMerge" class="h-8 w-8 mb-3 text-green-500" />
                   <div class="font-medium mb-1">From an existing repository</div>
                   <p class="text-xs text-muted-foreground">
-                    Deploy from a Git repo you already have. Your repo must follow the Flui layout — a Flui-managed Dockerfile at the root is strongly recommended.
+                    Deploy from a Git repo you already have. Flui reads its flui.yaml, and its Dockerfile if it builds with one.
                   </p>
                   @if (flowSubtype() === 'existing-repo') {
                     <ng-icon name="lucideCheck" class="absolute top-3 right-3 h-4 w-4 text-primary" />
@@ -290,23 +290,22 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
 
               <!-- Structure requirements for the existing-repo flow -->
               @if (flowSubtype() === 'existing-repo') {
-                <div class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10">
-                  <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <div class="text-xs text-amber-900 dark:text-amber-100 space-y-2">
-                    <p class="font-medium">Your repository must follow the Flui layout</p>
+                <div class="flex items-start gap-3 p-4 rounded-lg border border-border bg-muted/40" data-testid="existing-repo-needs">
+                  <ng-icon name="lucideInfo" class="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div class="text-xs text-foreground space-y-2">
+                    <p class="font-medium">What Flui needs in the repository</p>
                     <p>
-                      At minimum we expect a <code class="font-mono bg-amber-100/60 dark:bg-amber-900/40 px-1 rounded">Dockerfile</code> at the repo root.
-                      For reliable builds, start its first line with <code class="font-mono bg-amber-100/60 dark:bg-amber-900/40 px-1 rounded"># flui-managed</code>
-                      — that's the marker Flui uses to trust the Dockerfile's port, runtime and build steps. If the Dockerfile is missing
-                      or doesn't match, the deploy will fail or you'll be asked to fill in port / healthcheck / resources by hand.
+                      A <code class="font-mono bg-muted px-1 rounded">flui.yaml</code> that describes the app, plus a
+                      <code class="font-mono bg-muted px-1 rounded">Dockerfile</code> if it builds with one. No
+                      <code class="font-mono bg-muted px-1 rounded">flui.yaml</code> yet? An AI agent can write both, or
+                      <code class="font-mono bg-muted px-1 rounded">flui app init</code> copies them from a
+                      <button type="button" (click)="navigateToTemplates()" class="inline-flex items-center gap-1 text-primary hover:underline font-medium">
+                        framework template
+                        <ng-icon name="lucideArrowRight" class="h-3 w-3" />
+                      </button>.
                     </p>
                     <p>
-                      Not sure what Flui expects? The
-                      <button type="button" (click)="navigateToTemplates()" class="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 hover:underline font-medium">
-                        template catalog
-                        <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-                      </button>
-                      shows working examples for every supported framework — clone one and adapt your repo to match.
+                      <a href="https://docs.flui.cloud/concepts/17-the-flui-manifest/" target="_blank" rel="noopener" class="text-primary hover:underline">What the flui.yaml says</a>
                     </p>
                   </div>
                 </div>
@@ -2071,7 +2070,11 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                   </div>
                   <div class="flex justify-between">
                     <span>Estimated time:</span>
-                    <span class="font-medium">2-5 minutes</span>
+                    @if (roomWaitAhead()) {
+                      <span class="font-medium text-amber-700 dark:text-amber-400">starts when a node with room joins</span>
+                    } @else {
+                      <span class="font-medium">2-5 minutes</span>
+                    }
                   </div>
                 </div>
                 <p class="text-xs text-blue-600 dark:text-blue-400 mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
@@ -2137,6 +2140,12 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
   `,
 })
 export class DeployWizardComponent implements OnInit, OnDestroy {
+  /** The capacity check says it will not fit now: the honest estimate is "when scaling makes room". */
+  protected readonly roomWaitAhead = computed(() => {
+    const av = this.state.catalogAvailability();
+    return !!av && !!av.reason && av.placement?.verdict !== 'fits';
+  });
+
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   repoService = inject(RepositoryService);

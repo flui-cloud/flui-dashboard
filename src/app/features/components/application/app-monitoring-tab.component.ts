@@ -4,16 +4,16 @@ import { ActivatedRoute } from '@angular/router';
 import { UserEventsService } from '../../../core/services/user-events.service';
 import { firstValueFrom } from 'rxjs';
 import {
-  GradeGaugeComponent,
-  GaugeChartData,
-  GaugeChartConfig,
+  ChartPanelComponent,
+  StatTileComponent,
+  StatTileData,
+  NODE_SERIES_COLORS,
   TimeSeriesLineComponent,
   TimeSeriesChartData,
   TimeSeriesChartConfig,
   TimeSeriesSeries,
-  MultiStatCardComponent,
-  MultiStatCardData,
 } from '../../../shared/components/charts';
+import { formatPercent, formatRate } from '../../../shared/utils/metric-format';
 import { ApplicationMonitoringService } from '../../service/application-monitoring.service';
 import { ApplicationMetricsService } from '../../../core/api/api/applicationMetrics.service';
 import { DbDiskUsageComponent } from './db-disk-usage.component';
@@ -28,14 +28,36 @@ import { lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert
 
 type MonitoringTimeRange = '1h' | '2h' | '3h' | '6h' | '1d';
 
+/** One config object per size, held stable so a 5s poll never re-applies chart options. */
+type SizedConfig = Record<'inline' | 'expanded', TimeSeriesChartConfig>;
+
+const INLINE_HEIGHT = '190px';
+const EXPANDED_HEIGHT = 'min(62vh, 560px)';
+
+const RANGES: { value: MonitoringTimeRange; label: string; long: string }[] = [
+  { value: '1h', label: '1h', long: 'last hour' },
+  { value: '2h', label: '2h', long: 'last 2 hours' },
+  { value: '3h', label: '3h', long: 'last 3 hours' },
+  { value: '6h', label: '6h', long: 'last 6 hours' },
+  { value: '1d', label: '1d', long: 'last day' },
+];
+
+function sizedPair(extra: TimeSeriesChartConfig): SizedConfig {
+  const base = { showGrid: true, showLegend: true, showTitle: false, ...extra };
+  return {
+    inline: { ...base, height: INLINE_HEIGHT, enableZoom: false, animated: true },
+    expanded: { ...base, height: EXPANDED_HEIGHT, enableZoom: true, animated: false },
+  };
+}
+
 @Component({
   selector: 'app-monitoring-tab',
   standalone: true,
   imports: [
     NgIconComponent,
-    GradeGaugeComponent,
+    ChartPanelComponent,
+    StatTileComponent,
     TimeSeriesLineComponent,
-    MultiStatCardComponent,
     DbDiskUsageComponent,
     AppTrafficSectionComponent,
     AppAlertsSectionComponent
@@ -87,32 +109,26 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   private readonly cpuHistoryData = signal<TimeSeriesChartData | null>(null);
   private readonly memoryHistoryData = signal<TimeSeriesChartData | null>(null);
   private readonly networkHistoryData = signal<TimeSeriesChartData | null>(null);
+  private readonly replicasHistoryData = signal<TimeSeriesChartData | null>(null);
 
   readonly cpuHistory = this.cpuHistoryData.asReadonly();
   readonly memoryHistory = this.memoryHistoryData.asReadonly();
   readonly networkHistory = this.networkHistoryData.asReadonly();
+  readonly replicasHistory = this.replicasHistoryData.asReadonly();
 
-  // Gauge configurations
-  readonly cpuGaugeConfig: GaugeChartConfig = {
-    unit: '%', thresholds: { warning: 70, danger: 90 }, height: '200px',
-  };
-  readonly memoryGaugeConfig: GaugeChartConfig = {
-    unit: '%', thresholds: { warning: 75, danger: 90 }, height: '200px',
-  };
+  readonly ranges = RANGES;
+  readonly rangeLabel = computed(() => RANGES.find((r) => r.value === this.timeRange())?.long ?? '');
+  readonly inlineHeight = INLINE_HEIGHT;
+  readonly expandedHeight = EXPANDED_HEIGHT;
+  readonly cpuConfig = sizedPair({ unit: '%', thresholds: { warning: 70, danger: 90 } });
+  readonly memoryConfig = sizedPair({ unit: '%', thresholds: { warning: 75, danger: 90 } });
+  readonly networkConfig = sizedPair({ valueFormatter: (v: number) => formatRate(v) });
+  readonly replicasConfig = sizedPair({ valueFormatter: (v: number) => v.toFixed(0) });
 
-  // Time series configurations
-  readonly cpuTsConfig: TimeSeriesChartConfig = {
-    unit: '%', height: '300px', showGrid: true, showLegend: false,
-    thresholds: { warning: 70, danger: 90 },
-  };
-  readonly memoryTsConfig: TimeSeriesChartConfig = {
-    unit: '%', height: '300px', showGrid: true, showLegend: false,
-    thresholds: { warning: 75, danger: 90 },
-  };
-  readonly networkTsConfig: TimeSeriesChartConfig = {
-    unit: ' B/s', height: '300px', showGrid: true, showLegend: true,
-    valueFormatter: (v: number) => this.formatBytes(v),
-  };
+  /** The template context is untyped, so the size is resolved here rather than indexed inline. */
+  pick(config: SizedConfig, mode: string): TimeSeriesChartConfig {
+    return mode === 'expanded' ? config.expanded : config.inline;
+  }
 
   // Pod selector
   private readonly selectedPodName = signal<string | null>(null);
@@ -148,32 +164,6 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
     this.selectedPodName.set(podName);
   }
 
-  // Computed gauge data — usage vs limits (not requests) for realistic representation
-  readonly cpuGaugeData = computed<GaugeChartData>(() => {
-    const cpu = this.activeCpu();
-    const usage = cpu?.usage_cores ?? 0;
-    const limits = cpu?.limits_cores ?? 0;
-    const pct = limits > 0 ? (usage / limits) * 100 : 0;
-    return {
-      value: pct,
-      title: 'CPU',
-      subtitle: `${this.formatCpu(usage)} / ${this.formatCpu(limits)}`,
-    };
-  });
-
-  readonly memoryGaugeData = computed<GaugeChartData>(() => {
-    const mem = this.activeMemory();
-    const usage = mem?.usage_bytes ?? 0;
-    const limits = mem?.limits_bytes ?? 0;
-    const pct = limits > 0 ? (usage / limits) * 100 : 0;
-    return {
-      value: pct,
-      title: 'Memory',
-      subtitle: `${this.formatBytes(usage)} / ${this.formatBytes(limits)}`,
-    };
-  });
-
-  // Computed stat cards
   readonly replicaStats = computed(() => {
     const s = this.monitoring.statusMetrics();
     return {
@@ -183,31 +173,88 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
     };
   });
 
-  readonly restartStats = computed<MultiStatCardData>(() => {
-    const podStatus = this.activeReplicaStatus();
-    const appStatus = this.monitoring.statusMetrics();
-    const total = podStatus?.restart_total ?? appStatus?.restart_total ?? 0;
-    const rate = podStatus?.restart_rate_1h ?? appStatus?.restart_rate_1h ?? 0;
-    // Pass pre-formatted strings so MultiStatCardComponent doesn't apply its
-    // default two-decimal float formatter (restart counts are integers).
-    return {
-      title: 'Container Restarts',
-      stats: [
-        { label: 'Total', value: String(Math.round(total)), severity: total > 0 ? 'warning' : 'success' },
-        { label: 'Last Hour', value: rate.toFixed(1), severity: rate > 0 ? 'danger' : 'success' },
-      ],
-    };
+  private readonly cpuPct = computed(() => {
+    const cpu = this.activeCpu();
+    const limit = cpu?.limits_cores ?? 0;
+    return limit > 0 ? ((cpu?.usage_cores ?? 0) / limit) * 100 : null;
   });
 
-  readonly networkStats = computed<MultiStatCardData>(() => {
+  private readonly memoryPct = computed(() => {
+    const mem = this.activeMemory();
+    const limit = mem?.limits_bytes ?? 0;
+    return limit > 0 ? ((mem?.usage_bytes ?? 0) / limit) * 100 : null;
+  });
+
+  readonly cpuNow = computed(() => {
+    const pct = this.cpuPct();
+    return pct == null ? '' : formatPercent(pct);
+  });
+  readonly memoryNow = computed(() => {
+    const pct = this.memoryPct();
+    return pct == null ? '' : formatPercent(pct);
+  });
+  readonly networkNow = computed(() => {
     const net = this.activeNetwork();
-    return {
-      title: 'Network I/O',
-      stats: [
-        { label: 'Receive', value: this.formatBytes(net?.receive_bytes_rate ?? 0) + '/s', severity: 'info' },
-        { label: 'Transmit', value: this.formatBytes(net?.transmit_bytes_rate ?? 0) + '/s', severity: 'info' },
-      ],
-    };
+    return net ? formatRate((net.receive_bytes_rate ?? 0) + (net.transmit_bytes_rate ?? 0)) : '';
+  });
+  readonly replicasNow = computed(() => {
+    const r = this.replicaStats();
+    return r.desired ? `${r.ready}/${r.desired}` : '';
+  });
+
+  readonly tiles = computed<StatTileData[]>(() => {
+    const cpu = this.activeCpu();
+    const mem = this.activeMemory();
+    const net = this.activeNetwork();
+    const replicas = this.replicaStats();
+    const podStatus = this.activeReplicaStatus();
+    const appStatus = this.monitoring.statusMetrics();
+    const restarts = Math.round(podStatus?.restart_total ?? appStatus?.restart_total ?? 0);
+    const restartsHour = podStatus?.restart_rate_1h ?? appStatus?.restart_rate_1h ?? 0;
+    const cpuPct = this.cpuPct();
+    const memoryPct = this.memoryPct();
+    const spark = (data: TimeSeriesChartData | null) => data?.series[0]?.data.map((p) => p.value) ?? [];
+    const netIn = net?.receive_bytes_rate ?? 0;
+    const netOut = net?.transmit_bytes_rate ?? 0;
+    return [
+      {
+        label: 'CPU',
+        value: cpuPct == null ? '—' : cpuPct.toFixed(1),
+        unit: cpuPct == null ? '' : '%',
+        spark: spark(this.cpuHistory()),
+        color: NODE_SERIES_COLORS[0],
+        footnote: `${this.formatCpu(cpu?.usage_cores ?? 0)} / ${this.formatCpu(cpu?.limits_cores ?? 0)}`,
+      },
+      {
+        label: 'Memory',
+        value: memoryPct == null ? '—' : memoryPct.toFixed(1),
+        unit: memoryPct == null ? '' : '%',
+        spark: spark(this.memoryHistory()),
+        color: NODE_SERIES_COLORS[1],
+        footnote: `${this.formatBytes(mem?.usage_bytes ?? 0)} / ${this.formatBytes(mem?.limits_bytes ?? 0)}`,
+      },
+      {
+        label: 'Replicas',
+        value: `${replicas.ready}/${replicas.desired}`,
+        spark: spark(this.replicasHistory()),
+        color: NODE_SERIES_COLORS[2],
+        footnote: replicas.unavailable > 0 ? `${replicas.unavailable} unavailable` : 'all ready',
+      },
+      {
+        label: 'Restarts',
+        value: String(restarts),
+        spark: [],
+        color: NODE_SERIES_COLORS[3],
+        footnote: `${restartsHour.toFixed(1)} last hour`,
+      },
+      {
+        label: 'Network',
+        value: formatRate(netIn + netOut),
+        spark: spark(this.networkHistory()),
+        color: NODE_SERIES_COLORS[0],
+        footnote: `${formatRate(netIn)} in · ${formatRate(netOut)} out`,
+      },
+    ];
   });
 
   ngOnInit(): void {
@@ -316,6 +363,24 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
         { name: 'Network Out', data: netOut, smooth: true, color: '#f59e0b' },
       ],
     });
+
+    const ready = dp
+      .filter(p => p.replicas_ready != null)
+      .map(p => ({ timestamp: new Date(p.datetime), value: p.replicas_ready! }));
+    const desired = dp
+      .filter(p => p.replicas_desired != null)
+      .map(p => ({ timestamp: new Date(p.datetime), value: p.replicas_desired! }));
+    this.replicasHistoryData.set(
+      ready.length || desired.length
+        ? {
+            title: 'Replicas',
+            series: [
+              { name: 'Ready', data: ready, color: '#10b981' },
+              { name: 'Desired', data: desired, color: '#94a3b8' },
+            ],
+          }
+        : null,
+    );
   }
 
   formatCpu(cores: number): string {
@@ -332,7 +397,10 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
 
   formatBytes(bytes: number): string {
     if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes >= 1024 * 1024) {
+      const mb = bytes / (1024 * 1024);
+      return `${mb.toFixed(mb >= 100 ? 0 : 1)} MB`;
+    }
     if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${bytes.toFixed(0)} B`;
   }

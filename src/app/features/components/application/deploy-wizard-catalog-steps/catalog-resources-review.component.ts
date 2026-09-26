@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideChevronDown,
@@ -21,7 +22,7 @@ import {
   selector: 'app-catalog-resources-review',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon],
+  imports: [FormsModule, NgIcon, RouterLink],
   providers: [
     provideIcons({
       lucideChevronDown,
@@ -96,24 +97,48 @@ import {
             </div>
           </div>
         } @else if (av.reason === 'autoscaling_pending') {
-          <div class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-sm">
-            <ng-icon name="lucideTriangleAlert" class="h-4 w-4 mt-0.5 text-amber-600 dark:text-amber-400" />
+          <div class="flex items-start gap-2 p-3 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 text-sm">
+            <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5 text-blue-600 dark:text-blue-400" />
             <div class="flex-1">
-              <p class="font-medium text-amber-800 dark:text-amber-200">
-                A node will be added to fit this
+              <p class="font-medium text-blue-800 dark:text-blue-200">
+                @if (av.placement?.verdict === 'buys') {
+                  Flui will buy a {{ av.placement?.shape }} in {{ av.placement?.region }} to fit this
+                } @else {
+                  A node will be added to fit this
+                }
               </p>
-              <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                {{ av.reasonMessage ?? 'Capacity is tight, but this cluster grows on its own: the install stays pending until the new node joins.' }}
+              <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+                {{ av.reasonMessage }} The app waits for room until the new node joins.
               </p>
+              @if (av.placement?.groupId; as groupId) {
+                <a [routerLink]="['/scaling', groupId]" class="inline-block mt-1 text-xs font-medium text-blue-700 dark:text-blue-300 underline underline-offset-2">Open scaling</a>
+              }
             </div>
           </div>
         } @else {
           <div class="flex items-start gap-2 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm">
             <ng-icon name="lucideCircleX" class="h-4 w-4 mt-0.5 text-red-600 dark:text-red-400" />
             <div class="flex-1">
-              <p class="font-medium text-red-700 dark:text-red-300">Insufficient cluster capacity</p>
+              <p class="font-medium text-red-700 dark:text-red-300">
+                @switch (av.placement?.verdict) {
+                  @case ('nothing-hosts') { No machine can take this yet — it would wait for room }
+                  @case ('proposes') { The scaling group is manual: it would only propose a {{ av.placement?.shape }} }
+                  @default { Insufficient cluster capacity }
+                }
+              </p>
               @if (av.reasonMessage) {
-                <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">{{ av.reasonMessage }}</p>
+                <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">
+                  {{ av.reasonMessage }}
+                  @if (av.placement?.why) {
+                    <button type="button" (click)="whyOpen.set(!whyOpen())" class="ml-1 underline underline-offset-2 font-medium">{{ whyOpen() ? 'Hide' : 'Why' }}</button>
+                  }
+                </p>
+                @if (whyOpen() && av.placement?.why) {
+                  <p class="text-xs text-red-700/80 dark:text-red-300/80 mt-1">{{ av.placement?.why }}</p>
+                }
+              }
+              @if (av.placement?.groupId; as groupId) {
+                <a [routerLink]="['/scaling', groupId]" class="inline-block mt-1 text-xs font-medium text-red-700 dark:text-red-300 underline underline-offset-2">Open scaling</a>
               }
               <div class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4">
                 <span>Required:</span><span class="text-right font-mono">{{ av.required.cpu }} · {{ av.required.memory }}</span>
@@ -123,9 +148,9 @@ import {
               </div>
               <p class="text-xs text-red-700 dark:text-red-300 mt-2">
                 @if (detail?.resourceOverridesSupported) {
-                  Shrink the override below, pick another cluster, or check the "install anyway" box to proceed at your own risk.
+                  Shrink the override below, pick another cluster, or check "Install anyway".
                 } @else {
-                  Pick a cluster with more capacity, free up resources, or check the "install anyway" box to proceed at your own risk.
+                  Pick a cluster with more room, free some up, or check "Install anyway".
                 }
               </p>
             </div>
@@ -147,17 +172,20 @@ import {
 
         @if (advancedOpen()) {
           <div class="mt-3 space-y-3">
-            <div class="flex items-start gap-2 p-3 rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/15 text-xs">
-              <ng-icon name="lucideTriangleAlert" class="h-4 w-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-              <div class="space-y-1 text-amber-800 dark:text-amber-200">
-                <p class="font-semibold">Not recommended — overriding resources can break the cluster.</p>
-                <p class="text-amber-700/90 dark:text-amber-300/90">
-                  The manifest defaults are sized to run safely. Raising memory/limits or replicas can
-                  oversubscribe the node and OOM-kill other apps — including system components, which can
-                  take the whole cluster down. Lowering a request below the app's real usage can get this
-                  app OOM-killed or CPU-throttled. Only change these if you know exactly what you're doing;
-                  leave a field empty to keep the manifest value.
+            <div class="flex items-start gap-2 p-3 rounded-md border border-border bg-muted/40 text-xs">
+              <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+              <div class="space-y-1 text-muted-foreground">
+                <p>
+                  The capacity check above follows what you write here: whether it fits, which machine scaling would buy, or that it would wait.
+                  Leave a field empty to keep the manifest value.
+                  <button type="button" (click)="overrideWhyOpen.set(!overrideWhyOpen())" class="ml-1 underline underline-offset-2 font-medium text-foreground">{{ overrideWhyOpen() ? 'Hide' : 'Why' }}</button>
                 </p>
+                @if (overrideWhyOpen()) {
+                  <p>
+                    A request reserves room on a node. One larger than any node has free does not overload anything: the app waits, and the scaling group buys a node inside its money ceiling or raises an alarm.
+                    A limit is what the app may really use. A memory limit far above the request is what can crowd a node; a limit below the app's real use gets it stopped (memory) or slowed down (CPU).
+                  </p>
+                }
               </div>
             </div>
 
@@ -264,7 +292,7 @@ import {
             class="mt-0.5"
           />
           <span class="text-xs text-amber-800 dark:text-amber-200">
-            <strong>Install anyway</strong> — I understand the cluster is short on capacity and the app may be OOM-killed or throttled at runtime.
+            <strong>Install anyway</strong> — if what it reserves does not fit, it waits for room; if only its limit does not, it runs and the node can run short of memory at peak.
           </span>
         </label>
       }
@@ -274,6 +302,8 @@ import {
 export class CatalogResourcesReviewComponent implements OnDestroy {
   protected readonly state = inject(DeployWizardStateService);
   protected readonly advancedOpen = signal<boolean>(false);
+  protected readonly whyOpen = signal<boolean>(false);
+  protected readonly overrideWhyOpen = signal<boolean>(false);
 
   private recheckTimer: ReturnType<typeof setTimeout> | null = null;
 

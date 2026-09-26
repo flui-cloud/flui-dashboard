@@ -1,4 +1,4 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleCheck,
@@ -73,6 +73,9 @@ import { ApplicationRowComponent } from './application-row.component';
           @for (component of group().components; track component.id) {
             <span [class]="dotClass(component.status, '2')"></span>
           }
+          @if (replicas() !== null) {
+            <span class="ml-1 text-xs text-gray-500 dark:text-gray-400 tabular-nums" data-testid="group-replicas">{{ replicas() }}x</span>
+          }
         </span>
 
         <span class="text-xs text-gray-500 dark:text-gray-400 font-mono flex-shrink-0 hidden lg:block w-32 truncate">
@@ -137,9 +140,22 @@ export class ApplicationGroupRowComponent {
     return this.primaryComponent()?.k8sNamespace ?? '';
   }
 
+  /** Replicas asked for across every component, as the API's grouped listing counts them. */
+  protected readonly replicas = computed(() => {
+    const counted = this.group().components.filter(
+      (c) => typeof c.replicas === 'number',
+    );
+    return counted.length
+      ? counted.reduce((sum, c) => sum + (c.replicas as number), 0)
+      : null;
+  });
+
   componentsTitle(): string {
     return this.group()
-      .components.map((c) => `${this.shortName(c)}: ${c.status}`)
+      .components.map((c) => {
+        const replicas = c.replicas == null ? '' : ` · ${c.replicas}x`;
+        return `${this.shortName(c)}: ${c.status}${replicas}`;
+      })
       .join(' · ');
   }
 
@@ -186,6 +202,8 @@ export class ApplicationGroupRowComponent {
         return 'bg-red-500';
       case ApplicationStatusEnum.Degraded:
         return 'bg-orange-500';
+      case ApplicationStatusEnum.WaitingForRoom:
+        return 'bg-amber-400 animate-pulse';
       case ApplicationStatusEnum.Deleting:
         return 'bg-gray-400 animate-pulse';
       case ApplicationStatusEnum.Stopped:
@@ -210,6 +228,8 @@ export class ApplicationGroupRowComponent {
       case ApplicationStatusEnum.Degraded:
       case ApplicationStatusEnum.RollingBack:
         return `${base} bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400`;
+      case ApplicationStatusEnum.WaitingForRoom:
+        return `${base} bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300`;
       case ApplicationStatusEnum.Stopped:
       case ApplicationStatusEnum.Deleting:
       case ApplicationStatusEnum.Deleted:
@@ -240,6 +260,8 @@ export class ApplicationGroupRowComponent {
         return 'lucideCircleX';
       case ApplicationStatusEnum.Degraded:
         return 'lucideActivity';
+      case ApplicationStatusEnum.WaitingForRoom:
+        return 'lucideLoader';
       default:
         return 'lucideCircle';
     }
@@ -250,6 +272,7 @@ export class ApplicationGroupRowComponent {
       status === ApplicationStatusEnum.AwaitingBuild ||
       status === ApplicationStatusEnum.Provisioning ||
       status === ApplicationStatusEnum.Updating ||
+      status === ApplicationStatusEnum.WaitingForRoom ||
       status === ApplicationStatusEnum.Deleting;
     return spin ? 'h-3 w-3 animate-spin' : 'h-3 w-3';
   }

@@ -151,6 +151,8 @@ export class ApplicationRowComponent {
         return `${base} bg-red-500`;
       case ApplicationStatusEnum.Degraded:
         return `${base} bg-orange-500`;
+      case ApplicationStatusEnum.WaitingForRoom:
+        return `${base} bg-amber-400 animate-pulse`;
       case ApplicationStatusEnum.Deleting:
         return `${base} bg-gray-400 animate-pulse`;
       case ApplicationStatusEnum.Stopped:
@@ -175,6 +177,8 @@ export class ApplicationRowComponent {
       case ApplicationStatusEnum.Degraded:
       case ApplicationStatusEnum.RollingBack:
         return `${base} bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400`;
+      case ApplicationStatusEnum.WaitingForRoom:
+        return `${base} bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300`;
       case ApplicationStatusEnum.Stopped:
       case ApplicationStatusEnum.Deleting:
       case ApplicationStatusEnum.Deleted:
@@ -204,6 +208,8 @@ export class ApplicationRowComponent {
         return 'lucideCircleX';
       case ApplicationStatusEnum.Degraded:
         return 'lucideActivity';
+      case ApplicationStatusEnum.WaitingForRoom:
+        return 'lucideLoader';
       default:
         return 'lucideCircle';
     }

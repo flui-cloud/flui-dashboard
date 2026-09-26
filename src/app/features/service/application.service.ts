@@ -117,6 +117,7 @@ const STATUS_SEVERITY: ApplicationStatus[] = [
   ApplicationStatusEnum.Deleting,
   ApplicationStatusEnum.RollingBack,
   ApplicationStatusEnum.Updating,
+  ApplicationStatusEnum.WaitingForRoom,
   ApplicationStatusEnum.Provisioning,
   ApplicationStatusEnum.AwaitingBuild,
   ApplicationStatusEnum.Pending,

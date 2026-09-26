@@ -5,13 +5,15 @@ import { lucideLoader, lucideAlertCircle } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { AppRuntimeService } from '../../service/app-runtime.service';
 import { AppResourcesEditorComponent } from './app-resources-editor.component';
+import { AppResourceProposalComponent } from './app-resource-proposal.component';
+import { AppMaintenanceCardComponent } from '../maintenance/app-maintenance-card.component';
 import { UpdateResourcesDto } from '../../../core/api/model/updateResourcesDto';
 import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
 
 @Component({
   selector: 'app-resources-tab',
   standalone: true,
-  imports: [NgIconComponent, AppResourcesEditorComponent],
+  imports: [NgIconComponent, AppResourcesEditorComponent, AppResourceProposalComponent, AppMaintenanceCardComponent],
   providers: [
     provideIcons({ lucideLoader, lucideAlertCircle }),
   ],
@@ -34,13 +36,16 @@ import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
           </div>
         }
 
+        <app-resource-proposal [appId]="app.id ?? null" (deferred)="maintenanceCard.reload()" />
+        <app-app-maintenance-card #maintenanceCard [appId]="app.id ?? null" />
+
         <app-resources-editor
           [runtime]="runtimeService.runtime()"
           [savingReplicas]="runtimeService.savingReplicas()"
           [savingResources]="runtimeService.savingResources()"
           [savingRestart]="runtimeService.savingRestart()"
-          [maxCpuMc]="runtimeService.maxCpuMc()"
-          [maxMemMib]="runtimeService.maxMemMib()"
+          [appId]="app.id ?? null"
+          [clusterId]="app.clusterId ?? null"
           [rollout]="runtimeService.rollout()"
           (saveResourcesEvent)="onSaveResources($event)"
           (saveReplicasEvent)="onSaveReplicas($event)"
@@ -63,9 +68,6 @@ export class AppResourcesTabComponent implements OnInit, OnDestroy {
       const app = this.app();
       if (app?.id) {
         await this.runtimeService.loadRuntime(app.id);
-      }
-      if (app?.clusterId) {
-        void this.runtimeService.loadClusterCapacity(app.clusterId);
       }
     })();
   }
