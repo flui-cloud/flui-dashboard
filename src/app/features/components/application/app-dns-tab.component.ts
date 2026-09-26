@@ -22,6 +22,7 @@ import { CatalogClusterCapabilitiesDto } from '../../../core/api/model/catalogCl
 import { CatalogService } from '../../../core/api/api/catalog.service';
 import { hasPublicEndpoint } from '../../model/app-exposure';
 import { accessOf } from '../../model/app-access';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-app-dns-tab',
@@ -188,6 +189,7 @@ export class AppDnsTabComponent implements OnInit {
   private readonly catalogApi = inject(CatalogService);
   protected clusterDnsZoneService = inject(ClusterDnsZoneService);
   protected appEndpointsService = inject(AppEndpointsService);
+  private readonly toast = inject(ToastService);
   protected authzInstall = inject(AuthzInstallService);
 
   private readonly capabilities = signal<CatalogClusterCapabilitiesDto | null>(null);
@@ -341,9 +343,13 @@ export class AppDnsTabComponent implements OnInit {
 
   protected async reconcileEndpoint(ep: AppEndpointResponseDto): Promise<void> {
     this.reconcilingId.set(ep.id);
-    const result = await this.appEndpointsService.reconcileEndpoint(ep.id);
-    if (result) {
+    const sync = await this.appEndpointsService.syncEndpoint(ep.id);
+    if (sync) {
       await this.appEndpointsService.pollEndpointReconciliation(ep.id, 60000);
+      const toast = { title: `${ep.fqdn} synced`, message: sync.says };
+      if (sync.certificate === 'failed') this.toast.showWarning(toast);
+      else if (sync.certificate === 'waiting') this.toast.showInfo(toast);
+      else this.toast.showSuccess(toast);
     }
     this.reconcilingId.set(null);
     if (ep.certificateRequired) {

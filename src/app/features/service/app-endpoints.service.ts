@@ -7,6 +7,13 @@ import { UpdateAppEndpointDto } from '../../core/api/model/updateAppEndpointDto'
 import { CertificateStatus, DnsReconciliationStatus } from '../model/dns.models';
 import { internalHostingErrorMessage } from '../model/app-exposure';
 
+export interface EndpointSync {
+  certificate: 'not-required' | 'shared' | 'valid' | 'retried' | 'requested' | 'issuing' | 'waiting' | 'failed';
+  certificateRetried: boolean;
+  actions: string[];
+  says: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AppEndpointsService {
   private readonly apiService = inject(ApiService);
@@ -89,6 +96,11 @@ export class AppEndpointsService {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to trigger reconciliation'));
       return null;
     }
+  }
+
+  async syncEndpoint(id: string): Promise<EndpointSync | null> {
+    const result = await this.reconcileEndpoint(id);
+    return (result as AppEndpointResponseDto & { sync?: EndpointSync } | null)?.sync ?? null;
   }
 
   async getEndpointStatus(id: string): Promise<AppEndpointResponseDto | null> {

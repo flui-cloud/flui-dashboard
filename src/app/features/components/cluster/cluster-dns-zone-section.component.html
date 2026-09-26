@@ -196,6 +196,27 @@
     </div>
   }
 
+  @if (assignments().length > 0 && acmeResolvers(); as r) {
+    <div class="flex items-center gap-1.5 text-xs text-sub flex-wrap" data-testid="acme-resolvers">
+      @if (r.pinned) {
+        <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5 text-green-500" />
+        Certificates: names checked through public resolvers
+      } @else {
+        <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 text-amber-500" />
+        <span>Certificates: names checked through the cluster's own resolver &bull; a new name can wait up to an hour</span>
+        <button
+          *fluiCan="'app:write'"
+          (click)="pinAcmeResolvers()"
+          [disabled]="pinningResolvers()"
+          class="text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+          data-testid="acme-resolvers-pin"
+        >
+          {{ pinningResolvers() ? 'Setting…' : 'Use public resolvers' }}
+        </button>
+      }
+    </div>
+  }
+
   @if (assignments().length > 0 && !showAssignForm() && !assigning() && unassignedZones().length > 0) {
     <button
       (click)="showAssignForm.set(true)"

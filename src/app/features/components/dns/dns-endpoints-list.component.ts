@@ -29,6 +29,13 @@ interface ParsedError {
   rawJson: string;
 }
 
+interface CertificatePhase {
+  step: 'none' | 'publishing' | 'issuing' | 'issued' | 'failed';
+  label: string;
+  detail: string | null;
+  technical: string | null;
+}
+
 @Component({
   selector: 'app-dns-endpoints-list',
   standalone: true,
@@ -64,6 +71,15 @@ interface ParsedError {
                   <span class="text-xs text-gray-500 dark:text-gray-400">
                     {{ ep.serviceName }} &middot; {{ ep.k8sNamespace }}
                   </span>
+                  @if (phaseOf(ep); as phase) {
+                    @if (phase.step !== 'issued' && phase.step !== 'none' && phase.detail) {
+                      <span
+                        class="block text-xs"
+                        [class]="phase.step === 'failed' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'"
+                        data-testid="endpoint-cert-detail"
+                      >{{ phase.detail }}</span>
+                    }
+                  }
                 </div>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
@@ -99,7 +115,7 @@ interface ParsedError {
                         class="h-3 w-3"
                       />
                     }
-                    {{ getCertLabel(ep.certificateStatus ?? null) }}
+                    {{ certBadgeLabel(ep) }}
                   </span>
                   @if (ep.certificateProvider === 'lets_encrypt_staging') {
                     <span class="text-xs px-2 py-0.5 rounded font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
@@ -117,12 +133,13 @@ interface ParsedError {
                   </span>
                 }
                 <!-- Error/cert detail button: only when there's an error or cert is not valid -->
-                @if (ep.errorMessage || (ep.certificateMessage && ep.certificateStatus !== 'valid')) {
+                @if (ep.errorMessage || (technicalOf(ep) && ep.certificateStatus !== 'valid')) {
                   <button
                     type="button"
                     (click)="openError(ep)"
-                    title="View error details"
-                    class="p-1 rounded text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
+                    title="View details"
+                    class="p-1 rounded transition-colors"
+                    [class]="ep.errorMessage || phaseOf(ep)?.step === 'failed' ? 'text-red-400 hover:text-red-600 dark:hover:text-red-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'"
                   >
                     <ng-icon name="lucideFileText" class="h-3.5 w-3.5" />
                   </button>
@@ -385,7 +402,7 @@ export class DnsEndpointsListComponent {
   }
 
   private buildError(ep: AppEndpointResponseDto): ParsedError {
-    const hasCert = !!ep.certificateMessage;
+    const hasCert = !!this.technicalOf(ep);
     const hasReconcile = !!ep.errorMessage;
 
     let title = 'Error Details';
@@ -397,7 +414,7 @@ export class DnsEndpointsListComponent {
     return {
       title,
       httpCode: reconcilePart?.httpCode ?? null,
-      certMessage: ep.certificateMessage ?? null,
+      certMessage: this.technicalOf(ep),
       k8sMessage: reconcilePart?.k8sMessage ?? null,
       causes: reconcilePart?.causes ?? [],
       rawJson: reconcilePart?.rawJson ?? '',
@@ -442,6 +459,21 @@ export class DnsEndpointsListComponent {
 
   getStatusClass(status: string): string {
     return this.colorToClass(getReconciliationBadgeColor(status));
+  }
+
+  certBadgeLabel(ep: AppEndpointResponseDto): string {
+    const phase = this.phaseOf(ep);
+    return phase && phase.step !== 'issued' ? phase.label : this.getCertLabel(ep.certificateStatus ?? null);
+  }
+
+  phaseOf(ep: AppEndpointResponseDto): CertificatePhase | null {
+    return (ep as AppEndpointResponseDto & { certificatePhase?: CertificatePhase }).certificatePhase ?? null;
+  }
+
+  /** The raw message, kept behind the details button; Flui's own sentences are shown in the row. */
+  technicalOf(ep: AppEndpointResponseDto): string | null {
+    const phase = this.phaseOf(ep);
+    return phase ? phase.technical : (ep.certificateMessage ?? null);
   }
 
   getCertLabel(status: string | null): string {

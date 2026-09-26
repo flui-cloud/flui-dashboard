@@ -19,6 +19,7 @@ import { CanDirective } from '../../../core/directives/can.directive';
 import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
 import {
   ClusterDnsZoneService,
+  AcmeResolvers,
   ClusterWildcard,
 } from '../../service/cluster-dns-zone.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
@@ -58,6 +59,8 @@ export class ClusterDnsZoneSectionComponent {
   private readonly sandbox = inject(SandboxService);
 
   private readonly wildcards = signal<Record<string, ClusterWildcard>>({});
+  protected readonly acmeResolvers = signal<AcmeResolvers | null>(null);
+  protected readonly pinningResolvers = signal(false);
   protected readonly publishingId = signal<string | null>(null);
 
   constructor() {
@@ -65,6 +68,11 @@ export class ClusterDnsZoneSectionComponent {
       this.assignments();
       this.clusterId();
       void this.loadWildcards();
+    });
+    effect(() => {
+      const clusterId = this.clusterId();
+      this.acmeResolvers.set(null);
+      if (clusterId && !this.sandbox.inSandbox()) void this.loadAcmeResolvers(clusterId);
     });
   }
 
@@ -174,6 +182,23 @@ export class ClusterDnsZoneSectionComponent {
     a: ClusterDnsZoneResponseDto
   ): ClusterWildcard | undefined {
     return this.wildcards()[a.id];
+  }
+
+  private async loadAcmeResolvers(clusterId: string): Promise<void> {
+    const state = await this.dnsZoneService.getAcmeResolvers(clusterId);
+    if (this.clusterId() === clusterId) this.acmeResolvers.set(state);
+  }
+
+  protected async pinAcmeResolvers(): Promise<void> {
+    const clusterId = this.clusterId();
+    if (!clusterId || this.pinningResolvers()) return;
+    this.pinningResolvers.set(true);
+    try {
+      const state = await this.dnsZoneService.pinAcmeResolvers(clusterId);
+      if (state) this.acmeResolvers.set(state);
+    } finally {
+      this.pinningResolvers.set(false);
+    }
   }
 
   private async loadWildcards(): Promise<void> {

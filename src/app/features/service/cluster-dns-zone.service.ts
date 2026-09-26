@@ -22,6 +22,13 @@ export interface InternalHostingStatus {
 
 export type IssuerApiType = 'http' | 'dns';
 
+export interface AcmeResolvers {
+  pinned: boolean;
+  nameservers: string | null;
+  says: string;
+  changed: boolean;
+}
+
 export interface ClusterWildcard {
   status: 'published' | 'absent' | 'foreign' | 'unknown' | 'unavailable';
   fqdn: string | null;
@@ -137,6 +144,28 @@ export class ClusterDnsZoneService {
     } finally {
       this.loadingData.set(false);
     }
+  }
+
+  async getAcmeResolvers(clusterId: string): Promise<AcmeResolvers | null> {
+    try {
+      return await firstValueFrom(this.http.get<AcmeResolvers | null>(this.acmeResolversUrl(clusterId)));
+    } catch {
+      return null;
+    }
+  }
+
+  async pinAcmeResolvers(clusterId: string): Promise<AcmeResolvers | null> {
+    this.errorData.set(null);
+    try {
+      return await firstValueFrom(this.http.post<AcmeResolvers | null>(this.acmeResolversUrl(clusterId), {}));
+    } catch (err: unknown) {
+      this.errorData.set(this.extractErrorMessage(err, 'Failed to set public resolvers'));
+      return null;
+    }
+  }
+
+  private acmeResolversUrl(clusterId: string): string {
+    return `${this.basePath}/api/v1/clusters/${encodeURIComponent(clusterId)}/dns-zone/acme-resolvers`;
   }
 
   async getClusterWildcard(
