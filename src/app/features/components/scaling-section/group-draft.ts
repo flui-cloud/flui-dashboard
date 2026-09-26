@@ -124,7 +124,7 @@ export class GroupDraft {
   setCost(value: FieldValue): void {
     this.state.update((group) => ({
       ...group,
-      limits: { ...group.limits, maxMonthlyCost: whole(value) },
+      limits: { ...group.limits, maxMonthlyCost: euros(value) },
     }));
   }
 
@@ -153,4 +153,11 @@ function whole(value: FieldValue): number | null {
   if (!Number.isFinite(parsed)) return null;
   if (parsed < MIN_FLEET_NODES || parsed > MAX_FLEET_NODES) return null;
   return parsed;
+}
+
+function euros(value: FieldValue): number | null {
+  if (value === null || value === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return Math.round(parsed * 100) / 100;
 }
