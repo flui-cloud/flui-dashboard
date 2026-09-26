@@ -11,6 +11,8 @@ import {
 } from '@angular/core';
 
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { AppConfigService } from '../../../core/services/app-config.service';
 import {
   FormBuilder,
   FormGroup,
@@ -152,6 +154,19 @@ interface FirewallRuleDto {
       (cancelled)="navigateBack()"
       (create)="createCluster()"
       >
+      @if (createError(); as message) {
+        <div
+          class="flex items-start gap-2 mb-6 p-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm"
+          role="alert"
+          data-testid="create-cluster-error"
+        >
+          <ng-icon name="lucideX" class="h-4 w-4 mt-0.5 text-red-600 dark:text-red-400" />
+          <div class="flex-1">
+            <p class="font-medium text-red-700 dark:text-red-300">The cluster was not created</p>
+            <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">{{ message }}</p>
+          </div>
+        </div>
+      }
       <!-- Selection Summary Bar -->
       @if (selectedProvider() || selectedRegion() || selectedServerTypeId()) {
         <div class="flex items-center gap-2 flex-wrap mb-6 px-1 py-2 rounded-lg bg-muted/40 border border-border/50 text-xs text-muted-foreground">
@@ -260,6 +275,19 @@ interface FirewallRuleDto {
                 You'll choose the region and node size together in the next step, where prices and
                 availability are shown per region.
               </p>
+              @if (providerRefusal(); as refusal) {
+                <div
+                  class="mt-3 max-w-4xl flex items-start gap-2 p-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm"
+                  role="alert"
+                  data-testid="provider-refused"
+                >
+                  <ng-icon name="lucideX" class="h-4 w-4 mt-0.5 text-red-600 dark:text-red-400" />
+                  <div class="flex-1">
+                    <p class="font-medium text-red-700 dark:text-red-300">This provider cannot host a workload cluster here yet</p>
+                    <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">{{ refusal }}</p>
+                  </div>
+                </div>
+              }
             </div>
           </div>
         }
@@ -1273,6 +1301,8 @@ export class ClusterCreationWizardComponent implements OnInit {
   private readonly accessManagementService = inject(AccessManagementService);
   private readonly clusterDnsZoneService = inject(ClusterDnsZoneService);
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
+  private readonly appConfig = inject(AppConfigService);
   readonly dnsZonesService = inject(DnsZonesService);
   public pricingService = inject(PricingService);
   readonly ipDetectionService = inject(IpDetectionService);
@@ -1286,6 +1316,8 @@ export class ClusterCreationWizardComponent implements OnInit {
   formValid = signal<boolean>(false);
   currentStepIndex = signal<number>(0);
   isCreating = signal<boolean>(false);
+  readonly createError = signal<string | null>(null);
+  readonly providerRefusal = signal<string | null>(null);
 
   // Selected values
   selectedProvider = signal<string>('');
@@ -1464,7 +1496,7 @@ export class ClusterCreationWizardComponent implements OnInit {
         title: 'Infrastructure',
         description: 'Configure name and provider',
         icon: 'lucideSettings',
-        isValid: this.formValid() && !!this.selectedProvider(),
+        isValid: this.formValid() && !!this.selectedProvider() && !this.providerRefusal(),
         isCompleted: currentIndex > 0 && this.formValid() && !!this.selectedProvider(),
       },
       {
@@ -1700,8 +1732,26 @@ export class ClusterCreationWizardComponent implements OnInit {
     this.selectedProvider.set(providerId);
     this.selectedRegion.set('');
     this.selectedServerTypeId.set('');
+    this.providerRefusal.set(null);
     if (providerId) {
       void this.wizardService.loadServerTypesAllRegions(providerId).catch(() => undefined);
+      void this.checkWorkloadProvider(providerId);
+    }
+  }
+
+  // An unanswered question leaves the decision to creation, which runs the
+  // same check: refusing here on a network error would block a valid provider.
+  private async checkWorkloadProvider(providerId: string): Promise<void> {
+    try {
+      const verdict = await firstValueFrom(
+        this.http.get<{ allowed: boolean; reason: string | null }>(
+          `${this.appConfig.apiBaseUrl}/api/v1/infrastructure/clusters/workload-providers/${providerId}`,
+        ),
+      );
+      if (this.selectedProvider() !== providerId) return;
+      this.providerRefusal.set(verdict.allowed ? null : verdict.reason);
+    } catch {
+      if (this.selectedProvider() === providerId) this.providerRefusal.set(null);
     }
   }
 
@@ -2101,6 +2151,7 @@ export class ClusterCreationWizardComponent implements OnInit {
     if (!serverType) return;
 
     this.isCreating.set(true);
+    this.createError.set(null);
 
     try {
       const configuration = this.buildClusterConfiguration(serverType);
@@ -2125,10 +2176,9 @@ export class ClusterCreationWizardComponent implements OnInit {
       });
     } catch (error: any) {
       console.error('Failed to create cluster:', error);
-      this.completeOutput.emit({
-        success: false,
-        error: this.mapCreateClusterError(error),
-      });
+      const message = this.mapCreateClusterError(error);
+      this.createError.set(message);
+      this.completeOutput.emit({ success: false, error: message });
     } finally {
       this.isCreating.set(false);
     }
