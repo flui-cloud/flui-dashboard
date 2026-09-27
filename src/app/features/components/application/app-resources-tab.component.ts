@@ -7,13 +7,14 @@ import { AppRuntimeService } from '../../service/app-runtime.service';
 import { AppResourcesEditorComponent } from './app-resources-editor.component';
 import { AppResourceProposalComponent } from './app-resource-proposal.component';
 import { AppMaintenanceCardComponent } from '../maintenance/app-maintenance-card.component';
+import { AppAutoscalingCardComponent } from './app-autoscaling-card.component';
 import { UpdateResourcesDto } from '../../../core/api/model/updateResourcesDto';
 import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
 
 @Component({
   selector: 'app-resources-tab',
   standalone: true,
-  imports: [NgIconComponent, AppResourcesEditorComponent, AppResourceProposalComponent, AppMaintenanceCardComponent],
+  imports: [NgIconComponent, AppResourcesEditorComponent, AppResourceProposalComponent, AppMaintenanceCardComponent, AppAutoscalingCardComponent],
   providers: [
     provideIcons({ lucideLoader, lucideAlertCircle }),
   ],
@@ -52,6 +53,8 @@ import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
           (restartEvent)="onRestart()"
           (refreshEvent)="onRefresh()"
         />
+
+        <app-autoscaling-card [appId]="app.id ?? null" />
 
       </div>
     }

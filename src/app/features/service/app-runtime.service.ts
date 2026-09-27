@@ -28,6 +28,16 @@ export interface ResourceProposalAnswer {
   usageRead: boolean;
 }
 
+export interface AppAutoscaling {
+  enabled: boolean;
+  min: number;
+  max: number;
+  targetCPU: number;
+  /** `manifest`: min and max come from flui.yaml `deploy.scaling`. */
+  rangeFrom: 'app' | 'manifest';
+  running: boolean | null;
+}
+
 export type PlacementVerdict = 'fits' | 'buys' | 'proposes' | 'nothing-hosts' | 'unknown';
 
 export interface ResourcesConsequence {
@@ -161,6 +171,26 @@ export class AppRuntimeService {
       this.http.post<ResourcesConsequence>(
         `${this.appConfig.apiBaseUrl}/api/v1/applications/${appId}/resources/consequence`,
         dto,
+      ),
+    );
+  }
+
+  autoscaling(appId: string): Promise<AppAutoscaling> {
+    return firstValueFrom(
+      this.http.get<AppAutoscaling>(
+        `${this.appConfig.apiBaseUrl}/api/v1/applications/${appId}/autoscaling`,
+      ),
+    );
+  }
+
+  setAutoscaling(
+    appId: string,
+    body: { enabled: boolean; min?: number; max?: number; targetCPU?: number },
+  ): Promise<AppAutoscaling> {
+    return firstValueFrom(
+      this.http.put<AppAutoscaling>(
+        `${this.appConfig.apiBaseUrl}/api/v1/applications/${appId}/autoscaling`,
+        body,
       ),
     );
   }

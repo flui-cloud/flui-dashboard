@@ -1023,7 +1023,27 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                         (input)="appReplicas.set(+$any($event.target).value)"
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       />
-                      <p class="text-xs text-muted-foreground mt-1">Number of pod replicas</p>
+                      <p class="text-xs text-muted-foreground mt-1">
+                        {{ appAutoscale() ? 'Fewest replicas' : 'Number of pod replicas' }}
+                      </p>
+                      <label class="mt-2 flex items-center gap-2 text-sm" data-testid="wizard-autoscale">
+                        <input type="checkbox" [checked]="appAutoscale()" (change)="appAutoscale.set($any($event.target).checked)" />
+                        Follow the load, up to
+                        <input
+                          type="number"
+                          min="2"
+                          max="20"
+                          [value]="appMaxReplicas()"
+                          (input)="appMaxReplicas.set(+$any($event.target).value)"
+                          [disabled]="!appAutoscale()"
+                          class="h-8 w-16 rounded-md border border-input bg-background px-2 text-sm"
+                          data-testid="wizard-autoscale-max"
+                        />
+                        replicas
+                      </label>
+                      @if (appAutoscale() && appMaxReplicas() <= appReplicas()) {
+                        <p class="text-xs text-red-600 dark:text-red-400 mt-1">The most has to be above the fewest.</p>
+                      }
                     </div>
                   </div>
                 </div>
@@ -2270,6 +2290,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   // Configuration step (docker_image)
   appPort = signal<number | null>(null);
   appReplicas = signal<number>(1);
+  appAutoscale = signal(false);
+  appMaxReplicas = signal<number>(3);
 
   // Port discovery
   portDiscovering = signal<boolean>(false);
@@ -3808,6 +3830,15 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
           },
           port: this.appPort() ?? undefined,
           replicas: this.appReplicas(),
+          ...(this.appAutoscale() && this.appMaxReplicas() > this.appReplicas()
+            ? {
+                scaling: {
+                  enabled: true,
+                  minReplicas: this.appReplicas(),
+                  maxReplicas: this.appMaxReplicas(),
+                },
+              }
+            : {}),
           resourceProfile: this.selectedProfile() as CreateApplicationDto.ResourceProfileEnum,
           exposure: this.state.exposureMode(),
           env: envVars.map(v => ({ name: v.key, value: v.value, secret: v.isSecret })),
