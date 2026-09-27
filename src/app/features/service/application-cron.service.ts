@@ -104,10 +104,7 @@ export class ApplicationCronService {
     }
   }
 
-  async toggle(
-    appId: string,
-    job: ScheduledJob,
-  ): Promise<ScheduledJob | null> {
+  async toggle(appId: string, job: ScheduledJob): Promise<ScheduledJob | null> {
     return this.update(appId, job.name, { enabled: !job.enabled });
   }
 
@@ -164,17 +161,21 @@ export class ApplicationCronService {
     appId: string,
     name: string,
     jobName: string,
-  ): Promise<string> {
+  ): Promise<{ logs: string; reason: string | null }> {
     try {
       const res = await firstValueFrom(
-        this.http.get<{ jobName: string; logs: string }>(
+        this.http.get<{
+          jobName: string;
+          logs: string;
+          reason?: string | null;
+        }>(
           `${this.base(appId)}/${encodeURIComponent(name)}/runs/${encodeURIComponent(jobName)}/logs`,
         ),
       );
-      return res?.logs ?? '';
+      return { logs: res?.logs ?? '', reason: res?.reason ?? null };
     } catch (error: any) {
       console.error('Error loading run logs:', error);
-      return '';
+      return { logs: '', reason: null };
     }
   }
 

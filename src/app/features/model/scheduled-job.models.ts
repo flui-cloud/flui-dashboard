@@ -12,6 +12,12 @@ export interface ScheduledJob {
   lastScheduleTime?: string | null;
   lastSuccessfulTime?: string | null;
   createdAt?: string | null;
+  lastRunStatus?: string | null;
+  consecutiveFailures?: number;
+  failing?: boolean;
+  /** `manifest` schedules are changed in flui.yaml, not here. */
+  origin?: 'user' | 'manifest';
+  onCluster?: boolean;
 }
 
 export interface CreateScheduledJobRequest {
@@ -32,10 +38,7 @@ export interface UpdateScheduledJobRequest {
 }
 
 export type ScheduledJobRunStatus =
-  | 'Running'
-  | 'Succeeded'
-  | 'Failed'
-  | 'Unknown';
+  'Running' | 'Succeeded' | 'Failed' | 'Unknown';
 
 export interface ScheduledJobRun {
   jobName: string;
@@ -43,4 +46,5 @@ export interface ScheduledJobRun {
   manual: boolean;
   startTime?: string | null;
   completionTime?: string | null;
+  reason?: string | null;
 }

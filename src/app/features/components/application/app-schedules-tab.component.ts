@@ -1,4 +1,3 @@
-
 import {
   ChangeDetectionStrategy,
   Component,
@@ -134,13 +133,40 @@ import {
                     <span
                       class="text-xs px-2 py-0.5 rounded-full"
                       [class]="
-                        job.enabled
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                        job.failing
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                          : job.enabled
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                      "
+                      [title]="
+                        job.failing
+                          ? 'The last ' +
+                            job.consecutiveFailures +
+                            ' runs failed'
+                          : ''
                       "
                     >
-                      {{ job.enabled ? 'enabled' : 'suspended' }}
+                      {{
+                        job.failing
+                          ? 'failing'
+                          : job.enabled
+                            ? 'enabled'
+                            : 'suspended'
+                      }}
                     </span>
+                    @if (job.origin === 'manifest') {
+                      <span class="ml-1 text-xs text-muted-foreground"
+                        >from flui.yaml</span
+                      >
+                    }
+                    @if (job.onCluster === false) {
+                      <span
+                        class="ml-1 text-xs text-amber-600"
+                        title="Recorded by Flui; the next release or a run puts it back on the cluster."
+                        >not on the cluster yet</span
+                      >
+                    }
                   </td>
                   <td class="py-2 px-3 text-xs text-muted-foreground">
                     {{ formatDate(job.lastScheduleTime) }}
@@ -162,6 +188,7 @@ import {
                       >
                         Runs
                       </button>
+                      @if (job.origin !== 'manifest') {
                       <button
                         type="button"
                         class="px-2 py-1 text-xs rounded-md hover:bg-muted"
@@ -184,6 +211,7 @@ import {
                       >
                         <ng-icon name="lucideTrash2" class="h-4 w-4" />
                       </button>
+                      }
                     </div>
                   </td>
                 </tr>
@@ -384,6 +412,13 @@ import {
                           [class]="runStatusClass(r)"
                           >{{ r.status }}</span
                         >
+                        @if (r.reason) {
+                          <div
+                            class="mt-1 text-xs text-red-600 dark:text-red-400"
+                          >
+                            {{ r.reason }}
+                          </div>
+                        }
                       </td>
                       <td class="py-2 px-3 text-xs">
                         {{ r.manual ? 'manual' : 'cron' }}
@@ -424,9 +459,14 @@ import {
               @if (runLogsLoading()) {
                 <div class="skeleton h-24 w-full"></div>
               } @else {
+                @if (runLogs()?.reason) {
+                  <p class="text-xs text-red-600 dark:text-red-400">
+                    Failed: {{ runLogs()?.reason }}
+                  </p>
+                }
                 <pre
                   class="max-h-64 overflow-auto rounded-md bg-muted/50 p-3 text-xs whitespace-pre-wrap"
-                >{{ runLogs()?.logs || '(no logs — the run pod may be gone or empty)' }}</pre>
+                  >{{ runLogs()?.logs || '(the run printed nothing)' }}</pre>
               }
             </div>
           }
@@ -458,7 +498,11 @@ export class AppSchedulesTabComponent implements OnInit, OnDestroy {
   readonly runsFor = signal<ScheduledJob | null>(null);
   readonly runs = signal<ScheduledJobRun[]>([]);
   readonly runsLoading = signal(false);
-  readonly runLogs = signal<{ jobName: string; logs: string } | null>(null);
+  readonly runLogs = signal<{
+    jobName: string;
+    logs: string;
+    reason?: string | null;
+  } | null>(null);
   readonly runLogsLoading = signal(false);
 
   private appId(): string | null {
@@ -576,8 +620,12 @@ export class AppSchedulesTabComponent implements OnInit, OnDestroy {
     if (!id || !job) return;
     this.runLogsLoading.set(true);
     this.runLogs.set({ jobName: run.jobName, logs: '' });
-    const logs = await this.cronService.runLogs(id, job.name, run.jobName);
-    this.runLogs.set({ jobName: run.jobName, logs });
+    const { logs, reason } = await this.cronService.runLogs(
+      id,
+      job.name,
+      run.jobName,
+    );
+    this.runLogs.set({ jobName: run.jobName, logs, reason });
     this.runLogsLoading.set(false);
   }
 
