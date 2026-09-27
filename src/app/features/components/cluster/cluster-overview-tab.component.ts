@@ -63,6 +63,13 @@ import { ClusterMaintenanceCardComponent } from '../maintenance/cluster-maintena
   template: `
     <div class="space-y-4">
 
+      @if (cluster()?.status === 'deletion_failed') {
+        <div class="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200" data-testid="cluster-deletion-failed">
+          <p class="m-0 font-medium">Deletion failed — this cluster still exists and its servers may still be billed.</p>
+          <p class="m-0 mt-1">{{ cluster()?.statusReason || 'The provider gave no reason.' }} Delete it again from the cluster menu.</p>
+        </div>
+      }
+
       <!-- Autoscale warning banner (only when warning != NONE) -->
       <app-autoscale-warning-banner
         [status]="autoscaleStatus()"

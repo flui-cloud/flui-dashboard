@@ -8,6 +8,7 @@ export enum ClusterStatus {
   SCALING = 'scaling',
   UPDATING = 'updating',
   DELETING = 'deleting',
+  DELETION_FAILED = 'deletion_failed',
   STOPPED = 'stopped',
   STOPPING = 'stopping',
   STARTING = 'starting'
@@ -70,6 +71,8 @@ export interface ClusterInfo {
   };
   vnetId?: string;
   vnetName?: string;
+  /** Why the cluster is in its state, when the state alone is a dead end (a refused deletion). */
+  statusReason?: string;
 }
 
 export interface ClusterConfiguration {

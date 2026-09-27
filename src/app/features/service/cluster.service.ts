@@ -621,6 +621,7 @@ export class ClusterService {
         id: clusterResponse.id,
         name: clusterResponse.name,
         status: this.mapApiStatusToClusterStatus(clusterResponse.status),
+        statusReason: clusterResponse.statusReason,
         clusterType: clusterResponse.clusterType as ClusterType,
         provider: clusterResponse.provider as ProviderType,
         region: clusterResponse.region,
@@ -745,6 +746,8 @@ export class ClusterService {
         return ClusterStatus.ERROR;
       case 'deleting':
         return ClusterStatus.DELETING;
+      case 'deletion_failed':
+        return ClusterStatus.DELETION_FAILED;
       case 'deleted':
         return ClusterStatus.NO_CLUSTER;
       case 'stopped':
@@ -771,6 +774,7 @@ export class ClusterService {
         id: cluster.id,
         name: cluster.name,
         status: this.mapApiStatusToClusterStatus(cluster.status),
+        statusReason: cluster.statusReason,
         clusterType: cluster.clusterType as ClusterType,
         provider: cluster.provider as ProviderType,
         region: cluster.region,
@@ -812,6 +816,7 @@ export class ClusterService {
         id: clusterResponse.id,
         name: clusterResponse.name,
         status: this.mapApiStatusToClusterStatus(clusterResponse.status),
+        statusReason: clusterResponse.statusReason,
         clusterType: clusterResponse.clusterType as ClusterType,
         provider: clusterResponse.provider as ProviderType,
         region: clusterResponse.region,
