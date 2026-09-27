@@ -110,6 +110,18 @@ describe('the nodes tile moves the group floor', () => {
     expect(find('tile-fleet-buy')!.textContent).toContain('Buy one cx23 in fsn1');
   });
 
+  it('brings a floor above the fleet back down without buying or removing anything', async () => {
+    await build(row({ nodes: 1, bounds: { min: 2, desired: 2, max: 2 } }));
+    await fixture.whenStable();
+    await click('tile-fleet-minus');
+    expect(find('tile-fleet-confirm')!.textContent).toContain('Nothing is bought or removed');
+    api.preview.calls.reset();
+    await click('tile-fleet-confirm-yes');
+    expect(api.setFloor).toHaveBeenCalledWith('g-1', 1);
+    expect(api.preview).not.toHaveBeenCalled();
+    expect(find('tile-fleet-waiting')!.textContent).toContain('Back to 1 node');
+  });
+
   it('offers nothing when the fleet already holds the floor', async () => {
     await build(row());
     await fixture.whenStable();
@@ -124,7 +136,7 @@ describe('the nodes tile moves the group floor', () => {
   });
 
   it('never offers to give back the master', async () => {
-    await build(row({ nodes: 1 }));
+    await build(row({ nodes: 1, bounds: { min: 1, desired: 1, max: 3 } }));
     expect(find('tile-fleet-minus')!.disabled).toBeTrue();
   });
 });

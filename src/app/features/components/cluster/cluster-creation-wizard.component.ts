@@ -1937,7 +1937,7 @@ export class ClusterCreationWizardComponent implements OnInit {
   }
 
   canComplete(): boolean {
-    const vnetOk = !this.vnetRequired() || (!!this.selectedVNetId() && !!this.selectedSubnetId());
+    const vnetOk = this.isNetworkStepValid();
     return (
       this.basicConfigForm.valid &&
       !!this.selectedProvider() &&

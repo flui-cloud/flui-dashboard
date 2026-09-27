@@ -632,7 +632,11 @@ export class VNetSelectorComponent implements OnInit {
         ? {
             networkZone: this.newSubnetZone,
             // Concrete CIDR required — the provider drops subnets without one.
-            ipRange: this.newSubnetIpRange || this.deriveDefaultSubnetCidr(),
+            // With no subnet field on screen, the range typed above is the only one
+            // the person chose, so the subnet follows it.
+            ipRange: this.regionForNew()
+              ? this.deriveDefaultSubnetCidr()
+              : this.newSubnetIpRange || this.deriveDefaultSubnetCidr(),
           }
         : undefined,
     };

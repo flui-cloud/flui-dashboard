@@ -29,7 +29,7 @@ type Step =
       <div class="flex items-center gap-2">
         <button
           type="button"
-          (click)="ask(nodes() - 1)"
+          (click)="ask(lowerTo())"
           [disabled]="!canRemove() || busy()"
           [title]="removeTooltip()"
           aria-label="One node fewer"
@@ -122,7 +122,13 @@ export class ScalingFleetTileComponent {
   });
 
   protected readonly canAdd = computed(() => this.movable() && this.nodes() < MAX_FLEET_NODES);
-  protected readonly canRemove = computed(() => this.movable() && this.nodes() > 1);
+  /** A floor above the fleet comes back down to it first: that undoes a + nobody bought yet. */
+  protected readonly lowerTo = computed(() => {
+    const floor = this.row()?.bounds?.min ?? this.nodes();
+    return floor > this.nodes() ? this.nodes() : this.nodes() - 1;
+  });
+
+  protected readonly canRemove = computed(() => this.movable() && this.lowerTo() >= 1);
 
   /** The fleet and floor last looked at, so a reload re-offers a pending approval once and no more. */
   private offeredFor: string | null = null;
@@ -160,7 +166,9 @@ export class ScalingFleetTileComponent {
 
   protected readonly addTooltip = computed(() => this.tooltip('One node more'));
   protected readonly removeTooltip = computed(() =>
-    this.nodes() <= 1 ? 'Only the master is left: it cannot be given back' : this.tooltip('One node fewer'),
+    this.lowerTo() < 1
+      ? 'Only the master is left: it cannot be given back'
+      : this.tooltip(this.lowerTo() === this.nodes() ? 'Back to the nodes the cluster has' : 'One node fewer'),
   );
 
   protected readonly buyStep = computed(() => {
@@ -183,6 +191,7 @@ export class ScalingFleetTileComponent {
     if (s.kind !== 'confirm') return '';
     const more = s.to > this.nodes();
     const head = `Hold ${s.to} ${s.to === 1 ? 'node' : 'nodes'}, master included.`;
+    if (s.to === this.nodes()) return `${head} Nothing is bought or removed: the + not yet bought is undone.`;
     if (!this.manual()) {
       return more
         ? `${head} The group buys the machine on its own, within its ceilings.`
@@ -228,6 +237,10 @@ export class ScalingFleetTileComponent {
       this.changed.emit();
       if (saved.acts.acts) {
         this.step.set({ kind: 'waiting', says: saved.acts.says });
+        return;
+      }
+      if (s.to === this.nodes()) {
+        this.step.set({ kind: 'waiting', says: `Back to ${s.to} ${s.to === 1 ? 'node' : 'nodes'}. Nothing bought or removed.` });
         return;
       }
       await this.nextApproval(groupId, more);

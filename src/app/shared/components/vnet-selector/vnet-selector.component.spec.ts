@@ -53,10 +53,11 @@ describe('a new network from the cluster wizard', () => {
     expect(selector.newSubnetZone).toBe('GRA');
     selector.newVnetName = 'edge';
     selector.newIpRange = '10.44.0.0/16';
-    selector.newSubnetIpRange = '10.44.1.0/24';
     await selector.submitCreateVNet();
     expect(createVNet).toHaveBeenCalledWith(
-      jasmine.objectContaining({ subnet: jasmine.objectContaining({ networkZone: 'GRA' }) }),
+      jasmine.objectContaining({
+        subnet: jasmine.objectContaining({ networkZone: 'GRA', ipRange: '10.44.0.0/24' }),
+      }),
     );
   });
 
