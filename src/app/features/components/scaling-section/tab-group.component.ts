@@ -6,7 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom, map } from 'rxjs';
 import { GroupDraft } from './group-draft';
 import { GroupDraftStore } from './group-draft.store';
@@ -71,6 +71,39 @@ import { WriteScalingGroup } from '../../model/scaling-group.models';
             </button>
           </div>
         </div>
+
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 px-1 text-[12px] text-sub"
+          data-testid="group-remove"
+        >
+          <span>{{ removeNote() }}</span>
+          @if (!confirmRemove()) {
+            <button
+              type="button"
+              class="rounded-md border border-border px-2.5 py-1 font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+              [disabled]="!removable()"
+              [title]="removeNote()"
+              data-testid="group-remove-button"
+              (click)="confirmRemove.set(true)"
+            >
+              Remove this group
+            </button>
+          } @else {
+            <span class="inline-flex items-center gap-2">
+              Remove {{ d.group().name }} and its decision log? No node is removed.
+              <button
+                type="button"
+                class="rounded-md bg-destructive px-2.5 py-1 font-medium text-destructive-foreground disabled:opacity-50"
+                [disabled]="removing()"
+                data-testid="group-remove-confirm"
+                (click)="remove(d)"
+              >
+                {{ removing() ? 'Removing…' : 'Remove' }}
+              </button>
+              <button type="button" class="text-muted-foreground" [disabled]="removing()" (click)="confirmRemove.set(false)">Cancel</button>
+            </span>
+          }
+        </div>
       </section>
     } @else {
       <section class="card-surface p-6" data-testid="group-tab-unknown">
@@ -101,11 +134,45 @@ export class ScalingGroupTabComponent {
   private readonly api = inject(ScalingApiService);
   private readonly store = inject(ScalingGroupStore);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
 
   private readonly params = this.route.parent?.paramMap ?? this.route.paramMap;
 
   protected readonly saving = signal(false);
   private readonly failure = signal<string | null>(null);
+  protected readonly confirmRemove = signal(false);
+  protected readonly removing = signal(false);
+
+  /** The only group of a cluster Flui buys for is how its nodes change, so it stays. */
+  protected readonly removable = computed(() => {
+    const row = this.store.row().data;
+    if (!row) return false;
+    return row.groupCount > 1 || !row.capability.canProvision || !row.capability.hasCatalogue;
+  });
+
+  protected readonly removeNote = computed(() =>
+    this.removable()
+      ? 'Removing a group stops it deciding; no node is removed.'
+      : 'This is the only group of the cluster and its nodes change through it: set it to manual to stop it buying.',
+  );
+
+  protected async remove(draft: GroupDraft): Promise<void> {
+    this.removing.set(true);
+    try {
+      await firstValueFrom(this.api.deleteGroup(draft.group().id));
+      this.toast.showSuccess({ title: 'Group removed', message: draft.group().name });
+      await this.router.navigate(['/cluster', draft.group().clusterId, 'scaling']);
+    } catch (error: unknown) {
+      const body = (error as { error?: { message?: string | string[] } })?.error?.message;
+      this.toast.showError({
+        title: 'Group not removed',
+        message: Array.isArray(body) ? body.join(' ') : (body ?? ''),
+      });
+    } finally {
+      this.removing.set(false);
+      this.confirmRemove.set(false);
+    }
+  }
 
   protected readonly groupId = toSignal(
     this.params.pipe(map((p) => p.get('groupId'))),

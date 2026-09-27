@@ -93,7 +93,7 @@ import { ScalingGroupFormComponent } from './scaling-group-form.component';
         </div>
 
         <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
-          <app-scaling-fleet-tile [note]="limitsNote()" />
+          <app-scaling-fleet-tile [note]="limitsNote()" [row]="row" (changed)="onGroupSaved()" />
           <app-scaling-tile
             label="Pressure"
             testid="pressure"

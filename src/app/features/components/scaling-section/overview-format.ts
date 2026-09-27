@@ -57,7 +57,7 @@ function baseModeOf(
   if (!capability.canProvision) {
     return capability.hasCatalogue ? MODES['you-buy'] : MODES['you-attach'];
   }
-  if (row && row.groupCount > 0 && !row.acts) return MODES['flui-decides'];
+  if (row && !row.acts) return MODES['flui-decides'];
   return MODES['flui-buys'];
 }
 

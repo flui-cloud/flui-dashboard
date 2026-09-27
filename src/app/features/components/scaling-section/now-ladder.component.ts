@@ -72,6 +72,43 @@ const EMPTY_PREVIEW: ScalingPreview = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="space-y-2" data-testid="ladder">
+      @if (removable(); as node) {
+        <div
+          class="card-surface flex flex-wrap items-center gap-x-4 gap-y-3 p-4"
+          data-testid="ladder-give-back"
+        >
+          <span class="min-w-0 flex-1 text-[13px] leading-relaxed text-sub">
+            The fleet is above its target: this manual group would give back
+            <span class="font-medium text-foreground">{{ node }}</span>. Its work
+            moves to the nodes that stay.
+          </span>
+          @if (!confirmRemove()) {
+            <button
+              type="button"
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground hover:opacity-90"
+              data-testid="ladder-remove-once"
+              (click)="confirmRemove.set(true)"
+            >
+              Remove {{ node }}
+            </button>
+          } @else {
+            <span class="inline-flex flex-wrap items-center gap-2 text-[12px]" data-testid="ladder-remove-confirm">
+              Drain and delete {{ node }}? The group stays manual.
+              <button
+                type="button"
+                class="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground disabled:opacity-50"
+                [disabled]="removing()"
+                (click)="removeOnce(node)"
+                data-testid="ladder-remove-confirm-yes"
+              >
+                {{ removing() ? 'Removing…' : 'Remove' }}
+              </button>
+              <button type="button" class="text-muted-foreground" [disabled]="removing()" (click)="confirmRemove.set(false)">Cancel</button>
+            </span>
+          }
+        </div>
+      }
+
       <h2 class="text-label m-0">If a node were needed now</h2>
 
       @if (loading()) {
@@ -188,13 +225,42 @@ export class ScalingNowLadderComponent {
   private readonly toast = inject(ToastService);
   protected readonly confirmBuy = signal(false);
   protected readonly buying = signal(false);
+  protected readonly confirmRemove = signal(false);
+  protected readonly removing = signal(false);
+
+  protected readonly removable = computed(() => {
+    const g = this.group();
+    const giveBack = this.store.preview().data?.giveBack;
+    if (!g.capability.canProvision || !giveBack || giveBack.onItsOwn) return null;
+    return giveBack.node;
+  });
+
+  protected async removeOnce(node: string): Promise<void> {
+    this.removing.set(true);
+    try {
+      const decision = await firstValueFrom(this.api.approveRemoval(this.group().id, node));
+      this.toast.showSuccess({ title: 'Node being given back', message: decision.did });
+      this.confirmRemove.set(false);
+      this.store.reload();
+    } catch (err: unknown) {
+      const e = err as { error?: { message?: string | string[] }; message?: string };
+      const message = e?.error?.message ?? e?.message ?? 'Nothing was removed.';
+      this.toast.showError({
+        title: 'Nothing removed',
+        message: Array.isArray(message) ? message.join(' ') : message,
+      });
+      this.store.reload();
+    } finally {
+      this.removing.set(false);
+    }
+  }
 
   protected readonly buyable = computed(() => {
     const g = this.group();
     const preview = this.store.preview().data;
     const chosen = preview?.chosen;
     if (!g.capability.canProvision || g.provision !== 'manual') return null;
-    if (!preview?.pending || !chosen?.shape || !chosen.region || g.purchase?.state === 'buying') return null;
+    if (!chosen?.shape || !chosen.region || g.purchase?.state === 'buying') return null;
     const price = chosen.hourlyEur === null ? '' : ` at €${chosen.hourlyEur}/h`;
     return { shape: chosen.shape, region: chosen.region, price };
   });

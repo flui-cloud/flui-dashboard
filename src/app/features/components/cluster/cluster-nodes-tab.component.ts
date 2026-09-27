@@ -1,6 +1,7 @@
 import { Component, computed, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { RouterLink } from '@angular/router';
 import {
   lucideServer,
   lucideRefreshCw,
@@ -15,7 +16,6 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
 import { ClusterStatus } from '../../model/cluster.models';
 import { InstanceWithLabels, getClusterInfo, getClusterNodeId } from '../../model/instance.models';
 import { InstanceRowComponent } from '../compute/instance-row.component';
-import { AddWorkerDialogComponent } from './add-worker-dialog.component';
 import { RemoveWorkerDialogComponent } from './remove-worker-dialog.component';
 import { ByosConnectNodeDialogComponent } from './byos-connect-node-dialog.component';
 
@@ -33,7 +33,7 @@ interface NodeRowMeta {
   imports: [
     NgIconComponent,
     InstanceRowComponent,
-    AddWorkerDialogComponent,
+    RouterLink,
     RemoveWorkerDialogComponent,
     ByosConnectNodeDialogComponent
 ],
@@ -66,16 +66,27 @@ interface NodeRowMeta {
             >
               <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="nodesIsLoading()" />
             </button>
-            <button
-              type="button"
-              (click)="openAddWorker()"
-              [disabled]="!canAddWorker()"
-              [title]="addWorkerTooltip()"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-              {{ isByos() ? 'Connect node' : 'Add worker' }}
-            </button>
+            @if (isByos()) {
+              <button
+                type="button"
+                (click)="openAddWorker()"
+                [disabled]="!canAddWorker()"
+                [title]="addWorkerTooltip()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
+                Connect node
+              </button>
+            } @else {
+              <a
+                routerLink="../scaling"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-border text-foreground hover:bg-muted"
+                data-testid="nodes-change-on-scaling"
+                title="Nodes change through the cluster's scaling group: + and − on the Scaling tab."
+              >
+                Change nodes on the Scaling tab
+              </a>
+            }
           </div>
         </div>
 
@@ -121,7 +132,7 @@ interface NodeRowMeta {
             @for (row of nodeRows(); track row.node.id) {
               <div class="space-y-1">
                 <app-instance-row [instance]="row.node" />
-                @if (!row.isMaster) {
+                @if (!row.isMaster && isByos()) {
                   <div class="flex justify-end px-2">
                     <button
                       type="button"
@@ -140,15 +151,6 @@ interface NodeRowMeta {
           </div>
         }
       </div>
-    }
-
-    @if (showAddDialog() && cluster()?.id; as cid) {
-      <app-add-worker-dialog
-        [clusterId]="cid"
-        [currentNodes]="currentNodesForDialog()"
-        [maxNodes]="maxNodes()"
-        (closed)="showAddDialog.set(false)"
-      />
     }
 
     @if (showByosDialog() && cluster()?.id; as cid) {
@@ -179,7 +181,6 @@ export class ClusterNodesTabComponent implements OnInit {
   nodesIsLoading = this.clusterService.nodesIsLoading;
   nodesError = this.clusterService.nodesErrorMessage;
 
-  protected showAddDialog = signal<boolean>(false);
   protected showByosDialog = signal<boolean>(false);
   protected removeTarget = signal<InstanceWithLabels | null>(null);
 
@@ -210,12 +211,6 @@ export class ClusterNodesTabComponent implements OnInit {
   protected workerCount = computed(() =>
     this.clusterNodes().filter(n => !this.isMasterNode(n)).length
   );
-
-  protected currentNodesForDialog = computed(() => {
-    const fromStatus = this.autoscaleService.status()?.currentNodes;
-    if (fromStatus != null) return fromStatus;
-    return this.cluster()?.nodeCount ?? this.clusterNodes().length;
-  });
 
   protected maxNodes = computed<number | null>(() => {
     const fromStatus = this.autoscaleService.status()?.maxNodes;
@@ -266,11 +261,7 @@ export class ClusterNodesTabComponent implements OnInit {
   }
 
   openAddWorker(): void {
-    if (this.isByos()) {
-      this.showByosDialog.set(true);
-      return;
-    }
-    if (this.canAddWorker()) this.showAddDialog.set(true);
+    if (this.isByos()) this.showByosDialog.set(true);
   }
 
   openRemoveWorker(node: InstanceWithLabels): void {

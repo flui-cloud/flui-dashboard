@@ -12,6 +12,7 @@ import {
   ScalingBounds,
   DecisionOperation,
   FleetRoom,
+  GiveBack,
   ScalingDecision,
   ScalingLimits,
   ScalingPreview,
@@ -157,6 +158,7 @@ interface WirePreview {
   asks: string | null;
   blocked?: AlarmBlock | null;
   room?: FleetRoom | null;
+  giveBack?: GiveBack | null;
 }
 
 interface WireDecision {
@@ -351,6 +353,21 @@ export class ScalingApiService {
     );
   }
 
+  /** Gives back, once, the node a manual group names; the group stays manual. */
+  approveRemoval(groupId: string, node: string): Observable<{ did: string }> {
+    return this.http.post<{ did: string }>(
+      `${this.base}/scaling-groups/${groupId}/approve-removal`,
+      { node },
+    );
+  }
+
+  /** How a cluster gains or loses a node: the floor and the target move together. */
+  setFloor(groupId: string, min: number): Observable<SectionGroup> {
+    return this.http
+      .patch<WireGroup>(`${this.base}/scaling-groups/${groupId}/floor`, { min })
+      .pipe(map(toGroup));
+  }
+
   /** Lets a group held back by a failed purchase buy again; buys nothing itself. */
   retryPurchase(groupId: string): Observable<SectionGroup> {
     return this.http
@@ -511,6 +528,7 @@ function toPreview(wire: WirePreview): ScalingPreview {
     asks: wire.asks,
     blocked: wire.blocked ?? null,
     room: wire.room ?? null,
+    giveBack: wire.giveBack ?? null,
   };
 }
 

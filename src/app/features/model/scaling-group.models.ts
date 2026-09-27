@@ -196,6 +196,14 @@ export interface ScalingPreview {
   blocked?: AlarmBlock | null;
   /** Room each node has left for new apps; null when the cluster could not be asked. */
   room?: FleetRoom | null;
+  /** The node the group would give back now; `onItsOwn` false means a person approves it. */
+  giveBack?: GiveBack | null;
+}
+
+export interface GiveBack {
+  nodeId: string;
+  node: string;
+  onItsOwn: boolean;
 }
 
 export interface RoomAmount {

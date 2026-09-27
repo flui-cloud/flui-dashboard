@@ -50,7 +50,7 @@ import { AutoscaleStatus } from '../../model/autoscale.models';
                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
                 >
                   <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-                  Add worker now
+                  Add a node
                 </button>
               }
             </div>

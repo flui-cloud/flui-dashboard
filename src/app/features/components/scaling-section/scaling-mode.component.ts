@@ -31,15 +31,29 @@ import { ScalingApiService } from '../../service/scaling-api.service';
             data-testid="scaling-mode-switch"
             (click)="confirming.set(true)"
           >
-            Switch to automatic
+            {{ switchLabel() }}
           </button>
         } @else {
           <span class="inline-flex flex-wrap items-center gap-2 text-xs" data-testid="scaling-mode-confirm">
+            @if (needsCap()) {
+              <label class="inline-flex items-center gap-1">
+                <span>Monthly ceiling €</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  class="w-20 rounded-md border border-border bg-background px-2 py-0.5"
+                  data-testid="scaling-mode-cap"
+                  [value]="cap() ?? ''"
+                  (input)="cap.set(asAmount($any($event.target).value))"
+                />
+              </label>
+            }
             <span>{{ promise() }}</span>
             <button
               type="button"
               class="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground disabled:opacity-50"
-              [disabled]="saving()"
+              [disabled]="saving() || !ceiling()"
               data-testid="scaling-mode-switch-confirm"
               (click)="switchToAutomatic()"
             >
@@ -68,6 +82,7 @@ export class ScalingModeComponent {
 
   protected readonly confirming = signal(false);
   protected readonly saving = signal(false);
+  protected readonly cap = signal<number | null>(null);
 
   protected readonly label = computed(() => {
     const g = this.group();
@@ -87,27 +102,48 @@ export class ScalingModeComponent {
       : 'rounded-md bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary',
   );
 
+  /** An automatic group only buys within a monthly ceiling in euros, so one without it is asked for it here. */
+  protected readonly needsCap = computed(() => !(Number(this.group().limits.maxMonthlyCost) > 0));
+
   protected readonly canSwitch = computed(() => {
     const g = this.group();
-    return g.capability.canProvision && g.provision === 'manual';
+    return g.capability.canProvision && (g.provision === 'manual' || this.needsCap());
+  });
+
+  protected readonly switchLabel = computed(() =>
+    this.group().provision === 'automatic' ? 'Set a monthly ceiling' : 'Switch to automatic',
+  );
+
+  protected readonly ceiling = computed(() => {
+    const cap = this.needsCap() ? this.cap() : this.group().limits.maxMonthlyCost;
+    return cap !== null && cap > 0 ? cap : null;
   });
 
   protected readonly promise = computed(() => {
     const g = this.group();
     const nodes = `${g.bounds.max} ${g.bounds.max === 1 ? 'node' : 'nodes'}`;
-    const cap = g.limits.maxMonthlyCost;
+    const cap = this.ceiling();
     return cap === null
-      ? `Flui will buy on its own, up to ${nodes}, with no money ceiling.`
+      ? 'Flui buys on its own only within a monthly ceiling in euros.'
       : `Flui will buy on its own, up to €${cap} a month and ${nodes}.`;
   });
 
+  protected asAmount(value: string): number | null {
+    const amount = Number(value);
+    return value.trim() !== '' && Number.isFinite(amount) ? amount : null;
+  }
+
   protected async switchToAutomatic(): Promise<void> {
     const g = this.group();
+    const cap = this.ceiling();
+    if (cap === null) return;
     this.saving.set(true);
     try {
-      const saved = await firstValueFrom(
-        this.api.updateGroup(g.id, { provision: 'automatic' } as WriteScalingGroup),
-      );
+      const body: Partial<WriteScalingGroup> = { provision: 'automatic' };
+      if (this.needsCap()) {
+        body.limits = { hourlyBillingOnly: g.limits.hourlyBillingOnly, maxMonthlyCost: cap };
+      }
+      const saved = await firstValueFrom(this.api.updateGroup(g.id, body as WriteScalingGroup));
       this.toast.showSuccess({
         title: 'Group switched to automatic',
         message: saved.acts.label ?? this.promise(),

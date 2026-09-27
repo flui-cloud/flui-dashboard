@@ -513,6 +513,23 @@ export class ScalingFixtureService extends ScalingApiService {
     return of(GROUPS[groupId]);
   }
 
+  override setFloor(groupId: string, min: number): Observable<SectionGroup> {
+    const existing = GROUPS[groupId] ?? GROUPS['g-prod'];
+    GROUPS[groupId] = {
+      ...existing,
+      bounds: { min, desired: min, max: Math.max(existing.bounds.max, min) },
+    };
+    return of(GROUPS[groupId]);
+  }
+
+  override approvePurchase(): Observable<{ did: string }> {
+    return of({ did: 'Ordered a machine; it joins once provisioned.' });
+  }
+
+  override approveRemoval(_groupId: string, node: string): Observable<{ did: string }> {
+    return of({ did: `Draining and removing ${node}.` });
+  }
+
   override deleteGroup(groupId: string): Observable<void> {
     delete GROUPS[groupId];
     return of(undefined);
