@@ -28,6 +28,7 @@ import {
   getAllAttachedServerIds
 } from '../../model/vnet.models';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { ManagementNetworkCardComponent } from './management-network-card.component';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
   VNetListSurfaceInput,
@@ -39,7 +40,7 @@ import {
 @Component({
   selector: 'vnet-list',
   standalone: true,
-  imports: [ReadOnlySectionDirective, CommonModule, FormsModule, NgIcon],
+  imports: [ReadOnlySectionDirective, CommonModule, FormsModule, NgIcon, ManagementNetworkCardComponent],
   providers: [
     provideIcons({
       lucideRefreshCw,
@@ -85,6 +86,8 @@ import {
           </button>
         </div>
       </div>
+
+      <app-management-network-card />
 
       <!-- Statistics Cards -->
       @if (statistics()) {

@@ -48,6 +48,7 @@ import {
   buildOperatingContextSurface,
   presentedContent,
 } from './operating-context-surface';
+import { ManagementNetworkCardComponent } from '../vnet/management-network-card.component';
 
 type ContextTab = 'attention' | 'holding' | 'archive';
 
@@ -61,6 +62,7 @@ type ContextTab = 'attention' | 'holding' | 'archive';
     ContextNoteCardComponent,
     ContextNoteFormComponent,
     ExplainComponent,
+    ManagementNetworkCardComponent,
   ],
   providers: [
     provideIcons({
@@ -96,6 +98,8 @@ type ContextTab = 'attention' | 'holding' | 'archive';
           </app-explain>
         </span>
       </header>
+
+      <app-management-network-card [compact]="true" />
 
       <!-- ── What reaches a given thing ────────────────────────── -->
       @if (!firstRun()) {
@@ -186,7 +190,7 @@ type ContextTab = 'attention' | 'holding' | 'archive';
             </p>
             <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
               The API runs on it, so resizing takes the control plane down.
-              Add workers instead.
+              Add a node from the cluster's Scaling tab instead.
             </p>
           </div>
 
