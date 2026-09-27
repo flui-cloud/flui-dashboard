@@ -1,4 +1,13 @@
-import { Component, OnInit, OnDestroy, signal, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  computed,
+  effect,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -67,14 +76,18 @@ interface FilterState {
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ pageTitle() }}</h1>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            {{ pageTitle() }}
+          </h1>
           <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
             {{ pageSubtitle() }}
           </p>
         </div>
         <div class="flex items-center gap-3">
           @if (isBackgroundRefreshing()) {
-            <span class="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+            <span
+              class="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500"
+            >
               <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
               Syncing...
             </span>
@@ -84,7 +97,11 @@ interface FilterState {
             [disabled]="isLoading()"
             class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 text-sm"
           >
-            <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
+            <ng-icon
+              name="lucideRefreshCw"
+              class="h-4 w-4"
+              [class.animate-spin]="isLoading()"
+            />
             Refresh
           </button>
           @if (canDeploy()) {
@@ -100,25 +117,49 @@ interface FilterState {
       </div>
 
       <!-- Stats -->
-      <div class="grid gap-3" [class]="kindWaitingCount() ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'">
-        <div class="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/50 rounded-lg px-4 py-3">
+      <div
+        class="grid gap-3"
+        [class]="
+          kindWaitingCount() ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'
+        "
+      >
+        <div
+          class="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/50 rounded-lg px-4 py-3"
+        >
           <p class="text-xs text-gray-500 dark:text-gray-400">Total</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ kindOwnGroups().length }}</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">
+            {{ kindOwnGroups().length }}
+          </p>
         </div>
-        <div class="bg-white dark:bg-gray-800/60 border border-green-200 dark:border-gray-700/50 rounded-lg px-4 py-3">
+        <div
+          class="bg-white dark:bg-gray-800/60 border border-green-200 dark:border-gray-700/50 rounded-lg px-4 py-3"
+        >
           <p class="text-xs text-green-600 dark:text-green-400">Running</p>
-          <p class="text-xl font-bold text-green-700 dark:text-green-400">{{ kindRunningCount() }}</p>
+          <p class="text-xl font-bold text-green-700 dark:text-green-400">
+            {{ kindRunningCount() }}
+          </p>
         </div>
-        <div class="bg-white dark:bg-gray-800/60 border border-red-200 dark:border-gray-700/50 rounded-lg px-4 py-3">
+        <div
+          class="bg-white dark:bg-gray-800/60 border border-red-200 dark:border-gray-700/50 rounded-lg px-4 py-3"
+        >
           <p class="text-xs text-red-600 dark:text-red-400">Failed</p>
-          <p class="text-xl font-bold text-red-700 dark:text-red-400">{{ kindFailedCount() }}</p>
+          <p class="text-xl font-bold text-red-700 dark:text-red-400">
+            {{ kindFailedCount() }}
+          </p>
         </div>
         @if (kindWaitingCount()) {
-          <button type="button" (click)="updateFilter('status', 'waiting_for_room')"
+          <button
+            type="button"
+            (click)="updateFilter('status', 'waiting_for_room')"
             class="text-left bg-white dark:bg-gray-800/60 border border-amber-200 dark:border-gray-700/50 rounded-lg px-4 py-3 hover:bg-amber-50 dark:hover:bg-amber-900/10"
-            data-testid="stat-waiting-for-room">
-            <p class="text-xs text-amber-700 dark:text-amber-400">Waiting for room</p>
-            <p class="text-xl font-bold text-amber-700 dark:text-amber-400">{{ kindWaitingCount() }}</p>
+            data-testid="stat-waiting-for-room"
+          >
+            <p class="text-xs text-amber-700 dark:text-amber-400">
+              Waiting for room
+            </p>
+            <p class="text-xl font-bold text-amber-700 dark:text-amber-400">
+              {{ kindWaitingCount() }}
+            </p>
           </button>
         }
       </div>
@@ -126,7 +167,10 @@ interface FilterState {
       <!-- Filters -->
       <div class="flex flex-col md:flex-row gap-3">
         <div class="relative flex-1">
-          <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <ng-icon
+            name="lucideSearch"
+            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+          />
           <input
             type="text"
             [ngModel]="filtersState().search"
@@ -173,17 +217,31 @@ interface FilterState {
 
       @if (activeFiltersCount() > 0) {
         <div class="flex items-center justify-between text-sm">
-          <span class="text-gray-500 dark:text-gray-400">{{ activeFiltersCount() }} filter(s) active</span>
-          <button (click)="clearFilters()" class="text-blue-600 hover:text-blue-700 dark:text-blue-400">Clear all</button>
+          <span class="text-gray-500 dark:text-gray-400"
+            >{{ activeFiltersCount() }} filter(s) active</span
+          >
+          <button
+            (click)="clearFilters()"
+            class="text-blue-600 hover:text-blue-700 dark:text-blue-400"
+          >
+            Clear all
+          </button>
         </div>
       }
 
       <!-- Error -->
       @if (errorMessage() && !isLoading()) {
-        <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-3">
+        <div
+          class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-3"
+        >
           <div class="flex items-center gap-2">
-            <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-red-600 dark:text-red-400" />
-            <p class="text-sm text-red-900 dark:text-red-200">{{ errorMessage() }}</p>
+            <ng-icon
+              name="lucideCircleAlert"
+              class="h-4 w-4 text-red-600 dark:text-red-400"
+            />
+            <p class="text-sm text-red-900 dark:text-red-200">
+              {{ errorMessage() }}
+            </p>
           </div>
         </div>
       }
@@ -192,12 +250,19 @@ interface FilterState {
       <div class="flex flex-col gap-0.5">
         @if (isInitialLoading()) {
           @for (i of skeletonRows; track i) {
-            <div class="animate-pulse bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg h-14"></div>
+            <div
+              class="animate-pulse bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg h-14"
+            ></div>
           }
         } @else if (ownGroups().length === 0) {
           <div class="flex flex-col items-center justify-center py-16">
-            <ng-icon name="lucidePackage" class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
-            <p class="text-sm font-medium text-gray-900 dark:text-white mb-1">{{ emptyTitle() }}</p>
+            <ng-icon
+              name="lucidePackage"
+              class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3"
+            />
+            <p class="text-sm font-medium text-gray-900 dark:text-white mb-1">
+              {{ emptyTitle() }}
+            </p>
             <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
               @if (activeFiltersCount() > 0) {
                 Try adjusting your filters
@@ -231,7 +296,9 @@ interface FilterState {
       @if (showcaseGroups().length > 0) {
         <div class="space-y-2">
           <div class="flex items-baseline gap-2">
-            <h2 class="text-sm font-semibold text-gray-900 dark:text-white">In the showcase</h2>
+            <h2 class="text-sm font-semibold text-gray-900 dark:text-white">
+              In the showcase
+            </h2>
             @if (showcaseReadOnly()) {
               <span
                 class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:text-gray-300"
@@ -241,7 +308,9 @@ interface FilterState {
             }
           </div>
           @if (showcaseWhy()) {
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ showcaseWhy() }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              {{ showcaseWhy() }}
+            </p>
           }
           <div class="flex flex-col gap-0.5">
             @for (group of showcaseGroups(); track group.id) {
@@ -257,23 +326,38 @@ interface FilterState {
 
       @if (ownGroups().length > 0) {
         <p class="text-center text-xs text-gray-500 dark:text-gray-400">
-          Showing {{ ownGroups().length }} of {{ kindOwnGroups().length }} application(s)
+          Showing {{ ownGroups().length }} of
+          {{ kindOwnGroups().length }} application(s)
         </p>
       }
     </div>
 
     <!-- Delete Modal -->
     @if (showDeleteModal()) {
-      <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-sm w-full p-5 shadow-xl">
+      <div
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      >
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg max-w-sm w-full p-5 shadow-xl"
+        >
           <div class="flex items-start gap-3">
-            <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
-              <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400" />
+            <div
+              class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0"
+            >
+              <ng-icon
+                name="lucideCircleAlert"
+                class="h-5 w-5 text-red-600 dark:text-red-400"
+              />
             </div>
             <div class="flex-1">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Delete Application</h3>
+              <h3
+                class="text-sm font-semibold text-gray-900 dark:text-white mb-1"
+              >
+                Delete Application
+              </h3>
               <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
-                Delete <strong>{{ appToDelete()?.name }}</strong>? This removes the deployment and all related resources.
+                Delete <strong>{{ appToDelete()?.name }}</strong
+                >? This removes it and everything created for it.
               </p>
               <div class="flex items-center gap-2">
                 <button
@@ -313,7 +397,12 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     (this.route.snapshot.data['kind'] as ApplicationKind | undefined) ??
       ApplicationKindEnum.Application,
   );
-  filtersState = signal<FilterState>({ search: '', category: '', status: '', cluster: '' });
+  filtersState = signal<FilterState>({
+    search: '',
+    category: '',
+    status: '',
+    cluster: '',
+  });
   showDeleteModal = signal(false);
   appToDelete = signal<Application | null>(null);
 
@@ -398,21 +487,28 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     () => this.kindOwnGroups().filter((g) => g.status === 'failed').length,
   );
   kindWaitingCount = computed(
-    () => this.kindOwnGroups().filter((g) => g.status === 'waiting_for_room').length,
+    () =>
+      this.kindOwnGroups().filter((g) => g.status === 'waiting_for_room')
+        .length,
   );
 
   clusterNames = computed(() =>
-    this.clusterService.clusters().map((c) => ({ id: c.id, name: c.name }))
+    this.clusterService.clusters().map((c) => ({ id: c.id, name: c.name })),
   );
 
-  isInitialLoading = computed(() => this.isLoading() && this.allApplications().length === 0);
-  isRefreshing = computed(() => this.isLoading() && this.allApplications().length > 0);
+  isInitialLoading = computed(
+    () => this.isLoading() && this.allApplications().length === 0,
+  );
+  isRefreshing = computed(
+    () => this.isLoading() && this.allApplications().length > 0,
+  );
 
   filteredGroups = computed(() => {
     const groups = this.kindScopedGroups();
     const f = this.filtersState();
     return groups.filter((g) => {
-      if (f.search && !g.name.toLowerCase().includes(f.search.toLowerCase())) return false;
+      if (f.search && !g.name.toLowerCase().includes(f.search.toLowerCase()))
+        return false;
       if (f.category && g.category !== f.category) return false;
       if (f.status && g.status !== f.status) return false;
       if (f.cluster && g.clusterId !== f.cluster) return false;
@@ -431,12 +527,17 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
    */
   private isShowcase(g: AppGroupView): boolean {
     const primary =
-      g.components.find((c) => c.id === g.primaryComponentId) ?? g.components[0];
+      g.components.find((c) => c.id === g.primaryComponentId) ??
+      g.components[0];
     return !!accessOf(primary)?.showcase;
   }
 
-  ownGroups = computed(() => this.filteredGroups().filter((g) => !this.isShowcase(g)));
-  showcaseGroups = computed(() => this.filteredGroups().filter((g) => this.isShowcase(g)));
+  ownGroups = computed(() =>
+    this.filteredGroups().filter((g) => !this.isShowcase(g)),
+  );
+  showcaseGroups = computed(() =>
+    this.filteredGroups().filter((g) => this.isShowcase(g)),
+  );
 
   /**
    * "read-only" is a fact about the caller, not about the showcase: the
@@ -446,7 +547,8 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   showcaseReadOnly = computed(() =>
     this.showcaseGroups().every((g) => {
       const primary =
-        g.components.find((c) => c.id === g.primaryComponentId) ?? g.components[0];
+        g.components.find((c) => c.id === g.primaryComponentId) ??
+        g.components[0];
       return !!accessOf(primary)?.readOnly;
     }),
   );
@@ -456,13 +558,19 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
 
   private groupKind(g: AppGroupView): ApplicationKind {
     const primary =
-      g.components.find((c) => c.id === g.primaryComponentId) ?? g.components[0];
+      g.components.find((c) => c.id === g.primaryComponentId) ??
+      g.components[0];
     return primary?.kind ?? ApplicationKindEnum.Application;
   }
 
   activeFiltersCount = computed(() => {
     const f = this.filtersState();
-    return (f.search ? 1 : 0) + (f.category ? 1 : 0) + (f.status ? 1 : 0) + (f.cluster ? 1 : 0);
+    return (
+      (f.search ? 1 : 0) +
+      (f.category ? 1 : 0) +
+      (f.status ? 1 : 0) +
+      (f.cluster ? 1 : 0)
+    );
   });
 
   private readonly surfaceRevision = new ApplicationsListSurfaceRevision();
@@ -521,7 +629,12 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   }
 
   clearFilters() {
-    this.filtersState.set({ search: '', category: '', status: '', cluster: '' });
+    this.filtersState.set({
+      search: '',
+      category: '',
+      status: '',
+      cluster: '',
+    });
   }
 
   openRecap(groupId: string) {
@@ -550,17 +663,24 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     this.appToDelete.set(null);
 
     // Fire-and-forget: service handles status update, WS, polling, and removal
-    this.appService.deleteApplication(app.id).catch(err => {
+    this.appService.deleteApplication(app.id).catch((err) => {
       console.error('Failed to initiate deletion:', err);
     });
   }
 
   deployNewApp() {
     const kind = this.kind();
-    if (kind === ApplicationKindEnum.Database || kind === ApplicationKindEnum.Tool) {
-      this.router.navigate(['/apps/catalog'], { queryParams: { appKind: kind } });
+    if (
+      kind === ApplicationKindEnum.Database ||
+      kind === ApplicationKindEnum.Tool
+    ) {
+      this.router.navigate(['/apps/catalog'], {
+        queryParams: { appKind: kind },
+      });
       return;
     }
-    this.router.navigate(['/apps/deploy/new'], { queryParams: { appKind: kind } });
+    this.router.navigate(['/apps/deploy/new'], {
+      queryParams: { appKind: kind },
+    });
   }
 }

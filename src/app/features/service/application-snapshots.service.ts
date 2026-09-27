@@ -6,6 +6,8 @@ import { ApplicationsService } from '../../core/api/api/applications.service';
 import {
   ApplicationSnapshot,
   CreateSnapshotRequest,
+  CopyRefusal,
+  SpareVolume,
   SnapshotCapability,
   SnapshotListResponse,
 } from '../model/volume-management.models';
@@ -28,11 +30,14 @@ export class ApplicationSnapshotsService {
   private readonly creatingData = signal<boolean>(false);
   private readonly deletingIdData = signal<string | null>(null);
   private readonly errorData = signal<string | null>(null);
+  private readonly refusalData = signal<CopyRefusal | null>(null);
+  private readonly spareData = signal<SpareVolume[]>([]);
   private readonly capabilityData = signal<SnapshotCapability | null>(null);
 
   private pollingHandle: ReturnType<typeof setTimeout> | null = null;
   private pollingStartedAt = 0;
-  private pollContext: { kind: 'app'; id: string } | { kind: 'cluster'; id: string } | null = null;
+  private pollContext:
+    { kind: 'app'; id: string } | { kind: 'cluster'; id: string } | null = null;
 
   readonly snapshots = this.snapshotsData.asReadonly();
   readonly loading = this.loadingData.asReadonly();
@@ -51,7 +56,9 @@ export class ApplicationSnapshotsService {
     this.capabilityData.set(null);
     try {
       const data = (await firstValueFrom(
-        this.applicationsApi.applicationSnapshotsControllerListSnapshotsForApp(appId),
+        this.applicationsApi.applicationSnapshotsControllerListSnapshotsForApp(
+          appId,
+        ),
       )) as SnapshotListResponse | ApplicationSnapshot[];
       const response = this.normalizeAppList(data);
       this.capabilityData.set({
@@ -75,7 +82,9 @@ export class ApplicationSnapshotsService {
     this.capabilityData.set(null);
     try {
       const data = (await firstValueFrom(
-        this.applicationsApi.applicationSnapshotsControllerListSnapshotsForCluster(clusterId),
+        this.applicationsApi.applicationSnapshotsControllerListSnapshotsForCluster(
+          clusterId,
+        ),
       )) as ApplicationSnapshot[] | { snapshots: ApplicationSnapshot[] };
       this.snapshotsData.set(this.normalizeList(data));
       this.pollContext = { kind: 'cluster', id: clusterId };
@@ -94,9 +103,45 @@ export class ApplicationSnapshotsService {
    * (the OpenAPI spec doesn't declare one yet — see guide §3.1 / §4.2).
    * Once the spec is regenerated this can be replaced by the typed call.
    */
-  async create(appId: string, body: CreateSnapshotRequest = {}): Promise<ApplicationSnapshot | null> {
+  readonly refusal = this.refusalData.asReadonly();
+  readonly spare = this.spareData.asReadonly();
+
+  clearRefusal(): void {
+    this.refusalData.set(null);
+  }
+
+  async loadSpare(appId: string): Promise<void> {
+    try {
+      const url = `${this.basePath}/api/v1/applications/${encodeURIComponent(appId)}/volumes/spare`;
+      this.spareData.set(
+        await firstValueFrom(this.http.get<SpareVolume[]>(url)),
+      );
+    } catch {
+      this.spareData.set([]);
+    }
+  }
+
+  async deleteSpare(appId: string, name: string): Promise<boolean> {
+    try {
+      const url = `${this.basePath}/api/v1/applications/${encodeURIComponent(appId)}/volumes/spare/${encodeURIComponent(name)}`;
+      await firstValueFrom(this.http.delete(url));
+      this.spareData.update((list) => list.filter((v) => v.name !== name));
+      return true;
+    } catch (error: any) {
+      this.errorData.set(
+        error?.error?.message || 'Failed to delete the volume',
+      );
+      return false;
+    }
+  }
+
+  async create(
+    appId: string,
+    body: CreateSnapshotRequest = {},
+  ): Promise<ApplicationSnapshot | null> {
     this.creatingData.set(true);
     this.errorData.set(null);
+    this.refusalData.set(null);
     try {
       const url = `${this.basePath}/api/v1/applications/${encodeURIComponent(appId)}/snapshots`;
       const created = await firstValueFrom(
@@ -108,8 +153,20 @@ export class ApplicationSnapshotsService {
       }
       return created;
     } catch (error: any) {
+      if (error?.error?.code === 'VOLUME_COPY_REFUSED') {
+        this.refusalData.set({
+          message: error.error.message,
+          options: Array.isArray(error.error.options)
+            ? error.error.options
+            : [],
+          request: body,
+        });
+        return null;
+      }
       console.error('Error creating snapshot:', error);
-      this.errorData.set(error?.error?.message || error?.message || 'Failed to create snapshot');
+      this.errorData.set(
+        error?.error?.message || error?.message || 'Failed to create snapshot',
+      );
       return null;
     } finally {
       this.creatingData.set(false);
@@ -121,10 +178,15 @@ export class ApplicationSnapshotsService {
     this.errorData.set(null);
     try {
       await firstValueFrom(
-        this.applicationsApi.applicationSnapshotsControllerDeleteSnapshot(appId, snapshotId),
+        this.applicationsApi.applicationSnapshotsControllerDeleteSnapshot(
+          appId,
+          snapshotId,
+        ),
       );
       this.snapshotsData.update((list) =>
-        list.map((s) => (s.exportId === snapshotId ? { ...s, deleting: true } : s)),
+        list.map((s) =>
+          s.exportId === snapshotId ? { ...s, deleting: true } : s,
+        ),
       );
       this.maybeStartPolling();
       return true;
@@ -223,12 +285,18 @@ export class ApplicationSnapshotsService {
     this.stopPolling();
     this.snapshotsData.set([]);
     this.errorData.set(null);
+    this.refusalData.set(null);
+    this.spareData.set([]);
     this.capabilityData.set(null);
     this.pollContext = null;
   }
 
   private normalizeList(
-    raw: ApplicationSnapshot[] | { snapshots: ApplicationSnapshot[] } | null | undefined,
+    raw:
+      | ApplicationSnapshot[]
+      | { snapshots: ApplicationSnapshot[] }
+      | null
+      | undefined,
   ): ApplicationSnapshot[] {
     if (!raw) return [];
     if (Array.isArray(raw)) return raw;
@@ -273,9 +341,14 @@ export class ApplicationSnapshotsService {
     }
 
     try {
-      const obs = ctx.kind === 'app'
-        ? this.applicationsApi.applicationSnapshotsControllerListSnapshotsForApp(ctx.id)
-        : this.applicationsApi.applicationSnapshotsControllerListSnapshotsForCluster(ctx.id);
+      const obs =
+        ctx.kind === 'app'
+          ? this.applicationsApi.applicationSnapshotsControllerListSnapshotsForApp(
+              ctx.id,
+            )
+          : this.applicationsApi.applicationSnapshotsControllerListSnapshotsForCluster(
+              ctx.id,
+            );
       const data = (await firstValueFrom(obs)) as
         | SnapshotListResponse
         | ApplicationSnapshot[]
@@ -293,8 +366,7 @@ export class ApplicationSnapshotsService {
         this.snapshotsData.set(
           this.normalizeList(
             data as
-              | ApplicationSnapshot[]
-              | { snapshots: ApplicationSnapshot[] },
+              ApplicationSnapshot[] | { snapshots: ApplicationSnapshot[] },
           ),
         );
       }

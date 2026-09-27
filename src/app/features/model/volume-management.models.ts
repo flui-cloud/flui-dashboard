@@ -54,6 +54,27 @@ export interface SnapshotListResponse extends SnapshotCapability {
 export interface CreateSnapshotRequest {
   volumeName?: string;
   description?: string;
+  /** Stop the application for the length of the copy, then start it again. */
+  pause?: boolean;
+  /** Copy a database volume while it runs, knowing it may not restore. */
+  allowInconsistent?: boolean;
+}
+
+/** The server's refusal of a live copy, with the ways forward it offers. */
+export interface CopyRefusal {
+  message: string;
+  options: ('pause' | 'allowInconsistent')[];
+  request: CreateSnapshotRequest;
+}
+
+/** A volume the application owns but does not run on. */
+export interface SpareVolume {
+  name: string;
+  kind: 'restored' | 'previous';
+  size: string | null;
+  createdAt: string | null;
+  inUse: boolean;
+  restoredFrom: string | null;
 }
 
 /** Compute the UI status from the API booleans + the client-side delete flag. */
@@ -94,7 +115,12 @@ export function snapshotSizeLabel(snap: ApplicationSnapshot): {
  * Mirrors the CLI's `formatBytes` so the dashboard shows the same numbers.
  */
 export function formatBytes(bytes: number | undefined): string | null {
-  if (bytes === undefined || bytes === null || !Number.isFinite(bytes) || bytes < 0) {
+  if (
+    bytes === undefined ||
+    bytes === null ||
+    !Number.isFinite(bytes) ||
+    bytes < 0
+  ) {
     return null;
   }
   if (bytes === 0) return '0 B';
@@ -111,7 +137,9 @@ export function formatBytes(bytes: number | undefined): string | null {
 
 export type SnapshotKind = 'native' | 'clone';
 
-export function getSnapshotKind(snap: Pick<ApplicationSnapshot, 'sink'>): SnapshotKind {
+export function getSnapshotKind(
+  snap: Pick<ApplicationSnapshot, 'sink'>,
+): SnapshotKind {
   return snap.sink === 'pvc-clone' ? 'clone' : 'native';
 }
 

@@ -1,5 +1,14 @@
 import { availabilityOf } from '../../model/application.models';
-import { Component, OnInit, inject, computed, signal, effect, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  computed,
+  signal,
+  effect,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
@@ -32,9 +41,13 @@ import { buildOpenAppUrl, CATALOG_APP_LABEL } from '../../model/open-app-url';
 import { hasPublicEndpoint, isBuildingBlock } from '../../model/app-exposure';
 import { CatalogService } from '../../service/catalog.service';
 import { ClientConnectionSectionComponent } from './client-connection-section.component';
-import { InternalServiceInfoComponent, InternalServiceMode } from './internal-service-info.component';
+import {
+  InternalServiceInfoComponent,
+  InternalServiceMode,
+} from './internal-service-info.component';
 import { AppLatestReleaseCardComponent } from './app-latest-release-card.component';
 import { AppProjectSectionComponent } from './app-project-section.component';
+import { AppDeleteDialogComponent } from './app-delete-dialog.component';
 import { replicaCountsOf } from './replica-counts';
 
 @Component({
@@ -50,6 +63,7 @@ import { replicaCountsOf } from './replica-counts';
     InternalServiceInfoComponent,
     AppLatestReleaseCardComponent,
     AppProjectSectionComponent,
+    AppDeleteDialogComponent,
   ],
   providers: [
     provideIcons({
@@ -80,13 +94,27 @@ export class AppOverviewTabComponent implements OnInit {
   readonly catalogService = inject(CatalogService);
 
   readonly app = this.appService.selectedApplication;
+  /**
+   * The group this application is removed with. A component of a bundle is
+   * never deleted on its own from here: alone, it would leave the rest of
+   * the bundle, its database included, running.
+   */
+  readonly deleteGroup = computed(() => {
+    const id = this.app()?.id;
+    return id
+      ? (this.appService
+          .applicationGroups()
+          .find((g) => g.components.some((c) => c.id === id)) ?? null)
+      : null;
+  });
 
   readonly rollbackAvailable = computed(
     () => availabilityOf(this.app(), 'rollback').state === 'available',
   );
   readonly runtime = this.runtimeService.runtime;
 
-  readonly deleteDialog = viewChild.required<ConfirmationDialogComponent>('deleteDialog');
+  readonly deleteDialog =
+    viewChild.required<ConfirmationDialogComponent>('deleteDialog');
 
   readonly isDeleting = signal(false);
   readonly deleteStepMessage = signal<string | null>(null);
@@ -111,36 +139,56 @@ export class AppOverviewTabComponent implements OnInit {
     });
   }
 
-  readonly varCount = computed(() => Object.keys(this.variablesService.plainData()).length);
-  readonly secretCount = computed(() => this.variablesService.sensitiveKeys().length);
+  readonly varCount = computed(
+    () => Object.keys(this.variablesService.plainData()).length,
+  );
+  readonly secretCount = computed(
+    () => this.variablesService.sensitiveKeys().length,
+  );
 
   readonly appEndpoints = computed(() => {
     const appId = this.app()?.id;
     if (!appId) return [];
-    return this.endpointsService.endpoints().filter(e => e.applicationId === appId);
+    return this.endpointsService
+      .endpoints()
+      .filter((e) => e.applicationId === appId);
   });
   readonly appEndpointCount = computed(() => this.appEndpoints().length);
-  readonly syncedEndpointCount = computed(() =>
-    this.appEndpoints().filter(e => e.reconciliationStatus === 'IN_SYNC').length
+  readonly syncedEndpointCount = computed(
+    () =>
+      this.appEndpoints().filter((e) => e.reconciliationStatus === 'IN_SYNC')
+        .length,
   );
-  readonly driftEndpointCount = computed(() =>
-    this.appEndpoints().filter(e => e.reconciliationStatus === 'DRIFT' || e.reconciliationStatus === 'ERROR').length
+  readonly driftEndpointCount = computed(
+    () =>
+      this.appEndpoints().filter(
+        (e) =>
+          e.reconciliationStatus === 'DRIFT' ||
+          e.reconciliationStatus === 'ERROR',
+      ).length,
   );
-  readonly primaryEndpoint = computed(() =>
-    this.appEndpoints().find(e => e.reconciliationStatus === 'IN_SYNC') ?? null
+  readonly primaryEndpoint = computed(
+    () =>
+      this.appEndpoints().find((e) => e.reconciliationStatus === 'IN_SYNC') ??
+      null,
   );
-  readonly extraInSyncCount = computed(() => Math.max(0, this.syncedEndpointCount() - 1));
+  readonly extraInSyncCount = computed(() =>
+    Math.max(0, this.syncedEndpointCount() - 1),
+  );
 
   readonly primaryEndpointReadiness = computed(() =>
     evaluateEndpointReadiness(this.primaryEndpoint()),
   );
 
   readonly catalogSlug = computed<string | undefined>(() => {
-    const labels = (this.app() as { labels?: Record<string, string> } | null)?.labels;
+    const labels = (this.app() as { labels?: Record<string, string> } | null)
+      ?.labels;
     return labels?.[CATALOG_APP_LABEL];
   });
 
-  private readonly catalogEntrypointPath = signal<string | undefined>(undefined);
+  private readonly catalogEntrypointPath = signal<string | undefined>(
+    undefined,
+  );
 
   readonly openAppUrl = computed(() =>
     buildOpenAppUrl(
@@ -160,13 +208,16 @@ export class AppOverviewTabComponent implements OnInit {
     isBuildingBlock(this.app()) ? 'building-block' : 'internal-app',
   );
 
-  readonly internalUrlReadiness = computed<'pending' | 'failed' | 'ready' | 'not-configured'>(() => {
+  readonly internalUrlReadiness = computed<
+    'pending' | 'failed' | 'ready' | 'not-configured'
+  >(() => {
     const app = this.app();
     if (!app) return 'not-configured';
     if (app.internalUrl) return 'ready';
     const r = app.reconciliationStatus as string;
     if (r === 'ERROR') return 'failed';
-    if (r === 'RECONCILING' || r === 'PENDING' || app.status === 'provisioning') return 'pending';
+    if (r === 'RECONCILING' || r === 'PENDING' || app.status === 'provisioning')
+      return 'pending';
     return 'not-configured';
   });
 
@@ -180,7 +231,9 @@ export class AppOverviewTabComponent implements OnInit {
     ),
   );
 
-  readonly recentEvents = computed(() => this.revisionsService.events().slice(0, 3));
+  readonly recentEvents = computed(() =>
+    this.revisionsService.events().slice(0, 3),
+  );
 
   openDeleteDialog(): void {
     this.deleteDialog().open();
@@ -203,6 +256,9 @@ export class AppOverviewTabComponent implements OnInit {
   ngOnInit(): void {
     const app = this.app();
     if (!app) return;
+    if (!this.appService.applicationGroups().length) {
+      void this.appService.loadApplications();
+    }
     this.variablesService.loadVariables(app.id);
     if (app.clusterId) {
       this.endpointsService.loadEndpoints(app.clusterId);
@@ -233,17 +289,22 @@ export class AppOverviewTabComponent implements OnInit {
   }
 
   formatBytes(bytes: number): string {
-    if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)}GB`;
+    if (bytes >= 1024 * 1024 * 1024)
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)}GB`;
     if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
     if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)}KB`;
     return `${bytes.toFixed(0)}B`;
   }
 
-  private resolveStatus(m: AppMetricsDto): 'healthy' | 'degraded' | 'down' | 'waiting' {
+  private resolveStatus(
+    m: AppMetricsDto,
+  ): 'healthy' | 'degraded' | 'down' | 'waiting' {
     if (this.app()?.status === 'waiting_for_room') return 'waiting';
     const s = m.status;
     if (s.replicas_ready == null && s.replicas_desired == null) {
-      const running = m.pods?.some(p => p.phase === 'Running' && (p.count ?? 0) > 0) ?? false;
+      const running =
+        m.pods?.some((p) => p.phase === 'Running' && (p.count ?? 0) > 0) ??
+        false;
       return running ? 'healthy' : 'down';
     }
     const ready = s.replicas_ready ?? 0;

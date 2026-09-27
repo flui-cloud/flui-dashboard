@@ -19,8 +19,14 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
   providers: [provideIcons({ lucideX, lucideLoader })],
   template: `
     @if (open()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="cancelled.emit()">
-        <div class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6" (click)="$event.stopPropagation()">
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        (click)="cancelled.emit()"
+      >
+        <div
+          class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6"
+          (click)="$event.stopPropagation()"
+        >
           <div class="flex items-start justify-between mb-4">
             <div>
               <h3 class="text-lg font-semibold">Take a copy of this volume</h3>
@@ -28,14 +34,21 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
                 Captures the current data of this application's volume.
               </p>
             </div>
-            <button (click)="cancelled.emit()" class="p-1 hover:bg-muted rounded">
+            <button
+              (click)="cancelled.emit()"
+              class="p-1 hover:bg-muted rounded"
+            >
               <ng-icon name="lucideX" class="h-4 w-4" />
             </button>
           </div>
 
           <div class="space-y-4">
             <div>
-              <label class="text-sm font-medium mb-1 block" for="snapshot-description">Description (optional)</label>
+              <label
+                class="text-sm font-medium mb-1 block"
+                for="snapshot-description"
+                >Description (optional)</label
+              >
               <input
                 id="snapshot-description"
                 type="text"
@@ -46,17 +59,41 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
                 class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
               />
             </div>
-            <div>
-              <label class="text-sm font-medium mb-1 block" for="snapshot-pvc">PVC name (optional)</label>
+            <label class="flex items-start gap-2 text-sm">
               <input
-                id="snapshot-pvc"
-                type="text"
-                [ngModel]="pvcName()"
-                (ngModelChange)="pvcName.set($event)"
-                placeholder="leave empty if the app has a single volume"
-                class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm font-mono text-xs"
+                type="checkbox"
+                class="mt-1"
+                [ngModel]="pause()"
+                (ngModelChange)="pause.set($event)"
               />
-            </div>
+              <span>
+                Stop the application during the copy
+                <span class="block text-xs text-muted-foreground">
+                  A short interruption; it starts again as soon as the copy is
+                  taken.
+                  @if (suggestPause()) {
+                    A database copied while it runs may not restore.
+                  }
+                </span>
+              </span>
+            </label>
+            @if (showVolume()) {
+              <div>
+                <label
+                  class="text-sm font-medium mb-1 block"
+                  for="snapshot-volume"
+                  >Volume</label
+                >
+                <input
+                  id="snapshot-volume"
+                  type="text"
+                  [ngModel]="volumeName()"
+                  (ngModelChange)="volumeName.set($event)"
+                  placeholder="needed only when the application has more than one"
+                  class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm font-mono text-xs"
+                />
+              </div>
+            }
           </div>
 
           <div class="flex items-center gap-2 mt-6">
@@ -87,28 +124,34 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
 export class SnapshotCreateDialogComponent {
   readonly open = input(false);
   readonly creating = input(false);
+  /** A database: copying it while it runs is refused or unsafe. */
+  readonly suggestPause = input(false);
+  readonly showVolume = input(false);
 
   readonly submitRequest = output<CreateSnapshotRequest>();
   readonly cancelled = output<void>();
 
   readonly description = signal('');
-  readonly pvcName = signal('');
+  readonly volumeName = signal('');
+  readonly pause = signal(false);
 
   constructor() {
     effect(() => {
       if (this.open()) {
         this.description.set('');
-        this.pvcName.set('');
+        this.volumeName.set('');
+        this.pause.set(this.suggestPause());
       }
     });
   }
 
   onSubmit(): void {
     const description = this.description().trim();
-    const volumeName = this.pvcName().trim();
+    const volumeName = this.volumeName().trim();
     this.submitRequest.emit({
       description: description || undefined,
       volumeName: volumeName || undefined,
+      ...(this.pause() ? { pause: true } : {}),
     });
   }
 }

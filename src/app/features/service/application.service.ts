@@ -15,7 +15,10 @@ import {
 } from '../model/application.models';
 import { ApplicationsService } from '../../core/api/api/applications.service';
 import { ClusterService } from './cluster.service';
-import { AppRuntimeWebSocketService, OperationProgressEvent } from './app-runtime-websocket.service';
+import {
+  AppRuntimeWebSocketService,
+  OperationProgressEvent,
+} from './app-runtime-websocket.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AppConfigService } from '../../core/services/app-config.service';
 
@@ -42,6 +45,7 @@ export interface RemovalPreview {
   volumesKnown: boolean;
   dataWarning: string | null;
   note?: string;
+  backupNote?: string | null;
 }
 
 export interface GenerateWorkflowParams {
@@ -151,11 +155,15 @@ export class ApplicationService {
   private readonly error = signal<string | null>(null);
 
   // Deploy wizard tracking (kept for wizard/progress compatibility)
-  private readonly currentDeploymentProgress = signal<DeploymentProgress | null>(null);
-  private deploymentPollingInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly currentDeploymentProgress =
+    signal<DeploymentProgress | null>(null);
+  private deploymentPollingInterval: ReturnType<typeof setInterval> | null =
+    null;
 
   // Delete operation tracking
-  private readonly _deleteProgress = signal<OperationProgressEvent | null>(null);
+  private readonly _deleteProgress = signal<OperationProgressEvent | null>(
+    null,
+  );
   private readonly _deletingAppIds = new Set<string>();
   private readonly _deletedAppIds = new Set<string>();
 
@@ -227,9 +235,8 @@ export class ApplicationService {
       });
     }
 
-    return groups
-      .sort((a, b) => b._sort - a._sort)
-      .map(({ _sort, ...g }) => g);
+    groups.sort((a, b) => b._sort - a._sort);
+    return groups.map(({ _sort, ...g }) => g);
   });
 
   patchApplicationProject(appIds: string[], projectId: string | null): void {
@@ -239,7 +246,9 @@ export class ApplicationService {
     );
   }
 
-  readonly selectedApplication = computed(() => this.selectedApplicationSignal());
+  readonly selectedApplication = computed(() =>
+    this.selectedApplicationSignal(),
+  );
 
   refreshSelectedApplication(app: Application): void {
     this.selectedApplicationSignal.set(app);
@@ -250,66 +259,76 @@ export class ApplicationService {
   }
 
   readonly runningAppsCount = computed(
-    () => this.applicationGroups().filter(
-      (g) => g.status === ApplicationStatusEnum.Running
-    ).length
+    () =>
+      this.applicationGroups().filter(
+        (g) => g.status === ApplicationStatusEnum.Running,
+      ).length,
   );
 
   readonly failedAppsCount = computed(
-    () => this.applicationGroups().filter(
-      (g) => g.status === ApplicationStatusEnum.Failed
-    ).length
+    () =>
+      this.applicationGroups().filter(
+        (g) => g.status === ApplicationStatusEnum.Failed,
+      ).length,
   );
 
   readonly provisioningAppsCount = computed(
-    () => this.applicationGroups().filter(
-      (g) => g.status === ApplicationStatusEnum.Provisioning
-    ).length
+    () =>
+      this.applicationGroups().filter(
+        (g) => g.status === ApplicationStatusEnum.Provisioning,
+      ).length,
   );
 
   readonly systemAppsCount = computed(
-    () => this.applicationGroups().filter(
-      (g) => g.category === ApplicationCategoryEnum.System
-    ).length
+    () =>
+      this.applicationGroups().filter(
+        (g) => g.category === ApplicationCategoryEnum.System,
+      ).length,
   );
 
   readonly userAppsCount = computed(
-    () => this.applicationGroups().filter(
-      (g) => g.category === ApplicationCategoryEnum.User
-    ).length
+    () =>
+      this.applicationGroups().filter(
+        (g) => g.category === ApplicationCategoryEnum.User,
+      ).length,
   );
 
   readonly databasesCount = computed(
-    () => this.applicationGroups().filter(
-      (g) => this.groupKind(g) === ApplicationKindEnum.Database
-    ).length
+    () =>
+      this.applicationGroups().filter(
+        (g) => this.groupKind(g) === ApplicationKindEnum.Database,
+      ).length,
   );
 
   readonly applicationsCount = computed(
-    () => this.applicationGroups().filter(
-      (g) => this.groupKind(g) === ApplicationKindEnum.Application
-    ).length
+    () =>
+      this.applicationGroups().filter(
+        (g) => this.groupKind(g) === ApplicationKindEnum.Application,
+      ).length,
   );
 
   readonly toolsCount = computed(
-    () => this.applicationGroups().filter(
-      (g) => this.groupKind(g) === ApplicationKindEnum.Tool
-    ).length
+    () =>
+      this.applicationGroups().filter(
+        (g) => this.groupKind(g) === ApplicationKindEnum.Tool,
+      ).length,
   );
 
   readonly systemKindCount = computed(
-    () => this.applicationGroups().filter(
-      (g) => this.groupKind(g) === ApplicationKindEnum.System
-    ).length
+    () =>
+      this.applicationGroups().filter(
+        (g) => this.groupKind(g) === ApplicationKindEnum.System,
+      ).length,
   );
 
   readonly userTotalAppsCount = computed(
-    () => this.databasesCount() + this.applicationsCount() + this.toolsCount()
+    () => this.databasesCount() + this.applicationsCount() + this.toolsCount(),
   );
 
   private groupKind(g: AppGroupView): ApplicationKind {
     const primary =
-      g.components.find((c) => c.id === g.primaryComponentId) ?? g.components[0];
+      g.components.find((c) => c.id === g.primaryComponentId) ??
+      g.components[0];
     return primary?.kind ?? ApplicationKindEnum.Application;
   }
 
@@ -326,8 +345,9 @@ export class ApplicationService {
       // SWR: fast DB call first, then background revalidation from Kubernetes
       await this._doFetch(false, true);
       this.isBackgroundRefreshing.set(true);
-      this._doFetch(true, false)
-        .finally(() => this.isBackgroundRefreshing.set(false));
+      this._doFetch(true, false).finally(() =>
+        this.isBackgroundRefreshing.set(false),
+      );
     }
   }
 
@@ -336,7 +356,10 @@ export class ApplicationService {
    * @param refresh - whether to reconcile from Kubernetes (true=slow, false=DB only)
    * @param setLoadingState - whether to update isLoading signal and surface errors to UI
    */
-  private async _doFetch(refresh: boolean, setLoadingState: boolean): Promise<void> {
+  private async _doFetch(
+    refresh: boolean,
+    setLoadingState: boolean,
+  ): Promise<void> {
     if (setLoadingState) {
       this.isLoading.set(true);
       this.error.set(null);
@@ -354,15 +377,19 @@ export class ApplicationService {
       const results = await Promise.allSettled(
         validClusters.map((cluster) =>
           firstValueFrom(
-            this.applicationsApi.applicationsControllerListGroupedByCluster(cluster.id!, refresh)
-          )
-        )
+            this.applicationsApi.applicationsControllerListGroupedByCluster(
+              cluster.id!,
+              refresh,
+            ),
+          ),
+        ),
       );
 
       const allApps: Application[] = [];
       const meta: Record<string, BundleMeta> = {};
       for (const result of results) {
-        if (result.status !== 'fulfilled' || !Array.isArray(result.value)) continue;
+        if (result.status !== 'fulfilled' || !Array.isArray(result.value))
+          continue;
         for (const group of result.value) {
           allApps.push(...group.components);
           if (group.type === 'composed' && group.catalogInstallId) {
@@ -380,20 +407,27 @@ export class ApplicationService {
       }
       this.bundleMeta.set(meta);
 
-      const filtered = allApps.filter(a =>
-        a.status !== 'deleted' && !this._deletedAppIds.has(a.id)
+      const filtered = allApps.filter(
+        (a) => a.status !== 'deleted' && !this._deletedAppIds.has(a.id),
       );
 
       // Preserve local 'deleting' status for apps the server hasn't caught up on yet
-      const merged = filtered.map(a =>
-        this._deletingAppIds.has(a.id) ? { ...a, status: ApplicationStatusEnum.Deleting } : a
+      const merged = filtered.map((a) =>
+        this._deletingAppIds.has(a.id)
+          ? { ...a, status: ApplicationStatusEnum.Deleting }
+          : a,
       );
 
       this.applicationsList.set(merged);
-      merged.forEach(a => { if (a.id && a.name) this.wsService.registerAppName(a.id, a.name); });
+      merged.forEach((a) => {
+        if (a.id && a.name) this.wsService.registerAppName(a.id, a.name);
+      });
     } catch (error: any) {
       if (setLoadingState) {
-        const errorMessage = error?.error?.message || error?.message || 'Failed to load applications';
+        const errorMessage =
+          error?.error?.message ||
+          error?.message ||
+          'Failed to load applications';
         console.error('Failed to load applications:', error);
         this.error.set(errorMessage);
         throw error;
@@ -414,14 +448,16 @@ export class ApplicationService {
 
     try {
       const app = await firstValueFrom(
-        this.applicationsApi.applicationsControllerFindById(id, true)
+        this.applicationsApi.applicationsControllerFindById(id, true),
       );
 
       this.selectedApplicationSignal.set(app);
-      if (app?.id && app?.name) this.wsService.registerAppName(app.id, app.name);
+      if (app?.id && app?.name)
+        this.wsService.registerAppName(app.id, app.name);
       return app;
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Failed to load application';
+      const errorMessage =
+        error?.error?.message || error?.message || 'Failed to load application';
       console.error('Failed to load application:', error);
       this.error.set(errorMessage);
       throw error;
@@ -439,7 +475,7 @@ export class ApplicationService {
    */
   async refreshApplication(id: string): Promise<Application | null> {
     const app = await firstValueFrom(
-      this.applicationsApi.applicationsControllerFindById(id, true)
+      this.applicationsApi.applicationsControllerFindById(id, true),
     );
     if (app) {
       this.selectedApplicationSignal.set(app);
@@ -457,9 +493,10 @@ export class ApplicationService {
     this.error.set(null);
 
     try {
-      const appName = this.applicationsList().find(a => a.id === id)?.name
-        ?? this.selectedApplicationSignal()?.name
-        ?? 'Application';
+      const appName =
+        this.applicationsList().find((a) => a.id === id)?.name ??
+        this.selectedApplicationSignal()?.name ??
+        'Application';
 
       // cancelled flag shared between WS and polling — first to fire wins
       const cancelled = { value: false };
@@ -486,7 +523,7 @@ export class ApplicationService {
       });
 
       const response = await firstValueFrom(
-        this.applicationsApi.applicationsControllerDelete(id)
+        this.applicationsApi.applicationsControllerDelete(id),
       );
 
       this.notificationService.add({
@@ -503,7 +540,10 @@ export class ApplicationService {
         this._pollDeleteOperation(id, operationId, cancelled, appName);
       }
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Failed to delete application';
+      const errorMessage =
+        error?.error?.message ||
+        error?.message ||
+        'Failed to delete application';
       console.error('Failed to delete application:', error);
       this.error.set(errorMessage);
       throw error;
@@ -514,7 +554,7 @@ export class ApplicationService {
     this._deletingAppIds.delete(appId);
     this._deletedAppIds.add(appId);
     this._deleteProgress.set(null);
-    this.applicationsList.update(apps => apps.filter(a => a.id !== appId));
+    this.applicationsList.update((apps) => apps.filter((a) => a.id !== appId));
     if (this.selectedApplicationSignal()?.id === appId) {
       this.selectedApplicationSignal.set(null);
     }
@@ -528,7 +568,12 @@ export class ApplicationService {
     this.wsService.unsubscribeFromApp(appId);
   }
 
-  private _pollDeleteOperation(appId: string, operationId: string, cancelled: { value: boolean }, appName: string): void {
+  private _pollDeleteOperation(
+    appId: string,
+    operationId: string,
+    cancelled: { value: boolean },
+    appName: string,
+  ): void {
     const POLL_INTERVAL = 3000;
     const MAX_POLLS = 60;
     let pollCount = 0;
@@ -538,7 +583,9 @@ export class ApplicationService {
       pollCount++;
       try {
         const result = await firstValueFrom(
-          this.http.get<{ status: string }>(`${this.appConfig.apiBaseUrl}/api/v1/operations/${operationId}`)
+          this.http.get<{ status: string }>(
+            `${this.appConfig.apiBaseUrl}/api/v1/operations/${operationId}`,
+          ),
         );
         if (cancelled.value) return;
         if (result.status === 'COMPLETED') {
@@ -575,7 +622,11 @@ export class ApplicationService {
     setTimeout(() => poll(), POLL_INTERVAL);
   }
 
-  trackBundleUninstall(componentIds: string[], operationId?: string, bundleName?: string): void {
+  trackBundleUninstall(
+    componentIds: string[],
+    operationId?: string,
+    bundleName?: string,
+  ): void {
     const ids = componentIds.filter(Boolean);
     if (ids.length === 0) return;
 
@@ -585,7 +636,12 @@ export class ApplicationService {
     }
 
     if (operationId) {
-      this._pollUninstallOperation(ids, operationId, { value: false }, bundleName ?? 'Bundle');
+      this._pollUninstallOperation(
+        ids,
+        operationId,
+        { value: false },
+        bundleName ?? 'Bundle',
+      );
     }
   }
 
@@ -617,7 +673,9 @@ export class ApplicationService {
       pollCount++;
       try {
         const result = await firstValueFrom(
-          this.http.get<{ status: string }>(`${this.appConfig.apiBaseUrl}/api/v1/operations/${operationId}`)
+          this.http.get<{ status: string }>(
+            `${this.appConfig.apiBaseUrl}/api/v1/operations/${operationId}`,
+          ),
         );
         if (cancelled.value) return;
         if (result.status === 'COMPLETED') {
@@ -642,7 +700,16 @@ export class ApplicationService {
     setTimeout(() => poll(), POLL_INTERVAL);
   }
 
-  async deploy(id: string, dto?: { imageRef?: string; commitSha?: string; buildId?: string; useCurrentImage?: boolean; reason?: string }): Promise<string | null> {
+  async deploy(
+    id: string,
+    dto?: {
+      imageRef?: string;
+      commitSha?: string;
+      buildId?: string;
+      useCurrentImage?: boolean;
+      reason?: string;
+    },
+  ): Promise<string | null> {
     this.error.set(null);
     this._updateAppStatus(id, ApplicationStatusEnum.Updating);
     try {
@@ -653,7 +720,7 @@ export class ApplicationService {
           buildId: dto?.buildId,
           useCurrentImage: dto?.useCurrentImage,
           reason: dto?.reason,
-        })
+        }),
       );
       const operationId: string | null = result?.id ?? null;
       if (operationId) {
@@ -683,7 +750,9 @@ export class ApplicationService {
   async startApplication(id: string): Promise<void> {
     this.error.set(null);
     try {
-      const app = await firstValueFrom(this.applicationsApi.applicationsControllerStart(id));
+      const app = await firstValueFrom(
+        this.applicationsApi.applicationsControllerStart(id),
+      );
       this._updateAppInList(app);
       this.selectedApplicationSignal.set(app);
     } catch (error: any) {
@@ -693,12 +762,19 @@ export class ApplicationService {
     }
   }
 
-  async rollback(id: string, revisionNumber: number, reason?: string): Promise<void> {
+  async rollback(
+    id: string,
+    revisionNumber: number,
+    reason?: string,
+  ): Promise<void> {
     this.error.set(null);
     this._updateAppStatus(id, ApplicationStatusEnum.RollingBack);
     try {
       await firstValueFrom(
-        this.applicationsApi.applicationsControllerRollback(id, { revisionNumber, reason })
+        this.applicationsApi.applicationsControllerRollback(id, {
+          revisionNumber,
+          reason,
+        }),
       );
     } catch (error: any) {
       const msg = error?.error?.message || error?.message || 'Rollback failed';
@@ -711,7 +787,9 @@ export class ApplicationService {
   async reconcile(id: string): Promise<void> {
     this.error.set(null);
     try {
-      await firstValueFrom(this.applicationsApi.applicationsControllerReconcile(id));
+      await firstValueFrom(
+        this.applicationsApi.applicationsControllerReconcile(id),
+      );
     } catch (error: any) {
       const msg = error?.error?.message || error?.message || 'Reconcile failed';
       this.error.set(msg);
@@ -720,23 +798,27 @@ export class ApplicationService {
   }
 
   private _updateAppStatus(id: string, status: Application['status']): void {
-    this.applicationsList.update(apps =>
-      apps.map(a => a.id === id ? { ...a, status } : a)
+    this.applicationsList.update((apps) =>
+      apps.map((a) => (a.id === id ? { ...a, status } : a)),
     );
     if (this.selectedApplicationSignal()?.id === id) {
-      this.selectedApplicationSignal.update(a => a ? { ...a, status } : a);
+      this.selectedApplicationSignal.update((a) => (a ? { ...a, status } : a));
     }
   }
 
   private _updateAppInList(app: Application): void {
-    this.applicationsList.update(apps =>
-      apps.map(a => a.id === app.id ? app : a)
+    this.applicationsList.update((apps) =>
+      apps.map((a) => (a.id === app.id ? app : a)),
     );
   }
 
   private _trackOperation(appId: string, operationId: string): void {
     this.wsService.ensureAppSubscription(appId);
-    const matches = (e: { appId: string; operationId: string; operationType: string }) => {
+    const matches = (e: {
+      appId: string;
+      operationId: string;
+      operationType: string;
+    }) => {
       if (e.appId !== appId) return false;
       if (e.operationId !== operationId) return false;
       const type = (e.operationType ?? '').toLowerCase();
@@ -749,14 +831,21 @@ export class ApplicationService {
     this.wsService.onGlobalOperationCompleted((e) => {
       if (!matches(e)) return;
       if (e.applicationStatus) {
-        this._updateAppStatus(appId, e.applicationStatus as Application['status']);
+        this._updateAppStatus(
+          appId,
+          e.applicationStatus as Application['status'],
+        );
       }
       if (e.imageRef) {
-        this.applicationsList.update(apps =>
-          apps.map(a => a.id === appId ? { ...a, imageRef: e.imageRef } : a)
+        this.applicationsList.update((apps) =>
+          apps.map((a) =>
+            a.id === appId ? { ...a, imageRef: e.imageRef } : a,
+          ),
         );
         if (this.selectedApplicationSignal()?.id === appId) {
-          this.selectedApplicationSignal.update(a => a ? { ...a, imageRef: e.imageRef } : a);
+          this.selectedApplicationSignal.update((a) =>
+            a ? { ...a, imageRef: e.imageRef } : a,
+          );
         }
       }
     });
@@ -772,15 +861,21 @@ export class ApplicationService {
   }
 
   /** @deprecated Use generateWorkflowV3 for V3 Dockerfile-first flow */
-  async generateWorkflow(applicationId: string, params: GenerateWorkflowParams): Promise<GenerateWorkflowResult> {
+  async generateWorkflow(
+    applicationId: string,
+    params: GenerateWorkflowParams,
+  ): Promise<GenerateWorkflowResult> {
     try {
       const url = `${this.appConfig.apiBaseUrl}/api/v1/applications/${applicationId}/generate-workflow`;
       const result = await firstValueFrom(
-        this.http.post<GenerateWorkflowResult>(url, params)
+        this.http.post<GenerateWorkflowResult>(url, params),
       );
       return result;
     } catch (error: any) {
-      const msg = error?.error?.message || error?.message || 'Failed to generate workflow';
+      const msg =
+        error?.error?.message ||
+        error?.message ||
+        'Failed to generate workflow';
       throw new Error(msg);
     }
   }
@@ -791,16 +886,23 @@ export class ApplicationService {
    */
   async generateWorkflowV3(
     applicationId: string,
-    params: { branch: string; isFluiManaged: boolean; delivery?: WorkflowDelivery },
+    params: {
+      branch: string;
+      isFluiManaged: boolean;
+      delivery?: WorkflowDelivery;
+    },
   ): Promise<GenerateWorkflowResult> {
     try {
       const url = `${this.appConfig.apiBaseUrl}/api/v1/applications/${applicationId}/generate-workflow-v3`;
       const result = await firstValueFrom(
-        this.http.post<GenerateWorkflowResult>(url, params)
+        this.http.post<GenerateWorkflowResult>(url, params),
       );
       return result;
     } catch (error: any) {
-      const msg = error?.error?.message || error?.message || 'Failed to generate V3 workflow';
+      const msg =
+        error?.error?.message ||
+        error?.message ||
+        'Failed to generate V3 workflow';
       throw new Error(msg);
     }
   }
@@ -818,9 +920,13 @@ export class ApplicationService {
     return firstValueFrom(this.http.get<BuildExpectation>(url));
   }
 
-  async getWorkflowStatus(applicationId: string): Promise<WorkflowStatusResult> {
+  async getWorkflowStatus(
+    applicationId: string,
+  ): Promise<WorkflowStatusResult> {
     return firstValueFrom(
-      this.applicationsApi.applicationsControllerGetWorkflowStatus(applicationId)
+      this.applicationsApi.applicationsControllerGetWorkflowStatus(
+        applicationId,
+      ),
     );
   }
 
@@ -830,7 +936,9 @@ export class ApplicationService {
 
   // ===== LEGACY WIZARD METHODS (kept for deploy-wizard/deploy-progress compatibility) =====
 
-  async startDeployment(_config: DeployWizardConfiguration): Promise<{ operationId: string; applicationId: string }> {
+  async startDeployment(
+    _config: DeployWizardConfiguration,
+  ): Promise<{ operationId: string; applicationId: string }> {
     throw new Error('Deploy wizard not yet migrated to new Application API');
   }
 
