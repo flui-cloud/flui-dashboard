@@ -27,6 +27,15 @@ export const routes: Routes = [
     title: 'Auth - flui.cloud',
   },
   {
+    path: 'gateway-login',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/components/auth/gateway-login.component').then(
+        (m) => m.GatewayLoginComponent
+      ),
+    title: 'Sign in - flui.cloud',
+  },
+  {
     path: 'try',
     loadComponent: () =>
       import('./features/components/sandbox/sandbox-claim.component').then(

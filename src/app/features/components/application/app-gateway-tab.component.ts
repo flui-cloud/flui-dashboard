@@ -1,9 +1,9 @@
-
 import {
   ChangeDetectionStrategy,
   Component,
   OnDestroy,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -23,10 +23,8 @@ import {
 
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationGatewayService } from '../../service/application-gateway.service';
-import {
-  GatewayMinRole,
-  GatewayRoute,
-} from '../../model/gateway-route.models';
+import { GatewayMinRole, GatewayRoute } from '../../model/gateway-route.models';
+import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
 
 @Component({
   selector: 'app-gateway-tab',
@@ -147,7 +145,11 @@ import {
                           : 'bg-muted text-muted-foreground'
                       "
                     >
-                      {{ route.tlsEnabled ? 'https' : (route.certificateStatus || 'http') }}
+                      {{
+                        route.tlsEnabled
+                          ? 'https'
+                          : route.certificateStatus || 'http'
+                      }}
                     </span>
                   </td>
                   <td class="py-2 px-3">
@@ -157,14 +159,20 @@ import {
                           class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                         >
                           <ng-icon name="lucideLock" class="h-3 w-3" />
-                          SSO{{ route.auth?.minRole ? ' · ' + route.auth?.minRole : '' }}
+                          SSO{{
+                            route.auth?.minRole
+                              ? ' · ' + route.auth?.minRole
+                              : ''
+                          }}
                         </span>
                       }
                       @if (route.rateLimit?.average) {
                         <span
                           class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
                         >
-                          {{ route.rateLimit?.average }} req/{{ route.rateLimit?.period || '1s' }}
+                          {{ route.rateLimit?.average }} req/{{
+                            route.rateLimit?.period || '1s'
+                          }}
                         </span>
                       }
                       @if (route.allowIps?.length) {
@@ -174,8 +182,14 @@ import {
                           {{ route.allowIps?.length }} IP range(s)
                         </span>
                       }
-                      @if (!route.auth?.sso && !route.rateLimit?.average && !route.allowIps?.length) {
-                        <span class="text-xs text-muted-foreground">public · no policies</span>
+                      @if (
+                        !route.auth?.sso &&
+                        !route.rateLimit?.average &&
+                        !route.allowIps?.length
+                      ) {
+                        <span class="text-xs text-muted-foreground"
+                          >public · no policies</span
+                        >
                       }
                     </div>
                   </td>
@@ -223,8 +237,12 @@ import {
                       }
                       <div class="grid gap-4 md:grid-cols-3">
                         <!-- Authentication -->
-                        <div class="rounded-md border border-border bg-background p-4 space-y-3">
-                          <h4 class="text-sm font-semibold flex items-center gap-2">
+                        <div
+                          class="rounded-md border border-border bg-background p-4 space-y-3"
+                        >
+                          <h4
+                            class="text-sm font-semibold flex items-center gap-2"
+                          >
                             <ng-icon name="lucideLock" class="h-4 w-4" />
                             Authentication
                           </h4>
@@ -237,7 +255,9 @@ import {
                             Require Flui SSO login
                           </label>
                           <label class="block space-y-1">
-                            <span class="text-xs text-muted-foreground">Minimum role</span>
+                            <span class="text-xs text-muted-foreground"
+                              >Minimum role</span
+                            >
                             <select
                               class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm disabled:opacity-50"
                               [disabled]="!fSso()"
@@ -253,10 +273,14 @@ import {
                         </div>
 
                         <!-- Rate limit -->
-                        <div class="rounded-md border border-border bg-background p-4 space-y-3">
+                        <div
+                          class="rounded-md border border-border bg-background p-4 space-y-3"
+                        >
                           <h4 class="text-sm font-semibold">Rate limit</h4>
                           <label class="block space-y-1">
-                            <span class="text-xs text-muted-foreground">Requests per period (0 = off)</span>
+                            <span class="text-xs text-muted-foreground"
+                              >Requests per period (0 = off)</span
+                            >
                             <input
                               type="number"
                               min="0"
@@ -267,7 +291,9 @@ import {
                           </label>
                           <div class="grid grid-cols-2 gap-2">
                             <label class="block space-y-1">
-                              <span class="text-xs text-muted-foreground">Burst</span>
+                              <span class="text-xs text-muted-foreground"
+                                >Burst</span
+                              >
                               <input
                                 type="number"
                                 min="0"
@@ -277,7 +303,9 @@ import {
                               />
                             </label>
                             <label class="block space-y-1">
-                              <span class="text-xs text-muted-foreground">Period</span>
+                              <span class="text-xs text-muted-foreground"
+                                >Period</span
+                              >
                               <select
                                 class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
                                 [ngModel]="fPeriod()"
@@ -292,11 +320,15 @@ import {
                         </div>
 
                         <!-- IP filtering -->
-                        <div class="rounded-md border border-border bg-background p-4 space-y-3">
+                        <div
+                          class="rounded-md border border-border bg-background p-4 space-y-3"
+                        >
                           <h4 class="text-sm font-semibold">IP filtering</h4>
                           <label class="block space-y-1">
                             <span class="text-xs text-muted-foreground">
-                              Allowed CIDR ranges, one per line (empty = allow all)
+                              Allowed CIDR ranges, one per line (empty = allow
+                              all). Anyone else gets a plain "Forbidden" page
+                              (403).
                             </span>
                             <textarea
                               rows="4"
@@ -306,6 +338,12 @@ import {
                               (ngModelChange)="fAllowIps.set($event)"
                             ></textarea>
                           </label>
+                          @if (invalidAllowIps().length) {
+                            <p class="text-xs text-red-600">
+                              Not an IP address or range:
+                              {{ invalidAllowIps().join(', ') }}
+                            </p>
+                          }
                         </div>
                       </div>
 
@@ -317,11 +355,14 @@ import {
                         <button
                           type="button"
                           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                          [disabled]="saving()"
+                          [disabled]="saving() || invalidAllowIps().length > 0"
                           (click)="savePolicies(route)"
                         >
                           @if (saving()) {
-                            <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
+                            <ng-icon
+                              name="lucideLoader"
+                              class="h-4 w-4 animate-spin"
+                            />
                           }
                           Save policies
                         </button>
@@ -355,8 +396,8 @@ import {
               (ngModelChange)="fHost.set($event)"
             />
             <span class="text-xs text-muted-foreground">
-              If the domain belongs to a cluster DNS zone, the record is
-              created automatically; otherwise point your DNS at the cluster.
+              If the domain belongs to a cluster DNS zone, the record is created
+              automatically; otherwise point your DNS at the cluster.
             </span>
           </label>
 
@@ -463,6 +504,9 @@ export class AppGatewayTabComponent implements OnInit, OnDestroy {
   readonly fBurst = signal(0);
   readonly fPeriod = signal('1s');
   readonly fAllowIps = signal('');
+  readonly invalidAllowIps = computed(() =>
+    this.allowIpLines().filter((ip) => !isAddressOrCidr(ip)),
+  );
 
   // Add-route form state
   readonly fHost = signal('');
@@ -506,10 +550,8 @@ export class AppGatewayTabComponent implements OnInit, OnDestroy {
   async savePolicies(route: GatewayRoute): Promise<void> {
     const id = this.appId();
     if (!id) return;
-    const allowIps = this.fAllowIps()
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const allowIps = this.allowIpLines();
+    if (allowIps.some((ip) => !isAddressOrCidr(ip))) return;
     const average = Number(this.fAverage()) || 0;
     const burst = Number(this.fBurst()) || 0;
     const updated = await this.gatewayService.setPolicy(id, route.endpointId, {
@@ -527,6 +569,13 @@ export class AppGatewayTabComponent implements OnInit, OnDestroy {
       allowIps: allowIps.length ? allowIps : null,
     });
     if (updated) this.expandedId.set(null);
+  }
+
+  private allowIpLines(): string[] {
+    return this.fAllowIps()
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
 
   openAdd(): void {

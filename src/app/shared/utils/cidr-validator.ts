@@ -98,3 +98,31 @@ export function cidrListValidator(): ValidatorFn {
     return result.valid ? null : { invalidCidrs: result.invalidCidrs };
   };
 }
+
+const IPV4_OCTET = String.raw`(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)`;
+const IPV4_ADDRESS_REGEX = new RegExp(String.raw`^${IPV4_OCTET}(\.${IPV4_OCTET}){3}$`);
+
+function isIpv6Address(value: string): boolean {
+  if (!value.includes(':') || !/^[0-9a-fA-F:.]+$/.test(value)) return false;
+  try {
+    new URL(`http://[${value}]/`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A single IPv4/IPv6 address or CIDR range, the same rule the API applies to a
+ * route's IP filter: one invalid entry makes the proxy drop the whole route.
+ */
+export function isAddressOrCidr(value: string): boolean {
+  const parts = value.trim().split('/');
+  if (parts.length > 2) return false;
+  const v4 = IPV4_ADDRESS_REGEX.test(parts[0]);
+  const v6 = !v4 && isIpv6Address(parts[0]);
+  if (!v4 && !v6) return false;
+  if (parts.length === 1) return true;
+  if (!/^\d{1,3}$/.test(parts[1])) return false;
+  return Number(parts[1]) <= (v4 ? 32 : 128);
+}
