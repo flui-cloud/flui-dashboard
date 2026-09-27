@@ -18,7 +18,7 @@ import {
   lucidePause,
   lucideRotateCcw,
 } from '@ng-icons/lucide';
-import { InstallLogService } from '../../service/install-log.service';
+import { PurchaseLogComponent } from './purchase-log.component';
 import {
   ClusterScalingRow,
   SectionGroup,
@@ -45,6 +45,7 @@ interface StatCard {
     HlmButtonDirective,
     SectionFailureComponent,
     SectionSkeletonComponent,
+    PurchaseLogComponent,
   ],
   providers: [
     provideIcons({
@@ -112,29 +113,34 @@ interface StatCard {
           >
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
               <ng-icon
-                [name]="purchase.state === 'buying' ? 'lucideLoader' : purchase.state === 'joined' ? 'lucideCircleCheck' : 'lucideCircleAlert'"
+                [name]="
+                  purchase.state === 'buying'
+                    ? 'lucideLoader'
+                    : purchase.state === 'joined'
+                      ? 'lucideCircleCheck'
+                      : 'lucideCircleAlert'
+                "
                 class="h-4 w-4 shrink-0"
                 [class.animate-spin]="purchase.state === 'buying'"
               />
               <span class="min-w-0 flex-1 text-foreground">
                 {{ purchase.says }}
                 @if (purchase.state === 'joined' && purchase.finishedAt) {
-                  <span class="text-muted-foreground"> · joined at {{ clock(purchase.finishedAt) }}</span>
+                  <span class="text-muted-foreground">
+                    · joined at {{ clock(purchase.finishedAt) }}</span
+                  >
                 }
               </span>
-              <button
-                type="button"
-                class="text-[13px] font-medium underline underline-offset-2 disabled:opacity-50"
-                [disabled]="downloadingLog()"
-                (click)="downloadLog(purchase.operationId)"
-                data-testid="purchase-log"
-              >
-                {{ downloadingLog() ? 'Downloading…' : 'Install log' }}
-              </button>
+              <app-purchase-log [operationId]="purchase.operationId" />
             </div>
             @if (purchase.state === 'buying') {
-              <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-primary/15">
-                <div class="h-1 rounded-full bg-primary transition-all" [style.width.%]="purchase.progress"></div>
+              <div
+                class="mt-2 h-1 w-full overflow-hidden rounded-full bg-primary/15"
+              >
+                <div
+                  class="h-1 rounded-full bg-primary transition-all"
+                  [style.width.%]="purchase.progress"
+                ></div>
               </div>
             }
           </div>
@@ -165,7 +171,8 @@ interface StatCard {
               @if (hold.until) {
                 <p class="m-0 text-foreground">
                   The machine was sold out {{ heldAge() }} ago and nothing was
-                  created. Flui reads availability again at {{ clockOf(hold.until) }}.
+                  created. Flui reads availability again at
+                  {{ clockOf(hold.until) }}.
                 </p>
               } @else {
                 <p class="m-0 text-foreground">
@@ -206,8 +213,11 @@ interface StatCard {
               class="h-4 w-4 shrink-0 translate-y-0.5 text-amber-500"
             />
             <span class="text-foreground"
-              >Alarm open {{ open.age }}@if (!preview()?.blocked) { — {{ open.asks }}}</span
-            >
+              >Alarm open {{ open.age }}
+              @if (!preview()?.blocked) {
+                — {{ open.asks }}
+              }
+            </span>
           </p>
         }
 
@@ -281,7 +291,11 @@ export class ScalingNowSummaryComponent {
       this.store.reload();
     } catch (err: unknown) {
       const e = err as { error?: { message?: string }; message?: string };
-      this.retryError.set(e?.error?.message ?? e?.message ?? 'Could not ask the group to try again.');
+      this.retryError.set(
+        e?.error?.message ??
+          e?.message ??
+          'Could not ask the group to try again.',
+      );
     } finally {
       this.retrying.set(false);
     }
@@ -400,9 +414,6 @@ export class ScalingNowSummaryComponent {
     };
   }
 
-  private readonly installLog = inject(InstallLogService);
-  protected readonly downloadingLog = signal(false);
-
   protected purchaseClass(state: 'buying' | 'joined' | 'failed'): string {
     if (state === 'buying') return 'border-primary/40 bg-primary/[0.05]';
     if (state === 'joined') return 'border-green-500/40 bg-green-500/[0.06]';
@@ -411,22 +422,6 @@ export class ScalingNowSummaryComponent {
 
   protected clock(at: Date): string {
     return at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  protected downloadLog(operationId: string): void {
-    this.downloadingLog.set(true);
-    this.installLog.download(operationId).subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `install-${operationId}.log`;
-        a.click();
-        URL.revokeObjectURL(url);
-        this.downloadingLog.set(false);
-      },
-      error: () => this.downloadingLog.set(false),
-    });
   }
 
   protected readonly state = computed(() => {
