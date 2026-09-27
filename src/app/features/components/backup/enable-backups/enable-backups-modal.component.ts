@@ -109,7 +109,7 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Backup storage / month</span>
                 @if (opts.estimate.backupMonthlyCentsBy.single != null) {
-                <span class="font-medium">{{ centsToEur(opts.estimate.backupMonthlyCentsBy.single) }}</span>
+                <span class="font-medium" [title]="opts.estimate.backupPricingSource || ''">{{ centsToEur(opts.estimate.backupMonthlyCentsBy.single) }}</span>
                 } @else {
                 <span class="text-muted-foreground italic" [title]="opts.estimate.backupUnavailableReason || ''">
                   Cost unavailable

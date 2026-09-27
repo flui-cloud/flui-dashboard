@@ -6,6 +6,8 @@ import { AppConfigService } from '../../core/services/app-config.service';
 export interface DbPitrStatus {
   applicationId: string;
   continuousBackupEnabled: boolean;
+  /** False when the database is protected by scheduled dumps. */
+  pointInTime?: boolean;
   policyId: string | null;
   cronSchedule: string | null;
   backupCount: number;

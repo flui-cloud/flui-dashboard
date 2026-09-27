@@ -21,7 +21,8 @@ export type DestinationRole = PolicyDestinationInputDto.RoleEnum;
 export type RestoreTargetKind = CreateRestoreJobDto.TargetKindEnum;
 export type RestoreStrategy = CreateRestoreJobDto.StrategyEnum;
 
-export type DestinationHealthStatus = 'unknown' | 'healthy' | 'degraded' | 'failed';
+export type DestinationHealthStatus =
+  'unknown' | 'healthy' | 'degraded' | 'failed';
 export type BackupPolicyStatus = 'active' | 'paused' | 'degraded' | 'failed';
 export type ReplicationStatus = 'ok' | 'degraded' | 'failed' | 'never_run';
 export type BackupJobStatus =
@@ -43,12 +44,7 @@ export type ArtifactLocationState =
   | 'expired'
   | 'failed';
 export type RestoreJobStatus =
-  | 'pending'
-  | 'previewing'
-  | 'restoring'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
+  'pending' | 'previewing' | 'restoring' | 'completed' | 'failed' | 'cancelled';
 
 // ===== Response entity shapes (server returns these) =====
 
@@ -132,6 +128,11 @@ export interface BackupJob {
   finishedAt?: string;
   infrastructureOperationId?: string;
   errorMessage?: string;
+  /** Per volume, seconds the application was stopped for its copy. */
+  metadata?: { stoppedSeconds?: Record<string, number> } & Record<
+    string,
+    unknown
+  >;
   artifact?: BackupArtifact;
   createdAt: string;
   updatedAt: string;
@@ -154,6 +155,7 @@ export interface BackupArtifact {
   id: string;
   backupJobId: string;
   clusterId: string;
+  engineClass?: 'volume' | 'database' | 'platform' | 'volume_copy';
   veleroBackupName: string;
   sizeBytes?: string | null;
   itemCount?: number | null;
@@ -221,7 +223,7 @@ export interface ObjectStoragePreset {
 // ===== Helpers =====
 
 export function inferProfile(
-  destinations: { role: DestinationRole }[]
+  destinations: { role: DestinationRole }[],
 ): BackupPolicyProfile {
   if (!destinations.length) return 'custom';
   const replicas = destinations.filter((d) => d.role === 'replica').length;
@@ -231,23 +233,25 @@ export function inferProfile(
 }
 
 export function validatePolicyDestinations(
-  destinations: PolicyDestinationInputDto[]
+  destinations: PolicyDestinationInputDto[],
 ): string | null {
   if (!destinations.length) return 'At least one destination is required';
   const primaries = destinations.filter((d) => d.role === 'primary');
   if (primaries.length === 0) return 'A primary destination is required';
   if (primaries.length > 1) return 'Only one primary destination is allowed';
   const ids = new Set(destinations.map((d) => d.destinationId));
-  if (ids.size !== destinations.length) return 'Duplicate destinations are not allowed';
+  if (ids.size !== destinations.length)
+    return 'Duplicate destinations are not allowed';
   return null;
 }
 
 export function costEstimateMonthlyEur(
   usageBytes: number | string | null | undefined,
-  costPerGbMonthCents: number | null | undefined
+  costPerGbMonthCents: number | null | undefined,
 ): number | null {
   if (usageBytes == null || costPerGbMonthCents == null) return null;
-  const bytes = typeof usageBytes === 'string' ? Number(usageBytes) : usageBytes;
+  const bytes =
+    typeof usageBytes === 'string' ? Number(usageBytes) : usageBytes;
   if (!Number.isFinite(bytes) || bytes < 0) return null;
   const gb = bytes / 1024 / 1024 / 1024;
   return (gb * costPerGbMonthCents) / 100;
@@ -275,12 +279,15 @@ export interface BadgeStyle {
 }
 
 const TONE = {
-  green: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30',
+  green:
+    'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30',
   blue: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30',
-  amber: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
+  amber:
+    'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
   red: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30',
   gray: 'bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/30',
-  violet: 'bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30',
+  violet:
+    'bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30',
 };
 
 export function healthBadge(status: DestinationHealthStatus): BadgeStyle {
@@ -324,7 +331,10 @@ export function jobStatusBadge(status: BackupJobStatus): BadgeStyle {
     case 'running':
     case 'uploading':
     case 'replicating':
-      return { label: status[0].toUpperCase() + status.slice(1), classes: TONE.blue };
+      return {
+        label: status[0].toUpperCase() + status.slice(1),
+        classes: TONE.blue,
+      };
   }
 }
 
@@ -336,7 +346,10 @@ export function locationStateBadge(state: ArtifactLocationState): BadgeStyle {
       return { label: 'Available', classes: TONE.green };
     case 'uploading':
     case 'pending':
-      return { label: state[0].toUpperCase() + state.slice(1), classes: TONE.blue };
+      return {
+        label: state[0].toUpperCase() + state.slice(1),
+        classes: TONE.blue,
+      };
     case 'failed':
       return { label: 'Failed', classes: TONE.red };
     case 'missing':
@@ -358,7 +371,10 @@ export function restoreStatusBadge(status: RestoreJobStatus): BadgeStyle {
       return { label: 'Pending', classes: TONE.gray };
     case 'previewing':
     case 'restoring':
-      return { label: status[0].toUpperCase() + status.slice(1), classes: TONE.blue };
+      return {
+        label: status[0].toUpperCase() + status.slice(1),
+        classes: TONE.blue,
+      };
   }
 }
 
@@ -451,6 +467,7 @@ export interface SetupOptionsEstimate {
     mirrored: number | null;
   };
   backupUnavailableReason?: string;
+  backupPricingSource?: string;
   estimatedDataGb: number | null;
   estimatedDataSource?: 'last-backup' | 'pvc-requests';
   backupScope?: BackupScopeInfo;
@@ -492,17 +509,23 @@ export function centsToEur(cents: number | null | undefined): string {
  * English copy for alert codes — backend may return localized strings,
  * but we keep the UI consistent in English by mapping on alert.code.
  */
-const ALERT_COPY: Record<string, { message: (a: BackupStatusAlert) => string; cta?: string }> = {
+const ALERT_COPY: Record<
+  string,
+  { message: (a: BackupStatusAlert) => string; cta?: string }
+> = {
   NO_CLUSTERS: {
-    message: () => 'No clusters yet. Create your first cluster to enable backups.',
+    message: () =>
+      'No clusters yet. Create your first cluster to enable backups.',
     cta: 'Create cluster',
   },
   CLUSTERS_WITHOUT_BACKUPS: {
-    message: () => "Some clusters don't have active backups. Configure them in 1 click.",
+    message: () =>
+      "Some clusters don't have active backups. Configure them in 1 click.",
     cta: 'Enable backups',
   },
   DEGRADED_POLICIES: {
-    message: () => 'One or more policies are degraded — replica destinations are failing.',
+    message: () =>
+      'One or more policies are degraded — replica destinations are failing.',
     cta: 'Check destinations',
   },
   FAILED_DESTINATIONS: {
@@ -539,7 +562,10 @@ const ALERT_CTA_PATH: Record<string, string> = {
   STALE_BACKUPS: '/management/backup/jobs',
 };
 
-export function alertCtaPath(alert: BackupStatusAlert, fallback = '/management/backup'): string {
+export function alertCtaPath(
+  alert: BackupStatusAlert,
+  fallback = '/management/backup',
+): string {
   if (alert.resourceType === 'cluster' && alert.resourceId) {
     return `/cluster/${alert.resourceId}/overview`;
   }
@@ -558,8 +584,12 @@ const PROVIDER_READINESS_COPY: Record<string, string> = {
     'Flui backups run on Scaleway Object Storage. Enable Scaleway as a provider to use the service.',
 };
 
-export function providerReadinessMessage(reason?: string, fallbackMessage?: string): string {
-  if (reason && PROVIDER_READINESS_COPY[reason]) return PROVIDER_READINESS_COPY[reason];
+export function providerReadinessMessage(
+  reason?: string,
+  fallbackMessage?: string,
+): string {
+  if (reason && PROVIDER_READINESS_COPY[reason])
+    return PROVIDER_READINESS_COPY[reason];
   return (
     fallbackMessage ||
     'Flui backups run on Scaleway Object Storage. Enable Scaleway as a provider to use the service.'

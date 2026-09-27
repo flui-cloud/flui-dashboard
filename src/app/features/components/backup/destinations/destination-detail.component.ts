@@ -1,4 +1,13 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -22,83 +31,183 @@ import {
 @Component({
   selector: 'app-destination-detail',
   standalone: true,
-  imports: [ReadOnlySectionDirective, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  imports: [
+    ReadOnlySectionDirective,
+    BackupStatusBadgeComponent,
+    BackupBackLinkComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-4 max-w-3xl">
-      <app-backup-back-link link="/management/backup/destinations" label="Back to destinations" />
+      <app-backup-back-link
+        link="/management/backup/destinations"
+        label="Back to destinations"
+      />
 
       @if (dest(); as d) {
-      <header class="flex items-start justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold">{{ d.name }}</h1>
-          <p class="text-sm text-muted-foreground mt-1">{{ providerLabel(d.provider) }}</p>
-        </div>
-        <div class="flex gap-2">
-          <button appReadOnlySection="backup" class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" (click)="onTest()">
-            Test connection
-          </button>
-          <button appReadOnlySection="backup" class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" (click)="onRefresh()">
-            Refresh usage
-          </button>
-        </div>
-      </header>
+        <header class="flex items-start justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold">{{ d.name }}</h1>
+            <p class="text-sm text-muted-foreground mt-1">
+              {{ providerLabel(d.provider) }}
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button
+              appReadOnlySection="backup"
+              class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
+              (click)="onTest()"
+            >
+              Test connection
+            </button>
+            <button
+              appReadOnlySection="backup"
+              class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
+              (click)="onRefresh()"
+            >
+              Refresh usage
+            </button>
+          </div>
+        </header>
 
-      <div class="rounded-lg border border-border bg-card p-5 space-y-3">
-        <div class="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <div class="text-xs text-muted-foreground">Health</div>
-            <app-backup-status-badge kind="health" [value]="d.healthStatus" />
+        <div class="rounded-lg border border-border bg-card p-5 space-y-3">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div class="text-xs text-muted-foreground">Health</div>
+              <app-backup-status-badge kind="health" [value]="d.healthStatus" />
+            </div>
+            <div>
+              <div class="text-xs text-muted-foreground">Endpoint</div>
+              <div class="font-mono text-xs break-all">{{ d.endpoint }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-muted-foreground">Region / Bucket</div>
+              <div>{{ d.region }} / {{ d.bucket }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-muted-foreground">Path prefix</div>
+              <div>{{ d.pathPrefix || '—' }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-muted-foreground">Encryption</div>
+              <div>{{ d.encryptionMode }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-muted-foreground">Usage</div>
+              <div>{{ formatBytes(d.usageBytes) }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-muted-foreground">
+                Estimated cost / month
+              </div>
+              <div>{{ estimatedCost(d) }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-muted-foreground">Price per GB / month</div>
+              @if (editingCost()) {
+                <div class="flex items-center gap-1 mt-0.5">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    [value]="d.costPerGbMonthCents ?? ''"
+                    (input)="costDraft.set($any($event.target).value)"
+                    class="w-24 h-8 px-2 rounded-md border border-input bg-background text-sm"
+                    aria-label="Cents per GB per month"
+                  />
+                  <span class="text-xs text-muted-foreground">cents</span>
+                  <button
+                    type="button"
+                    (click)="saveCost()"
+                    class="px-2 h-8 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    (click)="saveCost(true)"
+                    class="px-2 h-8 text-xs rounded-md hover:bg-muted"
+                  >
+                    List price
+                  </button>
+                </div>
+                @if (costError()) {
+                  <div class="text-xs text-red-600 mt-1">{{ costError() }}</div>
+                }
+              } @else {
+                <div>
+                  {{
+                    d.costPerGbMonthCents == null
+                      ? 'Not set'
+                      : d.costPerGbMonthCents + ' cents'
+                  }}
+                  @if (d.metadata?.['costSource'] === 'list-price') {
+                    <span class="text-xs text-muted-foreground">(list price)</span>
+                  }
+                  <button
+                    type="button"
+                    (click)="editingCost.set(true)"
+                    class="ml-1 text-xs text-blue-600 hover:underline"
+                  >
+                    Change
+                  </button>
+                </div>
+              }
+            </div>
+            <div>
+              <div class="text-xs text-muted-foreground">Last health check</div>
+              <div>{{ d.lastHealthCheckAt || '—' }}</div>
+            </div>
           </div>
-          <div>
-            <div class="text-xs text-muted-foreground">Endpoint</div>
-            <div class="font-mono text-xs break-all">{{ d.endpoint }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-muted-foreground">Region / Bucket</div>
-            <div>{{ d.region }} / {{ d.bucket }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-muted-foreground">Path prefix</div>
-            <div>{{ d.pathPrefix || '—' }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-muted-foreground">Encryption</div>
-            <div>{{ d.encryptionMode }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-muted-foreground">Usage</div>
-            <div>{{ formatBytes(d.usageBytes) }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-muted-foreground">Estimated cost / month</div>
-            <div>{{ estimatedCost(d) }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-muted-foreground">Last health check</div>
-            <div>{{ d.lastHealthCheckAt || '—' }}</div>
-          </div>
+          @if (d.lastHealthError) {
+            <div
+              class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-400"
+            >
+              {{ d.lastHealthError }}
+            </div>
+          }
+          @if (!ownFolderForClusterBackups(d)) {
+            <div
+              class="flex items-start justify-between gap-4 rounded border border-border px-3 py-2 text-xs"
+            >
+              <p class="text-muted-foreground">
+                Cluster backups share this destination's folder with other
+                backups, which makes it unusable for them.
+              </p>
+              <button
+                appReadOnlySection="backup"
+                type="button"
+                class="shrink-0 rounded-md border border-border px-3 py-1.5 text-xs hover:bg-muted disabled:opacity-50"
+                [disabled]="upgrading()"
+                (click)="onUpgradeLayout()"
+              >
+                Give them their own folder
+              </button>
+            </div>
+            @if (upgradeRefusal()) {
+              <div
+                class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300 break-words"
+              >
+                {{ upgradeRefusal() }}
+              </div>
+            }
+          }
         </div>
-        @if (d.lastHealthError) {
-        <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-400">
-          {{ d.lastHealthError }}
-        </div>
-        }
-      </div>
 
-      <div class="flex justify-end">
-        <button appReadOnlySection="backup"
-          type="button"
-          class="text-sm text-red-600 hover:underline"
-          (click)="onDelete(d)"
-        >
-          Delete destination
-        </button>
-      </div>
+        <div class="flex justify-end">
+          <button
+            appReadOnlySection="backup"
+            type="button"
+            class="text-sm text-red-600 hover:underline"
+            (click)="onDelete(d)"
+          >
+            Delete destination
+          </button>
+        </div>
       } @else if (loading()) {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+        <p class="text-sm text-muted-foreground">Loading…</p>
       } @else {
-      <p class="text-sm text-muted-foreground">Destination not found.</p>
+        <p class="text-sm text-muted-foreground">Destination not found.</p>
       }
     </div>
   `,
@@ -111,6 +220,30 @@ export class DestinationDetailComponent implements OnInit, OnDestroy {
 
   protected readonly dest = signal<BackupDestination | null>(null);
   protected readonly loading = signal(false);
+  protected readonly upgrading = signal(false);
+  protected readonly editingCost = signal(false);
+  protected readonly costDraft = signal('');
+  protected readonly costError = signal<string | null>(null);
+
+  async saveCost(listPrice = false): Promise<void> {
+    const d = this.dest();
+    if (!d) return;
+    const raw = this.costDraft().trim();
+    const typed = raw === '' ? d.costPerGbMonthCents : raw;
+    const cents = listPrice ? null : Number(typed);
+    if (cents !== null && (!Number.isFinite(cents) || cents < 0)) {
+      this.costError.set('Use cents per GB per month, e.g. 1.606');
+      return;
+    }
+    const failed = await this.backup.setDestinationCost(d.id, cents);
+    this.costError.set(failed);
+    if (!failed) {
+      this.editingCost.set(false);
+      this.costDraft.set('');
+      this.dest.set(await this.backup.getDestination(d.id));
+    }
+  }
+  protected readonly upgradeRefusal = signal<string | null>(null);
   protected readonly providerLabel = providerLabel;
   protected readonly formatBytes = formatBytes;
 
@@ -157,6 +290,19 @@ export class DestinationDetailComponent implements OnInit, OnDestroy {
     if (!id) return;
     await this.backup.testDestination(id);
     this.dest.set(await this.backup.getDestination(id));
+  }
+
+  protected ownFolderForClusterBackups(d: BackupDestination): boolean {
+    return d.metadata?.['layout'] === 'engine-prefixed';
+  }
+
+  async onUpgradeLayout(): Promise<void> {
+    const id = this.dest()?.id;
+    if (!id) return;
+    this.upgrading.set(true);
+    this.upgradeRefusal.set(await this.backup.upgradeDestinationLayout(id));
+    this.dest.set(await this.backup.getDestination(id));
+    this.upgrading.set(false);
   }
 
   async onRefresh(): Promise<void> {

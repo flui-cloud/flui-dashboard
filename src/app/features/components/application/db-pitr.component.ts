@@ -40,30 +40,62 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
       @if (s.continuousBackupEnabled || s.backupCount > 0) {
         <div class="rounded-lg border border-border bg-card p-4">
           <div class="flex items-start gap-2">
-            <ng-icon name="lucideHistory" class="mt-0.5 h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <ng-icon
+              name="lucideHistory"
+              class="mt-0.5 h-5 w-5 text-indigo-600 dark:text-indigo-400"
+            />
             <div class="min-w-0 flex-1">
-              <h3 class="text-base font-semibold">Point-in-time recovery</h3>
+              <h3 class="text-base font-semibold">
+                {{
+                  s.pointInTime === false
+                    ? 'Scheduled dumps'
+                    : 'Point-in-time recovery'
+                }}
+              </h3>
               <p class="mt-0.5 text-sm text-muted-foreground">
-                @if (s.continuousBackupEnabled) {
+                @if (s.pointInTime === false) {
+                  This database's image cannot back up continuously, so it is
+                  dumped on a schedule. A restore brings back the latest dump
+                  into a
+                  <span class="font-medium">new install</span> — changes after
+                  it are not kept.
+                } @else if (s.continuousBackupEnabled) {
                   Continuous backup is on.
                 } @else {
-                  Continuous backup is currently off — you can still recover from the {{ s.backupCount }} existing backup(s).
+                  Continuous backup is currently off — you can still recover
+                  from the {{ s.backupCount }} existing backup(s).
                 }
-                Restore this database as of an instant into a
-                <span class="font-medium">new install</span> — the live database is untouched.
+                @if (s.pointInTime !== false) {
+                  Restore this database as of an instant into a
+                  <span class="font-medium">new install</span> — the live
+                  database is untouched.
+                }
               </p>
 
               <dl class="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
                 <div>
-                  <dt class="text-xs text-muted-foreground">Recoverable from</dt>
+                  <dt class="text-xs text-muted-foreground">
+                    {{ s.pointInTime === false ? 'Oldest dump' : 'Recoverable from' }}
+                  </dt>
                   <dd>{{ fmt($safeNavigationMigration(s.window?.oldest)) }}</dd>
                 </div>
                 <div>
-                  <dt class="text-xs text-muted-foreground">up to</dt>
-                  <dd>{{ fmt($safeNavigationMigration(s.window?.newest)) }} <span class="text-xs text-muted-foreground">(≈ now)</span></dd>
+                  <dt class="text-xs text-muted-foreground">
+                    {{ s.pointInTime === false ? 'Newest dump' : 'up to' }}
+                  </dt>
+                  <dd>
+                    {{ fmt($safeNavigationMigration(s.window?.newest)) }}
+                    @if (s.pointInTime !== false) {
+                      <span class="text-xs text-muted-foreground"
+                        >(last change archived)</span
+                      >
+                    }
+                  </dd>
                 </div>
                 <div>
-                  <dt class="text-xs text-muted-foreground">Base backups</dt>
+                  <dt class="text-xs text-muted-foreground">
+                    {{ s.pointInTime === false ? 'Dumps' : 'Base backups' }}
+                  </dt>
                   <dd>{{ s.backupCount }}</dd>
                 </div>
               </dl>
@@ -74,12 +106,23 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
                   (click)="open.set(true)"
                   class="mt-3 inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium hover:bg-muted"
                 >
-                  <ng-icon name="lucideClock" class="h-4 w-4" /> Restore to a point in time…
+                  <ng-icon name="lucideClock" class="h-4 w-4" />
+                  {{
+                    s.pointInTime === false
+                      ? 'Restore the latest dump…'
+                      : 'Restore to a point in time…'
+                  }}
                 </button>
               } @else {
-                <div class="mt-3 space-y-3 rounded-md border border-border bg-muted/40 p-3">
+                <div
+                  class="mt-3 space-y-3 rounded-md border border-border bg-muted/40 p-3"
+                >
                   <div>
-                    <label class="block text-xs font-medium text-muted-foreground" for="pitr-name">New install name</label>
+                    <label
+                      class="block text-xs font-medium text-muted-foreground"
+                      for="pitr-name"
+                      >New install name</label
+                    >
                     <input
                       id="pitr-name"
                       type="text"
@@ -89,8 +132,12 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
                       class="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
                     />
                   </div>
+                  @if (s.pointInTime !== false) {
                   <div>
-                    <label class="block text-xs font-medium text-muted-foreground" for="pitr-at">
+                    <label
+                      class="block text-xs font-medium text-muted-foreground"
+                      for="pitr-at"
+                    >
                       Recover to (leave empty for the latest recoverable point)
                     </label>
                     <input
@@ -101,6 +148,7 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
                       class="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
                     />
                   </div>
+                  }
 
                   <div class="flex items-center gap-2">
                     <button
@@ -109,7 +157,11 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
                       [disabled]="restoring() || !name().trim()"
                       class="inline-flex h-9 items-center gap-1.5 rounded-md bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                     >
-                      <ng-icon [name]="restoring() ? 'lucideLoader' : 'lucideHistory'" class="h-4 w-4" [class.animate-spin]="restoring()" />
+                      <ng-icon
+                        [name]="restoring() ? 'lucideLoader' : 'lucideHistory'"
+                        class="h-4 w-4"
+                        [class.animate-spin]="restoring()"
+                      />
                       {{ restoring() ? 'Starting…' : 'Restore' }}
                     </button>
                     <button
@@ -125,11 +177,16 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
               }
 
               @if (ok(); as m) {
-                <p class="mt-2 text-xs text-emerald-600 dark:text-emerald-400">{{ m }}</p>
+                <p class="mt-2 text-xs text-emerald-600 dark:text-emerald-400">
+                  {{ m }}
+                </p>
               }
               @if (error(); as e) {
-                <p class="mt-2 flex items-center gap-1.5 text-xs text-destructive">
-                  <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5" /> {{ e }}
+                <p
+                  class="mt-2 flex items-center gap-1.5 text-xs text-destructive"
+                >
+                  <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5" />
+                  {{ e }}
                 </p>
               }
             </div>

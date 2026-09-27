@@ -48,7 +48,9 @@ export class BackupService {
   private readonly _policies = signal<BackupPolicy[]>([]);
   private readonly _jobs = signal<BackupJob[]>([]);
   private readonly _restoreJobs = signal<RestoreJob[]>([]);
-  private readonly _selectedDestination = signal<BackupDestination | null>(null);
+  private readonly _selectedDestination = signal<BackupDestination | null>(
+    null,
+  );
   private readonly _selectedPolicy = signal<BackupPolicy | null>(null);
   private readonly _selectedJob = signal<BackupJob | null>(null);
   private readonly _selectedRestore = signal<RestoreJob | null>(null);
@@ -74,10 +76,12 @@ export class BackupService {
   readonly error = this._error.asReadonly();
 
   readonly degradedPolicies = computed(() =>
-    this._policies().filter((p) => p.status === 'degraded' || p.status === 'failed')
+    this._policies().filter(
+      (p) => p.status === 'degraded' || p.status === 'failed',
+    ),
   );
   readonly totalUsageBytes = computed(() =>
-    this._destinations().reduce((sum, d) => sum + Number(d.usageBytes ?? 0), 0)
+    this._destinations().reduce((sum, d) => sum + Number(d.usageBytes ?? 0), 0),
   );
 
   policiesByCluster(clusterId: string): BackupPolicy[] {
@@ -110,11 +114,13 @@ export class BackupService {
     this._error.set(null);
     try {
       const res = (await firstValueFrom(
-        this.api.backupDestinationsControllerList()
+        this.api.backupDestinationsControllerList(),
       )) as BackupDestination[];
       this._destinations.set(res ?? []);
     } catch (err: any) {
-      this._error.set(err?.error?.message ?? err?.message ?? 'Failed to load destinations');
+      this._error.set(
+        err?.error?.message ?? err?.message ?? 'Failed to load destinations',
+      );
     } finally {
       this._loading.set(false);
     }
@@ -123,7 +129,7 @@ export class BackupService {
   async getDestination(id: string): Promise<BackupDestination | null> {
     try {
       const res = (await firstValueFrom(
-        this.api.backupDestinationsControllerGet(id)
+        this.api.backupDestinationsControllerGet(id),
       )) as BackupDestination;
       this._selectedDestination.set(res);
       return res;
@@ -133,12 +139,14 @@ export class BackupService {
     }
   }
 
-  async createDestination(dto: CreateBackupDestinationDto): Promise<BackupDestination | null> {
+  async createDestination(
+    dto: CreateBackupDestinationDto,
+  ): Promise<BackupDestination | null> {
     this._loading.set(true);
     this._error.set(null);
     try {
       const res = (await firstValueFrom(
-        this.api.backupDestinationsControllerCreate(dto)
+        this.api.backupDestinationsControllerCreate(dto),
       )) as BackupDestination;
       this._destinations.update((list) => [res, ...list]);
       return res;
@@ -150,10 +158,12 @@ export class BackupService {
     }
   }
 
-  async testDestination(id: string): Promise<{ healthy: boolean; error?: string } | null> {
+  async testDestination(
+    id: string,
+  ): Promise<{ healthy: boolean; error?: string } | null> {
     try {
       const res = (await firstValueFrom(
-        this.api.backupDestinationsControllerTest(id)
+        this.api.backupDestinationsControllerTest(id),
       )) as { healthy: boolean; error?: string };
       // Server side updates healthStatus — refresh entry
       await this.refreshDestinationInList(id);
@@ -161,6 +171,41 @@ export class BackupService {
     } catch (err: any) {
       this._error.set(err?.error?.message ?? 'Failed to test destination');
       return null;
+    }
+  }
+
+  /** Null on success, the server's refusal (with the commands to run) otherwise. */
+  async upgradeDestinationLayout(id: string): Promise<string | null> {
+    try {
+      await firstValueFrom(
+        this.http.post(
+          `${this.appConfig.apiBaseUrl}/api/v1/backup-destinations/${id}/upgrade-layout`,
+          {},
+        ),
+      );
+      await this.refreshDestinationInList(id);
+      return null;
+    } catch (err: any) {
+      return err?.error?.message ?? 'Failed to update the destination';
+    }
+  }
+
+  /** `null` goes back to the published list price, when there is one. */
+  async setDestinationCost(
+    id: string,
+    costPerGbMonthCents: number | null,
+  ): Promise<string | null> {
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.appConfig.apiBaseUrl}/api/v1/backup-destinations/${id}/cost`,
+          { costPerGbMonthCents },
+        ),
+      );
+      await this.refreshDestinationInList(id);
+      return null;
+    } catch (err: any) {
+      return err?.error?.message ?? 'Could not change the price';
     }
   }
 
@@ -177,7 +222,8 @@ export class BackupService {
     try {
       await firstValueFrom(this.api.backupDestinationsControllerRemove(id));
       this._destinations.update((list) => list.filter((d) => d.id !== id));
-      if (this._selectedDestination()?.id === id) this._selectedDestination.set(null);
+      if (this._selectedDestination()?.id === id)
+        this._selectedDestination.set(null);
       return true;
     } catch (err: any) {
       this._error.set(err?.error?.message ?? 'Failed to delete destination');
@@ -202,7 +248,7 @@ export class BackupService {
     this._error.set(null);
     try {
       const res = (await firstValueFrom(
-        this.api.backupPoliciesControllerList()
+        this.api.backupPoliciesControllerList(),
       )) as BackupPolicy[];
       this._policies.set(res ?? []);
     } catch (err: any) {
@@ -215,7 +261,7 @@ export class BackupService {
   async loadPoliciesByCluster(clusterId: string): Promise<BackupPolicy[]> {
     try {
       const res = (await firstValueFrom(
-        this.api.backupPoliciesControllerListByCluster(clusterId)
+        this.api.backupPoliciesControllerListByCluster(clusterId),
       )) as BackupPolicy[];
       return res ?? [];
     } catch (err: any) {
@@ -227,7 +273,7 @@ export class BackupService {
   async getPolicy(id: string): Promise<BackupPolicy | null> {
     try {
       const res = (await firstValueFrom(
-        this.api.backupPoliciesControllerGet(id)
+        this.api.backupPoliciesControllerGet(id),
       )) as BackupPolicy;
       this._selectedPolicy.set(res);
       return res;
@@ -242,7 +288,7 @@ export class BackupService {
     this._error.set(null);
     try {
       const res = (await firstValueFrom(
-        this.api.backupPoliciesControllerCreate(dto)
+        this.api.backupPoliciesControllerCreate(dto),
       )) as BackupPolicy;
       this._policies.update((list) => [res, ...list]);
       return res;
@@ -299,7 +345,7 @@ export class BackupService {
   async loadJobsByCluster(clusterId: string): Promise<void> {
     try {
       const res = (await firstValueFrom(
-        this.api.backupJobsControllerListByCluster(clusterId)
+        this.api.backupJobsControllerListByCluster(clusterId),
       )) as BackupJob[];
       this._jobs.set(res ?? []);
     } catch (err: any) {
@@ -309,7 +355,9 @@ export class BackupService {
 
   async getJob(id: string): Promise<BackupJob | null> {
     try {
-      const res = (await firstValueFrom(this.api.backupJobsControllerGet(id))) as BackupJob;
+      const res = (await firstValueFrom(
+        this.api.backupJobsControllerGet(id),
+      )) as BackupJob;
       this._selectedJob.set(res);
       this.upsertJob(res);
       return res;
@@ -319,14 +367,21 @@ export class BackupService {
     }
   }
 
-  async runOnDemand(policyId: string, metadata?: object): Promise<RunBackupResult | null> {
+  async runOnDemand(
+    policyId: string,
+    metadata?: object,
+  ): Promise<RunBackupResult | null> {
     try {
       const job = (await firstValueFrom(
-        this.api.backupJobsControllerCreate({ policyId, metadata })
+        this.api.backupJobsControllerCreate({ policyId, metadata }),
       )) as BackupJob;
       this.upsertJob(job);
       const operationId = job.infrastructureOperationId;
-      if (operationId) this.trackOperation(operationId, { jobId: job.id, resourceType: 'backup_job' });
+      if (operationId)
+        this.trackOperation(operationId, {
+          jobId: job.id,
+          resourceType: 'backup_job',
+        });
       return { job, operationId };
     } catch (err: any) {
       this._error.set(err?.error?.message ?? 'Failed to start backup');
@@ -347,7 +402,7 @@ export class BackupService {
   async loadRestoreJobs(): Promise<void> {
     try {
       const res = (await firstValueFrom(
-        this.api.restoreJobsControllerList()
+        this.api.restoreJobsControllerList(),
       )) as RestoreJob[];
       this._restoreJobs.set(res ?? []);
     } catch (err: any) {
@@ -358,7 +413,7 @@ export class BackupService {
   async getRestoreJob(id: string): Promise<RestoreJob | null> {
     try {
       const res = (await firstValueFrom(
-        this.api.restoreJobsControllerGet(id)
+        this.api.restoreJobsControllerGet(id),
       )) as RestoreJob;
       this._selectedRestore.set(res);
       return res;
@@ -368,10 +423,12 @@ export class BackupService {
     }
   }
 
-  async previewRestore(dto: RestorePreviewDto): Promise<RestorePreviewResult | null> {
+  async previewRestore(
+    dto: RestorePreviewDto,
+  ): Promise<RestorePreviewResult | null> {
     try {
       const res = (await firstValueFrom(
-        this.api.restoreJobsControllerPreview(dto)
+        this.api.restoreJobsControllerPreview(dto),
       )) as RestorePreviewResult;
       return res;
     } catch (err: any) {
@@ -380,15 +437,46 @@ export class BackupService {
     }
   }
 
-  async createRestore(dto: CreateRestoreJobDto): Promise<CreateRestoreResult | null> {
+  /** A database backup into a new database; works when the original is gone. */
+  async restoreDatabase(
+    artifactId: string,
+    body: { name: string; clusterId?: string; recoveryTargetTime?: string },
+  ): Promise<CreateRestoreResult | null> {
     try {
       const res = (await firstValueFrom(
-        this.api.restoreJobsControllerCreate(dto)
+        this.http.post<RestoreJob>(
+          `${this.appConfig.apiBaseUrl}/api/v1/backup-artifacts/${artifactId}/restore-database`,
+          body,
+        ),
       )) as RestoreJob;
       this._restoreJobs.update((list) => [res, ...list]);
       const operationId = res.infrastructureOperationId;
       if (operationId)
-        this.trackOperation(operationId, { jobId: res.id, resourceType: 'restore_job' });
+        this.trackOperation(operationId, {
+          jobId: res.id,
+          resourceType: 'restore_job',
+        });
+      return { restore: res, operationId };
+    } catch (err: any) {
+      this._error.set(err?.error?.message ?? 'Failed to start restore');
+      return null;
+    }
+  }
+
+  async createRestore(
+    dto: CreateRestoreJobDto,
+  ): Promise<CreateRestoreResult | null> {
+    try {
+      const res = (await firstValueFrom(
+        this.api.restoreJobsControllerCreate(dto),
+      )) as RestoreJob;
+      this._restoreJobs.update((list) => [res, ...list]);
+      const operationId = res.infrastructureOperationId;
+      if (operationId)
+        this.trackOperation(operationId, {
+          jobId: res.id,
+          resourceType: 'restore_job',
+        });
       return { restore: res, operationId };
     } catch (err: any) {
       this._error.set(err?.error?.message ?? 'Failed to start restore');
@@ -398,7 +486,10 @@ export class BackupService {
 
   private trackOperation(
     operationId: string,
-    meta: { jobId?: string; resourceType?: ActiveOperation['resourceType'] }
+    meta: {
+      jobId?: string;
+      resourceType?: NonNullable<ActiveOperation['resourceType']>;
+    },
   ): void {
     this._activeOps.update((map) => ({
       ...map,
@@ -420,6 +511,60 @@ export class BackupService {
       onCompleted: (e) => this.handleCompleted(e),
       onFailed: (e) => this.handleFailed(e),
     });
+    void this.pollOperation(operationId);
+  }
+
+  /**
+   * The backup engines record their progress on the operation and do not all
+   * announce it over the socket, so the operation is also read directly until
+   * it ends; otherwise a dialog waits at 0% on work that has long finished.
+   */
+  private async pollOperation(operationId: string): Promise<void> {
+    const deadline = Date.now() + 30 * 60_000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 3_000));
+      const tracked = this._activeOps()[operationId];
+      if (tracked?.status !== 'running') return;
+      let op: PolledOperation | null = null;
+      try {
+        op = await firstValueFrom(
+          this.http.get<PolledOperation>(
+            `${this.appConfig.apiBaseUrl}/api/v1/infrastructure/operations/${operationId}`,
+          ),
+        );
+      } catch {
+        continue;
+      }
+      if (!op) continue;
+      const status = (op.status ?? '').toUpperCase();
+      if (status === 'COMPLETED') {
+        this.handleCompleted({
+          operationId,
+        } as InfrastructureOperationCompletedDto);
+        return;
+      }
+      if (status === 'FAILED' || status === 'CANCELLED') {
+        this.handleFailed({
+          operationId,
+          error: op.errorMessage ?? 'The operation failed',
+        } as InfrastructureOperationFailedDto);
+        return;
+      }
+      this._activeOps.update((map) => {
+        const current = map[operationId];
+        if (current?.status !== 'running') return map;
+        return {
+          ...map,
+          [operationId]: {
+            ...current,
+            percentage: Math.max(current.percentage, op?.progress ?? 0),
+            message: op?.currentStep
+              ? humanStep(op.currentStep)
+              : current.message,
+          },
+        };
+      });
+    }
   }
 
   private handleProgress(e: InfrastructureOperationProgressDto): void {
@@ -445,7 +590,12 @@ export class BackupService {
       if (!op) return map;
       return {
         ...map,
-        [e.operationId]: { ...op, status: 'completed', percentage: 100, endedAt: Date.now() },
+        [e.operationId]: {
+          ...op,
+          status: 'completed',
+          percentage: 100,
+          endedAt: Date.now(),
+        },
       };
     });
     this.ws.unsubscribeFromOperation(e.operationId);
@@ -462,7 +612,12 @@ export class BackupService {
       if (!op) return map;
       return {
         ...map,
-        [e.operationId]: { ...op, status: 'failed', error: e.error, endedAt: Date.now() },
+        [e.operationId]: {
+          ...op,
+          status: 'failed',
+          error: e.error,
+          endedAt: Date.now(),
+        },
       };
     });
     this.ws.unsubscribeFromOperation(e.operationId);
@@ -472,7 +627,7 @@ export class BackupService {
     this._statusLoading.set(true);
     try {
       const res = (await firstValueFrom(
-        this.api.backupStatusControllerStatus()
+        this.api.backupStatusControllerStatus(),
       )) as BackupStatus;
       this._status.set(res);
       return res;
@@ -487,7 +642,7 @@ export class BackupService {
   async getSetupOptions(clusterId: string): Promise<SetupOptions | null> {
     try {
       const res = (await firstValueFrom(
-        this.api.quickSetupControllerOptions(clusterId)
+        this.api.quickSetupControllerOptions(clusterId),
       )) as SetupOptions;
       return res;
     } catch (err: any) {
@@ -498,11 +653,11 @@ export class BackupService {
 
   async startQuickSetup(
     clusterId: string,
-    dto: QuickSetupDto
+    dto: QuickSetupDto,
   ): Promise<{ operationId: string } | null> {
     try {
       const res = (await firstValueFrom(
-        this.api.quickSetupControllerStart(clusterId, dto)
+        this.api.quickSetupControllerStart(clusterId, dto),
       )) as { operationId: string };
       if (res?.operationId) {
         this.trackOperation(res.operationId, { resourceType: 'quick_setup' });
@@ -527,3 +682,15 @@ export class BackupService {
 }
 
 export type { BackupArtifact } from '../model/backup.models';
+
+interface PolledOperation {
+  status?: string;
+  progress?: number;
+  currentStep?: string;
+  errorMessage?: string;
+}
+
+function humanStep(step: string): string {
+  const words = step.replaceAll('_', ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
