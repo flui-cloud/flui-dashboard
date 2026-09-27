@@ -448,6 +448,15 @@ interface FirewallRuleDto {
         <!-- Step 3: Network Configuration (VNet & Subnet) -->
         @case (3) {
           <div class="space-y-6">
+            @if (environmentNetwork(); as env) {
+              <div class="p-4 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 rounded-lg" data-testid="joins-environment-network">
+                <div class="font-medium text-slate-900 dark:text-white">Joins the environment network</div>
+                <p class="m-0 mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  On the control cluster's provider, every cluster shares its private network:
+                  <span class="font-mono">{{ env.name }}</span> ({{ env.ipRange }}). Nothing to choose here.
+                </p>
+              </div>
+            } @else {
             <!-- Only where the provider has no private network of its own. -->
             @if (canBuildNetwork()) {
               <div class="grid grid-cols-2 gap-3">
@@ -498,6 +507,7 @@ interface FirewallRuleDto {
             <div>
               <app-vnet-selector
                 [provider]="selectedProvider()"
+                [region]="selectedRegion()"
                 [required]="vnetRequired()"
                 [description]="vnetRequired()
                   ? 'This provider requires all cluster nodes to share a private network. Select a VNet and subnet to continue.'
@@ -671,6 +681,7 @@ interface FirewallRuleDto {
                   </div>
                 }
               </div>
+            }
             }
             }
           </div>
@@ -1177,7 +1188,18 @@ interface FirewallRuleDto {
               </div>
     
               <!-- VNet Configuration Summary -->
-              @if (selectedVNetId() && selectedSubnetId()) {
+              @if (environmentNetwork(); as env) {
+                <div class="border border-border rounded-lg p-4">
+                  <h4 class="font-medium mb-3 flex items-center">
+                    <ng-icon name="lucideNetwork" class="h-4 w-4 mr-2" />
+                    Network Configuration
+                  </h4>
+                  <div class="text-sm flex items-center justify-between">
+                    <span class="text-muted-foreground">Environment network:</span>
+                    <span class="font-mono text-sm font-medium">{{ env.name }} · {{ env.ipRange }}</span>
+                  </div>
+                </div>
+              } @else if (selectedVNetId() && selectedSubnetId()) {
                 <div class="border border-border rounded-lg p-4">
                   <h4 class="font-medium mb-3 flex items-center">
                     <ng-icon name="lucideNetwork" class="h-4 w-4 mr-2" />
@@ -1318,6 +1340,8 @@ export class ClusterCreationWizardComponent implements OnInit {
   isCreating = signal<boolean>(false);
   readonly createError = signal<string | null>(null);
   readonly providerRefusal = signal<string | null>(null);
+  /** Set when a cluster on the chosen provider joins the control's network without being asked. */
+  readonly environmentNetwork = signal<{ name: string; ipRange: string } | null>(null);
 
   // Selected values
   selectedProvider = signal<string>('');
@@ -1482,6 +1506,7 @@ export class ClusterCreationWizardComponent implements OnInit {
 
   // Wizard steps - Consolidated (6 steps total)
   private isNetworkStepValid(): boolean {
+    if (this.environmentNetwork()) return true;
     if (this.vnetRequired()) return !!this.selectedVNetId() && !!this.selectedSubnetId();
     if (this.selectedVNetId()) return !!this.selectedSubnetId();
     return true;
@@ -1733,6 +1758,7 @@ export class ClusterCreationWizardComponent implements OnInit {
     this.selectedRegion.set('');
     this.selectedServerTypeId.set('');
     this.providerRefusal.set(null);
+    this.environmentNetwork.set(null);
     if (providerId) {
       void this.wizardService.loadServerTypesAllRegions(providerId).catch(() => undefined);
       void this.checkWorkloadProvider(providerId);
@@ -1744,14 +1770,22 @@ export class ClusterCreationWizardComponent implements OnInit {
   private async checkWorkloadProvider(providerId: string): Promise<void> {
     try {
       const verdict = await firstValueFrom(
-        this.http.get<{ allowed: boolean; reason: string | null }>(
+        this.http.get<{
+          allowed: boolean;
+          reason: string | null;
+          environmentNetwork?: { name: string; ipRange: string } | null;
+        }>(
           `${this.appConfig.apiBaseUrl}/api/v1/infrastructure/clusters/workload-providers/${providerId}`,
         ),
       );
       if (this.selectedProvider() !== providerId) return;
       this.providerRefusal.set(verdict.allowed ? null : verdict.reason);
+      this.environmentNetwork.set(verdict.environmentNetwork ?? null);
     } catch {
-      if (this.selectedProvider() === providerId) this.providerRefusal.set(null);
+      if (this.selectedProvider() === providerId) {
+        this.providerRefusal.set(null);
+        this.environmentNetwork.set(null);
+      }
     }
   }
 
@@ -2195,7 +2229,7 @@ export class ClusterCreationWizardComponent implements OnInit {
       sshKeys: this.selectedSshKeyId() ? [this.selectedSshKeyId()!] : [],
       diskSizeGb: this.needsDiskConfig() ? this.diskSizeGb() : undefined,
       firewallRules: this.buildFirewallRules(),
-      vnetConfig: !this.fluiBuildsNetwork() && this.selectedVNetId() && this.selectedSubnetId() ? {
+      vnetConfig: !this.environmentNetwork() && !this.fluiBuildsNetwork() && this.selectedVNetId() && this.selectedSubnetId() ? {
         vnetId: this.selectedVNetId()!,
         subnetId: this.selectedSubnetId()!,
         autoAssignIp: true

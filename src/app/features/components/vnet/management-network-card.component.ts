@@ -18,6 +18,7 @@ export interface ManagementNetwork {
   source: 'setting' | 'install' | 'default';
   unavailable: string | null;
   hub: { address: string; endpoint: string | null; keyed: boolean } | null;
+  hubProblem?: string | null;
   members: ManagementNetworkMember[];
 }
 
@@ -76,6 +77,11 @@ export interface ManagementNetwork {
               @if (!n.hub.keyed) { · not up yet }
             </p>
           }
+          @if (n.hubProblem) {
+            <p class="m-0 text-sm text-red-600 dark:text-red-400" data-testid="flui-network-hub-problem">
+              The control's end is not set up, so members stay pending: {{ n.hubProblem }}
+            </p>
+          }
           @if (n.members.length) {
             <table class="w-full text-left text-sm" data-testid="flui-network-members">
               <thead class="text-xs text-muted-foreground">
@@ -123,6 +129,7 @@ export class ManagementNetworkCardComponent implements OnInit {
     const stale = n.members.filter((m) => m.status === 'stale').length;
     const members = `${n.members.length} ${n.members.length === 1 ? 'member' : 'members'}`;
     const quiet = stale ? ` · ${stale} quiet` : '';
+    if (n.hubProblem) return `on · control end not set up · ${members}${quiet}`;
     return `on · control end ${n.hub?.address ?? 'not up yet'} · ${members}${quiet}`;
   });
 

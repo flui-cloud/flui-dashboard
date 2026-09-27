@@ -102,6 +102,21 @@ describe('the nodes tile moves the group floor', () => {
     expect(find('tile-fleet-waiting')!.textContent).toContain('buys on its own');
   });
 
+  it('offers again, after a reload, the purchase a manual group is waiting on', async () => {
+    await build(row({ nodes: 1 }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(api.preview).toHaveBeenCalledWith('g-1');
+    expect(find('tile-fleet-buy')!.textContent).toContain('Buy one cx23 in fsn1');
+  });
+
+  it('offers nothing when the fleet already holds the floor', async () => {
+    await build(row());
+    await fixture.whenStable();
+    expect(api.preview).not.toHaveBeenCalled();
+    expect(find('tile-fleet-buy')).toBeNull();
+  });
+
   it('keeps both buttons off where Flui cannot buy', async () => {
     await build(row({ groupId: null, capability: { provider: 'byos', canProvision: false, hasCatalogue: false, billing: 'none' } }));
     expect(find('tile-fleet-plus')!.disabled).toBeTrue();

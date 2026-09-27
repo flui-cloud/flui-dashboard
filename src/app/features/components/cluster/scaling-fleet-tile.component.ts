@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ClusterScalingRow } from '../../model/scaling-section.models';
@@ -123,6 +123,40 @@ export class ScalingFleetTileComponent {
 
   protected readonly canAdd = computed(() => this.movable() && this.nodes() < MAX_FLEET_NODES);
   protected readonly canRemove = computed(() => this.movable() && this.nodes() > 1);
+
+  /** The fleet and floor last looked at, so a reload re-offers a pending approval once and no more. */
+  private offeredFor: string | null = null;
+
+  constructor() {
+    effect(() => {
+      const row = this.row();
+      if (!row?.groupId || row.acts || !row.bounds) return;
+      const floor = row.bounds.min;
+      if (row.nodes === floor) return;
+      const key = `${row.groupId}:${row.nodes}:${floor}`;
+      if (key === this.offeredFor) return;
+      this.offeredFor = key;
+      untracked(() => void this.resumeApproval(row.groupId as string, row.nodes < floor));
+    });
+  }
+
+  /** Re-offers, after a reload, the approval the group is waiting on and nothing else. */
+  private async resumeApproval(groupId: string, more: boolean): Promise<void> {
+    if (this.step().kind !== 'idle') return;
+    try {
+      const preview = await firstValueFrom(this.api.preview(groupId));
+      if (this.step().kind !== 'idle') return;
+      const chosen = preview.chosen;
+      if (more && chosen?.shape && chosen.region) {
+        const price = chosen.hourlyEur === null ? '' : ` at €${chosen.hourlyEur}/h`;
+        this.step.set({ kind: 'buy', shape: chosen.shape, region: chosen.region, price });
+      } else if (!more && preview.giveBack && !preview.giveBack.onItsOwn) {
+        this.step.set({ kind: 'give-back', node: preview.giveBack.node });
+      }
+    } catch {
+      // Nothing to re-offer when the preview cannot be read; the Now tab still has it.
+    }
+  }
 
   protected readonly addTooltip = computed(() => this.tooltip('One node more'));
   protected readonly removeTooltip = computed(() =>

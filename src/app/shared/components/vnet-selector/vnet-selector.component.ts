@@ -299,6 +299,11 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
             }
           </div>
     
+          @if (regionForNew()) {
+            <p class="m-0 text-xs text-slate-600 dark:text-slate-400" data-testid="vnet-region-for-new">
+              Created in {{ regionForNew() }}, where this cluster runs: a network here is regional.
+            </p>
+          }
           @if (vnetZones().length > 0) {
             <div>
               <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -396,6 +401,20 @@ export class VNetSelectorComponent implements OnInit {
    */
   description = input<string | undefined>(undefined);
 
+  /**
+   * The region the cluster runs in. Where the provider's networks are regional
+   * and it lists no zones of its own, a new network is created there — a
+   * network in another region is one the cluster's nodes cannot join.
+   */
+  region = input<string | undefined>(undefined);
+
+  /** The region a new network goes to on its own, when nothing else says. */
+  readonly regionForNew = computed(() =>
+    this.vnetZones().length === 0 && this.vnetTopology()?.scope === 'regional'
+      ? (this.region() ?? '')
+      : '',
+  );
+
   // ===== OUTPUTS =====
 
   /**
@@ -488,7 +507,7 @@ export class VNetSelectorComponent implements OnInit {
   async openCreateForm(): Promise<void> {
     const p = this.provider() ?? '';
     const zones = this.vnetZones();
-    this.newSubnetZone = zones[0]?.id ?? '';
+    this.newSubnetZone = zones[0]?.id ?? this.regionForNew();
     this.newVnetName = this.newSubnetZone ? `${p}-${this.newSubnetZone}` : `${p}-vnet`;
     this.newCreateSubnet = this.supportsSubnets();
     this.createError.set(null);

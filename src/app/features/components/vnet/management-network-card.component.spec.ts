@@ -50,6 +50,16 @@ describe('the Flui network card', () => {
     expect(find('flui-network-line')!.textContent).toContain('on · control end 10.250.0.1 · 1 member · 1 quiet');
   });
 
+  it("says why members stay pending when the control's end is not set up", async () => {
+    await build(network({ hubProblem: 'Cannot reach node 5.6.7.8:22 over SSH' }));
+    expect(find('flui-network-hub-problem')!.textContent).toContain('Cannot reach node 5.6.7.8:22');
+  });
+
+  it('names it in the one line as well', async () => {
+    await build(network({ hubProblem: 'Cannot reach node 5.6.7.8:22 over SSH' }), true);
+    expect(find('flui-network-line')!.textContent).toContain('control end not set up');
+  });
+
   it('will not offer to switch on where it cannot work, and says why', async () => {
     await build(network({ enabled: false, unavailable: 'The control cluster has no address the other clusters can reach.' }));
     expect((find('flui-network-toggle') as HTMLButtonElement).disabled).toBeTrue();
