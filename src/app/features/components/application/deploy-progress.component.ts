@@ -37,6 +37,7 @@ import {
 } from '../../model/application.models';
 import { buildOpenAppUrl } from '../../model/open-app-url';
 import { evaluateEndpointReadiness } from '../../model/endpoint-readiness';
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
 // Steps for deploy_application operation type (from API doc)
 const DEPLOY_STEPS: Array<{
@@ -80,7 +81,7 @@ const DEPLOY_STEPS: Array<{
 @Component({
   selector: 'app-deploy-progress',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [MaskIdPipe, CommonModule, NgIcon],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -261,7 +262,7 @@ const DEPLOY_STEPS: Array<{
               </div>
               <div class="p-4 bg-gray-900 dark:bg-black">
                 <div
-                  class="font-mono text-xs text-green-400 space-y-1 max-h-96 overflow-y-auto"
+                  class="font-mono text-xs text-slate-200 space-y-1 max-h-96 overflow-y-auto"
                 >
                   @for (log of deployment.logs; track $index) {
                     <div class="whitespace-pre-wrap">{{ log }}</div>
@@ -287,21 +288,21 @@ const DEPLOY_STEPS: Array<{
             <!-- Success State -->
             @if (deployment.status === 'completed') {
               <div
-                class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6"
+                class="card-surface p-6"
               >
                 <div class="flex items-center mb-4">
                   <div
-                    class="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center mr-4"
+                    class="h-12 w-12 rounded-full bg-green-500/15 flex items-center justify-center mr-4"
                   >
-                    <ng-icon name="lucideCheck" class="h-6 w-6 text-white" />
+                    <ng-icon name="lucideCheck" class="h-6 w-6 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
                     <h3
-                      class="font-semibold text-green-900 dark:text-green-100"
+                      class="font-semibold text-foreground"
                     >
                       Deployment Successful!
                     </h3>
-                    <p class="text-sm text-green-700 dark:text-green-300">
+                    <p class="text-sm text-muted-foreground">
                       Your application is live
                     </p>
                   </div>
@@ -313,7 +314,7 @@ const DEPLOY_STEPS: Array<{
                       [href]="url"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="inline-flex items-center justify-center w-full rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
+                      class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                     >
                       <ng-icon name="lucideExternalLink" class="h-4 w-4 mr-2" />
                       View Application
@@ -321,7 +322,7 @@ const DEPLOY_STEPS: Array<{
                   }
                   <button
                     (click)="viewApplicationDetails()"
-                    class="inline-flex items-center justify-center w-full rounded-md border border-green-300 dark:border-green-700 bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                    class="inline-flex items-center justify-center w-full rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
                   >
                     Application Details
                   </button>
@@ -405,7 +406,7 @@ const DEPLOY_STEPS: Array<{
                   <div class="flex justify-between">
                     <span class="text-muted-foreground">App ID:</span>
                     <code class="text-xs bg-muted px-2 py-1 rounded">
-                      {{ deployment.applicationId.substring(0, 12) }}...
+                      {{ deployment.applicationId | maskId }}
                     </code>
                   </div>
                 }
@@ -775,7 +776,7 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
   getProgressBarClass(status: string): string {
     switch (status) {
       case 'completed':
-        return 'bg-green-500 dark:bg-green-600';
+        return 'bg-primary';
       case 'failed':
         return 'bg-destructive';
       default:

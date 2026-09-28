@@ -92,7 +92,11 @@
     <div class="card-surface p-12">
       <div class="text-center">
         <ng-icon name="lucideActivity" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-        <p class="text-sub">No metrics yet. Waiting for data…</p>
+        <p class="text-foreground font-medium">No metrics received from this cluster yet</p>
+        <p class="text-sub text-sm mt-1 max-w-md mx-auto">
+          A new cluster starts sending them within a few minutes; a cluster on another provider
+          than the control sends them through the Flui network. This page keeps checking.
+        </p>
       </div>
     </div>
   }

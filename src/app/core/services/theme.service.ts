@@ -33,6 +33,6 @@ export class ThemeService {
   private loadFromStorage(): boolean {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return stored === 'dark';
-    return true;
+    return false;
   }
 }

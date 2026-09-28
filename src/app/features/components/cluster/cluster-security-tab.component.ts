@@ -6,7 +6,6 @@ import {
   lucideCircle, lucideAlertTriangle,
 } from '@ng-icons/lucide';
 import { AuthzInstallService } from '../../service/authz-install.service';
-import { AppConfigService } from '../../../core/services/app-config.service';
 import { ClusterService } from '../../service/cluster.service';
 import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallResponseDto';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
@@ -24,19 +23,6 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6 max-w-2xl">
-
-      <!-- OIDC gate -->
-      @if (!isOidc) {
-        <div class="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
-          <ng-icon name="lucideAlertTriangle" class="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p class="text-sm font-medium text-amber-900 dark:text-amber-100">OIDC mode required</p>
-            <p class="text-sm text-amber-700 dark:text-amber-300 mt-1">
-              flui-authz requires OIDC auth mode. Configure your Identity Provider in Settings → Authentication first.
-            </p>
-          </div>
-        </div>
-      }
 
       <!-- Main panel -->
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-4">
@@ -56,9 +42,8 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
         </div>
 
         <p class="text-sm text-gray-600 dark:text-gray-400">
-          Protects apps with <span class="font-mono text-xs">exposure: internal</span> via an
-          in-cluster JWT validator. Zero dependency on the Flui API for each auth request —
-          ~1 ms latency vs ~100 ms external roundtrip.
+          Checks the Flui sign-in on this cluster for internal apps and for routes that
+          require one. The control cluster does not need it.
         </p>
 
         <!-- Installed date -->
@@ -105,7 +90,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           @if (showInstallButton()) {
             <button
               (click)="onInstall()"
-              [disabled]="authzService.installing() || authzService.loading() || !isOidc"
+              [disabled]="authzService.installing() || authzService.loading()"
               class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               @if (authzService.installing()) {
@@ -119,7 +104,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           @if (showRetryButton()) {
             <button
               (click)="onInstall()"
-              [disabled]="authzService.installing() || !isOidc"
+              [disabled]="authzService.installing()"
               class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               @if (authzService.installing()) {
@@ -158,11 +143,9 @@ export class ClusterSecurityTabComponent implements OnInit {
   protected authzService = inject(AuthzInstallService);
   private readonly route = inject(ActivatedRoute);
   private readonly clusterService = inject(ClusterService);
-  private readonly cfg = inject(AppConfigService);
 
   readonly uninstallDialog = viewChild.required<ConfirmationDialogComponent>('uninstallDialog');
 
-  protected isOidc = this.cfg.get().authMode === 'oidc';
   private readonly clusterId = signal('');
 
   private readonly Status = AuthzInstallResponseDto.StatusEnum;

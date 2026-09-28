@@ -196,6 +196,15 @@ export class ClusterMonitoringService {
       // A failure for the cluster we left must not pause polling on this one.
       if (this.pendingFor !== clusterId) return;
 
+      // No readings yet is a state of the cluster, not a failure of the API:
+      // the page says so and keeps asking.
+      if (error?.status === 404) {
+        this.serverMetrics.set([]);
+        this.loadedFor.set(clusterId);
+        this.consecutiveErrorCount.set(0);
+        this.errorSignal.set(null);
+        return;
+      }
       const isHttpError = error?.status >= 400 && error?.status < 600;
       if (isHttpError) {
         const newCount = this.consecutiveErrorCount() + 1;

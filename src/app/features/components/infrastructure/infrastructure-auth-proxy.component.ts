@@ -15,7 +15,6 @@ import {
 } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { AuthzInstallService } from '../../service/authz-install.service';
-import { AppConfigService } from '../../../core/services/app-config.service';
 import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallResponseDto';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 
@@ -36,19 +35,10 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
       <div class="flex items-start gap-2 text-sm text-muted-foreground">
         <ng-icon name="lucideInfo" class="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-500 dark:text-blue-400" />
         <p>
-          Auth Proxy protects internal apps so only logged-in team members can reach them. Install once per cluster — no extra config.
+          Auth Proxy checks the Flui sign-in for internal apps and routes that require one, so only team members with access reach them. Install it once on each cluster other than the control — no extra config.
         </p>
       </div>
 
-      @if (!isOidc) {
-        <div class="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-md text-sm">
-          <ng-icon name="lucideAlertTriangle" class="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p class="font-medium text-amber-900 dark:text-amber-100">Auth Proxy requires OIDC login.</p>
-            <p class="text-amber-700 dark:text-amber-300 mt-0.5 text-xs">Configure OIDC in the platform settings before installing.</p>
-          </div>
-        </div>
-      }
 
       @if (clustersLoading()) {
         <div class="h-9 w-full max-w-sm animate-pulse rounded bg-muted"></div>
@@ -113,7 +103,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                 @if (showInstallButton()) {
                   <button
                     (click)="onInstall()"
-                    [disabled]="authzService.installing() || authzService.loading() || !isOidc"
+                    [disabled]="authzService.installing() || authzService.loading()"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     @if (authzService.installing()) {
@@ -125,7 +115,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                 @if (showRetryButton()) {
                   <button
                     (click)="onInstall()"
-                    [disabled]="authzService.installing() || !isOidc"
+                    [disabled]="authzService.installing()"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     @if (authzService.installing()) {
@@ -197,11 +187,9 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 export class InfrastructureAuthProxyComponent implements OnInit {
   protected readonly authzService = inject(AuthzInstallService);
   private readonly clusterService = inject(ClusterService);
-  private readonly cfg = inject(AppConfigService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  protected isOidc = this.cfg.get().authMode === 'oidc';
   protected clustersLoading = signal(false);
   protected selectedClusterId = signal('');
 

@@ -176,8 +176,14 @@ export class ClusterMetricsHistoryService {
       this.historySignal.set(response);
       this.loadedFor.set(clusterId);
     } catch (error) {
+      if (this.pendingFor !== clusterId) return;
+      if ((error as { status?: number })?.status === 404) {
+        this.historySignal.set(null);
+        this.loadedFor.set(clusterId);
+        return;
+      }
       console.error('Failed to load metrics history:', error);
-      if (this.pendingFor === clusterId) this.errorSignal.set('History is unavailable for this window.');
+      this.errorSignal.set('History is unavailable for this window.');
     } finally {
       if (this.pendingFor === clusterId) this.loadingSignal.set(false);
     }
