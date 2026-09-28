@@ -549,11 +549,15 @@ interface FirewallRuleDto {
                   }
                 } @else {
                   <div class="space-y-2">
-                    @for (subnet of selectedVNetData()!.subnets; track subnet.id) {
+                    @for (subnet of orderedSubnets(); track subnet.id) {
                       <div
                         (click)="selectSubnet(subnet.id)"
                         [class]="getSubnetCardClass(subnet.id)"
-                        class="p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md"
+                        class="p-4 border-2 rounded-lg transition-all"
+                        [class.cursor-pointer]="isIpv4Subnet(subnet.ipRange)"
+                        [class.hover:shadow-md]="isIpv4Subnet(subnet.ipRange)"
+                        [class.opacity-50]="!isIpv4Subnet(subnet.ipRange)"
+                        [attr.aria-disabled]="!isIpv4Subnet(subnet.ipRange)"
                         >
                         <div class="flex items-center justify-between">
                           <div class="flex items-center gap-3 flex-1">
@@ -565,6 +569,9 @@ interface FirewallRuleDto {
                                 <span class="font-mono font-semibold text-slate-900 dark:text-white">
                                   {{ subnet.ipRange }}
                                 </span>
+                                @if (!isIpv4Subnet(subnet.ipRange)) {
+                                  <span class="text-xs text-muted-foreground">IPv6 only — nodes need an IPv4 subnet</span>
+                                }
                               </div>
                               <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                                 <span>{{ subnet.networkZone }}</span>
@@ -832,6 +839,16 @@ interface FirewallRuleDto {
               </label>
             </div>
     
+            @if (isCrossProviderWorkload() && overlayEnabled()) {
+              <div class="p-4 rounded-lg border border-border bg-muted/40 flex items-start gap-2" data-testid="firewall-through-tunnel">
+                <ng-icon name="lucideShield" class="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <p class="text-xs text-muted-foreground">
+                  Your control cluster runs on a different provider ({{ controlClusterProvider() }}) and
+                  reaches this cluster through the Flui network, an encrypted tunnel: no port is opened
+                  for it on the public network.
+                </p>
+              </div>
+            }
             @if (managedFirewallRules().length > 0) {
               <div class="p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
                 <div class="flex items-start gap-2 mb-3">
@@ -1342,6 +1359,8 @@ export class ClusterCreationWizardComponent implements OnInit {
   readonly providerRefusal = signal<string | null>(null);
   /** Set when a cluster on the chosen provider joins the control's network without being asked. */
   readonly environmentNetwork = signal<{ name: string; ipRange: string } | null>(null);
+  /** The Flui network is on: a workload on another provider is reached through the tunnel. */
+  readonly overlayEnabled = signal(false);
 
   // Selected values
   selectedProvider = signal<string>('');
@@ -1483,7 +1502,7 @@ export class ClusterCreationWizardComponent implements OnInit {
   /** Non-editable rules Flui applies automatically for cross-provider reachability.
    *  Display-only — the control's real source IP is resolved and enforced server-side. */
   readonly managedFirewallRules = computed(() => {
-    if (!this.isCrossProviderWorkload()) return [];
+    if (!this.isCrossProviderWorkload() || this.overlayEnabled()) return [];
     return [
       {
         description: 'Kubernetes API — control-plane access',
@@ -1773,6 +1792,7 @@ export class ClusterCreationWizardComponent implements OnInit {
         this.http.get<{
           allowed: boolean;
           reason: string | null;
+          overlayEnabled?: boolean;
           environmentNetwork?: { name: string; ipRange: string } | null;
         }>(
           `${this.appConfig.apiBaseUrl}/api/v1/infrastructure/clusters/workload-providers/${providerId}`,
@@ -1781,6 +1801,7 @@ export class ClusterCreationWizardComponent implements OnInit {
       if (this.selectedProvider() !== providerId) return;
       this.providerRefusal.set(verdict.allowed ? null : verdict.reason);
       this.environmentNetwork.set(verdict.environmentNetwork ?? null);
+      this.overlayEnabled.set(!!verdict.overlayEnabled);
     } catch {
       if (this.selectedProvider() === providerId) {
         this.providerRefusal.set(null);
@@ -1806,9 +1827,8 @@ export class ClusterCreationWizardComponent implements OnInit {
     if (vnet) {
       this.selectedVNetId.set(vnet.id);
       this.selectedVNetData.set(vnet);
-      // Auto-select the sole subnet (e.g. a freshly-created VNet) so the step
-      // needs no extra click; otherwise require an explicit pick.
-      this.selectedSubnetId.set(vnet.subnets.length === 1 ? vnet.subnets[0].id : null);
+      const ipv4 = vnet.subnets.filter((s) => this.isIpv4Subnet(s.ipRange));
+      this.selectedSubnetId.set(ipv4.length === 1 ? ipv4[0].id : null);
     } else {
       this.selectedVNetId.set(null);
       this.selectedVNetData.set(null);
@@ -1817,8 +1837,24 @@ export class ClusterCreationWizardComponent implements OnInit {
   }
 
   selectSubnet(subnetId: string): void {
+    const subnet = this.selectedVNetData()?.subnets.find((s) => s.id === subnetId);
+    if (subnet && !this.isIpv4Subnet(subnet.ipRange)) return;
     this.selectedSubnetId.set(subnetId);
   }
+
+  /** Nodes get their private address from an IPv4 subnet; an IPv6-only one cannot carry them. */
+  isIpv4Subnet(ipRange: string | null | undefined): boolean {
+    return !!ipRange && !ipRange.includes(':');
+  }
+
+  /** IPv4 first, then by range: the same order on every visit. */
+  readonly orderedSubnets = computed(() =>
+    [...(this.selectedVNetData()?.subnets ?? [])].sort(
+      (a, b) =>
+        Number(this.isIpv4Subnet(b.ipRange)) - Number(this.isIpv4Subnet(a.ipRange)) ||
+        a.ipRange.localeCompare(b.ipRange),
+    ),
+  );
 
 
   private readonly providerVnetTopology = computed(() =>

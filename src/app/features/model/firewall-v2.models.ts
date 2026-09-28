@@ -463,3 +463,30 @@ export function validateFirewallRule(rule: FirewallRuleFormData): string[] {
 
   return errors;
 }
+
+export type HostFirewallLayerState =
+  | 'not-applicable'
+  | 'off'
+  | 'pending'
+  | 'applied'
+  | 'blocked'
+  | 'failed'
+  | 'removing';
+
+/** `hostLayer` of GET /firewalls/cluster/:clusterId, until the client is regenerated. */
+export interface HostFirewallLayer {
+  applicable: boolean;
+  enabled: boolean;
+  state: HostFirewallLayerState;
+  reason: string | null;
+  appliedAt: string | null;
+  appliedNodes: number | null;
+  lastAttemptAt: string | null;
+}
+
+export function hostLayerOf(
+  firewall: FirewallResponseDto | null | undefined,
+): HostFirewallLayer | null {
+  const layer = (firewall as { hostLayer?: HostFirewallLayer } | null | undefined)?.hostLayer;
+  return layer && typeof layer === 'object' ? layer : null;
+}

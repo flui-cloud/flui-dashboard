@@ -1,5 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { AppConfigService } from '../../core/services/app-config.service';
 import { FirewallsService } from '../../core/api/api/firewalls.service';
 import {
   FirewallResponseDto,
@@ -24,6 +26,8 @@ import {
 })
 export class FirewallV2Service {
   private readonly firewallsService = inject(FirewallsService);
+  private readonly http = inject(HttpClient);
+  private readonly appConfig = inject(AppConfigService);
 
   private readonly firewallsData = signal<FirewallResponseDto[]>([]);
   private readonly loadingData = signal<boolean>(false);
@@ -200,6 +204,17 @@ export class FirewallV2Service {
     } finally {
       this.loadingData.set(false);
     }
+  }
+
+  async setHostLayer(clusterId: string, enabled: boolean): Promise<FirewallResponseDto> {
+    const firewall = await firstValueFrom(
+      this.http.post<FirewallResponseDto>(
+        `${this.appConfig.apiBaseUrl}/api/v1/firewalls/cluster/${encodeURIComponent(clusterId)}/host-layer`,
+        { enabled },
+      ),
+    );
+    this.updateFirewallInList(firewall);
+    return firewall;
   }
 
   async reconcile(id: string): Promise<FirewallResponseDto | null> {

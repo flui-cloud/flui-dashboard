@@ -18,6 +18,8 @@ import { FirewallV2Service } from '../../service/firewall-v2.service';
 import { FirewallResponseDto } from '../../../core/api/model/models';
 import { ReconciliationStatusBadgeComponent } from '../firewall/reconciliation-status-badge.component';
 import { DriftIndicatorComponent } from '../firewall/drift-indicator.component';
+import { ClusterHostLayerComponent } from './cluster-host-layer.component';
+import { hostLayerOf } from '../../model/firewall-v2.models';
 
 @Component({
   selector: 'cluster-firewall-tab',
@@ -26,7 +28,8 @@ import { DriftIndicatorComponent } from '../firewall/drift-indicator.component';
     FormsModule,
     NgIconComponent,
     ReconciliationStatusBadgeComponent,
-    DriftIndicatorComponent
+    DriftIndicatorComponent,
+    ClusterHostLayerComponent
 ],
   providers: [
     provideIcons({
@@ -207,6 +210,14 @@ import { DriftIndicatorComponent } from '../firewall/drift-indicator.component';
             </div>
           </div>
 
+          @if (hostLayer()?.applicable && clusterId()) {
+            <cluster-host-layer
+              [clusterId]="clusterId()!"
+              [layer]="hostLayer()!"
+              (changed)="clusterFirewall.set($event)"
+            />
+          }
+
           @if (clusterFirewall()!.reconciliationStatus) {
             <app-drift-indicator
               [hasDrift]="clusterFirewall()!.hasDrift"
@@ -325,6 +336,8 @@ export class ClusterFirewallTabComponent implements OnInit {
           ?.firewall
       : undefined;
   });
+  readonly hostLayer = computed(() => hostLayerOf(this.clusterFirewall()));
+  readonly clusterId = computed(() => this.clusterService.cluster()?.id ?? null);
   readonly isHostFirewall = computed(
     () => this.firewallCap()?.backend === 'host-nftables',
   );
