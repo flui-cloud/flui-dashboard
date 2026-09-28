@@ -46,6 +46,7 @@ const AREA_LABEL: Record<string, string> = {
   migrations: 'Migrations',
   mail: 'Mail',
   access: 'Who has access',
+  platform: 'Platform updates',
 };
 
 const LIFETIMES: { id: string; label: string; days: number | null }[] = [

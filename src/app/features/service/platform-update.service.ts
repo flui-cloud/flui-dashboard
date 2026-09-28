@@ -51,6 +51,91 @@ export interface PlatformUpdateComponentProgress {
   status: 'pending' | 'running' | 'done' | 'skipped' | 'failed';
 }
 
+export const WITHOUT_BACKUP_ACKNOWLEDGEMENT =
+  'Without a backup, a database migration cannot be undone.';
+
+export type UpgradePhaseKey =
+  'backup' | 'manifests' | 'images' | 'k3s' | 'verify';
+
+export interface PlatformUpgradeBlocker {
+  phase: string;
+  message: string;
+  overridable?: boolean;
+}
+
+export interface PlatformUpgradePlanCluster {
+  clusterId: string;
+  clusterName: string;
+  clusterType: 'control' | 'workload';
+  planId?: string;
+  files?: { name: string; action: string }[];
+  leftAlone?: number;
+  steps?: string[];
+  fromVersion?: string | null;
+  upToDate: boolean;
+  blockers: string[];
+}
+
+export interface PlatformUpgradePlanPhase {
+  key: UpgradePhaseKey;
+  title: string;
+  willRun: boolean;
+  summary: string;
+  blockers: PlatformUpgradeBlocker[];
+  clusters?: PlatformUpgradePlanCluster[];
+}
+
+export interface PlatformUpgradePlan {
+  planId: string;
+  fromVersion: string;
+  targetVersion: string;
+  bootstrapRef: string;
+  k3sVersion: string | null;
+  migrations: number;
+  phases: PlatformUpgradePlanPhase[];
+  advisories: PlatformUpdateAdvisory[];
+  blockers: PlatformUpgradeBlocker[];
+  applicable: boolean;
+  acknowledgement: string;
+}
+
+export interface PlatformUpgradeNodeState {
+  name: string;
+  role: string;
+  fromVersion: string | null;
+  version: string | null;
+  status: 'pending' | 'upgrading' | 'done' | 'failed';
+  message?: string;
+}
+
+export interface PlatformUpgradePhaseCluster {
+  clusterId: string;
+  clusterName: string;
+  clusterType: string;
+  status: string;
+  steps?: string[];
+  stepIndex?: number;
+  nodes?: PlatformUpgradeNodeState[];
+  error?: string;
+}
+
+export interface PlatformUpgradePhase {
+  key: UpgradePhaseKey;
+  title: string;
+  status: 'pending' | 'running' | 'done' | 'skipped' | 'failed';
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  backupJobId?: string | null;
+  clusters?: PlatformUpgradePhaseCluster[];
+  checks?: { name: string; ok: boolean; detail?: string }[];
+  error?: string;
+}
+
+export interface StartUpgradeOptions {
+  planId?: string;
+  withoutBackup?: boolean;
+}
+
 export interface PlatformUpdateOperation {
   id: string;
   status: string;
@@ -65,6 +150,13 @@ export interface PlatformUpdateOperation {
   completedAt: string | null;
   errorMessage: string | null;
   userId: string | null;
+  schema?: 1 | 2;
+  planId?: string | null;
+  k3sVersion?: string | null;
+  withoutBackup?: boolean;
+  phases?: PlatformUpgradePhase[];
+  failedPhase?: string | null;
+  guidance?: string | null;
 }
 
 const POLL_INTERVAL_MS = 3000;
@@ -83,6 +175,8 @@ export class PlatformUpdateService {
   private readonly startingData = signal(false);
   private readonly errorData = signal<string | null>(null);
   private readonly apiUnreachableData = signal(false);
+  private readonly planData = signal<PlatformUpgradePlan | null>(null);
+  private readonly planningData = signal(false);
 
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private loaded = false;
@@ -95,6 +189,8 @@ export class PlatformUpdateService {
   readonly starting = this.startingData.asReadonly();
   readonly error = this.errorData.asReadonly();
   readonly apiUnreachable = this.apiUnreachableData.asReadonly();
+  readonly plan$ = this.planData.asReadonly();
+  readonly planning = this.planningData.asReadonly();
 
   readonly updateAvailable = computed(
     () => this.statusData()?.updateAvailable ?? false,
@@ -117,7 +213,8 @@ export class PlatformUpdateService {
    */
   readonly checkFailed = computed(() => !!this.statusData()?.checkError);
   readonly blockers = computed(
-    () => this.statusData()?.advisories.filter((a) => a.level === 'blocker') ?? [],
+    () =>
+      this.statusData()?.advisories.filter((a) => a.level === 'blocker') ?? [],
   );
 
   private url(path = ''): string {
@@ -151,7 +248,9 @@ export class PlatformUpdateService {
       this.apiUnreachableData.set(false);
     } catch (err) {
       this.apiUnreachableData.set(true);
-      this.errorData.set(this.messageOf(err, 'Could not read the update status'));
+      this.errorData.set(
+        this.messageOf(err, 'Could not read the update status'),
+      );
     }
   }
 
@@ -191,24 +290,75 @@ export class PlatformUpdateService {
       this.statusData.set(status);
       this.errorData.set(status.checkError);
     } catch (err) {
-      this.errorData.set(this.messageOf(err, 'Could not reach the release manifest'));
+      this.errorData.set(
+        this.messageOf(err, 'Could not reach the release manifest'),
+      );
     } finally {
       this.checkingData.set(false);
     }
   }
 
-  async start(targetVersion: string): Promise<void> {
-    this.startingData.set(true);
+  /** Reads every cluster, so it takes a while; changes nothing. */
+  async plan(targetVersion: string): Promise<PlatformUpgradePlan | null> {
+    this.planningData.set(true);
+    this.planData.set(null);
     this.errorData.set(null);
     try {
+      const plan = await firstValueFrom(
+        this.http.post<PlatformUpgradePlan>(this.url('/plan'), {
+          targetVersion,
+        }),
+      );
+      this.planData.set(plan);
+      return plan;
+    } catch (err) {
+      this.errorData.set(this.messageOf(err, 'Could not plan the update'));
+      return null;
+    } finally {
+      this.planningData.set(false);
+    }
+  }
+
+  async start(
+    targetVersion: string,
+    options: StartUpgradeOptions = {},
+  ): Promise<void> {
+    this.startingData.set(true);
+    this.errorData.set(null);
+    const body: Record<string, unknown> = { targetVersion };
+    if (options.planId) body['planId'] = options.planId;
+    if (options.withoutBackup) {
+      body['withoutBackup'] = true;
+      body['acknowledgement'] = WITHOUT_BACKUP_ACKNOWLEDGEMENT;
+    }
+    try {
       const operation = await firstValueFrom(
-        this.http.post<PlatformUpdateOperation>(this.url(), { targetVersion }),
+        this.http.post<PlatformUpdateOperation>(this.url(), body),
       );
       this.operationData.set(operation);
       this.startPolling();
     } catch (err) {
       this.errorData.set(this.messageOf(err, 'Could not start the update'));
       throw err;
+    } finally {
+      this.startingData.set(false);
+    }
+  }
+
+  async resume(operationId: string): Promise<void> {
+    this.startingData.set(true);
+    this.errorData.set(null);
+    try {
+      const operation = await firstValueFrom(
+        this.http.post<PlatformUpdateOperation>(
+          this.url(`/${encodeURIComponent(operationId)}/resume`),
+          {},
+        ),
+      );
+      this.operationData.set(operation);
+      this.startPolling();
+    } catch (err) {
+      this.errorData.set(this.messageOf(err, 'Could not resume the update'));
     } finally {
       this.startingData.set(false);
     }
@@ -243,7 +393,9 @@ export class PlatformUpdateService {
     if (this.apiUnreachable()) return;
 
     this.stopPolling();
-    if (before?.components.some((c) => c.key === 'fluiWeb' && c.status === 'done')) {
+    if (
+      before?.components.some((c) => c.key === 'fluiWeb' && c.status === 'done')
+    ) {
       // The dashboard itself was replaced; this tab is running the old bundle.
       window.location.reload();
     }
