@@ -11,8 +11,10 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { BackupService } from '../../service/backup.service';
+import { FleetService } from '../../service/fleet.service';
 import {
   BackupOverallStatus,
+  BackupStatus,
   BackupStatusAlert,
   STATUS_BANNER_TONE,
   STATUS_TEXT_TONE,
@@ -40,83 +42,98 @@ const REFRESH_INTERVAL_MS = 60_000;
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (loading() && !status()) {
-    <div class="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-4">
-      <div class="h-8 w-8 rounded-lg bg-muted animate-pulse"></div>
-      <div class="flex-1 space-y-1.5">
-        <div class="h-3 w-32 rounded bg-muted animate-pulse"></div>
-        <div class="h-3 w-48 rounded bg-muted animate-pulse"></div>
+    <div class="card-surface p-5 h-full flex flex-col gap-4">
+      <div class="flex items-center gap-2.5">
+        <div class="h-8 w-8 rounded-lg bg-muted animate-pulse"></div>
+        <div class="flex-1 space-y-1.5">
+          <div class="h-3 w-24 rounded bg-muted animate-pulse"></div>
+          <div class="h-3 w-32 rounded bg-muted animate-pulse"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        @for (_ of [1, 2, 3]; track _) {
+          <div class="h-14 rounded-lg bg-muted animate-pulse"></div>
+        }
       </div>
     </div>
     } @else {
     @if (status(); as s) {
-    <div
-      class="rounded-lg border px-4 py-3 flex flex-col md:flex-row md:items-center gap-3 md:gap-5 group transition-colors cursor-pointer"
+    <section
+      class="card-surface p-5 h-full flex flex-col gap-4 cursor-pointer transition-colors hover:border-primary/30"
       [class]="banner()"
       (click)="navigateTo('/management/backup')"
+      data-testid="backups-card"
     >
-      <!-- Title block -->
-      <div class="flex items-center gap-2.5 md:min-w-[180px]">
-        <div class="h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+      <div class="flex items-center gap-2.5">
+        <div class="icon-chip icon-chip-sm bg-muted">
           <ng-icon [name]="iconName()" class="h-4 w-4" [class]="textTone()" />
         </div>
         <div class="min-w-0">
-          <h2 class="font-semibold text-foreground text-sm">Backups</h2>
+          <h2 class="font-semibold text-foreground">Backups</h2>
           <p class="text-xs text-muted-foreground">{{ subtitle() }}</p>
         </div>
       </div>
 
-      <!-- Inline stats -->
-      <div class="flex items-center gap-5 text-sm">
-        <div class="flex items-baseline gap-1.5">
-          <span class="font-semibold tabular-nums">{{ s.summary.clustersWithBackups }}<span class="text-muted-foreground font-normal">/{{ s.summary.clustersTotal }}</span></span>
-          <span class="text-[10px] text-muted-foreground uppercase tracking-wide">protected</span>
+      @if (isEmpty(s)) {
+        <p class="text-sm text-muted-foreground" data-testid="backups-empty">No backups yet.</p>
+      } @else {
+        <div class="grid grid-cols-3 gap-2">
+          <div class="card-inner rounded-lg px-2.5 py-2.5 flex flex-col gap-0.5">
+            <span class="text-xl font-semibold tabular-nums">{{ s.summary.clustersWithBackups }}<span class="text-sm text-muted-foreground font-normal">/{{ s.summary.clustersTotal }}</span></span>
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" title="Clusters with a recent backup">Protected</span>
+          </div>
+          <div class="card-inner rounded-lg px-2.5 py-2.5 flex flex-col gap-0.5">
+            <span class="text-xl font-semibold tabular-nums">{{ s.summary.activePolicies }}</span>
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Policies</span>
+          </div>
+          <div class="card-inner rounded-lg px-2.5 py-2.5 flex flex-col gap-0.5">
+            <span class="text-xl font-semibold tabular-nums">{{ s.summary.totalArtifactsLast30d }}</span>
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Backups / 30d</span>
+          </div>
         </div>
-        <span class="text-border">·</span>
-        <div class="flex items-baseline gap-1.5">
-          <span class="font-semibold tabular-nums">{{ s.summary.activePolicies }}</span>
-          <span class="text-[10px] text-muted-foreground uppercase tracking-wide">policies</span>
-        </div>
-        <span class="text-border hidden sm:inline">·</span>
-        <div class="hidden sm:flex items-baseline gap-1.5">
-          <span class="font-semibold tabular-nums">{{ s.summary.totalArtifactsLast30d }}</span>
-          <span class="text-[10px] text-muted-foreground uppercase tracking-wide">backups / 30d</span>
-        </div>
-      </div>
 
-      <!-- Alert / status message -->
-      <div class="flex-1 min-w-0 text-xs">
-        @if (s.alerts.length > 0) {
-        <div class="flex items-start gap-1.5">
-          <ng-icon [name]="alertIcon(s.alerts[0].severity)" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" [class]="alertText(s.alerts[0].severity)" />
-          <span class="text-foreground truncate">{{ alertMessage(s.alerts[0]) }}</span>
+        <div class="flex flex-col gap-1.5 text-xs">
+          @if (s.alerts.length > 0) {
+          <div class="flex items-start gap-1.5">
+            <ng-icon [name]="alertIcon(s.alerts[0].severity)" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" [class]="alertText(s.alerts[0].severity)" />
+            <span class="text-foreground">{{ alertMessage(s.alerts[0]) }}</span>
+          </div>
+          } @else if (s.lastSuccessfulBackupAt) {
+          <span class="text-muted-foreground">Last backup {{ s.lastSuccessfulBackupAt | date : 'short' }}</span>
+          }
+          @if (coverageLine(); as line) {
+          <span class="text-muted-foreground" data-testid="backups-coverage">{{ line }}</span>
+          }
         </div>
-        } @else if (s.lastSuccessfulBackupAt) {
-        <span class="text-muted-foreground">
-          Last backup {{ s.lastSuccessfulBackupAt | date : 'short' }}
-        </span>
+      }
+
+      <div class="mt-auto">
+        @if (s.alerts.length > 0 || s.cta) {
+        <button
+          type="button"
+          class="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+          (click)="$event.stopPropagation(); navigateTo(resolveCtaPath(s))"
+        >
+          {{ ctaLabel(s) }}
+          <ng-icon name="lucideArrowRight" class="h-3 w-3" />
+        </button>
+        } @else if (isEmpty(s)) {
+        <button
+          type="button"
+          class="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+          (click)="$event.stopPropagation(); navigateTo('/management/backup/policies/new')"
+        >
+          Set up a backup policy
+          <ng-icon name="lucideArrowRight" class="h-3 w-3" />
+        </button>
         } @else {
-        <span class="text-muted-foreground">No backups yet.</span>
+        <span class="text-xs font-semibold text-primary inline-flex items-center gap-1">
+          Open backups
+          <ng-icon name="lucideArrowRight" class="h-3 w-3" />
+        </span>
         }
       </div>
-
-      <!-- CTA -->
-      @if (s.alerts.length > 0 || s.cta) {
-      <button
-        type="button"
-        class="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1 flex-shrink-0"
-        (click)="$event.stopPropagation(); navigateTo(resolveCtaPath(s))"
-      >
-        {{ ctaLabel(s) }}
-        <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-      </button>
-      }
-      @if (!s.alerts.length && !s.cta) {
-      <ng-icon
-        name="lucideArrowRight"
-        class="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-      />
-      }
-    </div>
+    </section>
     }
     }
   `,
@@ -124,15 +141,26 @@ const REFRESH_INTERVAL_MS = 60_000;
 export class DashboardBackupsComponent implements OnInit, OnDestroy {
   private readonly backup = inject(BackupService);
   private readonly router = inject(Router);
+  private readonly fleet = inject(FleetService);
   private intervalId: ReturnType<typeof setInterval> | null = null;
 
   protected readonly status = this.backup.status;
   protected readonly loading = this.backup.statusLoading;
 
-  protected readonly banner = computed(() => {
-    const overall = this.status()?.overall ?? 'info';
-    return `${STATUS_BANNER_TONE[overall]} hover:border-primary/30`;
+  protected readonly banner = computed(() => STATUS_BANNER_TONE[this.status()?.overall ?? 'info']);
+
+  /** Only when the fleet read answered: a guest refused it sees the card without this line. */
+  protected readonly coverageLine = computed(() => {
+    if (this.fleet.coverageState() !== 'ready') return null;
+    const withData = (this.fleet.coverage()?.applications ?? []).filter((a) => a.holdsData);
+    if (withData.length === 0) return null;
+    const protectedApps = withData.filter((a) => a.coverage === 'protected').length;
+    return `${protectedApps} of ${withData.length} apps with data protected`;
   });
+
+  protected isEmpty(s: BackupStatus): boolean {
+    return !s.lastSuccessfulBackupAt && s.summary.activePolicies === 0 && s.summary.totalArtifactsLast30d === 0;
+  }
 
   protected readonly textTone = computed(() => {
     return STATUS_TEXT_TONE[this.status()?.overall ?? 'info'];

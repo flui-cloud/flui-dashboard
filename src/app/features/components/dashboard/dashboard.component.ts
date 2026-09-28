@@ -1,6 +1,5 @@
 import { Component, OnDestroy, inject, signal, computed, effect, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DashboardService } from '../../service/dashboard.service';
-import { DashboardDnsService } from '../../service/dashboard-dns.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
   DashboardSurfaceInput,
@@ -8,126 +7,127 @@ import {
   buildDashboardSurface,
   presentedContent,
 } from './dashboard-surface';
-import { DashboardPulseComponent } from './dashboard-pulse.component';
-import { DashboardOperationsComponent } from './dashboard-operations.component';
-import { DashboardProvidersComponent } from './dashboard-providers.component';
-import { DashboardAppsComponent } from './dashboard-apps.component';
-import { DashboardClustersComponent } from './dashboard-clusters.component';
+import { DashboardHomeHeaderComponent } from './dashboard-home-header.component';
+import { DashboardFleetTilesComponent } from './dashboard-fleet-tiles.component';
+import { DashboardClustersTableComponent } from './dashboard-clusters-table.component';
+import { DashboardNeedsYouComponent } from './dashboard-needs-you.component';
+import { DashboardWorkloadsComponent } from './dashboard-workloads.component';
 import { DashboardCertsComponent } from './dashboard-certs.component';
 import { DashboardActivityComponent } from './dashboard-activity.component';
 import { DashboardBackupsComponent } from './dashboard-backups.component';
-import { DashboardCredentialsBannerComponent } from './dashboard-credentials-banner.component';
 import { PlatformUpdateBannerComponent } from '../platform-updates/platform-update-banner.component';
 import { DashboardAgentStatusComponent } from './dashboard-agent-status.component';
 import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.component';
+import { FleetService } from '../../service/fleet.service';
+import { ClusterService } from '../../service/cluster.service';
+import { PermissionService } from '../../../core/services/permission.service';
+import { isFreshInstall } from './home-state';
+
+const FLEET_REFRESH_MS = 60_000;
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    DashboardPulseComponent,
-    DashboardOperationsComponent,
-    DashboardProvidersComponent,
-    DashboardAppsComponent,
-    DashboardClustersComponent,
+    DashboardHomeHeaderComponent,
+    DashboardFleetTilesComponent,
+    DashboardClustersTableComponent,
+    DashboardNeedsYouComponent,
+    DashboardWorkloadsComponent,
     DashboardCertsComponent,
     DashboardActivityComponent,
     DashboardBackupsComponent,
-    DashboardCredentialsBannerComponent,
     PlatformUpdateBannerComponent,
     DashboardAgentStatusComponent,
     SandboxGuideCardComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="flex flex-col gap-4 p-4 md:p-6 min-h-full">
+    <div class="flex flex-col gap-4 md:gap-5 p-4 md:p-6 min-h-full">
+      <app-dashboard-home-header [fresh]="fresh()" [refreshing]="refreshing()" (refresh)="refresh()" />
 
-      <!-- Global Platform Pulse -->
-      <app-dashboard-pulse />
-
-      <!-- Is an agent connected, and is one working right now — always visible, not tucked under Settings -->
-      <app-dashboard-agent-status />
-
-      <!-- Credentials status banner (only shown when something needs attention) -->
-      <app-dashboard-credentials-banner />
-
-      <!-- Shown only while a Flui release is waiting to be applied -->
       <app-platform-update-banner />
-
-      <!-- Renders itself only inside a sandbox tenancy -->
       <app-sandbox-guide-card />
 
       @if (isInitializing()) {
-
-        <!-- Skeleton: 4-card grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          @for (_ of [1,2,3,4]; track _) {
-            <div class="bg-card border border-border rounded-lg p-5 flex flex-col gap-3">
-              <div class="flex items-center gap-2.5">
-                <div class="h-8 w-8 rounded-lg bg-muted animate-pulse"></div>
-                <div class="flex flex-col gap-1.5 flex-1">
-                  <div class="h-3 w-24 rounded bg-muted animate-pulse"></div>
-                  <div class="h-2.5 w-16 rounded bg-muted animate-pulse"></div>
-                </div>
-              </div>
-              <div class="h-9 w-14 rounded bg-muted animate-pulse"></div>
-              <div class="flex flex-col gap-2 flex-1">
-                <div class="h-3 w-full rounded bg-muted animate-pulse"></div>
-                <div class="h-3 w-4/5 rounded bg-muted animate-pulse"></div>
-                <div class="h-3 w-3/5 rounded bg-muted animate-pulse"></div>
-              </div>
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-4" data-testid="home-skeleton">
+          @for (_ of [1, 2, 3, 4]; track _) {
+            <div class="card-surface p-4 h-[112px] flex flex-col gap-3">
+              <div class="h-2.5 w-16 skeleton"></div>
+              <div class="h-6 w-20 skeleton"></div>
+              <div class="h-6 w-full skeleton"></div>
             </div>
           }
         </div>
-
-        <!-- Skeleton: activity timeline -->
-        <div class="bg-card border border-border rounded-lg p-5 flex flex-col gap-3">
-          <div class="h-4 w-40 rounded bg-muted animate-pulse"></div>
-          @for (_ of [1,2,3,4]; track _) {
-            <div class="flex items-center gap-4 py-1">
-              <div class="h-6 w-6 rounded-full bg-muted animate-pulse flex-shrink-0"></div>
-              <div class="flex-1 flex justify-between gap-4">
-                <div class="h-3 w-32 rounded bg-muted animate-pulse"></div>
-                <div class="h-3 w-12 rounded bg-muted animate-pulse"></div>
-              </div>
-            </div>
-          }
+        <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
+          <div class="card-surface p-5 flex flex-col gap-3">
+            <div class="h-4 w-24 skeleton"></div>
+            @for (_ of [1, 2, 3]; track _) {
+              <div class="h-10 w-full skeleton"></div>
+            }
+          </div>
+          <div class="card-surface p-5 flex flex-col gap-3">
+            <div class="h-4 w-24 skeleton"></div>
+            <div class="h-14 w-full skeleton"></div>
+          </div>
         </div>
-
+      } @else if (fresh()) {
+        <div data-testid="home-fresh" class="contents">
+          <app-dashboard-certs [firstStep]="true" />
+          <app-dashboard-fleet-tiles [fresh]="true" />
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
+            <app-dashboard-clusters-table [fresh]="true" />
+            <div class="flex flex-col gap-4">
+              <app-dashboard-needs-you />
+              <app-dashboard-agent-status />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
+            <app-dashboard-activity />
+            <app-dashboard-backups />
+          </div>
+        </div>
       } @else {
-
-        <!-- Active Operations (condizionale) -->
-        <app-dashboard-operations />
-
-        <!-- Main grid: Certs first when not complete, otherwise last -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          @if (certsFirst()) {
+        <div data-testid="home-control-room" class="contents">
+          <app-dashboard-fleet-tiles />
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
+            <app-dashboard-clusters-table />
+            <div class="flex flex-col gap-4">
+              <app-dashboard-needs-you />
+              <app-dashboard-agent-status />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
             <app-dashboard-certs />
-          }
-          <app-dashboard-providers />
-          <app-dashboard-apps />
-          <app-dashboard-clusters />
-          @if (!certsFirst()) {
-            <app-dashboard-certs />
-          }
+            <app-dashboard-backups />
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
+            <app-dashboard-activity />
+            <app-dashboard-workloads />
+          </div>
         </div>
-
-        <!-- Backups status (full-width slim banner) -->
-        <app-dashboard-backups />
-
-        <!-- Recent Activity (full width) -->
-        <app-dashboard-activity />
       }
     </div>
   `,
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private readonly dashboardService = inject(DashboardService);
-  private readonly dnsService = inject(DashboardDnsService);
   private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly fleet = inject(FleetService);
+  private readonly clusterService = inject(ClusterService);
+  private readonly permissions = inject(PermissionService);
+  private fleetTimer: ReturnType<typeof setInterval> | null = null;
 
   isInitializing = signal(true);
-  certsFirst = computed(() => !this.dnsService.isFullyConfigured());
+  refreshing = signal(false);
+
+  readonly fresh = computed(() =>
+    isFreshInstall({
+      loading: this.isInitializing(),
+      userApps: this.dashboardService.userTotalApps(),
+      clusters: this.clusterService.clusters(),
+    }),
+  );
 
   private readonly surfaceRevision = new DashboardSurfaceRevision();
 
@@ -165,13 +165,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.permissions.loadSections();
+    void this.fleet.loadAll();
     void (async () => {
       await this.dashboardService.initialize();
       this.isInitializing.set(false);
     })();
+    this.fleetTimer = setInterval(() => {
+      void this.fleet.loadMetrics();
+      void this.fleet.loadNeedsYou();
+    }, FLEET_REFRESH_MS);
+  }
+
+  async refresh(): Promise<void> {
+    this.refreshing.set(true);
+    try {
+      await Promise.all([this.dashboardService.refresh(), this.fleet.loadAll()]);
+    } finally {
+      this.refreshing.set(false);
+    }
   }
 
   ngOnDestroy(): void {
+    if (this.fleetTimer) clearInterval(this.fleetTimer);
+    this.fleetTimer = null;
     this.currentSurface.set(null);
   }
 }

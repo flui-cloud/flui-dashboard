@@ -34,16 +34,16 @@ const STATUS_COLORS: Partial<Record<ClusterStatus, { dot: string; label: string;
   providers: [provideIcons({ lucideActivity, lucideArrowRight })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="bg-card border border-border rounded-lg p-5">
+    <div class="card-surface p-5 h-full">
       <!-- Header -->
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2">
           <ng-icon name="lucideActivity" class="h-4 w-4 text-primary" />
-          <h2 class="font-semibold text-foreground">Recent Cluster Activity</h2>
+          <h2 class="font-semibold text-foreground">Recent cluster activity</h2>
         </div>
         <a
           routerLink="/cluster"
-          class="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+          class="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
         >
           All clusters
           <ng-icon name="lucideArrowRight" class="h-3 w-3" />

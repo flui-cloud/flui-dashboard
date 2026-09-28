@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
 import { ClusterService } from '../../../service/cluster.service';
 import {
@@ -302,6 +302,7 @@ export class PolicyWizardComponent implements OnInit {
   protected readonly backup = inject(BackupService);
   private readonly clusterService = inject(ClusterService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly clusters = this.clusterService.clusters;
   readonly profiles: BackupPolicyProfile[] = ['single', 'mirrored', 'custom'];
@@ -357,9 +358,27 @@ export class PolicyWizardComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.prefillFromLink();
     void (async () => {
       await Promise.all([this.clusterService.loadClusters(), this.backup.loadDestinations()]);
     })();
+  }
+
+  /** "Protect" from the home opens this with the cluster and the app already chosen. */
+  private prefillFromLink(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const clusterId = params.get('clusterId');
+    const applicationId = params.get('applicationId');
+    if (clusterId) this.form.clusterId = clusterId;
+    if (params.get('engineClass') === 'database') {
+      this.form.engineClass = 'database';
+      this.onEngineClassChange('database');
+    }
+    if (applicationId) {
+      this.form.scope = 'applications' as BackupScope;
+      this.applicationIds = applicationId;
+      if (!this.form.name) this.form.name = `protect-${applicationId.slice(0, 8)}`;
+    }
   }
 
   profileDescription(p: BackupPolicyProfile): string {

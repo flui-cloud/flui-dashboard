@@ -20,66 +20,66 @@ type AgentHookState = 'working' | 'idle' | 'none';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (loaded()) {
-      @switch (state()) {
-        @case ('working') {
-          <div class="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10 p-4 flex items-center gap-3">
-            <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
-              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-              <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-            </span>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-emerald-900 dark:text-emerald-200">An agent is working</p>
-              <p class="text-xs text-emerald-700 dark:text-emerald-400 truncate">
-                {{ identityLabel(working()!) }}
-                @if (working()!.lastTool) {
-                  · {{ working()!.lastTool }}
-                }
-              </p>
+      <section class="card-surface p-5 flex flex-col gap-3" data-testid="agent-card">
+        <h2 class="font-semibold text-foreground">Agent</h2>
+        @switch (state()) {
+          @case ('working') {
+            <div class="flex items-center gap-3">
+              <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
+                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+              </span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-emerald-700 dark:text-emerald-300">An agent is working</p>
+                <p class="text-xs text-muted-foreground truncate">
+                  {{ identityLabel(working()!) }}
+                  @if (working()!.lastTool) {
+                    · {{ working()!.lastTool }}
+                  }
+                </p>
+              </div>
             </div>
-            <a routerLink="/agents" class="flex-shrink-0 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:underline">
+            <a routerLink="/agents" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
               View activity
               <ng-icon name="lucideArrowRight" class="h-3 w-3" />
             </a>
-          </div>
-        }
-        @case ('idle') {
-          <div class="rounded-lg border border-border bg-card p-4 flex items-center gap-3">
-            <span class="flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-muted-foreground/40"></span>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold">No agent working right now</p>
-              <p class="text-xs text-muted-foreground truncate">
-                Last seen: {{ identityLabel(mostRecent()!) }} · {{ formatTime(mostRecent()!.lastActivityAt) }}
-              </p>
+          }
+          @case ('idle') {
+            <div class="flex items-center gap-3">
+              <span class="flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-muted-foreground/40"></span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium">No agent working right now</p>
+                <p class="text-xs text-muted-foreground truncate">
+                  Last seen: {{ identityLabel(mostRecent()!) }} · {{ formatTime(mostRecent()!.lastActivityAt) }}
+                </p>
+              </div>
             </div>
-            <a routerLink="/agents" class="flex-shrink-0 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-              View activity
-              <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-            </a>
-            <a routerLink="/settings" fragment="agent-keys" class="flex-shrink-0 text-xs text-muted-foreground hover:text-foreground hover:underline">
-              Connect another
-            </a>
-          </div>
-        }
-        @case ('none') {
-          <div class="rounded-lg border border-dashed border-border bg-card p-4 flex items-center gap-3">
-            <ng-icon name="lucideBot" class="h-8 w-8 flex-shrink-0 text-muted-foreground" />
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold">No agent connected yet</p>
-              <p class="text-xs text-muted-foreground">
-                Connect a coding agent so it can operate this instance directly.
-              </p>
+            <div class="flex items-center gap-3">
+              <a routerLink="/agents" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                View activity
+                <ng-icon name="lucideArrowRight" class="h-3 w-3" />
+              </a>
+              <a routerLink="/settings" fragment="agent-keys" class="text-xs text-muted-foreground hover:text-foreground hover:underline">
+                Connect another
+              </a>
+            </div>
+          }
+          @case ('none') {
+            <div class="flex items-center gap-3">
+              <ng-icon name="lucideBot" class="h-6 w-6 flex-shrink-0 text-muted-foreground" />
+              <p class="flex-1 min-w-0 text-sm font-medium">No agent connected yet</p>
             </div>
             <a
               routerLink="/settings"
               fragment="agent-keys"
-              class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              class="self-start inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
             >
               Connect an agent
               <ng-icon name="lucideArrowRight" class="h-3 w-3" />
             </a>
-          </div>
+          }
         }
-      }
+      </section>
     }
   `,
 })

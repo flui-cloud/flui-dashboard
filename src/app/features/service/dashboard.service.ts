@@ -3,7 +3,6 @@ import { firstValueFrom } from 'rxjs';
 import { ClusterService } from './cluster.service';
 import { ApplicationService } from './application.service';
 import { ProvidersService } from './providers.service';
-import { DashboardMetricsService } from './dashboard-metrics.service';
 import { DashboardDnsService } from './dashboard-dns.service';
 import { HealthService } from '../../core/api/api/health.service';
 import { ClusterStatus } from '../model/cluster.models';
@@ -24,7 +23,6 @@ export class DashboardService {
   private readonly clusterService = inject(ClusterService);
   private readonly applicationService = inject(ApplicationService);
   private readonly providersService = inject(ProvidersService);
-  private readonly metricsService = inject(DashboardMetricsService);
   private readonly dashboardDnsService = inject(DashboardDnsService);
   private readonly healthApi = inject(HealthService);
 
@@ -99,10 +97,7 @@ export class DashboardService {
       this.applicationService.loadApplications(),
     ]);
     // Phase 2 — requires clusters to be loaded first
-    await Promise.allSettled([
-      this.metricsService.loadMetrics(),
-      this.dashboardDnsService.load(),
-    ]);
+    await this.dashboardDnsService.load().catch(() => undefined);
     this.lastRefreshedAtSignal.set(new Date());
   }
 

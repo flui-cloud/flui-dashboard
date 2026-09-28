@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -16,7 +16,7 @@ import { DashboardDnsService, AppDnsInfo } from '../../service/dashboard-dns.ser
 import { DnsSetupWizardComponent } from './dns-setup-wizard.component';
 import { NotificationService } from '../../../core/services/notification.service';
 
-const CERT_ACTION_KEY = 'open-cert-wizard';
+export const CERT_ACTION_KEY = 'open-cert-wizard';
 
 interface AppRow {
   label: string;
@@ -52,28 +52,65 @@ const ALL_APP_ROWS: AppRow[] = [
       <app-dns-setup-wizard (closed)="showWizard.set(false)" />
     }
 
-    <div class="bg-card border border-border rounded-lg p-5 h-full flex flex-col">
+    @if (firstStep() && dnsService.hasStatus() && dnsService.needsSetup()) {
+      <section class="card-surface p-6 grid grid-cols-1 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-6 items-center" data-testid="certs-first-step">
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-2.5">
+            <div class="icon-chip icon-chip-sm chip-warn">
+              <ng-icon name="lucideShieldAlert" class="h-4 w-4" />
+            </div>
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Certificates &amp; DNS · first step</span>
+          </div>
+          <h2 class="text-xl font-semibold text-foreground">DNS not configured</h2>
+          <p class="text-sm text-muted-foreground">Set up DNS zones and certificates to make your apps publicly accessible.</p>
+          <div>
+            <button
+              type="button"
+              (click)="showWizard.set(true)"
+              class="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <ng-icon name="lucideSettings" class="h-4 w-4" />
+              Set up DNS &amp; Certificates
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-col rounded-lg bg-muted/50 px-4 py-1">
+          @for (row of appRows(); track row.key) {
+            <div class="flex items-center gap-2.5 py-2.5 border-b border-border last:border-0">
+              <ng-icon name="lucideCircleDashed" class="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/60" />
+              <span class="text-sm font-medium text-foreground flex-1">{{ row.label }}</span>
+              <span class="text-xs text-muted-foreground">not set up</span>
+            </div>
+          }
+        </div>
+      </section>
+    } @else {
+    <div class="card-surface p-5 h-full flex flex-col" data-testid="certs-card">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2.5">
-          <div class="h-8 w-8 rounded-lg flex items-center justify-center" [class]="headerIconBg()">
-            <ng-icon [name]="headerIcon()" class="h-4 w-4" [class]="headerIconColor()" />
+          <div class="icon-chip icon-chip-sm" [class]="headerChip()">
+            <ng-icon [name]="headerIcon()" class="h-4 w-4" />
           </div>
-          <div class="flex items-center gap-1.5">
-            <h2 class="font-semibold text-foreground text-sm">Certificates & DNS</h2>
-            @if (dnsService.hasStatus() && !dnsService.isFullyConfigured()) {
-              <span class="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse flex-shrink-0"></span>
-            }
+          <div class="flex flex-col">
+            <div class="flex items-center gap-1.5">
+              <h2 class="font-semibold text-foreground">Certificates &amp; DNS</h2>
+              @if (dnsService.hasStatus() && !dnsService.isFullyConfigured()) {
+                <span class="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse flex-shrink-0"></span>
+              }
+            </div>
+            <p class="text-xs text-muted-foreground" data-testid="certs-subtitle">{{ subtitle() }}</p>
           </div>
-          <p class="text-xs text-muted-foreground">Security posture</p>
         </div>
         <button
+          type="button"
           (click)="refresh()"
           [disabled]="dnsService.loading()"
-          class="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-40"
+          class="h-8 w-8 flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-primary transition-colors disabled:opacity-40"
           title="Refresh"
+          aria-label="Refresh"
         >
-          <ng-icon name="lucideRefreshCw" class="h-3 w-3" [class.animate-spin]="dnsService.loading()" />
+          <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="dnsService.loading()" />
         </button>
       </div>
 
@@ -122,18 +159,18 @@ const ALL_APP_ROWS: AppRow[] = [
         <div class="flex flex-col flex-1">
           @for (row of appRows(); track row.key) {
             @let app = dnsService.status()![row.key]!;
-            <div class="flex items-center gap-2.5 py-2 border-b border-border last:border-0">
+            <div class="flex items-center gap-3 py-2.5 border-t border-border">
               <ng-icon
                 [name]="appStatusIcon(app)"
-                class="h-3.5 w-3.5 flex-shrink-0"
+                class="h-4 w-4 flex-shrink-0"
                 [class]="appStatusIconColor(app)"
               />
-              <span class="text-xs font-medium text-foreground w-16 flex-shrink-0">{{ row.label }}</span>
+              <span class="text-sm font-medium text-foreground w-20 flex-shrink-0">{{ row.label }}</span>
               <span class="text-xs text-muted-foreground font-mono truncate flex-1 min-w-0">
                 {{ app.domain || '—' }}
               </span>
               <span
-                class="flex-shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium cursor-default"
+                class="flex-shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium cursor-default"
                 [class]="certStatusClass(app)"
                 [title]="app.certMessage || ''"
               >
@@ -146,10 +183,10 @@ const ALL_APP_ROWS: AppRow[] = [
       }
 
       @if (dnsService.hasStatus() && !dnsService.needsSetup()) {
-        <div class="pt-3 border-t border-border mt-2 flex items-center justify-between gap-2">
+        <div class="pt-3 border-t border-border mt-auto flex items-center justify-between gap-2">
           <a
             [routerLink]="['/cluster', dnsService.targetClusterId(), 'dns']"
-            class="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+            class="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
           >
             <ng-icon name="lucideGlobe" class="h-3 w-3" />
             Manage cluster DNS
@@ -157,24 +194,35 @@ const ALL_APP_ROWS: AppRow[] = [
           </a>
           <button
             (click)="showWizard.set(true)"
-            class="group flex items-center gap-1 text-xs text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+            class="group flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
             title="Configure DNS & Certificates"
           >
-            <ng-icon name="lucideSettings" class="h-3 w-3 animate-pulse" />
+            <ng-icon name="lucideSettings" class="h-3 w-3" />
             Configure
           </button>
         </div>
       }
     </div>
+    }
   `,
 })
 export class DashboardCertsComponent implements OnInit, OnDestroy {
+  readonly firstStep = input(false);
+
   protected dnsService = inject(DashboardDnsService);
   private readonly notifService = inject(NotificationService);
   protected showWizard = signal(false);
   protected appRows = computed(() =>
     ALL_APP_ROWS.filter(row => row.key !== 'zitadel' || this.dnsService.status()?.zitadel !== null)
   );
+
+  protected readonly subtitle = computed(() => {
+    if (!this.dnsService.hasStatus() || this.dnsService.needsSetup()) return 'Security posture';
+    const status = this.dnsService.status()!;
+    const rows = this.appRows();
+    const synced = rows.filter((row) => status[row.key]?.isComplete).length;
+    return `Security posture \u00b7 ${synced} of ${rows.length} synced`;
+  });
 
   constructor() {
     // Watch cert status — add notification when incomplete, remove when fully configured
@@ -221,16 +269,10 @@ export class DashboardCertsComponent implements OnInit, OnDestroy {
     return 'lucideShieldAlert';
   }
 
-  protected headerIconBg(): string {
-    if (!this.dnsService.hasStatus() || this.dnsService.needsSetup()) return 'bg-amber-100 dark:bg-amber-900/30';
-    if (this.dnsService.isFullyConfigured()) return 'bg-emerald-100 dark:bg-emerald-900/30';
-    return 'bg-amber-100 dark:bg-amber-900/30';
-  }
-
-  protected headerIconColor(): string {
-    if (!this.dnsService.hasStatus() || this.dnsService.needsSetup()) return 'text-amber-500';
-    if (this.dnsService.isFullyConfigured()) return 'text-emerald-500';
-    return 'text-amber-500';
+  protected headerChip(): string {
+    return this.dnsService.hasStatus() && !this.dnsService.needsSetup() && this.dnsService.isFullyConfigured()
+      ? 'chip-ok'
+      : 'chip-warn';
   }
 
   protected appStatusIcon(app: AppDnsInfo): string {
