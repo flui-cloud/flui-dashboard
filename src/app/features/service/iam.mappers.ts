@@ -19,6 +19,8 @@ export interface ApiRoleBinding {
   scopeType: AccessScope['type'];
   scopeRef: string | null;
   selector: AccessSelector | null;
+  expiresAt?: string | null;
+  grantedBy?: string | null;
 }
 
 export interface CreateGrantBody {
@@ -28,6 +30,7 @@ export interface CreateGrantBody {
   scopeType: AccessScope['type'];
   scopeRef?: string;
   selector?: AccessSelector;
+  expiresAt?: string;
 }
 
 export interface ApiGroup {
@@ -103,14 +106,20 @@ export function toGrantRecord(b: ApiRoleBinding): GrantRecord {
       role: b.role,
       scope: toScope(b.scopeType, b.scopeRef, b.selector),
     },
+    expiresAt: b.expiresAt ?? null,
+    grantedBy: b.grantedBy ?? null,
   };
 }
 
-export function toCreateBody(b: AccessBinding): CreateGrantBody {
+export function toCreateBody(
+  b: AccessBinding,
+  expiresAt?: Date | null,
+): CreateGrantBody {
   const base = {
     principalType: b.principal.type,
     principalRef: b.principal.ref,
     role: b.role,
+    ...(expiresAt ? { expiresAt: expiresAt.toISOString() } : {}),
   };
   switch (b.scope.type) {
     case 'global':

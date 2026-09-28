@@ -1,4 +1,7 @@
-export type AccessRole = 'viewer' | 'operator' | 'maintainer' | 'owner';
+export type AccessRole =
+  'viewer' | 'operator' | 'maintainer' | 'owner' | 'platform_operator';
+
+export const PLATFORM_OPERATOR_ROLE: AccessRole = 'platform_operator';
 
 export type AccessPrincipalType = 'user' | 'group' | 'service_account';
 
@@ -77,6 +80,72 @@ export interface SectionOption {
 export interface GrantRecord {
   id: string;
   binding: AccessBinding;
+  expiresAt?: string | null;
+  grantedBy?: string | null;
+}
+
+export type GrantEnd = 'standing' | 'active' | 'ended';
+
+export function grantEnd(g: GrantRecord, now: number = Date.now()): GrantEnd {
+  if (!g.expiresAt) return 'standing';
+  return new Date(g.expiresAt).getTime() > now ? 'active' : 'ended';
+}
+
+export function temporaryGrants(
+  grants: GrantRecord[],
+  now: number = Date.now(),
+): { active: GrantRecord[]; ended: GrantRecord[] } {
+  const at = (g: GrantRecord) => new Date(g.expiresAt ?? 0).getTime();
+  const active = grants
+    .filter((g) => grantEnd(g, now) === 'active')
+    .sort((a, b) => at(a) - at(b));
+  const ended = grants
+    .filter((g) => grantEnd(g, now) === 'ended')
+    .sort((a, b) => at(b) - at(a));
+  return { active, ended };
+}
+
+export type GrantDuration = 'never' | '8h' | '1d' | '7d' | 'date';
+
+const HOUR_MS = 60 * 60 * 1000;
+
+const DURATION_MS: Record<Exclude<GrantDuration, 'never' | 'date'>, number> = {
+  '8h': 8 * HOUR_MS,
+  '1d': 24 * HOUR_MS,
+  '7d': 7 * 24 * HOUR_MS,
+};
+
+/** `date` is a local `datetime-local` value; null means a standing grant or an unusable date. */
+export function grantExpiry(
+  duration: GrantDuration,
+  date: string,
+  now: number = Date.now(),
+): Date | null {
+  if (duration === 'never') return null;
+  if (duration === 'date') {
+    const d = date ? new Date(date) : null;
+    return d && !Number.isNaN(d.getTime()) ? d : null;
+  }
+  return new Date(now + DURATION_MS[duration]);
+}
+
+export function formatWhen(value: string | Date): string {
+  return new Date(value).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
+export function timeLeft(value: string, now: number = Date.now()): string {
+  const min = Math.max(
+    0,
+    Math.round((new Date(value).getTime() - now) / 60_000),
+  );
+  if (min < 60) return `${min} min`;
+  const hours = Math.round(min / 60);
+  if (hours < 48) return `${hours} h`;
+  const days = Math.round(hours / 24);
+  return `${days} days`;
 }
 
 export type UserStatus = 'active' | 'invited' | 'disabled';
@@ -101,13 +170,7 @@ export interface GroupRecord {
 }
 
 export type ScopeKind =
-  | 'everything'
-  | 'cluster'
-  | 'project'
-  | 'app'
-  | 'kind'
-  | 'tag'
-  | 'section';
+  'everything' | 'cluster' | 'project' | 'app' | 'kind' | 'tag' | 'section';
 
 export const SECTION_LABELS: Record<string, string> = {
   home: 'Home',

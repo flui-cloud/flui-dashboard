@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideCirclePlus, lucideInfo } from '@ng-icons/lucide';
 import {
@@ -11,7 +11,11 @@ import {
   AccessPrincipal,
   AccessRole,
   AccessScope,
+  GrantDuration,
+  PLATFORM_OPERATOR_ROLE,
   ScopeKind,
+  formatWhen,
+  grantExpiry,
 } from '../../model/iam.model';
 
 const SELECT_CLASS =
@@ -30,9 +34,21 @@ const SELECT_CLASS =
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './grant-builder.component.html',
 })
-export class GrantBuilderComponent {
+export class GrantBuilderComponent implements OnInit {
   protected readonly iam = inject(IamService);
   protected readonly selectClass = SELECT_CLASS;
+  protected readonly platformOperator = PLATFORM_OPERATOR_ROLE;
+
+  readonly presetRole = input<AccessRole | null>(null);
+  readonly presetDuration = input<GrantDuration | null>(null);
+
+  readonly durations: { key: GrantDuration; label: string }[] = [
+    { key: 'never', label: 'Never' },
+    { key: '8h', label: 'In 8 hours' },
+    { key: '1d', label: 'In 1 day' },
+    { key: '7d', label: 'In 7 days' },
+    { key: 'date', label: 'On a date…' },
+  ];
 
   readonly principalKey = signal<string>('');
   readonly role = signal<AccessRole>('viewer');
@@ -43,6 +59,26 @@ export class GrantBuilderComponent {
   readonly selectedApps = signal<string[]>([]);
   readonly sectionKey = signal<string>('');
   readonly selectedTags = signal<string[]>([]);
+  readonly duration = signal<GrantDuration>('never');
+  readonly endDate = signal<string>('');
+
+  ngOnInit(): void {
+    const role = this.presetRole();
+    if (role) this.role.set(role);
+    const duration = this.presetDuration();
+    if (duration) this.duration.set(duration);
+    else if (role === PLATFORM_OPERATOR_ROLE) this.duration.set('1d');
+  }
+
+  readonly expiryPreview = computed(() =>
+    grantExpiry(this.duration(), this.endDate()),
+  );
+
+  readonly endValid = computed(() => {
+    if (this.duration() === 'never') return true;
+    const at = this.expiryPreview();
+    return !!at && at.getTime() > Date.now();
+  });
 
   readonly principal = computed<AccessPrincipal | null>(() => {
     const key = this.principalKey();
@@ -81,7 +117,9 @@ export class GrantBuilderComponent {
     return s ? this.iam.matchApps(s) : [];
   });
 
-  readonly canSave = computed(() => !!this.principal() && !!this.scope());
+  readonly canSave = computed(
+    () => !!this.principal() && !!this.scope() && this.endValid(),
+  );
 
   readonly compiled = computed(() => JSON.stringify(this.scope()));
 
@@ -90,7 +128,9 @@ export class GrantBuilderComponent {
     if (!p) return 'Pick who this grant is for.';
     const who = this.iam.principalDisplay(p);
     const roleName = this.iam.roleName(this.role());
-    return `${who} can ${roleName} on ${this.scopeLabel()}`;
+    const at = this.expiryPreview();
+    const until = at ? ` until ${formatWhen(at)}` : '';
+    return `${who} can ${roleName} on ${this.scopeLabel()}${until}`;
   });
 
   private scopeLabel(): string {
@@ -125,7 +165,15 @@ export class GrantBuilderComponent {
   }
 
   onRole(e: Event): void {
-    this.role.set(this.value(e) as AccessRole);
+    const role = this.value(e) as AccessRole;
+    this.role.set(role);
+    if (role === PLATFORM_OPERATOR_ROLE && this.duration() === 'never') {
+      this.duration.set('1d');
+    }
+  }
+
+  onDuration(e: Event): void {
+    this.duration.set(this.value(e) as GrantDuration);
   }
 
   onScopeKind(e: Event): void {
@@ -147,8 +195,11 @@ export class GrantBuilderComponent {
   save(): void {
     const principal = this.principal();
     const scope = this.scope();
-    if (!principal || !scope) return;
-    this.iam.addGrant({ principal, role: this.role(), scope });
+    if (!principal || !scope || !this.endValid()) return;
+    this.iam.addGrant(
+      { principal, role: this.role(), scope },
+      grantExpiry(this.duration(), this.endDate()),
+    );
     this.clusterId.set('');
     this.project.set('');
     this.kindValue.set('');

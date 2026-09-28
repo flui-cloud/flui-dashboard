@@ -24,7 +24,13 @@ const PAGE_ID = 'access';
 // when the cap actually bit.
 const MAX_ROWS = 50;
 
-export type AccessTabId = 'grants' | 'people' | 'groups' | 'roles';
+export type AccessTabId =
+  | 'grants'
+  | 'people'
+  | 'groups'
+  | 'roles'
+  | 'temporary'
+  | 'activity';
 
 export interface AccessSurfaceInput {
   activeTab: AccessTabId;
@@ -98,6 +104,7 @@ function grantRow(grant: GrantRecord, roleName: AccessSurfaceInput['roleName'], 
       textObservation('flui.access.grant_principal', grant.binding.principal.ref, 'api'),
       textObservation('flui.access.grant_role', roleName(grant.binding.role), 'ui'),
       textObservation('flui.access.grant_scope', scopeText(grant.binding), 'ui'),
+      textObservation('flui.access.grant_expires_at', grant.expiresAt, 'api'),
     ].filter((o): o is Observation => o !== null),
   };
 }
@@ -168,6 +175,12 @@ function rowsFor(input: AccessSurfaceInput): RowSpec[] {
       return input.groups.map(groupRow);
     case 'roles':
       return input.roles.map(roleRow);
+    case 'temporary':
+      return input.grants
+        .filter((g) => !!g.expiresAt)
+        .map((g) => grantRow(g, input.roleName, input.scopeText));
+    case 'activity':
+      return [];
   }
 }
 
@@ -181,6 +194,10 @@ function totalFor(input: AccessSurfaceInput): number {
       return input.groups.length;
     case 'roles':
       return input.roles.length;
+    case 'temporary':
+      return input.grants.filter((g) => !!g.expiresAt).length;
+    case 'activity':
+      return 0;
   }
 }
 

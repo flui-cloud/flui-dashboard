@@ -11,6 +11,8 @@ import {
   lucideListChecks,
   lucideTrash2,
   lucideInfo,
+  lucideClock,
+  lucideActivity,
 } from '@ng-icons/lucide';
 import {
   HlmCardDirective,
@@ -28,15 +30,20 @@ import { GrantBuilderComponent } from './grant-builder.component';
 import { PeopleTabComponent } from './people-tab.component';
 import { GroupsTabComponent } from './groups-tab.component';
 import { RolesTabComponent } from './roles-tab.component';
+import { TemporaryAccessTabComponent } from './temporary-access-tab.component';
+import { ActivityTabComponent } from './activity-tab.component';
 import {
   AccessBinding,
   AccessDelta,
   AccessSelector,
+  GrantEnd,
   GrantRecord,
   accessDeltaLines,
+  formatWhen,
+  grantEnd,
 } from '../../model/iam.model';
 
-type TabId = 'grants' | 'people' | 'groups' | 'roles';
+type TabId = AccessTabId;
 
 interface TabDef {
   id: TabId;
@@ -58,6 +65,8 @@ interface TabDef {
     PeopleTabComponent,
     GroupsTabComponent,
     RolesTabComponent,
+    TemporaryAccessTabComponent,
+    ActivityTabComponent,
   ],
   providers: [
     provideIcons({
@@ -68,6 +77,8 @@ interface TabDef {
       lucideListChecks,
       lucideTrash2,
       lucideInfo,
+      lucideClock,
+      lucideActivity,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -154,19 +165,31 @@ interface TabDef {
                         <th class="py-2 pr-4 font-medium">Role</th>
                         <th class="py-2 pr-4 font-medium">What</th>
                         <th class="py-2 pr-4 font-medium">Applies to</th>
+                        <th class="py-2 pr-4 font-medium">Ends</th>
                         <th class="py-2 w-10"></th>
                       </tr>
                     </thead>
                     <tbody>
                       @for (g of iam.grants(); track g.id) {
-                        <tr class="border-b border-border/60 last:border-0">
-                          <td class="py-2.5 pr-4">{{ iam.principalDisplay(g.binding.principal) }}</td>
+                        <tr class="border-b border-border/60 last:border-0" [class.opacity-60]="endOf(g) === 'ended'" data-testid="grant-row">
+                          <td class="py-2.5 pr-4">
+                            {{ iam.principalDisplay(g.binding.principal) }}
+                            @if (g.grantedBy) {
+                              <div class="text-[11px] text-muted-foreground">granted by {{ g.grantedBy }}</div>
+                            }
+                          </td>
                           <td class="py-2.5 pr-4">
                             <span hlmBadge variant="outline" class="text-xs">{{ iam.roleName(g.binding.role) }}</span>
                           </td>
                           <td class="py-2.5 pr-4 text-muted-foreground">{{ scopeText(g.binding) }}</td>
                           <td class="py-2.5 pr-4 text-muted-foreground">
                             {{ g.binding.scope.type === 'section' ? 'portal section' : matchCount(g.binding) + ' app' + (matchCount(g.binding) === 1 ? '' : 's') }}
+                          </td>
+                          <td class="py-2.5 pr-4 text-muted-foreground whitespace-nowrap" data-testid="grant-end">
+                            @switch (endOf(g)) {
+                              @case ('active') { until {{ when(g.expiresAt) }} }
+                              @case ('ended') { ended {{ when(g.expiresAt) }} }
+                            }
                           </td>
                           <td class="py-2.5">
                             @if (iam.isRevocable(g.binding.role)) {
@@ -178,7 +201,7 @@ interface TabDef {
                           </td>
                         </tr>
                       } @empty {
-                        <tr><td colspan="5" class="py-6 text-center text-sm text-muted-foreground">No grants yet.</td></tr>
+                        <tr><td colspan="6" class="py-6 text-center text-sm text-muted-foreground">No grants yet.</td></tr>
                       }
                     </tbody>
                   </table>
@@ -195,6 +218,12 @@ interface TabDef {
         }
         @case ('roles') {
           <app-roles-tab />
+        }
+        @case ('temporary') {
+          <app-temporary-access-tab [scopeText]="scopeTextFn" (revoke)="askRemove($event)" />
+        }
+        @case ('activity') {
+          <app-activity-tab />
         }
       }
 
@@ -270,6 +299,8 @@ export class AccessComponent implements OnInit, OnDestroy {
     { id: 'people', label: 'People', icon: 'lucideUsers' },
     { id: 'groups', label: 'Groups', icon: 'lucideUsersRound' },
     { id: 'roles', label: 'Roles', icon: 'lucideShield' },
+    { id: 'temporary', label: 'Temporary access', icon: 'lucideClock' },
+    { id: 'activity', label: 'Activity', icon: 'lucideActivity' },
   ];
 
   readonly activeTab = toSignal(
@@ -316,6 +347,16 @@ export class AccessComponent implements OnInit, OnDestroy {
     if (sel.clusterName) return `cluster ${sel.clusterName}`;
     if (sel.provider) return `provider ${sel.provider}`;
     return 'selector';
+  }
+
+  readonly scopeTextFn = (b: AccessBinding): string => this.scopeText(b);
+
+  endOf(g: GrantRecord): GrantEnd {
+    return grantEnd(g);
+  }
+
+  when(value: string | null | undefined): string {
+    return value ? formatWhen(value) : '';
   }
 
   matchCount(b: AccessBinding): number {

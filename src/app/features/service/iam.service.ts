@@ -53,10 +53,9 @@ export class IamService {
   }
 
   /**
-   * User emails are loaded once into `_users`, and this root singleton
-   * outlives any component reading `users()` — so a mask-mode toggle has to
-   * reload them here, or a stale real email survives it. Skips its own first
-   * run, which `refresh()` already covers.
+   * This root singleton caches emails (users, grant holders and granters), so a
+   * mask-mode toggle reloads them or a real email survives it. The first run is
+   * skipped: `refresh()` covers it.
    */
   constructor() {
     let first = true;
@@ -67,6 +66,8 @@ export class IamService {
         return;
       }
       this.loadUsers();
+      this.loadGrants();
+      this.loadPrincipals();
     });
   }
 
@@ -201,11 +202,11 @@ export class IamService {
     });
   }
 
-  addGrant(binding: AccessBinding): void {
+  addGrant(binding: AccessBinding, expiresAt?: Date | null): void {
     this.http
       .post<ApiRoleBinding & { delta?: AccessDelta }>(
         `${this.iamBase}/grants`,
-        toCreateBody(binding),
+        toCreateBody(binding, expiresAt),
       )
       .subscribe({
         next: (row) => this._grants.update((g) => [toGrantRecord(row), ...g]),

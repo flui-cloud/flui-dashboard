@@ -38,6 +38,30 @@
       </div>
     </div>
 
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <div class="sm:w-56">
+        <label for="gb-ends" class="block text-xs font-medium text-muted-foreground mb-1">Ends</label>
+        <select id="gb-ends" [class]="selectClass" (change)="onDuration($event)">
+          @for (d of durations; track d.key) {
+            <option [value]="d.key" [selected]="duration() === d.key">{{ d.label }}</option>
+          }
+        </select>
+      </div>
+      @if (duration() === 'date') {
+        <div class="sm:w-64">
+          <label for="gb-end-date" class="block text-xs font-medium text-muted-foreground mb-1">End date</label>
+          <input id="gb-end-date" type="datetime-local" [class]="selectClass" [value]="endDate()"
+            (change)="endDate.set(value($event))" (input)="endDate.set(value($event))" />
+        </div>
+      }
+    </div>
+    @if (role() === platformOperator) {
+      <p class="text-xs text-muted-foreground -mt-2">Runs the installation without reaching any application data.</p>
+    }
+    @if (duration() === 'date' && endDate() && !endValid()) {
+      <p class="text-xs text-destructive -mt-2">Pick a date in the future.</p>
+    }
+
     @switch (scopeKind()) {
       @case ('cluster') {
         <div class="max-w-sm">

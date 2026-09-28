@@ -310,3 +310,84 @@ describe('the identity-provider caveat picks its moments', () => {
     expect(out.join(' ')).toContain(caveat);
   });
 });
+
+describe('the grants list says when each grant ends', () => {
+  const HOUR = 3600_000;
+  const grant = (id: string, ref: string, over: object = {}) => ({
+    id,
+    binding: {
+      principal: { type: 'user' as const, ref },
+      role: 'operator' as const,
+      scope: { type: 'global' as const },
+    },
+    ...over,
+  });
+
+  const build = async () => {
+    const iam = iamStub(new Subject<AccessDelta | null>());
+    iam.grants.set([
+      grant('standing', 'sam@acme.com'),
+      grant('active', 'ann@acme.com', {
+        expiresAt: new Date(Date.now() + 5 * HOUR).toISOString(),
+        grantedBy: 'owner@acme.com',
+      }),
+      grant('ended', 'ed@acme.com', {
+        expiresAt: new Date(Date.now() - 5 * HOUR).toISOString(),
+      }),
+    ] as never);
+    await TestBed.configureTestingModule({
+      imports: [AccessComponent],
+      providers: [
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
+        { provide: IamService, useValue: iam },
+        {
+          provide: PermissionService,
+          useValue: {
+            can: () => true,
+            load: () => undefined,
+            isSectionReadOnly: () => false,
+          },
+        },
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of({ get: () => 'grants' }) },
+        },
+        { provide: Router, useValue: { navigate: jasmine.createSpy() } },
+      ],
+    }).compileComponents();
+    const f = TestBed.createComponent(AccessComponent);
+    f.detectChanges();
+    return f;
+  };
+
+  const rowOf = (f: ComponentFixture<AccessComponent>, ref: string) =>
+    (Array.from(
+      f.nativeElement.querySelectorAll('[data-testid="grant-row"]'),
+    ) as HTMLElement[]).find((r) => r.textContent?.includes(ref))!;
+
+  const endOf = (row: HTMLElement) =>
+    row.querySelector('[data-testid="grant-end"]')!.textContent!.trim();
+
+  it('shows nothing for a standing grant', async () => {
+    const f = await build();
+    const row = rowOf(f, 'sam@acme.com');
+    expect(endOf(row)).toBe('');
+    expect(row.classList).not.toContain('opacity-60');
+  });
+
+  it('shows "until" for an active temporary grant, and who granted it', async () => {
+    const f = await build();
+    const row = rowOf(f, 'ann@acme.com');
+    expect(endOf(row)).toMatch(/^until /);
+    expect(row.textContent).toContain('granted by owner@acme.com');
+    expect(row.classList).not.toContain('opacity-60');
+  });
+
+  it('dims an ended grant and says when it ended', async () => {
+    const f = await build();
+    const row = rowOf(f, 'ed@acme.com');
+    expect(endOf(row)).toMatch(/^ended /);
+    expect(row.classList).toContain('opacity-60');
+  });
+});
