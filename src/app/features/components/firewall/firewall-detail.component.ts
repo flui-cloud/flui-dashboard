@@ -12,11 +12,12 @@ import { DriftIndicatorComponent } from './drift-indicator.component';
 import { FirewallRuleComparisonComponent } from './firewall-rule-comparison.component';
 import { FirewallInlineRuleEditorComponent } from './firewall-inline-rule-editor.component';
 import { FirewallRuleFormData, convertRuleResponseToFormData } from '../../model/firewall-v2.models';
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
 @Component({
   selector: 'app-firewall-detail',
   standalone: true,
-  imports: [
+  imports: [MaskIdPipe, 
     CommonModule,
     NgIcon,
     ReconciliationStatusBadgeComponent,

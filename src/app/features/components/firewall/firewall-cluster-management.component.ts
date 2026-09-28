@@ -15,6 +15,7 @@ import {
   buildFirewallClusterManagementSurface,
   presentedContent,
 } from './firewall-cluster-management-surface';
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
 /**
  * Main component for listing and managing cluster firewalls
@@ -23,7 +24,7 @@ import {
 @Component({
   selector: 'app-firewall-cluster-management',
   standalone: true,
-  imports: [
+  imports: [MaskIdPipe, 
     ReadOnlySectionDirective,
     FormsModule,
     RouterLink,

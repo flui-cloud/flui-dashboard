@@ -64,4 +64,12 @@ describe('maskModeInterceptor', () => {
     expect(req.request.headers.has('x-mask-mode')).toBe(false);
     req.flush({});
   });
+
+  it('never sends it to another origin, such as the identity provider', () => {
+    mask.setEnabled(true);
+    http.get('https://auth.example.com/.well-known/openid-configuration').subscribe();
+    const req = httpMock.expectOne('https://auth.example.com/.well-known/openid-configuration');
+    expect(req.request.headers.has('x-mask-mode')).toBe(false);
+    req.flush({});
+  });
 });

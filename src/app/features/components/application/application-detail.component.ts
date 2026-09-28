@@ -61,6 +61,7 @@ import {
   presentedContent,
 } from './application-surface';
 import { replicaCountsOf } from './replica-counts';
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
 interface TabItem {
   label: string;
@@ -71,7 +72,7 @@ interface TabItem {
 @Component({
   selector: 'app-application-detail',
   standalone: true,
-  imports: [RouterModule, NgIconComponent],
+  imports: [MaskIdPipe, RouterModule, NgIconComponent],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -228,7 +229,7 @@ interface TabItem {
                 </span>
                 @if (app.id) {
                   <div class="flex items-center gap-1">
-                    <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ app.id }}</span>
+                    <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ app.id | maskId }}</span>
                     <button
                       (click)="copyId(app.id)"
                       class="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

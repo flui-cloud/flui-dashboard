@@ -196,7 +196,7 @@
               <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                 <span>Rules: {{ firewall.desiredRules.length || 0 }}</span>
                 @if (firewall.providerFirewallId) {
-                  <span>Provider ID: {{ firewall.providerFirewallId }}</span>
+                  <span>Provider ID: {{ firewall.providerFirewallId | maskId }}</span>
                 }
                 <span>Last Reconciled: {{ formatDate(firewall.lastReconciliationAt) }}</span>
               </div>

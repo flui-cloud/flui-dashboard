@@ -28,11 +28,12 @@ import { ProviderInferencePanelComponent } from './provider-inference-panel.comp
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { ProviderSurfaceInput, ProviderSurfaceRevision, buildProviderSurface, presentedContent } from './provider-surface';
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
 @Component({
   selector: 'provider-manage',
   standalone: true,
-  imports: [ReadOnlySectionDirective, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent, ProviderInferencePanelComponent],
+  imports: [MaskIdPipe, ReadOnlySectionDirective, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent, ProviderInferencePanelComponent],
   providers: [
     provideIcons({
       lucideActivity,
@@ -227,7 +228,7 @@ import { ProviderSurfaceInput, ProviderSurfaceRevision, buildProviderSurface, pr
                 <dl class="p-6 space-y-3 text-sm">
                   <div class="flex justify-between gap-4">
                     <dt class="text-muted-foreground shrink-0">ID</dt>
-                    <dd class="font-mono text-xs truncate" [title]="configuration()!.id">{{ configuration()!.id }}</dd>
+                    <dd class="font-mono text-xs truncate" [title]="configuration()!.id | maskId">{{ configuration()!.id | maskId }}</dd>
                   </div>
                   <div class="flex justify-between gap-4">
                     <dt class="text-muted-foreground">Active</dt>

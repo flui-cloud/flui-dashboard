@@ -46,6 +46,7 @@ import {
   buildClusterSurface,
   presentedContent,
 } from './cluster-surface';
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
 interface TabItem {
   label: string;
@@ -56,7 +57,7 @@ interface TabItem {
 @Component({
   selector: 'cluster-dashboard',
   standalone: true,
-  imports: [
+  imports: [MaskIdPipe, 
     FormsModule,
     RouterModule,
     NgIconComponent
@@ -155,7 +156,7 @@ interface TabItem {
               </h2>
               @if (clusterData.id) {
                 <div class="flex items-center gap-1 mt-0.5">
-                  <span class="font-mono text-xs text-muted-foreground">{{ clusterData.id }}</span>
+                  <span class="font-mono text-xs text-muted-foreground">{{ clusterData.id | maskId }}</span>
                   <button
                     (click)="copyId(clusterData.id); $event.stopPropagation()"
                     class="p-0.5 rounded hover:bg-muted transition-colors"

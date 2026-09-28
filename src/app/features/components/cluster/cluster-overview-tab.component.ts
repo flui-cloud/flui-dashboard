@@ -35,11 +35,12 @@ import { AutoscaleWarningBannerComponent } from './autoscale-warning-banner.comp
 import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
 import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-backups-modal.component';
 import { ClusterMaintenanceCardComponent } from '../maintenance/cluster-maintenance-card.component';
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
 @Component({
   selector: 'cluster-overview-tab',
   standalone: true,
-  imports: [
+  imports: [MaskIdPipe, 
     ClusterMaintenanceCardComponent,RouterModule, NgIconComponent, AutoscaleWarningBannerComponent, AttachVNetDialogComponent, EnableBackupsModalComponent],
   providers: [
     provideIcons({
@@ -388,7 +389,7 @@ import { ClusterMaintenanceCardComponent } from '../maintenance/cluster-maintena
                   <p class="text-sm font-medium text-foreground truncate" [title]="c.vnetName ?? c.vnetId">
                     {{ c.vnetName || 'VNet' }}
                   </p>
-                  <p class="font-mono text-xs text-sub truncate" [title]="c.vnetId">{{ c.vnetId }}</p>
+                  <p class="font-mono text-xs text-sub truncate" [title]="c.vnetId | maskId">{{ c.vnetId | maskId }}</p>
                 </div>
               } @else {
                 <p class="text-sub flex-1 text-xs">
@@ -452,7 +453,7 @@ import { ClusterMaintenanceCardComponent } from '../maintenance/cluster-maintena
             @if (c.id) {
               <div>
                 <p class="text-label mb-0.5">Cluster ID</p>
-                <p class="font-mono text-sub truncate" [title]="c.id">{{ c.id }}</p>
+                <p class="font-mono text-sub truncate" [title]="c.id | maskId">{{ c.id | maskId }}</p>
               </div>
             }
           </div>

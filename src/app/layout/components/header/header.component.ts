@@ -51,7 +51,7 @@ const MASK_MODE_TOOLTIP =
       <button
         type="button"
         data-testid="mask-mode-toggle"
-        (click)="maskMode.toggle()"
+        (click)="toggleMaskMode()"
         class="p-1.5 rounded-md hover:bg-muted transition-colors"
         [class.text-amber-500]="maskMode.enabled()"
         [class.text-muted-foreground]="!maskMode.enabled()"
@@ -86,4 +86,13 @@ export class HeaderComponent {
   protected readonly universeOverlay = inject(UniverseOverlayService);
 
   protected readonly maskModeTooltip = MASK_MODE_TOOLTIP;
+
+  /**
+   * Values already on screen came unmasked (or masked) from the API; only a
+   * fresh load asks for all of them again under the new setting.
+   */
+  protected toggleMaskMode(): void {
+    this.maskMode.toggle();
+    window.location.reload();
+  }
 }

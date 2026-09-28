@@ -13,11 +13,12 @@ import {
   buildRestoreDetailSurface,
   presentedContent,
 } from './restore-detail-surface';
+import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
 
 @Component({
   selector: 'app-restore-detail',
   standalone: true,
-  imports: [BackupStatusBadgeComponent, BackupProgressModalComponent, BackupBackLinkComponent],
+  imports: [MaskIdPipe, BackupStatusBadgeComponent, BackupProgressModalComponent, BackupBackLinkComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-3xl space-y-4">
@@ -26,7 +27,7 @@ import {
       <header class="flex items-start justify-between">
         <div>
           <h1 class="text-2xl font-semibold">Restore job</h1>
-          <p class="text-xs text-muted-foreground font-mono">{{ r.id }}</p>
+          <p class="text-xs text-muted-foreground font-mono">{{ r.id | maskId }}</p>
         </div>
         <app-backup-status-badge kind="restore" [value]="r.status" />
       </header>

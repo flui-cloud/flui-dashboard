@@ -22,11 +22,12 @@ import {
   buildJobDetailSurface,
   presentedContent,
 } from './job-detail-surface';
+import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
 
 @Component({
   selector: 'app-job-detail',
   standalone: true,
-  imports: [
+  imports: [MaskIdPipe, 
     BackupStatusBadgeComponent,
     BackupProgressModalComponent,
     BackupBackLinkComponent,
@@ -44,7 +45,7 @@ import {
         <header class="flex items-start justify-between">
           <div>
             <h1 class="text-2xl font-semibold">Backup job</h1>
-            <p class="text-xs text-muted-foreground font-mono">{{ j.id }}</p>
+            <p class="text-xs text-muted-foreground font-mono">{{ j.id | maskId }}</p>
           </div>
           <app-backup-status-badge kind="job" [value]="j.status" />
         </header>
