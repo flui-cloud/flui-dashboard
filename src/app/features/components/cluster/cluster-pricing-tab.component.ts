@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -10,101 +11,29 @@ import {
   lucideLoader,
   lucideCircleAlert,
   lucideHardDrive,
+  lucideTrendingUp,
+  lucideChevronDown,
 } from '@ng-icons/lucide';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { ClusterService } from '../../service/cluster.service';
 import { InfrastructureClustersService } from '../../../core/api/api/infrastructureClusters.service';
-
-interface BillingPeriod {
-  start: string;
-  end: string;
-  totalHours: number;
-  elapsedHours: number;
-}
-
-interface Breakdown {
-  computeGross: string;
-  computeNet: string;
-  storageGross: string;
-  storageNet: string;
-  trafficGross: string;
-  trafficNet: string;
-}
-
-interface NodeSegment {
-  serverType: string;
-  startedAt: string;
-  endedAt: string | null;
-  hours: number;
-  costGross: string;
-  costNet: string;
-}
-
-interface NodeMtd {
-  nodeId: string;
-  serverName: string;
-  nodeType: string;
-  currentServerType: string;
-  providerResourceId: string | null;
-  status: 'active' | 'terminated';
-  billableHours: number;
-  costGross: string;
-  costNet: string;
-  segments: NodeSegment[];
-}
-
-interface VolumeMtd {
-  volumeProviderId: string;
-  kind: string;
-  currentSizeGb: number;
-  status: 'active' | 'terminated';
-  costGross: string;
-  costNet: string;
-}
-
-interface TrafficInfo {
-  outgoingBytes: number;
-  ingoingBytes: number;
-  includedBytes: number;
-  overageBytes: number;
-  overageCostGross: string;
-  overageCostNet: string;
-}
-
-interface MonthToDate {
-  totalGross: string;
-  totalNet: string;
-  breakdown: Breakdown;
-  nodes: NodeMtd[];
-  volumes: VolumeMtd[];
-  traffic: TrafficInfo;
-}
-
-interface RunRate {
-  monthlyGross: string;
-  monthlyNet: string;
-  breakdown: Breakdown;
-  activeNodes: number;
-  activeVolumes: number;
-}
-
-interface ClusterBilling {
-  clusterId: string;
-  clusterName: string;
-  provider: string;
-  region: string;
-  currency: string;
-  billingPeriod: BillingPeriod;
-  monthToDate: MonthToDate;
-  runRate: RunRate;
-  calculatedAt: string;
-}
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
+import { formatMoney } from '../../../shared/utils/money';
+import {
+  ClusterBilling,
+  NodeGroups,
+  NodeMtd,
+  groupNodes,
+  shown,
+  vatLabel,
+} from './cluster-pricing-view';
 
 @Component({
   selector: 'cluster-pricing-tab',
   standalone: true,
-  imports: [NgIconComponent],
+  imports: [MaskIdPipe, NgIconComponent, NgTemplateOutlet, RouterLink],
   providers: [
     provideIcons({
       lucideCreditCard,
@@ -115,6 +44,8 @@ interface ClusterBilling {
       lucideLoader,
       lucideCircleAlert,
       lucideHardDrive,
+      lucideTrendingUp,
+      lucideChevronDown,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -200,50 +131,80 @@ interface ClusterBilling {
           </div>
         </div>
 
-        <!-- Spent this month + Run rate -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="card-surface p-5">
             <div class="flex items-center gap-2 mb-3">
               <ng-icon
                 name="lucideCreditCard"
                 class="h-4 w-4 text-green-600 dark:text-green-400"
               />
-              <span class="text-label">Spent this month</span>
+              <span class="text-label">Spent so far</span>
             </div>
             <p class="text-2xl font-bold text-value">
-              {{ b.currency }} {{ formatCost(b.monthToDate.totalGross) }}
+              {{ money(shown(b, { gross: b.monthToDate.totalGross, net: b.monthToDate.totalNet })) }}
             </p>
             <p class="text-xs text-sub mt-1">
-              Net: {{ b.currency }} {{ formatCost(b.monthToDate.totalNet) }}
+              {{ vatLabel(b) }}
+              @if (b.vat?.included) {
+                · {{ money(b.monthToDate.totalNet) }} excl. VAT
+              }
             </p>
             <p class="text-xs text-sub mt-2">
-              From {{ formatDate(b.billingPeriod.start) }} to today — includes
-              already-terminated nodes
+              {{ formatDate(b.billingPeriod.start) }} to today, removed machines included
             </p>
             <div class="mt-3 pt-3 border-t border-border space-y-1">
               <div class="flex justify-between text-xs">
-                <span class="text-sub">Compute</span>
-                <span class="text-value font-medium"
-                  >{{ b.currency }}
-                  {{ formatCost(b.monthToDate.breakdown.computeGross) }}</span
-                >
+                <span class="text-sub">Machines</span>
+                <span class="text-value font-medium">{{
+                  money(shown(b, { gross: b.monthToDate.breakdown.computeGross, net: b.monthToDate.breakdown.computeNet }))
+                }}</span>
               </div>
               <div class="flex justify-between text-xs">
                 <span class="text-sub">Storage</span>
-                <span class="text-value font-medium"
-                  >{{ b.currency }}
-                  {{ formatCost(b.monthToDate.breakdown.storageGross) }}</span
-                >
-              </div>
-              <div class="flex justify-between text-xs">
-                <span class="text-sub">Traffic</span>
-                <span class="text-value font-medium"
-                  >{{ b.currency }}
-                  {{ formatCost(b.monthToDate.breakdown.trafficGross) }}</span
-                >
+                <span class="text-value font-medium">{{
+                  money(shown(b, { gross: b.monthToDate.breakdown.storageGross, net: b.monthToDate.breakdown.storageNet }))
+                }}</span>
               </div>
             </div>
           </div>
+
+          @if (b.forecast; as f) {
+            <div class="card-surface p-5">
+              <div class="flex items-center gap-2 mb-3">
+                <ng-icon
+                  name="lucideTrendingUp"
+                  class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                />
+                <span class="text-label">Expected by month end</span>
+              </div>
+              <p class="text-2xl font-bold text-value">
+                {{ money(shown(b, { gross: f.totalGross, net: f.totalNet })) }}
+              </p>
+              <p class="text-xs text-sub mt-1">
+                {{ vatLabel(b) }}
+                @if (b.vat?.included) {
+                  · {{ money(f.totalNet) }} excl. VAT
+                }
+              </p>
+              <p class="text-xs text-sub mt-2">
+                Spent so far, plus what runs now for the {{ f.remainingHours }}h left in the month
+              </p>
+              <div class="mt-3 pt-3 border-t border-border space-y-1">
+                <div class="flex justify-between text-xs">
+                  <span class="text-sub">Machines</span>
+                  <span class="text-value font-medium">{{
+                    money(shown(b, { gross: f.breakdown.computeGross, net: f.breakdown.computeNet }))
+                  }}</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-sub">Storage</span>
+                  <span class="text-value font-medium">{{
+                    money(shown(b, { gross: f.breakdown.storageGross, net: f.breakdown.storageNet }))
+                  }}</span>
+                </div>
+              </div>
+            </div>
+          }
 
           <div class="card-surface p-5">
             <div class="flex items-center gap-2 mb-3">
@@ -251,126 +212,159 @@ interface ClusterBilling {
                 name="lucideGauge"
                 class="h-4 w-4 text-purple-600 dark:text-purple-400"
               />
-              <span class="text-label">Run rate</span>
+              <span class="text-label">Monthly cost of this setup</span>
             </div>
             <p class="text-2xl font-bold text-value">
-              {{ b.currency }} {{ formatCost(b.runRate.monthlyGross) }}
+              {{ money(shown(b, { gross: b.runRate.monthlyGross, net: b.runRate.monthlyNet })) }}
             </p>
-            <p class="text-xs text-sub mt-1">
-              Net: {{ b.currency }} {{ formatCost(b.runRate.monthlyNet) }}
-            </p>
+            <p class="text-xs text-sub mt-1">{{ vatLabel(b) }}</p>
             <p class="text-xs text-sub mt-2">
-              {{ b.runRate.activeNodes }} node{{
-                b.runRate.activeNodes !== 1 ? 's' : ''
-              }}
-              + {{ b.runRate.activeVolumes }} volume{{
-                b.runRate.activeVolumes !== 1 ? 's' : ''
-              }}
-              at the current rate, for a full month
+              {{ b.runRate.activeNodes }} machine{{ b.runRate.activeNodes !== 1 ? 's' : '' }}
+              and {{ b.runRate.activeVolumes }} volume{{ b.runRate.activeVolumes !== 1 ? 's' : '' }}
+              as they are now, over a whole month
             </p>
             <div class="mt-3 pt-3 border-t border-border space-y-1">
               <div class="flex justify-between text-xs">
-                <span class="text-sub">Compute</span>
-                <span class="text-value font-medium"
-                  >{{ b.currency }}
-                  {{ formatCost(b.runRate.breakdown.computeGross) }}</span
-                >
+                <span class="text-sub">Machines</span>
+                <span class="text-value font-medium">{{
+                  money(shown(b, { gross: b.runRate.breakdown.computeGross, net: b.runRate.breakdown.computeNet }))
+                }}</span>
               </div>
               <div class="flex justify-between text-xs">
                 <span class="text-sub">Storage</span>
-                <span class="text-value font-medium"
-                  >{{ b.currency }}
-                  {{ formatCost(b.runRate.breakdown.storageGross) }}</span
-                >
+                <span class="text-value font-medium">{{
+                  money(shown(b, { gross: b.runRate.breakdown.storageGross, net: b.runRate.breakdown.storageNet }))
+                }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Nodes -->
-        <div class="card-surface">
-          <div class="p-4 border-b border-border">
-            <div class="flex items-center gap-2">
-              <ng-icon
-                name="lucideServer"
-                class="h-4 w-4 text-muted-foreground"
-              />
-              <h3 class="text-sm font-medium text-foreground">
-                Nodes ({{ b.monthToDate.nodes.length }})
-              </h3>
+        @if (b.billedAs || b.unpricedItems || b.listPricedItems) {
+          <div class="text-xs text-sub space-y-1">
+            @if (b.billedAs) {
+              <p>{{ b.provider }}: {{ b.billedAs }}.</p>
+            }
+            @if (b.unpricedItems) {
+              <p>
+                {{ b.unpricedItems }} machine{{ b.unpricedItems !== 1 ? 's or volumes' : ' or volume' }}
+                could not be priced and {{ b.unpricedItems !== 1 ? 'are' : 'is' }} left out of these figures.
+              </p>
+            }
+            @if (b.listPricedItems) {
+              <p>
+                {{ b.listPricedItems }} priced at today's list price: they started before Flui kept the price they were bought at.
+              </p>
+            }
+          </div>
+        }
+
+        @if (groups(); as g) {
+          <div class="card-surface">
+            <div class="p-4 border-b border-border flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <ng-icon
+                  name="lucideServer"
+                  class="h-4 w-4 text-muted-foreground"
+                />
+                <h3 class="text-sm font-medium text-foreground">
+                  Machines ({{ g.active.length }})
+                </h3>
+              </div>
+              <a routerLink="/infrastructure/costs" class="text-xs text-primary hover:underline">All costs</a>
+            </div>
+            <div class="divide-y divide-border">
+              @for (node of g.active; track node.nodeId) {
+                <ng-container *ngTemplateOutlet="nodeRow; context: { $implicit: node, b: b }" />
+              }
+              @if (g.removed.length) {
+                <button
+                  type="button"
+                  class="w-full p-4 flex items-center justify-between text-left hover:bg-muted/40"
+                  (click)="showRemoved.set(!showRemoved())"
+                >
+                  <span class="text-sm text-sub">
+                    {{ g.removed.length }} removed this month
+                  </span>
+                  <span class="flex items-center gap-2 text-sm font-semibold text-value">
+                    {{ money(b.vat?.included ? g.removedGross : g.removedNet) }}
+                    <ng-icon
+                      name="lucideChevronDown"
+                      class="h-4 w-4 text-muted-foreground transition-transform"
+                      [class.rotate-180]="showRemoved()"
+                    />
+                  </span>
+                </button>
+                @if (showRemoved()) {
+                  @for (node of g.removed; track node.nodeId) {
+                    <ng-container *ngTemplateOutlet="nodeRow; context: { $implicit: node, b: b }" />
+                  }
+                }
+              }
             </div>
           </div>
-          <div class="divide-y divide-border">
-            @for (node of b.monthToDate.nodes; track node.nodeId) {
-              <div class="p-4">
-                <div class="flex items-start justify-between mb-2">
-                  <div>
-                    <p class="text-sm font-medium text-value">
-                      {{ node.serverName }}
-                    </p>
-                    <div class="flex items-center gap-2 mt-0.5">
-                      <span
-                        class="text-xs px-1.5 py-0.5 rounded font-medium"
-                        [class]="
-                          node.nodeType === 'master'
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                            : 'bg-muted text-muted-foreground'
-                        "
-                      >
-                        {{ node.nodeType }}
-                      </span>
-                      <span class="text-xs text-sub">{{
-                        node.currentServerType
-                      }}</span>
-                      <span
-                        class="text-xs px-1.5 py-0.5 rounded"
-                        [class]="
-                          node.status === 'active'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                        "
-                      >
-                        {{
-                          node.status === 'active' ? 'active' : 'terminated'
-                        }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-sm font-semibold text-value">
-                      {{ b.currency }} {{ formatCost(node.costGross) }}
-                    </p>
-                    <p class="text-xs text-sub">
-                      {{ node.billableHours }}h billed
-                    </p>
-                  </div>
-                </div>
+        }
 
-                @if (node.segments.length > 1) {
-                  <div class="mt-3 pt-3 border-t border-border space-y-1">
-                    <p class="text-xs text-sub font-medium mb-1">
-                      Server type changes this month:
-                    </p>
-                    @for (seg of node.segments; track $index) {
-                      <div class="flex items-center justify-between text-xs">
-                        <span class="text-sub">
-                          {{ seg.serverType }} · {{ seg.hours }}h ({{
-                            formatDate(seg.startedAt)
-                          }}
-                          —
-                          {{ seg.endedAt ? formatDate(seg.endedAt) : 'now' }})
-                        </span>
-                        <span class="text-value font-medium"
-                          >{{ b.currency }} {{ formatCost(seg.costGross) }}</span
-                        >
-                      </div>
-                    }
+        <ng-template #nodeRow let-node let-b="b">
+          <div class="p-4">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <p class="text-sm font-medium text-value">
+                  {{ node.serverName }}
+                </p>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span
+                    class="text-xs px-1.5 py-0.5 rounded font-medium"
+                    [class]="
+                      node.nodeType === 'master'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                        : 'bg-muted text-muted-foreground'
+                    "
+                  >
+                    {{ node.nodeType }}
+                  </span>
+                  <span class="text-xs text-sub">{{ node.currentServerType }}</span>
+                  <span
+                    class="text-xs px-1.5 py-0.5 rounded"
+                    [class]="
+                      node.status === 'active'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                    "
+                  >
+                    {{ node.status === 'active' ? 'running' : 'removed' }}
+                  </span>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-semibold text-value">
+                  {{ money(shown(b, { gross: node.costGross, net: node.costNet })) }}
+                </p>
+                <p class="text-xs text-sub">{{ node.billableHours }}h billed</p>
+              </div>
+            </div>
+
+            @if (node.segments.length > 1) {
+              <div class="mt-3 pt-3 border-t border-border space-y-1">
+                <p class="text-xs text-sub font-medium mb-1">
+                  Server type changes this month:
+                </p>
+                @for (seg of node.segments; track $index) {
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-sub">
+                      {{ seg.serverType }} · {{ seg.hours }}h ({{ formatDate(seg.startedAt) }}
+                      —
+                      {{ seg.endedAt ? formatDate(seg.endedAt) : 'now' }})
+                    </span>
+                    <span class="text-value font-medium">{{
+                      money(shown(b, { gross: seg.costGross, net: seg.costNet }))
+                    }}</span>
                   </div>
                 }
               </div>
             }
           </div>
-        </div>
+        </ng-template>
 
         <!-- Volumes -->
         @if (b.monthToDate.volumes.length > 0) {
@@ -399,15 +393,15 @@ interface ClusterBilling {
                       {{ vol.kind }} · {{ vol.currentSizeGb }} GB
                     </p>
                     <p class="text-xs text-sub mt-0.5">
-                      ID: {{ vol.volumeProviderId }}
+                      ID: {{ vol.volumeProviderId | maskId }}
                     </p>
                   </div>
                   <div class="text-right">
                     <p class="text-sm font-semibold text-value">
-                      {{ b.currency }} {{ formatCost(vol.costGross) }}
+                      {{ money(shown(b, { gross: vol.costGross, net: vol.costNet })) }}
                     </p>
                     <p class="text-xs text-sub">
-                      {{ vol.status === 'active' ? 'active' : 'terminated' }}
+                      {{ vol.status === 'active' ? 'in use' : 'removed' }}
                     </p>
                   </div>
                 </div>
@@ -428,6 +422,13 @@ export class ClusterPricingTabComponent implements OnInit {
   private readonly clustersApi = inject(InfrastructureClustersService);
 
   billing = signal<ClusterBilling | null>(null);
+  readonly groups = computed<NodeGroups | null>(() => {
+    const b = this.billing();
+    return b ? groupNodes(b.monthToDate.nodes as NodeMtd[]) : null;
+  });
+  readonly showRemoved = signal(false);
+  readonly shown = shown;
+  readonly vatLabel = vatLabel;
   isLoading = signal(false);
   error = signal<string | null>(null);
 
@@ -457,8 +458,8 @@ export class ClusterPricingTabComponent implements OnInit {
     }
   }
 
-  formatCost(value: string, decimals = 2): string {
-    return Number.parseFloat(value || '0').toFixed(decimals);
+  money(value: string | number | null | undefined): string {
+    return formatMoney(value, this.billing()?.currency ?? 'EUR');
   }
 
   formatDate(isoString: string): string {

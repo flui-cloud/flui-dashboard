@@ -10,6 +10,8 @@ import {
   PlacementStrategy,
   ProvisionMode,
   ScalingBounds,
+  ScalingCost,
+  ScalingCostDraft,
   DecisionOperation,
   FleetRoom,
   GiveBack,
@@ -98,6 +100,7 @@ interface WireGroup {
   acts: WireActuation;
   purchaseHeld?: { failedAt: string; error: string | null; until?: string | null } | null;
   purchase?: WirePurchase | null;
+  cost?: ScalingCost | null;
 }
 
 interface WirePurchase {
@@ -375,6 +378,11 @@ export class ScalingApiService {
       .pipe(map(toGroup));
   }
 
+  /** What node limits would cost before they are saved, priced by the API. */
+  cost(clusterId: string, draft: Partial<ScalingCostDraft>): Observable<ScalingCost> {
+    return this.http.post<ScalingCost>(`${this.base}/clusters/${clusterId}/scaling/cost`, draft);
+  }
+
   deleteGroup(groupId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/scaling-groups/${groupId}`);
   }
@@ -459,6 +467,7 @@ function toGroup(wire: WireGroup): SectionGroup {
     standingOrders: wire.standingOrders.map(toStandingOrder),
     requirement: wire.requirement,
     acts: wire.acts,
+    cost: wire.cost ?? null,
     purchaseHeld: wire.purchaseHeld
       ? {
           failedAt: new Date(wire.purchaseHeld.failedAt),

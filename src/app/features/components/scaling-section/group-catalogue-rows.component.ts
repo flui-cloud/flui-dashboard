@@ -192,12 +192,15 @@ import { ShapeSpec } from '../../model/scaling-section.models';
       <th scope="row" [class]="t.td + ' font-normal'">
         <app-explain
           [floating]="true"
-          label="Spend cap"
+          label="Spending ceiling"
           labelClass="text-[13px] text-foreground"
           testid="cap-why"
         >
-          Weighed against the whole fleet's monthly bill, not against one
-          machine: what is already running counts against it.
+          The safety net under the node limits. Before every purchase the
+          fleet's whole monthly list price is weighed against it, not one
+          machine: what is already running counts. Required to buy
+          automatically; set it above the worst case below and it only ever
+          stops a runaway.
         </app-explain>
       </th>
       <td [class]="t.td">
@@ -209,10 +212,10 @@ import { ShapeSpec } from '../../model/scaling-section.models';
               min="0"
               step="1"
               [class]="t.field + ' w-28 tabular-nums'"
-              placeholder="no cap"
+              placeholder="none"
               [ngModel]="g().limits.maxMonthlyCost"
               (ngModelChange)="d().setCost($event)"
-              aria-label="Spend ceiling per month"
+              aria-label="Spending ceiling per month"
               data-testid="max-monthly"
             />
             <span class="text-[12px] text-muted-foreground">per month</span>
@@ -236,7 +239,7 @@ import { ShapeSpec } from '../../model/scaling-section.models';
             <span>{{ warning }}</span>
           </span>
         } @else if (d().hasCatalogue()) {
-          In currency, not in node count.
+          Safety net: never passed, whatever the node limits allow.
         } @else {
           <app-explain
             [floating]="true"
@@ -279,9 +282,9 @@ export class GroupCatalogueRowsComponent {
     if (committed + cheapest <= cap) return null;
 
     const running = committed
-      ? `The fleet already costs €${committed.toFixed(0)} a month and the `
+      ? `The fleet already costs €${committed.toFixed(2)} a month and the `
       : 'The ';
-    return `${running}cheapest machine this group may buy adds €${cheapest.toFixed(0)}, so nothing can be bought under €${cap}.`;
+    return `${running}cheapest machine this group may buy adds €${cheapest.toFixed(2)}, so nothing can be bought under a spending ceiling of €${cap.toFixed(2)}.`;
   });
 
   constructor() {

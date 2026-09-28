@@ -16,16 +16,17 @@ import {
   WriteScalingGroup,
 } from '../../model/scaling-group.models';
 import { consequenceOf } from '../scaling-section/scaling-consequence';
+import { GroupCostComponent } from '../scaling-section/group-cost.component';
 
 /**
  * Sets up scaling for one cluster, or changes it. The figure being agreed to —
- * how large the cluster may become and how much it may spend unattended — is
- * on screen beside the fields, not behind a second click.
+ * how large the cluster may become, and what that can cost — is on screen
+ * beside the fields, not behind a second click.
  */
 @Component({
   selector: 'app-scaling-group-form',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, GroupCostComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   host: { '(document:keydown.escape)': 'close()' },
   template: `
@@ -110,7 +111,7 @@ import { consequenceOf } from '../scaling-section/scaling-consequence';
           @if (provision() === 'automatic') {
             <div class="flex flex-col gap-1.5">
               <label for="cap" class="text-xs font-semibold text-foreground"
-                >Monthly cap</label
+                >Spending ceiling (€ a month)</label
               >
               <div class="flex items-center gap-2.5">
                 <input
@@ -126,10 +127,18 @@ import { consequenceOf } from '../scaling-section/scaling-consequence';
                 >
               </div>
               <p class="m-0 text-[11px] text-sub">
-                Flui will not cross it, and raises an alarm instead.
+                The safety net under the node limits: Flui never passes it,
+                and raises an alarm instead.
               </p>
             </div>
           }
+
+          <app-group-cost
+            [clusterId]="clusterId()"
+            [draft]="costDraft()"
+            [needsCeiling]="needsCeiling()"
+            (useCeiling)="capEdit.set($event)"
+          />
 
           @if (problem(); as message) {
             <p
@@ -198,15 +207,15 @@ export class ScalingGroupFormComponent {
 
   readonly clusterId = input.required<string>();
   readonly existing = input<SectionGroup | null>(null);
-  /** Seeds the ceiling and the floor when this cluster has no group yet. */
+  /** Seeds the node limits when this cluster has no group yet. */
   readonly currentNodes = input<number>(1);
   readonly saved = output<SectionGroup>();
   readonly closed = output<void>();
 
   readonly bounds = [
-    { role: 'min' as const, label: 'floor' },
+    { role: 'min' as const, label: 'min nodes' },
     { role: 'desired' as const, label: 'target' },
-    { role: 'max' as const, label: 'ceiling' },
+    { role: 'max' as const, label: 'max nodes' },
   ];
 
   readonly modes: { value: ProvisionMode; label: string; help: string }[] = [
@@ -276,6 +285,20 @@ export class ScalingGroupFormComponent {
     },
   }));
 
+  readonly costDraft = computed(() => {
+    const { min, max } = this.draftBounds();
+    if (min < 1 || max > 20 || min > max) return null;
+    const cap = this.cap();
+    return {
+      bounds: { min, max },
+      maxMonthlyCost: cap ? Number(cap) : null,
+    };
+  });
+
+  readonly needsCeiling = computed(
+    () => this.provision() === 'automatic' && !isPositiveAmount(this.cap()),
+  );
+
   readonly consequence = computed(() =>
     consequenceOf(this.body(), this.currentNodes()),
   );
@@ -286,12 +309,13 @@ export class ScalingGroupFormComponent {
     const { min, desired, max } = this.draftBounds();
     if (min < 1 || desired < 1 || max < 1)
       return 'A node count is at least one: every cluster holds its master.';
-    if (max > 20) return 'A cluster may hold at most 20 nodes.';
-    if (min > max) return 'The ceiling cannot be below the floor.';
+    if (min > 20 || desired > 20 || max > 20)
+      return 'A cluster may hold at most 20 nodes, master included.';
+    if (min > max) return 'Max nodes cannot be below min nodes.';
     if (desired < min || desired > max)
-      return 'The target sits between the floor and the ceiling.';
-    if (this.provision() === 'automatic' && Number(this.cap()) <= 0) {
-      return 'Set a monthly ceiling before letting Flui buy.';
+      return 'The target sits between min and max nodes.';
+    if (this.provision() === 'automatic' && !isPositiveAmount(this.cap())) {
+      return 'Automatic buying needs a spending ceiling, the safety net under the node limits.';
     }
     return null;
   });
@@ -326,4 +350,8 @@ export class ScalingGroupFormComponent {
     if (typeof body === 'string') return body;
     return 'Scaling could not be saved.';
   }
+}
+
+function isPositiveAmount(value: unknown): boolean {
+  return Number(value) > 0;
 }

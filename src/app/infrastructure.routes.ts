@@ -7,6 +7,14 @@ export const infrastructureRoutes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'costs',
+    loadComponent: () =>
+      import('./features/components/costs/costs.component').then(
+        (m) => m.CostsComponent,
+      ),
+    title: 'Costs - flui.cloud',
+  },
+  {
     path: 'compute',
     children: [
       {

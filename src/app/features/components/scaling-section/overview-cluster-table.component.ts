@@ -297,7 +297,8 @@ export class OverviewClusterTableComponent {
     }
 
     const cap = row.monthlyCap;
-    const against = cap === null ? 'no cap' : `cap €${cap}`;
+    const against =
+      cap === null ? 'no spending ceiling' : `ceiling €${cap.toFixed(2)}`;
     return {
       value: eurMonth(row.monthlyEur),
       sub: row.unpricedNodes ? `at least · ${against}` : against,
@@ -306,7 +307,7 @@ export class OverviewClusterTableComponent {
   }
 
   private setupCopy(row: ClusterScalingRow, mode: ScalingMode): string {
-    const bounds = `Setting up scaling for ${row.clusterName} would ask for three bounds: a floor held immediately, a target approached only when the market allows, and a ceiling urgency may reach right now.`;
+    const bounds = `Setting up scaling for ${row.clusterName} would ask for limits in nodes: a minimum held immediately, a target approached only when the market allows, and a maximum urgency may reach right now. What they can cost is shown beside them.`;
     const provider: Partial<Record<ScalingMode, string>> = {
       'flui-buys': `${row.capability.provider} can create servers through its own API, so this cluster would buy for itself instead of waiting on you.`,
       'you-buy': `${row.capability.provider} publishes a catalogue but has no create API, so the group would name a machine and its price and raise an alarm for you to act on.`,

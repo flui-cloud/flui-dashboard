@@ -109,9 +109,9 @@ export class ScalingNowBlockedComponent {
     const g = this.group();
     switch (exit.kind) {
       case 'raise-cap':
-        return `Set the monthly ceiling from ${g.limits.maxMonthlyCost === null ? 'none' : '€' + g.limits.maxMonthlyCost} to €${exit.toEur}?`;
+        return `Set the spending ceiling from ${g.limits.maxMonthlyCost === null ? 'none' : '€' + g.limits.maxMonthlyCost.toFixed(2)} to €${exit.toEur}?`;
       case 'raise-max-nodes':
-        return `Set the node ceiling from ${g.bounds.max} to ${exit.toNodes}?`;
+        return `Set max nodes from ${g.bounds.max} to ${exit.toNodes}?`;
       case 'add-shape':
         return `Add ${exit.shape} after ${g.shapes.join(', ') || 'the current list'}?`;
       default:

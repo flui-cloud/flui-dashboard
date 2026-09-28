@@ -323,15 +323,15 @@ export class ScalingNowSummaryComponent {
   private nodesCard(row: ClusterScalingRow | null): StatCard {
     const bounds = this.group().bounds;
 
-    const ceiling = this.manual()
-      ? `ceiling ${bounds.max}, reported not enforced`
-      : `ceiling ${bounds.max}`;
+    const most = this.manual()
+      ? `max ${bounds.max}, reported not enforced`
+      : `max ${bounds.max}`;
 
     return {
       id: 'nodes',
       label: 'Nodes',
       value: row ? `${row.nodes}` : '—',
-      caption: `floor ${bounds.min} · target ${bounds.desired} · ${ceiling}`,
+      caption: `min ${bounds.min} · target ${bounds.desired} · ${most}`,
     };
   }
 
@@ -361,9 +361,12 @@ export class ScalingNowSummaryComponent {
       };
     }
 
-    let against = 'no cap';
+    let against = 'no spending ceiling';
     if (cap !== null) {
-      against = row.monthlyEur > cap ? `over its €${cap} cap` : `cap €${cap}`;
+      against =
+        row.monthlyEur > cap
+          ? `over its spending ceiling of €${cap.toFixed(2)}`
+          : `spending ceiling €${cap.toFixed(2)}`;
     }
 
     const unpriced = row.unpricedNodes;
@@ -380,11 +383,21 @@ export class ScalingNowSummaryComponent {
     };
   }
 
+  /**
+   * The cluster did not say what is waiting. One reading for the whole page:
+   * the card and the sentence above it both say "not known" rather than one
+   * of them claiming calm.
+   */
+  protected readonly unasked = computed(() => {
+    const row = this.row();
+    return row !== null && row.pendingPods === null && !this.pending();
+  });
+
   private pendingCard(): StatCard {
     const group = this.group();
     const stuck = this.pending();
     const row = this.row();
-    const unasked = row !== null && row.pendingPods === null && !stuck;
+    const unasked = this.unasked();
     const alreadyPending = stuck ? 1 : 0;
     const counted = row ? Math.max(row.pendingPods ?? 0, alreadyPending) : null;
     const waiting = stuck
@@ -439,6 +452,10 @@ export class ScalingNowSummaryComponent {
       fleet !== null && fleet < group.bounds.min
         ? ` The fleet is also ${fleet} where the floor is ${group.bounds.min}, and the floor is held now rather than approached.`
         : '';
+
+    if (!stuck && this.unasked()) {
+      return `The cluster could not be asked whether anything is waiting, so Flui cannot say that everything is running.${under}`;
+    }
 
     if (!stuck) {
       if (fleet !== null && fleet < group.bounds.min) {

@@ -42,7 +42,7 @@ describe('switching a group to automatic', () => {
     fixture.detectChanges();
   };
 
-  it('asks for a monthly ceiling when the group has none, and will not switch without it', async () => {
+  it('asks for a spending ceiling when the group has none, and will not switch without it', async () => {
     await build(group());
     open();
     const confirm = find('scaling-mode-switch-confirm') as HTMLButtonElement;
@@ -77,6 +77,30 @@ describe('switching a group to automatic', () => {
 
   it('offers to set a ceiling on an automatic group that has none', async () => {
     await build(group({ provision: 'automatic' }));
-    expect(find('scaling-mode-switch')!.textContent).toContain('Set a monthly ceiling');
+    expect(find('scaling-mode-switch')!.textContent).toContain('Set a spending ceiling');
+  });
+
+  it('proposes the ceiling the API computed to cover the worst case, in nodes first', async () => {
+    await build(
+      group({
+        cost: {
+          priced: true,
+          says: '',
+          unpricedShapes: [],
+          scenarios: [{ kind: 'worst-case', label: 'At the maximum', lowEur: 30, highEur: 45 }],
+          ceiling: { monthlyEur: null, nodesWithin: null, stopsBeforeMax: false, says: '' },
+          suggestedCeilingEur: 45,
+        },
+      } as Partial<SectionGroup>),
+    );
+    open();
+    expect((find('scaling-mode-cap') as HTMLInputElement).value).toBe('45');
+    expect(find('scaling-mode-confirm')!.textContent).toContain('up to 3 nodes, never past a spending ceiling of €45.00');
+    (find('scaling-mode-switch-confirm') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(updateGroup).toHaveBeenCalledWith('g-1', {
+      provision: 'automatic',
+      limits: { hourlyBillingOnly: true, maxMonthlyCost: 45 },
+    });
   });
 });

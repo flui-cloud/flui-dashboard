@@ -18,13 +18,13 @@ describe('consequenceOf', () => {
     expect(reading.sentence).not.toContain('without asking you');
   });
 
-  it('names how many nodes and how much money before Flui may buy', () => {
+  it('names how many nodes, with the spending ceiling underneath, before Flui may buy', () => {
     const reading = consequenceOf(
       draft({ provision: 'automatic', limits: { maxMonthlyCost: 45 } }),
       1,
     );
     expect(reading.sentence).toBe(
-      'Flui may grow this cluster up to 3 more nodes, spending at most €45 a month, without asking you again.',
+      'Flui may grow this cluster by up to 3 more nodes without asking you again. Under that, it never lets the fleet pass the spending ceiling of €45.00 a month.',
     );
   });
 
@@ -59,9 +59,9 @@ describe('consequenceOf', () => {
     expect(reading.sentence).toContain('to at most 4 nodes');
   });
 
-  it('admits an uncapped sentence for what it is, so the form can refuse it', () => {
+  it('says an automatic group without a spending ceiling buys nothing', () => {
     const reading = consequenceOf(draft({ provision: 'automatic' }), 1);
-    expect(reading.sentence).toContain('an unlimited amount');
+    expect(reading.sentence).toContain('nothing will be bought until one is');
   });
 
   it('repeats the wait and the floor, the two things a reader forgets', () => {

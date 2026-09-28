@@ -46,6 +46,9 @@ export class GroupDraft {
     ),
   );
 
+  /** What is wrong with each node limit as typed, said beside that field. */
+  readonly boundProblems = computed(() => boundProblemsOf(this.group().bounds));
+
   readonly chosenStrategy = computed<StrategyCopy | null>(
     () => STRATEGIES.find((s) => s.id === this.group().strategy) ?? null,
   );
@@ -144,15 +147,43 @@ export class GroupDraft {
  * removed — so one is the smallest a live cluster can be, and the API refuses
  * anything outside this range on either of its doors.
  */
-const MIN_FLEET_NODES = 1;
-const MAX_FLEET_NODES = 20;
+export const MIN_FLEET_NODES = 1;
+export const MAX_FLEET_NODES = 20;
+
+export type BoundProblems = Partial<Record<BoundRole, string>>;
+
+/**
+ * A value out of range is kept in the draft and named beside its field, so
+ * Save is never switched off without a reason on the screen.
+ */
+export function boundProblemsOf(bounds: ScalingBounds): BoundProblems {
+  const out: BoundProblems = {};
+  for (const role of ['min', 'desired', 'max'] as const) {
+    const value = bounds[role];
+    if (value > MAX_FLEET_NODES) {
+      out[role] = `At most ${MAX_FLEET_NODES} nodes, master included.`;
+    } else if (value < MIN_FLEET_NODES) {
+      out[role] = `At least ${MIN_FLEET_NODES} node: the master.`;
+    }
+  }
+  if (!out.max && !out.min && bounds.min > bounds.max) {
+    out.max = 'Max nodes cannot be below min nodes.';
+  }
+  if (
+    !out.desired &&
+    !out.max &&
+    !out.min &&
+    (bounds.desired < bounds.min || bounds.desired > bounds.max)
+  ) {
+    out.desired = 'The target sits between min and max nodes.';
+  }
+  return out;
+}
 
 function whole(value: FieldValue): number | null {
   if (value === null || value === '') return null;
   const parsed = Math.round(Number(value));
-  if (!Number.isFinite(parsed)) return null;
-  if (parsed < MIN_FLEET_NODES || parsed > MAX_FLEET_NODES) return null;
-  return parsed;
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function euros(value: FieldValue): number | null {

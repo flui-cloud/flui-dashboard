@@ -104,8 +104,8 @@ function why(ctx: LadderContext, rung: LadderRung): string {
     case 'over-budget': {
       const cap = ctx.group.limits.maxMonthlyCost;
       return cap === null
-        ? 'Over the cost limit.'
-        : `Would take the fleet past €${cap}/month.`;
+        ? 'Over the spending ceiling.'
+        : `Would take the fleet past the spending ceiling of €${cap.toFixed(2)}/month.`;
     }
     case 'refused-by-limit':
       return "The group's own rules exclude it.";
@@ -120,8 +120,8 @@ function whyWouldBuy(ctx: LadderContext): string {
   if (manual(ctx))
     return 'Fits and is available — but nothing here can buy it.';
   return withheld(ctx)
-    ? 'Fits, available, inside the ceiling — and this group buys nothing.'
-    : 'Fits, available, inside the ceiling.';
+    ? 'Fits, available, inside the spending ceiling — and this group buys nothing.'
+    : 'Fits, available, inside the spending ceiling.';
 }
 
 function whyUnavailable(ctx: LadderContext, rung: LadderRung): string {

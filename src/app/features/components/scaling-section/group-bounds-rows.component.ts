@@ -34,7 +34,8 @@ import { TABLE } from './scaling-tabs-format';
           testid="provision-why"
         >
           @if (d().canProvision()) {
-            Automatic stays inside the ceilings below and never asks again.
+            Automatic stays inside the node limits below, and under the
+            spending ceiling, and never asks again.
           } @else {
             Not a choice here: Flui cannot create a machine on
             {{ provider() }}.
@@ -85,7 +86,7 @@ import { TABLE } from './scaling-tabs-format';
       <th scope="row" [class]="t.td + ' font-normal'">
         <app-explain
           [floating]="true"
-          label="Floor"
+          label="Min nodes"
           labelClass="text-[13px] text-foreground"
           testid="floor-why"
         >
@@ -102,11 +103,19 @@ import { TABLE } from './scaling-tabs-format';
           [class]="t.field + ' w-24 tabular-nums'"
           [ngModel]="g().bounds.min"
           (ngModelChange)="d().setBound('min', $event)"
-          aria-label="Floor"
+          aria-label="Min nodes"
+          [attr.aria-invalid]="!!d().boundProblems().min"
           data-testid="bound-min-input"
         />
+        @if (d().boundProblems().min; as problem) {
+          <span
+            class="mt-1 block text-[12px] text-red-600 dark:text-red-400"
+            data-testid="bound-min-error"
+            >{{ problem }}</span
+          >
+        }
       </td>
-      <td [class]="t.tdMuted">Never fewer than this. Held now, always.</td>
+      <td [class]="t.tdMuted">Never fewer nodes than this. Held now, always.</td>
     </tr>
 
     <tr [class]="t.row" data-testid="row-desired">
@@ -130,9 +139,17 @@ import { TABLE } from './scaling-tabs-format';
           [class]="t.field + ' w-24 tabular-nums'"
           [ngModel]="g().bounds.desired"
           (ngModelChange)="d().setBound('desired', $event)"
-          aria-label="Target"
+          aria-label="Target nodes"
+          [attr.aria-invalid]="!!d().boundProblems().desired"
           data-testid="bound-desired-input"
         />
+        @if (d().boundProblems().desired; as problem) {
+          <span
+            class="mt-1 block text-[12px] text-red-600 dark:text-red-400"
+            data-testid="bound-desired-error"
+            >{{ problem }}</span
+          >
+        }
       </td>
       <td [class]="t.tdMuted">Where the fleet would like to sit.</td>
     </tr>
@@ -141,12 +158,13 @@ import { TABLE } from './scaling-tabs-format';
       <th scope="row" [class]="t.td + ' font-normal'">
         <app-explain
           [floating]="true"
-          label="Ceiling"
+          label="Max nodes"
           labelClass="text-[13px] text-foreground"
           testid="ceiling-why"
         >
           @if (d().canProvision()) {
-            Reached with whatever fits, not with a preferred machine.
+            Reached with whatever fits, not with a preferred machine. What it
+            can cost is shown below, from min to max.
           } @else {
             <span data-testid="max-meaning-manual">
               Machines arrive by hand here, so going past it is reported rather
@@ -164,13 +182,21 @@ import { TABLE } from './scaling-tabs-format';
           [class]="t.field + ' w-24 tabular-nums'"
           [ngModel]="g().bounds.max"
           (ngModelChange)="d().setBound('max', $event)"
-          aria-label="Ceiling"
+          aria-label="Max nodes"
+          [attr.aria-invalid]="!!d().boundProblems().max"
           data-testid="bound-max-input"
         />
+        @if (d().boundProblems().max; as problem) {
+          <span
+            class="mt-1 block text-[12px] text-red-600 dark:text-red-400"
+            data-testid="bound-max-error"
+            >{{ problem }}</span
+          >
+        }
       </td>
       <td [class]="t.tdMuted">
         @if (d().canProvision()) {
-          Never more than this.
+          Never more nodes than this.
         } @else {
           Reported, not prevented.
         }

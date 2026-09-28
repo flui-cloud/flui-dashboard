@@ -22,6 +22,7 @@ export const FULL_ACCESS_ONLY_LABELS: ReadonlySet<string> = new Set([
 
 export const INFRASTRUCTURE_SECTION_BY_LABEL: Record<string, string> = {
   Compute: 'infrastructure',
+  Costs: 'infrastructure',
   'Virtual Networks': 'infrastructure',
   'SSH Keys': 'infrastructure',
   Domains: 'infrastructure',
@@ -52,6 +53,13 @@ export const INFRASTRUCTURE_ITEMS: SidebarNavItem[] = [
     routerLinkActive: 'active',
     icon: 'lucideServer',
     keywords: ['vps', 'instances', 'hetzner', 'scaleway'],
+  },
+  {
+    label: 'Costs',
+    link: '/infrastructure/costs',
+    routerLinkActive: 'active',
+    icon: 'lucideReceipt',
+    keywords: ['billing', 'spend', 'invoice', 'price', 'vat'],
   },
   {
     label: 'Virtual Networks',

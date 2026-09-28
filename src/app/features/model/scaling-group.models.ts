@@ -48,6 +48,42 @@ export interface ScalingLimits {
   maxMonthlyCost: number | null;
 }
 
+export type CostScenarioKind = 'at-min' | 'short-peak' | 'daily-peak' | 'worst-case';
+
+export interface CostScenario {
+  kind: CostScenarioKind;
+  label: string;
+  /** With the cheapest machine on the list; null where it cannot be priced. */
+  lowEur: number | null;
+  /** With the dearest machine on the list. */
+  highEur: number | null;
+}
+
+/**
+ * What the node limits cost, as the API priced them from the provider's list.
+ * The page shows it and never multiplies a price of its own.
+ */
+export interface ScalingCost {
+  priced: boolean;
+  says: string;
+  unpricedShapes: string[];
+  scenarios: CostScenario[];
+  ceiling: {
+    monthlyEur: number | null;
+    nodesWithin: number | null;
+    stopsBeforeMax: boolean;
+    says: string;
+  };
+  suggestedCeilingEur: number | null;
+}
+
+export interface ScalingCostDraft {
+  bounds: { min: number; max: number };
+  shapes: string[];
+  regions: string[];
+  maxMonthlyCost: number | null;
+}
+
 export interface ScalingGroup {
   id: string;
   name: string;

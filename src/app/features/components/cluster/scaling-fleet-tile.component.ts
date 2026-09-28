@@ -154,7 +154,7 @@ export class ScalingFleetTileComponent {
       if (this.step().kind !== 'idle') return;
       const chosen = preview.chosen;
       if (more && chosen?.shape && chosen.region) {
-        const price = chosen.hourlyEur === null ? '' : ` at €${chosen.hourlyEur}/h`;
+        const price = chosen.hourlyEur === null ? '' : ` at €${formatHourly(chosen.hourlyEur)}/h`;
         this.step.set({ kind: 'buy', shape: chosen.shape, region: chosen.region, price });
       } else if (!more && preview.giveBack && !preview.giveBack.onItsOwn) {
         this.step.set({ kind: 'give-back', node: preview.giveBack.node });
@@ -256,7 +256,7 @@ export class ScalingFleetTileComponent {
     const preview = await firstValueFrom(this.api.preview(groupId));
     const chosen = preview.chosen;
     if (more && chosen?.shape && chosen.region) {
-      const price = chosen.hourlyEur === null ? '' : ` at €${chosen.hourlyEur}/h`;
+      const price = chosen.hourlyEur === null ? '' : ` at €${formatHourly(chosen.hourlyEur)}/h`;
       this.step.set({ kind: 'buy', shape: chosen.shape, region: chosen.region, price });
       return;
     }
@@ -321,3 +321,7 @@ export class ScalingFleetTileComponent {
   }
 }
 
+/** An hourly price keeps the precision providers quote it with, up to 4 decimals. */
+function formatHourly(eur: number): string {
+  return Number(eur.toFixed(4)).toString();
+}

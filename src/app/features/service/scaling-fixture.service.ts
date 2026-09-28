@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import {
   AvailabilityOutlook,
+  ScalingCost,
   ScalingDecision,
   ScalingPreview,
   WriteScalingGroup,
@@ -463,6 +464,17 @@ export class ScalingFixtureService extends ScalingApiService {
 
   override row(clusterId: string): Observable<ClusterScalingRow> {
     return of(ROWS.find((row) => row.clusterId === clusterId) ?? ROWS[0]);
+  }
+
+  override cost(): Observable<ScalingCost> {
+    return of({
+      priced: false,
+      says: 'The fixture reads no provider prices, so no cost is shown.',
+      unpricedShapes: [],
+      scenarios: [],
+      ceiling: { monthlyEur: null, nodesWithin: null, stopsBeforeMax: false, says: '' },
+      suggestedCeilingEur: null,
+    });
   }
 
   override group(groupId: string): Observable<SectionGroup> {

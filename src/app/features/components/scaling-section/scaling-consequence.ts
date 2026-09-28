@@ -12,9 +12,9 @@ export interface ConsequenceReading {
  *
  * The API asks the same question of its own callers, but the action cycle only
  * intercepts agentic surfaces — a form in a browser meets no such step. This
- * sentence is therefore the only consent that exists for the dashboard, which
- * is why the monthly ceiling is required before Flui may buy: without it the
- * sentence would end in "unlimited", and nobody can agree to that.
+ * sentence is therefore the only consent that exists for the dashboard. It is
+ * said in nodes; the spending ceiling is the safety net under them, required
+ * before Flui may buy.
  */
 export function consequenceOf(
   draft: WriteScalingGroup,
@@ -35,15 +35,17 @@ export function consequenceOf(
   }
 
   // How much room is being granted: counted from the nodes the cluster has
-  // where the caller knows them, and from the ceiling itself where it does not.
+  // where the caller knows them, and from the maximum itself where it does not.
   const growth =
     currentNodes === undefined
       ? `to at most ${draft.bounds.max} nodes`
-      : `up to ${nodeWord(Math.max(0, draft.bounds.max - currentNodes))}`;
-  const spend =
-    cap == null ? 'an unlimited amount' : `at most €${cap.toFixed(0)} a month`;
+      : `by up to ${nodeWord(Math.max(0, draft.bounds.max - currentNodes))}`;
+  const ceiling =
+    cap == null
+      ? 'No spending ceiling is set, so nothing will be bought until one is.'
+      : `Under that, it never lets the fleet pass the spending ceiling of €${cap.toFixed(2)} a month.`;
   return {
-    sentence: `Flui may grow this cluster ${growth}, spending ${spend}, without asking you again.`,
+    sentence: `Flui may grow this cluster ${growth} without asking you again. ${ceiling}`,
     clauses: [
       `It acts only when an app has been stuck for ${draft.settleSeconds ?? 30} seconds.`,
       `It gives a node back when the work fits without it, never going below ${draft.bounds.min}.`,

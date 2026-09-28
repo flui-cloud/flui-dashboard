@@ -11,17 +11,21 @@ import { firstValueFrom, map } from 'rxjs';
 import { GroupDraft } from './group-draft';
 import { GroupDraftStore } from './group-draft.store';
 import { GroupSettingsTableComponent } from './group-settings-table.component';
+import { GroupCostComponent } from './group-cost.component';
 import { consequenceOf } from './scaling-consequence';
 import { ScalingApiService } from '../../service/scaling-api.service';
 import { ScalingGroupStore } from './scaling-group.store';
 import { ToastService } from '../../../shared/services/toast.service';
 import { SectionGroup } from '../../model/scaling-section.models';
-import { WriteScalingGroup } from '../../model/scaling-group.models';
+import {
+  ScalingCostDraft,
+  WriteScalingGroup,
+} from '../../model/scaling-group.models';
 
 @Component({
   selector: 'app-scaling-group-tab',
   standalone: true,
-  imports: [RouterLink, GroupSettingsTableComponent],
+  imports: [RouterLink, GroupSettingsTableComponent, GroupCostComponent],
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -40,6 +44,15 @@ import { WriteScalingGroup } from '../../model/scaling-group.models';
         </div>
 
         <app-group-settings-table [draft]="d" />
+
+        @if (d.hasCatalogue()) {
+          <app-group-cost
+            [clusterId]="d.group().clusterId"
+            [draft]="costDraft(d)"
+            [needsCeiling]="needsCeiling(d)"
+            (useCeiling)="d.setCost($event)"
+          />
+        }
 
         <div
           class="card-surface flex flex-wrap items-start justify-between gap-4 p-4"
@@ -199,20 +212,36 @@ export class ScalingGroupTabComponent {
     return consequenceOf(bodyOf(draft.group()));
   }
 
+  /** The limits on screen, priced by the API; nothing while one is out of range. */
+  protected costDraft(draft: GroupDraft): ScalingCostDraft | null {
+    if (Object.keys(draft.boundProblems()).length) return null;
+    const g = draft.group();
+    return {
+      bounds: { min: g.bounds.min, max: g.bounds.max },
+      shapes: g.shapes,
+      regions: g.regions,
+      maxMonthlyCost: g.limits.maxMonthlyCost,
+    };
+  }
+
+  protected needsCeiling(draft: GroupDraft): boolean {
+    const g = draft.group();
+    return g.provision === 'automatic' && !isPositiveAmount(g.limits.maxMonthlyCost);
+  }
+
   protected problem(draft: GroupDraft): string | null {
     const saved = this.failure();
     if (saved) return saved;
 
     const group = draft.group();
-    const { min, desired, max } = group.bounds;
-    if (min > max) return 'The ceiling cannot be below the floor.';
-    if (desired < min || desired > max)
-      return 'The target sits between the floor and the ceiling.';
+    const bounds = draft.boundProblems();
+    const first = bounds.min ?? bounds.desired ?? bounds.max;
+    if (first) return first;
     if (
       group.provision === 'automatic' &&
-      Number(group.limits.maxMonthlyCost) <= 0
+      !isPositiveAmount(group.limits.maxMonthlyCost)
     ) {
-      return 'Set a monthly ceiling before letting Flui buy.';
+      return 'Automatic buying needs a spending ceiling, the safety net under the node limits.';
     }
     return null;
   }
@@ -266,4 +295,8 @@ function bodyOf(group: SectionGroup): WriteScalingGroup {
     },
     provision: group.provision,
   };
+}
+
+function isPositiveAmount(value: unknown): boolean {
+  return Number(value) > 0;
 }

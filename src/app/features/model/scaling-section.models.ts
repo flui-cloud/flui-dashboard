@@ -2,6 +2,7 @@ import {
   AvailabilityOutlook,
   FleetNode,
   ScalingBounds,
+  ScalingCost,
   ScalingGroup,
 } from './scaling-group.models';
 
@@ -74,6 +75,8 @@ export interface SectionGroup extends ScalingGroup {
   purchaseHeld: PurchaseHold | null;
   /** The last purchase, while on its way and for half an hour after. */
   purchase?: PurchaseInFlight | null;
+  /** What the node limits cost; absent from an API that does not compute it. */
+  cost?: ScalingCost | null;
 }
 
 export interface PurchaseInFlight {

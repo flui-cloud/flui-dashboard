@@ -37,14 +37,14 @@ import { ScalingApiService } from '../../service/scaling-api.service';
           <span class="inline-flex flex-wrap items-center gap-2 text-xs" data-testid="scaling-mode-confirm">
             @if (needsCap()) {
               <label class="inline-flex items-center gap-1">
-                <span>Monthly ceiling €</span>
+                <span>Spending ceiling €</span>
                 <input
                   type="number"
                   min="1"
                   step="1"
                   class="w-20 rounded-md border border-border bg-background px-2 py-0.5"
                   data-testid="scaling-mode-cap"
-                  [value]="cap() ?? ''"
+                  [value]="capOrSuggested() ?? ''"
                   (input)="cap.set(asAmount($any($event.target).value))"
                 />
               </label>
@@ -102,7 +102,7 @@ export class ScalingModeComponent {
       : 'rounded-md bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary',
   );
 
-  /** An automatic group only buys within a monthly ceiling in euros, so one without it is asked for it here. */
+  /** An automatic group only buys under a spending ceiling, the safety net, so one without it is asked for it here. */
   protected readonly needsCap = computed(() => !(Number(this.group().limits.maxMonthlyCost) > 0));
 
   protected readonly canSwitch = computed(() => {
@@ -111,11 +111,16 @@ export class ScalingModeComponent {
   });
 
   protected readonly switchLabel = computed(() =>
-    this.group().provision === 'automatic' ? 'Set a monthly ceiling' : 'Switch to automatic',
+    this.group().provision === 'automatic' ? 'Set a spending ceiling' : 'Switch to automatic',
   );
 
+  /** What the API proposes: a ceiling covering the worst case, so it only stops a runaway. */
+  private readonly suggested = computed(() => this.group().cost?.suggestedCeilingEur ?? null);
+
+  protected readonly capOrSuggested = computed(() => this.cap() ?? this.suggested());
+
   protected readonly ceiling = computed(() => {
-    const cap = this.needsCap() ? this.cap() : this.group().limits.maxMonthlyCost;
+    const cap = this.needsCap() ? this.capOrSuggested() : this.group().limits.maxMonthlyCost;
     return cap !== null && cap > 0 ? cap : null;
   });
 
@@ -123,9 +128,11 @@ export class ScalingModeComponent {
     const g = this.group();
     const nodes = `${g.bounds.max} ${g.bounds.max === 1 ? 'node' : 'nodes'}`;
     const cap = this.ceiling();
+    const worst = g.cost?.scenarios.find((s) => s.kind === 'worst-case')?.highEur ?? null;
+    const ifFull = worst === null ? '' : ` At ${nodes} all month: €${worst.toFixed(2)}.`;
     return cap === null
-      ? 'Flui buys on its own only within a monthly ceiling in euros.'
-      : `Flui will buy on its own, up to €${cap} a month and ${nodes}.`;
+      ? `Flui buys on its own, up to ${nodes}, only under a spending ceiling.${ifFull}`
+      : `Flui will buy on its own, up to ${nodes}, never past a spending ceiling of €${cap.toFixed(2)} a month.${ifFull}`;
   });
 
   protected asAmount(value: string): number | null {
