@@ -3,6 +3,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideLayoutDashboard,
   lucideServer,
+  lucideReceipt,
   lucideHardDrive,
   lucideNetwork,
   lucideDatabase,
@@ -46,7 +47,9 @@ import {
   lucideBot,
   lucideBookOpen,
 } from '@ng-icons/lucide';
-import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
 import { BrnMenuTriggerDirective } from '@spartan-ng/brain/menu';
 import {
   HlmSidebarComponent,
@@ -78,6 +81,7 @@ import {
 } from '@dawit-io/spartan-sidebar-core';
 import { ThemeService } from '../../../core/services/theme.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { ApplicationService } from '../../../features/service/application.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { PlatformVersionService } from '../../../features/service/platform-version.service';
@@ -124,6 +128,7 @@ import {
       lucideDownload,
       lucideLayoutDashboard,
       lucideServer,
+      lucideReceipt,
       lucideHardDrive,
       lucideNetwork,
       lucideDatabase,
@@ -178,6 +183,7 @@ export class SidebarComponent implements OnInit {
   private readonly _search = inject(BrnSidebarSearchService);
   protected readonly _themeService = inject(ThemeService);
   private readonly _authService = inject(AuthService);
+  private readonly _maskMode = inject(MaskModeService);
   private readonly _router = inject(Router);
   private readonly _appService = inject(ApplicationService);
   private readonly _perms = inject(PermissionService);
@@ -266,15 +272,18 @@ export class SidebarComponent implements OnInit {
   );
 
   protected readonly _userDisplayName = computed(() => {
+    if (this._maskMode.enabled()) return 'Signed-in user';
     const user = this._authService.currentUser();
     return user?.name || user?.email || 'User';
   });
 
   protected readonly _userEmail = computed(() => {
+    if (this._maskMode.enabled()) return 'user@example.com';
     return this._authService.currentUser()?.email ?? '';
   });
 
   protected readonly _userInitials = computed(() => {
+    if (this._maskMode.enabled()) return '••';
     const user = this._authService.currentUser();
     if (!user) return '';
     const source = user.name || user.email || '';
@@ -291,6 +300,38 @@ export class SidebarComponent implements OnInit {
       complete: () => this._router.navigate(['/login']),
     });
   }
+
+  private readonly _url = toSignal(
+    this._router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+    ),
+    { initialValue: this._router.url },
+  );
+
+  /**
+   * The list an opened app belongs to. Its recap and its detail pages live
+   * under one path whatever the app is, so the address alone would light up
+   * "Applications" for a database, or nothing at all on the recap.
+   */
+  private readonly _openedAppList = computed<string | null>(() => {
+    const match = /^\/apps\/(?:recap|applications)\/([0-9a-f-]{36})(?:[/?#]|$)/.exec(
+      this._url(),
+    );
+    if (!match) return null;
+    const app = this._appService.applications().find((a) => a.id === match[1]);
+    if (!app) return null;
+    switch (String(app.kind ?? '').toUpperCase()) {
+      case 'DATABASE':
+        return '/apps/databases';
+      case 'TOOL':
+        return '/apps/tools';
+      case 'SYSTEM':
+        return '/apps/system';
+      default:
+        return '/apps/applications';
+    }
+  });
 
   readonly workloadItems = computed<SidebarNavItem[]>(() => {
     const dbCount = this._appService.databasesCount();
@@ -335,7 +376,9 @@ export class SidebarComponent implements OnInit {
       });
     }
 
-    return items;
+    const opened = this._openedAppList();
+    if (!opened) return items;
+    return items.map((item) => markOpenedAppList(item, opened));
   });
 
   private readonly _homeItem: SidebarNavItem = {
@@ -357,4 +400,10 @@ export class SidebarComponent implements OnInit {
     ...this.firewallItems,
     ...this.visibleManagementItems(),
   ]);
+}
+
+function markOpenedAppList(item: SidebarNavItem, opened: string): SidebarNavItem & { active?: boolean } {
+  if (item.link === opened) return { ...item, active: true };
+  if (item.link === '/apps/applications') return { ...item, routerLinkActive: '' };
+  return item;
 }

@@ -33,7 +33,24 @@ import { AppGroupView, Application } from '../../model/application.models';
     provideIcons({ lucideLoader, lucideTrash2, lucideTriangleAlert }),
   ],
   template: `
-    @if (canDelete()) {
+    @if (canDelete() && compact()) {
+      <div
+        class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-red-300 px-4 py-3 dark:border-red-900/50"
+        data-testid="danger-line"
+      >
+        <div class="min-w-0 text-xs text-muted-foreground">
+          <ng-content />
+        </div>
+        <button
+          type="button"
+          (click)="openDelete()"
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+        >
+          <ng-icon name="lucideTrash2" class="h-4 w-4" />
+          {{ deleteButtonText() }}
+        </button>
+      </div>
+    } @else if (canDelete()) {
       <section
         class="rounded-2xl border border-red-200 dark:border-red-900/40 bg-card p-6"
       >
@@ -233,6 +250,8 @@ export class AppDeleteDialogComponent {
   readonly group = input<AppGroupView | null>(null);
   readonly primary = input<Application | null>(null);
   readonly listRoute = input<string>('/apps/applications');
+  /** One line with the delete button, beside what the page projects into it. */
+  readonly compact = input(false);
 
   readonly deleted = output<void>();
 

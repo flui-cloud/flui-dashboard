@@ -39,6 +39,7 @@ import { SidebarNavItem } from './hlm-sidebar-group-tooltip.component';
           [label]="item.label"
           [routerLink]="item.link"
           [routerLinkActive]="item.routerLinkActive || ''"
+          [forceActive]="isForcedActive(item)"
           (clicked)="onNavigate(item.link)"
         >
           @if (item.icon) {
@@ -66,6 +67,10 @@ export class HlmSidebarGroupContentComponent {
   protected readonly _visibleItems = computed(() =>
     this.items().filter((item) => this._searchService.matches(item))
   );
+
+  protected isForcedActive(item: SidebarNavItem): boolean {
+    return (item as SidebarNavItem & { active?: boolean }).active === true;
+  }
 
   public readonly hasVisibleItems = computed(
     () => this.items().length === 0 || this._visibleItems().length > 0

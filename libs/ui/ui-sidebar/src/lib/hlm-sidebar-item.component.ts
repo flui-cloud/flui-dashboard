@@ -40,6 +40,7 @@ import { HlmSidebarTooltipComponent } from './hlm-sidebar-tooltip.component';
       <a
         [routerLink]="routerLink()"
         [routerLinkActive]="routerLinkActive()"
+        [class.active]="forceActive()"
         variant="ghost"
         [ngClass]="{ 'pl-2': _sidebarService.isExpanded() }"
         class="relative h-9 min-w-0 flex-1 flex"
@@ -89,6 +90,8 @@ export class HlmSidebarItemComponent implements OnDestroy {
   public readonly label = input.required<string>();
   public readonly routerLink = input<string | any[]>('');
   public readonly routerLinkActive = input<string>('');
+  /** Active although the address is not under its link (an item opened from this list). */
+  public readonly forceActive = input<boolean>(false);
   public readonly id = input<string>('');
   public readonly pinnable = input<boolean>(true);
 

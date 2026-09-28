@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -21,7 +22,7 @@ import {
   selector: 'app-db-connect-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, NgIcon],
+  imports: [RouterLink, NgIcon, NgTemplateOutlet],
   providers: [
     provideIcons({
       lucideChevronRight,
@@ -33,6 +34,48 @@ import {
   ],
   template: `
     @let a = app();
+    @if (variant() === 'block') {
+      <div class="space-y-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <a
+            [routerLink]="[consoleRoute(), a.id]"
+            class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <ng-icon name="lucideDatabase" class="h-4 w-4" />
+            {{ openLabel() }}
+          </a>
+          <button
+            type="button"
+            (click)="toggle('external')"
+            [attr.aria-expanded]="showExternal()"
+            class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
+          >
+            <ng-icon name="lucideTerminal" class="h-4 w-4" />
+            External client
+          </button>
+          <button
+            type="button"
+            (click)="toggle('internal')"
+            [attr.aria-expanded]="showInternal()"
+            class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
+          >
+            <ng-icon name="lucideServer" class="h-4 w-4" />
+            Use from another app
+          </button>
+        </div>
+        @if (showExternal()) {
+          <div class="rounded-md border border-border bg-background">
+            <p class="px-3 pt-2.5 text-xs font-medium text-foreground">Connect with an external client ({{ engineUi().externalClients }})</p>
+            <ng-container *ngTemplateOutlet="externalPanel" />
+          </div>
+        }
+        @if (showInternal()) {
+          <div class="rounded-md border border-border bg-background">
+            <ng-container *ngTemplateOutlet="internalPanel" />
+          </div>
+        }
+      </div>
+    } @else {
     <div class="mt-6 space-y-4 rounded-lg border border-border bg-muted/30 p-4">
       <div class="flex items-start gap-3">
         <ng-icon name="lucideDatabase" class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
@@ -68,6 +111,32 @@ import {
           />
         </button>
         @if (showExternal()) {
+          <ng-container *ngTemplateOutlet="externalPanel" />
+        }
+      </div>
+
+      <div class="rounded-md border border-border bg-background">
+        <button
+          type="button"
+          (click)="showInternal.set(!showInternal())"
+          class="flex w-full items-center gap-1.5 px-3 py-2 text-xs font-medium text-foreground"
+        >
+          <ng-icon name="lucideServer" class="h-3.5 w-3.5" />
+          Use from another app on Flui
+          <ng-icon
+            name="lucideChevronRight"
+            class="ml-auto h-3.5 w-3.5 text-muted-foreground transition-transform"
+            [class.rotate-90]="showInternal()"
+          />
+        </button>
+        @if (showInternal()) {
+          <ng-container *ngTemplateOutlet="internalPanel" />
+        }
+      </div>
+    </div>
+    }
+
+    <ng-template #externalPanel>
           <div class="space-y-2 border-t border-border px-3 py-2.5">
             <p class="text-xs text-muted-foreground">
               1 — open a local tunnel (requires the flui CLI):
@@ -98,24 +167,9 @@ import {
               Secret over SSH). The dashboard never displays or exposes it.
             </p>
           </div>
-        }
-      </div>
+    </ng-template>
 
-      <div class="rounded-md border border-border bg-background">
-        <button
-          type="button"
-          (click)="showInternal.set(!showInternal())"
-          class="flex w-full items-center gap-1.5 px-3 py-2 text-xs font-medium text-foreground"
-        >
-          <ng-icon name="lucideServer" class="h-3.5 w-3.5" />
-          Use from another app on Flui
-          <ng-icon
-            name="lucideChevronRight"
-            class="ml-auto h-3.5 w-3.5 text-muted-foreground transition-transform"
-            [class.rotate-90]="showInternal()"
-          />
-        </button>
-        @if (showInternal()) {
+    <ng-template #internalPanel>
           <div class="space-y-2 border-t border-border px-3 py-2.5">
             <p class="text-xs text-muted-foreground">
               An app running on Flui (same cluster) connects directly to the
@@ -168,14 +222,14 @@ import {
               with the command above (CLI only — the dashboard never shows it).
             </p>
           </div>
-        }
-      </div>
-    </div>
+    </ng-template>
   `,
 })
 export class AppDbConnectCardComponent {
   readonly app = input.required<ApplicationResponseDto>();
   readonly connInfo = input<DbConnectionInfo | null>(null);
+  /** `block` sits inside a page section that names it: the three ways to connect as one row of buttons. */
+  readonly variant = input<'card' | 'block'>('card');
 
   protected readonly showExternal = signal(false);
   protected readonly showInternal = signal(false);
@@ -236,6 +290,12 @@ export class AppDbConnectCardComponent {
 
   protected credentialsCommand(slug: string): string {
     return `flui db credentials ${slug} --show`;
+  }
+
+  protected toggle(which: 'external' | 'internal'): void {
+    const open = which === 'external' ? !this.showExternal() : !this.showInternal();
+    this.showExternal.set(which === 'external' && open);
+    this.showInternal.set(which === 'internal' && open);
   }
 
   protected copyText(text: string): void {

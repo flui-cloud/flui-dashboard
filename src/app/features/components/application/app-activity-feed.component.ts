@@ -9,6 +9,7 @@ import {
 import { AppAuditEventSummaryDto } from '../../../core/api/model/appAuditEventSummaryDto';
 import { AppRevisionsService, AuditEventType } from '../../service/app-revisions.service';
 import { ApplicationService } from '../../service/application.service';
+import { appEventText } from './app-recap-view';
 
 @Component({
   selector: 'app-activity-feed',
@@ -189,40 +190,6 @@ export class AppActivityFeedComponent {
   }
 
   formatChangeMetadata(event: AppAuditEventSummaryDto): string {
-    const m = event.changeMetadata as any;
-    switch (event.eventType) {
-      case 'deploy':
-        return event.imageRef ? `Deployed ${event.imageRef}` : 'Deployed';
-      case 'rollback':
-        return `Rolled back to #${m?.rollbackFromRevision ?? '?'}`;
-      case 'scale':
-        return this.formatScaleChange(m);
-      case 'resource_update':
-        return this.formatResourceUpdate(m);
-      case 'restart': return 'Rolling restart triggered';
-      case 'stop': return m?.previousReplicas === undefined ? 'Application stopped' : `Stopped (was ${m.previousReplicas} replicas)`;
-      case 'start': return m?.restoredReplicas === undefined ? 'Application started' : `Started (restored ${m.restoredReplicas} replicas)`;
-      case 'config_update': return 'Configuration variables updated';
-      case 'created': return 'Application created';
-      case 'reconciled': return 'Reconciled with cluster';
-      default: return event.eventType;
-    }
-  }
-
-  private formatScaleChange(m: any): string {
-    if (m?.before?.replicas === undefined || m?.after?.replicas === undefined) {
-      return 'Scaled replicas';
-    }
-    return `Scaled from ${m.before.replicas} to ${m.after.replicas} replicas`;
-  }
-
-  private formatResourceUpdate(m: any): string {
-    if (m?.autoFix && m?.previousMemoryLimit && m?.newMemoryLimit) {
-      return `Memory limit raised ${m.previousMemoryLimit} → ${m.newMemoryLimit}`;
-    }
-    const parts: string[] = [];
-    if (m?.after?.cpu?.limit) parts.push(`CPU limit ${m.before?.cpu?.limit ?? '?'} → ${m.after.cpu.limit}`);
-    if (m?.after?.memory?.limit) parts.push(`Memory limit ${m.before?.memory?.limit ?? '?'} → ${m.after.memory.limit}`);
-    return parts.length ? parts.join(', ') : 'Resources updated';
+    return appEventText(event);
   }
 }

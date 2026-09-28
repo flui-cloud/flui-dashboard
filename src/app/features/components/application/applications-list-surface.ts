@@ -32,9 +32,10 @@ export function appGroupEntityRef(id: string): string {
 
 interface FilterState {
   search: string;
-  category: string;
-  status: string;
+  /** 'all' | 'running' | 'attention' | 'no_backup' — the compact view the list is cut to. */
+  view: string;
   cluster: string;
+  project: string;
 }
 
 // This component (`ApplicationsListComponent`) is mounted at four different routes —
@@ -75,6 +76,10 @@ export interface ApplicationsListSurfaceInput {
   totalForKind: number;
   runningCount: number;
   failedCount: number;
+  /** Applications the list puts on top: failed, degraded, short of replicas or with a broken endpoint. */
+  attentionCount: number;
+  /** Applications holding data with no recent backup; null when the backup read did not answer. */
+  noBackupCount: number | null;
   filters: FilterState;
   activeFiltersCount: number;
   isInitialLoading: boolean;
@@ -105,11 +110,17 @@ function pageObservations(input: ApplicationsListSurfaceInput): Observation[] {
     valueObservation('flui.applications.total', input.totalForKind, 'derived'),
     valueObservation('flui.applications.running_count', input.runningCount, 'derived'),
     valueObservation('flui.applications.failed_count', input.failedCount, 'derived'),
-    // Discrete filter picks (select controls), not the live-typed search box — a value the
-    // user is still typing is not yet presented/committed content (playbook §5, deploy
-    // wizard note). `search` is deliberately never observed here for the same reason.
-    textObservation('flui.applications.filter_category', input.filters.category || null, 'ui'),
-    textObservation('flui.applications.filter_status', input.filters.status || null, 'ui'),
+    valueObservation('flui.applications.attention_count', input.attentionCount, 'derived'),
+    input.noBackupCount === null
+      ? null
+      : valueObservation('flui.applications.no_backup_count', input.noBackupCount, 'api'),
+    // Discrete filter picks, not the live-typed search box: a value the user is still
+    // typing is not yet committed content.
+    textObservation(
+      'flui.applications.filter_view',
+      input.filters.view && input.filters.view !== 'all' ? input.filters.view : null,
+      'ui',
+    ),
     textObservation('flui.applications.filter_cluster', input.filters.cluster || null, 'ui'),
   ].filter((observation): observation is Observation => observation !== null);
 }

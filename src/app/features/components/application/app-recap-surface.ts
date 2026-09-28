@@ -51,6 +51,8 @@ export interface AppRecapSurfaceInput {
   isLoading: boolean;
   /** The bundled databases the page draws an extra connect card for. */
   extraDatabases: { id: string; name: string; status: string }[];
+  /** The fleet backup rule for the primary: protected, pending, to_verify or unprotected. */
+  backupCoverage?: string | null;
 }
 
 export interface AppRecapSurfaceContext {
@@ -140,6 +142,7 @@ export function presentedContent(input: AppRecapSurfaceInput): PresentedContent 
       primary ? valueObservation('flui.application.replicas', primary.replicas, 'api') : null,
       primary ? textObservation('flui.application.catalog_version', primary.catalogVersion, 'api') : null,
       boolObservation('flui.app_recap.bundled_databases', input.extraDatabases.length > 0, 'derived'),
+      textObservation('flui.app_recap.backup_coverage', input.backupCoverage, 'api'),
     ]),
     state: { loading: input.isLoading },
   };

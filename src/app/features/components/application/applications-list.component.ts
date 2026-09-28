@@ -1,40 +1,17 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  signal,
-  computed,
-  effect,
-  inject,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideRefreshCw,
-  lucideSearch,
-  lucidePackage,
-  lucideLoader,
-  lucideCircleAlert,
-  lucideTrash2,
-  lucideRocket,
-  lucideCircleCheck,
-  lucideCircleX,
-  lucideShield,
-} from '@ng-icons/lucide';
-
+import { lucideCircleAlert, lucideLoader, lucidePackage, lucideRefreshCw, lucideRocket } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { ClusterService } from '../../service/cluster.service';
-import {
-  Application,
-  AppGroupView,
-  ApplicationKind,
-  ApplicationKindEnum,
-  getKindLabel,
-} from '../../model/application.models';
-import { ApplicationGroupRowComponent } from './application-group-row.component';
+import { ProvidersService } from '../../service/providers.service';
+import { ProjectsService } from '../../service/projects.service';
+import { FleetService } from '../../service/fleet.service';
+import { ApplicationMetricsService } from '../../../core/api/api/applicationMetrics.service';
+import type { AppMetricsDto } from '../../../core/api/model/appMetricsDto';
+import { AppGroupView, ApplicationKind, ApplicationKindEnum, getKindLabel } from '../../model/application.models';
+import { ClusterStatus } from '../../model/cluster.models';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { accessOf } from '../../model/app-access';
@@ -44,50 +21,28 @@ import {
   buildApplicationsListSurface,
   presentedContent,
 } from './applications-list-surface';
-
-interface FilterState {
-  search: string;
-  category: string;
-  status: string;
-  cluster: string;
-}
+import { ListFilters, ListRow, buildListRow, matchesView, primaryOf, sortRows, viewCounts } from './applications-list-rows';
+import { EMPTY_FILTERS, activeFilterCount, deployTarget, kindCopy, listSummary, providerName } from './applications-list-kind';
+import { ApplicationsListShowcaseComponent } from './applications-list-showcase.component';
+import { ApplicationsListTableComponent } from './applications-list-table.component';
+import { ApplicationsListToolbarComponent } from './applications-list-toolbar.component';
 
 @Component({
   selector: 'app-applications-list',
   standalone: true,
-  imports: [FormsModule, NgIconComponent, ApplicationGroupRowComponent],
-  providers: [
-    provideIcons({
-      lucideRefreshCw,
-      lucideSearch,
-      lucidePackage,
-      lucideLoader,
-      lucideCircleAlert,
-      lucideTrash2,
-      lucideRocket,
-      lucideCircleCheck,
-      lucideCircleX,
-      lucideShield,
-    }),
-  ],
+  imports: [NgIconComponent, ApplicationsListToolbarComponent, ApplicationsListTableComponent, ApplicationsListShowcaseComponent],
+  providers: [provideIcons({ lucideRefreshCw, lucidePackage, lucideLoader, lucideCircleAlert, lucideRocket })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="space-y-6 p-6">
-      <!-- Header -->
-      <div class="flex items-center justify-between">
+    <div class="space-y-5 p-6">
+      <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            {{ pageTitle() }}
-          </h1>
-          <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ pageSubtitle() }}
-          </p>
+          <h1 class="text-2xl font-bold text-foreground">{{ pageTitle() }}</h1>
+          <p class="mt-1 text-sm text-muted-foreground" data-testid="apps-summary">{{ summary() }}</p>
         </div>
         <div class="flex items-center gap-3">
           @if (isBackgroundRefreshing()) {
-            <span
-              class="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500"
-            >
+            <span class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
               Syncing...
             </span>
@@ -95,19 +50,15 @@ interface FilterState {
           <button
             (click)="refreshApplications()"
             [disabled]="isLoading()"
-            class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 text-sm"
+            class="inline-flex items-center gap-2 px-3 py-2 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 text-sm"
           >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-4 w-4"
-              [class.animate-spin]="isLoading()"
-            />
+            <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
             Refresh
           </button>
           @if (canDeploy()) {
             <button
               (click)="deployNewApp()"
-              class="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
             >
               <ng-icon name="lucideRocket" class="h-4 w-4" />
               {{ ctaLabel() }}
@@ -116,420 +67,204 @@ interface FilterState {
         </div>
       </div>
 
-      <!-- Stats -->
-      <div
-        class="grid gap-3"
-        [class]="
-          kindWaitingCount() ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'
-        "
-      >
-        <div
-          class="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/50 rounded-lg px-4 py-3"
-        >
-          <p class="text-xs text-gray-500 dark:text-gray-400">Total</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">
-            {{ kindOwnGroups().length }}
-          </p>
-        </div>
-        <div
-          class="bg-white dark:bg-gray-800/60 border border-green-200 dark:border-gray-700/50 rounded-lg px-4 py-3"
-        >
-          <p class="text-xs text-green-600 dark:text-green-400">Running</p>
-          <p class="text-xl font-bold text-green-700 dark:text-green-400">
-            {{ kindRunningCount() }}
-          </p>
-        </div>
-        <div
-          class="bg-white dark:bg-gray-800/60 border border-red-200 dark:border-gray-700/50 rounded-lg px-4 py-3"
-        >
-          <p class="text-xs text-red-600 dark:text-red-400">Failed</p>
-          <p class="text-xl font-bold text-red-700 dark:text-red-400">
-            {{ kindFailedCount() }}
-          </p>
-        </div>
-        @if (kindWaitingCount()) {
-          <button
-            type="button"
-            (click)="updateFilter('status', 'waiting_for_room')"
-            class="text-left bg-white dark:bg-gray-800/60 border border-amber-200 dark:border-gray-700/50 rounded-lg px-4 py-3 hover:bg-amber-50 dark:hover:bg-amber-900/10"
-            data-testid="stat-waiting-for-room"
-          >
-            <p class="text-xs text-amber-700 dark:text-amber-400">
-              Waiting for room
-            </p>
-            <p class="text-xl font-bold text-amber-700 dark:text-amber-400">
-              {{ kindWaitingCount() }}
-            </p>
-          </button>
-        }
-      </div>
+      <app-applications-list-toolbar
+        [filters]="filtersState()"
+        [counts]="counts()"
+        [backupKnown]="coverageById() !== null"
+        [clusterOptions]="clusterOptions()"
+        [projectOptions]="projectOptions()"
+        (filterChange)="updateFilter($event.field, $event.value)"
+      />
 
-      <!-- Filters -->
-      <div class="flex flex-col md:flex-row gap-3">
-        <div class="relative flex-1">
-          <ng-icon
-            name="lucideSearch"
-            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
-          />
-          <input
-            type="text"
-            [ngModel]="filtersState().search"
-            (ngModelChange)="updateFilter('search', $event)"
-            placeholder="Search applications..."
-            class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-        <select
-          [ngModel]="filtersState().category"
-          (ngModelChange)="updateFilter('category', $event)"
-          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white"
-        >
-          <option value="">All Categories</option>
-          <option value="system">System</option>
-          <option value="user">User</option>
-        </select>
-        <select
-          [ngModel]="filtersState().status"
-          (ngModelChange)="updateFilter('status', $event)"
-          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white"
-        >
-          <option value="">All Statuses</option>
-          <option value="running">Running</option>
-          <option value="provisioning">Provisioning</option>
-          <option value="waiting_for_room">Waiting for room</option>
-          <option value="pending">Pending</option>
-          <option value="degraded">Degraded</option>
-          <option value="stopped">Stopped</option>
-          <option value="failed">Failed</option>
-          <option value="updating">Updating</option>
-        </select>
-        <select
-          [ngModel]="filtersState().cluster"
-          (ngModelChange)="updateFilter('cluster', $event)"
-          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white"
-        >
-          <option value="">All Clusters</option>
-          @for (cluster of clusterNames(); track cluster.id) {
-            <option [value]="cluster.id">{{ cluster.name }}</option>
-          }
-        </select>
-      </div>
-
-      @if (activeFiltersCount() > 0) {
-        <div class="flex items-center justify-between text-sm">
-          <span class="text-gray-500 dark:text-gray-400"
-            >{{ activeFiltersCount() }} filter(s) active</span
-          >
-          <button
-            (click)="clearFilters()"
-            class="text-blue-600 hover:text-blue-700 dark:text-blue-400"
-          >
-            Clear all
-          </button>
-        </div>
-      }
-
-      <!-- Error -->
       @if (errorMessage() && !isLoading()) {
-        <div
-          class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-3"
-        >
-          <div class="flex items-center gap-2">
-            <ng-icon
-              name="lucideCircleAlert"
-              class="h-4 w-4 text-red-600 dark:text-red-400"
-            />
-            <p class="text-sm text-red-900 dark:text-red-200">
-              {{ errorMessage() }}
-            </p>
-          </div>
+        <div class="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+          <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-destructive" />
+          <p class="text-sm text-foreground">{{ errorMessage() }}</p>
         </div>
       }
 
-      <!-- Application rows -->
-      <div class="flex flex-col gap-0.5">
-        @if (isInitialLoading()) {
+      @if (isInitialLoading()) {
+        <div class="flex flex-col gap-1">
           @for (i of skeletonRows; track i) {
-            <div
-              class="animate-pulse bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg h-14"
-            ></div>
+            <div class="skeleton h-14"></div>
           }
-        } @else if (ownGroups().length === 0) {
-          <div class="flex flex-col items-center justify-center py-16">
-            <ng-icon
-              name="lucidePackage"
-              class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3"
-            />
-            <p class="text-sm font-medium text-gray-900 dark:text-white mb-1">
-              {{ emptyTitle() }}
-            </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              @if (activeFiltersCount() > 0) {
-                Try adjusting your filters
-              } @else {
-                {{ emptySubtitle() }}
-              }
-            </p>
-            @if (activeFiltersCount() === 0 && canDeploy()) {
-              <button
-                (click)="deployNewApp()"
-                class="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-              >
-                <ng-icon name="lucideRocket" class="h-4 w-4" />
-                {{ ctaLabel() }}
-              </button>
-            }
-          </div>
-        } @else {
-          @for (group of ownGroups(); track group.id) {
-            <app-application-group-row
-              [group]="group"
-              [refreshing]="isRefreshing()"
-              (open)="openRecap($event)"
-              (delete)="confirmDelete($event)"
-            />
-          }
-        }
-      </div>
-
-      <!-- The showcase: not yours, read-only, and said once for the whole group -->
-      @if (showcaseGroups().length > 0) {
-        <div class="space-y-2">
-          <div class="flex items-baseline gap-2">
-            <h2 class="text-sm font-semibold text-gray-900 dark:text-white">
-              In the showcase
-            </h2>
-            @if (showcaseReadOnly()) {
-              <span
-                class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:text-gray-300"
-              >
-                read-only
-              </span>
-            }
-          </div>
-          @if (showcaseWhy()) {
-            <p class="text-xs text-gray-500 dark:text-gray-400">
-              {{ showcaseWhy() }}
-            </p>
-          }
-          <div class="flex flex-col gap-0.5">
-            @for (group of showcaseGroups(); track group.id) {
-              <app-application-group-row
-                [group]="group"
-                [refreshing]="isRefreshing()"
-                (open)="openRecap($event)"
-              />
-            }
-          </div>
         </div>
+      } @else if (ownRows().length === 0) {
+        <div class="flex flex-col items-center justify-center py-16">
+          <ng-icon name="lucidePackage" class="h-12 w-12 text-muted-foreground/50 mb-3" />
+          <p class="text-sm font-medium text-foreground mb-1">{{ emptyTitle() }}</p>
+          <p class="text-xs text-muted-foreground mb-4">
+            @if (activeFiltersCount() > 0) {
+              Nothing matches these filters.
+              <button type="button" (click)="clearFilters()" class="text-primary hover:underline">Clear filters</button>
+            } @else {
+              {{ emptySubtitle() }}
+            }
+          </p>
+          @if (activeFiltersCount() === 0 && canDeploy()) {
+            <button
+              (click)="deployNewApp()"
+              class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
+            >
+              <ng-icon name="lucideRocket" class="h-4 w-4" />
+              {{ ctaLabel() }}
+            </button>
+          }
+        </div>
+      } @else {
+        <app-applications-list-table [rows]="ownRows()" (open)="openRecap($event)" />
       }
 
-      @if (ownGroups().length > 0) {
-        <p class="text-center text-xs text-gray-500 dark:text-gray-400">
-          Showing {{ ownGroups().length }} of
-          {{ kindOwnGroups().length }} application(s)
-        </p>
+      @if (showcaseRows().length > 0) {
+        <app-applications-list-showcase
+          [rows]="showcaseRows()"
+          [readOnly]="showcaseReadOnly()"
+          [why]="showcaseWhy()"
+          (open)="openRecap($event)"
+        />
       }
     </div>
-
-    <!-- Delete Modal -->
-    @if (showDeleteModal()) {
-      <div
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      >
-        <div
-          class="bg-white dark:bg-gray-800 rounded-lg max-w-sm w-full p-5 shadow-xl"
-        >
-          <div class="flex items-start gap-3">
-            <div
-              class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0"
-            >
-              <ng-icon
-                name="lucideCircleAlert"
-                class="h-5 w-5 text-red-600 dark:text-red-400"
-              />
-            </div>
-            <div class="flex-1">
-              <h3
-                class="text-sm font-semibold text-gray-900 dark:text-white mb-1"
-              >
-                Delete Application
-              </h3>
-              <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
-                Delete <strong>{{ appToDelete()?.name }}</strong
-                >? This removes it and everything created for it.
-              </p>
-              <div class="flex items-center gap-2">
-                <button
-                  (click)="cancelDelete()"
-                  [disabled]="false"
-                  class="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-xs font-medium disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  (click)="executeDelete()"
-                  [disabled]="false"
-                  class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-xs font-medium disabled:opacity-50"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
   `,
 })
+
 export class ApplicationsListComponent implements OnInit, OnDestroy {
   private readonly appService = inject(ApplicationService);
   private readonly clusterService = inject(ClusterService);
+  private readonly providers = inject(ProvidersService);
+  private readonly projects = inject(ProjectsService);
+  private readonly fleet = inject(FleetService);
+  private readonly metricsApi = inject(ApplicationMetricsService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly currentSurface = inject(CurrentSurfaceService);
   private readonly sandbox = inject(SandboxService);
 
-  skeletonRows = [1, 2, 3, 4, 5];
+  readonly skeletonRows = [1, 2, 3, 4, 5];
 
-  // State
   kind = signal<ApplicationKind>(
     (this.route.snapshot.data['kind'] as ApplicationKind | undefined) ??
       ApplicationKindEnum.Application,
   );
-  filtersState = signal<FilterState>({
-    search: '',
-    category: '',
-    status: '',
-    cluster: '',
-  });
-  showDeleteModal = signal(false);
-  appToDelete = signal<Application | null>(null);
+  filtersState = signal<ListFilters>(EMPTY_FILTERS);
 
-  // Service signals
   allApplications = this.appService.applications;
   isLoading = this.appService.loading;
   isBackgroundRefreshing = this.appService.backgroundRefreshing;
   errorMessage = this.appService.errorMessage;
 
+  private readonly usage = signal<ReadonlyMap<string, AppMetricsDto>>(new Map());
+
   pageTitle = computed(() => getKindLabel(this.kind()));
-  pageSubtitle = computed(() => {
-    switch (this.kind()) {
-      case ApplicationKindEnum.Database:
-        return 'Manage database workloads across your clusters';
-      case ApplicationKindEnum.Tool:
-        return 'Manage tools and utilities across your clusters';
-      case ApplicationKindEnum.System:
-        return 'Platform-managed system applications';
-      default:
-        return 'Manage your applications across your clusters';
-    }
-  });
-
   canDeploy = computed(() => this.kind() !== ApplicationKindEnum.System);
-
-  ctaLabel = computed(() => {
-    switch (this.kind()) {
-      case ApplicationKindEnum.Database:
-        return 'Add Database';
-      case ApplicationKindEnum.Tool:
-        return 'Add Tool';
-      case ApplicationKindEnum.System:
-        return 'Add System App';
-      default:
-        return 'Add Application';
-    }
-  });
-
-  emptyTitle = computed(() => {
-    switch (this.kind()) {
-      case ApplicationKindEnum.Database:
-        return 'No databases found';
-      case ApplicationKindEnum.Tool:
-        return 'No tools found';
-      case ApplicationKindEnum.System:
-        return 'No system applications found';
-      default:
-        return 'No applications found';
-    }
-  });
-
-  emptySubtitle = computed(() => {
-    switch (this.kind()) {
-      case ApplicationKindEnum.Database:
-        return 'Deploy your first database to get started';
-      case ApplicationKindEnum.Tool:
-        return 'Deploy your first tool to get started';
-      case ApplicationKindEnum.System:
-        return 'No system applications are currently deployed';
-      default:
-        return 'Deploy your first application to get started';
-    }
-  });
+  private readonly copy = computed(() => kindCopy(this.kind()));
+  ctaLabel = computed(() => this.copy().cta);
+  emptyTitle = computed(() => this.copy().emptyTitle);
+  emptySubtitle = computed(() => this.copy().emptySubtitle);
 
   allGroups = this.appService.applicationGroups;
 
   kindScopedGroups = computed(() =>
     this.allGroups().filter((g) => this.groupKind(g) === this.kind()),
   );
-  /**
-   * The three numbers count what is the caller's, not what is on the page: the
-   * showcase belongs to whoever runs this instance, and counting it made the
-   * header say "Total 1" over a list that said "no applications found".
-   */
+
+  /** The counts are the caller's own: the showcase belongs to whoever runs this instance. */
   kindOwnGroups = computed(() =>
     this.kindScopedGroups().filter((g) => !this.isShowcase(g)),
   );
-  kindRunningCount = computed(
-    () => this.kindOwnGroups().filter((g) => g.status === 'running').length,
-  );
+
+  protected readonly coverageById = computed(() => {
+    const coverage = this.fleet.coverage();
+    if (this.fleet.coverageState() !== 'ready' || !coverage) return null;
+    return new Map(coverage.applications.map((r) => [r.applicationId, r]));
+  });
+
+  private readonly rowsById = computed(() => {
+    const clusters = new Map(this.clusterService.clusters().map((c) => [c.id, c]));
+    const projects = new Map(this.projects.projects().map((p) => [p.id, p]));
+    const usage = this.usage();
+    const coverage = this.coverageById();
+    const now = Date.now();
+    const rows = new Map<string, ListRow>();
+    for (const g of this.kindScopedGroups()) {
+      const cluster = clusters.get(g.clusterId);
+      const projectId = this.projectIdOf(g);
+      rows.set(
+        g.id,
+        buildListRow(g, {
+          clusterName: cluster?.name ?? '',
+          providerName: providerName(cluster?.provider, (id) => this.providers.getProviderById(id)?.displayName),
+          project: (projectId && projects.get(projectId)) || null,
+          usage,
+          coverage,
+          now,
+        }),
+      );
+    }
+    return rows;
+  });
+
+  private rowsOf(groups: AppGroupView[]): ListRow[] {
+    const byId = this.rowsById();
+    return groups.map((g) => byId.get(g.id)).filter((r): r is ListRow => !!r);
+  }
+
+  private readonly ownAllRows = computed(() => this.rowsOf(this.kindOwnGroups()));
+
+  readonly counts = computed(() => viewCounts(this.ownAllRows()));
+
+  kindRunningCount = computed(() => this.counts().running);
   kindFailedCount = computed(
     () => this.kindOwnGroups().filter((g) => g.status === 'failed').length,
   );
-  kindWaitingCount = computed(
-    () =>
-      this.kindOwnGroups().filter((g) => g.status === 'waiting_for_room')
-        .length,
-  );
 
-  clusterNames = computed(() =>
-    this.clusterService.clusters().map((c) => ({ id: c.id, name: c.name })),
-  );
+  summary = computed(() => listSummary(this.kindOwnGroups(), this.pageTitle()));
+
+  clusterOptions = computed(() => {
+    const used = new Set(this.kindScopedGroups().map((g) => g.clusterId));
+    return this.clusterService
+      .clusters()
+      .filter((c) => !!c.id && used.has(c.id))
+      .map((c) => ({ id: c.id!, name: c.name ?? c.id! }));
+  });
+
+  projectOptions = computed(() => {
+    const used = new Set(
+      this.kindScopedGroups()
+        .map((g) => this.projectIdOf(g))
+        .filter((id): id is string => !!id),
+    );
+    return this.projects.projects().filter((p) => used.has(p.id));
+  });
 
   isInitialLoading = computed(
     () => this.isLoading() && this.allApplications().length === 0,
   );
-  isRefreshing = computed(
-    () => this.isLoading() && this.allApplications().length > 0,
-  );
 
   filteredGroups = computed(() => {
-    const groups = this.kindScopedGroups();
     const f = this.filtersState();
-    return groups.filter((g) => {
-      if (f.search && !g.name.toLowerCase().includes(f.search.toLowerCase()))
-        return false;
-      if (f.category && g.category !== f.category) return false;
-      if (f.status && g.status !== f.status) return false;
+    const search = f.search.trim().toLowerCase();
+    const byId = this.rowsById();
+    return this.kindScopedGroups().filter((g) => {
+      const row = byId.get(g.id);
+      if (!row) return false;
+      if (search && !row.searchText.includes(search)) return false;
+      if (!matchesView(row, f.view)) return false;
       if (f.cluster && g.clusterId !== f.cluster) return false;
+      if (f.project && this.projectIdOf(g) !== f.project) return false;
       return true;
     });
   });
 
+  private projectIdOf(g: AppGroupView): string | null | undefined {
+    return g.projectId ?? primaryOf(g)?.projectId;
+  }
+
   /**
-   * The showcase is drawn apart from the rest, under its own heading.
-   *
-   * It is read off `access.showcase`, which the API decides — the interface is
-   * not entitled to a second opinion about what is on display. Something a
-   * person did not create, shown unlabelled among the things they did, reads as
-   * the leftovers of somebody else; a heading says it once for the whole group
-   * rather than asking every row to carry the explanation.
+   * The showcase is drawn apart from the rest, under its own heading, read off
+   * `access.showcase`, which the API decides.
    */
   private isShowcase(g: AppGroupView): boolean {
-    const primary =
-      g.components.find((c) => c.id === g.primaryComponentId) ??
-      g.components[0];
-    return !!accessOf(primary)?.showcase;
+    return !!accessOf(primaryOf(g))?.showcase;
   }
 
   ownGroups = computed(() =>
@@ -539,39 +274,21 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     this.filteredGroups().filter((g) => this.isShowcase(g)),
   );
 
-  /**
-   * "read-only" is a fact about the caller, not about the showcase: the
-   * operator who runs these applications owns them and may change them, and
-   * telling them otherwise would be false on their own screen.
-   */
+  ownRows = computed(() => sortRows(this.rowsOf(this.ownGroups())));
+  showcaseRows = computed(() => sortRows(this.rowsOf(this.showcaseGroups())));
+
+  /** "read-only" is a fact about the caller: the operator running these applications may change them. */
   showcaseReadOnly = computed(() =>
-    this.showcaseGroups().every((g) => {
-      const primary =
-        g.components.find((c) => c.id === g.primaryComponentId) ??
-        g.components[0];
-      return !!accessOf(primary)?.readOnly;
-    }),
+    this.showcaseGroups().every((g) => !!accessOf(primaryOf(g))?.readOnly),
   );
 
-  /** The showcase's own sentence, served by the API so three surfaces cannot drift. */
   showcaseWhy = computed(() => this.sandbox.whyFor('showcase'));
 
   private groupKind(g: AppGroupView): ApplicationKind {
-    const primary =
-      g.components.find((c) => c.id === g.primaryComponentId) ??
-      g.components[0];
-    return primary?.kind ?? ApplicationKindEnum.Application;
+    return primaryOf(g)?.kind ?? ApplicationKindEnum.Application;
   }
 
-  activeFiltersCount = computed(() => {
-    const f = this.filtersState();
-    return (
-      (f.search ? 1 : 0) +
-      (f.category ? 1 : 0) +
-      (f.status ? 1 : 0) +
-      (f.cluster ? 1 : 0)
-    );
-  });
+  activeFiltersCount = computed(() => activeFilterCount(this.filtersState()));
 
   private readonly surfaceRevision = new ApplicationsListSurfaceRevision();
 
@@ -582,6 +299,8 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
       totalForKind: this.kindScopedGroups().length,
       runningCount: this.kindRunningCount(),
       failedCount: this.kindFailedCount(),
+      attentionCount: this.counts().attention,
+      noBackupCount: this.coverageById() === null ? null : this.counts().no_backup,
       filters: this.filtersState(),
       activeFiltersCount: this.activeFiltersCount(),
       isInitialLoading: this.isInitialLoading(),
@@ -594,22 +313,17 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // Publish this page's own Semantic Surface snapshot into the shared registry whenever
-    // it changes — same pattern as ApplicationDetailComponent. ngOnDestroy clears it so the
-    // snapshot never outlives this page.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
   }
 
   ngOnInit(): void {
-    void (async () => {
-      try {
-        await this.appService.loadApplications();
-      } catch (error) {
-        console.error('Failed to load applications:', error);
-      }
-    })();
+    if (this.clusterService.clusters().length === 0) {
+      this.clusterService.loadClusters().catch(() => undefined);
+    }
+    if (this.projects.projects().length === 0) this.projects.loadProjects();
+    void this.refreshApplications();
   }
 
   ngOnDestroy(): void {
@@ -622,65 +336,44 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Failed to refresh applications:', error);
     }
+    void this.fleet.loadCoverage();
+    void this.loadUsage();
   }
 
-  updateFilter(field: keyof FilterState, value: string) {
+  /** Readings per cluster, as the cluster Monitoring page reads them; a cluster that does not answer leaves its rows at a dash. */
+  private async loadUsage(): Promise<void> {
+    const status = new Map(this.clusterService.clusters().map((c) => [c.id, c.status]));
+    const ids = [...new Set(this.kindScopedGroups().map((g) => g.clusterId))].filter((id) => {
+      const s = status.get(id);
+      return !s || s === ClusterStatus.ACTIVE;
+    });
+    const results = await Promise.allSettled(
+      ids.map((id) => firstValueFrom(this.metricsApi.applicationMetricsControllerGetClusterAppsMetrics(id))),
+    );
+    const next = new Map<string, AppMetricsDto>();
+    for (const r of results) {
+      if (r.status !== 'fulfilled') continue;
+      for (const app of r.value.applications ?? []) next.set(app.app_id, app);
+    }
+    this.usage.set(next);
+  }
+
+  updateFilter<K extends keyof ListFilters>(field: K, value: ListFilters[K]) {
     this.filtersState.update((current) => ({ ...current, [field]: value }));
   }
 
   clearFilters() {
-    this.filtersState.set({
-      search: '',
-      category: '',
-      status: '',
-      cluster: '',
-    });
+    this.filtersState.set(EMPTY_FILTERS);
   }
 
   openRecap(groupId: string) {
     this.router.navigate(['/apps/recap', groupId], {
-      queryParams: { from: 'applications' },
-    });
-  }
-
-  confirmDelete(app: Application) {
-    if (app.systemProtected) return;
-    this.appToDelete.set(app);
-    this.showDeleteModal.set(true);
-  }
-
-  cancelDelete() {
-    this.showDeleteModal.set(false);
-    this.appToDelete.set(null);
-  }
-
-  executeDelete() {
-    const app = this.appToDelete();
-    if (!app?.id) return;
-
-    // Close modal immediately — don't wait for API response
-    this.showDeleteModal.set(false);
-    this.appToDelete.set(null);
-
-    // Fire-and-forget: service handles status update, WS, polling, and removal
-    this.appService.deleteApplication(app.id).catch((err) => {
-      console.error('Failed to initiate deletion:', err);
+      queryParams: { from: this.copy().listName },
     });
   }
 
   deployNewApp() {
     const kind = this.kind();
-    if (
-      kind === ApplicationKindEnum.Database ||
-      kind === ApplicationKindEnum.Tool
-    ) {
-      this.router.navigate(['/apps/catalog'], {
-        queryParams: { appKind: kind },
-      });
-      return;
-    }
-    this.router.navigate(['/apps/deploy/new'], {
-      queryParams: { appKind: kind },
-    });
+    this.router.navigate([deployTarget(kind)], { queryParams: { appKind: kind } });
   }
 }

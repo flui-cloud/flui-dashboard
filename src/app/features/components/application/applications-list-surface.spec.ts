@@ -35,7 +35,9 @@ function input(over: Partial<ApplicationsListSurfaceInput> = {}): ApplicationsLi
     totalForKind: 1,
     runningCount: 1,
     failedCount: 0,
-    filters: { search: '', category: '', status: '', cluster: '' },
+    attentionCount: 0,
+    noBackupCount: 0,
+    filters: { search: '', view: 'all', cluster: '', project: '' },
     activeFiltersCount: 0,
     isInitialLoading: false,
     hasLoadError: false,
@@ -77,8 +79,8 @@ describe('applications list surface producer', () => {
     // `filters.search` is never read by presentedContent — it is a live-typed value, kept
     // out on purpose (see the note in applications-list-surface.ts).
     const tracker = new ApplicationsListSurfaceRevision();
-    const a = input({ filters: { search: '', category: '', status: '', cluster: '' } });
-    const b = input({ filters: { search: 'billing', category: '', status: '', cluster: '' } });
+    const a = input({ filters: { search: '', view: 'all', cluster: '', project: '' } });
+    const b = input({ filters: { search: 'billing', view: 'all', cluster: '', project: '' } });
     const r1 = tracker.next(presentedContent(a));
     const r2 = tracker.next(presentedContent(b));
     expect(r2).toBe(r1);
@@ -122,16 +124,24 @@ describe('applications list surface producer', () => {
       filteredGroups: [group()],
       totalForKind: 9,
       activeFiltersCount: 1,
-      filters: { search: '', category: 'user', status: '', cluster: '' },
+      filters: { search: '', view: 'attention', cluster: '', project: 'proj-1' },
     });
     expect(listScope(snapshot).completeness).toEqual({ shown: 1, total: 1, filtered: true });
     expect(observation(snapshot, 'flui.applications.total')?.presentedAs.value).toBe(9);
-    expect(observation(snapshot, 'flui.applications.filter_category')?.presentedAs.text).toBe('user');
-    expect(observation(snapshot, 'flui.applications.filter_status')).toBeUndefined();
+    expect(observation(snapshot, 'flui.applications.filter_view')?.presentedAs.text).toBe('attention');
+    expect(observation(snapshot, 'flui.applications.filter_cluster')).toBeUndefined();
+    expect(JSON.stringify(snapshot)).not.toContain('proj-1');
+  });
+
+  it('presents the attention and no-backup counts, and no backup count when the backup read did not answer', () => {
+    const counted = snapshotOf({ attentionCount: 2, noBackupCount: 3 });
+    expect(observation(counted, 'flui.applications.attention_count')?.presentedAs.value).toBe(2);
+    expect(observation(counted, 'flui.applications.no_backup_count')?.presentedAs.value).toBe(3);
+    expect(observation(snapshotOf({ noBackupCount: null }), 'flui.applications.no_backup_count')).toBeUndefined();
   });
 
   it('never presents the live-typed search box, only committed select filters', () => {
-    const json = JSON.stringify(snapshotOf({ filters: { search: 'do-not-leak-this', category: '', status: '', cluster: '' } }));
+    const json = JSON.stringify(snapshotOf({ filters: { search: 'do-not-leak-this', view: 'all', cluster: '', project: '' } }));
     expect(json).not.toContain('do-not-leak-this');
   });
 
