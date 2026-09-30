@@ -83,11 +83,12 @@ const FRESHNESS_LABEL: Record<Freshness, string> = {
             Platform backup not initialized
           </div>
           <p class="text-sm text-muted-foreground">
-            No platform (control-plane DR) policy exists yet. Initialize it from the CLI — the
-            operator's private age identity is generated offline and must never touch a
-            server-reachable surface.
+            No platform (control-plane DR) policy exists yet. Set it up from the CLI: the key that
+            opens these backups is created on your own machine and kept in your vault, never on a
+            server.
           </p>
-          <code class="inline-block rounded bg-muted px-2 py-1 text-xs">flui backup platform init</code>
+          <code class="block w-fit rounded bg-muted px-2 py-1 text-xs">flui backup platform init</code>
+          <code class="mt-1 block w-fit rounded bg-muted px-2 py-1 text-xs">flui backup enable platform -D &lt;destination-id&gt;</code>
         </div>
         } @else {
         <div class="space-y-5">
@@ -234,8 +235,8 @@ const FRESHNESS_LABEL: Record<Freshness, string> = {
           <p class="border-t border-border pt-4 text-xs text-muted-foreground">
             The operator recipient (<code class="rounded bg-muted px-1">age1…</code>) is set with
             <code class="rounded bg-muted px-1">flui backup platform init</code>. The matching private
-            identity stays offline with the operator — the master can never decrypt its own backup, so
-            it is never generated in the browser.
+            key stays in the operator's vault on their own machine — the master can never decrypt its
+            own backup, so it is never generated in the browser.
           </p>
         </div>
         }

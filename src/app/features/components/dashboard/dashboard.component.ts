@@ -75,35 +75,33 @@ const FLEET_REFRESH_MS = 60_000;
         <div data-testid="home-fresh" class="contents">
           <app-dashboard-certs [firstStep]="true" />
           <app-dashboard-fleet-tiles [fresh]="true" />
-          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
-            <app-dashboard-clusters-table [fresh]="true" />
-            <div class="flex flex-col gap-4">
-              <app-dashboard-needs-you />
-              <app-dashboard-agent-status />
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start" data-testid="home-columns">
+            <div class="contents lg:flex lg:flex-col lg:gap-4">
+              <app-dashboard-clusters-table class="order-1" [fresh]="true" />
+              <app-dashboard-activity class="order-5" />
             </div>
-          </div>
-          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
-            <app-dashboard-activity />
-            <app-dashboard-backups />
+            <div class="contents lg:flex lg:flex-col lg:gap-4">
+              <app-dashboard-needs-you class="order-2" />
+              <app-dashboard-agent-status class="order-3" />
+              <app-dashboard-backups class="order-4" />
+            </div>
           </div>
         </div>
       } @else {
         <div data-testid="home-control-room" class="contents">
           <app-dashboard-fleet-tiles />
-          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
-            <app-dashboard-clusters-table />
-            <div class="flex flex-col gap-4">
-              <app-dashboard-needs-you />
-              <app-dashboard-agent-status />
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start" data-testid="home-columns">
+            <div class="contents lg:flex lg:flex-col lg:gap-4">
+              <app-dashboard-clusters-table class="order-1" />
+              <app-dashboard-certs class="order-4" />
+              <app-dashboard-activity class="order-6" />
             </div>
-          </div>
-          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
-            <app-dashboard-certs />
-            <app-dashboard-backups />
-          </div>
-          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
-            <app-dashboard-activity />
-            <app-dashboard-workloads />
+            <div class="contents lg:flex lg:flex-col lg:gap-4">
+              <app-dashboard-needs-you class="order-2" />
+              <app-dashboard-agent-status class="order-3" />
+              <app-dashboard-backups class="order-5" />
+              <app-dashboard-workloads class="order-7" />
+            </div>
           </div>
         </div>
       }

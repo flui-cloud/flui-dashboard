@@ -86,8 +86,22 @@ describe('DashboardComponent', () => {
     userApps.set(0);
     await build();
     expect(q('home-control-room')).not.toBeNull();
-    expect(order()).toEqual([
-      'app-dashboard-fleet-tiles',
+    const [left, right] = Array.from(q('home-columns')!.children).map((column) =>
+      Array.from(column.children).map((card) => card.tagName.toLowerCase()),
+    );
+    expect(left).toEqual(['app-dashboard-clusters-table', 'app-dashboard-certs', 'app-dashboard-activity']);
+    expect(right).toEqual([
+      'app-dashboard-needs-you',
+      'app-dashboard-agent-status',
+      'app-dashboard-backups',
+      'app-dashboard-workloads',
+    ]);
+    const cards = Array.from(q('home-columns')!.querySelectorAll('[class*="order-"]'));
+    const readingOrder = cards
+      .map((card) => ({ tag: card.tagName.toLowerCase(), order: Number(/order-(\d+)/.exec(card.className)![1]) }))
+      .sort((a, b) => a.order - b.order)
+      .map((card) => card.tag);
+    expect(readingOrder).toEqual([
       'app-dashboard-clusters-table',
       'app-dashboard-needs-you',
       'app-dashboard-agent-status',
