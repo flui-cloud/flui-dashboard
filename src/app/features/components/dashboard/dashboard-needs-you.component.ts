@@ -42,7 +42,8 @@ function iconOf(item: NeedsYouItem): { icon: string; spin: boolean } {
   if (item.kind === 'cluster_operation') return { icon: 'lucideLoaderCircle', spin: true };
   if (item.kind === 'apps_without_backup') return { icon: 'lucideArchive', spin: false };
   if (item.kind === 'credential') {
-    return { icon: item.credential?.kind === 'github_app' ? 'lucideGithub' : 'lucideKeyRound', spin: false };
+    const github = item.credential?.kind === 'github_app' || item.credential?.kind === 'github_pat';
+    return { icon: github ? 'lucideGithub' : 'lucideKeyRound', spin: false };
   }
   return { icon: item.level === 'critical' ? 'lucideCircleAlert' : 'lucideTriangleAlert', spin: false };
 }

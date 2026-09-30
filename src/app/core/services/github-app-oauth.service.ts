@@ -29,7 +29,7 @@ export interface PackagesPatStatus {
   scopes?: string[];
 }
 
-export type CredentialKind = 'GITHUB_APP' | 'GHCR_PAT' | 'PROVIDER';
+export type CredentialKind = 'GITHUB_APP' | 'GITHUB_PAT' | 'GHCR_PAT' | 'PROVIDER';
 
 export interface CredentialItem {
   kind: CredentialKind;

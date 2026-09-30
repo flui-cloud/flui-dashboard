@@ -99,15 +99,45 @@ const PAT_DEEP_LINK =
           </p>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            <!-- GitHub App card (recommended) -->
+            <!-- PAT card (recommended) -->
             <button
-              (click)="selectMethod('github_app')"
-              [class]="getMethodCardClass('github_app')"
+              (click)="selectMethod('pat')"
+              [class]="getMethodCardClass('pat')"
               class="relative flex flex-col items-start text-left p-5 rounded-xl border-2 transition-all duration-200 hover:shadow-md"
             >
               <span class="absolute -top-2.5 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                 <ng-icon name="lucideStar" size="10" /> Recommended
               </span>
+              <div class="flex items-center gap-3 mb-3">
+                <div class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700">
+                  <ng-icon name="lucideKey" size="20" class="text-slate-700 dark:text-slate-300" />
+                </div>
+                <span class="font-semibold text-sm text-slate-900 dark:text-white">Personal Access Token</span>
+                @if (wizardService.selectedMethod() === 'pat') {
+                  <ng-icon name="lucideCheckCircle" size="16" class="ml-auto text-blue-600 dark:text-blue-400" />
+                }
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                The quickest way in. Each person pastes a classic token that covers both their repositories and container images. Nothing to register on GitHub.
+              </p>
+              <ul class="mt-3 space-y-1">
+                <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <span class="text-green-500">✓</span> Ready in a minute, no App to create
+                </li>
+                <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <span class="text-amber-500">△</span> Org PAT policies may block
+                </li>
+                <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <span class="text-amber-500">△</span> Token expires &amp; must be rotated
+                </li>
+              </ul>
+            </button>
+            <!-- GitHub App card -->
+            <button
+              (click)="selectMethod('github_app')"
+              [class]="getMethodCardClass('github_app')"
+              class="flex flex-col items-start text-left p-5 rounded-xl border-2 transition-all duration-200 hover:shadow-md"
+            >
               <div class="flex items-center gap-3 mb-3">
                 <div class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700">
                   <ng-icon name="lucideGithub" size="20" class="text-slate-700 dark:text-slate-300" />
@@ -118,7 +148,7 @@ const PAT_DEEP_LINK =
                 }
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Create a GitHub App with one click. Works for personal and org repos, integrates webhooks, no per-user tokens.
+                For teams and organisations: one App shared by everyone, created on GitHub with one click, so nobody keeps a personal token.
               </p>
               <ul class="mt-3 space-y-1">
                 <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
@@ -133,36 +163,6 @@ const PAT_DEEP_LINK =
               </ul>
             </button>
 
-            <!-- PAT card -->
-            <button
-              (click)="selectMethod('pat')"
-              [class]="getMethodCardClass('pat')"
-              class="flex flex-col items-start text-left p-5 rounded-xl border-2 transition-all duration-200 hover:shadow-md"
-            >
-              <div class="flex items-center gap-3 mb-3">
-                <div class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700">
-                  <ng-icon name="lucideKey" size="20" class="text-slate-700 dark:text-slate-300" />
-                </div>
-                <span class="font-semibold text-sm text-slate-900 dark:text-white">Personal Access Token</span>
-                @if (wizardService.selectedMethod() === 'pat') {
-                  <ng-icon name="lucideCheckCircle" size="16" class="ml-auto text-blue-600 dark:text-blue-400" />
-                }
-              </div>
-              <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Single-user / advanced. One classic PAT covers both repository access and GHCR container pulls. No App registration required.
-              </p>
-              <ul class="mt-3 space-y-1">
-                <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                  <span class="text-green-500">✓</span> Fastest setup for solo dev
-                </li>
-                <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                  <span class="text-amber-500">△</span> Org PAT policies may block
-                </li>
-                <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                  <span class="text-amber-500">△</span> Token expires &amp; must be rotated
-                </li>
-              </ul>
-            </button>
           </div>
         </div>
       }

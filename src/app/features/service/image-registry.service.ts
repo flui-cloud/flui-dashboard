@@ -153,7 +153,7 @@ export class ImageRegistryFeatureService {
         return;
       }
       if (status === 403) {
-        this.ghcrError.set('Insufficient GitHub permissions. Re-install the Flui GitHub App.');
+        this.ghcrError.set('GitHub refused to list the images. The GitHub token needs the read:packages scope; replace it on the Repositories page.');
       } else {
         this.ghcrError.set(error?.error?.message || error?.message || 'Failed to load GHCR images');
       }
