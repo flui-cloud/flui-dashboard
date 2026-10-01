@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideArchive,
@@ -28,7 +28,7 @@ const REFRESH_INTERVAL_MS = 60_000;
 @Component({
   selector: 'app-dashboard-backups',
   standalone: true,
-  imports: [CommonModule, NgIconComponent],
+  imports: [CommonModule, NgIconComponent, RouterLink],
   providers: [
     provideIcons({
       lucideArchive,
@@ -98,6 +98,18 @@ const REFRESH_INTERVAL_MS = 60_000;
             <ng-icon [name]="alertIcon(s.alerts[0].severity)" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" [class]="alertText(s.alerts[0].severity)" />
             <span class="text-foreground">{{ alertMessage(s.alerts[0]) }}</span>
           </div>
+          @if (s.alerts[0].items?.length) {
+          <ul class="flex flex-col gap-0.5 pl-5" data-testid="backups-alert-items">
+            @for (item of s.alerts[0].items!.slice(0, ITEMS_LISTED); track item.id) {
+            <li class="truncate">
+              <a [routerLink]="item.path" (click)="$event.stopPropagation()" class="font-medium text-primary hover:underline">{{ item.name }}</a>
+            </li>
+            }
+            @if (s.alerts[0].items!.length > ITEMS_LISTED) {
+            <li class="text-muted-foreground">and {{ s.alerts[0].items!.length - ITEMS_LISTED }} more</li>
+            }
+          </ul>
+          }
           } @else if (s.lastSuccessfulBackupAt) {
           <span class="text-muted-foreground">Last backup {{ s.lastSuccessfulBackupAt | date : 'short' }}</span>
           }
@@ -144,6 +156,7 @@ export class DashboardBackupsComponent implements OnInit, OnDestroy {
   private readonly fleet = inject(FleetService);
   private intervalId: ReturnType<typeof setInterval> | null = null;
 
+  protected readonly ITEMS_LISTED = 3;
   protected readonly status = this.backup.status;
   protected readonly loading = this.backup.statusLoading;
 
@@ -154,8 +167,11 @@ export class DashboardBackupsComponent implements OnInit, OnDestroy {
     if (this.fleet.coverageState() !== 'ready') return null;
     const withData = (this.fleet.coverage()?.applications ?? []).filter((a) => a.holdsData);
     if (withData.length === 0) return null;
+    const byChoice = withData.filter((a) => a.coverage === 'not_backed_up_by_choice').length;
+    const counted = withData.length - byChoice;
     const protectedApps = withData.filter((a) => a.coverage === 'protected').length;
-    return `${protectedApps} of ${withData.length} apps with data protected`;
+    const line = `${protectedApps} of ${counted} apps with data protected`;
+    return byChoice ? `${line}, ${byChoice} not backed up by choice` : line;
   });
 
   protected isEmpty(s: BackupStatus): boolean {
@@ -233,12 +249,13 @@ export class DashboardBackupsComponent implements OnInit, OnDestroy {
 
   protected readonly alertMessage = alertMessage;
 
-  protected ctaLabel(s: { alerts: { code: string; ctaLabel?: string }[]; cta?: { label: string } }): string {
+  protected ctaLabel(s: { alerts: { code: string; severity?: string; ctaLabel?: string }[]; cta?: { label: string } }): string {
     const first = s.alerts[0];
-    if (first) {
-      const mapped = alertCtaLabel(first as any);
-      if (mapped) return mapped;
+    if (!first || !['warning', 'critical'].includes(first.severity ?? '')) {
+      return 'Open backups';
     }
+    const mapped = alertCtaLabel(first as any);
+    if (mapped) return mapped;
     // Fallback: backend-provided CTA may be localized — neutral English fallback.
     return s.cta?.label && /^[\x00-\x7F]*$/.test(s.cta.label) && !/[àèéìòù]/i.test(s.cta.label)
       ? s.cta.label

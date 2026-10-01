@@ -127,6 +127,49 @@ describe('DashboardNeedsYouComponent', () => {
     expect(protect.textContent).toContain('Protect');
     expect(protect.getAttribute('href')).toBe('/management/backup/policies/new?clusterId=c-1&applicationId=a-1');
     expect(q('needs-you-backup:apps-without-backup')!.textContent).toContain('pg');
+    expect((q('needs-you-app-a-1') as HTMLAnchorElement).getAttribute('href')).toBe('/apps/applications/a-1');
+    needs.set(NEEDS);
+  });
+
+  it('opens the application instead of offering a policy that would not help, and says why', () => {
+    needs.set({
+      generatedAt: '',
+      count: 1,
+      items: [
+        {
+          id: 'backup:apps-without-backup',
+          kind: 'apps_without_backup',
+          level: 'warning',
+          title: '1 app with data and no backup',
+          detail: 'Orders DB',
+          action: { label: 'Open backups', path: '/apps/applications/a-2/snapshots' },
+          applications: [
+            {
+              applicationId: 'a-2',
+              name: 'Orders DB',
+              slug: 'pg-orders',
+              kind: 'DATABASE',
+              clusterId: 'c-1',
+              clusterName: 'wc-1',
+              reason: 'no_policy',
+              pendingReason: 'the database is not running yet',
+              lastSuccessAt: null,
+              protect: null,
+              open: { label: 'Open application', path: '/apps/applications/a-2' },
+              backups: { label: 'Open backups', path: '/apps/applications/a-2/snapshots' },
+            },
+          ],
+        },
+      ],
+    });
+    fixture.detectChanges();
+    expect(q('needs-you-protect-a-2')).toBeNull();
+    const open = q('needs-you-open-a-2') as HTMLAnchorElement;
+    expect(open.textContent).toContain('Open backups');
+    expect(open.getAttribute('href')).toBe('/apps/applications/a-2/snapshots');
+    expect((q('needs-you-app-a-2') as HTMLAnchorElement).getAttribute('href')).toBe('/apps/applications/a-2');
+    expect(q('needs-you-why-a-2')!.textContent).toContain('The database is not running yet.');
+    expect(q('needs-you-backup:apps-without-backup')!.textContent).toContain('pg-orders · wc-1');
     needs.set(NEEDS);
   });
 

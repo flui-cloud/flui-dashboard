@@ -13,6 +13,8 @@ import {
 import { policyEngineLabel } from '../../../model/backup-protection.models';
 import { CreateBackupPolicyDto } from '../../../../core/api/model/createBackupPolicyDto';
 import { PolicyDestinationInputDto } from '../../../../core/api/model/policyDestinationInputDto';
+import { AppOption, PolicyAppPickerComponent } from './policy-app-picker.component';
+import { PROFILE_DESCRIPTION, policyDtoOf } from './policy-wizard.dto';
 
 interface WizardDestination {
   destinationId: string;
@@ -23,7 +25,7 @@ interface WizardDestination {
 @Component({
   selector: 'app-policy-wizard',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, PolicyAppPickerComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-3xl space-y-5">
@@ -36,15 +38,7 @@ interface WizardDestination {
 
       <ol class="flex gap-2 text-xs">
         @for (s of [1,2,3,4]; track s) {
-        <li
-          class="rounded-full px-3 py-1 border"
-          [class.bg-primary]="step() === s"
-          [class.text-primary-foreground]="step() === s"
-          [class.border-primary]="step() === s"
-          [class.border-border]="step() !== s"
-        >
-          Step {{ s }}
-        </li>
+        <li class="rounded-full px-3 py-1 border" [class]="step() === s ? 'bg-primary text-primary-foreground border-primary' : 'border-border'">Step {{ s }}</li>
         }
       </ol>
 
@@ -64,6 +58,7 @@ interface WizardDestination {
           <span class="text-sm font-medium">Cluster *</span>
           <select
             [(ngModel)]="form.clusterId"
+            (ngModelChange)="selectedApps.set([])"
             required
             class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
           >
@@ -117,16 +112,12 @@ interface WizardDestination {
           />
         </label>
         } @if (form.scope === 'applications') {
-        <label class="block">
-          <span class="text-sm font-medium">
-            {{ perApp() ? 'Application ID' : 'Application IDs (comma-separated)' }}
-          </span>
-          <input
-            [(ngModel)]="applicationIds"
-            class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-            placeholder="8b2b8f1a-0398-45fc-9ffd-143830cf722e"
-          />
-        </label>
+        <app-policy-app-picker
+          [clusterId]="form.clusterId"
+          [multiple]="!perApp()"
+          [(selected)]="selectedApps"
+          (optionsLoaded)="onAppsLoaded($event)"
+        />
         } @if (form.scope === 'label_selector') {
         <label class="block">
           <span class="text-sm font-medium">Label selector</span>
@@ -260,7 +251,7 @@ interface WizardDestination {
           <div><span class="text-muted-foreground">Engine:</span> {{ engineLabel(form.engineClass) }}</div>
           <div><span class="text-muted-foreground">Scope:</span> {{ form.scope }}</div>
           @if (form.scope === 'applications') {
-          <div><span class="text-muted-foreground">Applications:</span> {{ applicationIds || '—' }}</div>
+          <div><span class="text-muted-foreground">Applications:</span> {{ appNames() || '—' }}</div>
           }
           <div><span class="text-muted-foreground">Schedule:</span> {{ form.cronSchedule || 'default nightly time' }}</div>
           @if (form.engineClass === 'volume_copy') {
@@ -334,7 +325,9 @@ export class PolicyWizardComponent implements OnInit {
 
   namespacesText = '';
   labelSelector = '';
-  applicationIds = '';
+  readonly selectedApps = signal<string[]>([]);
+  private readonly appChoices = signal<AppOption[]>([]);
+  private autoName = false;
   pauseDuringCopy = false;
   keepMonthly = false;
 
@@ -360,6 +353,7 @@ export class PolicyWizardComponent implements OnInit {
   onEngineClassChange(engineClass: CreateBackupPolicyDto.EngineClassEnum): void {
     if (engineClass === 'database' || engineClass === 'volume_copy') {
       this.form.scope = 'applications' as BackupScope;
+      this.selectedApps.update((ids) => ids.slice(0, 1));
     }
     if (engineClass === 'database') {
       this.destinations.update((list) => list.slice(0, 1).map((d) => ({ ...d, role: 'primary' as const })));
@@ -402,28 +396,41 @@ export class PolicyWizardComponent implements OnInit {
     }
     if (applicationId) {
       this.form.scope = 'applications' as BackupScope;
-      this.applicationIds = applicationId;
-      if (!this.form.name) this.form.name = `protect-${applicationId.slice(0, 8)}`;
+      this.selectedApps.set([applicationId]);
+      this.autoName = !this.form.name;
     }
   }
 
-  profileDescription(p: BackupPolicyProfile): string {
-    switch (p) {
-      case 'single':
-        return 'Primary only. 1× storage cost.';
-      case 'mirrored':
-        return 'Primary + 1 replica cross-provider. 2× cost. Recommended.';
-      case 'custom':
-        return 'Multiple destinations with custom retention.';
+  onAppsLoaded(options: AppOption[]): void {
+    this.appChoices.set(options);
+    const only = options.find((a) => a.id === this.selectedApps()[0]);
+    if (this.autoName && only) {
+      this.form.name = `protect-${only.slug}`;
+      this.autoName = false;
+      if (only.database && this.form.engineClass !== 'database') {
+        this.form.engineClass = 'database';
+        this.onEngineClassChange('database');
+      }
     }
+  }
+
+  appNames(): string {
+    const byId = new Map(this.appChoices().map((a) => [a.id, a.name]));
+    return this.selectedApps()
+      .map((id) => byId.get(id) ?? id)
+      .join(', ');
+  }
+
+  profileDescription(p: BackupPolicyProfile): string {
+    return PROFILE_DESCRIPTION[p];
   }
 
   canAdvance(): boolean {
     if (this.step() === 1) {
       if (!this.form.name || !this.form.clusterId) return false;
-      if (this.form.scope === 'applications' && !this.applicationIds.trim()) return false;
-      if (this.perApp() && this.applicationIds.split(',').filter((s) => s.trim()).length !== 1) return false;
-      return true;
+      const apps = this.selectedApps().length;
+      if (this.form.scope === 'applications' && apps === 0) return false;
+      return !this.perApp() || apps === 1;
     }
     if (this.step() === 3) return !this.validationError();
     return true;
@@ -471,38 +478,16 @@ export class PolicyWizardComponent implements OnInit {
     this.submitError.set(null);
     this.submitting.set(true);
 
-    const dto: CreateBackupPolicyDto = {
-      ...this.form,
+    const dto = policyDtoOf({
+      form: this.form,
       profile: this.inferredProfile(),
-      destinations: this.destinations()
-        .filter((d) => d.destinationId)
-        .map((d, i) => ({
-          destinationId: d.destinationId,
-          role: d.role,
-          priority: i,
-        })),
-    };
-
-    if (!dto.cronSchedule) delete (dto as any).cronSchedule;
-    if (this.form.engineClass === 'volume_copy') {
-      delete (dto as any).retentionMaxCopies;
-      const metadata = {
-        ...(this.pauseDuringCopy ? { pauseDuringCopy: true } : {}),
-        ...(this.keepMonthly ? { keepMonthly: true } : {}),
-      };
-      if (Object.keys(metadata).length) dto.metadata = metadata;
-    }
-
-    if (this.form.scope === 'namespaces') {
-      const ns = this.namespacesText.split(',').map((s) => s.trim()).filter(Boolean);
-      dto.scopeSelector = { namespaces: ns };
-    } else if (this.form.scope === 'label_selector') {
-      dto.scopeSelector = { labelSelector: this.labelSelector };
-    } else if (this.form.scope === 'applications') {
-      const ids = this.applicationIds.split(',').map((s) => s.trim()).filter(Boolean);
-      dto.scopeSelector = { applicationIds: ids };
-    }
-
+      destinations: this.destinations(),
+      pauseDuringCopy: this.pauseDuringCopy,
+      keepMonthly: this.keepMonthly,
+      namespacesText: this.namespacesText,
+      labelSelector: this.labelSelector,
+      applicationIds: this.selectedApps(),
+    });
     const created =
       this.form.engineClass === 'database'
         ? await this.backup.enableDatabase(dto)

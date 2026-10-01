@@ -11,6 +11,8 @@ export interface BackupStatusAlert {
   resourceId?: string;
   ctaLabel?: string;
   ctaPath?: string;
+  /** The resources the alert names, each with its page. */
+  items?: Array<{ id: string; name: string; path: string }>;
 }
 
 export interface BackupStatusSummary {

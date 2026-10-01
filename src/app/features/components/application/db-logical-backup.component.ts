@@ -50,7 +50,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                 <span class="font-normal text-muted-foreground">· {{ i.engine }} · {{ i.format }}</span>
               </h3>
               <p class="mt-0.5 text-sm text-muted-foreground">
-                A portable engine-native dump{{ i.database ? ' of "' + i.database + '"' : '' }} — restore it here, on
+                A portable engine-native dump{{ i.database ? ' of database “' + i.database + '”' : '' }} — restore it here, on
                 another Flui database, or anywhere. Complements the volume copies below.
               </p>
 

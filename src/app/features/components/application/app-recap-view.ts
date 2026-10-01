@@ -184,18 +184,32 @@ export function backupBand(protection: AppProtection | null | undefined, now = D
       return { ...base, label: 'First backup due', tone: 'info' };
     case 'to_verify':
       return { ...base, label: 'To verify', tone: 'warn', detail: 'A label-selector policy covers it; Flui cannot check which apps it reaches.' };
+    case 'not_backed_up_by_choice':
+      return { ...base, label: 'Not backed up by choice', tone: 'muted', detail: c.decision?.note ?? null, protectPath: null };
     default:
       return { ...base, label: 'Not backed up', tone: 'warn', detail: UNPROTECTED_DETAIL[c.reason] ?? 'No recent backup protects its data.' };
   }
 }
 
-const UNPROTECTED_DETAIL: Record<string, string> = {
+export const UNPROTECTED_DETAIL: Record<string, string> = {
   no_policy: 'No policy covers it.',
   stale: 'Its last backup is too old.',
   never_succeeded: 'Its policy has never succeeded.',
   left_out: 'The last backup left its volumes out.',
   no_schedule: 'Its policy has no schedule.',
 };
+
+function sentence(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  const capital = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  return /[.!?]$/.test(capital) ? capital : `${capital}.`;
+}
+
+/** Why an app holding data is not protected: what protecting its cluster ran into, else the coverage reason. */
+export function unprotectedWhy(pendingReason: string | null | undefined, reason: string): string | null {
+  return pendingReason ? sentence(pendingReason) : (UNPROTECTED_DETAIL[reason] ?? null);
+}
 
 /** Parses a path the API returned (`/route?a=b`) into router commands and query params. */
 export function routeOf(path: string): { path: string; query: Record<string, string> } {

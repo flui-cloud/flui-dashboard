@@ -44,7 +44,8 @@ import {
   snapshotStatus,
 } from '../../model/volume-management.models';
 import { databaseEngineOf } from '../../model/db-engine';
-import { AppBackupProtectionComponent } from './app-backup-protection.component';
+import { AppBackupProtectionComponent, Protection } from './app-backup-protection.component';
+import { AppBackupDecisionComponent } from './app-backup-decision.component';
 import { AppVolumeBackupsComponent } from './app-volume-backups.component';
 
 type StatusFilter = 'all' | SnapshotStatus;
@@ -62,6 +63,7 @@ type StatusFilter = 'all' | SnapshotStatus;
     SnapshotDeleteDialogComponent,
     SnapshotRestoreDialogComponent,
     AppBackupProtectionComponent,
+    AppBackupDecisionComponent,
     AppVolumeBackupsComponent,
   ],
   providers: [
@@ -77,7 +79,15 @@ type StatusFilter = 'all' | SnapshotStatus;
   ],
   template: `
     <div class="space-y-6">
+      <app-backup-decision
+        [appId]="appId()"
+        [protection]="protection()"
+        (changed)="backupProtection.reload()"
+        (protect)="backupProtection.startProtect()"
+      />
+
       <app-backup-protection
+        #backupProtection
         [appId]="appId()"
         [appSlug]="appService.selectedApplication()?.slug ?? ''"
         [clusterId]="appService.selectedApplication()?.clusterId ?? ''"
@@ -85,6 +95,7 @@ type StatusFilter = 'all' | SnapshotStatus;
         [postgres]="isPostgres()"
         [hasData]="!noVolume()"
         (backedUp)="volumeBackups.load()"
+        (loaded)="protection.set($event)"
       />
 
       @if (isDatabase()) {
@@ -463,6 +474,7 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
     /no persistent volume/i.test(this.snapshotCapability()?.reason ?? ''),
   );
 
+  readonly protection = signal<Protection | null>(null);
   readonly filter = signal<StatusFilter>('all');
   readonly createOpen = signal(false);
   readonly pendingDelete = signal<ApplicationSnapshot | null>(null);

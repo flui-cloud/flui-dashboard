@@ -46,4 +46,19 @@ export interface BackupPolicyActivity {
   health: BackupHealth;
   lastRun: BackupRun | null;
   runs: BackupRun[];
+  /** Only on a single policy's activity. */
+  targets?: PolicyTargets;
+}
+
+/** What a policy protects, named; `path` is null for what no longer exists. */
+export interface PolicyTargets {
+  cluster: { id: string; name: string | null; gone: boolean } | null;
+  applications: Array<{
+    id: string;
+    name: string | null;
+    slug: string | null;
+    path: string | null;
+    gone: boolean;
+    goneWith?: 'cluster';
+  }>;
 }

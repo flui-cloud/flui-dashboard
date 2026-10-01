@@ -66,6 +66,7 @@ export interface BackupPolicyOptions {
 const SKIP_REASON: Record<string, string> = {
   system: 'part of Flui, covered by the platform backup',
   no_data: 'keeps no data',
+  not_backed_up_by_choice: 'not backed up by choice',
 };
 
 /** What a backup engine is called on screen. */

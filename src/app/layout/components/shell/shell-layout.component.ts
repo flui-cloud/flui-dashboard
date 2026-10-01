@@ -104,7 +104,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
         </hlm-sidebar-content-header>
         <div class="relative flex-1 overflow-hidden">
           <app-flui-backdrop placement="bottom-right" intensity="soft" />
-          <div class="absolute inset-0 overflow-y-auto p-2 subtle-scroll">
+          <div class="page-outlet absolute inset-0 overflow-y-auto p-2 subtle-scroll">
             <app-sandbox-section-notice />
             <router-outlet></router-outlet>
           </div>

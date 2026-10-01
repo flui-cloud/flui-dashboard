@@ -84,6 +84,21 @@ describe('app recap view', () => {
     );
   });
 
+  it('says an app a person decided not to back up is so by choice, with the note and no Protect', () => {
+    const band = backupBand(
+      protection({
+        coverage: 'not_backed_up_by_choice',
+        reason: 'not_backed_up_by_choice',
+        protectPath: null,
+        decision: { notBackedUp: true, note: 'scratch copy', decidedBy: 'u1', decidedAt: '2026-10-01T09:00:00Z' },
+      }),
+      NOW,
+    )!;
+    expect(band).toEqual(
+      jasmine.objectContaining({ label: 'Not backed up by choice', tone: 'muted', detail: 'scratch copy', protectPath: null }),
+    );
+  });
+
   it('says there is nothing to back up for an app that keeps no data, and nothing when the rule did not answer', () => {
     expect(backupBand(protection({ holdsData: false, coverage: 'unprotected' }), NOW)!.label).toBe('Nothing to back up');
     expect(backupBand(null)).toBeNull();

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -13,6 +14,8 @@ import { firstValueFrom } from 'rxjs';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import { BackupService } from '../../service/backup.service';
 import { AssistantOperationProgressComponent } from '../assistant/assistant-operation-progress.component';
+import type { AppCoverageRow } from '../../service/fleet.service';
+import { decisionPanel } from './app-backup-decision';
 
 interface ProtectionPolicy {
   policyId: string;
@@ -34,10 +37,11 @@ interface BeforeDeploy {
   warning?: string;
 }
 
-interface Protection {
+export interface Protection {
   protectedOffCluster: boolean;
   policies: ProtectionPolicy[];
   beforeDeploy?: BeforeDeploy | null;
+  coverage?: AppCoverageRow | null;
 }
 
 type BeforeDeployChoice = 'off' | 'on' | 'required';
@@ -56,8 +60,10 @@ type BeforeDeployChoice = 'off' | 'on' | 'required';
     @if (protection(); as p) {
       <section
         class="card-surface p-4 space-y-3"
+        [class.hidden]="!ownHeader() && !p.policies.length && !choosing() && !failure()"
         data-testid="backup-protection"
       >
+        @if (ownHeader()) {
         <div class="flex items-start justify-between gap-3">
           <div>
             <h2 class="text-lg font-semibold">
@@ -101,6 +107,7 @@ type BeforeDeployChoice = 'off' | 'on' | 'required';
             </button>
           }
         </div>
+        }
 
         @for (pol of p.policies; track pol.policyId) {
           <div class="rounded-md border border-border px-3 py-2 text-sm">
@@ -309,8 +316,10 @@ export class AppBackupProtectionComponent {
   readonly hasData = input(true);
   /** A backup taken from here finished. */
   readonly backedUp = output<void>();
+  readonly loaded = output<Protection | null>();
 
   protected readonly protection = signal<Protection | null>(null);
+  protected readonly ownHeader = computed(() => !decisionPanel(this.protection()));
   protected readonly choosing = signal(false);
   protected readonly working = signal(false);
   protected readonly failure = signal<string | null>(null);
@@ -427,7 +436,7 @@ export class AppBackupProtectionComponent {
     return 'Backup';
   }
 
-  protected async startProtect(): Promise<void> {
+  async startProtect(): Promise<void> {
     this.failure.set(null);
     await this.backup.loadDestinations();
     this.destinationId.set(this.backup.destinations()[0]?.id ?? '');
@@ -468,6 +477,11 @@ export class AppBackupProtectionComponent {
     }
   }
 
+  reload(): void {
+    const id = this.appId();
+    if (id) void this.load(id);
+  }
+
   private async load(id: string): Promise<void> {
     try {
       this.protection.set(
@@ -480,5 +494,6 @@ export class AppBackupProtectionComponent {
     } catch {
       this.protection.set(null);
     }
+    this.loaded.emit(this.protection());
   }
 }

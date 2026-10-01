@@ -97,6 +97,25 @@ describe('DashboardBackupsComponent', () => {
     expect(q('backups-card')!.textContent).toContain('Set up a backup policy');
   });
 
+  it('names the policies whose cluster is gone, each linking to its page', () => {
+    backupStatus.set({
+      ...status(),
+      overall: 'warning',
+      alerts: [
+        {
+          severity: 'warning',
+          code: 'ORPHAN_POLICIES',
+          message: 'Backup policy prod-daily points at a cluster that no longer exists.',
+          items: [{ id: 'p1', name: 'prod-daily', path: '/management/backup/policies/p1' }],
+        },
+      ],
+    });
+    fixture.detectChanges();
+    const link = q('backups-alert-items')!.querySelector('a') as HTMLAnchorElement;
+    expect(link.textContent).toContain('prod-daily');
+    expect(link.getAttribute('href')).toBe('/management/backup/policies/p1');
+  });
+
   it('renders nothing when the status could not be read', () => {
     backupStatus.set(null);
     fixture.detectChanges();

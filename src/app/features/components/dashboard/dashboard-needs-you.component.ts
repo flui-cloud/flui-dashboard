@@ -17,6 +17,7 @@ import { FleetService, NeedsYouItem, NeedsYouLevel } from '../../service/fleet.s
 import { DashboardDnsService } from '../../service/dashboard-dns.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { CERT_ACTION_KEY } from './dashboard-certs.component';
+import { NeedsYouAppRow, needsYouAppRow } from './needs-you-apps';
 
 interface Row {
   id: string;
@@ -27,7 +28,7 @@ interface Row {
   spin: boolean;
   path: string | null;
   opensDnsWizard: boolean;
-  apps: Array<{ id: string; name: string; protectPath: string | null }>;
+  apps: NeedsYouAppRow[];
 }
 
 const APPS_LISTED = 4;
@@ -113,12 +114,22 @@ function iconOf(item: NeedsYouItem): { icon: string; spin: boolean } {
                 <div class="flex gap-3">
                   <ng-container [ngTemplateOutlet]="body" />
                 </div>
-                <ul class="flex flex-col gap-1 pl-[30px]">
+                <ul class="flex flex-col gap-2 pl-[30px]">
                   @for (app of row.apps; track app.id) {
-                    <li class="flex items-center justify-between gap-2 text-xs">
-                      <span class="truncate text-foreground">{{ app.name }}</span>
+                    <li class="flex items-start justify-between gap-2 text-xs">
+                      <div class="flex min-w-0 flex-col">
+                        <a [routerLink]="app.appPath" class="truncate font-medium text-foreground hover:underline" [attr.data-testid]="'needs-you-app-' + app.id">{{ app.name }}</a>
+                        @if (app.secondary) {
+                          <span class="truncate text-muted-foreground">{{ app.secondary }}</span>
+                        }
+                        @if (app.why) {
+                          <span class="text-muted-foreground" [attr.data-testid]="'needs-you-why-' + app.id">{{ app.why }}</span>
+                        }
+                      </div>
                       @if (app.protectPath) {
                         <a [routerLink]="pathOf(app.protectPath)" [queryParams]="queryOf(app.protectPath)" class="shrink-0 font-medium text-primary hover:underline" [attr.data-testid]="'needs-you-protect-' + app.id">Protect</a>
+                      } @else {
+                        <a [routerLink]="app.backupsPath" class="shrink-0 font-medium text-primary hover:underline" [attr.data-testid]="'needs-you-open-' + app.id">Open backups</a>
                       }
                     </li>
                   }
@@ -171,11 +182,7 @@ export class DashboardNeedsYouComponent {
       ...iconOf(item),
       path: item.action?.path ?? null,
       opensDnsWizard: false,
-      apps: (item.applications ?? []).slice(0, APPS_LISTED).map((a) => ({
-        id: a.applicationId,
-        name: a.name,
-        protectPath: a.protect?.path ?? null,
-      })),
+      apps: (item.applications ?? []).slice(0, APPS_LISTED).map(needsYouAppRow),
     }));
     const dns = this.dnsRow();
     if (!dns) return api;

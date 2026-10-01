@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { BackupPolicy } from '../../../model/backup.models';
@@ -25,6 +25,7 @@ import {
   selector: 'app-policy-detail',
   standalone: true,
   imports: [
+    RouterLink,
     ReadOnlySectionDirective,
     BackupStatusBadgeComponent,
     BackupHealthBadgeComponent,
@@ -161,9 +162,37 @@ import {
       <div class="rounded-lg border border-border bg-card p-5 space-y-3 text-sm">
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <div class="text-xs text-muted-foreground">Scope</div>
+            <div class="text-xs text-muted-foreground">Protects</div>
+            @if (activity()?.targets?.applications?.length) {
+            @for (app of activity()!.targets!.applications; track app.id) {
+            <div>
+              @if (app.path) {
+              <a [routerLink]="app.path" class="text-primary hover:underline">{{ app.name }}</a>
+              } @else {
+              <span>{{ app.name ?? 'An application' }}</span>
+              }
+              @if (app.slug && app.slug !== app.name) {
+              <span class="text-xs text-muted-foreground"> {{ app.slug }}</span>
+              }
+              @if (app.gone) {
+              <span class="text-xs text-muted-foreground">
+                · {{ app.goneWith === 'cluster' ? 'deleted with its cluster' : 'deleted' }}</span
+              >
+              }
+            </div>
+            }
+            } @else {
             <div class="capitalize">{{ p.scope.replace('_',' ') }}</div>
+            }
           </div>
+          @if (activity()?.targets?.cluster; as c) {
+          <div>
+            <div class="text-xs text-muted-foreground">Cluster</div>
+            <div>
+              {{ c.name ?? 'A cluster' }}@if (c.gone) {<span class="text-xs text-muted-foreground"> · deleted</span>}
+            </div>
+          </div>
+          }
           <div>
             <div class="text-xs text-muted-foreground">Retention</div>
             @if (p.engineClass === 'volume_copy') {
@@ -219,6 +248,7 @@ import {
       <app-backup-progress-modal
         [operationId]="activeOpId()"
         title="Running backup"
+        (settled)="onRunSettled()"
         (closed)="onProgressClosed()"
       />
     </div>
@@ -302,15 +332,22 @@ export class PolicyDetailComponent implements OnInit, OnDestroy {
     this.running.set(true);
     const result = await this.backup.runOnDemand(policyId);
     this.running.set(false);
-    if (result?.operationId) this.activeOpId.set(result.operationId);
-    else if (result) void this.reloadActivity(policyId);
-    else this.toast.showError(this.backup.error() ?? 'Could not start the backup');
+    if (!result) {
+      this.toast.showError(this.backup.error() ?? 'Could not start the backup');
+      return;
+    }
+    if (result.operationId) this.activeOpId.set(result.operationId);
+    void this.reloadActivity(policyId);
+  }
+
+  onRunSettled(): void {
+    const id = this.policy()?.id;
+    if (id) void this.reloadActivity(id);
   }
 
   onProgressClosed(): void {
     this.activeOpId.set(null);
-    const id = this.policy()?.id;
-    if (id) void this.reloadActivity(id);
+    this.onRunSettled();
   }
 
   async onToggle(p: BackupPolicy): Promise<void> {

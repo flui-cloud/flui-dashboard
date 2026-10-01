@@ -170,6 +170,9 @@ function backupOf(group: AppGroupView, coverage: ReadonlyMap<string, AppCoverage
   if (rows.some((r) => r.coverage === 'to_verify')) {
     return { label: 'To verify', tone: 'muted', title: 'Covered by a label selector Flui cannot check', noBackup: false };
   }
+  if (rows.some((r) => r.coverage === 'not_backed_up_by_choice')) {
+    return { label: 'Not backed up', tone: 'muted', title: 'Not backed up by choice', noBackup: false };
+  }
   const oldest = rows
     .map((r) => r.lastSuccessAt)
     .filter((d): d is string => !!d)

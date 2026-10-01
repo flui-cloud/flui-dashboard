@@ -33,7 +33,7 @@ import { SidebarNavItem } from './hlm-sidebar-group-tooltip.component';
     >
       <div class="relative pl-6">
         <div class="bg-border absolute bottom-0 left-0 top-0 ml-2.5 w-px"></div>
-        @if (items().length > 0) { @for (item of _visibleItems(); track item.link) {
+        @if (items().length > 0) { @for (item of _visibleItems(); track trackKey(item)) {
         <hlm-sidebar-item
           [id]="item.id || ''"
           [label]="item.label"
@@ -67,6 +67,14 @@ export class HlmSidebarGroupContentComponent {
   protected readonly _visibleItems = computed(() =>
     this.items().filter((item) => this._searchService.matches(item))
   );
+
+  /**
+   * RouterLinkActive keeps a class it already added when its input changes,
+   * so an item whose rule changes is drawn again rather than updated.
+   */
+  protected trackKey(item: SidebarNavItem): string {
+    return `${item.link}|${item.routerLinkActive ?? ''}`;
+  }
 
   protected isForcedActive(item: SidebarNavItem): boolean {
     return (item as SidebarNavItem & { active?: boolean }).active === true;

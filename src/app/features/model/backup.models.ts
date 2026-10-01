@@ -286,6 +286,10 @@ export interface ActiveOperation {
   message: string;
   status: 'running' | 'completed' | 'failed';
   error?: string;
+  /** A backup run that finished but left something out. */
+  partial?: boolean;
+  /** What the finished run said about itself. */
+  detail?: string;
   startedAt: number;
   endedAt?: number;
 }

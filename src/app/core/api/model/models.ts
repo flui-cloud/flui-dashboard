@@ -569,6 +569,7 @@ export * from './serverMetricsHistoryDto';
 export * from './serverResponseDto';
 export * from './serverTypePricingDto';
 export * from './setGatewayPolicyDto';
+export * from './setBackupDecisionDto';
 export * from './setPlatformConfigDto';
 export * from './shapeCatalogueDto';
 export * from './showcaseItemDto';

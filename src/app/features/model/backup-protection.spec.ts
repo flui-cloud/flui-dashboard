@@ -32,6 +32,9 @@ describe('backup protection labels', () => {
       'part of Flui, covered by the platform backup',
     );
     expect(protectedAppLine(app({ outcome: 'skipped', reason: 'no_data' }))).toBe('keeps no data');
+    expect(protectedAppLine(app({ outcome: 'skipped', reason: 'not_backed_up_by_choice' }))).toBe(
+      'not backed up by choice',
+    );
     expect(protectedAppLine(app({ outcome: 'failed', reason: 'destination unreachable' }))).toBe(
       'destination unreachable',
     );

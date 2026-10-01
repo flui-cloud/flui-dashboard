@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* A routed page that caps its own width sits centred in the content area. */
+.page-outlet > * > [class*="max-w-"]:not(.fixed):not(.absolute) {
+  margin-inline: auto;
+}
+
 :root {
   --font-sans: "Geist", system-ui, -apple-system, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "Cascadia Code", monospace;

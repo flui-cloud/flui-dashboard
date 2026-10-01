@@ -59,12 +59,19 @@ export interface NeedsYouAction {
 export interface NeedsYouApp {
   applicationId: string;
   name: string;
+  slug?: string;
   kind: string;
   clusterId: string;
   clusterName: string | null;
   reason: string;
+  /** Why protecting its cluster has not covered it yet, when it tried. */
+  pendingReason?: string | null;
   lastSuccessAt: string | null;
-  protect: NeedsYouAction;
+  /** Absent when a policy made by hand would not help, e.g. a database that is not running. */
+  protect: NeedsYouAction | null;
+  open?: NeedsYouAction;
+  /** Its Backup tab: protect it, or decide it is not backed up. */
+  backups?: NeedsYouAction;
 }
 
 export interface NeedsYouItem {
@@ -85,7 +92,16 @@ export interface NeedsYou {
   items: NeedsYouItem[];
 }
 
-export type AppCoverageState = 'protected' | 'pending' | 'to_verify' | 'unprotected';
+export type AppCoverageState = 'protected' | 'pending' | 'to_verify' | 'unprotected' | 'not_backed_up_by_choice';
+
+/** A person's decision that an application is not backed up. */
+export interface AppBackupDecision {
+  notBackedUp: true;
+  note?: string;
+  decidedBy: string;
+  decidedByName?: string;
+  decidedAt: string;
+}
 
 export interface AppCoverageRow {
   applicationId: string;
@@ -113,6 +129,14 @@ export interface AppCoverageRow {
   lastSuccessAt: string | null;
   protectedUntil: string | null;
   protectPath: string | null;
+  applicationPath?: string;
+  pending?: {
+    outcome: 'waiting' | 'failed' | 'needs_decision';
+    reason: string | null;
+    at: string;
+    protectHelps: boolean;
+  } | null;
+  decision?: AppBackupDecision | null;
 }
 
 export interface FleetCoverage {
@@ -124,6 +148,7 @@ export interface FleetCoverage {
     pending: number;
     toVerify: number;
     unprotected: number;
+    notBackedUpByChoice?: number;
     alarms: number;
   };
   applications: AppCoverageRow[];

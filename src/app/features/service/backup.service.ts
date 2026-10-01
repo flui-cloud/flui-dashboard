@@ -24,12 +24,7 @@ import {
   ProtectClusterRequest,
 } from '../model/backup-protection.models';
 import { BackupStatus, SetupOptions } from '../model/backup-status.models';
-import {
-  InfrastructureOperationCompletedDto,
-  InfrastructureOperationFailedDto,
-  InfrastructureOperationProgressDto,
-  InfrastructureWebSocketService,
-} from './infrastructure-websocket.service';
+import { BackupOperationsTracker } from './backup-operations.tracker';
 
 export interface RunBackupResult {
   job: BackupJob;
@@ -44,7 +39,7 @@ export interface CreateRestoreResult {
 @Injectable({ providedIn: 'root' })
 export class BackupService {
   private readonly api = inject(BackupsService);
-  private readonly ws = inject(InfrastructureWebSocketService);
+  private readonly tracker = inject(BackupOperationsTracker);
   private readonly http = inject(HttpClient);
   private readonly appConfig = inject(AppConfigService);
 
@@ -59,7 +54,6 @@ export class BackupService {
   private readonly _selectedPolicy = signal<BackupPolicy | null>(null);
   private readonly _selectedJob = signal<BackupJob | null>(null);
   private readonly _selectedRestore = signal<RestoreJob | null>(null);
-  private readonly _activeOps = signal<Record<string, ActiveOperation>>({});
   private readonly _activity = signal<BackupPolicyActivity[]>([]);
   private readonly _activityLoaded = signal(false);
   private readonly _activityError = signal<string | null>(null);
@@ -77,7 +71,7 @@ export class BackupService {
   readonly selectedPolicy = this._selectedPolicy.asReadonly();
   readonly selectedJob = this._selectedJob.asReadonly();
   readonly selectedRestore = this._selectedRestore.asReadonly();
-  readonly activeOperations = this._activeOps.asReadonly();
+  readonly activeOperations = this.tracker.operations;
   readonly activity = this._activity.asReadonly();
   readonly activityLoaded = this._activityLoaded.asReadonly();
   readonly activityError = this._activityError.asReadonly();
@@ -582,136 +576,14 @@ export class BackupService {
       resourceType?: NonNullable<ActiveOperation['resourceType']>;
     },
   ): void {
-    this._activeOps.update((map) => ({
-      ...map,
-      [operationId]: {
-        operationId,
-        jobId: meta.jobId,
-        resourceType: meta.resourceType,
-        percentage: 0,
-        currentStep: '',
-        totalSteps: 0,
-        message: 'Starting…',
-        status: 'running',
-        startedAt: Date.now(),
+    this.tracker.track(operationId, {
+      ...meta,
+      onSettled: (op) => {
+        if (!op.jobId) return;
+        if (op.resourceType === 'backup_job') void this.getJob(op.jobId);
+        if (op.resourceType === 'restore_job') void this.getRestoreJob(op.jobId);
       },
-    }));
-
-    this.ws.subscribeToOperation(operationId, {
-      onProgress: (e) => this.handleProgress(e),
-      onCompleted: (e) => this.handleCompleted(e),
-      onFailed: (e) => this.handleFailed(e),
     });
-    void this.pollOperation(operationId);
-  }
-
-  /**
-   * The backup engines record their progress on the operation and do not all
-   * announce it over the socket, so the operation is also read directly until
-   * it ends; otherwise a dialog waits at 0% on work that has long finished.
-   */
-  private async pollOperation(operationId: string): Promise<void> {
-    const deadline = Date.now() + 30 * 60_000;
-    while (Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, 3_000));
-      const tracked = this._activeOps()[operationId];
-      if (tracked?.status !== 'running') return;
-      let op: PolledOperation | null = null;
-      try {
-        op = await firstValueFrom(
-          this.http.get<PolledOperation>(
-            `${this.appConfig.apiBaseUrl}/api/v1/infrastructure/operations/${operationId}`,
-          ),
-        );
-      } catch {
-        continue;
-      }
-      if (!op) continue;
-      const status = (op.status ?? '').toUpperCase();
-      if (status === 'COMPLETED') {
-        this.handleCompleted({
-          operationId,
-        } as InfrastructureOperationCompletedDto);
-        return;
-      }
-      if (status === 'FAILED' || status === 'CANCELLED') {
-        this.handleFailed({
-          operationId,
-          error: op.errorMessage ?? 'The operation failed',
-        } as InfrastructureOperationFailedDto);
-        return;
-      }
-      this._activeOps.update((map) => {
-        const current = map[operationId];
-        if (current?.status !== 'running') return map;
-        return {
-          ...map,
-          [operationId]: {
-            ...current,
-            percentage: Math.max(current.percentage, op?.progress ?? 0),
-            message: op?.currentStep
-              ? humanStep(op.currentStep)
-              : current.message,
-          },
-        };
-      });
-    }
-  }
-
-  private handleProgress(e: InfrastructureOperationProgressDto): void {
-    this._activeOps.update((map) => {
-      const op = map[e.operationId];
-      if (!op) return map;
-      return {
-        ...map,
-        [e.operationId]: {
-          ...op,
-          percentage: e.percentage,
-          currentStep: `${e.currentStepIndex}/${e.totalSteps}`,
-          totalSteps: e.totalSteps,
-          message: e.message,
-        },
-      };
-    });
-  }
-
-  private handleCompleted(e: InfrastructureOperationCompletedDto): void {
-    this._activeOps.update((map) => {
-      const op = map[e.operationId];
-      if (!op) return map;
-      return {
-        ...map,
-        [e.operationId]: {
-          ...op,
-          status: 'completed',
-          percentage: 100,
-          endedAt: Date.now(),
-        },
-      };
-    });
-    this.ws.unsubscribeFromOperation(e.operationId);
-    const op = this._activeOps()[e.operationId];
-    if (op?.jobId) {
-      if (op.resourceType === 'backup_job') void this.getJob(op.jobId);
-      if (op.resourceType === 'restore_job') void this.getRestoreJob(op.jobId);
-    }
-  }
-
-  private handleFailed(e: InfrastructureOperationFailedDto): void {
-    this._activeOps.update((map) => {
-      const op = map[e.operationId];
-      if (!op) return map;
-      return {
-        ...map,
-        [e.operationId]: {
-          ...op,
-          status: 'failed',
-          error: e.error,
-          endedAt: Date.now(),
-        },
-      };
-    });
-    this.ws.unsubscribeFromOperation(e.operationId);
   }
 
   async loadStatus(): Promise<BackupStatus | null> {
@@ -761,10 +633,7 @@ export class BackupService {
   }
 
   clearOperation(operationId: string): void {
-    this._activeOps.update((map) => {
-      const { [operationId]: _, ...rest } = map;
-      return rest;
-    });
+    this.tracker.clear(operationId);
   }
 
   clearError(): void {
@@ -773,15 +642,3 @@ export class BackupService {
 }
 
 export type { BackupArtifact } from '../model/backup.models';
-
-interface PolledOperation {
-  status?: string;
-  progress?: number;
-  currentStep?: string;
-  errorMessage?: string;
-}
-
-function humanStep(step: string): string {
-  const words = step.replaceAll('_', ' ').trim();
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
