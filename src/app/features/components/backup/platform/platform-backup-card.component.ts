@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
@@ -19,37 +20,36 @@ import {
   lucideShieldCheck,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
-import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
+import { BackupHealthBadgeComponent } from '../shared/health-badge.component';
+import { BackupRunsTableComponent } from '../shared/runs-table.component';
+import { BackupProgressModalComponent } from '../shared/progress-modal.component';
+import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { BackupService } from '../../../service/backup.service';
+import { BackupPolicyActivity } from '../../../model/backup-run.models';
+import { formatLocalDateTime, formatRelativeTime, formatUtcDateTime } from '../../../model/backup-activity';
 import {
   PlatformBackupJob,
   PlatformBackupPolicy,
   PlatformBackupService,
 } from '../../../service/platform-backup.service';
 
-type Freshness = 'fresh' | 'stale' | 'unknown';
-
-/** Fresh ≤ 45 min; beyond that the dead-man's switch withholds its heartbeat. */
-const FRESH_THRESHOLD_MIN = 45;
 const INSECURE_SSH_KEY = 'SSH_KEY_ENCRYPTION_KEY';
-
-const FRESHNESS_CLASSES: Record<Freshness, string> = {
-  fresh: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
-  stale: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
-  unknown: 'bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/30',
-};
-
-const FRESHNESS_LABEL: Record<Freshness, string> = {
-  fresh: 'Fresh',
-  stale: "Stale — dead-man's switch will alarm",
-  unknown: 'No run yet',
-};
+const RECENT_RUNS = 5;
 
 @Component({
   selector: 'app-platform-backup-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon, BackupStatusBadgeComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    NgIcon,
+    ReadOnlySectionDirective,
+    BackupHealthBadgeComponent,
+    BackupRunsTableComponent,
+    BackupProgressModalComponent,
+  ],
   providers: [
     provideIcons({
       lucideCircleAlert,
@@ -131,38 +131,55 @@ const FRESHNESS_LABEL: Record<Freshness, string> = {
                 <ng-icon name="lucideClock" class="mt-0.5 h-4 w-4 text-muted-foreground" />
                 <div>
                   <div class="text-xs text-muted-foreground">Schedule</div>
+                  @if (activity(); as a) {
+                  <div>{{ a.schedule.description }}</div>
+                  @if (a.schedule.nextRunAt) {
+                  <div class="text-xs text-muted-foreground" [attr.title]="utc(a.schedule.nextRunAt)">
+                    Next {{ relative(a.schedule.nextRunAt) }} · {{ local(a.schedule.nextRunAt) }}
+                  </div>
+                  }
+                  } @else {
                   <div class="font-mono text-xs">{{ policy()?.cronSchedule || '—' }}</div>
+                  }
                 </div>
               </div>
             </div>
 
-            <!-- Last backup -->
-            <div class="rounded-md border border-border bg-background p-3">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs text-muted-foreground">Last backup</span>
-                @if (lastJob(); as j) {
-                <app-backup-status-badge kind="job" [value]="j.status" />
-                <span
-                  class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium"
-                  [class]="freshnessClasses()"
+            <div class="rounded-md border border-border bg-background p-3 space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs text-muted-foreground">Health</span>
+                  @if (activity(); as a) {
+                  <app-backup-health-badge [state]="a.health.state" [detail]="a.health.detail" />
+                  }
+                </div>
+                <button
+                  appReadOnlySection="backup"
+                  type="button"
+                  class="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                  [disabled]="!hasRecipient() || running() || !!activeOpId()"
+                  (click)="backUpNow()"
                 >
-                  {{ freshnessLabel() }}
-                </span>
-                } @else {
-                <span class="text-sm text-muted-foreground">No runs yet</span>
-                }
+                  {{ running() ? 'Starting…' : 'Back up now' }}
+                </button>
               </div>
-              @if (lastJob(); as j) {
-              <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <div class="text-xs text-muted-foreground">Finished</div>
-                  <div>{{ j.finishedAt || '—' }}</div>
-                </div>
-                <div>
-                  <div class="text-xs text-muted-foreground">Age</div>
-                  <div>{{ ageLabel() }}</div>
-                </div>
-              </div>
+              @if (activity(); as a) {
+              @if (a.health.detail) {
+              <p class="text-xs text-muted-foreground">{{ a.health.detail }}</p>
+              }
+              @if (a.runs.length) {
+              <app-backup-runs-table [runs]="a.runs" [compact]="true" [limit]="recentRuns" />
+              } @else {
+              <p class="text-sm text-muted-foreground">No runs yet</p>
+              }
+              <a
+                [routerLink]="['/management/backup/policies', a.policyId]"
+                class="inline-block text-xs text-primary hover:underline"
+              >
+                View all runs →
+              </a>
+              } @else if (activityError()) {
+              <p class="text-xs text-muted-foreground">Run history unavailable.</p>
               }
             </div>
 
@@ -241,6 +258,12 @@ const FRESHNESS_LABEL: Record<Freshness, string> = {
         </div>
         }
 
+        <app-backup-progress-modal
+          [operationId]="activeOpId()"
+          title="Backing up the platform"
+          (closed)="onProgressClosed()"
+        />
+
         @if (error()) {
         <div class="mt-3 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
           {{ error() }}
@@ -253,6 +276,7 @@ const FRESHNESS_LABEL: Record<Freshness, string> = {
 export class PlatformBackupCardComponent implements OnInit {
   private readonly service = inject(PlatformBackupService);
   private readonly toast = inject(ToastService);
+  private readonly backup = inject(BackupService);
 
   protected readonly insecureSshKey = INSECURE_SSH_KEY;
 
@@ -261,7 +285,15 @@ export class PlatformBackupCardComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly policy = signal<PlatformBackupPolicy | null>(null);
   protected readonly lastJob = signal<PlatformBackupJob | null>(null);
-  protected readonly now = signal(Date.now());
+  protected readonly activity = signal<BackupPolicyActivity | null>(null);
+  protected readonly activityError = signal(false);
+  protected readonly running = signal(false);
+  protected readonly activeOpId = signal<string | null>(null);
+  protected readonly recentRuns = RECENT_RUNS;
+
+  protected readonly relative = (iso: string) => formatRelativeTime(iso);
+  protected readonly local = formatLocalDateTime;
+  protected readonly utc = formatUtcDateTime;
 
   protected heartbeatUrlInput = '';
 
@@ -273,22 +305,6 @@ export class PlatformBackupCardComponent implements OnInit {
   protected readonly heartbeatConfigured = computed(
     () => !!this.policy()?.metadata?.platform?.heartbeat?.url,
   );
-
-  protected readonly ageMinutes = computed<number | null>(() => {
-    const finished = this.lastJob()?.finishedAt;
-    if (!finished) return null;
-    const t = new Date(finished).getTime();
-    if (Number.isNaN(t)) return null;
-    return (this.now() - t) / 60000;
-  });
-
-  protected readonly freshness = computed<Freshness>(() => {
-    const age = this.ageMinutes();
-    if (age == null) return 'unknown';
-    return age <= FRESH_THRESHOLD_MIN ? 'fresh' : 'stale';
-  });
-  protected readonly freshnessClasses = computed(() => FRESHNESS_CLASSES[this.freshness()]);
-  protected readonly freshnessLabel = computed(() => FRESHNESS_LABEL[this.freshness()]);
 
   protected readonly zitadelCovered = computed(
     () => this.lastJob()?.metadata?.zitadelCovered === true,
@@ -304,15 +320,6 @@ export class PlatformBackupCardComponent implements OnInit {
     void this.load();
   }
 
-  protected ageLabel(): string {
-    const age = this.ageMinutes();
-    if (age == null) return '—';
-    const m = Math.round(age);
-    if (m < 60) return `${m} min ago`;
-    const h = Math.floor(m / 60);
-    return `${h}h ${m % 60}m ago`;
-  }
-
   private async load(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
@@ -321,15 +328,46 @@ export class PlatformBackupCardComponent implements OnInit {
       const policy = policies[0] ?? null;
       this.policy.set(policy);
       this.heartbeatUrlInput = policy?.metadata?.platform?.heartbeat?.url ?? '';
-      this.now.set(Date.now());
       if (policy) {
-        this.lastJob.set(await this.service.lastPlatformJob([policy.id]));
+        const [lastJob] = await Promise.all([
+          this.service.lastPlatformJob([policy.id]),
+          this.loadActivity(policy.id),
+        ]);
+        this.lastJob.set(lastJob);
       }
     } catch (err: unknown) {
       this.error.set(this.errorMessage(err, 'Failed to load platform backup status'));
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private async loadActivity(policyId: string): Promise<void> {
+    this.activityError.set(false);
+    try {
+      this.activity.set(await this.backup.getPolicyActivity(policyId, RECENT_RUNS));
+    } catch {
+      this.activityError.set(true);
+    }
+  }
+
+  protected async backUpNow(): Promise<void> {
+    const policy = this.policy();
+    if (!policy) return;
+    this.running.set(true);
+    const result = await this.backup.runOnDemand(policy.id);
+    this.running.set(false);
+    if (result?.operationId) this.activeOpId.set(result.operationId);
+    else if (result) void this.loadActivity(policy.id);
+    else this.toast.showError(this.backup.error() ?? 'Could not start the backup');
+  }
+
+  protected onProgressClosed(): void {
+    this.activeOpId.set(null);
+    const policy = this.policy();
+    if (!policy) return;
+    void this.loadActivity(policy.id);
+    void this.service.lastPlatformJob([policy.id]).then((job) => this.lastJob.set(job));
   }
 
   protected async saveHeartbeat(): Promise<void> {

@@ -19,7 +19,6 @@ const JOB: BackupJob = {
   clusterId: 'cl-1',
   userId: 'u1',
   triggerType: 'scheduled',
-  veleroBackupName: 'backup-2026-09-01',
   status: 'completed',
   startedAt: '2026-09-01T02:00:00.000Z',
   finishedAt: '2026-09-01T02:05:00.000Z',
@@ -76,12 +75,12 @@ describe('jobs list surface producer', () => {
     expect(row.entities?.[0].role).toBe('related');
   });
 
-  it('presents trigger, status, started-at and the velero backup name', () => {
+  it('presents trigger, status, started-at and finished-at', () => {
     const row = rowScope(snapshotOf(), 'job-1');
     const obs = (key: string) => row.observations?.find((o) => o.key === key);
     expect(obs('flui.backup.job.trigger_type')?.presentedAs.text).toBe('scheduled');
     expect(obs('flui.backup.job.status')?.presentedAs.text).toBe('completed');
-    expect(obs('flui.backup.job.velero_backup_name')?.presentedAs.text).toBe('backup-2026-09-01');
+    expect(obs('flui.backup.job.finished_at')?.presentedAs.text).toBe('2026-09-01T02:05:00.000Z');
   });
 
   it('redacts: no raw error text ever enters a row (jobs never present errorMessage)', () => {

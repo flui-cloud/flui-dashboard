@@ -4,7 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
 import { ClusterService } from '../../../service/cluster.service';
+import { BackupPolicyActivity } from '../../../model/backup-run.models';
+import { policyEngineLabel } from '../../../model/backup-protection.models';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
+import { BackupHealthBadgeComponent } from '../shared/health-badge.component';
+import {
+  activityByPolicyId,
+  formatLocalDateTime,
+  formatRelativeTime,
+  formatUtcDateTime,
+  runTime,
+  sortByAttention,
+} from '../../../model/backup-activity';
 import { BackupBackLinkComponent } from '../shared/back-link.component';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
@@ -18,7 +29,14 @@ import {
 @Component({
   selector: 'app-policies-list',
   standalone: true,
-  imports: [ReadOnlySectionDirective, FormsModule, RouterLink, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  imports: [
+    ReadOnlySectionDirective,
+    FormsModule,
+    RouterLink,
+    BackupStatusBadgeComponent,
+    BackupHealthBadgeComponent,
+    BackupBackLinkComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-4">
@@ -27,7 +45,7 @@ import {
         <div>
           <h1 class="text-2xl font-semibold">Backup policies</h1>
           <p class="text-sm text-muted-foreground mt-1">
-            Per-cluster policies orchestrating Velero backups across destinations.
+            One policy per app and engine: continuous backups or dumps for databases, snapshots for volumes, and Flui itself.
           </p>
         </div>
         <a
@@ -58,7 +76,10 @@ import {
         <p class="text-sm text-muted-foreground">No policies match the current filter.</p>
       </div>
       } @else {
-      <div class="overflow-hidden rounded-lg border border-border bg-card">
+      @if (backup.activityError()) {
+      <p class="text-xs text-muted-foreground">Run activity is unavailable right now; health and run times are not shown.</p>
+      }
+      <div class="overflow-x-auto rounded-lg border border-border bg-card">
         <table class="w-full text-sm">
           <thead class="bg-muted/40 text-xs uppercase text-muted-foreground">
             <tr>
@@ -67,6 +88,9 @@ import {
               <th class="text-left px-4 py-2">Protects</th>
               <th class="text-left px-4 py-2">Profile</th>
               <th class="text-left px-4 py-2">Schedule</th>
+              <th class="text-left px-4 py-2">Health</th>
+              <th class="text-left px-4 py-2">Last run</th>
+              <th class="text-left px-4 py-2">Next run</th>
               <th class="text-left px-4 py-2">Status</th>
             </tr>
           </thead>
@@ -79,11 +103,29 @@ import {
                 </a>
               </td>
               <td class="px-4 py-2 text-muted-foreground">{{ clusterName(p.clusterId) }}</td>
-              <td class="px-4 py-2 text-muted-foreground">{{ engineLabel(p.engineClass) }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ engineLabel(p.engineClass, p.engine) }}</td>
               <td class="px-4 py-2 text-muted-foreground capitalize">{{ p.profile }}</td>
+              @if (activityFor(p.id); as a) {
+              <td class="px-4 py-2 text-muted-foreground" [attr.title]="p.cronSchedule ? p.cronSchedule + ' (UTC)' : null">
+                {{ a.schedule.description }}
+              </td>
+              <td class="px-4 py-2">
+                <app-backup-health-badge [state]="a.health.state" [detail]="a.health.detail" />
+              </td>
+              <td class="px-4 py-2 text-muted-foreground whitespace-nowrap" [attr.title]="hover(lastRunAt(a))">
+                {{ relative(lastRunAt(a)) }}
+              </td>
+              <td class="px-4 py-2 text-muted-foreground whitespace-nowrap" [attr.title]="hover(a.schedule.nextRunAt)">
+                {{ relative(a.schedule.nextRunAt) }}
+              </td>
+              } @else {
               <td class="px-4 py-2 text-muted-foreground font-mono text-xs">
                 {{ p.cronSchedule || 'on-demand' }}
               </td>
+              <td class="px-4 py-2 text-muted-foreground">{{ backup.activityLoaded() ? '—' : '…' }}</td>
+              <td class="px-4 py-2 text-muted-foreground">—</td>
+              <td class="px-4 py-2 text-muted-foreground">—</td>
+              }
               <td class="px-4 py-2">
                 <app-backup-status-badge kind="policy" [value]="p.status" />
               </td>
@@ -104,17 +146,25 @@ export class PoliciesListComponent implements OnInit, OnDestroy {
   readonly clusters = this.clusterService.clusters;
   clusterFilter = '';
 
+  private readonly activityById = computed(() => activityByPolicyId(this.backup.activity()));
+
   readonly filtered = computed(() => {
     const id = this.clusterFilter;
     const all = this.backup.policies();
-    return id ? all.filter((p) => p.clusterId === id) : all;
+    const byId = this.activityById();
+    const visible = id ? all.filter((p) => p.clusterId === id) : all;
+    return sortByAttention(visible, (p) => byId.get(p.id)?.health.state);
   });
 
   private readonly surfaceRevision = new PoliciesListSurfaceRevision();
 
   readonly surface = computed(() => {
     const input: PoliciesListSurfaceInput = {
-      rows: this.filtered().map((policy) => ({ policy, clusterName: this.clusterName(policy.clusterId) })),
+      rows: this.filtered().map((policy) => ({
+        policy,
+        clusterName: this.clusterName(policy.clusterId),
+        activity: this.activityFor(policy.id),
+      })),
       totalPolicies: this.backup.policies().length,
       clusterFilterName: this.clusterFilter ? this.clusterName(this.clusterFilter) : null,
       loading: this.backup.loading(),
@@ -137,8 +187,28 @@ export class PoliciesListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void (async () => {
-      await Promise.all([this.backup.loadPolicies(), this.clusterService.loadClusters()]);
+      await Promise.all([
+        this.backup.loadPolicies(),
+        this.backup.loadActivity(),
+        this.clusterService.loadClusters(),
+      ]);
     })();
+  }
+
+  activityFor(policyId: string): BackupPolicyActivity | null {
+    return this.activityById().get(policyId) ?? null;
+  }
+
+  protected lastRunAt(a: BackupPolicyActivity): string | null {
+    return a.lastRun ? runTime(a.lastRun) : null;
+  }
+
+  protected relative(iso: string | null): string {
+    return formatRelativeTime(iso);
+  }
+
+  protected hover(iso: string | null): string | null {
+    return iso ? `${formatLocalDateTime(iso)} (${formatUtcDateTime(iso)})` : null;
   }
 
   clusterName(id: string): string {
@@ -146,14 +216,5 @@ export class PoliciesListComponent implements OnInit, OnDestroy {
   }
 
   /** What the policy actually protects — the three engines behave nothing alike. */
-  engineLabel(engineClass?: string): string {
-    switch (engineClass) {
-      case 'database':
-        return 'Database (continuous)';
-      case 'platform':
-        return 'Control plane';
-      default:
-        return 'Cluster state';
-    }
-  }
+  readonly engineLabel = policyEngineLabel;
 }

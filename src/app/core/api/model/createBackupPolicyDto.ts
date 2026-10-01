@@ -9,12 +9,16 @@
  */
 import { PolicyDestinationInputDto } from './policyDestinationInputDto';
 import { BackupScopeSelectorDto } from './backupScopeSelectorDto';
+import { BackupPolicyOptionsDto } from './backupPolicyOptionsDto';
 
 
 export interface CreateBackupPolicyDto { 
     name: string;
     clusterId: string;
     scope: CreateBackupPolicyDto.ScopeEnum;
+    /**
+     * What protects the scope. Omitted, a policy naming one application copies its volumes; any other scope must name it.
+     */
     engineClass?: CreateBackupPolicyDto.EngineClassEnum;
     scopeSelector?: BackupScopeSelectorDto;
     includePvcs?: boolean;
@@ -24,6 +28,7 @@ export interface CreateBackupPolicyDto {
     retentionMaxCopies?: number;
     profile?: CreateBackupPolicyDto.ProfileEnum;
     destinations: Array<PolicyDestinationInputDto>;
+    metadata?: BackupPolicyOptionsDto;
 }
 export namespace CreateBackupPolicyDto {
     export const ScopeEnum = {
@@ -34,7 +39,6 @@ export namespace CreateBackupPolicyDto {
     } as const;
     export type ScopeEnum = typeof ScopeEnum[keyof typeof ScopeEnum];
     export const EngineClassEnum = {
-        Volume: 'volume',
         Database: 'database',
         Platform: 'platform',
         VolumeCopy: 'volume_copy'

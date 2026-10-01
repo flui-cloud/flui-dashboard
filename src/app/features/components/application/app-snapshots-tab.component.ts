@@ -40,10 +40,12 @@ import {
   ApplicationSnapshot,
   CreateSnapshotRequest,
   SnapshotStatus,
+  SpareVolume,
   snapshotStatus,
 } from '../../model/volume-management.models';
 import { databaseEngineOf } from '../../model/db-engine';
 import { AppBackupProtectionComponent } from './app-backup-protection.component';
+import { AppVolumeBackupsComponent } from './app-volume-backups.component';
 
 type StatusFilter = 'all' | SnapshotStatus;
 
@@ -60,6 +62,7 @@ type StatusFilter = 'all' | SnapshotStatus;
     SnapshotDeleteDialogComponent,
     SnapshotRestoreDialogComponent,
     AppBackupProtectionComponent,
+    AppVolumeBackupsComponent,
   ],
   providers: [
     provideIcons({
@@ -79,13 +82,21 @@ type StatusFilter = 'all' | SnapshotStatus;
         [appSlug]="appService.selectedApplication()?.slug ?? ''"
         [clusterId]="appService.selectedApplication()?.clusterId ?? ''"
         [database]="isDatabase()"
+        [postgres]="isPostgres()"
         [hasData]="!noVolume()"
+        (backedUp)="volumeBackups.load()"
       />
 
       @if (isDatabase()) {
         <app-db-logical-backup [appId]="appId()" />
         <app-db-pitr [appId]="appId()" />
       }
+
+      <app-volume-backups
+        #volumeBackups
+        [appId]="appId()"
+        (restoredHere)="reloadSpare()"
+      />
 
       <!-- Toolbar -->
       <div class="flex flex-wrap items-center justify-between gap-3">
@@ -373,7 +384,7 @@ type StatusFilter = 'all' | SnapshotStatus;
                 </div>
                 <div class="flex shrink-0 gap-2">
                   <button
-                    (click)="useSpare(v.name)"
+                    (click)="useSpare(v)"
                     [disabled]="v.inUse || restoring()"
                     class="px-2.5 py-1 text-xs rounded-md border border-border hover:bg-muted disabled:opacity-50"
                   >
@@ -434,6 +445,11 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
   readonly spare = this.snapshotsService.spare;
   readonly isDatabase = computed(
     () => !!databaseEngineOf(this.appService.selectedApplication() as never),
+  );
+  readonly isPostgres = computed(
+    () =>
+      databaseEngineOf(this.appService.selectedApplication() as never) ===
+      'postgres',
   );
   readonly hasSeveralVolumes = computed(
     () =>
@@ -497,9 +513,10 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
     this.snapshotsService.clearRefusal();
   }
 
-  async useSpare(name: string): Promise<void> {
+  async useSpare(spare: SpareVolume): Promise<void> {
     const id = this.appId();
     if (!id) return;
+    const name = spare.name;
     if (
       !confirm(
         `Make the application use ${name}? It restarts; what it uses now is kept as a previous volume.`,
@@ -508,7 +525,7 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
       return;
     this.restoring.set(true);
     try {
-      await this.snapshotsService.swap(id, 'data', name);
+      await this.snapshotsService.swap(id, spare.replaces ?? 'data', name);
       await this.snapshotsService.loadSpare(id);
     } finally {
       this.restoring.set(false);
@@ -520,6 +537,11 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
     if (!id) return;
     if (!confirm(`Delete ${name}? Its data cannot be recovered.`)) return;
     await this.snapshotsService.deleteSpare(id, name);
+  }
+
+  reloadSpare(): void {
+    const id = this.appId();
+    if (id) void this.snapshotsService.loadSpare(id);
   }
 
   ngOnDestroy(): void {
@@ -595,7 +617,11 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
       const result = await this.snapshotsService.restore(id, snap.exportId);
       if (!result) return;
       if (restoreAndSwap) {
-        await this.snapshotsService.swap(id, 'data', result.newPvcName);
+        await this.snapshotsService.swap(
+          id,
+          snap.sourcePvcName ?? 'data',
+          result.newPvcName,
+        );
       }
       this.pendingRestore.set(null);
       await this.snapshotsService.loadForApp(id);

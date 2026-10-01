@@ -3,13 +3,13 @@ import { Component, OnInit, computed, inject, input, output, signal, ChangeDetec
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
+import { providerLabel } from '../../../model/backup.models';
 import {
   ProviderReadiness,
   SetupOptions,
   centsToEur,
-  providerLabel,
   providerReadinessMessage,
-} from '../../../model/backup.models';
+} from '../../../model/backup-status.models';
 import { QuickSetupDto } from '../../../../core/api/model/quickSetupDto';
 import { BackupProgressModalComponent } from '../shared/progress-modal.component';
 
@@ -134,19 +134,18 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
                 What's included in a backup?
               </summary>
               <div class="px-3 pb-3 pt-1 space-y-2">
+                @if (scope.persistentVolumes === 'per-application') {
                 <ul class="list-disc ml-4 text-foreground space-y-0.5">
-                  @if (scope.k8sResources) {
-                  <li>Application configuration and settings</li>
-                  } @if (scope.persistentVolumes === 'shared-storage-only') {
-                  <li>Data on shared storage volumes</li>
-                  }
+                  <li>Each app gets its own backup, new apps included</li>
+                  <li>Databases: continuous backup, or nightly dumps</li>
+                  <li>Other volumes: encrypted snapshots, 7 daily and 4 weekly</li>
                 </ul>
-                @if (scope.persistentVolumes === 'shared-storage-only') {
-                <p class="text-amber-700 dark:text-amber-400">
-                  <strong>Not database data.</strong> Volumes on dedicated storage — which is
-                  what databases use — are not captured here. Protect a Postgres database with
-                  continuous backup, and any other volume with a copy.
+                <p class="text-muted-foreground">
+                  Databases Flui does not recognise are listed as needing a decision
+                  instead of being copied while they write.
                 </p>
+                } @else {
+                <p class="text-muted-foreground">{{ scope.notes }}</p>
                 }
                 <p class="text-muted-foreground">
                   Container images and resources outside the cluster are not included.
@@ -168,10 +167,9 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
                 [(ngModel)]="cronSchedule"
                 class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
               >
-                <option value="0 2 * * *">Daily at 02:00 UTC (recommended)</option>
+                <option value="">Nightly, each kind at its own time (recommended)</option>
+                <option value="0 2 * * *">Everything at 02:00 UTC</option>
                 <option value="0 */6 * * *">Every 6 hours</option>
-                <option value="0 0 * * 0">Weekly (Sunday 00:00 UTC)</option>
-                <option value="">On-demand only</option>
               </select>
             </label>
 
@@ -205,7 +203,7 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
             <div class="text-3xl">✓</div>
             <p class="text-sm font-medium">Backups enabled successfully.</p>
             <p class="text-xs text-muted-foreground">
-              Automatic schedule active. The first backup is running now.
+              Every app on this cluster now has a backup, and new apps get one too.
             </p>
           </div>
           }
@@ -278,7 +276,7 @@ export class EnableBackupsModalComponent implements OnInit {
   protected readonly errorMsg = signal<string | null>(null);
   protected readonly opId = signal<string | null>(null);
 
-  protected cronSchedule = '0 2 * * *';
+  protected cronSchedule = '';
 
   protected readonly centsToEur = centsToEur;
   protected readonly providerLabel = (p: string): string =>

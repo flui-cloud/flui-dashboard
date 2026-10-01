@@ -22,7 +22,6 @@ const RESTORE: RestoreJob = {
   sourceDestinationId: 'dest-1',
   targetClusterId: 'cl-2',
   targetKind: 'full_cluster' as RestoreJob['targetKind'],
-  veleroRestoreName: 'restore-2026-09-01',
   status: 'completed',
   createdAt: '2026-09-01T03:00:00.000Z',
 };
@@ -79,10 +78,9 @@ describe('restore detail surface producer', () => {
     expect(sourceScope.entities).toEqual([{ ref: destinationEntityRef('dest-1'), role: 'related' }]);
   });
 
-  it('presents target kind, status and the velero restore name', () => {
+  it('presents target kind and status', () => {
     const snapshot = snapshotOf();
     expect(observation(snapshot, 'flui.backup.restore.target_kind')?.presentedAs.text).toBe('full_cluster');
-    expect(observation(snapshot, 'flui.backup.restore.velero_restore_name')?.presentedAs.text).toBe('restore-2026-09-01');
   });
 
   it('produces no snapshot at all when there is no restore job loaded — no invented selection', () => {

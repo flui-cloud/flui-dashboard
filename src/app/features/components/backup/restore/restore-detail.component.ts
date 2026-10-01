@@ -45,10 +45,6 @@ import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
           <div class="text-xs text-muted-foreground">Source destination</div>
           <div class="font-mono text-xs">{{ r.sourceDestinationId }}</div>
         </div>
-        <div>
-          <div class="text-xs text-muted-foreground">Velero restore</div>
-          <div class="font-mono text-xs">{{ r.veleroRestoreName || '—' }}</div>
-        </div>
       </div>
 
       @if (r.errorMessage) {

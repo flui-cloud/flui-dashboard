@@ -3,7 +3,7 @@ import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { BackupService } from '../../service/backup.service';
 import { FleetCoverage, FleetReadState, FleetService } from '../../service/fleet.service';
-import { BackupStatus } from '../../model/backup.models';
+import { BackupStatus } from '../../model/backup-status.models';
 import { DashboardBackupsComponent } from './dashboard-backups.component';
 
 const status = (over: Partial<BackupStatus['summary']> = {}, last?: string): BackupStatus => ({

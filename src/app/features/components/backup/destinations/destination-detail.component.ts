@@ -166,32 +166,6 @@ import {
               {{ d.lastHealthError }}
             </div>
           }
-          @if (!ownFolderForClusterBackups(d)) {
-            <div
-              class="flex items-start justify-between gap-4 rounded border border-border px-3 py-2 text-xs"
-            >
-              <p class="text-muted-foreground">
-                Cluster backups share this destination's folder with other
-                backups, which makes it unusable for them.
-              </p>
-              <button
-                appReadOnlySection="backup"
-                type="button"
-                class="shrink-0 rounded-md border border-border px-3 py-1.5 text-xs hover:bg-muted disabled:opacity-50"
-                [disabled]="upgrading()"
-                (click)="onUpgradeLayout()"
-              >
-                Give them their own folder
-              </button>
-            </div>
-            @if (upgradeRefusal()) {
-              <div
-                class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300 break-words"
-              >
-                {{ upgradeRefusal() }}
-              </div>
-            }
-          }
         </div>
 
         <div class="flex justify-end">
@@ -220,7 +194,6 @@ export class DestinationDetailComponent implements OnInit, OnDestroy {
 
   protected readonly dest = signal<BackupDestination | null>(null);
   protected readonly loading = signal(false);
-  protected readonly upgrading = signal(false);
   protected readonly editingCost = signal(false);
   protected readonly costDraft = signal('');
   protected readonly costError = signal<string | null>(null);
@@ -243,7 +216,6 @@ export class DestinationDetailComponent implements OnInit, OnDestroy {
       this.dest.set(await this.backup.getDestination(d.id));
     }
   }
-  protected readonly upgradeRefusal = signal<string | null>(null);
   protected readonly providerLabel = providerLabel;
   protected readonly formatBytes = formatBytes;
 
@@ -290,19 +262,6 @@ export class DestinationDetailComponent implements OnInit, OnDestroy {
     if (!id) return;
     await this.backup.testDestination(id);
     this.dest.set(await this.backup.getDestination(id));
-  }
-
-  protected ownFolderForClusterBackups(d: BackupDestination): boolean {
-    return d.metadata?.['layout'] === 'engine-prefixed';
-  }
-
-  async onUpgradeLayout(): Promise<void> {
-    const id = this.dest()?.id;
-    if (!id) return;
-    this.upgrading.set(true);
-    this.upgradeRefusal.set(await this.backup.upgradeDestinationLayout(id));
-    this.dest.set(await this.backup.getDestination(id));
-    this.upgrading.set(false);
   }
 
   async onRefresh(): Promise<void> {

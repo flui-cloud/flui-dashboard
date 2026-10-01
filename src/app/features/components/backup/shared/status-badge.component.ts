@@ -4,15 +4,17 @@ import {
   ArtifactLocationState,
   BackupJobStatus,
   BackupPolicyStatus,
-  BadgeStyle,
   DestinationHealthStatus,
   RestoreJobStatus,
+} from '../../../model/backup.models';
+import {
+  BadgeStyle,
   healthBadge,
   jobStatusBadge,
   locationStateBadge,
   policyStatusBadge,
   restoreStatusBadge,
-} from '../../../model/backup.models';
+} from '../../../model/backup-badges';
 
 type Kind = 'health' | 'policy' | 'job' | 'location' | 'restore';
 

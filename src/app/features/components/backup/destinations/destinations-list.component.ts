@@ -46,7 +46,7 @@ import {
         <div>
           <p class="text-sm font-medium">⚡ One-click Scaleway backups</p>
           <p class="text-xs text-muted-foreground mt-0.5">
-            Pick a cluster and Flui provisions the destination, schedule, Velero and first backup
+            Pick a cluster and Flui provisions the destination, protects every app on it and takes the first backups
             automatically — using your existing Scaleway credentials. Most users don't need to add a
             destination by hand.
           </p>

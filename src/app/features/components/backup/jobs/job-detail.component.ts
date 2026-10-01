@@ -58,10 +58,6 @@ import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
             <div class="capitalize">{{ j.triggerType.replace('_', ' ') }}</div>
           </div>
           <div>
-            <div class="text-xs text-muted-foreground">Velero backup</div>
-            <div class="font-mono text-xs">{{ j.veleroBackupName || '—' }}</div>
-          </div>
-          <div>
             <div class="text-xs text-muted-foreground">Started</div>
             <div>{{ j.startedAt || '—' }}</div>
           </div>

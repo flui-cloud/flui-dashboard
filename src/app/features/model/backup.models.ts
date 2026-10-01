@@ -43,6 +43,8 @@ export type ArtifactLocationState =
   | 'missing'
   | 'expired'
   | 'failed';
+export type BackupEngineClass = 'database' | 'platform' | 'volume_copy';
+
 export type RestoreJobStatus =
   'pending' | 'previewing' | 'restoring' | 'completed' | 'failed' | 'cancelled';
 
@@ -97,19 +99,15 @@ export interface BackupPolicy {
   };
   includePvcs: boolean;
   includeEtcdL1: boolean;
-  /**
-   * Which engine runs this policy, and therefore what it actually protects.
-   * The three behave nothing alike — Velero captures Kubernetes objects and
-   * the volumes it can read, the database engine ships WAL continuously, and
-   * the platform engine dumps Flui's own control plane — so a list that does
-   * not show it is a list of rows that look interchangeable and are not.
-   */
-  engineClass?: 'volume' | 'database' | 'platform' | 'volume_copy';
+  engineClass?: BackupEngineClass;
+  /** The database engine behind a database policy; `…-dump` means scheduled dumps. */
+  engine?: string | null;
   cronSchedule?: string | null;
   retentionDays: number;
   retentionMaxCopies?: number | null;
   enabled: boolean;
   status: BackupPolicyStatus;
+  metadata?: Record<string, unknown> | null;
   profile: BackupPolicyProfile;
   destinations: BackupPolicyDestination[];
   createdAt: string;
@@ -122,7 +120,6 @@ export interface BackupJob {
   clusterId: string;
   userId: string;
   triggerType: BackupJobTriggerType;
-  veleroBackupName?: string;
   status: BackupJobStatus;
   startedAt?: string;
   finishedAt?: string;
@@ -155,8 +152,7 @@ export interface BackupArtifact {
   id: string;
   backupJobId: string;
   clusterId: string;
-  engineClass?: 'volume' | 'database' | 'platform' | 'volume_copy';
-  veleroBackupName: string;
+  engineClass?: BackupEngineClass;
   sizeBytes?: string | null;
   itemCount?: number | null;
   expiresAt?: string | null;
@@ -180,7 +176,6 @@ export interface RestoreJob {
     labelSelector?: string;
   };
   strategy?: RestoreStrategy;
-  veleroRestoreName?: string;
   status: RestoreJobStatus;
   previewResult?: Record<string, unknown>;
   infrastructureOperationId?: string;
@@ -189,7 +184,6 @@ export interface RestoreJob {
 }
 
 export interface RestorePreviewResult {
-  veleroBackupName: string;
   manifestSummary?: Record<string, unknown>;
   sizeBytes?: string;
   itemCount?: number;
@@ -271,113 +265,6 @@ export function formatBytes(bytes: number | string | null | undefined): string {
   return `${v.toFixed(v >= 100 || i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
-// ===== UI badge styling =====
-
-export interface BadgeStyle {
-  label: string;
-  classes: string;
-}
-
-const TONE = {
-  green:
-    'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30',
-  blue: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30',
-  amber:
-    'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
-  red: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30',
-  gray: 'bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/30',
-  violet:
-    'bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30',
-};
-
-export function healthBadge(status: DestinationHealthStatus): BadgeStyle {
-  switch (status) {
-    case 'healthy':
-      return { label: 'Healthy', classes: TONE.green };
-    case 'degraded':
-      return { label: 'Degraded', classes: TONE.amber };
-    case 'failed':
-      return { label: 'Failed', classes: TONE.red };
-    default:
-      return { label: 'Unknown', classes: TONE.gray };
-  }
-}
-
-export function policyStatusBadge(status: BackupPolicyStatus): BadgeStyle {
-  switch (status) {
-    case 'active':
-      return { label: 'Active', classes: TONE.green };
-    case 'paused':
-      return { label: 'Paused', classes: TONE.gray };
-    case 'degraded':
-      return { label: 'Degraded', classes: TONE.amber };
-    case 'failed':
-      return { label: 'Failed', classes: TONE.red };
-  }
-}
-
-export function jobStatusBadge(status: BackupJobStatus): BadgeStyle {
-  switch (status) {
-    case 'completed':
-      return { label: 'Completed', classes: TONE.green };
-    case 'partially_completed':
-      return { label: 'Partial', classes: TONE.amber };
-    case 'failed':
-      return { label: 'Failed', classes: TONE.red };
-    case 'cancelled':
-      return { label: 'Cancelled', classes: TONE.gray };
-    case 'pending':
-      return { label: 'Pending', classes: TONE.gray };
-    case 'running':
-    case 'uploading':
-    case 'replicating':
-      return {
-        label: status[0].toUpperCase() + status.slice(1),
-        classes: TONE.blue,
-      };
-  }
-}
-
-export function locationStateBadge(state: ArtifactLocationState): BadgeStyle {
-  switch (state) {
-    case 'verified':
-      return { label: 'Verified', classes: TONE.violet };
-    case 'available':
-      return { label: 'Available', classes: TONE.green };
-    case 'uploading':
-    case 'pending':
-      return {
-        label: state[0].toUpperCase() + state.slice(1),
-        classes: TONE.blue,
-      };
-    case 'failed':
-      return { label: 'Failed', classes: TONE.red };
-    case 'missing':
-      return { label: 'Missing', classes: TONE.red };
-    case 'expired':
-      return { label: 'Expired', classes: TONE.gray };
-  }
-}
-
-export function restoreStatusBadge(status: RestoreJobStatus): BadgeStyle {
-  switch (status) {
-    case 'completed':
-      return { label: 'Completed', classes: TONE.green };
-    case 'failed':
-      return { label: 'Failed', classes: TONE.red };
-    case 'cancelled':
-      return { label: 'Cancelled', classes: TONE.gray };
-    case 'pending':
-      return { label: 'Pending', classes: TONE.gray };
-    case 'previewing':
-    case 'restoring':
-      return {
-        label: status[0].toUpperCase() + status.slice(1),
-        classes: TONE.blue,
-      };
-  }
-}
-
 /**
  * Presets come from the API, so callers pass what they have loaded. Falls back
  * to the raw provider id rather than inventing a name.
@@ -401,197 +288,4 @@ export interface ActiveOperation {
   error?: string;
   startedAt: number;
   endedAt?: number;
-}
-
-// ===== Phase 2: status / quick-setup / billing =====
-
-export type BackupOverallStatus = 'ok' | 'info' | 'warning' | 'critical';
-
-export interface BackupStatusAlert {
-  severity: BackupOverallStatus;
-  code: string;
-  message: string;
-  resourceType?: string;
-  resourceId?: string;
-  ctaLabel?: string;
-  ctaPath?: string;
-}
-
-export interface BackupStatusSummary {
-  clustersTotal: number;
-  clustersWithBackups: number;
-  clustersWithoutBackups: number;
-  activePolicies: number;
-  degradedPolicies: number;
-  failedDestinations: number;
-  healthyDestinations: number;
-  totalArtifactsLast30d: number;
-  failedJobsLast24h: number;
-}
-
-export interface BackupStatus {
-  overall: BackupOverallStatus;
-  summary: BackupStatusSummary;
-  lastSuccessfulBackupAt?: string;
-  alerts: BackupStatusAlert[];
-  cta?: { label: string; path: string };
-  generatedAt: string;
-}
-
-export interface ProviderReadiness {
-  provider: StorageBackendProvider;
-  ready: boolean;
-  needsConnection: boolean;
-  reason?: string;
-  message?: string;
-}
-
-export interface BackupScopeInfo {
-  k8sResources: boolean;
-  /**
-   * Never a plain `true`: Velero's file-system backup cannot read hostPath
-   * volumes, so volumes on the dedicated storage class (what databases use)
-   * are not captured while shared-storage ones are.
-   */
-  persistentVolumes: 'shared-storage-only' | false;
-  method: string;
-  notes: string;
-}
-
-export interface SetupOptionsEstimate {
-  currency: 'EUR';
-  clusterMonthlyCents: number | null;
-  clusterUnavailableReason?: string;
-  backupMonthlyCentsBy: {
-    single: number | null;
-    mirrored: number | null;
-  };
-  backupUnavailableReason?: string;
-  backupPricingSource?: string;
-  estimatedDataGb: number | null;
-  estimatedDataSource?: 'last-backup' | 'pvc-requests';
-  backupScope?: BackupScopeInfo;
-  disclaimer: string;
-}
-
-export interface SetupOptions {
-  currentProvider: string;
-  primary: ProviderReadiness;
-  /** Every destination this cluster may use. Never includes its own cloud. */
-  eligible?: ProviderReadiness[];
-  recommendedReplicas: ProviderReadiness[];
-  estimate: SetupOptionsEstimate;
-}
-
-/** MVP only supports 'single'. 'mirrored' returns when a 2nd GA destination is added. */
-export type QuickSetupProfile = 'single';
-
-export const STATUS_BANNER_TONE: Record<BackupOverallStatus, string> = {
-  ok: 'border-green-500/30 bg-green-500/5',
-  info: 'border-border bg-card',
-  warning: 'border-amber-500/30 bg-amber-500/5',
-  critical: 'border-red-500/30 bg-red-500/5',
-};
-
-export const STATUS_TEXT_TONE: Record<BackupOverallStatus, string> = {
-  ok: 'text-green-700 dark:text-green-400',
-  info: 'text-muted-foreground',
-  warning: 'text-amber-700 dark:text-amber-400',
-  critical: 'text-red-700 dark:text-red-400',
-};
-
-export function centsToEur(cents: number | null | undefined): string {
-  if (cents == null || !Number.isFinite(cents)) return '—';
-  return `€${(cents / 100).toFixed(2)}`;
-}
-
-/**
- * English copy for alert codes — backend may return localized strings,
- * but we keep the UI consistent in English by mapping on alert.code.
- */
-const ALERT_COPY: Record<
-  string,
-  { message: (a: BackupStatusAlert) => string; cta?: string }
-> = {
-  NO_CLUSTERS: {
-    message: () =>
-      'No clusters yet. Create your first cluster to enable backups.',
-    cta: 'Create cluster',
-  },
-  CLUSTERS_WITHOUT_BACKUPS: {
-    message: () =>
-      "Some clusters don't have active backups. Configure them in 1 click.",
-    cta: 'Enable backups',
-  },
-  DEGRADED_POLICIES: {
-    message: () =>
-      'One or more policies are degraded — replica destinations are failing.',
-    cta: 'Check destinations',
-  },
-  FAILED_DESTINATIONS: {
-    message: () => 'One or more destinations are unhealthy.',
-    cta: 'Open destinations',
-  },
-  FAILED_JOBS_24H: {
-    message: () => 'A backup job failed in the last 24 hours.',
-    cta: 'Open jobs history',
-  },
-  STALE_BACKUPS: {
-    message: () => 'No successful backup in the last 36 hours.',
-    cta: 'Diagnose',
-  },
-  ALL_GOOD: {
-    message: () => 'All clusters protected.',
-  },
-};
-
-export function alertMessage(alert: BackupStatusAlert): string {
-  return ALERT_COPY[alert.code]?.message(alert) ?? alert.message;
-}
-
-export function alertCtaLabel(alert: BackupStatusAlert): string | undefined {
-  return ALERT_COPY[alert.code]?.cta ?? alert.ctaLabel;
-}
-
-const ALERT_CTA_PATH: Record<string, string> = {
-  NO_CLUSTERS: '/cluster',
-  CLUSTERS_WITHOUT_BACKUPS: '/management/backup/overview',
-  DEGRADED_POLICIES: '/management/backup/destinations',
-  FAILED_DESTINATIONS: '/management/backup/destinations',
-  FAILED_JOBS_24H: '/management/backup/jobs',
-  STALE_BACKUPS: '/management/backup/jobs',
-};
-
-export function alertCtaPath(
-  alert: BackupStatusAlert,
-  fallback = '/management/backup',
-): string {
-  if (alert.resourceType === 'cluster' && alert.resourceId) {
-    return `/cluster/${alert.resourceId}/overview`;
-  }
-  return ALERT_CTA_PATH[alert.code] ?? alert.ctaPath ?? fallback;
-}
-
-/**
- * Friendly English copy for `setup-options.primary.reason` codes.
- * Backend may return technical codes or localized strings — map by code so
- * the UI is consistent and never leaks internals like NO_PROVISIONER_REGISTERED.
- */
-const PROVIDER_READINESS_COPY: Record<string, string> = {
-  CONNECT_SCALEWAY_REQUIRED:
-    'Flui backups run on Scaleway Object Storage. Enable Scaleway as a provider to use the service.',
-  NO_PROVISIONER_REGISTERED:
-    'Flui backups run on Scaleway Object Storage. Enable Scaleway as a provider to use the service.',
-};
-
-export function providerReadinessMessage(
-  reason?: string,
-  fallbackMessage?: string,
-): string {
-  if (reason && PROVIDER_READINESS_COPY[reason])
-    return PROVIDER_READINESS_COPY[reason];
-  return (
-    fallbackMessage ||
-    'Flui backups run on Scaleway Object Storage. Enable Scaleway as a provider to use the service.'
-  );
 }

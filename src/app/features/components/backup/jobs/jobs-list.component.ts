@@ -56,7 +56,7 @@ import {
               <th class="text-left px-4 py-2">Started</th>
               <th class="text-left px-4 py-2">Trigger</th>
               <th class="text-left px-4 py-2">Status</th>
-              <th class="text-left px-4 py-2">Velero backup</th>
+              <th class="text-left px-4 py-2">Finished</th>
             </tr>
           </thead>
           <tbody>
@@ -71,7 +71,7 @@ import {
               <td class="px-4 py-2">
                 <app-backup-status-badge kind="job" [value]="j.status" />
               </td>
-              <td class="px-4 py-2 font-mono text-xs text-muted-foreground">{{ j.veleroBackupName || '—' }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ j.finishedAt || '—' }}</td>
             </tr>
             }
           </tbody>

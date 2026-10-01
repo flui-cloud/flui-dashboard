@@ -75,6 +75,7 @@ export interface SpareVolume {
   createdAt: string | null;
   inUse: boolean;
   restoredFrom: string | null;
+  replaces?: string | null;
 }
 
 /** Compute the UI status from the API booleans + the client-side delete flag. */

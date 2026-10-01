@@ -40,7 +40,6 @@ function pageObservations(r: RestoreJob): Observation[] {
     textObservation('flui.backup.restore.target_kind', r.targetKind, 'api'),
     textObservation('flui.backup.restore.target_cluster_id', r.targetClusterId, 'api'),
     textObservation('flui.backup.restore.status', r.status, 'api'),
-    textObservation('flui.backup.restore.velero_restore_name', r.veleroRestoreName, 'api'),
     // `errorMessage` is shown on screen but is raw orchestration free text — same exclusion
     // as elsewhere in this producer set; only its presence is safe.
     r.errorMessage ? valueObservation('flui.backup.restore.has_error', true, 'api') : null,

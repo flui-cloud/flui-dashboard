@@ -7,6 +7,9 @@ import { ClusterService } from '../../../service/cluster.service';
 import { formatBytes } from '../../../model/backup.models';
 import { EnableBackupsModalComponent } from '../enable-backups/enable-backups-modal.component';
 import { PlatformBackupCardComponent } from '../platform/platform-backup-card.component';
+import { ClusterProtectionCardComponent } from '../cluster-protection/cluster-protection-card.component';
+import { BackupHealthBadgeComponent } from '../shared/health-badge.component';
+import { healthNeedsAttention } from '../../../model/backup-activity';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
 import {
@@ -26,7 +29,15 @@ interface OverviewCard {
 @Component({
   selector: 'app-backup-overview',
   standalone: true,
-  imports: [ReadOnlySectionDirective, FormsModule, RouterLink, EnableBackupsModalComponent, PlatformBackupCardComponent],
+  imports: [
+    ReadOnlySectionDirective,
+    FormsModule,
+    RouterLink,
+    EnableBackupsModalComponent,
+    PlatformBackupCardComponent,
+    ClusterProtectionCardComponent,
+    BackupHealthBadgeComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-6">
@@ -40,23 +51,41 @@ interface OverviewCard {
         </div>
       </header>
 
+      @if (attention().length) {
+      <div role="alert" class="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm">
+        <div class="font-medium text-red-700 dark:text-red-400">
+          {{ attention().length === 1 ? '1 backup needs attention' : attention().length + ' backups need attention' }}
+        </div>
+        <ul class="mt-2 space-y-1">
+          @for (a of attention(); track a.policyId) {
+          <li class="flex flex-wrap items-center gap-2">
+            <app-backup-health-badge [state]="a.health.state" [detail]="a.health.detail" />
+            <a [routerLink]="['/management/backup/policies', a.policyId]" class="font-medium hover:underline">
+              {{ a.policyName }}
+            </a>
+            <span class="text-xs text-muted-foreground">{{ a.health.detail }}</span>
+          </li>
+          }
+        </ul>
+      </div>
+      }
+
       <section class="space-y-2" appReadOnlySection="backup">
         <h2 class="text-sm font-semibold">What do you want to protect?</h2>
         <div class="grid gap-4 md:grid-cols-3">
           <div class="rounded-lg border border-border bg-card p-4 flex flex-col">
             <div class="text-sm font-semibold">A cluster</div>
             <p class="text-xs text-muted-foreground mt-1 flex-1">
-              Its Kubernetes objects, and the contents of shared-storage volumes.
-              <span class="text-amber-700 dark:text-amber-400">Not database volumes</span> —
-              those sit on dedicated storage this engine cannot read.
+              Every app on it, new ones included: databases with their own engine,
+              other volumes as encrypted daily snapshots.
             </p>
-            <div class="text-xs text-muted-foreground mt-2">Runs on a schedule</div>
+            <div class="text-xs text-muted-foreground mt-2">Below</div>
           </div>
           <div class="rounded-lg border border-border bg-card p-4 flex flex-col">
             <div class="text-sm font-semibold">A database</div>
             <p class="text-xs text-muted-foreground mt-1 flex-1">
               Every change shipped off-cluster as it happens, so it can be restored to any
-              moment in the window — not just to last night.
+              moment in the window. Images that cannot do that get nightly dumps.
             </p>
             <div class="text-xs text-muted-foreground mt-2">
               Open the database → <span class="font-medium">Backup</span>
@@ -73,19 +102,28 @@ interface OverviewCard {
         </div>
 
         <h2 class="text-sm font-semibold pt-2">Protect a cluster</h2>
+        @if (clusters().length === 0) {
         <div class="rounded-lg border border-border bg-card p-5">
-          @if (clusters().length === 0) {
-          <p class="text-sm text-muted-foreground">
-            Create a cluster first to enable backups.
-          </p>
-          } @else {
+          <p class="text-sm text-muted-foreground">Create a cluster first to enable backups.</p>
+        </div>
+        } @else {
+        <div class="space-y-3">
+          @for (c of clusters(); track c.id + ':' + cardsRevision()) {
+          @if (c.id) {
+          <app-cluster-protection-card
+            [clusterId]="c.id"
+            [clusterName]="c.name ?? ''"
+            (changed)="onProtectionChanged()"
+          />
+          }
+          }
+        </div>
+        <div class="rounded-lg border border-border bg-card p-4">
           <p class="text-sm text-muted-foreground mb-1">
-            Pick a cluster and Flui provisions the destination, installs the engine and takes
-            the first backup. Each run records which volumes it captured and which it skipped.
+            No backup storage yet? Flui creates a bucket on another cloud and protects the cluster in one step.
           </p>
           <p class="text-xs text-muted-foreground mb-3">
-            Requires a storage provider on a different cloud than the cluster —
-            <a routerLink="/management/providers" class="text-primary hover:underline">manage providers</a>.
+            <a routerLink="/management/providers" class="text-primary hover:underline">Manage providers</a>
           </p>
           <div class="flex flex-col sm:flex-row gap-2">
             <select
@@ -99,15 +137,15 @@ interface OverviewCard {
             </select>
             <button
               type="button"
-              class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              class="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
               [disabled]="!selectedClusterId"
               (click)="openEnableModal()"
             >
               Enable backups
             </button>
           </div>
-          }
         </div>
+        }
       </section>
 
       <!-- Stats -->
@@ -177,6 +215,7 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
   private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly showEnableModal = signal(false);
+  protected readonly cardsRevision = signal(0);
   protected selectedClusterId = '';
 
   readonly clusters = this.clusterService.clusters;
@@ -186,6 +225,9 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
   readonly restoreCount = computed(() => this.backup.restoreJobs().length);
   readonly totalUsage = computed(() => formatBytes(this.backup.totalUsageBytes()));
   readonly error = this.backup.error;
+  readonly attention = computed(() =>
+    this.backup.activity().filter((a) => healthNeedsAttention(a.health.state)),
+  );
 
   private readonly surfaceRevision = new BackupOverviewSurfaceRevision();
 
@@ -194,6 +236,7 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
       destinationsCount: this.destinationsCount(),
       policiesCount: this.policiesCount(),
       degradedPoliciesCount: this.degradedCount(),
+      attentionPolicies: this.attention().map((a) => ({ id: a.policyId, name: a.policyName, state: a.health.state })),
       restoreJobsCount: this.restoreCount(),
       totalUsageText: this.totalUsage(),
       clustersAvailable: this.clusters().length,
@@ -220,10 +263,17 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
     this.showEnableModal.set(true);
   }
 
+  onProtectionChanged(): void {
+    void this.backup.loadPolicies();
+    void this.backup.loadActivity();
+  }
+
   onEnableModalClosed(result: { activated: boolean }): void {
     this.showEnableModal.set(false);
     if (result.activated) {
+      this.cardsRevision.update((n) => n + 1);
       void this.backup.loadPolicies();
+      void this.backup.loadActivity();
       void this.backup.loadStatus();
     }
   }
@@ -237,7 +287,7 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
     },
     {
       title: 'Policies',
-      description: 'Per-cluster backup policies and schedules.',
+      description: 'One policy per app and engine, with its schedule and health.',
       link: '/management/backup/policies',
       cta: 'Manage policies',
     },
@@ -249,7 +299,7 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
     },
     {
       title: 'Restore',
-      description: 'Preview and run restore jobs across clusters and namespaces.',
+      description: 'Database restores into a new database, and their history.',
       link: '/management/backup/restore',
       cta: 'View restores',
     },
@@ -261,6 +311,7 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
         this.backup.loadDestinations(),
         this.backup.loadPolicies(),
         this.backup.loadRestoreJobs(),
+        this.backup.loadActivity(),
         this.clusterService.loadClusters(),
       ]);
     })();

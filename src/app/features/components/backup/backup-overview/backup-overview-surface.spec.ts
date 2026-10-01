@@ -88,4 +88,16 @@ describe('backup overview surface producer', () => {
     expect(json).not.toContain('ECONNREFUSED');
     expect(json).not.toContain('stack');
   });
+
+  it('lists the backups needing attention as related policies', () => {
+    const snapshot = snapshotOf({ attentionPolicies: [{ id: 'pol-1', name: 'nightly', state: 'missed' }] });
+    expectValidSurface(snapshot);
+    expect(observation(snapshot, 'flui.backup.policies_attention_count')?.presentedAs.value).toBe(1);
+    const row = snapshot.scopes.find((s) => s.parentId === 'backup-overview:attention')!;
+    expect(row.entities).toEqual([{ ref: 'flui://backup-policy/pol-1', label: 'nightly', role: 'related' }]);
+  });
+
+  it('adds no attention list when every backup is fine', () => {
+    expect(snapshotOf({ attentionPolicies: [] }).scopes).toHaveSize(1);
+  });
 });

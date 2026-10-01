@@ -7,8 +7,17 @@ import type {
   SurfaceSnapshot,
 } from '@flui-cloud/semantic-surface';
 
-import type { BackupPolicy, BackupPolicyDestination } from '../../../model/backup.models';
+import type {
+  BackupPolicy,
+  BackupPolicyDestination,
+} from '../../../model/backup.models';
+import type {
+  BackupPolicyActivity,
+  BackupRun,
+} from '../../../model/backup-run.models';
 import { destinationEntityRef } from '../destinations/destination-detail-surface';
+import { jobEntityRef } from '../jobs/job-detail-surface';
+import { buildSurfaceList, scopeIdPart } from '../../../../shared/utils/surface-kit';
 
 const SURFACE_APP_ID = 'flui-dashboard';
 const SURFACE_NAMESPACE = 'flui';
@@ -19,6 +28,7 @@ export function policyEntityRef(id: string): string {
 
 export interface PolicyDetailSurfaceInput {
   policy: BackupPolicy | null;
+  activity?: BackupPolicyActivity | null;
 }
 
 export interface PolicyDetailSurfaceContext {
@@ -45,8 +55,46 @@ function pageObservations(p: BackupPolicy): Observation[] {
     p.retentionMaxCopies != null
       ? valueObservation('flui.backup.policy.retention_max_copies', p.retentionMaxCopies, 'api')
       : null,
-    valueObservation('flui.backup.policy.includes_pvc_data', p.includePvcs, 'api'),
+    textObservation('flui.backup.policy.engine_class', p.engineClass, 'api'),
   ].filter((observation): observation is Observation => observation !== null);
+}
+
+function activityObservations(a: BackupPolicyActivity | null | undefined): Observation[] {
+  if (!a) return [];
+  return [
+    textObservation('flui.backup.policy.health', a.health.state, 'api'),
+    textObservation('flui.backup.policy.health_detail', a.health.detail, 'api'),
+    textObservation('flui.backup.policy.schedule_description', a.schedule.description, 'api'),
+    textObservation('flui.backup.policy.next_run_at', a.schedule.nextRunAt, 'api'),
+    textObservation('flui.backup.policy.last_success_at', a.health.lastSuccessAt, 'api'),
+  ].filter((observation): observation is Observation => observation !== null);
+}
+
+function runObservations(run: BackupRun): Observation[] {
+  return [
+    textObservation('flui.backup.run.trigger', run.trigger, 'api'),
+    textObservation('flui.backup.run.status', run.status, 'api'),
+    textObservation('flui.backup.run.started_at', run.startedAt, 'api'),
+    run.durationSeconds != null ? valueObservation('flui.backup.run.duration_seconds', run.durationSeconds, 'api') : null,
+    run.sizeBytes != null ? valueObservation('flui.backup.run.size_bytes', run.sizeBytes, 'api') : null,
+    run.encrypted != null ? valueObservation('flui.backup.run.encrypted', run.encrypted, 'api') : null,
+    textObservation('flui.backup.run.stored', run.stored, 'api'),
+  ].filter((observation): observation is Observation => observation !== null);
+}
+
+function runsScopes(pageId: string, runs: BackupRun[]): SemanticScopeSnapshot[] {
+  const listId = `${pageId}:runs`;
+  return buildSurfaceList({
+    listId,
+    parentId: pageId,
+    label: 'Runs',
+    rows: runs.map((run) => ({
+      id: `${listId}:${scopeIdPart(run.jobId)}`,
+      ref: jobEntityRef(run.jobId),
+      observations: runObservations(run),
+    })),
+    totalCount: runs.length,
+  }).scopes;
 }
 
 function destinationRowScope(policyPageId: string, d: BackupPolicyDestination): SemanticScopeSnapshot {
@@ -82,7 +130,7 @@ export function presentedContent(input: PolicyDetailSurfaceInput): PresentedCont
     kind: 'page',
     label: p.name,
     entities,
-    observations: pageObservations(p),
+    observations: [...pageObservations(p), ...activityObservations(input.activity)],
   };
 
   const destinationsListId = `${pageId}:destinations`;
@@ -99,6 +147,7 @@ export function presentedContent(input: PolicyDetailSurfaceInput): PresentedCont
     ...(p.destinations.length
       ? [destinationsListScope, ...p.destinations.map((d) => destinationRowScope(pageId, d))]
       : []),
+    ...(input.activity ? runsScopes(pageId, input.activity.runs) : []),
   ];
 
   return { scopes, attention: [{ scopeId: pageId, entityRef: ref, reason: 'route' }] };

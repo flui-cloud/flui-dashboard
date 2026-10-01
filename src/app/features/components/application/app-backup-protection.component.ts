@@ -5,12 +5,14 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import { BackupService } from '../../service/backup.service';
+import { AssistantOperationProgressComponent } from '../assistant/assistant-operation-progress.component';
 
 interface ProtectionPolicy {
   policyId: string;
@@ -25,10 +27,20 @@ interface ProtectionPolicy {
   nextRunAt: string | null;
 }
 
+interface BeforeDeploy {
+  enabled: boolean;
+  required: boolean;
+  takes: { restorePoint: boolean; dump: boolean; volumes: boolean };
+  warning?: string;
+}
+
 interface Protection {
   protectedOffCluster: boolean;
   policies: ProtectionPolicy[];
+  beforeDeploy?: BeforeDeploy | null;
 }
+
+type BeforeDeployChoice = 'off' | 'on' | 'required';
 
 /**
  * Whether this application is protected off the cluster, at the top of its
@@ -39,7 +51,7 @@ interface Protection {
   selector: 'app-backup-protection',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, AssistantOperationProgressComponent],
   template: `
     @if (protection(); as p) {
       <section
@@ -126,6 +138,68 @@ interface Protection {
                 {{ pol.lastRun?.error }}
               </div>
             }
+            @if (pol.engineClass === 'volume_copy' && pol.destination) {
+              <div class="mt-2 flex flex-wrap items-center gap-2">
+                <button
+                  (click)="backUpNow(pol, false)"
+                  [disabled]="(!!backupOp() && !backupFailed()) || startingBackup()"
+                  class="px-2.5 py-1 text-xs rounded-md border border-border hover:bg-muted disabled:opacity-50"
+                >
+                  {{ startingBackup() ? 'Starting…' : 'Back up now' }}
+                </button>
+                @if (needVolume()) {
+                  <input
+                    [ngModel]="volumeName()"
+                    (ngModelChange)="volumeName.set($event)"
+                    placeholder="volume name"
+                    class="h-7 w-44 px-2 rounded-md border border-input bg-background text-xs font-mono"
+                  />
+                }
+                @if (backupFailed()) {
+                  <button
+                    (click)="backUpNow(pol, true)"
+                    [disabled]="startingBackup()"
+                    class="px-2.5 py-1 text-xs rounded-md border border-border hover:bg-muted disabled:opacity-50"
+                  >
+                    Try again with the app stopped
+                  </button>
+                }
+              </div>
+              @if (backupError(); as e) {
+                <div class="text-xs text-red-600 mt-1">{{ e }}</div>
+              }
+            }
+          </div>
+        }
+
+        @if (backupOp(); as op) {
+          <app-assistant-operation-progress
+            [operationId]="op"
+            label="Backing up now"
+            (settled)="onBackupSettled($event)"
+          />
+        }
+
+        @if (p.policies.length && p.beforeDeploy; as bd) {
+          <div class="flex flex-wrap items-center gap-2 text-sm">
+            <label for="before-deploy" class="text-muted-foreground">
+              Backup before each deploy
+            </label>
+            <select
+              id="before-deploy"
+              [ngModel]="beforeDeployChoice(bd)"
+              (ngModelChange)="setBeforeDeploy($event)"
+              [disabled]="savingBeforeDeploy()"
+              class="h-8 px-2 rounded-md border border-input bg-background text-sm"
+              title="Required: a deploy stops if the backup before it cannot be taken"
+            >
+              <option value="off">Off</option>
+              <option value="on">On</option>
+              <option value="required">Required</option>
+            </select>
+            @if (bd.enabled && bd.warning) {
+              <span class="text-xs text-amber-600">{{ bd.warning }}</span>
+            }
           </div>
         }
 
@@ -152,6 +226,39 @@ interface Protection {
                 />
                 Stop the app during each copy
               </label>
+              <label
+                class="flex items-center gap-2 text-sm h-9"
+                title="Two more months of history on top of 7 daily and 4 weekly snapshots"
+              >
+                <input
+                  type="checkbox"
+                  [ngModel]="keepMonthly()"
+                  (ngModelChange)="keepMonthly.set($event)"
+                />
+                Keep 3 monthly snapshots (+~30% space)
+              </label>
+            } @else if (postgres() && advanced()) {
+              <label class="block text-sm">
+                <span class="text-xs text-muted-foreground"
+                  >Max minutes between log closes</span
+                >
+                <input
+                  type="number"
+                  min="1"
+                  max="60"
+                  [ngModel]="archiveMinutes()"
+                  (ngModelChange)="archiveMinutes.set($event)"
+                  class="mt-1 block h-9 w-24 px-3 rounded-md border border-input bg-background text-sm"
+                  title="Lower loses less data if the volume is lost; higher uses less storage"
+                />
+              </label>
+            } @else if (postgres()) {
+              <button
+                (click)="advanced.set(true)"
+                class="h-9 px-2 text-xs text-muted-foreground hover:underline"
+              >
+                Advanced
+              </button>
             }
             <button
               (click)="protect()"
@@ -196,8 +303,12 @@ export class AppBackupProtectionComponent {
   readonly appSlug = input<string>('');
   readonly clusterId = input<string>('');
   readonly database = input(false);
+  /** Continuous Postgres: the only engine whose log-close interval can be set. */
+  readonly postgres = input(false);
   /** False for an application with no volume: there is nothing to copy. */
   readonly hasData = input(true);
+  /** A backup taken from here finished. */
+  readonly backedUp = output<void>();
 
   protected readonly protection = signal<Protection | null>(null);
   protected readonly choosing = signal(false);
@@ -205,12 +316,107 @@ export class AppBackupProtectionComponent {
   protected readonly failure = signal<string | null>(null);
   protected readonly destinationId = signal('');
   protected readonly pause = signal(false);
+  protected readonly keepMonthly = signal(false);
+  protected readonly advanced = signal(false);
+  protected readonly archiveMinutes = signal(5);
+  protected readonly backupOp = signal<string | null>(null);
+  protected readonly startingBackup = signal(false);
+  protected readonly backupError = signal<string | null>(null);
+  protected readonly backupFailed = signal(false);
+  protected readonly needVolume = signal(false);
+  protected readonly volumeName = signal('');
+  protected readonly savingBeforeDeploy = signal(false);
+
+  private policyOptions(): Record<string, boolean | number> | null {
+    const options: Record<string, boolean | number> = {};
+    if (this.database()) {
+      if (!this.postgres()) return null;
+      const minutes = Math.round(Number(this.archiveMinutes()));
+      if (this.advanced() && Number.isFinite(minutes) && minutes !== 5) {
+        options['archiveTimeoutSeconds'] = Math.min(60, Math.max(1, minutes)) * 60;
+      }
+    } else {
+      if (this.pause()) options['pauseDuringCopy'] = true;
+      if (this.keepMonthly()) options['keepMonthly'] = true;
+    }
+    return Object.keys(options).length ? options : null;
+  }
 
   constructor() {
     effect(() => {
       const id = this.appId();
+      this.backupOp.set(null);
+      this.backupError.set(null);
+      this.backupFailed.set(false);
+      this.needVolume.set(false);
+      this.volumeName.set('');
       if (id) void this.load(id);
     });
+  }
+
+  protected beforeDeployChoice(bd: BeforeDeploy): BeforeDeployChoice {
+    if (!bd.enabled) return 'off';
+    return bd.required ? 'required' : 'on';
+  }
+
+  protected async setBeforeDeploy(choice: BeforeDeployChoice): Promise<void> {
+    const id = this.appId();
+    if (!id) return;
+    this.savingBeforeDeploy.set(true);
+    this.failure.set(null);
+    try {
+      const beforeDeploy = await firstValueFrom(
+        this.http.put<BeforeDeploy>(
+          `${this.config.apiBaseUrl}/api/v1/applications/${encodeURIComponent(id)}/backup-before-deploy`,
+          { enabled: choice !== 'off', required: choice === 'required' },
+        ),
+      );
+      this.protection.update((p) => (p ? { ...p, beforeDeploy } : p));
+    } catch (err: any) {
+      this.failure.set(err?.error?.message ?? 'Could not change the backup before deploys');
+    } finally {
+      this.savingBeforeDeploy.set(false);
+    }
+  }
+
+  protected async backUpNow(pol: ProtectionPolicy, pause: boolean): Promise<void> {
+    const id = this.appId();
+    const destinationId = pol.destination?.id;
+    if (!id || !destinationId) return;
+    this.startingBackup.set(true);
+    this.backupOp.set(null);
+    this.backupError.set(null);
+    this.backupFailed.set(false);
+    const volumeName = this.volumeName().trim();
+    try {
+      const res = await firstValueFrom(
+        this.http.post<{ operationId: string }>(
+          `${this.config.apiBaseUrl}/api/v1/applications/${encodeURIComponent(id)}/backups`,
+          {
+            destinationId,
+            ...(volumeName ? { volumeName } : {}),
+            ...(pause ? { pause: true } : {}),
+          },
+        ),
+      );
+      this.backupOp.set(res.operationId);
+    } catch (err: any) {
+      const message: string = err?.error?.message ?? 'Could not start the backup';
+      if (/multiple volumes/i.test(message)) this.needVolume.set(true);
+      this.backupError.set(message);
+    } finally {
+      this.startingBackup.set(false);
+    }
+  }
+
+  protected onBackupSettled(status: string): void {
+    this.backupFailed.set(status !== 'COMPLETED');
+    if (status === 'COMPLETED') {
+      this.backupOp.set(null);
+      this.backedUp.emit();
+      const id = this.appId();
+      if (id) void this.load(id);
+    }
   }
 
   protected kindLabel(engineClass: string, engine?: string | null): string {
@@ -218,7 +424,7 @@ export class AppBackupProtectionComponent {
       return engine?.endsWith('-dump') ? 'Scheduled dumps' : 'Continuous backup';
     }
     if (engineClass === 'volume_copy') return 'Volume copies to backup storage';
-    return 'Cluster backup';
+    return 'Backup';
   }
 
   protected async startProtect(): Promise<void> {
@@ -240,10 +446,7 @@ export class AppBackupProtectionComponent {
       engineClass: this.database() ? 'database' : 'volume_copy',
       scope: 'applications',
       scopeSelector: { applicationIds: [id] },
-      ...(this.database() ? {} : { cronSchedule: '0 2 * * *' }),
-      ...(!this.database() && this.pause()
-        ? { metadata: { pauseDuringCopy: true } }
-        : {}),
+      ...(this.policyOptions() ? { metadata: this.policyOptions() } : {}),
       retentionDays: 30,
       enabled: true,
       destinations: [{ destinationId: this.destinationId(), role: 'primary' }],

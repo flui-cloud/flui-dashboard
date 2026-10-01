@@ -85,6 +85,7 @@ export * from './availabilityOutlookDto';
 export * from './availableRepositoryDto';
 export * from './availableVersionDto';
 export * from './availableVersionsResponseDto';
+export * from './backupPolicyOptionsDto';
 export * from './backupScopeSelectorDto';
 export * from './bearerTokenDto';
 export * from './billingBreakdownDto';

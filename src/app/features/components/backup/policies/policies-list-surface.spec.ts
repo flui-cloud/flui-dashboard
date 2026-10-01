@@ -14,6 +14,7 @@ import {
   presentedContent,
 } from './policies-list-surface';
 import type { BackupPolicy } from '../../../model/backup.models';
+import type { BackupPolicyActivity } from '../../../model/backup-run.models';
 
 const POLICY: BackupPolicy = {
   id: 'pol-1',
@@ -98,5 +99,26 @@ describe('policies list surface producer', () => {
   it('produces an empty (not missing) list scope when nothing matches the filter', () => {
     const snapshot = snapshotOf({ rows: [], totalPolicies: 3, clusterFilterName: 'empty-cluster' });
     expect(listScope(snapshot).state).toEqual({ loading: false, empty: true });
+  });
+
+  it('presents health, last run and next run when activity is known for the row', () => {
+    const activity = {
+      policyId: 'pol-1',
+      policyName: 'nightly',
+      engineClass: 'volume_copy',
+      status: 'active',
+      schedule: { cron: '0 2 * * *', description: 'Every day at 02:00 UTC', timezone: 'UTC', nextRunAt: '2026-10-01T02:00:00.000Z', previousDueAt: null },
+      health: { state: 'failed', detail: 'Last run failed', lastSuccessAt: null },
+      lastRun: { jobId: 'j1', trigger: 'scheduled', status: 'failed', startedAt: '2026-09-30T02:00:00.000Z', finishedAt: null, durationSeconds: null, sizeBytes: null, encrypted: null, expiresAt: null, stored: 'unknown', errorMessage: 'boom' },
+      runs: [],
+    } as BackupPolicyActivity;
+    const snapshot = snapshotOf({ rows: [{ ...ROW, activity }] });
+    expectValidSurface(snapshot);
+    const row = rowScope(snapshot, 'pol-1');
+    const obs = (key: string) => row.observations?.find((o) => o.key === key);
+    expect(obs('flui.backup.policy.health')?.presentedAs.text).toBe('failed');
+    expect(obs('flui.backup.policy.last_run_at')?.presentedAs.text).toBe('2026-09-30T02:00:00.000Z');
+    expect(obs('flui.backup.policy.next_run_at')?.presentedAs.text).toBe('2026-10-01T02:00:00.000Z');
+    expect(obs('flui.backup.policy.schedule_description')?.presentedAs.text).toBe('Every day at 02:00 UTC');
   });
 });

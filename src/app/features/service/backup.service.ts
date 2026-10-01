@@ -13,12 +13,17 @@ import {
   BackupDestination,
   BackupJob,
   BackupPolicy,
-  BackupStatus,
   ObjectStoragePreset,
   RestoreJob,
   RestorePreviewResult,
-  SetupOptions,
 } from '../model/backup.models';
+import { BackupPolicyActivity } from '../model/backup-run.models';
+import {
+  BackupPolicyOptions,
+  ClusterProtection,
+  ProtectClusterRequest,
+} from '../model/backup-protection.models';
+import { BackupStatus, SetupOptions } from '../model/backup-status.models';
 import {
   InfrastructureOperationCompletedDto,
   InfrastructureOperationFailedDto,
@@ -55,6 +60,9 @@ export class BackupService {
   private readonly _selectedJob = signal<BackupJob | null>(null);
   private readonly _selectedRestore = signal<RestoreJob | null>(null);
   private readonly _activeOps = signal<Record<string, ActiveOperation>>({});
+  private readonly _activity = signal<BackupPolicyActivity[]>([]);
+  private readonly _activityLoaded = signal(false);
+  private readonly _activityError = signal<string | null>(null);
   private readonly _status = signal<BackupStatus | null>(null);
   private readonly _statusLoading = signal(false);
   private readonly _loading = signal(false);
@@ -70,6 +78,9 @@ export class BackupService {
   readonly selectedJob = this._selectedJob.asReadonly();
   readonly selectedRestore = this._selectedRestore.asReadonly();
   readonly activeOperations = this._activeOps.asReadonly();
+  readonly activity = this._activity.asReadonly();
+  readonly activityLoaded = this._activityLoaded.asReadonly();
+  readonly activityError = this._activityError.asReadonly();
   readonly status = this._status.asReadonly();
   readonly statusLoading = this._statusLoading.asReadonly();
   readonly loading = this._loading.asReadonly();
@@ -171,22 +182,6 @@ export class BackupService {
     } catch (err: any) {
       this._error.set(err?.error?.message ?? 'Failed to test destination');
       return null;
-    }
-  }
-
-  /** Null on success, the server's refusal (with the commands to run) otherwise. */
-  async upgradeDestinationLayout(id: string): Promise<string | null> {
-    try {
-      await firstValueFrom(
-        this.http.post(
-          `${this.appConfig.apiBaseUrl}/api/v1/backup-destinations/${id}/upgrade-layout`,
-          {},
-        ),
-      );
-      await this.refreshDestinationInList(id);
-      return null;
-    } catch (err: any) {
-      return err?.error?.message ?? 'Failed to update the destination';
     }
   }
 
@@ -300,6 +295,73 @@ export class BackupService {
     }
   }
 
+  /**
+   * Continuous backup for one database, or scheduled dumps when its image
+   * cannot back up continuously; the API configures the engine before it
+   * records the policy.
+   */
+  async enableDatabase(dto: CreateBackupPolicyDto): Promise<BackupPolicy | null> {
+    this._loading.set(true);
+    this._error.set(null);
+    try {
+      const res = await firstValueFrom(
+        this.http.post<BackupPolicy>(
+          `${this.appConfig.apiBaseUrl}/api/v1/backup-policies/enable-database`,
+          { ...dto, engineClass: 'database' },
+        ),
+      );
+      this._policies.update((list) => [res, ...list]);
+      return res;
+    } catch (err: any) {
+      this._error.set(err?.error?.message ?? 'Failed to enable database backups');
+      return null;
+    } finally {
+      this._loading.set(false);
+    }
+  }
+
+  /** Volume backups only: stop the app during each copy, or leave volumes out. */
+  updatePolicyOptions(
+    id: string,
+    options: BackupPolicyOptions,
+  ): Promise<BackupPolicy> {
+    return firstValueFrom(
+      this.http.patch<BackupPolicy>(
+        `${this.appConfig.apiBaseUrl}/api/v1/backup-policies/${id}/options`,
+        options,
+      ),
+    );
+  }
+
+  private protectionUrl(clusterId: string): string {
+    return `${this.appConfig.apiBaseUrl}/api/v1/clusters/${encodeURIComponent(clusterId)}/backups/protection`;
+  }
+
+  getClusterProtection(clusterId: string): Promise<ClusterProtection> {
+    return firstValueFrom(
+      this.http.get<ClusterProtection>(this.protectionUrl(clusterId)),
+    );
+  }
+
+  protectCluster(
+    clusterId: string,
+    body: ProtectClusterRequest,
+  ): Promise<{ operationId: string; protection: ClusterProtection }> {
+    return firstValueFrom(
+      this.http.post<{ operationId: string; protection: ClusterProtection }>(
+        this.protectionUrl(clusterId),
+        body,
+      ),
+    );
+  }
+
+  /** New applications stop getting a policy; the existing policies keep running. */
+  stopClusterProtection(clusterId: string): Promise<{ stopped: boolean }> {
+    return firstValueFrom(
+      this.http.delete<{ stopped: boolean }>(this.protectionUrl(clusterId)),
+    );
+  }
+
   async deletePolicy(id: string): Promise<boolean> {
     try {
       await firstValueFrom(this.api.backupPoliciesControllerRemove(id));
@@ -340,6 +402,35 @@ export class BackupService {
       this._error.set(err?.error?.message ?? `Failed to ${action} policy`);
       return null;
     }
+  }
+
+  async loadActivity(): Promise<BackupPolicyActivity[]> {
+    this._activityError.set(null);
+    try {
+      const res = await firstValueFrom(
+        this.http.get<BackupPolicyActivity[]>(
+          `${this.appConfig.apiBaseUrl}/api/v1/backup-policies/activity`,
+        ),
+      );
+      this._activity.set(res ?? []);
+      return res ?? [];
+    } catch (err: any) {
+      this._activityError.set(
+        err?.error?.message ?? err?.message ?? 'Failed to load backup activity',
+      );
+      return this._activity();
+    } finally {
+      this._activityLoaded.set(true);
+    }
+  }
+
+  getPolicyActivity(id: string, limit = 30): Promise<BackupPolicyActivity> {
+    return firstValueFrom(
+      this.http.get<BackupPolicyActivity>(
+        `${this.appConfig.apiBaseUrl}/api/v1/backup-policies/${id}/activity`,
+        { params: { limit } },
+      ),
+    );
   }
 
   async loadJobsByCluster(clusterId: string): Promise<void> {

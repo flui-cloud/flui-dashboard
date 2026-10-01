@@ -42,7 +42,6 @@ export namespace CreateRestoreJobDto {
     } as const;
     export type PlacementEnum = typeof PlacementEnum[keyof typeof PlacementEnum];
     export const StrategyEnum = {
-        VeleroRebuild: 'velero_rebuild',
         OsSnapshot: 'os_snapshot',
         PgPitr: 'pg_pitr',
         MariadbPitr: 'mariadb_pitr'

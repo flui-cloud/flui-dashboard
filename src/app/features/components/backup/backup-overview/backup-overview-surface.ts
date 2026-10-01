@@ -6,15 +6,26 @@ import type {
   SurfaceSnapshot,
 } from '@flui-cloud/semantic-surface';
 
+import { policyEntityRef } from '../policies/policy-detail-surface';
+import { scopeIdPart } from '../../../../shared/utils/surface-kit';
+
 // Same producer namespace as every other Flui producer (application-surface.ts).
 const SURFACE_APP_ID = 'flui-dashboard';
 
 const PAGE_ID = 'backup-overview';
+const ALERT_ID = 'backup-overview:attention';
+
+export interface AttentionPolicy {
+  id: string;
+  name: string;
+  state: string;
+}
 
 export interface BackupOverviewSurfaceInput {
   destinationsCount: number;
   policiesCount: number;
   degradedPoliciesCount: number;
+  attentionPolicies?: AttentionPolicy[];
   restoreJobsCount: number;
   totalUsageText: string;
   clustersAvailable: number;
@@ -41,6 +52,9 @@ function pageObservations(input: BackupOverviewSurfaceInput): Observation[] {
     valueObservation('flui.backup.policies_count', input.policiesCount, 'derived'),
     input.degradedPoliciesCount > 0
       ? valueObservation('flui.backup.policies_degraded_count', input.degradedPoliciesCount, 'derived')
+      : null,
+    input.attentionPolicies?.length
+      ? valueObservation('flui.backup.policies_attention_count', input.attentionPolicies.length, 'derived')
       : null,
     valueObservation('flui.backup.restore_jobs_count', input.restoreJobsCount, 'derived'),
     textObservation('flui.backup.total_usage', input.totalUsageText, 'derived'),
@@ -69,8 +83,28 @@ export function presentedContent(input: BackupOverviewSurfaceInput): PresentedCo
     ...(input.hasLoadError ? { state: { error: true } } : {}),
   };
 
+  const attentionPolicies = input.attentionPolicies ?? [];
+  const alertScopes: SemanticScopeSnapshot[] = attentionPolicies.length
+    ? [
+        {
+          id: ALERT_ID,
+          parentId: PAGE_ID,
+          kind: 'list',
+          label: 'Backups needing attention',
+          completeness: { shown: attentionPolicies.length, total: attentionPolicies.length },
+        },
+        ...attentionPolicies.map((p) => ({
+          id: `${ALERT_ID}:${scopeIdPart(p.id)}`,
+          parentId: ALERT_ID,
+          kind: 'region',
+          entities: [{ ref: policyEntityRef(p.id), label: p.name, role: 'related' as const }],
+          observations: [textObservation('flui.backup.policy.health', p.state, 'api')],
+        })),
+      ]
+    : [];
+
   return {
-    scopes: [pageScope],
+    scopes: [pageScope, ...alertScopes],
     attention: [{ scopeId: PAGE_ID, reason: 'route' }],
   };
 }

@@ -21,7 +21,7 @@ import {
   alertCtaLabel,
   alertCtaPath,
   alertMessage,
-} from '../../model/backup.models';
+} from '../../model/backup-status.models';
 
 const REFRESH_INTERVAL_MS = 60_000;
 

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleCheck, lucideCircleX, lucideLoaderCircle } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
@@ -66,6 +66,7 @@ const TERMINAL = new Set<OperationState>(['COMPLETED', 'FAILED', 'CANCELLED']);
 export class AssistantOperationProgressComponent implements OnInit, OnDestroy {
   readonly operationId = input.required<string>();
   readonly label = input.required<string>();
+  readonly settled = output<OperationState>();
 
   private readonly operationsApi = inject(InfrastructureOperationsService);
 
@@ -113,6 +114,7 @@ export class AssistantOperationProgressComponent implements OnInit, OnDestroy {
 
       if (TERMINAL.has(res.status)) {
         if (res.status === 'COMPLETED') this.progressValue.set(100);
+        this.settled.emit(res.status);
         return;
       }
     } catch {

@@ -10,6 +10,7 @@ import {
   inferProfile,
   validatePolicyDestinations,
 } from '../../../model/backup.models';
+import { policyEngineLabel } from '../../../model/backup-protection.models';
 import { CreateBackupPolicyDto } from '../../../../core/api/model/createBackupPolicyDto';
 import { PolicyDestinationInputDto } from '../../../../core/api/model/policyDestinationInputDto';
 
@@ -79,13 +80,17 @@ interface WizardDestination {
             (ngModelChange)="onEngineClassChange($event)"
             class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
           >
-            <option value="volume">Volume — Velero snapshot</option>
-            <option value="database">Database — continuous pgbackrest backup for one Postgres app</option>
-            <option value="platform">Platform — the Flui control-plane database itself</option>
+            <option value="volume_copy">Volume backups — encrypted snapshots of one app's volumes</option>
+            <option value="database">Database — continuous backup, or dumps, for one database</option>
+            <option value="platform">Flui itself — the control-plane database</option>
           </select>
           @if (form.engineClass === 'database') {
           <p class="mt-1 text-xs text-muted-foreground">
-            Targets exactly one application, one destination (no replicas).
+            Continuous where the image allows, nightly dumps otherwise. One destination, no replicas.
+          </p>
+          } @else if (form.engineClass === 'volume_copy') {
+          <p class="mt-1 text-xs text-muted-foreground">
+            Keeps 7 daily and 4 weekly snapshots. To protect every app at once, use "Protect this cluster".
           </p>
           }
         </label>
@@ -93,7 +98,7 @@ interface WizardDestination {
           <span class="text-sm font-medium">Scope</span>
           <select
             [(ngModel)]="form.scope"
-            [disabled]="form.engineClass === 'database'"
+            [disabled]="perApp()"
             class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-50"
           >
             <option value="cluster_all">Entire cluster</option>
@@ -114,7 +119,7 @@ interface WizardDestination {
         } @if (form.scope === 'applications') {
         <label class="block">
           <span class="text-sm font-medium">
-            {{ form.engineClass === 'database' ? 'Application ID' : 'Application IDs (comma-separated)' }}
+            {{ perApp() ? 'Application ID' : 'Application IDs (comma-separated)' }}
           </span>
           <input
             [(ngModel)]="applicationIds"
@@ -132,10 +137,12 @@ interface WizardDestination {
           />
         </label>
         }
+        @if (form.engineClass === 'volume_copy') {
         <label class="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" [(ngModel)]="form.includePvcs" />
-          Include PVC data
+          <input type="checkbox" [(ngModel)]="pauseDuringCopy" />
+          Stop the app during each copy
         </label>
+        }
       </section>
       }
 
@@ -147,9 +154,15 @@ interface WizardDestination {
           <input
             [(ngModel)]="form.cronSchedule"
             class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-            placeholder="0 2 * * *  (leave empty for on-demand only)"
+            placeholder="0 3 * * *  (empty: the default nightly time)"
           />
         </label>
+        @if (form.engineClass === 'volume_copy') {
+        <label class="inline-flex items-center gap-2 text-sm" title="Two more months of history for about 30% more space">
+          <input type="checkbox" [(ngModel)]="keepMonthly" />
+          Also keep 3 monthly snapshots
+        </label>
+        } @else {
         <div class="grid grid-cols-2 gap-4">
           <label class="block">
             <span class="text-sm font-medium">Retention (days)</span>
@@ -170,6 +183,7 @@ interface WizardDestination {
             />
           </label>
         </div>
+        }
       </section>
       }
 
@@ -243,13 +257,17 @@ interface WizardDestination {
         <div class="rounded-md border border-border p-3 space-y-1">
           <div><span class="text-muted-foreground">Name:</span> {{ form.name }}</div>
           <div><span class="text-muted-foreground">Cluster:</span> {{ clusterName(form.clusterId) }}</div>
-          <div><span class="text-muted-foreground">Engine:</span> {{ form.engineClass }}</div>
+          <div><span class="text-muted-foreground">Engine:</span> {{ engineLabel(form.engineClass) }}</div>
           <div><span class="text-muted-foreground">Scope:</span> {{ form.scope }}</div>
           @if (form.scope === 'applications') {
           <div><span class="text-muted-foreground">Applications:</span> {{ applicationIds || '—' }}</div>
           }
-          <div><span class="text-muted-foreground">Schedule:</span> {{ form.cronSchedule || 'on-demand' }}</div>
+          <div><span class="text-muted-foreground">Schedule:</span> {{ form.cronSchedule || 'default nightly time' }}</div>
+          @if (form.engineClass === 'volume_copy') {
+          <div><span class="text-muted-foreground">Keeps:</span> 7 daily, 4 weekly{{ keepMonthly ? ', 3 monthly' : '' }}</div>
+          } @else {
           <div><span class="text-muted-foreground">Retention:</span> {{ form.retentionDays }}d / {{ form.retentionMaxCopies || '∞' }} copies</div>
+          }
           <div><span class="text-muted-foreground">Profile:</span> {{ inferredProfile() }}</div>
           <div><span class="text-muted-foreground">Destinations:</span></div>
           <ul class="ml-4 list-disc">
@@ -317,25 +335,33 @@ export class PolicyWizardComponent implements OnInit {
   namespacesText = '';
   labelSelector = '';
   applicationIds = '';
+  pauseDuringCopy = false;
+  keepMonthly = false;
 
   form: CreateBackupPolicyDto = {
     name: '',
     clusterId: '',
-    scope: 'cluster_all' as BackupScope,
-    engineClass: 'volume',
-    includePvcs: true,
-    includeEtcdL1: false,
+    scope: 'applications' as BackupScope,
+    engineClass: 'volume_copy',
     cronSchedule: '',
     retentionDays: 30,
     retentionMaxCopies: 14,
-    profile: 'mirrored' as BackupPolicyProfile,
+    profile: 'single' as BackupPolicyProfile,
     destinations: [],
   };
 
-  /** database-class policies target exactly one app on exactly one destination. */
+  readonly engineLabel = policyEngineLabel;
+
+  /** Database and volume backups protect exactly one application. */
+  perApp(): boolean {
+    return this.form.engineClass === 'database' || this.form.engineClass === 'volume_copy';
+  }
+
   onEngineClassChange(engineClass: CreateBackupPolicyDto.EngineClassEnum): void {
-    if (engineClass === 'database') {
+    if (engineClass === 'database' || engineClass === 'volume_copy') {
       this.form.scope = 'applications' as BackupScope;
+    }
+    if (engineClass === 'database') {
       this.destinations.update((list) => list.slice(0, 1).map((d) => ({ ...d, role: 'primary' as const })));
     }
   }
@@ -396,6 +422,7 @@ export class PolicyWizardComponent implements OnInit {
     if (this.step() === 1) {
       if (!this.form.name || !this.form.clusterId) return false;
       if (this.form.scope === 'applications' && !this.applicationIds.trim()) return false;
+      if (this.perApp() && this.applicationIds.split(',').filter((s) => s.trim()).length !== 1) return false;
       return true;
     }
     if (this.step() === 3) return !this.validationError();
@@ -457,6 +484,14 @@ export class PolicyWizardComponent implements OnInit {
     };
 
     if (!dto.cronSchedule) delete (dto as any).cronSchedule;
+    if (this.form.engineClass === 'volume_copy') {
+      delete (dto as any).retentionMaxCopies;
+      const metadata = {
+        ...(this.pauseDuringCopy ? { pauseDuringCopy: true } : {}),
+        ...(this.keepMonthly ? { keepMonthly: true } : {}),
+      };
+      if (Object.keys(metadata).length) dto.metadata = metadata;
+    }
 
     if (this.form.scope === 'namespaces') {
       const ns = this.namespacesText.split(',').map((s) => s.trim()).filter(Boolean);
@@ -468,7 +503,10 @@ export class PolicyWizardComponent implements OnInit {
       dto.scopeSelector = { applicationIds: ids };
     }
 
-    const created = await this.backup.createPolicy(dto);
+    const created =
+      this.form.engineClass === 'database'
+        ? await this.backup.enableDatabase(dto)
+        : await this.backup.createPolicy(dto);
     this.submitting.set(false);
     if (!created) {
       this.submitError.set(this.backup.error() ?? 'Creation failed');

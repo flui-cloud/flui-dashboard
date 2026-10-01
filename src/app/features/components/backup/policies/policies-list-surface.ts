@@ -8,6 +8,7 @@ import type {
 } from '@flui-cloud/semantic-surface';
 
 import type { BackupPolicy } from '../../../model/backup.models';
+import type { BackupPolicyActivity } from '../../../model/backup-run.models';
 
 const SURFACE_APP_ID = 'flui-dashboard';
 const SURFACE_NAMESPACE = 'flui';
@@ -24,6 +25,7 @@ export interface PolicyRow {
   policy: BackupPolicy;
   /** The same `clusterName(p.clusterId)` lookup the row template renders. */
   clusterName: string;
+  activity?: BackupPolicyActivity | null;
 }
 
 export interface PoliciesListSurfaceInput {
@@ -45,11 +47,16 @@ function textObservation(key: string, value: string | undefined | null, source: 
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
-function rowObservations({ policy, clusterName }: PolicyRow): Observation[] {
+function rowObservations({ policy, clusterName, activity }: PolicyRow): Observation[] {
+  const lastRun = activity?.lastRun;
   return [
     textObservation('flui.backup.policy.cluster', clusterName, 'derived'),
     textObservation('flui.backup.policy.profile', policy.profile, 'api'),
     textObservation('flui.backup.policy.schedule', policy.cronSchedule || 'on-demand', 'api'),
+    textObservation('flui.backup.policy.schedule_description', activity?.schedule.description, 'api'),
+    textObservation('flui.backup.policy.health', activity?.health.state, 'api'),
+    textObservation('flui.backup.policy.last_run_at', lastRun ? (lastRun.startedAt ?? lastRun.finishedAt) : null, 'api'),
+    textObservation('flui.backup.policy.next_run_at', activity?.schedule.nextRunAt, 'api'),
     textObservation('flui.backup.policy.status', policy.status, 'api'),
   ].filter((observation): observation is Observation => observation !== null);
 }

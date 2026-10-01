@@ -42,7 +42,7 @@ function rowObservations(j: BackupJob): Observation[] {
     textObservation('flui.backup.job.trigger_type', j.triggerType, 'api'),
     textObservation('flui.backup.job.status', j.status, 'api'),
     textObservation('flui.backup.job.started_at', j.startedAt, 'api'),
-    textObservation('flui.backup.job.velero_backup_name', j.veleroBackupName, 'api'),
+    textObservation('flui.backup.job.finished_at', j.finishedAt, 'api'),
   ].filter((observation): observation is Observation => observation !== null);
 }
 
