@@ -18,12 +18,12 @@ import {
   providers: [provideIcons({ lucidePlus, lucideX })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm">
-      <div class="flex items-center gap-3 px-4 py-2.5">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">Project</span>
+    <div class="card-surface text-sm" data-testid="overview-project">
+      <div class="flex flex-wrap items-center gap-3 px-4 py-2.5">
+        <span class="text-label shrink-0">Project</span>
 
         @if (busy()) {
-          <span class="h-5 w-28 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"></span>
+          <span class="h-5 w-28 rounded-full bg-muted animate-pulse"></span>
         } @else {
           <app-project-badge [project]="current()" />
         }
@@ -34,7 +34,7 @@ import {
           <select
             [disabled]="busy() || creating()"
             (change)="onChange($event)"
-            class="h-8 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-2 pr-7 text-xs appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            class="h-8 rounded-md border border-border bg-background px-2 pr-7 text-xs text-foreground appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="">No project</option>
             @for (p of allProjects(); track p.id) {
@@ -45,7 +45,7 @@ import {
             type="button"
             (click)="toggleCreate()"
             [disabled]="busy()"
-            class="inline-flex h-8 items-center gap-1 rounded-md border border-gray-300 dark:border-gray-600 px-2 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white disabled:opacity-50"
+            class="inline-flex h-8 items-center gap-1 rounded-md border border-border px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
             [title]="creating() ? 'Cancel' : 'Create a project and move this workload into it'"
           >
             <ng-icon [name]="creating() ? 'lucideX' : 'lucidePlus'" class="h-3.5 w-3.5" />
@@ -55,7 +55,7 @@ import {
       </div>
 
       @if (creating() && canManage()) {
-        <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-3">
+        <div class="border-t border-border px-4 py-3">
           <app-project-form
             [busy]="busy()"
             submitLabel="Create and assign"

@@ -1,4 +1,6 @@
-import { AppGroupView, Application, ApplicationKind, ApplicationKindEnum, getKindLabel } from '../../model/application.models';
+import { AppGroupView, Application, ApplicationKind, ApplicationKindEnum } from '../../model/application.models';
+import { WORKLOAD_LIST_LABEL, WORKLOAD_LIST_ROUTE, WorkloadList, workloadListOf } from '../../model/workload-list';
+import { databaseEngineOf, engineDescriptor } from '../../model/db-engine';
 import { originOf } from './applications-list-rows';
 
 export interface HeaderPart {
@@ -6,26 +8,13 @@ export interface HeaderPart {
   mono: boolean;
 }
 
-export function listRouteForKind(kind: ApplicationKind | undefined): string {
-  switch (kind) {
-    case ApplicationKindEnum.Database:
-      return '/apps/databases';
-    case ApplicationKindEnum.Tool:
-      return '/apps/tools';
-    case ApplicationKindEnum.System:
-      return '/apps/system';
-    default:
-      return '/apps/applications';
-  }
+export function backLink(from: string | null, list: WorkloadList): string {
+  return from === 'catalog' ? '/apps/catalog' : WORKLOAD_LIST_ROUTE[list];
 }
 
-export function backLink(from: string | null, kind: ApplicationKind | undefined): string {
-  return from === 'catalog' ? '/apps/catalog' : listRouteForKind(kind);
-}
-
-export function backLabel(from: string | null, kind: ApplicationKind | undefined): string {
+export function backLabel(from: string | null, list: WorkloadList): string {
   if (from === 'catalog') return 'Back to catalog';
-  return `Back to ${getKindLabel(kind ?? ApplicationKindEnum.Application).toLowerCase()}`;
+  return `Back to ${WORKLOAD_LIST_LABEL[list].toLowerCase()}`;
 }
 
 export function kindLabel(kind: ApplicationKind | undefined): string {
@@ -45,6 +34,11 @@ export function kindChip(group: AppGroupView, primary: Application | null): stri
   if (group.type === 'composed') {
     const n = group.components.length;
     return `Bundle · ${n} component${n === 1 ? '' : 's'}`;
+  }
+  if (primary && workloadListOf(primary) === 'data') {
+    const engine = databaseEngineOf(primary);
+    if (engine) return engineDescriptor(engine).label;
+    return primary.kind === ApplicationKindEnum.Database ? kindLabel(primary.kind) : 'Data store';
   }
   return kindLabel(primary?.kind);
 }

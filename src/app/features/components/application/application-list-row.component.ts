@@ -48,6 +48,20 @@ const TEXT: Record<Tone, string> = {
             @if (r.bundle) {
               <span class="rounded px-1.5 py-0.5 text-[11px] font-medium chip-purple">{{ r.bundle }}</span>
             }
+            @if (r.tool) {
+              <span class="rounded border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground" data-testid="app-row-tool">Tool</span>
+            }
+            @if (r.partOf; as bundle) {
+              <span class="text-xs text-muted-foreground" data-testid="app-row-part-of">
+                part of
+                <button
+                  type="button"
+                  (click)="$event.stopPropagation(); open.emit(bundle.id)"
+                  (keydown.enter)="$event.stopPropagation()"
+                  class="font-medium text-primary hover:underline"
+                >{{ bundle.name }}</button>
+              </span>
+            }
             @if (r.project) {
               <app-project-badge [project]="r.project" />
             }

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideSearch } from '@ng-icons/lucide';
 import { ListFilters, ListView } from './applications-list-rows';
+import { WorkloadType } from '../../model/workload-list';
 
 export type FilterChange = { [K in keyof ListFilters]: { field: K; value: ListFilters[K] } }[keyof ListFilters];
 
@@ -22,6 +23,30 @@ const VIEWS: { key: ListView; label: string }[] = [
   host: { class: 'block' },
   template: `
     <div class="flex flex-col gap-2.5 lg:flex-row lg:items-center">
+      @if (typeOptions().length > 0) {
+        <div class="inline-flex flex-wrap gap-0.5 rounded-lg bg-muted p-0.5" role="tablist" aria-label="Type" data-testid="apps-types">
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="filters().type === ''"
+            (click)="change('type', '')"
+            class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+            [class]="typeClass('')"
+            data-testid="apps-type-all"
+          >All</button>
+          @for (t of typeOptions(); track t.key) {
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="filters().type === t.key"
+              (click)="change('type', t.key)"
+              class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+              [class]="typeClass(t.key)"
+              [attr.data-testid]="'apps-type-' + t.key"
+            >{{ t.label }}</button>
+          }
+        </div>
+      }
       <div class="inline-flex flex-wrap gap-0.5 rounded-lg bg-muted p-0.5" role="tablist" data-testid="apps-views">
         @for (v of views; track v.key) {
           <button
@@ -81,6 +106,7 @@ const VIEWS: { key: ListView; label: string }[] = [
 export class ApplicationsListToolbarComponent {
   readonly filters = input.required<ListFilters>();
   readonly counts = input.required<Record<ListView, number>>();
+  readonly typeOptions = input<WorkloadType[]>([]);
   readonly backupKnown = input(true);
   readonly clusterOptions = input.required<{ id: string; name: string }[]>();
   readonly projectOptions = input.required<{ id: string; name: string }[]>();
@@ -95,6 +121,12 @@ export class ApplicationsListToolbarComponent {
   protected countFor(view: ListView): number | null {
     if (view === 'no_backup' && !this.backupKnown()) return null;
     return this.counts()[view];
+  }
+
+  protected typeClass(type: string): string {
+    return this.filters().type === type
+      ? 'bg-background text-foreground shadow-sm'
+      : 'text-muted-foreground hover:text-foreground';
   }
 
   protected viewClass(view: ListView): string {

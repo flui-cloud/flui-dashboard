@@ -37,7 +37,6 @@ import {
   lucidePackage,
   lucideBoxes,
   lucideChartNoAxesColumnIncreasing,
-  lucideHammer,
   lucideStore,
   lucideArchive,
   lucideArrowRightLeft,
@@ -48,6 +47,7 @@ import {
   lucideBookOpen,
 } from '@ng-icons/lucide';
 import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { WORKLOAD_LIST_LABEL, WORKLOAD_LIST_ROUTE, openedWorkloadList } from '../../../features/model/workload-list';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import { BrnMenuTriggerDirective } from '@spartan-ng/brain/menu';
@@ -162,7 +162,6 @@ import {
       lucidePackage,
       lucideBoxes,
   lucideChartNoAxesColumnIncreasing,
-      lucideHammer,
       lucideStore,
       lucideArchive,
       lucideArrowRightLeft,
@@ -312,65 +311,53 @@ export class SidebarComponent implements OnInit {
   /**
    * The list an opened app belongs to. Its recap and its detail pages live
    * under one path whatever the app is, so the address alone would light up
-   * "Applications" for a database, or nothing at all on the recap.
+   * "Applications" for a data store, or nothing at all on the recap.
    */
   private readonly _openedAppList = computed<string | null>(() => {
     const match = /^\/apps\/(?:recap|applications)\/([0-9a-f-]{36})(?:[/?#]|$)/.exec(
       this._url(),
     );
     if (!match) return null;
-    const app = this._appService.applications().find((a) => a.id === match[1]);
-    if (!app) return null;
-    switch (String(app.kind ?? '').toUpperCase()) {
-      case 'DATABASE':
-        return '/apps/databases';
-      case 'TOOL':
-        return '/apps/tools';
-      case 'SYSTEM':
-        return '/apps/system';
-      default:
-        return '/apps/applications';
-    }
+    const list = openedWorkloadList(
+      match[1],
+      this._appService.applicationGroups(),
+      this._appService.applications(),
+    );
+    return list ? WORKLOAD_LIST_ROUTE[list] : null;
   });
 
   readonly workloadItems = computed<SidebarNavItem[]>(() => {
-    const dbCount = this._appService.databasesCount();
-    const appCount = this._appService.applicationsCount();
-    const toolCount = this._appService.toolsCount();
-    const sysCount = this._appService.systemKindCount();
+    const counts = this._appService.workloadListCounts();
     const projectCount = this._projects.projects().length;
+    const label = (text: string, n: number) => (n > 0 ? `${text} (${n})` : text);
 
     const items: SidebarNavItem[] = [
       {
-        label: projectCount > 0 ? `Projects (${projectCount})` : 'Projects',
+        label: label('Projects', projectCount),
         link: '/apps/projects',
         routerLinkActive: 'active',
         icon: 'lucideFolders',
       },
       {
-        label: dbCount > 0 ? `Databases (${dbCount})` : 'Databases',
-        link: '/apps/databases',
-        routerLinkActive: 'active',
-        icon: 'lucideDatabase',
-      },
-      {
-        label: appCount > 0 ? `Applications (${appCount})` : 'Applications',
-        link: '/apps/applications',
+        label: label(WORKLOAD_LIST_LABEL.applications, counts.applications),
+        link: WORKLOAD_LIST_ROUTE.applications,
         routerLinkActive: 'active',
         icon: 'lucideContainer',
+        keywords: ['apps', 'tools', 'services'],
       },
       {
-        label: toolCount > 0 ? `Tools (${toolCount})` : 'Tools',
-        link: '/apps/tools',
+        label: label(WORKLOAD_LIST_LABEL.data, counts.data),
+        link: WORKLOAD_LIST_ROUTE.data,
         routerLinkActive: 'active',
-        icon: 'lucideHammer',
+        icon: 'lucideDatabase',
+        keywords: ['databases', 'cache', 'queues', 'storage', 'search'],
       },
     ];
 
     if (this.showSystemApps()) {
       items.push({
-        label: sysCount > 0 ? `System (${sysCount})` : 'System',
-        link: '/apps/system',
+        label: label(WORKLOAD_LIST_LABEL.system, counts.system),
+        link: WORKLOAD_LIST_ROUTE.system,
         routerLinkActive: 'active',
         icon: 'lucideShield',
       });
@@ -404,6 +391,6 @@ export class SidebarComponent implements OnInit {
 
 function markOpenedAppList(item: SidebarNavItem, opened: string): SidebarNavItem & { active?: boolean } {
   if (item.link === opened) return { ...item, active: true };
-  if (item.link === '/apps/applications') return { ...item, routerLinkActive: '' };
+  if (item.link === WORKLOAD_LIST_ROUTE.applications) return { ...item, routerLinkActive: '' };
   return item;
 }

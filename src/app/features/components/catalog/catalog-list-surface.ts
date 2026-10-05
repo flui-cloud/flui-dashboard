@@ -35,7 +35,7 @@ export interface CatalogListRow {
   updateAvailable: boolean;
 }
 
-/** The page groups its cards by kind under a heading with a count — unless `?appKind=`
+/** The page groups its cards by kind under a heading with a count — unless `?list=`
  * scopes it, and then there is one flat grid. Both shapes are one group here. */
 export interface CatalogListGroup {
   kind: string;
@@ -44,7 +44,7 @@ export interface CatalogListGroup {
 }
 
 export interface CatalogListSurfaceInput {
-  /** `heroTitle()` — the heading really changes with `?appKind=`. */
+  /** `heroTitle()` — the heading really changes with `?list=`. */
   heroTitle: string;
   scopedKind: string | null;
   /** Whether the search box holds a term, never the term itself: it is still being typed. */

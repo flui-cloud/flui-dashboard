@@ -39,8 +39,6 @@ import { CrashDiagnosesService } from '../../service/crash-diagnoses.service';
 import { AppRuntimeWebSocketService } from '../../service/app-runtime-websocket.service';
 import {
   ApplicationStatus,
-  ApplicationKind,
-  ApplicationKindEnum,
   getStatusLabel,
   getCategoryLabel,
   getReconciliationLabel,
@@ -52,6 +50,7 @@ import {
 import { isActionAvailable } from '../../model/app-status-actions';
 import { isBuildingBlock } from '../../model/app-exposure';
 import { databaseEngineOf } from '../../model/db-engine';
+import { WORKLOAD_LIST_ROUTE, WorkloadList, workloadListOf } from '../../model/workload-list';
 import { accessOf, allowsTab } from '../../model/app-access';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
@@ -503,7 +502,7 @@ export class ApplicationDetailComponent implements OnDestroy {
   showErrorToast = signal(false);
   errorToastMessage = signal('');
   private readonly _appWasLoaded = signal(false);
-  private readonly lastKnownKind = signal<ApplicationKind | undefined>(undefined);
+  private readonly lastKnownList = signal<WorkloadList>('applications');
 
   private readonly routeId = toSignal(
     this.route.paramMap.pipe(map(p => p.get('id'))),
@@ -522,8 +521,8 @@ export class ApplicationDetailComponent implements OnDestroy {
 
   constructor() {
     effect(() => {
-      const kind = this.application()?.kind;
-      if (kind) this.lastKnownKind.set(kind);
+      const app = this.application();
+      if (app) this.lastKnownList.set(workloadListOf(app));
     });
 
     effect(() => {
@@ -668,16 +667,8 @@ export class ApplicationDetailComponent implements OnDestroy {
   }
 
   private listRouteForKind(): string {
-    switch (this.application()?.kind ?? this.lastKnownKind()) {
-      case ApplicationKindEnum.Database:
-        return '/apps/databases';
-      case ApplicationKindEnum.Tool:
-        return '/apps/tools';
-      case ApplicationKindEnum.System:
-        return '/apps/system';
-      default:
-        return '/apps/applications';
-    }
+    const app = this.application();
+    return WORKLOAD_LIST_ROUTE[app ? workloadListOf(app) : this.lastKnownList()];
   }
 
   getStatusDisplayLabel(status: ApplicationStatus): string {

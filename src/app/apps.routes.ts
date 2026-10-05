@@ -15,30 +15,23 @@ export const appsRoutes: Routes = [
     title: 'Projects - flui.cloud',
   },
   {
-    path: 'databases',
+    path: 'data',
     loadComponent: () =>
       import(
         './features/components/application/applications-list.component'
       ).then((m) => m.ApplicationsListComponent),
-    data: { kind: 'DATABASE' },
-    title: 'Databases - flui.cloud',
+    data: { list: 'data' },
+    title: 'Data - flui.cloud',
   },
-  {
-    path: 'tools',
-    loadComponent: () =>
-      import(
-        './features/components/application/applications-list.component'
-      ).then((m) => m.ApplicationsListComponent),
-    data: { kind: 'TOOL' },
-    title: 'Tools - flui.cloud',
-  },
+  { path: 'databases', redirectTo: '/apps/data', pathMatch: 'full' },
+  { path: 'tools', redirectTo: '/apps/applications?type=tool', pathMatch: 'full' },
   {
     path: 'system',
     loadComponent: () =>
       import(
         './features/components/application/applications-list.component'
       ).then((m) => m.ApplicationsListComponent),
-    data: { kind: 'SYSTEM' },
+    data: { list: 'system' },
     title: 'System Apps - flui.cloud',
   },
   {
@@ -50,7 +43,7 @@ export const appsRoutes: Routes = [
           import(
             './features/components/application/applications-list.component'
           ).then((m) => m.ApplicationsListComponent),
-        data: { kind: 'APPLICATION' },
+        data: { list: 'applications' },
         title: 'Applications - flui.cloud',
       },
       {

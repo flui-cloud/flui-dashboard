@@ -20,6 +20,7 @@ import {
   OperationProgressEvent,
 } from './app-runtime-websocket.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { workloadListCounts } from '../model/workload-list';
 import { AppConfigService } from '../../core/services/app-config.service';
 
 export interface RemovalPreviewVolume {
@@ -320,6 +321,8 @@ export class ApplicationService {
         (g) => this.groupKind(g) === ApplicationKindEnum.System,
       ).length,
   );
+
+  readonly workloadListCounts = computed(() => workloadListCounts(this.applicationGroups()));
 
   readonly userTotalAppsCount = computed(
     () => this.databasesCount() + this.applicationsCount() + this.toolsCount(),

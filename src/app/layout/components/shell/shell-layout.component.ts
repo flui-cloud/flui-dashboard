@@ -27,6 +27,7 @@ import { AssistantWidgetComponent } from '../../../features/components/assistant
 import { FluiBackdropComponent } from '../../../shared/components/flui-backdrop/flui-backdrop.component';
 import { SandboxBannerComponent } from './sandbox-banner.component';
 import { SandboxSectionNoticeComponent } from './sandbox-section-notice.component';
+import { PAGE_WIDTH_CLASS, pageWidth } from './page-width';
 import { PlatformUpdateWatcherComponent } from '../../../features/components/platform-updates/platform-update-watcher.component';
 import { SandboxService } from '../../../core/services/sandbox.service';
 
@@ -105,8 +106,10 @@ import { SandboxService } from '../../../core/services/sandbox.service';
         <div class="relative flex-1 overflow-hidden">
           <app-flui-backdrop placement="bottom-right" intensity="soft" />
           <div class="page-outlet absolute inset-0 overflow-y-auto p-2 subtle-scroll">
-            <app-sandbox-section-notice />
-            <router-outlet></router-outlet>
+            <div class="mx-auto w-full" [class]="widthClass()">
+              <app-sandbox-section-notice />
+              <router-outlet></router-outlet>
+            </div>
           </div>
         </div>
       </div>
@@ -131,6 +134,15 @@ export class ShellLayoutComponent {
   protected readonly universeOverlay = inject(UniverseOverlayService);
   private readonly router = inject(Router);
   private readonly sandbox = inject(SandboxService);
+
+  /** Recomputed on each navigation, from the route the page was reached by. */
+  protected readonly widthClass = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(() => PAGE_WIDTH_CLASS[pageWidth(this.router.routerState.snapshot.root, this.router.url)]),
+    ),
+    { initialValue: PAGE_WIDTH_CLASS[pageWidth(this.router.routerState.snapshot.root, this.router.url)] },
+  );
 
   constructor() {
     // A guest returning to an open tab has the cookie but not the session state.

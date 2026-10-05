@@ -1,16 +1,16 @@
 import { Component, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideRefreshCw, lucideZap } from '@ng-icons/lucide';
+import { lucideRefreshCw } from '@ng-icons/lucide';
 import { DashboardService } from '../../service/dashboard.service';
 import { FLEET_WINDOWS, FleetService, FleetWindow } from '../../service/fleet.service';
 import { PermissionService } from '../../../core/services/permission.service';
+import { AddWorkloadMenuComponent } from '../application/add-workload-menu.component';
 
 @Component({
   selector: 'app-dashboard-home-header',
   standalone: true,
-  imports: [RouterLink, NgIconComponent],
-  providers: [provideIcons({ lucideRefreshCw, lucideZap })],
+  imports: [NgIconComponent, AddWorkloadMenuComponent],
+  providers: [provideIcons({ lucideRefreshCw })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -64,13 +64,7 @@ import { PermissionService } from '../../../core/services/permission.service';
           <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="refreshing()" />
         </button>
         @if (canDeploy()) {
-          <a
-            routerLink="/apps/deploy/new"
-            class="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <ng-icon name="lucideZap" class="h-4 w-4" />
-            Deploy
-          </a>
+          <app-add-workload-menu label="Deploy" />
         }
       </div>
     </header>

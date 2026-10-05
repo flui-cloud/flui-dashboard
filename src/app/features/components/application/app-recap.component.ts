@@ -11,6 +11,7 @@ import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 import { databaseEngineOf } from '../../model/db-engine';
+import { WORKLOAD_LIST_ROUTE, groupListOf } from '../../model/workload-list';
 import { Application, getSourceTypeLabel } from '../../model/application.models';
 import { AppDeleteDialogComponent } from './app-delete-dialog.component';
 import { AppRecapActivityComponent } from './app-recap-activity.component';
@@ -35,7 +36,6 @@ import {
   hostnameOf,
   kindChip,
   kindLabel,
-  listRouteForKind,
   openUrlOf,
 } from './app-recap-header';
 import { RecapFact, backupBand, endpointHealth, releaseFact, replicasFact, resourcesFact, routeOf } from './app-recap-view';
@@ -75,6 +75,7 @@ import {
           [backLink]="backLink()"
           [backLabel]="backLabel()"
           [logsAppId]="isComposed() && p ? p.id : null"
+          [manageAppId]="manageAppId()"
           [recapPath]="recapPath()"
           [openUrl]="openUrl()"
         />
@@ -105,7 +106,7 @@ import {
 
           <app-recap-manage [appId]="p.id" [recapPath]="recapPath()" />
 
-          <app-delete-dialog [group]="g" [primary]="p" [listRoute]="listRouteForKind()" [compact]="true">
+          <app-delete-dialog [group]="g" [primary]="p" [listRoute]="listRoute()" [compact]="true">
             {{ sourceLabel(p) }} · {{ p.exposure }} · namespace <span class="font-mono">{{ p.k8sNamespace | maskId }}</span>
           </app-delete-dialog>
         } @else if (p) {
@@ -132,6 +133,7 @@ import {
             [note]="internalNote()"
             [protectionLoaded]="store.protectionLoaded()"
             [runState]="store.runState()"
+            [recapPath]="recapPath()"
             (backUp)="store.backUpNow($event)"
           />
 
@@ -150,7 +152,7 @@ import {
             <app-recap-activity [events]="store.events()" [loaded]="store.eventsLoaded()" [appId]="p.id" [recapPath]="recapPath()" />
           </div>
 
-          <app-delete-dialog [group]="g" [primary]="p" [listRoute]="listRouteForKind()" [compact]="true">
+          <app-delete-dialog [group]="g" [primary]="p" [listRoute]="listRoute()" [compact]="true">
             ID <span class="font-mono">{{ p.slug | maskId }}</span> · components
             @for (c of g.components; track c.id; let last = $last) {
               <span class="font-mono">{{ c.slug | maskId }}</span>{{ last ? '' : ', ' }}
@@ -212,11 +214,22 @@ export class AppRecapComponent implements OnInit, OnDestroy {
     return g.components.find((c) => c.id === g.primaryComponentId) ?? g.components[0] ?? null;
   });
 
-  protected readonly listRouteForKind = computed(() => listRouteForKind(this.primary()?.kind));
-  protected readonly backLink = computed(() => backLink(this.from(), this.primary()?.kind));
-  protected readonly backLabel = computed(() => backLabel(this.from(), this.primary()?.kind));
+  private readonly workloadList = computed(() => {
+    const g = this.group();
+    return g ? groupListOf(g) : 'applications';
+  });
+  protected readonly listRoute = computed(() => WORKLOAD_LIST_ROUTE[this.workloadList()]);
+  protected readonly backLink = computed(() => backLink(this.from(), this.workloadList()));
+  protected readonly backLabel = computed(() => backLabel(this.from(), this.workloadList()));
 
   protected readonly isComposed = computed(() => this.group()?.type === 'composed');
+  /** One application to manage: the app itself, or a bundle's only component. */
+  protected readonly manageAppId = computed(() => {
+    const g = this.group();
+    if (!g) return null;
+    if (!this.isComposed()) return this.primary()?.id ?? null;
+    return g.components.length === 1 ? g.components[0].id : null;
+  });
   protected readonly recapPath = computed(() => `/apps/recap/${this.group()?.id ?? ''}`);
 
   protected readonly dbComponents = computed(() =>

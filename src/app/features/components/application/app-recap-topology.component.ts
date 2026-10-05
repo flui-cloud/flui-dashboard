@@ -29,7 +29,7 @@ import { RunState, TONE_TEXT } from './app-recap-view';
         }
         <div class="flex flex-1 flex-col gap-3">
           @for (c of front(); track c.app.id) {
-            <app-recap-component-card [card]="c" [protectionLoaded]="protectionLoaded()" [runState]="runState()" (backUp)="backUp.emit($event)" />
+            <app-recap-component-card [card]="c" [recapPath]="recapPath()" [protectionLoaded]="protectionLoaded()" [runState]="runState()" (backUp)="backUp.emit($event)" />
           }
         </div>
         @if (back().length) {
@@ -48,6 +48,7 @@ import { RunState, TONE_TEXT } from './app-recap-view';
   `,
 })
 export class AppRecapTopologyComponent {
+  readonly recapPath = input('');
   readonly endpointHost = input('');
   readonly health = input.required<{ label: string; tone: Tone }>();
   readonly front = input.required<ComponentCard[]>();

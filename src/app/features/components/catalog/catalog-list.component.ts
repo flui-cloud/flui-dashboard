@@ -17,7 +17,7 @@ import {
 import { CatalogService } from '../../service/catalog.service';
 import { CatalogResponseDto } from '../../../core/api/model/models';
 import { CatalogCardComponent } from './catalog-card.component';
-import { ApplicationKind, ApplicationKindEnum, getKindLabel } from '../../model/application.models';
+import { CatalogScope, CatalogSection, SECTION_LABEL, SECTION_ORDER, catalogScopeOf, catalogSectionOf, inCatalogScope, scopeCopy } from './catalog-scope';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
   CatalogListSurfaceInput,
@@ -28,33 +28,11 @@ import {
 
 const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
 
-interface CatalogKindGroup {
-  kind: ApplicationKind;
+interface CatalogSectionGroup {
+  kind: CatalogSection;
   label: string;
   apps: CatalogResponseDto[];
 }
-
-function readAppKind(app: CatalogResponseDto): ApplicationKind {
-  const raw = (app as unknown as { appKind?: string }).appKind;
-  switch (raw) {
-    case 'DATABASE':
-      return ApplicationKindEnum.Database;
-    case 'TOOL':
-      return ApplicationKindEnum.Tool;
-    case 'SYSTEM':
-      return ApplicationKindEnum.System;
-    case 'APPLICATION':
-    default:
-      return ApplicationKindEnum.Application;
-  }
-}
-
-const KIND_ORDER: ApplicationKind[] = [
-  ApplicationKindEnum.Database,
-  ApplicationKindEnum.Application,
-  ApplicationKindEnum.Tool,
-  ApplicationKindEnum.System,
-];
 
 @Component({
   selector: 'app-catalog-list',
@@ -282,7 +260,7 @@ const KIND_ORDER: ApplicationKind[] = [
         } @else {
           <div class="mb-3 flex items-center justify-between text-xs text-muted-foreground">
             <span>{{ filteredApps().length }} app{{ filteredApps().length === 1 ? '' : 's' }}</span>
-            @if (!scopedKind()) {
+            @if (!scope()) {
               <button
                 type="button"
                 (click)="toggleShowSystemApps()"
@@ -292,7 +270,7 @@ const KIND_ORDER: ApplicationKind[] = [
               </button>
             }
           </div>
-          @if (scopedKind()) {
+          @if (flatGrid()) {
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               @for (app of filteredApps(); track app.id) {
                 <app-catalog-card [app]="app" />
@@ -326,57 +304,20 @@ export class CatalogListComponent implements OnDestroy {
     initialValue: this.route.snapshot.queryParamMap,
   });
 
-  readonly scopedKind = computed<ApplicationKind | null>(() => {
-    const raw = this.appKind().get('appKind');
-    switch (raw) {
-      case 'DATABASE':
-        return ApplicationKindEnum.Database;
-      case 'TOOL':
-        return ApplicationKindEnum.Tool;
-      case 'SYSTEM':
-        return ApplicationKindEnum.System;
-      case 'APPLICATION':
-        return ApplicationKindEnum.Application;
-      default:
-        return null;
-    }
-  });
+  readonly scope = computed<CatalogScope | null>(() => catalogScopeOf(this.appKind()));
 
-  readonly heroTitle = computed(() => {
-    const k = this.scopedKind();
-    if (!k) return 'Deploy open-source apps in one click';
-    return `Add a ${getKindLabel(k).replace(/s$/, '').toLowerCase()}`;
-  });
+  readonly heroTitle = computed(() => scopeCopy(this.scope())?.title ?? 'Deploy open-source apps in one click');
 
   readonly heroSubtitle = computed(() => {
-    switch (this.scopedKind()) {
-      case ApplicationKindEnum.Database:
-        return 'Pick a database engine — Flui provisions storage, secrets, backups and connection envs for you.';
-      case ApplicationKindEnum.Tool:
-        return 'Browse admin UIs, ops tools and developer utilities. Many can connect to a running building block.';
-      case ApplicationKindEnum.System:
-        return 'Internal platform components — usually managed automatically.';
-      case ApplicationKindEnum.Application:
-        return 'Curated open-source applications ready to deploy on your cluster.';
-      default:
-        return 'Curated, EU-friendly alternatives to the tools you already use. Pick an app, choose a cluster, and Flui handles the rest — secrets, DNS, TLS and all.';
-    }
+    return (
+      scopeCopy(this.scope())?.subtitle ??
+      'Curated, EU-friendly alternatives to the tools you already use. Pick an app, choose a cluster, and Flui handles the rest — secrets, DNS, TLS and all.'
+    );
   });
 
-  readonly backLink = computed<string | null>(() => {
-    switch (this.scopedKind()) {
-      case ApplicationKindEnum.Database:
-        return '/apps/databases';
-      case ApplicationKindEnum.Tool:
-        return '/apps/tools';
-      case ApplicationKindEnum.System:
-        return '/apps/system';
-      case ApplicationKindEnum.Application:
-        return '/apps/applications';
-      default:
-        return null;
-    }
-  });
+  readonly flatGrid = computed(() => this.scope() === 'data' || this.scope() === 'system');
+
+  readonly backLink = computed<string | null>(() => scopeCopy(this.scope())?.back ?? null);
 
   readonly searchQuery = signal('');
   readonly activeCategory = signal<string | null>(null);
@@ -414,8 +355,10 @@ export class CatalogListComponent implements OnDestroy {
     const query = this.searchQuery().trim().toLowerCase();
     const category = this.activeCategory();
     const tags = this.activeTags();
+    const scope = this.scope();
 
     return all.filter((app) => {
+      if (scope && !inCatalogScope(app, scope)) return false;
       if (category && app.category !== category) return false;
       if (tags.length > 0 && !tags.every((t) => app.tags?.includes(t))) return false;
       if (query) {
@@ -434,12 +377,12 @@ export class CatalogListComponent implements OnDestroy {
     });
   });
 
-  readonly kindGroups = computed<CatalogKindGroup[]>(() => {
+  readonly kindGroups = computed<CatalogSectionGroup[]>(() => {
     const showSystem = this.showSystemApps();
-    const buckets = new Map<ApplicationKind, CatalogResponseDto[]>();
+    const buckets = new Map<CatalogSection, CatalogResponseDto[]>();
     for (const app of this.filteredApps()) {
-      const kind = readAppKind(app);
-      if (kind === ApplicationKindEnum.System && !showSystem) continue;
+      const kind = catalogSectionOf(app);
+      if (kind === 'system' && !showSystem) continue;
       const bucket = buckets.get(kind);
       if (bucket) {
         bucket.push(app);
@@ -447,9 +390,9 @@ export class CatalogListComponent implements OnDestroy {
         buckets.set(kind, [app]);
       }
     }
-    return KIND_ORDER
+    return SECTION_ORDER
       .filter((k) => buckets.has(k))
-      .map((k) => ({ kind: k, label: getKindLabel(k), apps: buckets.get(k)! }));
+      .map((k) => ({ kind: k, label: SECTION_LABEL[k], apps: buckets.get(k)! }));
   });
 
   private readonly currentSurface = inject(CurrentSurfaceService);
@@ -458,7 +401,7 @@ export class CatalogListComponent implements OnDestroy {
   /** The rows are `kindGroups()`/`filteredApps()` — what the grid draws after the filters —
    * and the badges come from the same service calls the card itself makes (playbook §5). */
   private readonly surfaceInput = computed<CatalogListSurfaceInput>(() => {
-    const scoped = this.scopedKind();
+    const scoped = this.scope();
     const row = (app: CatalogResponseDto) => ({
       slug: app.slug,
       name: app.name,
@@ -475,8 +418,8 @@ export class CatalogListComponent implements OnDestroy {
       showSystemApps: this.showSystemApps(),
       totalCount: this.catalog.catalog().length,
       shownCount: this.filteredApps().length,
-      groups: scoped
-        ? [{ kind: scoped, label: getKindLabel(scoped), rows: this.filteredApps().map(row) }]
+      groups: scoped && this.flatGrid()
+        ? [{ kind: scoped, label: SECTION_LABEL[scoped], rows: this.filteredApps().map(row) }]
         : this.kindGroups().map((g) => ({ kind: g.kind, label: g.label, rows: g.apps.map(row) })),
       isLoading: this.catalog.listLoading(),
       hasListError: Boolean(this.catalog.listError()),
@@ -504,22 +447,13 @@ export class CatalogListComponent implements OnDestroy {
 
     effect(() => {
       const cat = this.activeCategory();
-      const kind = this.scopedKind();
-      queueMicrotask(() =>
-        this.catalog.loadCatalog({
-          category: cat ?? undefined,
-          appKind: kind ?? undefined,
-        }),
-      );
+      queueMicrotask(() => this.catalog.loadCatalog({ category: cat ?? undefined }));
     });
     queueMicrotask(() => this.catalog.ensureApplicationsLoaded());
   }
 
   reload(): void {
-    this.catalog.loadCatalog({
-      category: this.activeCategory() ?? undefined,
-      appKind: this.scopedKind() ?? undefined,
-    });
+    this.catalog.loadCatalog({ category: this.activeCategory() ?? undefined });
   }
 
   setCategory(cat: string | null): void {

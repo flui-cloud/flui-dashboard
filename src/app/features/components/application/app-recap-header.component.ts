@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideArrowUpRight, lucideFileText } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideArrowUpRight, lucideFileText, lucideSettings2 } from '@ng-icons/lucide';
 import { AppGroupView } from '../../model/application.models';
 import { statusOf } from './app-recap-bundle';
 import { HeaderPart } from './app-recap-header';
@@ -12,7 +12,7 @@ import { TONE_DOT, TONE_PILL } from './app-recap-view';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, NgIcon],
-  providers: [provideIcons({ lucideArrowLeft, lucideArrowUpRight, lucideFileText })],
+  providers: [provideIcons({ lucideArrowLeft, lucideArrowUpRight, lucideFileText, lucideSettings2 })],
   host: { class: 'block' },
   template: `
     @let g = group();
@@ -62,11 +62,22 @@ import { TONE_DOT, TONE_PILL } from './app-recap-view';
             [href]="openUrl()"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            class="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
             data-testid="recap-open"
           >
             Open app
             <ng-icon name="lucideArrowUpRight" class="h-4 w-4" />
+          </a>
+        }
+        @if (manageAppId(); as manageId) {
+          <a
+            [routerLink]="['/apps/applications', manageId]"
+            [queryParams]="{ returnTo: recapPath() }"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            data-testid="recap-manage"
+          >
+            <ng-icon name="lucideSettings2" class="h-4 w-4" />
+            Manage
           </a>
         }
       </div>
@@ -80,6 +91,8 @@ export class AppRecapHeaderComponent {
   readonly backLink = input.required<string>();
   readonly backLabel = input.required<string>();
   readonly logsAppId = input<string | null>(null);
+  /** The application the full panel opens on; null when a bundle has several, each linked from its card. */
+  readonly manageAppId = input<string | null>(null);
   readonly recapPath = input.required<string>();
   readonly openUrl = input('');
 

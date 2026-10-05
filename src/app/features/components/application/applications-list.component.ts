@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideLoader, lucidePackage, lucideRefreshCw, lucideRocket } from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideLoader, lucidePackage, lucideRefreshCw } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { ClusterService } from '../../service/cluster.service';
 import { ProvidersService } from '../../service/providers.service';
@@ -10,7 +10,8 @@ import { ProjectsService } from '../../service/projects.service';
 import { FleetService } from '../../service/fleet.service';
 import { ApplicationMetricsService } from '../../../core/api/api/applicationMetrics.service';
 import type { AppMetricsDto } from '../../../core/api/model/appMetricsDto';
-import { AppGroupView, ApplicationKind, ApplicationKindEnum, getKindLabel } from '../../model/application.models';
+import { AppGroupView } from '../../model/application.models';
+import { WorkloadEntry, WorkloadList, isWorkloadList, workloadEntries, workloadTypeOf, workloadTypeOptions } from '../../model/workload-list';
 import { ClusterStatus } from '../../model/cluster.models';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
@@ -22,16 +23,17 @@ import {
   presentedContent,
 } from './applications-list-surface';
 import { ListFilters, ListRow, buildListRow, matchesView, primaryOf, sortRows, viewCounts } from './applications-list-rows';
-import { EMPTY_FILTERS, activeFilterCount, deployTarget, kindCopy, listSummary, providerName } from './applications-list-kind';
+import { EMPTY_FILTERS, activeFilterCount, listCopy, listSummary, providerName } from './applications-list-kind';
 import { ApplicationsListShowcaseComponent } from './applications-list-showcase.component';
 import { ApplicationsListTableComponent } from './applications-list-table.component';
 import { ApplicationsListToolbarComponent } from './applications-list-toolbar.component';
+import { AddScope, AddWorkloadMenuComponent } from './add-workload-menu.component';
 
 @Component({
   selector: 'app-applications-list',
   standalone: true,
-  imports: [NgIconComponent, ApplicationsListToolbarComponent, ApplicationsListTableComponent, ApplicationsListShowcaseComponent],
-  providers: [provideIcons({ lucideRefreshCw, lucidePackage, lucideLoader, lucideCircleAlert, lucideRocket })],
+  imports: [NgIconComponent, ApplicationsListToolbarComponent, ApplicationsListTableComponent, ApplicationsListShowcaseComponent, AddWorkloadMenuComponent],
+  providers: [provideIcons({ lucideRefreshCw, lucidePackage, lucideLoader, lucideCircleAlert })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-5 p-6">
@@ -55,14 +57,8 @@ import { ApplicationsListToolbarComponent } from './applications-list-toolbar.co
             <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
             Refresh
           </button>
-          @if (canDeploy()) {
-            <button
-              (click)="deployNewApp()"
-              class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
-            >
-              <ng-icon name="lucideRocket" class="h-4 w-4" />
-              {{ ctaLabel() }}
-            </button>
+          @if (addScope(); as scope) {
+            <app-add-workload-menu [scope]="scope" />
           }
         </div>
       </div>
@@ -70,6 +66,7 @@ import { ApplicationsListToolbarComponent } from './applications-list-toolbar.co
       <app-applications-list-toolbar
         [filters]="filtersState()"
         [counts]="counts()"
+        [typeOptions]="typeOptions()"
         [backupKnown]="coverageById() !== null"
         [clusterOptions]="clusterOptions()"
         [projectOptions]="projectOptions()"
@@ -101,18 +98,12 @@ import { ApplicationsListToolbarComponent } from './applications-list-toolbar.co
               {{ emptySubtitle() }}
             }
           </p>
-          @if (activeFiltersCount() === 0 && canDeploy()) {
-            <button
-              (click)="deployNewApp()"
-              class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
-            >
-              <ng-icon name="lucideRocket" class="h-4 w-4" />
-              {{ ctaLabel() }}
-            </button>
+          @if (activeFiltersCount() === 0 && addScope(); as scope) {
+            <app-add-workload-menu [scope]="scope" />
           }
         </div>
       } @else {
-        <app-applications-list-table [rows]="ownRows()" (open)="openRecap($event)" />
+        <app-applications-list-table [rows]="ownRows()" [nameHeader]="list() === 'data' ? 'Data store' : 'Application'" (open)="openRecap($event)" />
       }
 
       @if (showcaseRows().length > 0) {
@@ -141,11 +132,13 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
 
   readonly skeletonRows = [1, 2, 3, 4, 5];
 
-  kind = signal<ApplicationKind>(
-    (this.route.snapshot.data['kind'] as ApplicationKind | undefined) ??
-      ApplicationKindEnum.Application,
+  readonly list = signal<WorkloadList>(
+    isWorkloadList(this.route.snapshot.data['list']) ? this.route.snapshot.data['list'] : 'applications',
   );
-  filtersState = signal<ListFilters>(EMPTY_FILTERS);
+  filtersState = signal<ListFilters>({
+    ...EMPTY_FILTERS,
+    type: this.route.snapshot.queryParamMap?.get('type') ?? '',
+  });
 
   allApplications = this.appService.applications;
   isLoading = this.appService.loading;
@@ -154,23 +147,31 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
 
   private readonly usage = signal<ReadonlyMap<string, AppMetricsDto>>(new Map());
 
-  pageTitle = computed(() => getKindLabel(this.kind()));
-  canDeploy = computed(() => this.kind() !== ApplicationKindEnum.System);
-  private readonly copy = computed(() => kindCopy(this.kind()));
-  ctaLabel = computed(() => this.copy().cta);
+  private readonly copy = computed(() => listCopy(this.list()));
+  pageTitle = computed(() => this.copy().title);
+  readonly addScope = computed<AddScope>(() => {
+    const list = this.list();
+    return list === 'system' ? null : list;
+  });
   emptyTitle = computed(() => this.copy().emptyTitle);
   emptySubtitle = computed(() => this.copy().emptySubtitle);
 
   allGroups = this.appService.applicationGroups;
 
-  kindScopedGroups = computed(() =>
-    this.allGroups().filter((g) => this.groupKind(g) === this.kind()),
+  private readonly entries = computed(() => workloadEntries(this.allGroups(), this.list()));
+
+  private readonly partOfById = computed(
+    () => new Map(this.entries().filter((e) => e.partOf).map((e) => [e.group.id, e.partOf!])),
   );
 
+  listGroups = computed(() => this.entries().map((e: WorkloadEntry) => e.group));
+
   /** The counts are the caller's own: the showcase belongs to whoever runs this instance. */
-  kindOwnGroups = computed(() =>
-    this.kindScopedGroups().filter((g) => !this.isShowcase(g)),
+  listOwnGroups = computed(() =>
+    this.listGroups().filter((g) => !this.isShowcase(g)),
   );
+
+  readonly typeOptions = computed(() => workloadTypeOptions(this.listGroups(), this.list()));
 
   protected readonly coverageById = computed(() => {
     const coverage = this.fleet.coverage();
@@ -185,7 +186,8 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     const coverage = this.coverageById();
     const now = Date.now();
     const rows = new Map<string, ListRow>();
-    for (const g of this.kindScopedGroups()) {
+    const partOf = this.partOfById();
+    for (const g of this.listGroups()) {
       const cluster = clusters.get(g.clusterId);
       const projectId = this.projectIdOf(g);
       rows.set(
@@ -196,6 +198,7 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
           project: (projectId && projects.get(projectId)) || null,
           usage,
           coverage,
+          partOf: partOf.get(g.id) ?? null,
           now,
         }),
       );
@@ -208,19 +211,19 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     return groups.map((g) => byId.get(g.id)).filter((r): r is ListRow => !!r);
   }
 
-  private readonly ownAllRows = computed(() => this.rowsOf(this.kindOwnGroups()));
+  private readonly ownAllRows = computed(() => this.rowsOf(this.listOwnGroups()));
 
   readonly counts = computed(() => viewCounts(this.ownAllRows()));
 
-  kindRunningCount = computed(() => this.counts().running);
-  kindFailedCount = computed(
-    () => this.kindOwnGroups().filter((g) => g.status === 'failed').length,
+  listRunningCount = computed(() => this.counts().running);
+  listFailedCount = computed(
+    () => this.listOwnGroups().filter((g) => g.status === 'failed').length,
   );
 
-  summary = computed(() => listSummary(this.kindOwnGroups(), this.pageTitle()));
+  summary = computed(() => listSummary(this.listOwnGroups(), this.list()));
 
   clusterOptions = computed(() => {
-    const used = new Set(this.kindScopedGroups().map((g) => g.clusterId));
+    const used = new Set(this.listGroups().map((g) => g.clusterId));
     return this.clusterService
       .clusters()
       .filter((c) => !!c.id && used.has(c.id))
@@ -229,7 +232,7 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
 
   projectOptions = computed(() => {
     const used = new Set(
-      this.kindScopedGroups()
+      this.listGroups()
         .map((g) => this.projectIdOf(g))
         .filter((id): id is string => !!id),
     );
@@ -244,11 +247,12 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     const f = this.filtersState();
     const search = f.search.trim().toLowerCase();
     const byId = this.rowsById();
-    return this.kindScopedGroups().filter((g) => {
+    return this.listGroups().filter((g) => {
       const row = byId.get(g.id);
       if (!row) return false;
       if (search && !row.searchText.includes(search)) return false;
       if (!matchesView(row, f.view)) return false;
+      if (f.type && workloadTypeOf(g)?.key !== f.type) return false;
       if (f.cluster && g.clusterId !== f.cluster) return false;
       if (f.project && this.projectIdOf(g) !== f.project) return false;
       return true;
@@ -284,21 +288,17 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
 
   showcaseWhy = computed(() => this.sandbox.whyFor('showcase'));
 
-  private groupKind(g: AppGroupView): ApplicationKind {
-    return primaryOf(g)?.kind ?? ApplicationKindEnum.Application;
-  }
-
   activeFiltersCount = computed(() => activeFilterCount(this.filtersState()));
 
   private readonly surfaceRevision = new ApplicationsListSurfaceRevision();
 
   readonly surface = computed(() => {
     const input: ApplicationsListSurfaceInput = {
-      kind: this.kind(),
+      list: this.list(),
       filteredGroups: this.filteredGroups(),
-      totalForKind: this.kindScopedGroups().length,
-      runningCount: this.kindRunningCount(),
-      failedCount: this.kindFailedCount(),
+      totalForKind: this.listGroups().length,
+      runningCount: this.listRunningCount(),
+      failedCount: this.listFailedCount(),
       attentionCount: this.counts().attention,
       noBackupCount: this.coverageById() === null ? null : this.counts().no_backup,
       filters: this.filtersState(),
@@ -343,7 +343,7 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   /** Readings per cluster, as the cluster Monitoring page reads them; a cluster that does not answer leaves its rows at a dash. */
   private async loadUsage(): Promise<void> {
     const status = new Map(this.clusterService.clusters().map((c) => [c.id, c.status]));
-    const ids = [...new Set(this.kindScopedGroups().map((g) => g.clusterId))].filter((id) => {
+    const ids = [...new Set(this.listGroups().map((g) => g.clusterId))].filter((id) => {
       const s = status.get(id);
       return !s || s === ClusterStatus.ACTIVE;
     });
@@ -366,14 +366,13 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     this.filtersState.set(EMPTY_FILTERS);
   }
 
-  openRecap(groupId: string) {
-    this.router.navigate(['/apps/recap', groupId], {
-      queryParams: { from: this.copy().listName },
+  openRecap(id: string) {
+    if (this.partOfById().has(id)) {
+      this.router.navigate(['/apps/applications', id]);
+      return;
+    }
+    this.router.navigate(['/apps/recap', id], {
+      queryParams: { from: this.list() },
     });
-  }
-
-  deployNewApp() {
-    const kind = this.kind();
-    this.router.navigate([deployTarget(kind)], { queryParams: { appKind: kind } });
   }
 }

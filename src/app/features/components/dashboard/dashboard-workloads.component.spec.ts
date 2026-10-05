@@ -40,7 +40,7 @@ describe('DashboardWorkloadsComponent', () => {
     expect(q('workloads-running')!.textContent!.trim()).toBe('2');
     expect(q('workloads-failed')!.textContent!.trim()).toBe('1 failed');
     expect(q('workloads-apps')!.textContent!.trim()).toBe('2 apps');
-    expect(q('workloads-databases')!.textContent!.trim()).toBe('1 database');
+    expect(q('workloads-data')!.textContent!.trim()).toBe('1 data store');
     expect(q('workloads-tools')!.textContent!.trim()).toBe('0 tools');
   });
 

@@ -15,9 +15,9 @@ import { TONE_DOT, shortDate } from './app-recap-view';
         <h2 class="font-semibold text-foreground">Recent activity</h2>
         <a
           [routerLink]="['/apps/applications', appId(), 'revisions']"
-          [queryParams]="{ returnTo: recapPath() }"
+          [queryParams]="recapPath() ? { returnTo: recapPath() } : null"
           class="text-xs font-medium text-primary hover:underline"
-        >All events</a>
+        >{{ linkLabel() }}</a>
       </div>
       @if (events().length === 0) {
         <p class="mt-3 text-sm text-muted-foreground">{{ loaded() ? 'No events recorded yet.' : 'Loading…' }}</p>
@@ -39,7 +39,8 @@ export class AppRecapActivityComponent {
   readonly events = input.required<RecentEvent[]>();
   readonly loaded = input.required<boolean>();
   readonly appId = input.required<string>();
-  readonly recapPath = input.required<string>();
+  readonly recapPath = input('');
+  readonly linkLabel = input('All events');
 
   protected readonly dot = TONE_DOT;
   protected readonly shortDate = shortDate;

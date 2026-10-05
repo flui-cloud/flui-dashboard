@@ -28,7 +28,13 @@ import {
     <div class="space-y-2.5 rounded-lg border border-border p-4" [attr.data-testid]="'recap-component-' + c.app.id">
       <div class="flex items-start justify-between gap-2">
         <div class="min-w-0">
-          <p class="truncate text-sm font-semibold text-foreground">{{ c.role }}</p>
+          <a
+            [routerLink]="['/apps/applications', c.app.id]"
+            [queryParams]="recapPath() ? { returnTo: recapPath() } : {}"
+            class="block truncate text-sm font-semibold text-foreground hover:text-primary hover:underline"
+            [title]="'Manage ' + c.role"
+            >{{ c.role }}</a
+          >
           <p class="text-xs text-muted-foreground">{{ c.badge }}</p>
         </div>
         <span class="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium" [class]="text[c.status.tone]">
@@ -72,6 +78,7 @@ import {
 })
 export class AppRecapComponentCardComponent {
   readonly card = input.required<ComponentCard>();
+  readonly recapPath = input('');
   readonly protectionLoaded = input.required<boolean>();
   readonly runState = input.required<Record<string, RunState>>();
   readonly backUp = output<string>();

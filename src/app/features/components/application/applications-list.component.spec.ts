@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { ApplicationsListComponent } from './applications-list.component';
 import { ApplicationService } from '../../service/application.service';
@@ -42,16 +42,42 @@ const group = (a: Application, over: Partial<AppGroupView> = {}): AppGroupView =
   ...over,
 });
 
+const composedLabels = { 'flui.cloud/composed-component': 'db' };
+
 describe('ApplicationsListComponent', () => {
   let fixture: ComponentFixture<ApplicationsListComponent>;
+  let routeData: { list: string };
+  let routeQuery: Record<string, string>;
+  let navigate: jasmine.Spy;
   const coverageState = signal<FleetReadState>('ready');
   const coverage = signal<FleetCoverage | null>(null);
 
   const healthy = app('web', { url: 'https://web.example.com' });
   const failed = app('broken', { status: 'failed', reconciliationError: 'image not found' });
   const db = app('store', { volumes: [] } as Partial<Application>);
+  const kuma = app('kuma', { kind: 'TOOL' as Application['kind'] });
+  const umami = app('umami');
+  const umamiDb = app('umami-db', { imageRef: 'postgres:16', labels: composedLabels });
+  const bundle = group(umami, {
+    id: 'g-umami',
+    type: 'composed' as AppGroupView['type'],
+    primaryComponentId: umami.id,
+    components: [umami, umamiDb],
+  });
+
+  async function render(list: string, query: Record<string, string> = {}) {
+    routeData.list = list;
+    routeQuery = query;
+    fixture = TestBed.createComponent(ApplicationsListComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
 
   beforeEach(async () => {
+    routeData = { list: 'applications' };
+    routeQuery = {};
+    navigate = jasmine.createSpy('navigate');
     coverage.set({
       generatedAt: '',
       summary: { applications: 3, holdingData: 1, protected: 0, pending: 0, toVerify: 0, unprotected: 1, alarms: 1 },
@@ -77,14 +103,14 @@ describe('ApplicationsListComponent', () => {
         },
       ],
     });
-    const groups = [group(healthy), group(failed), group(db)];
+    const groups = [group(healthy), group(failed), group(db), group(kuma), bundle];
     await TestBed.configureTestingModule({
       imports: [ApplicationsListComponent],
       providers: [
         {
           provide: ApplicationService,
           useValue: {
-            applications: signal([healthy, failed, db]),
+            applications: signal([healthy, failed, db, kuma, umami, umamiDb]),
             applicationGroups: signal(groups),
             loading: signal(false),
             backgroundRefreshing: signal(false),
@@ -125,15 +151,24 @@ describe('ApplicationsListComponent', () => {
         },
         { provide: CurrentSurfaceService, useValue: { set: () => undefined } },
         { provide: SandboxService, useValue: { whyFor: () => null } },
-        { provide: ActivatedRoute, useValue: { snapshot: { data: { kind: 'APPLICATION' } } } },
-        { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              get data() {
+                return routeData;
+              },
+              get queryParamMap() {
+                return convertToParamMap(routeQuery);
+              },
+            },
+          },
+        },
+        { provide: Router, useValue: { navigate } },
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ApplicationsListComponent);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await render('applications');
   });
 
   const rowIds = () =>
@@ -146,7 +181,7 @@ describe('ApplicationsListComponent', () => {
     expect(rowIds()[0]).toBe('app-row-g-broken');
     expect(text()).toContain('Failed · image not found');
     expect(fixture.nativeElement.querySelector('[data-testid="apps-summary"]').textContent).toContain(
-      '3 applications on 1 cluster',
+      '5 applications on 1 cluster',
     );
   });
 
@@ -178,5 +213,37 @@ describe('ApplicationsListComponent', () => {
     );
     expect(cells.every((c) => c === '—')).toBeTrue();
     coverageState.set('ready');
+  });
+
+  it('marks tools and narrows to them from the Tools chip or the old tools address', async () => {
+    expect(fixture.nativeElement.querySelector('[data-testid="app-row-g-kuma"] [data-testid="app-row-tool"]')).not.toBeNull();
+    fixture.nativeElement.querySelector('[data-testid="apps-type-tool"]').click();
+    fixture.detectChanges();
+    expect(rowIds()).toEqual(['app-row-g-kuma']);
+
+    await render('applications', { type: 'tool' });
+    expect(rowIds()).toEqual(['app-row-g-kuma']);
+  });
+
+  it('keeps the bundle in Applications and lists its data store in Data, linked to the bundle', async () => {
+    expect(rowIds()).toContain('app-row-g-umami');
+
+    await render('data');
+    const row = fixture.nativeElement.querySelector('[data-testid="app-row-umami-db"]');
+    expect(row).not.toBeNull();
+    expect(rowIds()).toEqual([]);
+    expect(row.querySelector('[data-testid="app-row-part-of"]').textContent).toContain('umami');
+    expect(fixture.nativeElement.querySelector('[data-testid="apps-summary"]').textContent).toContain('1 data store on 1 cluster');
+
+    row.click();
+    expect(navigate).toHaveBeenCalledWith(['/apps/applications', 'umami-db']);
+    row.querySelector('[data-testid="app-row-part-of"] button').click();
+    expect(navigate).toHaveBeenCalledWith(['/apps/recap', 'g-umami'], { queryParams: { from: 'data' } });
+  });
+
+  it('offers the same Add menu on every list but System', async () => {
+    expect(fixture.nativeElement.querySelector('[data-testid="add-workload"]')).not.toBeNull();
+    await render('system');
+    expect(fixture.nativeElement.querySelector('[data-testid="add-workload"]')).toBeNull();
   });
 });

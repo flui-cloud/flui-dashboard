@@ -7,7 +7,8 @@ import type {
   SurfaceSnapshot,
 } from '@flui-cloud/semantic-surface';
 
-import type { AppGroupView, ApplicationKind } from '../../model/application.models';
+import type { AppGroupView } from '../../model/application.models';
+import { WORKLOAD_LIST_LABEL, WORKLOAD_LIST_ROUTE, type WorkloadList } from '../../model/workload-list';
 
 // Shared with application-surface.ts (app.id + namespace conventions) — see the
 // producer-playbook, §2: same app.id for every producer in this repo, not one per page.
@@ -34,45 +35,23 @@ interface FilterState {
   search: string;
   /** 'all' | 'running' | 'attention' | 'no_backup' — the compact view the list is cut to. */
   view: string;
+  type?: string;
   cluster: string;
   project: string;
 }
 
-// This component (`ApplicationsListComponent`) is mounted at four different routes —
-// /apps/applications, /apps/databases, /apps/tools, /apps/system — one per `kind`. `kind`
-// is therefore the per-instance discriminator the page id is built from (§4.2: identity is
-// per instance, not per definition) — the same file, four real distinct page instances.
-function routeForKind(kind: ApplicationKind): string {
-  switch (kind) {
-    case 'DATABASE':
-      return 'apps/databases';
-    case 'TOOL':
-      return 'apps/tools';
-    case 'SYSTEM':
-      return 'apps/system';
-    default:
-      return 'apps/applications';
-  }
-}
-
-function pageLabelForKind(kind: ApplicationKind): string {
-  switch (kind) {
-    case 'DATABASE':
-      return 'Databases';
-    case 'TOOL':
-      return 'Tools';
-    case 'SYSTEM':
-      return 'System Apps';
-    default:
-      return 'Applications';
-  }
+// This component (`ApplicationsListComponent`) is mounted at three routes — /apps/applications,
+// /apps/data, /apps/system — one per workload list. The list is therefore the per-instance
+// discriminator the page id is built from (§4.2: identity is per instance, not per definition).
+function routeForList(list: WorkloadList): string {
+  return WORKLOAD_LIST_ROUTE[list].slice(1);
 }
 
 export interface ApplicationsListSurfaceInput {
-  kind: ApplicationKind;
+  list: WorkloadList;
   /** `filteredGroups()` — what the list actually renders right now (search/category/status/cluster applied). */
   filteredGroups: AppGroupView[];
-  /** `kindScopedGroups().length` — every group of this kind, before any filter. The "Total" stat card. */
+  /** `listGroups().length` — every row of this list, before any filter. The "Total" stat card. */
   totalForKind: number;
   runningCount: number;
   failedCount: number;
@@ -121,6 +100,7 @@ function pageObservations(input: ApplicationsListSurfaceInput): Observation[] {
       input.filters.view && input.filters.view !== 'all' ? input.filters.view : null,
       'ui',
     ),
+    textObservation('flui.applications.filter_type', input.filters.type || null, 'ui'),
     textObservation('flui.applications.filter_cluster', input.filters.cluster || null, 'ui'),
   ].filter((observation): observation is Observation => observation !== null);
 }
@@ -165,13 +145,13 @@ export interface PresentedContent {
  * actually is.
  */
 export function presentedContent(input: ApplicationsListSurfaceInput): PresentedContent {
-  const pageId = `apps-list:${input.kind}`;
+  const pageId = `apps-list:${input.list}`;
   const listId = `${pageId}:list`;
 
   const pageScope: SemanticScopeSnapshot = {
     id: pageId,
     kind: 'page',
-    label: pageLabelForKind(input.kind),
+    label: WORKLOAD_LIST_LABEL[input.list],
     observations: pageObservations(input),
   };
 
@@ -210,14 +190,14 @@ export function buildApplicationsListSurface(
   context: ApplicationsListSurfaceContext,
 ): SurfaceSnapshot {
   const content = presentedContent(input);
-  const pageId = `apps-list:${input.kind}`;
+  const pageId = `apps-list:${input.list}`;
 
   return {
     schemaVersion: '0.2',
     app: { id: SURFACE_APP_ID, ...(context.appVersion ? { version: context.appVersion } : {}) },
     surface: {
       id: 'apps-list',
-      route: routeForKind(input.kind),
+      route: routeForList(input.list),
       revision: context.revision,
       generatedAt: context.generatedAt,
     },

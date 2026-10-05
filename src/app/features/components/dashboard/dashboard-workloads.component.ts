@@ -3,11 +3,8 @@ import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
-import {
-  ApplicationKindEnum,
-  ApplicationStatusEnum,
-  getGroupKind,
-} from '../../model/application.models';
+import { ApplicationStatusEnum } from '../../model/application.models';
+import { groupListOf, isTool, primaryComponentOf, workloadEntries } from '../../model/workload-list';
 
 interface Segment {
   key: string;
@@ -15,13 +12,8 @@ interface Segment {
   count: number;
   swatch: string;
   route: string;
+  query: Record<string, string>;
 }
-
-const USER_KINDS = new Set<string>([
-  ApplicationKindEnum.Application,
-  ApplicationKindEnum.Database,
-  ApplicationKindEnum.Tool,
-]);
 
 @Component({
   selector: 'app-dashboard-workloads',
@@ -61,7 +53,7 @@ const USER_KINDS = new Set<string>([
         </div>
         <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
           @for (s of segments(); track s.key) {
-            <a [routerLink]="s.route" class="inline-flex items-center gap-1.5 hover:text-foreground" [attr.data-testid]="'workloads-' + s.key">
+            <a [routerLink]="s.route" [queryParams]="s.query" class="inline-flex items-center gap-1.5 hover:text-foreground" [attr.data-testid]="'workloads-' + s.key">
               <span class="h-2 w-2 rounded-sm" [class]="s.swatch"></span>
               {{ s.count }} {{ s.label }}{{ s.count === 1 ? '' : 's' }}
             </a>
@@ -75,7 +67,7 @@ export class DashboardWorkloadsComponent {
   private readonly applications = inject(ApplicationService);
 
   private readonly userGroups = computed(() =>
-    this.applications.applicationGroups().filter((g) => USER_KINDS.has(getGroupKind(g))),
+    this.applications.applicationGroups().filter((g) => groupListOf(g) !== 'system'),
   );
 
   readonly total = computed(() => this.userGroups().length);
@@ -87,11 +79,14 @@ export class DashboardWorkloadsComponent {
   );
 
   readonly segments = computed<Segment[]>(() => {
-    const count = (kind: string) => this.userGroups().filter((g) => getGroupKind(g) === kind).length;
-    return [
-      { key: 'apps', label: 'app', count: count(ApplicationKindEnum.Application), swatch: 'bg-primary', route: '/apps/applications' },
-      { key: 'databases', label: 'database', count: count(ApplicationKindEnum.Database), swatch: 'bg-violet-500', route: '/apps/databases' },
-      { key: 'tools', label: 'tool', count: count(ApplicationKindEnum.Tool), swatch: 'bg-amber-500', route: '/apps/tools' },
+    const groups = this.applications.applicationGroups();
+    const applications = workloadEntries(groups, 'applications');
+    const tools = applications.filter((e) => isTool(primaryComponentOf(e.group))).length;
+    const segments: Segment[] = [
+      { key: 'apps', label: 'app', count: applications.length - tools, swatch: 'bg-primary', route: '/apps/applications', query: {} },
+      { key: 'data', label: 'data store', count: workloadEntries(groups, 'data').length, swatch: 'bg-violet-500', route: '/apps/data', query: {} },
+      { key: 'tools', label: 'tool', count: tools, swatch: 'bg-amber-500', route: '/apps/applications', query: { type: 'tool' } },
     ];
+    return segments;
   });
 }

@@ -1,46 +1,44 @@
-import { AppGroupView, ApplicationKind, ApplicationKindEnum } from '../../model/application.models';
+import { AppGroupView } from '../../model/application.models';
+import { WorkloadList } from '../../model/workload-list';
 import { ListFilters } from './applications-list-rows';
 
-export interface KindCopy {
-  cta: string;
+export interface ListCopy {
+  title: string;
   emptyTitle: string;
   emptySubtitle: string;
-  listName: string;
+  one: string;
+  many: string;
 }
 
-const KIND_COPY: Partial<Record<ApplicationKind, KindCopy>> = {
-  [ApplicationKindEnum.Database]: {
-    cta: 'Add Database',
-    emptyTitle: 'No databases found',
-    emptySubtitle: 'Deploy your first database to get started',
-    listName: 'databases',
+const LIST_COPY: Record<WorkloadList, ListCopy> = {
+  applications: {
+    title: 'Applications',
+    emptyTitle: 'No applications yet',
+    emptySubtitle: 'Deploy one from a repository or install one from the catalog',
+    one: 'application',
+    many: 'applications',
   },
-  [ApplicationKindEnum.Tool]: {
-    cta: 'Add Tool',
-    emptyTitle: 'No tools found',
-    emptySubtitle: 'Deploy your first tool to get started',
-    listName: 'tools',
+  data: {
+    title: 'Data',
+    emptyTitle: 'No data stores yet',
+    emptySubtitle: 'Databases, caches, queues and object stores you add appear here',
+    one: 'data store',
+    many: 'data stores',
   },
-  [ApplicationKindEnum.System]: {
-    cta: 'Add System App',
+  system: {
+    title: 'System',
     emptyTitle: 'No system applications found',
     emptySubtitle: 'No system applications are currently deployed',
-    listName: 'system',
+    one: 'system application',
+    many: 'system applications',
   },
 };
 
-const APPLICATION_COPY: KindCopy = {
-  cta: 'Add Application',
-  emptyTitle: 'No applications found',
-  emptySubtitle: 'Deploy your first application to get started',
-  listName: 'applications',
-};
-
-export function kindCopy(kind: ApplicationKind): KindCopy {
-  return KIND_COPY[kind] ?? APPLICATION_COPY;
+export function listCopy(list: WorkloadList): ListCopy {
+  return LIST_COPY[list];
 }
 
-export const EMPTY_FILTERS: ListFilters = { search: '', view: 'all', cluster: '', project: '' };
+export const EMPTY_FILTERS: ListFilters = { search: '', view: 'all', type: '', cluster: '', project: '' };
 
 const PROVIDER_NAMES: Record<string, string> = {
   hetzner: 'Hetzner',
@@ -55,18 +53,14 @@ export function providerName(provider: string | undefined, displayNameOf: (id: s
   return displayNameOf(provider) || PROVIDER_NAMES[provider] || provider;
 }
 
-export function listSummary(groups: AppGroupView[], title: string): string {
+export function listSummary(groups: AppGroupView[], list: WorkloadList): string {
+  const copy = LIST_COPY[list];
   const clusters = new Set(groups.map((g) => g.clusterId)).size;
-  const noun = title.toLowerCase();
-  if (groups.length === 0) return `No ${noun} yet`;
-  const label = groups.length === 1 ? noun.replace(/s$/, '') : noun;
-  return `${groups.length} ${label} on ${clusters} cluster${clusters === 1 ? '' : 's'}`;
+  if (groups.length === 0) return `No ${copy.many} yet`;
+  const noun = groups.length === 1 ? copy.one : copy.many;
+  return `${groups.length} ${noun} on ${clusters} cluster${clusters === 1 ? '' : 's'}`;
 }
 
 export function activeFilterCount(f: ListFilters): number {
-  return (f.search ? 1 : 0) + (f.view === 'all' ? 0 : 1) + (f.cluster ? 1 : 0) + (f.project ? 1 : 0);
-}
-
-export function deployTarget(kind: ApplicationKind): string {
-  return kind === ApplicationKindEnum.Database || kind === ApplicationKindEnum.Tool ? '/apps/catalog' : '/apps/deploy/new';
+  return (f.search ? 1 : 0) + (f.view === 'all' ? 0 : 1) + (f.type ? 1 : 0) + (f.cluster ? 1 : 0) + (f.project ? 1 : 0);
 }

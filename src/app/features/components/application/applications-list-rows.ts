@@ -8,6 +8,7 @@ import {
 } from '../../model/application.models';
 import type { AppCoverageRow } from '../../service/fleet.service';
 import type { Project } from '../../model/project.model';
+import { isTool } from '../../model/workload-list';
 import { Tone, providerChip, relativeTime } from '../dashboard/home-state';
 
 export type ListView = 'all' | 'running' | 'attention' | 'no_backup';
@@ -15,6 +16,8 @@ export type ListView = 'all' | 'running' | 'attention' | 'no_backup';
 export interface ListFilters {
   search: string;
   view: ListView;
+  /** A `workloadTypeOf` key; empty for every type. */
+  type: string;
   cluster: string;
   project: string;
 }
@@ -26,6 +29,7 @@ export interface ListRowContext {
   usage: ReadonlyMap<string, AppMetricsDto>;
   /** Null when the backup read did not answer: the column then says nothing. */
   coverage: ReadonlyMap<string, AppCoverageRow> | null;
+  partOf?: { id: string; name: string } | null;
   now?: number;
 }
 
@@ -36,6 +40,8 @@ export interface ListRow {
   statusLabel: string;
   subtitle: { text: string; tone: Tone; href: string | null };
   bundle: string | null;
+  tool: boolean;
+  partOf: { id: string; name: string } | null;
   project: Project | null;
   cluster: { name: string; provider: string; chip: string };
   ready: { text: string; tone: Tone; title: string };
@@ -290,6 +296,8 @@ export function buildListRow(group: AppGroupView, ctx: ListRowContext): ListRow 
     statusLabel: getStatusLabel(status),
     subtitle,
     bundle: bundleLabel(composed, version),
+    tool: isTool(primary),
+    partOf: ctx.partOf ?? null,
     project: ctx.project,
     cluster: { name: ctx.clusterName || '—', provider: ctx.providerName, chip: providerChip(ctx.providerName || '?') },
     ready,

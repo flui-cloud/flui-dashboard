@@ -15,7 +15,7 @@ import { ListRow } from './applications-list-rows';
         class="hidden md:grid gap-x-3.5 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
         [style.grid-template-columns]="columns"
       >
-        <span>Application</span>
+        <span>{{ nameHeader() }}</span>
         <span>Cluster</span>
         <span>Ready</span>
         <span>Source</span>
@@ -39,6 +39,7 @@ import { ListRow } from './applications-list-rows';
   `,
 })
 export class ApplicationsListTableComponent {
+  readonly nameHeader = input('Application');
   readonly rows = input.required<ListRow[]>();
   readonly open = output<string>();
 

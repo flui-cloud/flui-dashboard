@@ -30,14 +30,14 @@ function group(over: Partial<AppGroupView> = {}): AppGroupView {
 
 function input(over: Partial<ApplicationsListSurfaceInput> = {}): ApplicationsListSurfaceInput {
   return {
-    kind: 'APPLICATION' as ApplicationsListSurfaceInput['kind'],
+    list: 'applications',
     filteredGroups: [group()],
     totalForKind: 1,
     runningCount: 1,
     failedCount: 0,
     attentionCount: 0,
     noBackupCount: 0,
-    filters: { search: '', view: 'all', cluster: '', project: '' },
+    filters: { search: '', view: 'all', type: '', cluster: '', project: '' },
     activeFiltersCount: 0,
     isInitialLoading: false,
     hasLoadError: false,
@@ -79,8 +79,8 @@ describe('applications list surface producer', () => {
     // `filters.search` is never read by presentedContent — it is a live-typed value, kept
     // out on purpose (see the note in applications-list-surface.ts).
     const tracker = new ApplicationsListSurfaceRevision();
-    const a = input({ filters: { search: '', view: 'all', cluster: '', project: '' } });
-    const b = input({ filters: { search: 'billing', view: 'all', cluster: '', project: '' } });
+    const a = input({ filters: { search: '', view: 'all', type: '', cluster: '', project: '' } });
+    const b = input({ filters: { search: 'billing', view: 'all', type: '', cluster: '', project: '' } });
     const r1 = tracker.next(presentedContent(a));
     const r2 = tracker.next(presentedContent(b));
     expect(r2).toBe(r1);
@@ -97,7 +97,7 @@ describe('applications list surface producer', () => {
 
   it('SELECTION MODEL: no entity is ever primary or selected — every row is related, and attention names only the page', () => {
     const snapshot = snapshotOf({ filteredGroups: [group({ id: 'g1' }), group({ id: 'g2', name: 'worker' })] });
-    expect(snapshot.attention).toEqual([{ scopeId: `apps-list:APPLICATION`, reason: 'route' }]);
+    expect(snapshot.attention).toEqual([{ scopeId: `apps-list:applications`, reason: 'route' }]);
     for (const row of rowScopes(snapshot)) {
       expect(row.entities?.every((e) => e.role === 'related')).toBe(true);
     }
@@ -108,8 +108,8 @@ describe('applications list surface producer', () => {
     const rows = rowScopes(snapshot);
     expect(rows.length).toBe(1);
     expect(rows[0].entities).toEqual([{ ref: appGroupEntityRef('g1'), label: 'billing-api', role: 'related' }]);
-    expect(rows[0].id).toBe('apps-list:APPLICATION:list:row:g1');
-    expect(rows[0].parentId).toBe('apps-list:APPLICATION:list');
+    expect(rows[0].id).toBe('apps-list:applications:list:row:g1');
+    expect(rows[0].parentId).toBe('apps-list:applications:list');
   });
 
   it('caps row scopes at the budget and declares truncation honestly', () => {
@@ -124,7 +124,7 @@ describe('applications list surface producer', () => {
       filteredGroups: [group()],
       totalForKind: 9,
       activeFiltersCount: 1,
-      filters: { search: '', view: 'attention', cluster: '', project: 'proj-1' },
+      filters: { search: '', view: 'attention', type: '', cluster: '', project: 'proj-1' },
     });
     expect(listScope(snapshot).completeness).toEqual({ shown: 1, total: 1, filtered: true });
     expect(observation(snapshot, 'flui.applications.total')?.presentedAs.value).toBe(9);
@@ -141,7 +141,7 @@ describe('applications list surface producer', () => {
   });
 
   it('never presents the live-typed search box, only committed select filters', () => {
-    const json = JSON.stringify(snapshotOf({ filters: { search: 'do-not-leak-this', view: 'all', cluster: '', project: '' } }));
+    const json = JSON.stringify(snapshotOf({ filters: { search: 'do-not-leak-this', view: 'all', type: '', cluster: '', project: '' } }));
     expect(json).not.toContain('do-not-leak-this');
   });
 
