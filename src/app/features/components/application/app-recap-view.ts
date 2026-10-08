@@ -103,6 +103,21 @@ function usagePart(label: string, percent: number | null | undefined, limit: num
   return `${label} —`;
 }
 
+export function availabilityFact(
+  availability: { highlyAvailable: boolean; reasons: Array<{ message: string }> } | null | undefined,
+): RecapFact {
+  if (!availability) return { key: 'Losing a worker', value: '—', sub: 'Not known', tone: 'muted' };
+  if (availability.highlyAvailable) {
+    return { key: 'Losing a worker', value: 'Keeps answering', sub: 'Copies on more than one node', tone: 'ok' };
+  }
+  return {
+    key: 'Losing a worker',
+    value: 'Can stop it',
+    sub: availability.reasons[0]?.message ?? '',
+    tone: 'warn',
+  };
+}
+
 export function resourcesFact(metrics: AppMetricsDto | null | undefined): RecapFact {
   if (!metrics) return { key: 'Resources', value: '—', sub: 'No readings', tone: 'muted' };
   const cpu = metrics.cpu;

@@ -181,7 +181,9 @@ export const CONTROL_DEFAULT_RULES: FirewallRuleFormData[] = [
 
 /**
  * Default firewall rules for Workload clusters
- * Ports: SSH (22), HTTP (80), HTTPS (443). 80/443 are mandatory — Traefik serves
+ * Ports: SSH (22), HTTP (80), HTTPS (443). SSH starts empty: the wizard fills in
+ * the operator's detected address, and an empty list leaves SSH to the control
+ * cluster alone, which the API adds itself. 80/443 are mandatory — Traefik serves
  * apps over HTTPS and ACME needs HTTP-01 on 80; the API enforces them server-side
  * and will re-add them if omitted. The K3s API (6443) is not exposed here — the
  * API scopes it internally to the VNet/subnet CIDR, or to the control cluster's
@@ -198,7 +200,7 @@ export const WORKLOAD_DEFAULT_RULES: FirewallRuleFormData[] = [
     direction: 'in',
     protocol: 'tcp',
     port: '22',
-    sourceIps: ['0.0.0.0/0']
+    sourceIps: []
   },
   {
     description: 'HTTP (ACME / redirect)',

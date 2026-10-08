@@ -3,6 +3,7 @@ import { Tone } from '../dashboard/home-state';
 import { ComponentCard } from './app-recap-bundle';
 import { AppRecapComponentCardComponent } from './app-recap-component-card.component';
 import { RunState, TONE_TEXT } from './app-recap-view';
+import { AppAvailability } from '../../service/fleet.service';
 
 @Component({
   selector: 'app-recap-topology',
@@ -29,14 +30,14 @@ import { RunState, TONE_TEXT } from './app-recap-view';
         }
         <div class="flex flex-1 flex-col gap-3">
           @for (c of front(); track c.app.id) {
-            <app-recap-component-card [card]="c" [recapPath]="recapPath()" [protectionLoaded]="protectionLoaded()" [runState]="runState()" (backUp)="backUp.emit($event)" />
+            <app-recap-component-card [card]="c" [recapPath]="recapPath()" [protectionLoaded]="protectionLoaded()" [availability]="availability()[c.app.id] ?? null" [runState]="runState()" (backUp)="backUp.emit($event)" />
           }
         </div>
         @if (back().length) {
           <span class="self-center text-muted-foreground" aria-hidden="true">⇢</span>
           <div class="flex flex-1 flex-col gap-3">
             @for (c of back(); track c.app.id) {
-              <app-recap-component-card [card]="c" [protectionLoaded]="protectionLoaded()" [runState]="runState()" (backUp)="backUp.emit($event)" />
+              <app-recap-component-card [card]="c" [protectionLoaded]="protectionLoaded()" [availability]="availability()[c.app.id] ?? null" [runState]="runState()" (backUp)="backUp.emit($event)" />
             }
           </div>
         }
@@ -56,6 +57,7 @@ export class AppRecapTopologyComponent {
   readonly summary = input.required<string>();
   readonly note = input('');
   readonly protectionLoaded = input.required<boolean>();
+  readonly availability = input<Record<string, AppAvailability>>({});
   readonly runState = input.required<Record<string, RunState>>();
   readonly backUp = output<string>();
 

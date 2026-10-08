@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { DbConsoleService } from '../../service/db-console.service';
 import { BackupService } from '../../service/backup.service';
-import { AppProtection, FleetService } from '../../service/fleet.service';
+import { AppAvailability, AppProtection, FleetService } from '../../service/fleet.service';
 import { ApplicationMetricsService } from '../../../core/api/api/applicationMetrics.service';
 import { ApplicationsService } from '../../../core/api/api/applications.service';
 import type { AppMetricsDto } from '../../../core/api/model/appMetricsDto';
@@ -24,6 +24,7 @@ export class AppRecapStore {
   readonly protection = signal<Record<string, AppProtection>>({});
   readonly protectionLoaded = signal(false);
   readonly release = signal<ApplicationReleaseDto | null>(null);
+  readonly availability = signal<Record<string, AppAvailability>>({});
   readonly events = signal<RecentEvent[]>([]);
   readonly eventsLoaded = signal(false);
   readonly runState = signal<Record<string, RunState>>({});
@@ -32,7 +33,7 @@ export class AppRecapStore {
 
   async load(group: AppGroupView, primary: Application | null): Promise<void> {
     const ids = group.components.map((c) => c.id);
-    const loads = [this.loadMetrics(ids), this.loadProtection(ids)];
+    const loads = [this.loadMetrics(ids), this.loadProtection(ids), this.loadAvailability(ids)];
     if (group.type === 'composed') loads.push(this.loadEvents(group.components));
     else if (primary) loads.push(this.loadRelease(primary.id));
     await Promise.all(loads);
@@ -56,6 +57,15 @@ export class AppRecapStore {
     this.runState.update((s) => ({ ...s, [policyId]: 'running' }));
     const result = await this.backup.runOnDemand(policyId);
     this.runState.update((s) => ({ ...s, [policyId]: result ? 'started' : 'failed' }));
+  }
+
+  private async loadAvailability(ids: string[]): Promise<void> {
+    const results = await Promise.allSettled(ids.map((id) => this.fleet.appAvailability(id)));
+    const next: Record<string, AppAvailability> = {};
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') next[ids[i]] = r.value;
+    });
+    this.availability.set(next);
   }
 
   private async loadMetrics(ids: string[]): Promise<void> {

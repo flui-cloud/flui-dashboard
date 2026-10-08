@@ -154,6 +154,11 @@ export interface FleetCoverage {
   applications: AppCoverageRow[];
 }
 
+export interface AppAvailability {
+  highlyAvailable: boolean;
+  reasons: Array<{ code: string; message: string }>;
+}
+
 export interface AppProtectionPolicy {
   policyId: string;
   name: string;
@@ -249,6 +254,14 @@ export class FleetService {
     } catch (err) {
       this.coverageStateData.set(isForbidden(err) ? 'forbidden' : 'error');
     }
+  }
+
+  appAvailability(applicationId: string): Promise<AppAvailability> {
+    return firstValueFrom(
+      this.http.get<AppAvailability>(
+        `${this.appConfig.apiBaseUrl}/api/v1/applications/${encodeURIComponent(applicationId)}/availability`,
+      ),
+    );
   }
 
   appProtection(applicationId: string): Promise<AppProtection> {

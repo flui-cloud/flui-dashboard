@@ -64,6 +64,7 @@ export interface CreateAppMigrationInput {
   srcAppId: string;
   targetClusterId: string;
   cutover?: CutoverMode;
+  backupDestinationId?: string;
 }
 export interface CreateDbMigrationInput {
   srcAppId: string;

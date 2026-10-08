@@ -16,6 +16,7 @@ import {
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationKindEnum } from '../../model/application.models';
 import { ClusterService } from '../../service/cluster.service';
+import { BackupService } from '../../service/backup.service';
 import {
   CutoverMode,
   DbMigrationMode,
@@ -171,6 +172,31 @@ import {
               </div>
             }
 
+            @if (type() === 'app') {
+              <p class="text-xs text-muted-foreground">
+                An app with volumes stops at cutover while they are copied, then starts on the
+                target. If the copy fails, it starts again where it was.
+              </p>
+              @if (destinations().length > 1) {
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-dest">
+                    Volumes move through
+                  </label>
+                  <select
+                    id="m-dest"
+                    [ngModel]="destinationId()"
+                    (ngModelChange)="destinationId.set($event)"
+                    class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                  >
+                    <option value="">The destination protecting the app</option>
+                    @for (d of destinations(); track d.id) {
+                      <option [value]="d.id">{{ d.name }}</option>
+                    }
+                  </select>
+                </div>
+              }
+            }
+
             <!-- Cutover -->
             <div>
               <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-cutover">
@@ -296,6 +322,7 @@ export class MigrationLaunchModalComponent {
   private readonly migrationService = inject(MigrationService);
   private readonly clusterService = inject(ClusterService);
   private readonly applicationService = inject(ApplicationService);
+  private readonly backupService = inject(BackupService);
 
   readonly launched = output<void>();
 
@@ -312,6 +339,8 @@ export class MigrationLaunchModalComponent {
   readonly recoverTo = signal('');
   readonly displayName = signal('');
   readonly staging = signal<StagingMode>('scaled-down');
+  readonly destinationId = signal('');
+  readonly destinations = this.backupService.destinations;
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -352,6 +381,9 @@ export class MigrationLaunchModalComponent {
     if (this.applicationService.applications().length === 0) {
       await this.applicationService.loadApplications().catch(() => undefined);
     }
+    if (this.backupService.destinations().length === 0) {
+      await this.backupService.loadDestinations().catch(() => undefined);
+    }
   }
 
   close(): void {
@@ -386,6 +418,7 @@ export class MigrationLaunchModalComponent {
             srcAppId: this.appId(),
             targetClusterId,
             cutover,
+            backupDestinationId: this.destinationId() || undefined,
           });
           break;
         case 'db': {
@@ -433,6 +466,7 @@ export class MigrationLaunchModalComponent {
     this.recoverTo.set('');
     this.displayName.set('');
     this.staging.set('scaled-down');
+    this.destinationId.set('');
     this.error.set(null);
     this.submitting.set(false);
   }

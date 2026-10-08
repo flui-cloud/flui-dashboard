@@ -902,7 +902,11 @@ interface FirewallRuleDto {
                   <ng-icon name="lucideInfo" class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                   <p class="text-xs text-blue-700 dark:text-blue-300">
                     <strong>Workload Cluster:</strong> Pre-configured with default firewall rules for K3s.
-                    SSH port 22 has been pre-populated with your public IP for security.
+                    @if (ipDetectionService.userPublicIP()) {
+                      SSH port 22 has been pre-populated with your public IP for security.
+                    } @else {
+                      Your public IP could not be detected, so SSH port 22 is open only to the control cluster.
+                    }
                     You can modify any IP addresses or add additional rules as needed.
                   </p>
                 </div>
@@ -1030,7 +1034,10 @@ interface FirewallRuleDto {
                         <div>
                           <div class="flex items-center justify-between mb-2">
                             <label class="text-sm font-medium">
-                              Source CIDRs <span class="text-red-500">*</span>
+                              Source CIDRs
+                              @if (!isSshRule(ruleControl)) {
+                                <span class="text-red-500">*</span>
+                              }
                             </label>
                             <div class="flex items-center gap-2">
                               <button
@@ -1081,6 +1088,12 @@ interface FirewallRuleDto {
                               it manages this cluster over SSH, and removing it would stall the
                               install. Everything else is up to you.
                             </p>
+                            @if (!ruleControl.get('sourceIps')?.value) {
+                              <p class="text-xs text-amber-600 mt-1">
+                                Only the control cluster will reach these nodes over SSH. Add your
+                                address to use flui ssh from this machine.
+                              </p>
+                            }
                             @if (ipDetectionService.userPublicIP()) {
                               <p class="text-xs text-blue-600 mt-1">
                                 Your detected IP: {{ ipDetectionService.userPublicIP() }}
@@ -1753,7 +1766,7 @@ export class ClusterCreationWizardComponent implements OnInit {
           port: [rule.port || ''],
           sourceIps: [
             sourceIps.join(', '),
-            rule.direction === 'in' ? [Validators.required, cidrListValidator()] : []
+            rule.direction !== 'in' ? [] : isSSH ? [cidrListValidator()] : [Validators.required, cidrListValidator()]
           ],
           destinationIps: [
             destinationIps.join(', '),
@@ -2192,8 +2205,8 @@ export class ClusterCreationWizardComponent implements OnInit {
         port: port || undefined,
       };
 
-      // For inbound rules, use validated sourceIps
       if (direction === 'in') {
+        if (sourceIps.length === 0 && this.isSshRule(ruleControl)) continue;
         rule.sourceIps = sourceIps;
       }
 
@@ -2211,6 +2224,10 @@ export class ClusterCreationWizardComponent implements OnInit {
     }
 
     return rules;
+  }
+
+  isSshRule(ruleControl: AbstractControl): boolean {
+    return ruleControl.get('port')?.value === '22' && ruleControl.get('direction')?.value === 'in';
   }
 
   // Main action

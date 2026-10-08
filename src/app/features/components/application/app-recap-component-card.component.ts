@@ -4,9 +4,11 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideShieldAlert, lucideShieldCheck } from '@ng-icons/lucide';
 import { ComponentCard } from './app-recap-bundle';
+import { AppAvailability } from '../../service/fleet.service';
 import {
   RunState,
   TONE_DOT,
+  availabilityFact,
   TONE_PILL,
   TONE_TEXT,
   barWidth,
@@ -43,6 +45,16 @@ import {
         </span>
       </div>
       <p class="text-xs text-muted-foreground">{{ c.meta }}</p>
+      @if (availability(); as a) {
+        @let f = availabilityFact(a);
+        <p class="truncate text-xs" [title]="f.sub" data-testid="recap-component-availability">
+          <span class="text-muted-foreground">{{ f.key }}:</span>
+          <span class="ml-1 font-medium" [class]="text[f.tone]">{{ f.value }}</span>
+          @if (!a.highlyAvailable) {
+            <span class="ml-1 text-muted-foreground">· {{ f.sub }}</span>
+          }
+        </p>
+      }
       @for (b of c.bars; track b.key) {
         <div class="flex items-center gap-2 text-[11px]">
           <span class="w-9 font-semibold text-muted-foreground">{{ b.key }}</span>
@@ -80,6 +92,7 @@ export class AppRecapComponentCardComponent {
   readonly card = input.required<ComponentCard>();
   readonly recapPath = input('');
   readonly protectionLoaded = input.required<boolean>();
+  readonly availability = input<AppAvailability | null>(null);
   readonly runState = input.required<Record<string, RunState>>();
   readonly backUp = output<string>();
 
@@ -91,4 +104,5 @@ export class AppRecapComponentCardComponent {
   protected readonly label = runLabel;
   protected readonly barWidth = barWidth;
   protected readonly backupDetail = componentBackupDetail;
+  protected readonly availabilityFact = availabilityFact;
 }

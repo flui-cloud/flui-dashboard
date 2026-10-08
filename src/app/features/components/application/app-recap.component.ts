@@ -38,7 +38,7 @@ import {
   kindLabel,
   openUrlOf,
 } from './app-recap-header';
-import { RecapFact, backupBand, endpointHealth, releaseFact, replicasFact, resourcesFact, routeOf } from './app-recap-view';
+import { RecapFact, availabilityFact, backupBand, endpointHealth, releaseFact, replicasFact, resourcesFact, routeOf } from './app-recap-view';
 import {
   AppRecapSurfaceInput,
   AppRecapSurfaceRevision,
@@ -132,6 +132,7 @@ import {
             [summary]="runningSummary()"
             [note]="internalNote()"
             [protectionLoaded]="store.protectionLoaded()"
+            [availability]="store.availability()"
             [runState]="store.runState()"
             [recapPath]="recapPath()"
             (backUp)="store.backUpNow($event)"
@@ -268,7 +269,12 @@ export class AppRecapComponent implements OnInit, OnDestroy {
   protected readonly facts = computed<RecapFact[]>(() => {
     const p = this.primary();
     const m = p ? this.store.metrics()[p.id] : null;
-    return [replicasFact(m), resourcesFact(m), releaseFact(this.store.release())];
+    return [
+      replicasFact(m),
+      resourcesFact(m),
+      releaseFact(this.store.release()),
+      availabilityFact(p ? this.store.availability()[p.id] : null),
+    ];
   });
 
   protected readonly primaryBackup = computed(() => {

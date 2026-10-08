@@ -11,6 +11,8 @@ import {
 import { DatePipe } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideChevronDown,
+  lucideChevronRight,
   lucideKeyRound,
   lucidePencil,
   lucidePlugZap,
@@ -71,7 +73,7 @@ function resolveNames(
     AgentKeyProjectPickerComponent,
   ],
   providers: [
-    provideIcons({ lucideKeyRound, lucidePencil, lucidePlugZap, lucideTriangleAlert }),
+    provideIcons({ lucideChevronDown, lucideChevronRight, lucideKeyRound, lucidePencil, lucidePlugZap, lucideTriangleAlert }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -144,16 +146,6 @@ function resolveNames(
               }
             </div>
 
-            @if (row.surface.caution; as caution) {
-              <div
-                class="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-foreground"
-                [attr.data-testid]="'caution-' + row.key.id"
-              >
-                <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
-                <span>{{ caution }}</span>
-              </div>
-            }
-
             @if (row.surface.groups.length) {
               <div class="flex flex-wrap gap-1.5">
                 @for (g of row.surface.groups; track g.key) {
@@ -161,8 +153,6 @@ function resolveNames(
                 }
               </div>
             }
-
-            <p class="font-mono text-[11px] text-muted-foreground/80 break-all">{{ row.scopes }}</p>
 
             <p class="text-xs text-muted-foreground" [attr.data-testid]="'apps-' + row.key.id">
               @if (row.appNames === null && row.projectNames === null) {
@@ -188,6 +178,28 @@ function resolveNames(
                 }
               }
             </p>
+
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              [attr.aria-expanded]="isOpen(row.key.id)"
+              (click)="toggleDetails(row.key.id)"
+            >
+              <ng-icon [name]="isOpen(row.key.id) ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-3 w-3" />
+              Details
+            </button>
+            <div class="space-y-2" [hidden]="!isOpen(row.key.id)">
+              @if (row.surface.caution; as caution) {
+                <div
+                  class="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-foreground"
+                  [attr.data-testid]="'caution-' + row.key.id"
+                >
+                  <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
+                  <span>{{ caution }}</span>
+                </div>
+              }
+              <p class="font-mono text-[11px] text-muted-foreground/80 break-all">{{ row.scopes }}</p>
+            </div>
 
             @if (editing()?.keyId === row.key.id && editing()?.field === 'applications') {
               <div class="space-y-2 rounded-md border border-border bg-muted/20 p-3" [attr.data-testid]="'edit-applications-panel-' + row.key.id">
@@ -317,6 +329,17 @@ export class AgentKeyListComponent {
   private readonly projectsService = inject(AgentKeyProjectsService);
   protected readonly pending = signal<ApiKeyResponseDto | null>(null);
   protected readonly editing = signal<EditTarget | null>(null);
+  private readonly openRows = signal<ReadonlySet<string>>(new Set());
+
+  protected isOpen(id: string): boolean {
+    return this.openRows().has(id);
+  }
+
+  protected toggleDetails(id: string): void {
+    const next = new Set(this.openRows());
+    if (!next.delete(id)) next.add(id);
+    this.openRows.set(next);
+  }
   protected readonly editPicked = signal<string[]>([]);
   /** Application id → name, loaded once; a name missing from it is a stale/deleted id. */
   private readonly appNamesById = signal<Map<string, string>>(new Map());

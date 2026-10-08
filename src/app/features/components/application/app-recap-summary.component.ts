@@ -37,7 +37,7 @@ import { BackupBand, RecapFact, RunState, TONE_DOT, TONE_PILL, TONE_TEXT } from 
         <p class="text-sm text-muted-foreground">Not published outside the cluster.</p>
       }
 
-      <div class="grid gap-4 border-t border-border pt-5 sm:grid-cols-3" data-testid="recap-facts">
+      <div class="grid gap-4 border-t border-border pt-5 sm:grid-cols-2 lg:grid-cols-4" data-testid="recap-facts">
         @for (f of facts(); track f.key) {
           <div class="min-w-0">
             <p class="text-label">{{ f.key }}</p>

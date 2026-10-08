@@ -13,6 +13,8 @@ import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
+  lucideChevronDown,
+  lucideChevronRight,
   lucideLoader,
   lucideLock,
   lucideTriangleAlert,
@@ -46,7 +48,14 @@ const AREA_LABEL: Record<string, string> = {
   migrations: 'Migrations',
   mail: 'Mail',
   access: 'Who has access',
+  infrastructure: 'Infrastructure',
   platform: 'Platform updates',
+};
+
+const DEPTH_WORD: Record<string, string> = {
+  look: 'See',
+  change: 'Change',
+  destroy: 'Delete',
 };
 
 const LIFETIMES: { id: string; label: string; days: number | null }[] = [
@@ -72,6 +81,8 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
   providers: [
     provideIcons({
       lucideCheck,
+      lucideChevronDown,
+      lucideChevronRight,
       lucideLoader,
       lucideLock,
       lucideTriangleAlert,
@@ -131,35 +142,58 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
           </div>
         </div>
 
-        <div class="space-y-3">
+        <div class="space-y-2">
           @for (area of areas(); track area.key) {
-            <div class="space-y-2">
-              <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {{ area.label }}
-              </p>
-              @for (g of area.groups; track g.key) {
-                <label
-                  [attr.data-testid]="'group-' + g.key"
-                  [attr.data-grantable]="g.grantable"
-                  class="flex gap-3 rounded-lg border p-3 transition-colors"
-                  [class]="g.grantable
-                    ? 'cursor-pointer border-border hover:border-primary/40 hover:bg-accent/40'
-                    : 'border-dashed border-border bg-muted/30'"
-                >
-                  <input
-                    type="checkbox"
-                    class="mt-1 h-4 w-4 shrink-0 accent-primary"
-                    [attr.data-testid]="'check-' + g.key"
-                    [checked]="picked().has(g.key)"
-                    [disabled]="!g.grantable || disabled()"
-                    (change)="toggle(g.key)"
-                  />
-                  <div class="min-w-0 space-y-1">
+            <div class="rounded-lg border border-border p-3" [attr.data-testid]="'area-' + area.key">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-foreground">{{ area.label }}</p>
+                  <p class="text-xs text-muted-foreground">{{ chosenLabel(area.groups) }}</p>
+                </div>
+                <div class="inline-flex rounded-md border border-border bg-muted/40 p-0.5" role="radiogroup" [attr.aria-label]="area.label">
+                  <button
+                    type="button"
+                    role="radio"
+                    [attr.aria-checked]="!chosen(area.groups)"
+                    [disabled]="disabled()"
+                    (click)="choose(area.groups, null)"
+                    class="rounded px-3 py-1 text-xs font-medium transition-colors"
+                    [class]="!chosen(area.groups) ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                  >None</button>
+                  @for (g of area.groups; track g.key) {
+                    <button
+                      type="button"
+                      role="radio"
+                      [attr.data-testid]="'check-' + g.key"
+                      [attr.aria-checked]="picked().has(g.key)"
+                      [disabled]="!g.grantable || disabled()"
+                      [title]="g.grantable ? g.label : 'Not yours to grant'"
+                      (click)="choose(area.groups, g.key)"
+                      class="inline-flex items-center gap-1 rounded px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                      [class]="picked().has(g.key) ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                    >
+                      @if (!g.grantable) {
+                        <ng-icon name="lucideLock" class="h-3 w-3" />
+                      }
+                      {{ depthWord(g.depth) }}
+                    </button>
+                  }
+                </div>
+              </div>
+              <button
+                type="button"
+                class="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                [attr.aria-expanded]="isOpen(area.key)"
+                (click)="toggleDetails(area.key)"
+              >
+                <ng-icon [name]="isOpen(area.key) ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-3 w-3" />
+                Details
+              </button>
+              <div class="mt-2 space-y-3 border-t border-border pt-3" [hidden]="!isOpen(area.key)">
+                @for (g of area.groups; track g.key) {
+                  <div [attr.data-testid]="'group-' + g.key" [attr.data-grantable]="g.grantable" class="space-y-1">
                     <div class="flex flex-wrap items-center gap-2">
-                      <span
-                        class="text-sm font-medium"
-                        [class]="g.grantable ? 'text-foreground' : 'text-muted-foreground'"
-                      >{{ g.label }}</span>
+                      <span class="text-sm font-medium" [class]="g.grantable ? 'text-foreground' : 'text-muted-foreground'">{{ g.label }}</span>
                       @if (!g.grantable) {
                         <span hlmBadge variant="secondary" class="gap-1 text-xs">
                           <ng-icon name="lucideLock" class="h-3 w-3" />
@@ -180,8 +214,8 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
                       {{ g.scopes.join(' · ') }}
                     </p>
                   </div>
-                </label>
-              }
+                }
+              </div>
             </div>
           }
         </div>
@@ -266,8 +300,7 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
             Create key
           </button>
           <p class="text-xs text-muted-foreground">
-            {{ picked().size }} of {{ grantableCount() }} switches on.
-            A key with nothing switched on would carry your full weight, so at least one is required.
+            Pick at least one area: a key with none would carry your full weight.
           </p>
         </div>
       </div>
@@ -331,10 +364,6 @@ export class AgentKeyMintComponent {
     });
   }
 
-  protected readonly grantableCount = computed(
-    () => this.catalogue().filter((g) => g.grantable).length,
-  );
-
   protected readonly areas = computed(() => {
     const order: string[] = [];
     const byArea = new Map<string, PermissionGroupDto[]>();
@@ -359,6 +388,39 @@ export class AgentKeyMintComponent {
       this.picked().size > 0 &&
       this.name().trim().length > 0,
   );
+
+  private readonly openAreas = signal<ReadonlySet<string>>(new Set());
+
+  protected isOpen(area: string): boolean {
+    return this.openAreas().has(area);
+  }
+
+  protected toggleDetails(area: string): void {
+    const next = new Set(this.openAreas());
+    if (!next.delete(area)) next.add(area);
+    this.openAreas.set(next);
+  }
+
+  protected depthWord(depth: string): string {
+    return DEPTH_WORD[depth] ?? depth;
+  }
+
+  protected chosen(groups: PermissionGroupDto[]): PermissionGroupDto | undefined {
+    const picked = this.picked();
+    return groups.find((g) => picked.has(g.key));
+  }
+
+  protected chosenLabel(groups: PermissionGroupDto[]): string {
+    return this.chosen(groups)?.label ?? 'Nothing in this area';
+  }
+
+  /** A deeper group carries every shallower one in its area, so an area holds one pick at most. */
+  protected choose(groups: PermissionGroupDto[], key: string | null): void {
+    const next = new Set(this.picked());
+    for (const g of groups) next.delete(g.key);
+    if (key) next.add(key);
+    this.picked.set(next);
+  }
 
   protected toggle(key: string): void {
     const next = new Set(this.picked());
