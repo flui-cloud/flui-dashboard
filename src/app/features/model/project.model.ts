@@ -4,6 +4,8 @@ export interface Project {
   slug: string;
   description?: string | null;
   color?: string | null;
+  /** Set on a person's personal project, where their apps go by default. */
+  ownerUserId?: string | null;
 }
 
 export interface ProjectOption {

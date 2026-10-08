@@ -8,13 +8,14 @@ import { AppResourcesEditorComponent } from './app-resources-editor.component';
 import { AppResourceProposalComponent } from './app-resource-proposal.component';
 import { AppMaintenanceCardComponent } from '../maintenance/app-maintenance-card.component';
 import { AppAutoscalingCardComponent } from './app-autoscaling-card.component';
+import { AppEgressNoteComponent } from '../egress/app-egress-note.component';
 import { UpdateResourcesDto } from '../../../core/api/model/updateResourcesDto';
 import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
 
 @Component({
   selector: 'app-resources-tab',
   standalone: true,
-  imports: [NgIconComponent, AppResourcesEditorComponent, AppResourceProposalComponent, AppMaintenanceCardComponent, AppAutoscalingCardComponent],
+  imports: [NgIconComponent, AppResourcesEditorComponent, AppResourceProposalComponent, AppMaintenanceCardComponent, AppAutoscalingCardComponent, AppEgressNoteComponent],
   providers: [
     provideIcons({ lucideLoader, lucideAlertCircle }),
   ],
@@ -55,6 +56,8 @@ import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
         />
 
         <app-autoscaling-card [appId]="app.id ?? null" />
+
+        <app-egress-note [appId]="app.id ?? null" />
 
       </div>
     }

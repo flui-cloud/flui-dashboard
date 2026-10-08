@@ -16,6 +16,10 @@ export interface DeployFromYamlDto {
      */
     yaml: string;
     /**
+     * Project a new application is created in, and therefore its namespace. Omitted: the caller's personal project. Ignored when the application already exists: it stays in its project.
+     */
+    projectId?: string;
+    /**
      * Target cluster UUID
      */
     clusterId: string;

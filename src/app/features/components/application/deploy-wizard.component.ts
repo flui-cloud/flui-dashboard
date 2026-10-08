@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
 
+import { ProjectPickerComponent } from '../projects/project-picker.component';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -99,6 +100,7 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
     ReactiveFormsModule,
     RouterLink,
     NgIcon,
+    ProjectPickerComponent,
     WizardStepperComponent,
     DockerImagePickerComponent,
     EnvSuggestionsPanelComponent,
@@ -1373,6 +1375,12 @@ import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallRes
                       </div>
                     }
                   </div>
+
+                  <app-project-picker
+                    class="block max-w-sm"
+                    [value]="state.projectId()"
+                    (valueChange)="state.projectId.set($event)"
+                  />
 
                   <!-- Resource availability feedback -->
                   @if (selectedCluster() && flowSubtype() === 'marketplace') {
@@ -3821,6 +3829,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
       const response = await firstValueFrom(
         this.applicationsApi.applicationsControllerCreate(clusterId, {
           name: this.getApplicationName(),
+          projectId: this.state.projectId() ?? undefined,
           category: CreateApplicationDto.CategoryEnum.User,
           kind: this.selectedKind() as CreateApplicationDto.KindEnum,
           sourceType: CreateApplicationDto.SourceTypeEnum.DockerImage,

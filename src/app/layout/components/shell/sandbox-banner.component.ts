@@ -1,16 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideClock, lucideTriangleAlert } from '@ng-icons/lucide';
-import {
-  SandboxService,
-  formatCountdown,
-} from '../../../core/services/sandbox.service';
-import { SandboxSaveActionComponent } from './sandbox-save-action.component';
+import { SandboxService } from '../../../core/services/sandbox.service';
 
 @Component({
   selector: 'app-sandbox-banner',
   standalone: true,
-  imports: [NgIcon, SandboxSaveActionComponent],
+  imports: [NgIcon],
   providers: [provideIcons({ lucideClock, lucideTriangleAlert })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -22,30 +24,33 @@ import { SandboxSaveActionComponent } from './sandbox-save-action.component';
       >
         <ng-icon [name]="icon()" class="h-3.5 w-3.5 flex-shrink-0" />
 
-        @if (sandbox.expired()) {
-          <span class="font-medium">This sandbox has expired.</span>
+        @if (!sandbox.hasArea()) {
+          <span class="font-medium">Demo guest</span>
+          <span class="opacity-80">
+            You are looking around. Deploy something to get a space of your
+            own.
+          </span>
+        } @else if (sandbox.expired()) {
+          <span class="font-medium">Your demo space has expired.</span>
           <span class="opacity-80">
             Everything in it is being deleted. Nothing here can be recovered.
           </span>
         } @else {
-          <span class="font-medium">Guest sandbox</span>
+          <span class="font-medium">Your demo space</span>
           <span class="opacity-80">
-            — this area is deleted in
-            <span class="font-semibold tabular-nums">{{ remaining() }}</span
-            >, and there is no way to extend it.
-            @if (workloadHours()) {
-              Anything you deploy goes {{ workloadHours() }} hours after you
-              start it.
-            }
+            Your apps are removed after a day without activity.
           </span>
+          <button
+            type="button"
+            class="rounded border border-current/30 px-2 py-0.5 font-medium hover:bg-foreground/5 disabled:opacity-50"
+            [disabled]="keeping()"
+            (click)="keep()"
+          >
+            {{ kept() ? 'Kept' : 'Keep my apps' }}
+          </button>
         }
 
-        @if (!sandbox.expired()) {
-          <span class="ml-auto hidden sm:inline">
-            <app-sandbox-save-action />
-          </span>
-        }
-        <span class="opacity-70 hidden lg:inline" [class.ml-auto]="sandbox.expired()">
+        <span class="opacity-70 hidden lg:inline ml-auto">
           Shared cluster, with quotas. Flui is alpha.
         </span>
       </div>
@@ -54,19 +59,16 @@ import { SandboxSaveActionComponent } from './sandbox-save-action.component';
 })
 export class SandboxBannerComponent {
   protected readonly sandbox = inject(SandboxService);
+  protected readonly keeping = signal(false);
+  protected readonly kept = signal(false);
 
-  protected readonly remaining = computed(() =>
-    formatCountdown(this.sandbox.secondsRemaining()),
-  );
-
-  /**
-   * Said here rather than left for the visitor to discover when a workload
-   * disappears. Absent on an instance that does not serve the number, in which
-   * case the sentence simply is not made.
-   */
-  protected readonly workloadHours = computed(() =>
-    this.sandbox.workloadTtlHours(),
-  );
+  protected keep(): void {
+    this.keeping.set(true);
+    this.sandbox.keep().subscribe((ok) => {
+      this.keeping.set(false);
+      this.kept.set(ok);
+    });
+  }
 
   protected readonly icon = computed(() =>
     this.sandbox.urgent() ? 'lucideTriangleAlert' : 'lucideClock',

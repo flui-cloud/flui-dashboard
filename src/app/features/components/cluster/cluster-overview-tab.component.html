@@ -366,5 +366,6 @@
 
   @if (cluster(); as mc) {
     <app-cluster-maintenance-card [clusterId]="mc.id ?? null" />
+    <app-cluster-egress-card [clusterId]="mc.id ?? null" />
   }
 </div>

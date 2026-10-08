@@ -240,13 +240,6 @@ export class ApplicationService {
     return groups.map(({ _sort, ...g }) => g);
   });
 
-  patchApplicationProject(appIds: string[], projectId: string | null): void {
-    const ids = new Set(appIds);
-    this.applicationsList.update((list) =>
-      list.map((a) => (ids.has(a.id) ? { ...a, projectId } : a)),
-    );
-  }
-
   readonly selectedApplication = computed(() =>
     this.selectedApplicationSignal(),
   );

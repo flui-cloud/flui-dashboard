@@ -35,14 +35,8 @@ export const routes: Routes = [
       ),
     title: 'Sign in - flui.cloud',
   },
-  {
-    path: 'try',
-    loadComponent: () =>
-      import('./features/components/sandbox/sandbox-claim.component').then(
-        (m) => m.SandboxClaimComponent
-      ),
-    title: 'Open a live Flui',
-  },
+  // Earlier demo links point here: they land on sign-in, not a dead end.
+  { path: 'try', redirectTo: 'login', pathMatch: 'full' },
   // Fixtures, for the visual bench. Left out of a production build entirely:
   // the route sits outside the authenticated shell, so shipping it would put
   // invented cluster data on an open page.

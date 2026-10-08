@@ -381,12 +381,24 @@ export class IamService {
     this._lastInvite.set(null);
   }
 
-  setUserStatus(_id: string, _status: UserStatus): void {
-    this.notify.add({
-      title: 'Enabling/disabling users isn’t available yet',
-      type: 'info',
-      source: 'manual',
-    });
+  /**
+   * Disabling a person blocks them: every request refused, sign-in switched
+   * off, and on a demo their space ends. Enabling undoes it.
+   */
+  setUserStatus(id: string, status: UserStatus): void {
+    const action = status === 'disabled' ? 'block' : 'unblock';
+    this.http
+      .post<void>(
+        `${this.appConfig.apiBaseUrl}/api/v1/auth/users/${encodeURIComponent(id)}/${action}`,
+        {},
+      )
+      .subscribe({
+        next: () =>
+          this._users.update((u) =>
+            u.map((x) => (x.id === id ? { ...x, status } : x)),
+          ),
+        error: (e) => this.fail(status === 'disabled' ? 'disable user' : 'enable user', e),
+      });
   }
 
   createGroup(name: string, description?: string): void {

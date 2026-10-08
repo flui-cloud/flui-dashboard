@@ -32,6 +32,7 @@ import {
   PlatformBackupJob,
   PlatformBackupPolicy,
   PlatformBackupService,
+  PlatformHeartbeatStatus,
 } from '../../../service/platform-backup.service';
 
 const INSECURE_SSH_KEY = 'SSH_KEY_ENCRYPTION_KEY';
@@ -120,9 +121,31 @@ const RECENT_RUNS = 5;
               <!-- Heartbeat -->
               <div class="flex items-start gap-2 text-sm">
                 <ng-icon name="lucideHeartPulse" class="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div>
+                <div data-testid="platform-heartbeat">
                   <div class="text-xs text-muted-foreground">Dead-man's switch</div>
-                  <div>{{ heartbeatConfigured() ? 'Heartbeat URL configured' : 'Not configured' }}</div>
+                  @if (!heartbeatConfigured()) {
+                  <div>Not configured</div>
+                  } @else if (heartbeatStatus(); as h) {
+                  @switch (h.state) {
+                  @case ('beating') {
+                  <div>Sending{{ h.lastBeatAt ? ' · last ' + relative(h.lastBeatAt) : '' }}</div>
+                  }
+                  @case ('withheld') {
+                  <div class="text-destructive">Withheld: your watchdog will raise the alarm</div>
+                  }
+                  @case ('failing') {
+                  <div class="text-destructive">Not delivered</div>
+                  }
+                  @default {
+                  <div>Heartbeat URL configured</div>
+                  }
+                  }
+                  @for (reason of h.reasons; track reason) {
+                  <div class="text-xs text-muted-foreground" data-testid="platform-heartbeat-reason">{{ reason }}</div>
+                  }
+                  } @else {
+                  <div>Heartbeat URL configured</div>
+                  }
                 </div>
               </div>
 
@@ -220,26 +243,41 @@ const RECENT_RUNS = 5;
               Dead-man's-switch heartbeat URL
             </label>
             <p class="text-xs text-muted-foreground">
-              The master POSTs here every 5 min and withholds it when the last backup is stale — point
-              it at your operator monitor (e.g. a healthchecks.io ping URL).
+              Called every 5 minutes while the installation is healthy and its last backup is fresh.
+              Point it at your watchdog, for example a healthchecks.io check. Keep it private.
             </p>
+            @if (heartbeatHost(); as host) {
+            <p class="text-sm" data-testid="platform-heartbeat-set">Set, sending to {{ host }}</p>
+            }
             <div class="flex flex-col gap-2 sm:flex-row">
               <input
                 id="platform-heartbeat-url"
                 type="url"
                 [(ngModel)]="heartbeatUrlInput"
                 [disabled]="!hasRecipient() || saving()"
-                placeholder="https://…"
+                [placeholder]="heartbeatConfigured() ? 'Paste a new address to replace it' : 'https://…'"
                 class="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-50"
               />
               <button
                 type="button"
                 class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                [disabled]="!hasRecipient() || saving()"
+                [disabled]="!hasRecipient() || saving() || !heartbeatUrlInput.trim()"
                 (click)="saveHeartbeat()"
+                data-testid="platform-heartbeat-save"
               >
                 {{ saving() ? 'Saving…' : 'Save' }}
               </button>
+              @if (heartbeatConfigured()) {
+              <button
+                type="button"
+                class="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-destructive disabled:opacity-50"
+                [disabled]="saving()"
+                (click)="stopHeartbeat()"
+                data-testid="platform-heartbeat-stop"
+              >
+                Stop
+              </button>
+              }
             </div>
             @if (!hasRecipient()) {
             <p class="text-xs text-muted-foreground">
@@ -286,6 +324,7 @@ export class PlatformBackupCardComponent implements OnInit {
   protected readonly policy = signal<PlatformBackupPolicy | null>(null);
   protected readonly lastJob = signal<PlatformBackupJob | null>(null);
   protected readonly activity = signal<BackupPolicyActivity | null>(null);
+  protected readonly heartbeatStatus = signal<PlatformHeartbeatStatus | null>(null);
   protected readonly activityError = signal(false);
   protected readonly running = signal(false);
   protected readonly activeOpId = signal<string | null>(null);
@@ -302,8 +341,11 @@ export class PlatformBackupCardComponent implements OnInit {
   );
   protected readonly hasRecipient = computed(() => !!this.recipient());
   protected readonly recipientPrefix = computed(() => this.recipient()?.slice(0, 18) ?? '');
+  protected readonly heartbeatHost = computed(
+    () => this.policy()?.metadata?.platform?.heartbeat?.host ?? null,
+  );
   protected readonly heartbeatConfigured = computed(
-    () => !!this.policy()?.metadata?.platform?.heartbeat?.url,
+    () => !!this.policy()?.metadata?.platform?.heartbeat?.set,
   );
 
   protected readonly zitadelCovered = computed(
@@ -327,11 +369,14 @@ export class PlatformBackupCardComponent implements OnInit {
       const policies = await this.service.listPlatformPolicies();
       const policy = policies[0] ?? null;
       this.policy.set(policy);
-      this.heartbeatUrlInput = policy?.metadata?.platform?.heartbeat?.url ?? '';
       if (policy) {
         const [lastJob] = await Promise.all([
           this.service.lastPlatformJob([policy.id]),
           this.loadActivity(policy.id),
+          this.service
+            .heartbeatStatus()
+            .then((h) => this.heartbeatStatus.set(h))
+            .catch(() => this.heartbeatStatus.set(null)),
         ]);
         this.lastJob.set(lastJob);
       }
@@ -371,21 +416,31 @@ export class PlatformBackupCardComponent implements OnInit {
   }
 
   protected async saveHeartbeat(): Promise<void> {
+    const url = this.heartbeatUrlInput.trim();
+    if (!url) return;
+    await this.writeHeartbeat({ heartbeatUrl: url }, 'Heartbeat set');
+  }
+
+  protected async stopHeartbeat(): Promise<void> {
+    await this.writeHeartbeat({ clearHeartbeat: true }, 'Heartbeat stopped');
+  }
+
+  private async writeHeartbeat(
+    change: { heartbeatUrl?: string; clearHeartbeat?: boolean },
+    done: string,
+  ): Promise<void> {
     const policy = this.policy();
     const recipient = this.recipient();
     if (!policy || !recipient) return;
     this.saving.set(true);
     this.error.set(null);
     try {
-      const updated = await this.service.setPlatformConfig(policy.id, {
-        recipient,
-        heartbeatUrl: this.heartbeatUrlInput.trim() || undefined,
-      });
-      this.policy.set(updated);
-      this.heartbeatUrlInput = updated.metadata?.platform?.heartbeat?.url ?? '';
-      this.toast.showSuccess('Heartbeat URL updated');
+      this.policy.set(await this.service.setPlatformConfig(policy.id, { recipient, ...change }));
+      this.heartbeatUrlInput = '';
+      this.toast.showSuccess(done);
+      this.heartbeatStatus.set(await this.service.heartbeatStatus().catch(() => null));
     } catch (err: unknown) {
-      const message = this.errorMessage(err, 'Failed to update heartbeat URL');
+      const message = this.errorMessage(err, 'Failed to update the heartbeat');
       this.error.set(message);
       this.toast.showError(message);
     } finally {

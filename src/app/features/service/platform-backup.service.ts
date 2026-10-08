@@ -6,8 +6,17 @@ import { AppConfigService } from '../../core/services/app-config.service';
 /** Off-provider DR for the Flui control plane itself ("platform" backup class). */
 export const PLATFORM_ENGINE_CLASS = 'platform';
 
+/** The address never leaves the API: only that one is set, and where it goes. */
 export interface PlatformHeartbeat {
-  url?: string | null;
+  set?: boolean;
+  host?: string;
+}
+
+export interface PlatformHeartbeatStatus {
+  state: 'off' | 'beating' | 'withheld' | 'failing';
+  lastCheckAt: string | null;
+  lastBeatAt: string | null;
+  reasons: string[];
 }
 
 export interface PlatformPolicyMetadata {
@@ -50,6 +59,8 @@ export interface PlatformBackupJob {
 export interface SetPlatformConfigInput {
   recipient: string;
   heartbeatUrl?: string;
+  /** Forget the address: the heartbeat stops. */
+  clearHeartbeat?: boolean;
 }
 
 /**
@@ -81,6 +92,13 @@ export class PlatformBackupService {
         this.url(`backup-policies/${policyId}/platform-config`),
         input,
       ),
+    );
+  }
+
+  /** Whether the heartbeat is going out now, and why not. */
+  async heartbeatStatus(): Promise<PlatformHeartbeatStatus> {
+    return firstValueFrom(
+      this.http.get<PlatformHeartbeatStatus>(this.url('backup-policies/heartbeat')),
     );
   }
 

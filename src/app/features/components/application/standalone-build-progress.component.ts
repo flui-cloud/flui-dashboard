@@ -52,6 +52,7 @@ function phaseIndex(status: BuildPhase): number {
 
 interface WizardState {
   clusterId: string;
+  projectId?: string | null;
   gitUrl: string;
   branch: string;
   port: number | null;
@@ -780,6 +781,7 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
       const response: CreateApplicationResponseDto = await firstValueFrom(
         this.applicationsApi.applicationsControllerCreate(state.clusterId, {
           name: this.appName().trim(),
+          projectId: state.projectId ?? undefined,
           buildId: this.buildId(),
           category: CreateApplicationDto.CategoryEnum.User,
           sourceType: CreateApplicationDto.SourceTypeEnum.GitBuild,

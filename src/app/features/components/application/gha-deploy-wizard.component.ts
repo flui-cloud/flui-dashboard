@@ -310,6 +310,7 @@ export class GhaDeployWizardComponent implements OnInit {
     const response = await firstValueFrom(
       this.applicationsApi.applicationsControllerCreate(this.state.clusterId(), {
         name: `${this.state.confirmedFramework()}-${this.state.branch()}`.toLowerCase().replaceAll(/[^a-z0-9-]/g, '-'),
+        projectId: this.state.projectId() ?? undefined,
         category: CreateApplicationDto.CategoryEnum.User,
         sourceType: CreateApplicationDto.SourceTypeEnum.GitBuild,
         sourceConfig: {

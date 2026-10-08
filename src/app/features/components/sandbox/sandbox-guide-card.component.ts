@@ -29,13 +29,11 @@ import { SandboxService } from '../../../core/services/sandbox.service';
           </div>
         </div>
 
-        <p class="text-sm text-muted-foreground leading-relaxed">
-          The application here started when this area did, a few minutes ago,
-          and it came with records already in its database — open the SQL
-          console and query them. Its graphs, though, begin at zero and fill in
-          as you watch, which is exactly what they do on a real instance. The
-          one worth watching is the one you choose: it lands on a public URL
-          with a real certificate, usually inside a minute.
+        <p class="text-sm text-muted-foreground leading-relaxed" data-testid="sandbox-guide-text">
+          The apps in the showcase are real and running: open them, read their
+          logs and metrics. Install one yourself and you get a space of your
+          own; your app gets a public address with a real certificate, usually
+          within a minute.
         </p>
 
         <a

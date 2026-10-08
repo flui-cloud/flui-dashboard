@@ -242,11 +242,13 @@
                         <ng-icon name="lucideLink" class="h-4 w-4" />
                       </button>
                     }
-                    <button *fluiCan="'iam:assign-role'" type="button" (click)="toggleStatus(u.id, u.status)"
+                    @if (!u.isAdmin && !u.isBootstrapAdmin && !u.isSystemUser) {
+                    <button *fluiCan="'iam:manage-users'" type="button" (click)="toggleStatus(u.id, u.status)"
                       class="text-muted-foreground hover:text-foreground"
-                      [title]="u.status === 'disabled' ? 'Enable' : 'Disable'">
+                      [title]="u.status === 'disabled' ? 'Enable: let them sign in again' : 'Disable: refuse every request and end their demo space'">
                       <ng-icon [name]="u.status === 'disabled' ? 'lucideRotateCcw' : 'lucideBan'" class="h-4 w-4" />
                     </button>
+                    }
                   </div>
                 </td>
               </tr>

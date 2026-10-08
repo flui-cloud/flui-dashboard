@@ -93,3 +93,4 @@ describe('the area a screen belongs to', () => {
     expect(sandboxAreaForUrl('/applications/abc')).toBeNull();
   });
 });
+

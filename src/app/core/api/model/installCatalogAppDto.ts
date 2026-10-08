@@ -17,6 +17,10 @@ export interface InstallCatalogAppDto {
      */
     clusterId: string;
     /**
+     * Project the installed applications belong to, and therefore their namespace. Omitted: the installer's personal project.
+     */
+    projectId?: string;
+    /**
      * User-chosen display name shown in the dashboard
      */
     displayName: string;

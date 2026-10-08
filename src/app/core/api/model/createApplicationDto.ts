@@ -22,6 +22,10 @@ export interface CreateApplicationDto {
      */
     slug?: string;
     /**
+     * Project the application belongs to, and therefore the namespace it runs in. Omitted: the creator's personal project. It cannot be changed after creation.
+     */
+    projectId?: string;
+    /**
      * Optional description
      */
     description?: string;

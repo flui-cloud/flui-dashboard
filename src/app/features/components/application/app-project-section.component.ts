@@ -1,133 +1,45 @@
-import { Component, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideX } from '@ng-icons/lucide';
+import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { ProjectsService } from '../../service/projects.service';
-import { ApplicationService } from '../../service/application.service';
-import { PermissionService } from '../../../core/services/permission.service';
 import { ProjectBadgeComponent } from '../projects/project-badge.component';
-import {
-  ProjectFormComponent,
-  ProjectFormValue,
-} from '../projects/project-form.component';
 
 @Component({
   selector: 'app-project-section',
   standalone: true,
   host: { class: 'block' },
-  imports: [NgIcon, ProjectBadgeComponent, ProjectFormComponent],
-  providers: [provideIcons({ lucidePlus, lucideX })],
+  imports: [ProjectBadgeComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface text-sm" data-testid="overview-project">
       <div class="flex flex-wrap items-center gap-3 px-4 py-2.5">
         <span class="text-label shrink-0">Project</span>
-
-        @if (busy()) {
-          <span class="h-5 w-28 rounded-full bg-muted animate-pulse"></span>
-        } @else {
-          <app-project-badge [project]="current()" />
-        }
-
+        <app-project-badge [project]="current()" />
         <span class="flex-1"></span>
-
-        @if (canManage()) {
-          <select
-            [disabled]="busy() || creating()"
-            (change)="onChange($event)"
-            class="h-8 rounded-md border border-border bg-background px-2 pr-7 text-xs text-foreground appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <option value="">No project</option>
-            @for (p of allProjects(); track p.id) {
-              <option [value]="p.id" [selected]="application().projectId === p.id">{{ p.name }}</option>
-            }
-          </select>
-          <button
-            type="button"
-            (click)="toggleCreate()"
-            [disabled]="busy()"
-            class="inline-flex h-8 items-center gap-1 rounded-md border border-border px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
-            [title]="creating() ? 'Cancel' : 'Create a project and move this workload into it'"
-          >
-            <ng-icon [name]="creating() ? 'lucideX' : 'lucidePlus'" class="h-3.5 w-3.5" />
-            {{ creating() ? 'Cancel' : 'New' }}
-          </button>
-        }
+        <span
+          class="text-xs text-muted-foreground"
+          title="The project is where the application runs. Moving it to another project means moving its data, which is not available yet."
+        >
+          Set when the app was created
+        </span>
       </div>
-
-      @if (creating() && canManage()) {
-        <div class="border-t border-border px-4 py-3">
-          <app-project-form
-            [busy]="busy()"
-            submitLabel="Create and assign"
-            (saved)="onCreate($event)"
-            (cancelled)="creating.set(false)"
-          />
-        </div>
-      }
     </div>
   `,
 })
 export class AppProjectSectionComponent {
   private readonly projects = inject(ProjectsService);
-  private readonly appService = inject(ApplicationService);
-  private readonly perms = inject(PermissionService);
 
   readonly application = input.required<{
     id: string;
     projectId?: string | null;
   }>();
 
-  protected readonly allProjects = this.projects.projects;
-  readonly canManage = computed(() => this.perms.hasSection('projects'));
-  readonly busy = signal(false);
-  readonly creating = signal(false);
-
   readonly current = computed(() => {
     const pid = this.application().projectId;
-    return pid ? (this.allProjects().find((p) => p.id === pid) ?? null) : null;
+    return pid
+      ? (this.projects.projects().find((p) => p.id === pid) ?? null)
+      : null;
   });
 
   constructor() {
     this.projects.loadProjects();
-    this.perms.load();
   }
-
-  toggleCreate(): void {
-    this.creating.update((v) => !v);
-  }
-
-  onCreate(value: ProjectFormValue): void {
-    this.busy.set(true);
-    this.projects.create(value, (project) => {
-      this.creating.set(false);
-      this.assign(project.id);
-    });
-  }
-
-  onChange(e: Event): void {
-    const pid = (e.target as HTMLSelectElement).value;
-    const app = this.application();
-    if (pid === (app.projectId ?? '')) return;
-    this.busy.set(true);
-    if (pid) {
-      this.assign(pid);
-    } else if (app.projectId) {
-      this.projects.unassignApp(app.projectId, app.id, this.settled);
-    } else {
-      this.busy.set(false);
-    }
-  }
-
-  private assign(projectId: string): void {
-    const app = this.application();
-    this.appService.patchApplicationProject([app.id], projectId);
-    this.projects.assignApp(projectId, app.id, this.settled);
-  }
-
-  private readonly settled = (): void => {
-    void this.appService
-      .getApplication(this.application().id)
-      .catch(() => undefined)
-      .finally(() => this.busy.set(false));
-  };
 }

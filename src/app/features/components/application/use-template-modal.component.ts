@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, OnInit, inject, signal, computed } from '@angular/core';
 
+import { ProjectPickerComponent } from '../projects/project-picker.component';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -44,7 +45,7 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
 @Component({
   selector: 'app-use-template-modal',
   standalone: true,
-  imports: [RouterLink, NgIcon],
+  imports: [RouterLink, NgIcon, ProjectPickerComponent],
   providers: [provideIcons({
     lucideX, lucideLoader, lucideCheck, lucideCircleCheck, lucideTriangleAlert,
     lucideGithub, lucideServer, lucideRocket, lucideLock, lucideGlobe, lucideInfo, lucideTrash, lucideExternalLink,
@@ -170,6 +171,11 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
                 <span>No clusters available. Create a cluster first.</span>
               </div>
             }
+
+            <app-project-picker
+              [value]="selectedProjectId()"
+              (valueChange)="selectedProjectId.set($event)"
+            />
 
             <!-- Template info summary -->
             <div class="rounded-md border border-border bg-muted/30 p-3 space-y-1.5 text-xs">
@@ -361,6 +367,7 @@ export class UseTemplateModalComponent implements OnInit {
   owner = signal('');
   isPrivate = signal(true);
   selectedClusterId = signal('');
+  selectedProjectId = signal<string | null>(null);
 
   // Flow state
   currentStep = signal<FlowStep>('form');
@@ -528,6 +535,7 @@ export class UseTemplateModalComponent implements OnInit {
       const appResponse = await firstValueFrom(
         this.applicationsApi.applicationsControllerCreate(this.selectedClusterId(), {
           name: appName,
+          projectId: this.selectedProjectId() ?? undefined,
           category: CreateApplicationDto.CategoryEnum.User,
           sourceType: CreateApplicationDto.SourceTypeEnum.GitBuild,
           sourceConfig: {

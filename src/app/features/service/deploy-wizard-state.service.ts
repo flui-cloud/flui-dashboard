@@ -158,6 +158,8 @@ export class DeployWizardStateService {
 
   // ========== Common state ==========
   readonly clusterId = signal<string>('');
+  /** Null: the creator's personal project. */
+  readonly projectId = signal<string | null>(null);
   readonly applicationId = signal<string | null>(null);
   readonly envVars = signal<GhaEnvVarEntry[]>([]);
   /** Exposure mode for non-catalog flows (image, git_build). Catalog installs read
@@ -1084,6 +1086,7 @@ export class DeployWizardStateService {
       const appResponse = await firstValueFrom(
         this.applicationsApi.applicationsControllerCreate(this.clusterId(), {
           name: appName,
+          projectId: this.projectId() ?? undefined,
           category: CreateApplicationDto.CategoryEnum.User,
           sourceType: CreateApplicationDto.SourceTypeEnum.GitBuild,
           sourceConfig: {
@@ -1158,6 +1161,7 @@ export class DeployWizardStateService {
         this.applicationsApi.applicationsControllerDeployFromYaml({
           yaml: manifest.content,
           clusterId: this.clusterId(),
+          projectId: this.projectId() ?? undefined,
           repoFullName: this.repoFullName(),
           branch: this.branch() || undefined,
           envOverrides: Object.keys(envOverrides).length > 0 ? envOverrides : undefined,
@@ -1216,6 +1220,7 @@ export class DeployWizardStateService {
 
     const dto: InstallCatalogAppDto = {
       clusterId,
+      projectId: this.projectId() ?? undefined,
       displayName: this.catalogDisplayName().trim() || detail.name,
       userInputs: this.sanitizeMap(this.userInputs()),
       envOverrides: this.sanitizeMap(this.envOverrides()),

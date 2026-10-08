@@ -14,7 +14,6 @@ import {
   lucideFolders,
   lucidePlus,
   lucideTrash2,
-  lucideX,
 } from '@ng-icons/lucide';
 import {
   HlmCardDirective,
@@ -42,7 +41,7 @@ const FIELD =
     HlmBadgeDirective,
     DeleteConfirmationDialogComponent,
   ],
-  providers: [provideIcons({ lucideFolders, lucidePlus, lucideTrash2, lucideX })],
+  providers: [provideIcons({ lucideFolders, lucidePlus, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-6xl mx-auto space-y-6">
@@ -53,7 +52,7 @@ const FIELD =
           </div>
           <div>
             <h2 class="text-xl font-semibold text-foreground">Projects</h2>
-            <p class="text-sm text-muted-foreground">Group applications across clusters. An app belongs to at most one project.</p>
+            <p class="text-sm text-muted-foreground">Where applications live. Apps of one project share their building blocks; an app stays in the project it was created in.</p>
           </div>
         </div>
         @if (canManage()) {
@@ -121,12 +120,15 @@ const FIELD =
                     <h3 class="text-base font-semibold text-foreground truncate">{{ p.name }}</h3>
                     <span hlmBadge variant="outline" class="text-[11px] font-mono">{{ p.slug }}</span>
                     <span hlmBadge variant="outline" class="text-[11px]">{{ appsInProject(p).length }}</span>
+                    @if (p.ownerUserId) {
+                      <span hlmBadge variant="secondary" class="text-[11px]">personal</span>
+                    }
                   </div>
                   @if (p.description) {
                     <p class="text-sm text-muted-foreground mt-0.5">{{ p.description }}</p>
                   }
                 </div>
-                @if (canManage()) {
+                @if (canManage() && appsInProject(p).length === 0) {
                   <button type="button" (click)="askDelete(p)"
                     class="text-muted-foreground hover:text-destructive shrink-0" title="Delete project">
                     <ng-icon name="lucideTrash2" class="h-4 w-4" />
@@ -138,32 +140,18 @@ const FIELD =
                 @for (a of appsInProject(p); track a.id) {
                   <span class="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-foreground">
                     {{ a.slug }}
-                    @if (canManage()) {
-                      <button type="button" (click)="projects.unassignApp(p.id, a.id)"
-                        class="text-muted-foreground hover:text-destructive">
-                        <ng-icon name="lucideX" class="h-3 w-3" />
-                      </button>
-                    }
                   </span>
                 } @empty {
                   <span class="text-xs text-muted-foreground">No apps yet.</span>
                 }
               </div>
 
-              @if (canManage() && assignableApps(p).length) {
-                <select [class]="selectClass" (change)="onAssign(p.id, $event)">
-                  <option value="">Add an app…</option>
-                  @for (a of assignableApps(p); track a.id) {
-                    <option [value]="a.id">{{ a.name }} ({{ a.slug }}){{ a.project ? ' — ' + a.project : '' }}</option>
-                  }
-                </select>
-              }
             </div>
           </div>
         } @empty {
           <div hlmCard class="md:col-span-2">
             <div hlmCardContent class="pt-6">
-              <p class="text-sm text-muted-foreground">No projects yet.@if (canManage()) { Create one to start grouping apps.}</p>
+              <p class="text-sm text-muted-foreground">No projects yet. Your first application creates your personal one.</p>
             </div>
           </div>
         }
@@ -182,7 +170,6 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   private readonly perms = inject(PermissionService);
   private readonly currentSurface = inject(CurrentSurfaceService);
   protected readonly fieldClass = FIELD;
-  protected readonly selectClass = FIELD + ' h-9 pr-8 appearance-none';
   protected readonly hexFieldClass =
     'h-7 w-24 rounded-md border border-input bg-background px-2 text-xs font-mono ' +
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
@@ -249,10 +236,6 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     return this.projects.apps().filter((a) => a.project === p.slug);
   }
 
-  assignableApps(p: Project): AppAttributes[] {
-    return this.projects.apps().filter((a) => a.project !== p.slug);
-  }
-
   submitCreate(): void {
     if (!this.canCreate()) return;
     this.projects.create({
@@ -270,8 +253,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.pendingDelete.set(p);
     this.deleteDialog().open({
       title: 'Delete project',
-      description:
-        'The project is removed, but its apps keep running and become unassigned.',
+      description: 'The project is empty and is removed.',
       itemName: p.name,
       itemDescription: p.slug,
       confirmButtonText: 'Delete project',
@@ -283,12 +265,5 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     if (p) this.projects.remove(p.id);
     this.pendingDelete.set(null);
     this.deleteDialog().close();
-  }
-
-  onAssign(projectId: string, e: Event): void {
-    const sel = e.target as HTMLSelectElement;
-    const appId = sel.value;
-    sel.value = '';
-    if (appId) this.projects.assignApp(projectId, appId);
   }
 }

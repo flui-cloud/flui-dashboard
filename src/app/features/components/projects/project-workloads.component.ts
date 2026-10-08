@@ -225,14 +225,16 @@ const SELECT =
                 >
                   <ng-icon name="lucidePencil" class="h-4 w-4" />
                 </button>
-                <button
-                  type="button"
-                  (click)="askDeleteProject(project)"
-                  class="shrink-0 text-muted-foreground hover:text-destructive"
-                  title="Delete project"
-                >
-                  <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                </button>
+                @if (section.groups.length === 0) {
+                  <button
+                    type="button"
+                    (click)="askDeleteProject(project)"
+                    class="shrink-0 text-muted-foreground hover:text-destructive"
+                    title="Delete project"
+                  >
+                    <ng-icon name="lucideTrash2" class="h-4 w-4" />
+                  </button>
+                }
               }
             </div>
 
@@ -500,8 +502,7 @@ export class ProjectWorkloadsComponent implements OnInit, OnDestroy {
     this.pendingProjectDelete.set(project);
     this.projectDeleteDialog().open({
       title: 'Delete project',
-      description:
-        'The project is removed, but its workloads keep running and become unassigned.',
+      description: 'The project is empty and is removed.',
       itemName: project.name,
       itemDescription: project.slug,
       confirmButtonText: 'Delete project',

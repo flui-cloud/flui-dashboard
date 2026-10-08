@@ -55,7 +55,7 @@ export class ApplicationMonitoringService {
     if (this.subscriberCount === 1) {
       this.loadMetrics();
       this.pollingInterval = globalThis.window.setInterval(() => {
-        if (!this.isPollingPaused()) {
+        if (!this.isPollingPaused() && !globalThis.document?.hidden) {
           this.loadMetrics(false);
         }
       }, 5000);

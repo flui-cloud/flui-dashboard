@@ -88,47 +88,6 @@ export class ProjectsService {
     });
   }
 
-  assignApp(projectId: string, appId: string, onSettled?: () => void): void {
-    const slug = this._projects().find((p) => p.id === projectId)?.slug;
-    this.patchAppProject(appId, slug);
-    this.http
-      .post<void>(this.base(`/${projectId}/apps/${appId}`), {})
-      .subscribe({
-        next: () => {
-          this.loadApps();
-          onSettled?.();
-        },
-        error: (e) => {
-          this.loadApps();
-          this.fail('assign app', e);
-          onSettled?.();
-        },
-      });
-  }
-
-  unassignApp(projectId: string, appId: string, onSettled?: () => void): void {
-    this.patchAppProject(appId, undefined);
-    this.http
-      .delete<void>(this.base(`/${projectId}/apps/${appId}`))
-      .subscribe({
-        next: () => {
-          this.loadApps();
-          onSettled?.();
-        },
-        error: (e) => {
-          this.loadApps();
-          this.fail('remove app', e);
-          onSettled?.();
-        },
-      });
-  }
-
-  private patchAppProject(appId: string, project: string | undefined): void {
-    this._apps.update((list) =>
-      list.map((a) => (a.id === appId ? { ...a, project } : a)),
-    );
-  }
-
   private fail(action: string, err: unknown): void {
     const e = err as { error?: { message?: string }; message?: string };
     this.notify.add({

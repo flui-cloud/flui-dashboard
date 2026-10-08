@@ -21,6 +21,10 @@ export interface InstallFromYamlDto {
      */
     clusterId: string;
     /**
+     * Project the installed applications belong to, and therefore their namespace. Omitted: the installer's personal project.
+     */
+    projectId?: string;
+    /**
      * Display name shown in the dashboard. Defaults to manifest metadata.name.
      */
     displayName?: string;

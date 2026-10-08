@@ -1,10 +1,12 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { AppConfigService } from './app-config.service';
 
 export interface SandboxSession {
-  expiresAt: string;
+  /** False while the guest has only looked around: the first deploy takes an area. */
+  hasArea: boolean;
+  expiresAt: string | null;
   secondsRemaining: number;
   ttlHours: number;
   /**
@@ -15,11 +17,6 @@ export interface SandboxSession {
    */
   workloadTtlHours?: number;
   loginUrl: string;
-}
-
-export interface SandboxClaim extends SandboxSession {
-  apiKey?: string;
-  resumed: boolean;
 }
 
 export type SandboxLevel = 'full' | 'read-only' | 'stand-in' | 'closed';
@@ -42,35 +39,6 @@ export const SANDBOX_LEVEL_LABEL: Record<SandboxLevel, string> = {
   closed: 'Not part of the trial',
 };
 
-export interface SandboxSaveResult {
-  sent: boolean;
-  reason?: string;
-  expiresAt?: string;
-  message?: string;
-}
-
-export type SandboxClaimFailure =
-  | 'full'
-  | 'closed'
-  | 'limit'
-  | 'disabled'
-  | 'unknown';
-
-export interface SandboxClaimError {
-  reason: SandboxClaimFailure;
-  message: string;
-}
-
-const MESSAGES: Record<SandboxClaimFailure, string> = {
-  full: 'Every sandbox is taken right now. They are released continuously, so this usually clears within a few minutes.',
-  closed:
-    'The sandbox is not accepting new visitors at the moment. Anyone already inside is unaffected.',
-  limit:
-    'This address already has a sandbox open. They last 24 hours — carry on in the one you have.',
-  disabled: 'This instance does not run a sandbox.',
-  unknown: 'The sandbox could not be reached. Try again in a moment.',
-};
-
 @Injectable({ providedIn: 'root' })
 export class SandboxService {
   private readonly http = inject(HttpClient);
@@ -90,44 +58,32 @@ export class SandboxService {
     () => this._session()?.workloadTtlHours ?? null,
   );
 
+  readonly hasArea = computed(() => this._session()?.hasArea === true);
+
   readonly urgent = computed(
-    () => this.inSandbox() && this._secondsRemaining() < 3600,
+    () => this.hasArea() && this._secondsRemaining() < 3600,
   );
   readonly expired = computed(
-    () => this.inSandbox() && this._secondsRemaining() <= 0,
+    () => this.hasArea() && this._secondsRemaining() <= 0,
   );
 
   private get base(): string {
     return `${this.appConfig.apiBaseUrl}/api/v1/sandbox`;
   }
 
-  claim(): Observable<SandboxClaim> {
-    return this.http.post<SandboxClaim>(`${this.base}/claim`, {}).pipe(
-      tap((claim) => this.adopt(claim)),
-      catchError((error: HttpErrorResponse) =>
-        throwError(() => this.describe(error)),
-      ),
-    );
-  }
-
   refresh(): void {
     this.probe().subscribe();
   }
 
-  save(email: string): Observable<SandboxSaveResult> {
-    return this.http
-      .post<SandboxSaveResult>(`${this.base}/save`, { email })
-      .pipe(
-        catchError((error: HttpErrorResponse) =>
-          throwError(() => ({
-            sent: false,
-            reason: 'failed',
-            message:
-              (error.error?.message as string) ||
-              'That did not go through. Try again in a moment.',
-          })),
-        ),
-      );
+  /** "Keep my apps": counts as an action, so their deadline moves. */
+  keep(): Observable<boolean> {
+    return this.http.post<SandboxSession>(`${this.base}/keep`, {}).pipe(
+      map((session) => {
+        this.adopt(session);
+        return true;
+      }),
+      catchError(() => of(false)),
+    );
   }
 
   levelOf(key: string): SandboxLevel {
@@ -165,7 +121,8 @@ export class SandboxService {
     this._session.set(session);
     this.loadAreas();
     this._secondsRemaining.set(Math.max(0, session.secondsRemaining));
-    this.startTicking();
+    if (session.hasArea) this.startTicking();
+    else this.stopTicking();
   }
 
   private clear(): void {
@@ -191,27 +148,6 @@ export class SandboxService {
       clearInterval(this.ticker);
       this.ticker = undefined;
     }
-  }
-
-  private reasonFor(
-    code: string | undefined,
-    status: number,
-  ): SandboxClaimFailure {
-    if (code === 'SANDBOX_FULL' || status === 503) return 'full';
-    if (code === 'SANDBOX_CLOSED') return 'closed';
-    if (code === 'SANDBOX_CLAIM_LIMIT' || status === 409) return 'limit';
-    if (status === 404) return 'disabled';
-    return 'unknown';
-  }
-
-  private describe(error: HttpErrorResponse): SandboxClaimError {
-    const code = error.error?.code as string | undefined;
-    const reason = this.reasonFor(code, error.status);
-    // The server's wording wins: it knows the real limit and remaining time.
-    return {
-      reason,
-      message: (error.error?.message as string) || MESSAGES[reason],
-    };
   }
 }
 
