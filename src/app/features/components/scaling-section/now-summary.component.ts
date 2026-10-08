@@ -19,6 +19,7 @@ import {
   lucideRotateCcw,
 } from '@ng-icons/lucide';
 import { PurchaseLogComponent } from './purchase-log.component';
+import { ScalingNowGiveBackComponent } from './now-give-back.component';
 import {
   ClusterScalingRow,
   SectionGroup,
@@ -46,6 +47,7 @@ interface StatCard {
     SectionFailureComponent,
     SectionSkeletonComponent,
     PurchaseLogComponent,
+    ScalingNowGiveBackComponent,
   ],
   providers: [
     provideIcons({
@@ -203,6 +205,12 @@ interface StatCard {
               {{ retrying() ? 'Asking…' : 'Try again' }}
             </button>
           </div>
+        } @else if (giveBack(); as back) {
+          <app-scaling-now-give-back
+            [group]="group()"
+            [alarm]="back.alarm"
+            [age]="back.age"
+          />
         } @else if (alarm(); as open) {
           <p
             class="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-amber-500/40 bg-amber-500/[0.06] px-3 py-2 text-sm"
@@ -300,6 +308,13 @@ export class ScalingNowSummaryComponent {
       this.retrying.set(false);
     }
   }
+
+  protected readonly giveBack = computed(() => {
+    const open = this.row()?.openAlarm ?? null;
+    return open?.kind === 'give-back' && open.giveBack
+      ? { alarm: open.giveBack, age: ago(open.since, Date.now()) }
+      : null;
+  });
 
   protected readonly alarm = computed<{ asks: string; age: string } | null>(
     () => {

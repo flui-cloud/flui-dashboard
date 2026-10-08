@@ -145,6 +145,52 @@ const ROWS: ClusterScalingRow[] = [
     needsPerson:
       'No scaling group. This cluster will not grow, and nothing will raise an alarm when it should have.',
   },
+  {
+    clusterId: 'c-spare',
+    clusterName: 'lab-hz',
+    capability: HETZNER,
+    groupId: 'g-spare',
+    groupCount: 1,
+    bounds: { min: 1, desired: 1, max: 3 },
+    nodes: 2,
+    monthlyEur: 13.98,
+    unpricedNodes: 0,
+    monthlyCap: 30,
+    pendingPods: 0,
+    acts: true,
+    openOrders: 0,
+    blockedOrders: 0,
+    openAlarm: {
+      since: ago(0.7),
+      groupId: 'g-spare',
+      asks: 'lab-hz-worker-1 is above the target of 1 node and cannot go back: 5 applications keep their data on it. Keep it, or clear what is in the way.',
+      kind: 'give-back',
+      giveBack: {
+        node: 'lab-hz-worker-1',
+        nodes: 2,
+        target: 1,
+        monthlyEur: 6.99,
+        keepNodes: 2,
+        says: '5 applications keep their data on it',
+        reasons: [
+          {
+            kind: 'data-on-node',
+            title: 'Keep their data on this machine',
+            fix: 'Back the data up, then redeploy the app with storage any machine can reach, or delete it.',
+            items: [
+              { label: 'postgresql-04f3a9-j3fkkt', applicationId: 'a-pg1' },
+              { label: 'postgresql-549cab-qu2xow', applicationId: 'a-pg2' },
+              { label: 'postgresql-2b10a0-yofuh1', applicationId: 'a-pg3' },
+              { label: 'postgresql-c653b7-qsx6du', applicationId: 'a-pg4' },
+              { label: 'linkding-05acd3-ocd26l', applicationId: 'a-ld' },
+            ],
+          },
+        ],
+      },
+    },
+    lastDecisionAt: ago(0.02),
+    needsPerson: null,
+  },
 ];
 
 const GROUPS: Record<string, SectionGroup> = {
@@ -228,6 +274,29 @@ const GROUPS: Record<string, SectionGroup> = {
     purchaseHeld: null,
     standingOrders: [],
   },
+  'g-spare': {
+    id: 'g-spare',
+    name: 'general',
+    clusterId: 'c-spare',
+    clusterName: 'lab-hz',
+    provider: 'hetzner',
+    capability: HETZNER,
+    buyableRegions: ['fsn1', 'nbg1', 'hel1'],
+    bounds: { min: 1, desired: 1, max: 3 },
+    regions: ['fsn1'],
+    shapes: ['cx23'],
+    strategy: 'cheapest',
+    settleSeconds: 30,
+    limits: { hourlyBillingOnly: false, maxMonthlyCost: 30 },
+    provision: 'automatic',
+    acts: {
+      acts: true,
+      says: 'This group buys through the provider API on its own, up to €30 a month and 3 nodes.',
+    },
+    requirement: null,
+    purchaseHeld: null,
+    standingOrders: [],
+  },
 };
 
 const PREVIEWS: Record<string, ScalingPreview> = {
@@ -277,6 +346,20 @@ const PREVIEWS: Record<string, ScalingPreview> = {
       outcome: 'would-buy',
     },
     asks: null,
+  },
+  'g-spare': {
+    pending: null,
+    opportunityHeldBecause: null,
+    ladder: [],
+    chosen: null,
+    asks: null,
+    blocked: {
+      headline: 'Scaling needed — blocked by the spending ceiling',
+      exits: [
+        { kind: 'raise-cap', label: 'Raise the spending ceiling to €34', toEur: 34, toNodes: null, shape: null },
+        { kind: 'attach', label: 'Attach a machine yourself', toEur: null, toNodes: null, shape: null },
+      ],
+    },
   },
 };
 

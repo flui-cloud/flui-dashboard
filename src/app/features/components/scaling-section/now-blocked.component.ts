@@ -96,9 +96,12 @@ export class ScalingNowBlockedComponent {
 
   protected readonly blocked = computed(() => {
     const preview = this.store.preview().data;
-    const alarmOpen = this.store.row().data?.openAlarm ?? null;
+    const alarm = this.store.row().data?.openAlarm ?? null;
     if (!preview?.blocked) return null;
-    return preview.pending || alarmOpen ? preview.blocked : null;
+    // A give-back alarm is about a node too many; the purchase it would block is
+    // hypothetical, and its ways out would make that bill larger.
+    const purchaseAlarm = alarm !== null && alarm.kind !== 'give-back';
+    return preview.pending || purchaseAlarm ? preview.blocked : null;
   });
 
   protected readonly asks = computed(

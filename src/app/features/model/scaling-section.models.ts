@@ -21,6 +21,29 @@ export interface NodeRequirement {
 export interface OpenAlarm {
   since: string;
   asks: string;
+  groupId?: string;
+  /** `give-back`: the fleet is above its target and the node that would go back cannot be emptied. */
+  kind?: 'purchase' | 'give-back';
+  giveBack?: GiveBackAlarm | null;
+}
+
+export interface GiveBackAlarm {
+  node: string | null;
+  nodes: number;
+  target: number;
+  monthlyEur: number | null;
+  /** The target that closes the alarm by keeping the node. */
+  keepNodes: number;
+  /** "5 applications keep their data on it", written by the API. */
+  says: string;
+  reasons: GiveBackReason[];
+}
+
+export interface GiveBackReason {
+  kind: 'data-on-node' | 'not-restarted' | 'no-interruption' | 'placed-by-machine' | 'master';
+  title: string;
+  fix: string;
+  items: { label: string; applicationId: string | null }[];
 }
 
 export interface ScalingModeLabel {
