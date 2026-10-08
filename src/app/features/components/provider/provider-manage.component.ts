@@ -1,6 +1,4 @@
 import { Component, OnDestroy, computed, effect, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { switchMap } from 'rxjs/operators';
 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -19,7 +17,7 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { ProvidersService } from '../../service/providers.service';
-import { ProviderLogoService } from '../../../shared/services/provider-logo.service';
+import { ProviderMarkComponent } from '../../../shared/components/provider-mark.component';
 import { ProviderConfigurationDto, ProviderDefinitionDto } from '../../../core/api';
 import { HealthStatus } from '../../model/provider.models';
 import { ProviderCredentialsPanelComponent } from './provider-credentials-panel.component';
@@ -33,7 +31,7 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 @Component({
   selector: 'provider-manage',
   standalone: true,
-  imports: [MaskIdPipe, ReadOnlySectionDirective, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent, ProviderInferencePanelComponent],
+  imports: [ProviderMarkComponent, MaskIdPipe, ReadOnlySectionDirective, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent, ProviderInferencePanelComponent],
   providers: [
     provideIcons({
       lucideActivity,
@@ -76,11 +74,7 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
         <div class="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card via-card to-muted/30 p-6 md:p-8 mb-6">
           <div class="flex flex-col md:flex-row md:items-center gap-5">
             <div class="flex items-center justify-center h-16 w-16 rounded-xl bg-background border border-border shadow-sm shrink-0">
-              @if (logoUrl()) {
-                <img [src]="logoUrl()" [alt]="provider()!.displayName" class="h-10 w-10 object-contain" />
-              } @else {
-                <ng-icon name="lucideGlobe" class="h-8 w-8 text-muted-foreground" />
-              }
+              <app-provider-mark [name]="provider()!.displayName" [size]="40" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
@@ -287,7 +281,6 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly providersService = inject(ProvidersService);
-  private readonly providerLogo = inject(ProviderLogoService);
   private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected providerId = signal<string>('');
@@ -307,12 +300,6 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
     this.providersService.configuredProviders().find((c) => c.provider === this.providerId()),
   );
 
-  protected logoUrl = toSignal(
-    toObservable(computed(() => this.provider()?.logoUrl ?? null)).pipe(
-      switchMap((url) => this.providerLogo.resolve(url)),
-    ),
-    { initialValue: null as string | null },
-  );
 
   protected statusLabel = computed(() =>
     (this.configuration()?.status ?? 'not_configured').replaceAll('_',  ' '),

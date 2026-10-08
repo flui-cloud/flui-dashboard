@@ -8,7 +8,6 @@ import {
   NodeSizeOptionDto,
   SSHKeyDto,
 } from '../../core/api/model/models';
-import { ProviderLogoService } from './provider-logo.service';
 
 /**
  * Provider Option - Simplified provider info for selection
@@ -17,7 +16,6 @@ export interface ProviderOption {
   id: string;
   name: string;
   displayName: string;
-  logoUrl: string | null;
   regions: number;
   comingSoon?: boolean;
 }
@@ -63,7 +61,6 @@ export interface ServerTypeOption {
 export class ProviderWizardService {
   private readonly providerManagementService = inject(ProviderManagementService);
   private readonly accessManagementService = inject(AccessManagementService);
-  private readonly providerLogo = inject(ProviderLogoService);
 
   // === State Signals ===
 
@@ -142,14 +139,10 @@ export class ProviderWizardService {
       providersDto.forEach(p => { if (p.id) defsMap[p.id] = p; });
       this.providerDefinitions.set(defsMap);
 
-      const logoUrls = await Promise.all(
-        providersDto.map((provider) => this.providerLogo.resolveUrl(provider.logoUrl))
-      );
-      const mappedProviders: ProviderOption[] = providersDto.map((provider, index) => ({
+      const mappedProviders: ProviderOption[] = providersDto.map((provider) => ({
         id: provider.id || '',
         name: provider.displayName || provider.name || '',
         displayName: provider.displayName || provider.name || '',
-        logoUrl: logoUrls[index],
         regions: 0,
         comingSoon: !(provider.enabled ?? false),
       }));

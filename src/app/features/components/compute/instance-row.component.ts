@@ -1,7 +1,6 @@
 
 import { Component, Input, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { AppConfigService } from '../../../core/services/app-config.service';
 import {
   lucideCopy,
   lucideCpu,
@@ -20,11 +19,13 @@ import { InstanceWithLabels, getOwnership } from '../../model/instance.models';
 import { InstanceManagedBadgeComponent } from './instance-managed-badge.component';
 import { InstanceActionsComponent } from './instance-actions.component';
 import { InstanceStatusBadgeComponent } from './instance-status-badge.component';
+import { ProviderMarkComponent } from '../../../shared/components/provider-mark.component';
 
 @Component({
   selector: 'app-instance-row',
   standalone: true,
   imports: [
+    ProviderMarkComponent,
     NgIcon,
     InstanceManagedBadgeComponent,
     InstanceActionsComponent,
@@ -69,14 +70,7 @@ import { InstanceStatusBadgeComponent } from './instance-status-badge.component'
       <div class="grid items-center gap-x-4 px-4 py-2 text-sm" style="grid-template-columns: 1fr auto 2fr 1fr 1.5fr auto">
         <!-- Provider -->
         <div class="flex items-center gap-2">
-          <div class="flex items-center justify-center w-5 h-5 bg-white rounded border border-border shadow-sm flex-shrink-0">
-            <img
-              [src]="providerLogoUrl()"
-              [alt]="instance.provider"
-              class="w-3.5 h-3.5 object-contain"
-              (error)="onLogoError($event)"
-            />
-          </div>
+          <app-provider-mark [name]="instance.provider" [size]="20" />
           <span class="text-xs text-muted-foreground">{{ instance.provider }}</span>
         </div>
 
@@ -135,21 +129,12 @@ import { InstanceStatusBadgeComponent } from './instance-status-badge.component'
   `,
 })
 export class InstanceRowComponent {
-  private readonly appConfigService = inject(AppConfigService);
 
   @Input({ required: true }) instance!: InstanceWithLabels;
 
   ownership = computed(() => getOwnership(this.instance));
   isSelf = computed(() => this.ownership() === 'self');
   copiedIp = signal(false);
-
-  providerLogoUrl = computed(
-    () => `${this.appConfigService.apiBaseUrl}/api/v1/management/providers/${this.instance.provider}/logo`
-  );
-
-  onLogoError(event: Event): void {
-    (event.target as HTMLImageElement).style.display = 'none';
-  }
 
   async copyIp(ip?: string) {
     if (!ip) return;

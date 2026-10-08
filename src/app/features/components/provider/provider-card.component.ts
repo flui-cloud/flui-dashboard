@@ -1,11 +1,9 @@
 import { Component, computed, input, output, signal, inject, ChangeDetectionStrategy } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { switchMap } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { PricingService } from '../../../shared/services/pricing.service';
-import { ProviderLogoService } from '../../../shared/services/provider-logo.service';
+import { ProviderMarkComponent } from '../../../shared/components/provider-mark.component';
 import {
   lucideSettings,
   lucideCheck,
@@ -32,7 +30,7 @@ import { ProviderStatus } from '../../model/provider.models';
 @Component({
   selector: 'provider-card',
   standalone: true,
-  imports: [CommonModule, RouterLink, NgIcon],
+  imports: [CommonModule, RouterLink, NgIcon, ProviderMarkComponent],
   providers: [
     provideIcons({
       lucideSettings,
@@ -61,13 +59,7 @@ import { ProviderStatus } from '../../model/provider.models';
         <!-- Header - Always the same structure -->
         <div class="flex items-start justify-between mb-4">
           <div class="flex items-center space-x-3">
-            <div class="rounded-lg bg-muted shrink-0 flex items-center justify-center" style="width:40px;height:40px">
-              @if (logoUrl()) {
-                <img [src]="logoUrl()" [alt]="getProvider().displayName" width="32" height="32" style="object-fit:contain;overflow:visible;flex-shrink:0" />
-              } @else {
-                <ng-icon name="lucideGlobe" class="h-5 w-5 text-muted-foreground" />
-              }
-            </div>
+            <app-provider-mark [name]="getProvider().displayName" [size]="40" />
             <div>
               <h3 class="font-semibold text-lg">
                 {{ getProvider().displayName }}
@@ -290,7 +282,6 @@ import { ProviderStatus } from '../../model/provider.models';
 })
 export class ProviderCardComponent {
   private readonly pricingService = inject(PricingService);
-  private readonly providerLogo = inject(ProviderLogoService);
 
   configuration = input<ProviderConfigurationDto>();
   provider = input<ProviderDefinitionDto>();
@@ -299,13 +290,6 @@ export class ProviderCardComponent {
   featuresEnabled = signal<boolean>(true); // Enable features by default
 
   readonly isConfigured = computed(() => !!this.configuration());
-
-  readonly logoUrl = toSignal(
-    toObservable(computed(() => this.provider()?.logoUrl ?? null)).pipe(
-      switchMap((url) => this.providerLogo.resolve(url)),
-    ),
-    { initialValue: null as string | null },
-  );
 
   readonly getProvider = computed(() => {
     return this.provider()!;

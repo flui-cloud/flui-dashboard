@@ -73,8 +73,8 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="glow"></div>
-    <img class="mark mark-light" src="/icons/flui-mark/blue-512.png" alt="" aria-hidden="true" draggable="false" />
-    <img class="mark mark-dark"  src="/icons/flui-mark/bright-512.png" alt="" aria-hidden="true" draggable="false" />
+    <img class="mark mark-light" src="/icons/flui-mark/blue.svg" alt="" aria-hidden="true" draggable="false" />
+    <img class="mark mark-dark"  src="/icons/flui-mark/bright.svg" alt="" aria-hidden="true" draggable="false" />
   `,
 })
 export class FluiBackdropComponent {

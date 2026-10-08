@@ -14,6 +14,7 @@ import { VirtualInstancesService } from '../../../core/api/api/virtualInstances.
 import { InstanceWithLabels } from '../../../features/model/instance.models';
 import { InstanceStatusBadgeComponent } from '../../../features/components/compute/instance-status-badge.component';
 import { firstValueFrom } from 'rxjs';
+import { ProviderMarkComponent } from '../provider-mark.component';
 
 /**
  * Server Selector Component
@@ -31,7 +32,7 @@ import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-server-selector',
   standalone: true,
-  imports: [FormsModule, NgIconComponent, InstanceStatusBadgeComponent],
+  imports: [FormsModule, NgIconComponent, InstanceStatusBadgeComponent, ProviderMarkComponent],
   providers: [
     provideIcons({
       lucideServer,
@@ -89,15 +90,7 @@ import { firstValueFrom } from 'rxjs';
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                   <!-- Provider Icon -->
-                  <div class="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                    @if (server.provider === 'hetzner') {
-                      <img src="/logos/hetzner.png" alt="Hetzner" class="w-6 h-6 object-contain" />
-                    } @else if (server.provider === 'contabo') {
-                      <img src="/logos/contabo.png" alt="Contabo" class="w-6 h-6 object-contain" />
-                    } @else {
-                      <ng-icon name="lucideServer" size="24" class="text-slate-500"></ng-icon>
-                    }
-                  </div>
+                  <app-provider-mark [name]="server.provider" [size]="40" />
                   <!-- Server Info -->
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">

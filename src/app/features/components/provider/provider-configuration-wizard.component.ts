@@ -8,8 +8,6 @@ import {
   OnInit,
   ChangeDetectionStrategy
 } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { switchMap } from 'rxjs/operators';
 
 import {
   FormBuilder,
@@ -33,7 +31,7 @@ import {
   lucideInfo,
 } from '@ng-icons/lucide';
 import { ProvidersService } from '../../service/providers.service';
-import { ProviderLogoService } from '../../../shared/services/provider-logo.service';
+import { ProviderMarkComponent } from '../../../shared/components/provider-mark.component';
 import { ProviderDefinitionDto, ProviderCredentialsDto } from '../../../core/api';
 interface CredentialFieldDefinition {
   key: string;
@@ -55,7 +53,7 @@ interface WizardStep {
 @Component({
   selector: 'provider-configuration-wizard',
   standalone: true,
-  imports: [ReactiveFormsModule, NgIcon],
+  imports: [ReactiveFormsModule, NgIcon, ProviderMarkComponent],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -77,15 +75,7 @@ interface WizardStep {
     <div class="max-w-4xl mx-auto">
       <div class="mb-8">
         <div class="flex items-center space-x-3 mb-4">
-          @if (logoUrl()) {
-          <img
-            [src]="logoUrl()"
-            [alt]="provider().displayName"
-            class="h-8 w-8 object-contain"
-          />
-          } @else {
-          <ng-icon name="lucideGlobe" class="h-8 w-8 text-muted-foreground" />
-          }
+          <app-provider-mark [name]="provider().displayName" [size]="32" />
           <div>
             <h1 class="text-2xl font-bold">
               Configure {{ provider().displayName }}
@@ -447,14 +437,7 @@ interface WizardStep {
 export class ProviderConfigurationWizardComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly providersService = inject(ProvidersService);
-  private readonly providerLogo = inject(ProviderLogoService);
 
-  readonly logoUrl = toSignal(
-    toObservable(computed(() => this.provider()?.logoUrl ?? null)).pipe(
-      switchMap((url) => this.providerLogo.resolve(url)),
-    ),
-    { initialValue: null as string | null },
-  );
 
   provider = input.required<ProviderDefinitionDto>();
   completeOutput = output<{ success: boolean; configuration?: any; error?: string }>();

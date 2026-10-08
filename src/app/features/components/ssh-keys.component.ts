@@ -23,7 +23,7 @@ import {
 import { forkJoin, map } from 'rxjs';
 import { SSHKeyDto, CreateSSHKeyDto, UpdateSSHKeyDto, AccessManagementService } from '../../core/api';
 
-import { ProviderLogoService } from '../../shared/services/provider-logo.service';
+import { ProviderMarkComponent } from '../../shared/components/provider-mark.component';
 import { ProvidersService } from '../service/providers.service';
 import { ReadOnlySectionDirective } from '../../shared/directives/read-only-section.directive';
 import { sandboxFailureMessage } from '../../core/services/sandbox.service';
@@ -41,6 +41,7 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
   selector: 'app-ssh-keys',
   standalone: true,
   imports: [
+    ProviderMarkComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -271,12 +272,8 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
                                 class="inline-flex items-center gap-1 px-2 py-1 rounded border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 [title]="'Sync to ' + p.displayName"
                                 >
-                                @if (p.logoUrl) {
-                                  <img [src]="p.logoUrl" [alt]="p.displayName" class="w-4 h-4 object-contain opacity-40" />
-                                }
-                                @if (!p.logoUrl) {
-                                  <ng-icon name="lucideServer" class="w-3 h-3"></ng-icon>
-                                }
+                                <app-provider-mark [name]="p.displayName" [size]="16" />
+                                <span>{{ p.displayName }}</span>
                                 @if (isSyncing(key.id, p.id)) {
                                   <ng-icon name="lucideLoader" class="w-3 h-3 animate-spin"></ng-icon>
                                 }
@@ -292,12 +289,8 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
                                 class="inline-flex items-center gap-1 px-2 py-1 rounded border border-orange-400/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 [title]="p.error"
                                 >
-                                @if (p.logoUrl) {
-                                  <img [src]="p.logoUrl" [alt]="p.displayName" class="w-4 h-4 object-contain opacity-70" />
-                                }
-                                @if (!p.logoUrl) {
-                                  <ng-icon name="lucideServer" class="w-3 h-3"></ng-icon>
-                                }
+                                <app-provider-mark [name]="p.displayName" [size]="16" />
+                                <span>{{ p.displayName }}</span>
                                 @if (isSyncing(key.id, p.id)) {
                                   <ng-icon name="lucideLoader" class="w-3 h-3 animate-spin"></ng-icon>
                                 }
@@ -309,12 +302,8 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
                             @if (p.synced) {
                               <div class="inline-flex items-center rounded border border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400 overflow-hidden">
                                 <span class="inline-flex items-center gap-1 px-2 py-1" [title]="p.displayName + ' — synced'">
-                                  @if (p.logoUrl) {
-                                    <img [src]="p.logoUrl" [alt]="p.displayName" class="w-4 h-4 object-contain" />
-                                  }
-                                  @if (!p.logoUrl) {
-                                    <ng-icon name="lucideServer" class="w-3 h-3"></ng-icon>
-                                  }
+                                  <app-provider-mark [name]="p.displayName" [size]="16" />
+                                  <span>{{ p.displayName }}</span>
                                   <ng-icon name="lucideCheck" class="w-3 h-3"></ng-icon>
                                 </span>
                                 <button
@@ -755,7 +744,7 @@ export class SshKeysComponent implements OnDestroy {
   showDeleteModal = false;
   keyToDelete: SSHKeyDto | null = null;
   deleteScope = signal<string>('all');
-  deleteSyncedProviders = signal<{ id: string; displayName: string; logoUrl: string | null }[]>([]);
+  deleteSyncedProviders = signal<{ id: string; displayName: string }[]>([]);
   isDeleting = signal(false);
   deleteError = signal<string | null>(null);
   deleteSuccess = signal(false);
@@ -771,10 +760,8 @@ export class SshKeysComponent implements OnDestroy {
   addKeyForm: FormGroup;
   protected readonly accessManagementService = inject(AccessManagementService);
 
-  private readonly providerLogo = inject(ProviderLogoService);
   private readonly providersService = inject(ProvidersService);
 
-  private readonly providerLogos = signal<Record<string, string | null>>({});
 
   sshKeys = signal<SSHKeyDto[]>([]);
   isLoading = signal(true);
@@ -813,16 +800,6 @@ export class SshKeysComponent implements OnDestroy {
   );
 
   constructor(private readonly fb: FormBuilder) {
-    effect(() => {
-      for (const def of this.providersService.availableProviders()) {
-        if (!def.id) continue;
-        const id = def.id;
-        this.providerLogo.resolveUrl(def.logoUrl).then((url) => {
-          this.providerLogos.update((map) => ({ ...map, [id]: url }));
-        });
-      }
-    });
-
     // Publish this page's own Semantic Surface snapshot whenever it changes;
     // ngOnDestroy clears it so the snapshot never outlives this page.
     effect(() => {
@@ -865,17 +842,15 @@ export class SshKeysComponent implements OnDestroy {
     );
   }
 
-  getProviderSyncStatus(key: SSHKeyDto): { id: string; displayName: string; logoUrl: string | null; synced: boolean; error: string | null }[] {
+  getProviderSyncStatus(key: SSHKeyDto): { id: string; displayName: string; synced: boolean; error: string | null }[] {
     const mappings = key.providerKeyMappings as Record<string, string> | undefined;
     const errors = key.syncErrors as Record<string, string> | undefined;
     const definitions = this.providersService.availableProviders();
-    const logos = this.providerLogos();
     return this.providersService.activeProviders().map(config => {
       const def = definitions.find(d => d.id === config.provider);
-      const logoUrl = logos[config.provider] ?? null;
       const synced = !!mappings?.[config.provider];
       const error = (!synced && errors?.[config.provider]) ? errors[config.provider] : null;
-      return { id: config.provider, displayName: def?.displayName ?? config.provider, logoUrl, synced, error };
+      return { id: config.provider, displayName: def?.displayName ?? config.provider, synced, error };
     });
   }
 
@@ -1139,7 +1114,7 @@ export class SshKeysComponent implements OnDestroy {
       this.deleteScope.set('all');
     }
     const synced = this.getProviderSyncStatus(key).filter(p => p.synced);
-    this.deleteSyncedProviders.set(synced.map(p => ({ id: p.id, displayName: p.displayName, logoUrl: p.logoUrl })));
+    this.deleteSyncedProviders.set(synced.map(p => ({ id: p.id, displayName: p.displayName })));
     this.showDeleteModal = true;
   }
 

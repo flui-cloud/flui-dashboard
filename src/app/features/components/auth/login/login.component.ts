@@ -163,7 +163,7 @@ import { ThemeService } from '../../../../core/services/theme.service';
 
         <!-- Logo + brand -->
         <div class="flex flex-col items-center mb-8">
-          <img src="/icons/logo.png" alt="flui.cloud" class="logo-glow h-16 w-16 object-contain mb-5" />
+          <img src="/icons/flui-mark.svg" alt="flui.cloud" class="logo-glow h-16 w-16 object-contain mb-5" />
           <h1 class="text-3xl font-bold tracking-tight text-white">flui.cloud</h1>
           <p class="text-sm mt-1.5" style="color: hsl(215, 25%, 58%)">
             Cloud infrastructure, simplified.

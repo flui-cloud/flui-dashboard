@@ -17,6 +17,7 @@ import {
   ServerTypeOption,
 } from '../../services/provider-wizard.service';
 import { PricingService } from '../../services/pricing.service';
+import { ProviderMarkComponent } from '../provider-mark.component';
 
 /**
  * Provider Region Selector Component
@@ -39,7 +40,7 @@ import { PricingService } from '../../services/pricing.service';
 @Component({
   selector: 'app-provider-region-selector',
   standalone: true,
-  imports: [NgIconComponent],
+  imports: [NgIconComponent, ProviderMarkComponent],
   providers: [
     provideIcons({
       lucideCloud,
@@ -94,24 +95,7 @@ import { PricingService } from '../../services/pricing.service';
                   [class.cursor-not-allowed]="isProviderDisabled(provider)"
                   >
                   <div class="flex flex-col items-center gap-2 text-center">
-                    <!-- Provider Logo -->
-                    <div class="h-10 w-10 flex items-center justify-center">
-                      @if (provider.logoUrl) {
-                        <img
-                          [src]="provider.logoUrl"
-                          [alt]="provider.name"
-                          class="h-8 w-8 object-contain"
-                          (error)="onLogoError($event)"
-                          />
-                      }
-                      @if (!provider.logoUrl) {
-                        <ng-icon
-                          name="lucideCloud"
-                          size="28"
-                          class="text-blue-500 dark:text-blue-400"
-                        ></ng-icon>
-                      }
-                    </div>
+                    <app-provider-mark [name]="provider.name" [size]="40" />
                     <div>
                       <p class="text-sm font-semibold text-slate-900 dark:text-white leading-tight">{{ provider.name }}</p>
                       <p class="text-xs text-slate-500 dark:text-slate-400">{{ provider.regions }} regions</p>
@@ -387,10 +371,6 @@ export class ProviderRegionSelectorComponent implements OnInit {
 
   selectServerType(serverTypeId: string): void {
     this.serverTypeSelected.emit(serverTypeId);
-  }
-
-  onLogoError(event: Event): void {
-    (event.target as HTMLImageElement).style.display = 'none';
   }
 
   setCpuTypeFilter(value: string): void {

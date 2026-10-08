@@ -1,36 +1,20 @@
-import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { switchMap } from 'rxjs/operators';
-import { ProviderLogoService } from '../../../shared/services/provider-logo.service';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { ProviderMarkComponent } from '../../../shared/components/provider-mark.component';
 
 @Component({
   selector: 'app-provider-badge',
   standalone: true,
+  imports: [ProviderMarkComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="inline-flex items-center gap-1.5">
-      @if (logoUrl()) {
-        <img
-          [src]="logoUrl()"
-          [alt]="displayName()"
-          class="w-4 h-4 object-contain"
-        />
-      }
+      <app-provider-mark [name]="displayName()" [size]="16" />
       <span class="text-sm font-medium capitalize">{{ displayName() }}</span>
     </div>
   `,
 })
 export class ProviderBadgeComponent {
   provider = input.required<string>();
-
-  private readonly providerLogo = inject(ProviderLogoService);
-
-  readonly logoUrl = toSignal(
-    toObservable(
-      computed(() => `/api/v1/management/providers/${this.provider()}/logo`),
-    ).pipe(switchMap((url) => this.providerLogo.resolve(url))),
-    { initialValue: null as string | null },
-  );
 
   displayName(): string {
     const p = this.provider().toLowerCase();
