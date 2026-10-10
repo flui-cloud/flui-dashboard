@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, input, effect, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -16,6 +16,7 @@ import {
   TimeSeriesLineComponent,
 } from '../../../shared/components/charts';
 import { ApplicationTrafficService } from '../../service/application-traffic.service';
+import { breakdownOf } from './traffic-breakdown';
 
 export interface TrafficRange {
   start: Date;
@@ -46,7 +47,7 @@ export interface TrafficRange {
       <div class="flex items-start justify-between gap-4">
         <div>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <ng-icon name="lucideGlobe" class="text-blue-500" size="20" />
+            <ng-icon name="lucideGlobe" class="text-sub" size="20" />
             Traffic
           </h3>
           <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -56,7 +57,7 @@ export interface TrafficRange {
         <a
           [routerLink]="['../logs']"
           [queryParams]="logsQueryParams()"
-          class="shrink-0 inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          class="shrink-0 inline-flex items-center gap-1.5 text-sm text-sub hover:text-foreground hover:underline"
         >
           View logs
           <ng-icon name="lucideExternalLink" size="14" />
@@ -94,20 +95,10 @@ export interface TrafficRange {
         </div>
 
         @if (latencyIsCoarse()) {
-          <div
-            class="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3 flex items-start gap-2"
-          >
-            <ng-icon
-              name="lucideInfo"
-              class="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
-              size="16"
-            />
-            <p class="text-sm text-amber-800 dark:text-amber-200">
-              Percentiles are rough estimates. The latency histogram only has buckets at
-              {{ bucketLabel() }}, which cannot resolve this application — trust the mean
-              until the buckets are tuned.
-            </p>
-          </div>
+          <p class="m-0 flex items-center gap-1.5 text-xs text-sub" data-testid="latency-coarse">
+            <ng-icon name="lucideInfo" class="shrink-0" size="14" [attr.title]="coarseHint()" />
+            Percentiles are rough here: trust the mean.
+          </p>
         }
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -121,53 +112,52 @@ export interface TrafficRange {
         <app-time-series-line [data]="latencyChart()" [config]="latencyConfig" />
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          @if (byStatusCode().length > 0) {
-            <div
-              class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4"
-            >
-              <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Status codes
-              </h4>
-              <div class="space-y-1.5">
-                @for (entry of byStatusCode(); track entry.code) {
-                  <div class="flex items-center justify-between text-sm">
+          @if (statusView(); as view) {
+            <div class="rounded-lg border border-border bg-card p-4" data-testid="traffic-status-codes">
+              <h4 class="m-0 mb-2 text-sm font-semibold text-foreground">Status codes</h4>
+              <div class="min-h-24">
+                @for (entry of view.rows; track entry.code) {
+                  <div class="flex h-6 items-center justify-between text-sm">
                     <span class="flex items-center gap-2">
-                      <span
-                        class="inline-block w-2 h-2 rounded-full"
-                        [class]="codeDot(entry.code)"
-                      ></span>
-                      <span class="font-mono text-gray-700 dark:text-gray-300">{{
-                        entry.code
-                      }}</span>
+                      <span class="inline-block h-2 w-2 rounded-full" [class]="codeDot(entry.code)"></span>
+                      <span class="font-mono text-foreground">{{ entry.code }}</span>
                     </span>
-                    <span class="text-gray-500 dark:text-gray-400">
-                      {{ formatRate(entry.requests_per_second) }}
-                    </span>
+                    <span class="text-sub">{{ formatRate(entry.requests_per_second) }}</span>
                   </div>
                 }
               </div>
+              @if (view.hidden > 0 || showAllCodes()) {
+                <button
+                  type="button"
+                  class="mt-1 text-xs font-medium text-sub hover:text-foreground hover:underline"
+                  (click)="showAllCodes.set(!showAllCodes())"
+                >
+                  {{ showAllCodes() ? 'Show fewer' : 'Show all (' + (view.rows.length + view.hidden) + ')' }}
+                </button>
+              }
             </div>
           }
 
-          @if (byMethod().length > 0) {
-            <div
-              class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4"
-            >
-              <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Methods
-              </h4>
-              <div class="space-y-1.5">
-                @for (entry of byMethod(); track entry.method) {
-                  <div class="flex items-center justify-between text-sm">
-                    <span class="font-mono text-gray-700 dark:text-gray-300">{{
-                      entry.method
-                    }}</span>
-                    <span class="text-gray-500 dark:text-gray-400">
-                      {{ formatRate(entry.requests_per_second) }}
-                    </span>
+          @if (methodView(); as view) {
+            <div class="rounded-lg border border-border bg-card p-4" data-testid="traffic-methods">
+              <h4 class="m-0 mb-2 text-sm font-semibold text-foreground">Methods</h4>
+              <div class="min-h-24">
+                @for (entry of view.rows; track entry.method) {
+                  <div class="flex h-6 items-center justify-between text-sm">
+                    <span class="font-mono text-foreground">{{ entry.method }}</span>
+                    <span class="text-sub">{{ formatRate(entry.requests_per_second) }}</span>
                   </div>
                 }
               </div>
+              @if (view.hidden > 0 || showAllMethods()) {
+                <button
+                  type="button"
+                  class="mt-1 text-xs font-medium text-sub hover:text-foreground hover:underline"
+                  (click)="showAllMethods.set(!showAllMethods())"
+                >
+                  {{ showAllMethods() ? 'Show fewer' : 'Show all (' + (view.rows.length + view.hidden) + ')' }}
+                </button>
+              }
             </div>
           }
         </div>
@@ -230,10 +220,11 @@ export class AppTrafficSectionComponent {
     () => this.current()?.traffic.latency.estimates_are_coarse ?? false,
   );
 
-  protected readonly bucketLabel = computed(() => {
+  protected readonly coarseHint = computed(() => {
     const boundaries =
       this.current()?.traffic.latency.bucket_boundaries_seconds ?? [];
-    return boundaries.map((b) => `${b}s`).join(', ');
+    const buckets = boundaries.map((b) => `${b}s`).join(', ');
+    return `The latency histogram only has buckets at ${buckets}, which cannot resolve this application.`;
   });
 
   protected readonly byStatusCode = computed(
@@ -242,6 +233,15 @@ export class AppTrafficSectionComponent {
 
   protected readonly byMethod = computed(
     () => this.current()?.traffic.by_method ?? [],
+  );
+
+  protected readonly showAllCodes = signal(false);
+  protected readonly showAllMethods = signal(false);
+  protected readonly statusView = computed(() =>
+    this.byStatusCode().length ? breakdownOf(this.byStatusCode(), this.showAllCodes()) : null,
+  );
+  protected readonly methodView = computed(() =>
+    this.byMethod().length ? breakdownOf(this.byMethod(), this.showAllMethods()) : null,
   );
 
   protected readonly requestStats = computed<MultiStatCardData>(() => {

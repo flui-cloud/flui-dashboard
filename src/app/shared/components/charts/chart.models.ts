@@ -496,6 +496,18 @@ export interface StatTileData {
   /** What the change is measured against, e.g. "vs typical in the last hour". */
   deltaHint?: string;
   footnote?: string;
+  /** Left out when the figure has no history to draw; an empty one reads "no history yet". */
   spark?: number[];
   color?: string;
+  /** One line of explanation behind an info icon next to the label. */
+  hint?: string;
+  /** Remarks under the value in neutral text, marked by a dot: amber, red when bad, none when muted. */
+  notes?: StatTileNote[];
+}
+
+export interface StatTileNote {
+  text: string;
+  hint?: string;
+  kind?: 'line' | 'chip';
+  tone?: 'warn' | 'bad' | 'muted';
 }

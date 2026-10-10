@@ -273,7 +273,7 @@ export class AppRuntimeWebSocketService implements OnDestroy {
     }
     this.socket = io(`${wsUrl}/applications`, {
       ...this.wsAuth.authOptions(),
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,

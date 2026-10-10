@@ -207,4 +207,45 @@ describe('application surface producer', () => {
     expect(json).not.toContain('sk_live_ABC123');
     expect(json).not.toContain('DATABASE_PASSWORD');
   });
+
+  describe('health checks on the monitoring tab', () => {
+    const checks = {
+      app_id: APP.id,
+      readiness: 3,
+      liveness: 1,
+      startup: 0,
+      restarts_by_liveness: 1,
+      last_failure_at: '2026-08-20T09:10:00.000Z',
+      read: true,
+    };
+    const tab = (snapshot: SurfaceSnapshot) => snapshot.scopes.find((s) => s.id.endsWith(':tab:monitoring'))!;
+    const tabObs = (snapshot: SurfaceSnapshot, key: string) => tab(snapshot).observations?.find((o) => o.key === key);
+
+    it('carries the counts as numbers while the monitoring tab is open', () => {
+      const snapshot = snapshotOf({ activeTab: 'monitoring', healthChecks: checks });
+      expectValidSurface(snapshot);
+      expect(tabObs(snapshot, 'flui.application.readiness_failures_1h')!.presentedAs.value).toBe(3);
+      expect(tabObs(snapshot, 'flui.application.restarts_by_liveness_1h')!.presentedAs.value).toBe(1);
+      expect(JSON.stringify(snapshot)).not.toContain('09:10');
+    });
+
+    it('carries the busy part of the readiness failures when the API sends it', () => {
+      const snapshot = snapshotOf({ activeTab: 'monitoring', healthChecks: { ...checks, readiness_busy: 2 } });
+      expectValidSurface(snapshot);
+      expect(tabObs(snapshot, 'flui.application.readiness_busy_1h')!.presentedAs.value).toBe(2);
+    });
+
+    it('says the checks could not be read instead of carrying zeros', () => {
+      const snapshot = snapshotOf({ activeTab: 'monitoring', healthChecks: { ...checks, readiness: 0, read: false } });
+      expect(tabObs(snapshot, 'flui.application.health_checks_read')!.presentedAs.value).toBe(false);
+      expect(tabObs(snapshot, 'flui.application.readiness_failures_1h')).toBeUndefined();
+    });
+
+    it('leaves them out on other tabs and for another application', () => {
+      expect(JSON.stringify(snapshotOf({ activeTab: 'overview', healthChecks: checks }))).not.toContain('readiness_failures');
+      expect(
+        JSON.stringify(snapshotOf({ activeTab: 'monitoring', healthChecks: { ...checks, app_id: 'other' } })),
+      ).not.toContain('readiness_failures');
+    });
+  });
 });

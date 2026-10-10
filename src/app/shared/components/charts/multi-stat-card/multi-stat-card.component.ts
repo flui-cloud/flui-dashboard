@@ -52,7 +52,10 @@ import {
 
             <!-- Value -->
             <div class="flex items-baseline gap-2">
-              <span class="text-2xl font-bold" [class]="getValueColor(stat)">
+              @if (statusDot(stat); as dot) {
+                <span class="h-2 w-2 shrink-0 self-center rounded-full" [class]="dot" data-testid="multi-stat-dot"></span>
+              }
+              <span class="text-2xl font-bold text-foreground">
                 {{ formatValue(stat.value) }}{{ stat.unit || '' }}
               </span>
 
@@ -160,35 +163,15 @@ export class MultiStatCardComponent {
     return value.toFixed(2);
   }
 
-  // Get value color based on severity
-  getValueColor(stat: StatItem): string {
-    if (!stat.severity) {
-      return 'text-foreground';
-    }
-
-    const severityColors = {
-      success: 'text-green-600 dark:text-green-400',
-      warning: 'text-orange-600 dark:text-orange-400',
-      danger: 'text-red-600 dark:text-red-400',
-      info: 'text-blue-600 dark:text-blue-400',
-      neutral: 'text-gray-600 dark:text-gray-400'
-    };
-
-    return severityColors[stat.severity] || 'text-foreground';
+  statusDot(stat: StatItem): string | null {
+    if (stat.severity === 'danger') return 'bg-destructive';
+    if (stat.severity === 'warning') return 'bg-amber-500';
+    return null;
   }
 
   // Get trend class
-  getTrendClass(trend: 'up' | 'down' | 'stable'): string {
-    switch (trend) {
-      case 'up':
-        return 'text-red-500';
-      case 'down':
-        return 'text-green-500';
-      case 'stable':
-        return 'text-gray-500';
-      default:
-        return 'text-gray-500';
-    }
+  getTrendClass(_trend: 'up' | 'down' | 'stable'): string {
+    return 'text-sub';
   }
 
   // Get trend icon

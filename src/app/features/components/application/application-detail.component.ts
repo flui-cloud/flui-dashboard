@@ -34,6 +34,7 @@ import {
 
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationMonitoringService } from '../../service/application-monitoring.service';
+import { AppHealthChecksService } from '../../service/app-health-checks.service';
 import { AppRuntimeService } from '../../service/app-runtime.service';
 import { CrashDiagnosesService } from '../../service/crash-diagnoses.service';
 import { AppRuntimeWebSocketService } from '../../service/app-runtime-websocket.service';
@@ -464,6 +465,7 @@ export class ApplicationDetailComponent implements OnDestroy {
   copiedId = signal(false);
   private readonly appService = inject(ApplicationService);
   protected monitoringService = inject(ApplicationMonitoringService);
+  private readonly healthChecksService = inject(AppHealthChecksService);
   protected runtimeService = inject(AppRuntimeService);
   protected diagnosesService = inject(CrashDiagnosesService);
   private readonly ws = inject(AppRuntimeWebSocketService);
@@ -638,6 +640,7 @@ export class ApplicationDetailComponent implements OnDestroy {
       diagnosesCount: this.diagnosesCount(),
       access: this.access(),
       activeTab: this.activeTab(),
+      healthChecks: this.healthChecksService.checks(),
     };
     const content = presentedContent(input);
     if (!content) return null;

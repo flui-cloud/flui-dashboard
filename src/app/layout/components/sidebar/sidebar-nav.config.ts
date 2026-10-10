@@ -3,8 +3,10 @@ import { SidebarNavItem } from '@dawit-io/spartan-sidebar';
 export const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
 
 export const MANAGEMENT_SECTION_BY_LABEL: Record<string, string> = {
+  Now: 'clusters',
   Providers: 'providers',
   Backup: 'backup',
+  'Image registry': 'providers',
   Migrations: 'backup',
   Mail: 'mail',
   'GitHub Setup': 'providers',
@@ -18,6 +20,7 @@ export const FULL_ACCESS_ONLY_LABELS: ReadonlySet<string> = new Set([
   'SSH Keys',
   'Platform',
   'GitHub Setup',
+  'Image registry',
 ]);
 
 export const INFRASTRUCTURE_SECTION_BY_LABEL: Record<string, string> = {
@@ -134,6 +137,13 @@ export const DEPLOY_ITEMS: SidebarNavItem[] = [
 
 export const ALL_MANAGEMENT_ITEMS: SidebarNavItem[] = [
   {
+    label: 'Now',
+    link: '/management/now',
+    routerLinkActive: 'active',
+    icon: 'lucideActivity',
+    keywords: ['launch', 'load', 'traffic', 'bandwidth', 'health', 'live'],
+  },
+  {
     label: 'Providers',
     link: '/management/providers',
     routerLinkActive: 'active',
@@ -146,6 +156,13 @@ export const ALL_MANAGEMENT_ITEMS: SidebarNavItem[] = [
     routerLinkActive: 'active',
     icon: 'lucideArchive',
     keywords: ['restore', 'snapshot', 'disaster recovery'],
+  },
+  {
+    label: 'Image registry',
+    link: '/management/registry',
+    routerLinkActive: 'active',
+    icon: 'lucideContainer',
+    keywords: ['images', 'registry', 'bucket', 'storage', 'space'],
   },
   {
     label: 'Migrations',

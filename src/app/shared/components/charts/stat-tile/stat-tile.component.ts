@@ -1,6 +1,8 @@
 import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideInfo } from '@ng-icons/lucide';
 import { SparkLineComponent } from '../spark-line/spark-line.component';
-import { StatTileData } from '../chart.models';
+import { StatTileData, StatTileNote } from '../chart.models';
 
 /**
  * Stat Tile Component
@@ -16,12 +18,24 @@ import { StatTileData } from '../chart.models';
 @Component({
   selector: 'app-stat-tile',
   standalone: true,
-  imports: [SparkLineComponent],
+  imports: [SparkLineComponent, NgIcon],
+  providers: [provideIcons({ lucideInfo })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface p-4 flex flex-col gap-2 h-full">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-sub">
+      <div class="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-sub">
         {{ data().label }}
+        @if (data().hint; as hint) {
+          <ng-icon
+            name="lucideInfo"
+            class="h-3 w-3 shrink-0 normal-case"
+            tabindex="0"
+            role="img"
+            data-testid="stat-tile-hint"
+            [attr.title]="hint"
+            [attr.aria-label]="hint"
+          />
+        }
       </div>
 
       <div class="flex items-baseline gap-1.5">
@@ -41,7 +55,39 @@ import { StatTileData } from '../chart.models';
         }
       </div>
 
-      <div class="flex items-end justify-between gap-2 mt-auto">
+      @for (note of data().notes ?? []; track note.text) {
+        @if (note.kind === 'chip') {
+          <span
+            class="self-start inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-sub"
+            data-testid="stat-tile-note"
+            [attr.title]="note.hint"
+          >
+            @if (note.tone !== 'muted') {
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full" [class]="dotClass(note.tone)" data-testid="stat-tile-note-dot"></span>
+            }
+            {{ note.text }}
+          </span>
+        } @else {
+          <p class="m-0 flex items-start gap-1.5 text-[11px] leading-snug text-sub" data-testid="stat-tile-note">
+            @if (note.tone !== 'muted') {
+              <span class="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full" [class]="dotClass(note.tone)" data-testid="stat-tile-note-dot"></span>
+            }
+            <span>{{ note.text }}</span>
+            @if (note.hint) {
+              <ng-icon
+                name="lucideInfo"
+                class="mt-px h-3 w-3 shrink-0"
+                tabindex="0"
+                role="img"
+                [attr.title]="note.hint"
+                [attr.aria-label]="note.hint"
+              />
+            }
+          </p>
+        }
+      }
+
+      <div class="mt-auto flex flex-col gap-1">
         @if (spark().length > 1) {
           <app-spark-line
             [values]="spark()"
@@ -50,11 +96,11 @@ import { StatTileData } from '../chart.models';
             [height]="30"
             [ariaLabel]="data().label + ': trend over the selected window'"
           />
-        } @else {
+        } @else if (data().spark !== undefined) {
           <span class="text-[10px] text-sub">no history yet</span>
         }
-        @if (data().footnote) {
-          <span class="text-[10px] text-sub whitespace-nowrap">{{ data().footnote }}</span>
+        @if (data().footnote; as footnote) {
+          <span class="truncate text-[10px] text-sub" [attr.title]="footnote" data-testid="stat-tile-footnote">{{ footnote }}</span>
         }
       </div>
     </div>
@@ -70,14 +116,9 @@ export class StatTileComponent {
   readonly spark = computed(() => this.data().spark ?? []);
   readonly color = computed(() => this.data().color ?? '#2259F1');
 
-  readonly deltaClass = computed(() => {
-    switch (this.data().deltaTone) {
-      case 'up':
-        return 'text-amber-600 dark:text-amber-400';
-      case 'down':
-        return 'text-green-600 dark:text-green-400';
-      default:
-        return 'text-muted-foreground';
-    }
-  });
+  readonly deltaClass = computed(() => 'text-sub');
+
+  dotClass(tone: StatTileNote['tone']): string {
+    return tone === 'bad' ? 'bg-destructive' : 'bg-amber-500';
+  }
 }

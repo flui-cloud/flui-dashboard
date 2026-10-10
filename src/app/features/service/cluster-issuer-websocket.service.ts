@@ -52,7 +52,7 @@ export class ClusterIssuerWebSocketService implements OnDestroy {
     const wsUrl = this.appConfig.wsUrl || globalThis.window.location.origin;
     this.socket = io(`${wsUrl}/clusters`, {
       ...this.wsAuth.authOptions(),
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,

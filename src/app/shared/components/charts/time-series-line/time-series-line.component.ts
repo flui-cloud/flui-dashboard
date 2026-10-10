@@ -145,6 +145,7 @@ export class TimeSeriesLineComponent implements OnDestroy {
     if (series.length > 0 && thresholdMarkLines.length > 0) {
       series[0].markLine = {
         silent: true,
+        symbol: 'none',
         data: thresholdMarkLines
       };
     }
@@ -328,11 +329,12 @@ export class TimeSeriesLineComponent implements OnDestroy {
         lineStyle: {
           color: DEFAULT_CHART_COLORS.warning[0],
           type: 'dashed',
-          width: 2
+          width: 1,
+          opacity: 0.6
         },
         label: {
           show: true,
-          position: 'end',
+          position: 'insideEndTop',
           formatter: 'Warning',
           color: DEFAULT_CHART_COLORS.warning[0],
           fontSize: 10
@@ -345,11 +347,12 @@ export class TimeSeriesLineComponent implements OnDestroy {
         lineStyle: {
           color: DEFAULT_CHART_COLORS.danger[0],
           type: 'dashed',
-          width: 2
+          width: 1,
+          opacity: 0.6
         },
         label: {
           show: true,
-          position: 'end',
+          position: 'insideEndTop',
           formatter: 'Danger',
           color: DEFAULT_CHART_COLORS.danger[0],
           fontSize: 10

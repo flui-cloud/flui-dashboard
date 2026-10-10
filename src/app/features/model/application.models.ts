@@ -31,6 +31,11 @@ export type { AppMetricsDataPointDto } from '../../core/api/model/appMetricsData
 export type { SingleAppMetricsResponseDto } from '../../core/api/model/singleAppMetricsResponseDto';
 export type { SingleAppMetricsHistoryResponseDto } from '../../core/api/model/singleAppMetricsHistoryResponseDto';
 
+export type AppHistoryPoint = AppMetricsDataPointDto & {
+  cpu_throttled_percent?: number;
+};
+
+import type { AppMetricsDataPointDto } from '../../core/api/model/appMetricsDataPointDto';
 import { ApplicationResponseDto } from '../../core/api/model/applicationResponseDto';
 import { ApplicationGroupDto } from '../../core/api/model/applicationGroupDto';
 

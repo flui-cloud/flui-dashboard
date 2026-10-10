@@ -30,12 +30,13 @@ import { AlertEvent } from '../../model/alert.models';
           <h3
             class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"
           >
-            <ng-icon name="lucideBell" class="text-blue-500" size="20" />
+            <ng-icon name="lucideBell" class="text-sub" size="20" />
             Alerts
             @if (firing() > 0) {
               <span
-                class="inline-flex items-center rounded-full bg-red-100 dark:bg-red-950/60 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-300"
+                class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-sub"
               >
+                <span class="h-1.5 w-1.5 rounded-full bg-destructive"></span>
                 {{ firing() }} firing
               </span>
             }
@@ -64,7 +65,7 @@ import { AlertEvent } from '../../model/alert.models';
         >
           <ng-icon
             name="lucideCircleCheck"
-            class="text-emerald-500 mx-auto mb-2"
+            class="text-sub mx-auto mb-2"
             size="24"
           />
           <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -130,10 +131,8 @@ export class AppAlertsSectionComponent {
     });
   }
 
-  protected rowClass(alert: AlertEvent): string {
-    return alert.status === 'firing'
-      ? 'border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30'
-      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800';
+  protected rowClass(_alert: AlertEvent): string {
+    return 'border-border bg-card';
   }
 
   protected rowIcon(alert: AlertEvent): string {
@@ -144,27 +143,16 @@ export class AppAlertsSectionComponent {
   }
 
   protected rowIconClass(alert: AlertEvent): string {
-    if (alert.status === 'resolved') return 'text-emerald-500';
+    if (alert.status === 'resolved') return 'text-sub';
     return alert.severity === 'critical' ? 'text-red-500' : 'text-amber-500';
   }
 
-  protected badgeClass(alert: AlertEvent): string {
-    const base =
-      'inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium';
-    return alert.status === 'firing'
-      ? `${base} bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300`
-      : `${base} bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300`;
+  protected badgeClass(_alert: AlertEvent): string {
+    return 'inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-sub';
   }
 
-  protected severityClass(alert: AlertEvent): string {
-    const base = 'inline-flex items-center rounded px-1.5 py-0.5 text-xs';
-    if (alert.severity === 'critical') {
-      return `${base} bg-red-100/70 dark:bg-red-950/40 text-red-600 dark:text-red-400`;
-    }
-    if (alert.severity === 'warning') {
-      return `${base} bg-amber-100/70 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400`;
-    }
-    return `${base} bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300`;
+  protected severityClass(_alert: AlertEvent): string {
+    return 'inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-xs text-sub';
   }
 
   protected statusLabel(alert: AlertEvent): string {

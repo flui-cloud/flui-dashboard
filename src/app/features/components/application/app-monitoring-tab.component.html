@@ -8,7 +8,7 @@
       <div class="flex items-center gap-2 mt-1">
         <p class="text-sm text-sub">
           @if (pollingPaused()) {
-            <span class="text-orange-600 dark:text-orange-400 font-medium">Auto-refresh paused</span>
+            <span class="font-medium text-foreground">Auto-refresh paused</span>
           } @else {
             Live values every 5 seconds · history over the {{ rangeLabel() }}
           }
@@ -43,13 +43,65 @@
         [attr.aria-label]="pollingPaused() ? 'Retry' : 'Refresh'"
         class="inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         [class]="pollingPaused() && canRetry()
-          ? 'border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+          ? 'border-border text-foreground hover:bg-muted'
           : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'"
       >
         <ng-icon name="lucideRefreshCw" [class.animate-spin]="isLoading()" class="h-3.5 w-3.5" />
       </button>
     </div>
   </div>
+
+  @if (capacityAdvice(); as advice) {
+    <div
+      class="flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3"
+      data-testid="capacity-advice"
+    >
+      <ng-icon
+        [name]="advice.tone === 'ok' ? 'lucideCircleCheck' : advice.tone === 'act' ? 'lucideTriangleAlert' : 'lucideHourglass'"
+        class="mt-0.5 h-4 w-4 shrink-0"
+        [class]="advice.tone === 'ok' ? 'text-green-600 dark:text-green-400' : advice.tone === 'act' ? 'text-amber-600 dark:text-amber-400' : 'text-sub'"
+      />
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="m-0 text-sm font-semibold text-foreground">{{ advice.title }}</p>
+          @if (advice.advice === 'add_replicas') {
+            <button
+              type="button"
+              class="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+              [disabled]="addingReplica()"
+              (click)="addReplica()"
+              data-testid="capacity-advice-apply"
+            >
+              Run {{ advice.desired + 1 }} copies
+            </button>
+          }
+        </div>
+        <p class="m-0 text-sm text-sub">{{ advice.sentence }}</p>
+        @if (advice.reasons.length || advice.next_copy) {
+          <button
+            type="button"
+            class="mt-1 text-xs font-medium text-sub hover:text-foreground hover:underline"
+            (click)="showAdviceWhy.set(!showAdviceWhy())"
+            data-testid="capacity-advice-why"
+            [attr.aria-expanded]="showAdviceWhy()"
+          >
+            {{ showAdviceWhy() ? 'Hide why' : 'Why' }}
+          </button>
+          @if (showAdviceWhy()) {
+            <ul class="mt-1 list-disc pl-4 text-xs text-sub" data-testid="capacity-advice-reasons">
+              @for (reason of advice.reasons; track reason) {
+                <li>{{ reason }}</li>
+              }
+              @if (advice.next_copy; as next) {
+                <li>{{ next.sentence }}</li>
+              }
+            </ul>
+            <p class="m-0 mt-1 text-[11px] text-sub">Judged on the last {{ advice.thresholds.window_minutes }} minutes.</p>
+          }
+        }
+      </div>
+    </div>
+  }
 
   <!-- Error message -->
   @if (error()) {
@@ -70,12 +122,10 @@
             <button
               (click)="selectPod(null)"
               class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors"
-              [class.bg-blue-600]="selectedPod() === null"
-              [class.text-white]="selectedPod() === null"
-              [class.bg-gray-100]="selectedPod() !== null"
-              [class.dark:bg-gray-700]="selectedPod() !== null"
-              [class.text-gray-700]="selectedPod() !== null"
-              [class.dark:text-gray-300]="selectedPod() !== null"
+              [class.bg-foreground]="selectedPod() === null"
+              [class.text-background]="selectedPod() === null"
+              [class.bg-muted]="selectedPod() !== null"
+              [class.text-sub]="selectedPod() !== null"
             >
               All replicas
               <span class="opacity-70">({{ availableReplicas().length }})</span>
@@ -85,12 +135,10 @@
               <button
                 (click)="selectPod(replica.pod)"
                 class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors"
-                [class.bg-blue-600]="selectedPod() === replica.pod"
-                [class.text-white]="selectedPod() === replica.pod"
-                [class.bg-gray-100]="selectedPod() !== replica.pod"
-                [class.dark:bg-gray-700]="selectedPod() !== replica.pod"
-                [class.text-gray-700]="selectedPod() !== replica.pod"
-                [class.dark:text-gray-300]="selectedPod() !== replica.pod"
+                [class.bg-foreground]="selectedPod() === replica.pod"
+                [class.text-background]="selectedPod() === replica.pod"
+                [class.bg-muted]="selectedPod() !== replica.pod"
+                [class.text-sub]="selectedPod() !== replica.pod"
               >
                 <span
                   class="inline-flex h-1.5 w-1.5 rounded-full shrink-0"
@@ -118,10 +166,10 @@
     }
 
     @if ((m.health?.unavailable_pods ?? 0) > 0) {
-      <div class="flex items-start gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
-        <ng-icon name="lucideTriangleAlert" class="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+      <div class="flex items-start gap-3 rounded-lg border border-border bg-card p-3">
+        <ng-icon name="lucideTriangleAlert" class="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
         <div class="min-w-0 text-sm">
-          <p class="m-0 font-medium text-orange-700 dark:text-orange-400">
+          <p class="m-0 font-medium text-foreground">
             {{ m.health!.unavailable_pods }} of {{ m.health!.total_pods }} pods unavailable
           </p>
           @if (m.health!.condition_message) {
@@ -131,7 +179,7 @@
       </div>
     }
 
-    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4" data-testid="app-metrics-summary">
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4" data-testid="app-metrics-summary">
       @for (tile of tiles(); track tile.label) {
         <app-stat-tile [data]="tile" [sparkWidth]="112" />
       }
@@ -261,23 +309,13 @@
                 </div>
                 <div>
                   <p class="text-gray-500 dark:text-gray-400">Restarts</p>
-                  <p class="font-medium"
-                    [class.text-gray-900]="(replica.status.restart_total ?? 0) === 0"
-                    [class.dark:text-gray-100]="(replica.status.restart_total ?? 0) === 0"
-                    [class.text-orange-600]="(replica.status.restart_total ?? 0) > 0"
-                    [class.dark:text-orange-400]="(replica.status.restart_total ?? 0) > 0"
-                  >
+                  <p class="font-medium text-foreground">
                     {{ replica.status.restart_total ?? 0 }}
                   </p>
                 </div>
                 <div>
                   <p class="text-gray-500 dark:text-gray-400">Last Hour</p>
-                  <p class="font-medium"
-                    [class.text-gray-900]="(replica.status.restart_rate_1h ?? 0) === 0"
-                    [class.dark:text-gray-100]="(replica.status.restart_rate_1h ?? 0) === 0"
-                    [class.text-red-600]="(replica.status.restart_rate_1h ?? 0) > 0"
-                    [class.dark:text-red-400]="(replica.status.restart_rate_1h ?? 0) > 0"
-                  >
+                  <p class="font-medium text-foreground">
                     {{ (replica.status.restart_rate_1h ?? 0).toFixed(1) }}
                   </p>
                 </div>

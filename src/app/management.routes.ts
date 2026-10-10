@@ -12,6 +12,14 @@ export const managementRoutes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'now',
+    loadComponent: () =>
+      import(
+        './features/components/installation-now/installation-now.component'
+      ).then((m) => m.InstallationNowComponent),
+    title: 'Now - flui.cloud',
+  },
+  {
     path: 'providers',
     loadComponent: () =>
       import(
@@ -63,6 +71,14 @@ export const managementRoutes: Routes = [
         './features/components/platform-updates/platform-updates.component'
       ).then((m) => m.PlatformUpdatesComponent),
     title: 'Updates - flui.cloud',
+  },
+  {
+    path: 'registry',
+    loadComponent: () =>
+      import(
+        './features/components/registry-storage/registry-storage.component'
+      ).then((m) => m.RegistryStorageComponent),
+    title: 'Image registry - flui.cloud',
   },
   {
     path: 'migrations',

@@ -76,7 +76,7 @@ export class InfrastructureWebSocketService implements OnDestroy {
 
     this.socket = io(`${wsUrl}/infrastructure`, {
       ...this.wsAuth.authOptions(),
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,

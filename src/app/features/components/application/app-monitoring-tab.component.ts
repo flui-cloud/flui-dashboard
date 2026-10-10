@@ -7,7 +7,9 @@ import {
   ChartPanelComponent,
   StatTileComponent,
   StatTileData,
+  StatTileNote,
   NODE_SERIES_COLORS,
+  DEFAULT_CHART_COLORS,
   TimeSeriesLineComponent,
   TimeSeriesChartData,
   TimeSeriesChartConfig,
@@ -22,9 +24,20 @@ import {
   TrafficRange,
 } from './app-traffic-section.component';
 import { AppAlertsSectionComponent } from './app-alerts-section.component';
-import type { SingleAppMetricsHistoryResponseDto } from '../../model/application.models';
+import type { AppHistoryPoint, SingleAppMetricsHistoryResponseDto } from '../../model/application.models';
+import { lastReadinessDip, throttleNotice } from './app-monitoring-history';
+import { AppHealthChecksService } from '../../service/app-health-checks.service';
+import { AppCapacityAdviceService, adviceView } from '../../service/app-capacity-advice.service';
+import { AppRuntimeService } from '../../service/app-runtime.service';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert, lucideHeartPulse } from '@ng-icons/lucide';
+import {
+  lucideRefreshCw,
+  lucideActivity,
+  lucideCircleCheck,
+  lucideTriangleAlert,
+  lucideHeartPulse,
+  lucideHourglass,
+} from '@ng-icons/lucide';
 
 type MonitoringTimeRange = '1h' | '2h' | '3h' | '6h' | '1d';
 
@@ -63,7 +76,7 @@ function sizedPair(extra: TimeSeriesChartConfig): SizedConfig {
     AppAlertsSectionComponent
 ],
   providers: [
-    provideIcons({ lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert, lucideHeartPulse }),
+    provideIcons({ lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert, lucideHeartPulse, lucideHourglass }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app-monitoring-tab.component.html',
@@ -73,6 +86,16 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
 
   readonly monitoring = inject(ApplicationMonitoringService);
   private readonly metricsApi = inject(ApplicationMetricsService);
+  private readonly healthChecks = inject(AppHealthChecksService);
+  private readonly capacity = inject(AppCapacityAdviceService);
+  private readonly runtime = inject(AppRuntimeService);
+  readonly addingReplica = this.runtime.savingReplicas;
+  readonly showAdviceWhy = signal(false);
+  readonly capacityAdvice = computed(() => {
+    const advice = this.capacity.advice();
+    const view = advice ? adviceView(advice.advice) : null;
+    return advice && view ? { ...advice, ...view } : null;
+  });
 
   protected appId(): string {
     return this.route.parent?.snapshot.paramMap.get('id') ?? '';
@@ -115,6 +138,10 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   readonly memoryHistory = this.memoryHistoryData.asReadonly();
   readonly networkHistory = this.networkHistoryData.asReadonly();
   readonly replicasHistory = this.replicasHistoryData.asReadonly();
+
+  private readonly historyPoints = signal<AppHistoryPoint[]>([]);
+  readonly throttledPercent = computed(() => throttleNotice(this.historyPoints()));
+  readonly lastDip = computed(() => lastReadinessDip(this.historyPoints()));
 
   readonly ranges = RANGES;
   readonly rangeLabel = computed(() => RANGES.find((r) => r.value === this.timeRange())?.long ?? '');
@@ -167,8 +194,8 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   readonly replicaStats = computed(() => {
     const s = this.monitoring.statusMetrics();
     return {
-      ready: s?.replicas_ready ?? 0,
-      desired: s?.replicas_desired ?? 0,
+      ready: s?.replicas_ready ?? null,
+      desired: s?.replicas_desired ?? null,
       unavailable: s?.replicas_unavailable ?? 0,
     };
   });
@@ -199,7 +226,7 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   });
   readonly replicasNow = computed(() => {
     const r = this.replicaStats();
-    return r.desired ? `${r.ready}/${r.desired}` : '';
+    return r.desired && r.ready != null ? `${r.ready}/${r.desired}` : '';
   });
 
   readonly tiles = computed<StatTileData[]>(() => {
@@ -224,6 +251,7 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
         spark: spark(this.cpuHistory()),
         color: NODE_SERIES_COLORS[0],
         footnote: `${this.formatCpu(cpu?.usage_cores ?? 0)} / ${this.formatCpu(cpu?.limits_cores ?? 0)}`,
+        ...(this.throttleNote() ? { notes: [this.throttleNote()!] } : {}),
       },
       {
         label: 'Memory',
@@ -235,18 +263,19 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
       },
       {
         label: 'Replicas',
-        value: `${replicas.ready}/${replicas.desired}`,
+        value: this.replicasValue(replicas.ready, replicas.desired),
         spark: spark(this.replicasHistory()),
         color: NODE_SERIES_COLORS[2],
-        footnote: replicas.unavailable > 0 ? `${replicas.unavailable} unavailable` : 'all ready',
+        footnote: this.replicasFootnote(replicas.ready, replicas.desired, replicas.unavailable),
+        ...(this.dipNote() ? { notes: [this.dipNote()!] } : {}),
       },
       {
         label: 'Restarts',
         value: String(restarts),
-        spark: [],
         color: NODE_SERIES_COLORS[3],
         footnote: `${restartsHour.toFixed(1)} last hour`,
       },
+      this.healthTile(),
       {
         label: 'Network',
         value: formatRate(netIn + netOut),
@@ -257,8 +286,91 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
     ];
   });
 
+  private readonly throttleNote = computed<StatTileNote | null>(() => {
+    const percent = this.throttledPercent();
+    return percent == null
+      ? null
+      : {
+          text: `Held back by its limit ${percent}% of the time`,
+          hint: 'The application wanted more CPU than its limit allows. More replicas spread the load; a higher limit only helps one copy.',
+        };
+  });
+
+  private readonly dipNote = computed<StatTileNote | null>(() => {
+    const at = this.lastDip();
+    return at
+      ? { text: 'Not ready at times', hint: `Last at ${this.formatDipTime(at)}`, kind: 'chip' }
+      : null;
+  });
+
+  private healthTile(): StatTileData {
+    const checks = this.healthChecks.checks();
+    const known = !!checks?.read;
+    const busy = checks?.readiness_busy ?? checks?.readiness ?? 0;
+    const idle = Math.max(0, (checks?.readiness ?? 0) - busy);
+    const notes: StatTileNote[] = [];
+    if (known && busy > 0) {
+      const last =
+        idle === 0 && checks!.last_failure_at ? ` · last at ${this.formatClock(checks!.last_failure_at)}` : '';
+      notes.push({ text: `Too busy to answer ${busy} ${this.times(busy)}${last}` });
+    }
+    if (known && checks!.restarts_by_liveness > 0) {
+      notes.push({
+        text: `Restarted ${checks!.restarts_by_liveness} ${this.times(checks!.restarts_by_liveness)} by its liveness check`,
+        tone: 'bad',
+      });
+    }
+    return {
+      label: 'Health checks',
+      value: known ? String(busy) : '—',
+      color: NODE_SERIES_COLORS[1],
+      footnote: known ? this.healthFootnote(idle) : 'not read',
+      hint: 'A copy too busy to answer its readiness check stops receiving traffic; with no other copy ready, visitors get errors. More replicas keep the route open. A copy starting or stopping does not answer either: that is counted apart.',
+      ...(notes.length ? { notes } : {}),
+    };
+  }
+
+  private healthFootnote(idle: number): string {
+    return idle > 0 ? `too busy, last hour · ${idle} while starting` : 'too busy, last hour';
+  }
+
+  private times(n: number): string {
+    return n === 1 ? 'time' : 'times';
+  }
+
+  private formatClock(iso: string): string {
+    return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  private replicasValue(ready: number | null, desired: number | null): string {
+    return ready == null || desired == null ? '—' : `${ready}/${desired}`;
+  }
+
+  private replicasFootnote(ready: number | null, desired: number | null, unavailable: number): string {
+    if (ready == null || desired == null) return 'no data';
+    if (unavailable > 0) return `${unavailable} unavailable`;
+    if (desired === 0) return 'none running';
+    return ready >= desired ? 'all ready' : `${desired - ready} not ready`;
+  }
+
+  private formatDipTime(iso: string): string {
+    return new Date(iso).toLocaleString('en-US', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+    });
+  }
+
+  async addReplica(): Promise<void> {
+    const advice = this.capacity.advice();
+    if (advice?.advice !== 'add_replicas') return;
+    if (await this.runtime.updateReplicas(this.appId(), { replicas: advice.desired + 1 })) {
+      await this.capacity.load();
+    }
+  }
+
   ngOnInit(): void {
     this.monitoring.startPolling(this.appId());
+    this.healthChecks.start(this.appId());
+    this.capacity.start(this.appId());
     this.loadMetricsHistory();
     this.unsubscribeAlerts = this.userEvents.onAlert((event) => {
       if (event.applicationId === this.appId()) {
@@ -269,6 +381,8 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.monitoring.stopPolling();
+    this.healthChecks.stop();
+    this.capacity.stop();
     this.unsubscribeAlerts?.();
     this.unsubscribeAlerts = null;
   }
@@ -322,19 +436,24 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   }
 
   private transformHistoryData(response: SingleAppMetricsHistoryResponseDto): void {
-    if (!response.data_points || response.data_points.length === 0) return;
+    const dp: AppHistoryPoint[] = response.data_points ?? [];
+    this.historyPoints.set(dp);
+    if (dp.length === 0) return;
 
-    const dp = response.data_points;
-
-    // CPU chart
     const cpuSeries: TimeSeriesSeries[] = [{
-      name: 'CPU %',
+      name: 'Used',
       data: dp
         .filter(p => p.cpu_utilization_percent != null)
         .map(p => ({ timestamp: new Date(p.datetime), value: p.cpu_utilization_percent! })),
       smooth: true,
       color: '#3b82f6',
     }];
+    const throttled = dp
+      .filter(p => p.cpu_throttled_percent != null)
+      .map(p => ({ timestamp: new Date(p.datetime), value: p.cpu_throttled_percent! }));
+    if (throttled.length > 0) {
+      cpuSeries.push({ name: 'Throttled', data: throttled, smooth: true, color: DEFAULT_CHART_COLORS.warning[0] });
+    }
     this.cpuHistoryData.set({ title: 'CPU Usage History', series: cpuSeries });
 
     // Memory chart

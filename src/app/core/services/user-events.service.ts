@@ -65,7 +65,7 @@ export class UserEventsService implements OnDestroy {
 
     this.socket = io(`${wsUrl}/user`, {
       ...this.wsAuth.authOptions(),
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 10000,
