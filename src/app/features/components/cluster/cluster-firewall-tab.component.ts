@@ -20,6 +20,7 @@ import { ReconciliationStatusBadgeComponent } from '../firewall/reconciliation-s
 import { DriftIndicatorComponent } from '../firewall/drift-indicator.component';
 import { ClusterHostLayerComponent } from './cluster-host-layer.component';
 import { hostLayerOf } from '../../model/firewall-v2.models';
+import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.component';
 
 @Component({
   selector: 'cluster-firewall-tab',
@@ -29,7 +30,8 @@ import { hostLayerOf } from '../../model/firewall-v2.models';
     NgIconComponent,
     ReconciliationStatusBadgeComponent,
     DriftIndicatorComponent,
-    ClusterHostLayerComponent
+    ClusterHostLayerComponent,
+    ClusterEgressCardComponent,
 ],
   providers: [
     provideIcons({
@@ -43,8 +45,15 @@ import { hostLayerOf } from '../../model/firewall-v2.models';
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
+    <div class="space-y-4">
     <div class="card-surface p-6">
-      <div class="flex items-center justify-end mb-6">
+      <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+        <div class="min-w-0">
+          <h3 class="m-0 text-sm font-semibold text-foreground">Machines</h3>
+          <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
+            Traffic to and from the cluster's servers. It covers everything on them, the platform included.
+          </p>
+        </div>
         @if (clusterFirewall()) {
           <button
             (click)="navigateToFirewallManagement()"
@@ -176,7 +185,7 @@ import { hostLayerOf } from '../../model/firewall-v2.models';
             <p class="text-xs text-sub">
               Host firewall (nftables over SSH). SSH :22 stays always-open (CA-protected);
               ports 80 &amp; 443 are required and can't be removed (only IP-allowlisted);
-              outbound traffic is not restricted.
+              the machines' outbound traffic is not restricted.
             </p>
           }
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -293,8 +302,8 @@ import { hostLayerOf } from '../../model/firewall-v2.models';
           }
           <p class="text-sm text-sub">
             Ports 80 and 443 must stay open (HTTPS ingress + ACME cert renewal) and
-            can't be removed — only IP-allowlisted. Outbound traffic is not restricted
-            (egress stays open).
+            can't be removed — only IP-allowlisted. The machines' outbound traffic is
+            not restricted.
           </p>
           @if (enableError()) {
             <p class="text-sm text-red-600 dark:text-red-400">{{ enableError() }}</p>
@@ -306,6 +315,8 @@ import { hostLayerOf } from '../../model/firewall-v2.models';
           <p class="text-sm text-sub">No firewall configuration found for this cluster.</p>
         </div>
       }
+    </div>
+    <app-cluster-egress-card class="block" [clusterId]="clusterId()" />
     </div>
   `,
 })

@@ -93,6 +93,7 @@
         } @else {
           <p class="text-sub">No firewall configured</p>
         }
+        <app-cluster-egress-line [clusterId]="cluster()?.id ?? null" />
         <a [routerLink]="['../firewall']" class="card-link">
           Manage firewall <ng-icon name="lucideArrowRight" class="h-3 w-3" />
         </a>
@@ -366,6 +367,5 @@
 
   @if (cluster(); as mc) {
     <app-cluster-maintenance-card [clusterId]="mc.id ?? null" />
-    <app-cluster-egress-card [clusterId]="mc.id ?? null" />
   }
 </div>

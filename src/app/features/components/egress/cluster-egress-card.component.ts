@@ -3,18 +3,21 @@ import { FormsModule } from '@angular/forms';
 import { CanDirective } from '../../../core/directives/can.directive';
 import { EgressChange, EgressService, EgressView, formatEgressPorts, parseEgressPorts } from '../../service/egress.service';
 
-/** Which ports applications on a cluster may reach outside it. */
+/** Which ports applications on a cluster may reach outside it — not the machines, which the firewall above covers. */
 @Component({
   selector: 'app-cluster-egress-card',
   standalone: true,
   imports: [FormsModule, CanDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="card-surface space-y-3 p-4" data-testid="cluster-egress">
+    <section class="card-surface space-y-3 p-6" data-testid="cluster-egress">
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div class="min-w-0">
-          <h3 class="m-0 text-sm font-semibold text-foreground">Outbound ports</h3>
-          <p class="m-0 mt-0.5 text-[13px] text-muted-foreground" data-testid="egress-summary">{{ reading()?.summary ?? 'Reading…' }}</p>
+          <h3 class="m-0 text-sm font-semibold text-foreground">Applications' outbound traffic</h3>
+          <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
+            Which ports your applications can reach outside the cluster. The platform's own services are not affected.
+          </p>
+          <p class="m-0 mt-1.5 text-[13px] text-foreground" data-testid="egress-summary">{{ reading()?.summary ?? 'Reading…' }}</p>
         </div>
         @if (!editing() && reading()) {
           <div class="flex gap-2" *fluiCan="'egress:manage'">

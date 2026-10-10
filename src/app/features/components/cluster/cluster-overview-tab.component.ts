@@ -33,7 +33,7 @@ import { AutoscaleWarningBannerComponent } from './autoscale-warning-banner.comp
 import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
 import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-backups-modal.component';
 import { ClusterMaintenanceCardComponent } from '../maintenance/cluster-maintenance-card.component';
-import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.component';
+import { ClusterEgressLineComponent } from '../egress/cluster-egress-line.component';
 import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 import { ClusterOverviewNodesCardComponent } from './cluster-overview-nodes-card.component';
 import { meterBarClass } from './cluster-overview-nodes';
@@ -43,7 +43,7 @@ import { meterBarClass } from './cluster-overview-nodes';
   standalone: true,
   imports: [MaskIdPipe, ClusterOverviewNodesCardComponent,
     ClusterMaintenanceCardComponent,
-    ClusterEgressCardComponent,
+    ClusterEgressLineComponent,
     RouterModule, NgIconComponent, AutoscaleWarningBannerComponent, AttachVNetDialogComponent, EnableBackupsModalComponent],
   providers: [
     provideIcons({
