@@ -9,7 +9,12 @@ import {
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideInfo, lucideRefreshCw } from '@ng-icons/lucide';
+import {
+  lucideChevronLeft,
+  lucideChevronRight,
+  lucideInfo,
+  lucideRefreshCw,
+} from '@ng-icons/lucide';
 import {
   HlmCardDirective,
   HlmCardContentDirective,
@@ -25,6 +30,11 @@ import {
   isAuditEmail,
 } from '../../model/audit.model';
 
+const PAGE_SIZE = 50;
+
+const PAGE_BUTTON_CLASS =
+  'inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:pointer-events-none';
+
 const INPUT_CLASS =
   'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
@@ -37,7 +47,14 @@ const INPUT_CLASS =
     HlmCardContentDirective,
     AuditEventListComponent,
   ],
-  providers: [provideIcons({ lucideInfo, lucideRefreshCw })],
+  providers: [
+    provideIcons({
+      lucideChevronLeft,
+      lucideChevronRight,
+      lucideInfo,
+      lucideRefreshCw,
+    }),
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div hlmCard>
@@ -95,6 +112,21 @@ const INPUT_CLASS =
           <p class="text-sm text-muted-foreground py-4">The activity record could not be read.</p>
         } @else {
           <app-audit-event-list [events]="events()" emptyText="Nothing recorded for these filters." />
+          @if (page() > 0 || hasOlder()) {
+            <div class="flex items-center justify-between gap-3 pt-1">
+              <span class="text-xs text-muted-foreground">{{ range() }}</span>
+              <div class="flex items-center gap-2">
+                <button type="button" [class]="pageButtonClass" [disabled]="page() === 0" (click)="newer()">
+                  <ng-icon name="lucideChevronLeft" class="h-3.5 w-3.5" />
+                  Newer
+                </button>
+                <button type="button" [class]="pageButtonClass" [disabled]="!hasOlder()" (click)="older()">
+                  Older
+                  <ng-icon name="lucideChevronRight" class="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          }
         }
       </div>
     </div>
@@ -105,6 +137,7 @@ export class ActivityTabComponent {
   private readonly maskMode = inject(MaskModeService);
 
   protected readonly inputClass = INPUT_CLASS;
+  protected readonly pageButtonClass = PAGE_BUTTON_CLASS;
   protected readonly periods: AuditPeriod[] = ['24h', '7d', '30d'];
   protected readonly periodLabels = AUDIT_PERIOD_LABELS;
 
@@ -115,6 +148,13 @@ export class ActivityTabComponent {
   readonly refusedOnly = signal(false);
 
   readonly events = signal<AuditEvent[]>([]);
+  readonly hasOlder = signal(false);
+  private readonly cursors = signal<(string | undefined)[]>([undefined]);
+  readonly page = computed(() => this.cursors().length - 1);
+  readonly range = computed(() => {
+    const first = this.page() * PAGE_SIZE + 1;
+    return `${first}–${first + this.events().length - 1}`;
+  });
   readonly loading = signal(false);
   readonly error = signal(false);
 
@@ -128,7 +168,6 @@ export class ActivityTabComponent {
     period: this.period(),
     dataAccessOnly: this.dataOnly(),
     refusedOnly: this.refusedOnly(),
-    limit: 200,
   }));
 
   private sub?: Subscription;
@@ -139,6 +178,7 @@ export class ActivityTabComponent {
       const invalid = this.emailInvalid();
       this.maskMode.enabled();
       untracked(() => {
+        this.cursors.set([undefined]);
         if (!invalid) this.load(filter);
       });
     });
@@ -148,17 +188,33 @@ export class ActivityTabComponent {
     if (!this.emailInvalid()) this.load(this.filter());
   }
 
+  older(): void {
+    const last = this.events().at(-1);
+    if (!last || !this.hasOlder()) return;
+    this.cursors.update((c) => [...c, last.id]);
+    this.load(this.filter());
+  }
+
+  newer(): void {
+    if (this.page() === 0) return;
+    this.cursors.update((c) => c.slice(0, -1));
+    this.load(this.filter());
+  }
+
   private load(filter: AuditFilter): void {
     this.sub?.unsubscribe();
     this.loading.set(true);
     this.error.set(false);
-    this.sub = this.audit.list(filter).subscribe({
+    const before = this.cursors().at(-1);
+    this.sub = this.audit.list({ ...filter, before, limit: PAGE_SIZE + 1 }).subscribe({
       next: (rows) => {
-        this.events.set(rows);
+        this.events.set(rows.slice(0, PAGE_SIZE));
+        this.hasOlder.set(rows.length > PAGE_SIZE);
         this.loading.set(false);
       },
       error: () => {
         this.events.set([]);
+        this.hasOlder.set(false);
         this.error.set(true);
         this.loading.set(false);
       },

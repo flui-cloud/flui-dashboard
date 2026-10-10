@@ -15,6 +15,7 @@ describe('toAuditParams', () => {
           period: '24h',
           dataAccessOnly: true,
           refusedOnly: true,
+          before: 'e50',
           limit: 20,
         },
         now,
@@ -24,6 +25,7 @@ describe('toAuditParams', () => {
       since: '2026-09-27T12:00:00.000Z',
       dataAccess: 'true',
       outcome: 'refused',
+      before: 'e50',
       limit: '20',
     });
   });

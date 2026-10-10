@@ -58,6 +58,11 @@ describe('ActivityTabComponent', () => {
     fixture.detectChanges();
   };
 
+  const button = (label: string) =>
+    (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]).find(
+      (b) => b.textContent?.trim() === label,
+    );
+
   const tick = (id: string) => {
     (fixture.nativeElement.querySelector(`#${id}`) as HTMLInputElement).click();
     fixture.detectChanges();
@@ -69,7 +74,8 @@ describe('ActivityTabComponent', () => {
       period: '7d',
       dataAccessOnly: false,
       refusedOnly: false,
-      limit: 200,
+      before: undefined,
+      limit: 51,
     });
   });
 
@@ -83,7 +89,8 @@ describe('ActivityTabComponent', () => {
       period: '24h',
       dataAccessOnly: true,
       refusedOnly: true,
-      limit: 200,
+      before: undefined,
+      limit: 51,
     });
   });
 
@@ -100,6 +107,64 @@ describe('ActivityTabComponent', () => {
     expect(text()).toContain('id=a1');
     expect(text()).toContain('refused');
     expect(text()).toContain('data');
+  });
+
+  it('shows no page controls when everything fits on one page', () => {
+    expect(button('Older')).toBeUndefined();
+    expect(button('Newer')).toBeUndefined();
+  });
+
+  describe('when there are more records than one page', () => {
+    const rows = (from: number, n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        id: `r${from + i}`,
+        at: new Date().toISOString(),
+        userId: null,
+        email: null,
+        actorKind: 'system',
+        actorKeyId: null,
+        action: 'ssh certificate issued',
+        target: null,
+        status: null,
+        outcome: 'ok',
+        permission: null,
+        dataAccess: false,
+      }));
+
+    beforeEach(() => {
+      list.and.callFake((f: { before?: string }) =>
+        of(f.before === 'r50' ? rows(51, 10) : rows(1, 51)),
+      );
+      fixture.componentInstance.reload();
+      fixture.detectChanges();
+    });
+
+    it('shows one page and asks the server for the next one after its last record', () => {
+      expect(text()).toContain('1–50');
+      expect(button('Newer')!.disabled).toBeTrue();
+      button('Older')!.click();
+      fixture.detectChanges();
+      expect(last().before).toBe('r50');
+      expect(text()).toContain('51–60');
+      expect(button('Older')!.disabled).toBeTrue();
+    });
+
+    it('goes back to the newer page', () => {
+      button('Older')!.click();
+      fixture.detectChanges();
+      button('Newer')!.click();
+      fixture.detectChanges();
+      expect(last().before).toBeUndefined();
+      expect(text()).toContain('1–50');
+    });
+
+    it('starts again from the newest records when a filter changes', () => {
+      button('Older')!.click();
+      fixture.detectChanges();
+      tick('act-refused');
+      expect(last().before).toBeUndefined();
+      expect(last().refusedOnly).toBeTrue();
+    });
   });
 
   it('keeps the explanation behind a button', () => {

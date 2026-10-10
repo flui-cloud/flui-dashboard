@@ -69,6 +69,7 @@ export function toAuditParams(
     params['since'] = new Date(now - PERIOD_MS[f.period]).toISOString();
   if (f.dataAccessOnly) params['dataAccess'] = 'true';
   if (f.refusedOnly) params['outcome'] = 'refused';
+  if (f.before) params['before'] = f.before;
   if (f.limit) params['limit'] = String(f.limit);
   return params;
 }

@@ -24,6 +24,7 @@ export interface AuditFilter {
   dataAccessOnly?: boolean;
   refusedOnly?: boolean;
   period?: AuditPeriod;
+  before?: string;
   limit?: number;
 }
 
