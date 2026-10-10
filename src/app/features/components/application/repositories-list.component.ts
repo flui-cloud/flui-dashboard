@@ -347,7 +347,7 @@ import {
             }
           </div>
 
-          @if (setupStatus()?.authMethod === 'github_app') {
+          @if (setupStatus()?.authMethod === 'github_app' && setupStatus()?.imageRegistry !== 'flui') {
             <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
               <div class="flex items-center gap-3 min-w-0">
                 <ng-icon name="lucideKey" class="h-5 w-5 text-slate-500 dark:text-slate-400" />

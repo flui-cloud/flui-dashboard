@@ -16,6 +16,7 @@ import {
 import { GitHubOAuthService } from '../../../core/api/api/gitHubOAuth.service';
 import { GitHubSetupStatusResponseDto } from '../../../core/api/model/gitHubSetupStatusResponseDto';
 import { GithubAppOAuthService } from '../../../core/services/github-app-oauth.service';
+import { SandboxService } from '../../../core/services/sandbox.service';
 import { firstValueFrom } from 'rxjs';
 
 const REQUIRED_SCOPES = ['repo', 'write:packages', 'user:email', 'admin:repo_hook', 'workflow'];
@@ -175,6 +176,9 @@ interface ScopeCheckResult {
               Create classic token with all scopes
               <ng-icon name="lucideExternalLink" size="12" />
             </a>
+            @if (sandbox.inSandbox() && sandbox.whyFor('repositories'); as trialNote) {
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ trialNote }}</p>
+            }
           </div>
 
           @if (error()) {
@@ -210,6 +214,7 @@ export class GithubConnectComponent {
 
   private readonly gitHubOAuthApi = inject(GitHubOAuthService);
   private readonly githubAppOAuth = inject(GithubAppOAuthService);
+  protected readonly sandbox = inject(SandboxService);
 
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);

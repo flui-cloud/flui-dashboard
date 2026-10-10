@@ -245,7 +245,7 @@ export class RepositoryService {
       this.githubSetupRefused.set(false);
       return status;
     } catch (error: any) {
-      const fallback: GitHubSetupStatusResponseDto = { configured: false, authMethod: null };
+      const fallback: GitHubSetupStatusResponseDto = { configured: false, authMethod: null, imageRegistry: 'ghcr' };
       this.githubSetupStatus.set(fallback);
       this.githubSetupRefused.set(isSandboxRefusal(error));
       return fallback;

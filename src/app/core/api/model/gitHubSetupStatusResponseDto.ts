@@ -22,6 +22,10 @@ export interface GitHubSetupStatusResponseDto {
      * GitHub App slug — use to build the install URL: https://github.com/apps/{appSlug}/installations/new
      */
     appSlug?: string;
+    /**
+     * Where builds push their images: \"ghcr\" (each owner\'s GitHub Container Registry, which needs a GitHub token to pull) or \"flui\" (the registry this instance runs, which needs no GitHub token for images).
+     */
+    imageRegistry: GitHubSetupStatusResponseDto.ImageRegistryEnum;
 }
 export namespace GitHubSetupStatusResponseDto {
     export const AuthMethodEnum = {
@@ -29,6 +33,11 @@ export namespace GitHubSetupStatusResponseDto {
         GithubApp: 'github_app'
     } as const;
     export type AuthMethodEnum = typeof AuthMethodEnum[keyof typeof AuthMethodEnum];
+    export const ImageRegistryEnum = {
+        Ghcr: 'ghcr',
+        Flui: 'flui'
+    } as const;
+    export type ImageRegistryEnum = typeof ImageRegistryEnum[keyof typeof ImageRegistryEnum];
 }
 
 

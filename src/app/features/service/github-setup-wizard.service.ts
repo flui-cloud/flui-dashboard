@@ -208,7 +208,7 @@ export class GithubSetupWizardService {
       await firstValueFrom(
         this.gitHubSetupApi.gitHubSetupControllerResetConfig(),
       );
-      this.configuredStatus.set({ configured: false, authMethod: null });
+      this.configuredStatus.set({ configured: false, authMethod: null, imageRegistry: 'ghcr' });
       this.patValidation.set(null);
       return true;
     } catch (err: any) {
