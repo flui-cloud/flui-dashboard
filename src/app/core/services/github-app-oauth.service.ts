@@ -27,6 +27,8 @@ export interface PackagesPatStatus {
   lastVerifiedAt?: string | null;
   githubLogin?: string;
   scopes?: string[];
+  /** False when the instance keeps built images in its own registry. */
+  needed?: boolean;
 }
 
 export type CredentialKind = 'GITHUB_APP' | 'GITHUB_PAT' | 'GHCR_PAT' | 'PROVIDER';
@@ -58,6 +60,12 @@ export class GithubAppOAuthService {
   async getInstallUrl(): Promise<InstallUrlResponse> {
     return firstValueFrom(
       this.http.get<InstallUrlResponse>(`${this.base()}/install-url`),
+    );
+  }
+
+  async claim(claim: string): Promise<{ login: string; installationId: string | null }> {
+    return firstValueFrom(
+      this.http.post<{ login: string; installationId: string | null }>(`${this.base()}/claim`, { claim }),
     );
   }
 

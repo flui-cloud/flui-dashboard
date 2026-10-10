@@ -135,17 +135,27 @@ export class GithubInstalledComponent implements OnInit {
         return;
       }
   
-      if (status !== 'connected') {
+      const claim = params.get('claim');
+      if (claim) {
+        try {
+          const connected = await this.oauthApi.claim(claim);
+          this.login.set(connected.login);
+        } catch (err: unknown) {
+          this.state.set('error');
+          this.errorLabel.set(this.claimError(err));
+          return;
+        }
+      } else if (status === 'connected') {
+        this.login.set(params.get('login'));
+      } else {
         this.state.set('error');
         this.errorLabel.set('Unexpected response from GitHub.');
         return;
       }
   
-      this.login.set(params.get('login'));
-  
       try {
         const patStatus = await this.oauthApi.getPackagesPatStatus();
-        if (patStatus.configured) {
+        if (patStatus.configured || patStatus.needed === false) {
           this.state.set('success');
           setTimeout(() => this.goToRepositories(), 2000);
         } else {
@@ -167,6 +177,13 @@ export class GithubInstalledComponent implements OnInit {
 
   goToRepositories(): void {
     this.router.navigate(['/apps/repositories']);
+  }
+
+  private claimError(err: unknown): string {
+    const status = (err as { status?: number })?.status;
+    if (status === 403) return 'This GitHub link was started from another account. Start the connection again from your own.';
+    if (status === 400) return 'The connection expired or was already finished. Please start it again.';
+    return 'We could not complete the GitHub connection.';
   }
 
   private friendlyError(code: string): string {
