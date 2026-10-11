@@ -1,3 +1,4 @@
+import { SandboxService } from '../../core/services/sandbox.service';
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -166,6 +167,7 @@ const POLL_INTERVAL_MS = 3000;
 export class PlatformUpdateService {
   private readonly http = inject(HttpClient);
   private readonly appConfig = inject(AppConfigService);
+  private readonly sandbox = inject(SandboxService);
 
   private readonly statusData = signal<PlatformUpdateStatus | null>(null);
   private readonly operationData = signal<PlatformUpdateOperation | null>(null);
@@ -225,6 +227,8 @@ export class PlatformUpdateService {
   async ensureLoaded(): Promise<void> {
     if (this.loaded) return;
     this.loaded = true;
+    // Updating the platform is the operator's; a demo guest is never asked.
+    if (await this.sandbox.whenKnown()) return;
     await this.refresh();
   }
 

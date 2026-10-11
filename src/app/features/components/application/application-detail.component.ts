@@ -1,3 +1,4 @@
+import { ExplainComponent } from '../../../shared/components/explain.component';
 import { Component, OnDestroy, inject, signal, computed, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -72,7 +73,7 @@ interface TabItem {
 @Component({
   selector: 'app-application-detail',
   standalone: true,
-  imports: [MaskIdPipe, RouterModule, NgIconComponent],
+  imports: [MaskIdPipe, RouterModule, NgIconComponent, ExplainComponent],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -217,11 +218,13 @@ interface TabItem {
             <div>
               <div class="flex items-center gap-3">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-                  {{ app.name }}
+                  {{ title() ?? app.name }}
                 </h1>
-                <span [class]="getBadgeCategory(app.category)">
-                  {{ getCategoryDisplayLabel(app.category) }}
-                </span>
+                @if (!access()?.showcase) {
+                  <span [class]="getBadgeCategory(app.category)">
+                    {{ getCategoryDisplayLabel(app.category) }}
+                  </span>
+                }
               </div>
               <div class="flex items-center gap-3 mt-2">
                 <span [class]="getBadgeStatus(app.status)">
@@ -249,7 +252,8 @@ interface TabItem {
 
           <!-- Quick actions toolbar -->
           <div class="flex items-center gap-1 mt-1 flex-shrink-0">
-            @let pending = runtimeService.runtime()?.restartPending;
+@if (!access()?.readOnly) {
+                        @let pending = runtimeService.runtime()?.restartPending;
             <button
               (click)="onRollingRestart(app.id)"
               [disabled]="runtimeService.savingRestart() || !canRestart(app.status) || !!restartOff()"
@@ -270,6 +274,7 @@ interface TabItem {
                 Restart
               }
             </button>
+            }
           </div>
         </div>
 
@@ -351,17 +356,15 @@ interface TabItem {
         @if (access(); as acc) {
           @if (acc.showcase) {
             <div
-              class="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-200"
+              role="note"
+              class="mb-4 inline-flex max-w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground"
             >
-              <span class="font-medium">
-                A Flui project@if (acc.readOnly) { — read-only for you}.
-              </span>
-              <span class="opacity-80">
+              <app-explain [label]="acc.readOnly ? 'A Flui project · read-only' : 'A Flui project'" labelClass="text-[13px] font-medium text-foreground" floating>
                 We run this one ourselves and leave it on display.
                 @if (acc.readOnly) {
                   Everything else you can see in this instance is only yours.
                 }
-              </span>
+              </app-explain>
             </div>
           } @else if (acc.readOnly) {
             <div
@@ -526,6 +529,14 @@ export class ApplicationDetailComponent implements OnDestroy {
       const app = this.application();
       if (app) this.lastKnownList.set(workloadListOf(app));
     });
+    // A tab the caller may not open, reached by its address, lands on the overview instead of a refusal.
+    effect(() => {
+      const tab = this.activeTab();
+      const access = this.access();
+      if (tab && tab !== 'overview' && access && !allowsTab(access, tab)) {
+        void this.router.navigate(['overview'], { relativeTo: this.route, replaceUrl: true });
+      }
+    });
 
     effect(() => {
       if (this._appWasLoaded() && !this.application() && !this.isLoading()) {
@@ -562,6 +573,7 @@ export class ApplicationDetailComponent implements OnDestroy {
 
     try {
       await this.appService.getApplication(id);
+      if (this.appService.applications().length === 0) void this.appService.loadApplications();
       this._appWasLoaded.set(true);
       this.monitoringService.startPolling(id);
       this.pollingAppId = id;
@@ -629,6 +641,19 @@ export class ApplicationDetailComponent implements OnDestroy {
   });
 
   readonly access = computed(() => accessOf(this.application()));
+
+  /**
+   * In the showcase an application is named after what it is part of — "Live
+   * Activity", not the slug its install generated. Elsewhere the name stands.
+   */
+  protected readonly title = computed(() => {
+    const app = this.application();
+    if (!app || !this.access()?.showcase) return null;
+    const group = this.appService.applicationGroups().find((g) => g.components.some((c) => c.id === app.id));
+    if (!group || group.components.length < 2) return null;
+    const part = (app.metadata as { composedComponent?: unknown } | undefined)?.composedComponent;
+    return group.primaryComponentId === app.id || typeof part !== 'string' ? group.name : `${group.name} · ${part}`;
+  });
 
   private readonly surfaceRevision = new ApplicationSurfaceRevision();
 

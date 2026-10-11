@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { EgressService, EgressView, formatEgressPorts } from '../../service/egress.service';
 
-/** One line in the cluster summary, shown only when applications' outbound traffic is limited. */
+/** One line in the cluster summary: shown when outbound traffic is limited, or always with `sayOpen`. */
 @Component({
   selector: 'app-cluster-egress-line',
   standalone: true,
@@ -12,12 +12,17 @@ import { EgressService, EgressView, formatEgressPorts } from '../../service/egre
         <p class="m-0 mt-2 text-xs text-sub" data-testid="cluster-egress-line">
           Applications reach only {{ portsOf(r) }} outside the cluster.
         </p>
+      } @else if (sayOpen()) {
+        <p class="m-0 mt-2 text-xs text-sub" data-testid="cluster-egress-line">
+          Applications may reach any port outside the cluster.
+        </p>
       }
     }
   `,
 })
 export class ClusterEgressLineComponent {
   readonly clusterId = input<string | null>(null);
+  readonly sayOpen = input(false);
   private readonly api = inject(EgressService);
   protected readonly reading = signal<EgressView | null>(null);
 

@@ -1,3 +1,4 @@
+import { SandboxService } from '../../../core/services/sandbox.service';
 import { Component, computed, inject, input, signal, viewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -92,6 +93,7 @@ import {
   DEPLOY_ITEMS,
   FIREWALL_ITEMS,
   FULL_ACCESS_ONLY_LABELS,
+  READS_BY_LABEL,
   INFRASTRUCTURE_ITEMS,
   INFRASTRUCTURE_SECTION_BY_LABEL,
   MANAGEMENT_SECTION_BY_LABEL,
@@ -186,6 +188,7 @@ export class SidebarComponent implements OnInit {
   private readonly _router = inject(Router);
   private readonly _appService = inject(ApplicationService);
   private readonly _perms = inject(PermissionService);
+  private readonly _sandbox = inject(SandboxService);
   private readonly _platformVersion = inject(PlatformVersionService);
   private readonly _projects = inject(ProjectsService);
 
@@ -193,14 +196,14 @@ export class SidebarComponent implements OnInit {
 
   readonly firewallItems = FIREWALL_ITEMS;
   readonly deployItems = DEPLOY_ITEMS;
-  readonly clusterItems = CLUSTER_ITEMS;
+  readonly clusterItems = computed(() => CLUSTER_ITEMS.filter((item) => this.admitted(item)));
   private readonly allManagementItems = ALL_MANAGEMENT_ITEMS;
 
   // A search query hides a whole section (title + card), not just the items
   // inside it — these mirror each *Items array/signal above so the template
   // can decide section-level visibility, since hlm-sidebar-group can only
   // hide itself, not the title/card wrapper this app renders around it.
-  readonly clusterHasMatch = computed(() => this.clusterItems.some((item) => this._search.matches(item)));
+  readonly clusterHasMatch = computed(() => this.clusterItems().some((item) => this._search.matches(item)));
   readonly workloadsHasMatch = computed(() => this.workloadItems().some((item) => this._search.matches(item)));
   readonly deployHasMatch = computed(() => this.deployItems.some((item) => this._search.matches(item)));
   readonly firewallHasMatch = computed(() => this.firewallItems.some((item) => this._search.matches(item)));
@@ -218,7 +221,13 @@ export class SidebarComponent implements OnInit {
     return this._perms.hasSection(section);
   }
 
+  private admitted(item: SidebarNavItem): boolean {
+    const reads = READS_BY_LABEL[item.label];
+    return !reads || this._sandbox.allows('GET', reads);
+  }
+
   private shows(item: SidebarNavItem, section: string | undefined): boolean {
+    if (!this.admitted(item)) return false;
     if (!section) return true;
     if (!this.canSee(section)) return false;
     return (
@@ -380,7 +389,7 @@ export class SidebarComponent implements OnInit {
 
   readonly allNavItems = computed<SidebarNavItem[]>(() => [
     this._homeItem,
-    ...this.clusterItems,
+    ...this.clusterItems(),
     ...this.workloadItems(),
     ...this.deployItems,
     ...this.infrastructureItems(),

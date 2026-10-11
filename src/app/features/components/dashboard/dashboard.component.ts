@@ -1,3 +1,5 @@
+import { SandboxService } from '../../../core/services/sandbox.service';
+import { GuestHomeComponent } from './guest-home.component';
 import { Component, OnDestroy, inject, signal, computed, effect, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DashboardService } from '../../service/dashboard.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
@@ -17,7 +19,6 @@ import { DashboardActivityComponent } from './dashboard-activity.component';
 import { DashboardBackupsComponent } from './dashboard-backups.component';
 import { PlatformUpdateBannerComponent } from '../platform-updates/platform-update-banner.component';
 import { DashboardAgentStatusComponent } from './dashboard-agent-status.component';
-import { SandboxGuideCardComponent } from '../sandbox/sandbox-guide-card.component';
 import { FleetService } from '../../service/fleet.service';
 import { ClusterService } from '../../service/cluster.service';
 import { PermissionService } from '../../../core/services/permission.service';
@@ -39,7 +40,7 @@ const FLEET_REFRESH_MS = 60_000;
     DashboardBackupsComponent,
     PlatformUpdateBannerComponent,
     DashboardAgentStatusComponent,
-    SandboxGuideCardComponent,
+    GuestHomeComponent,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
@@ -47,9 +48,10 @@ const FLEET_REFRESH_MS = 60_000;
       <app-dashboard-home-header [fresh]="fresh()" [refreshing]="refreshing()" (refresh)="refresh()" />
 
       <app-platform-update-banner />
-      <app-sandbox-guide-card />
 
-      @if (isInitializing()) {
+      @if (guest()) {
+        <app-guest-home />
+      } @else if (isInitializing()) {
         <div class="grid grid-cols-2 xl:grid-cols-4 gap-4" data-testid="home-skeleton">
           @for (_ of [1, 2, 3, 4]; track _) {
             <div class="card-surface p-4 h-[112px] flex flex-col gap-3">
@@ -110,6 +112,9 @@ const FLEET_REFRESH_MS = 60_000;
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private readonly dashboardService = inject(DashboardService);
+  private readonly sandbox = inject(SandboxService);
+  /** A demo guest gets their own first screen: the operator's control room is not theirs. */
+  protected readonly guest = computed(() => this.sandbox.inSandbox());
   private readonly currentSurface = inject(CurrentSurfaceService);
   private readonly fleet = inject(FleetService);
   private readonly clusterService = inject(ClusterService);
@@ -164,15 +169,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.permissions.loadSections();
-    void this.fleet.loadAll();
     void (async () => {
+      if (await this.sandbox.whenKnown()) {
+        await this.dashboardService.checkBackendHealth();
+        return;
+      }
+      void this.fleet.loadAll();
+      this.fleetTimer = setInterval(() => {
+        void this.fleet.loadMetrics();
+        void this.fleet.loadNeedsYou();
+      }, FLEET_REFRESH_MS);
       await this.dashboardService.initialize();
       this.isInitializing.set(false);
     })();
-    this.fleetTimer = setInterval(() => {
-      void this.fleet.loadMetrics();
-      void this.fleet.loadNeedsYou();
-    }, FLEET_REFRESH_MS);
   }
 
   async refresh(): Promise<void> {

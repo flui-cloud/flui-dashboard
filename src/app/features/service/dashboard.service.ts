@@ -106,7 +106,7 @@ export class DashboardService {
     await this.initialize();
   }
 
-  private async checkBackendHealth(): Promise<void> {
+  async checkBackendHealth(): Promise<void> {
     try {
       await firstValueFrom(this.healthApi.healthControllerPing());
       this.backendHealthSignal.set('online');

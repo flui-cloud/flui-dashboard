@@ -9,6 +9,7 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
   imports: [ProjectBadgeComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
+    @if (!hidden()) {
     <div class="card-surface text-sm" data-testid="overview-project">
       <div class="flex flex-wrap items-center gap-3 px-4 py-2.5">
         <span class="text-label shrink-0">Project</span>
@@ -22,6 +23,7 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
         </span>
       </div>
     </div>
+    }
   `,
 })
 export class AppProjectSectionComponent {
@@ -38,6 +40,11 @@ export class AppProjectSectionComponent {
       ? (this.projects.projects().find((p) => p.id === pid) ?? null)
       : null;
   });
+
+  /** In a project the caller cannot see, as a showcase application is: say nothing rather than "Not in a project". */
+  readonly hidden = computed(
+    () => !!this.application().projectId && this.current() === null,
+  );
 
   constructor() {
     this.projects.loadProjects();

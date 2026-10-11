@@ -108,10 +108,10 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
         }
 
         @if (!configuration()) {
-          <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 text-center">
-            <p class="text-sm text-yellow-800 dark:text-yellow-200 mb-4">This provider isn't configured yet.</p>
-            <a routerLink="/management/providers" class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-              Go to providers list
+          <div class="card-surface p-6 text-center">
+            <p class="text-sm text-muted-foreground mb-4">This provider isn't connected yet.</p>
+            <a routerLink="/management/providers" [queryParams]="{ configure: providerId() }" class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+              Connect {{ provider()!.displayName }}
             </a>
           </div>
         } @else {

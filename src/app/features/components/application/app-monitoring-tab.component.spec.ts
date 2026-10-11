@@ -12,6 +12,7 @@ import { AppHealthChecks, AppHealthChecksService } from '../../service/app-healt
 import { AppCapacityAdvice, AppCapacityAdviceService } from '../../service/app-capacity-advice.service';
 import { AppRuntimeService } from '../../service/app-runtime.service';
 import { AppMonitoringTabComponent } from './app-monitoring-tab.component';
+import { ApplicationService } from '../../service/application.service';
 
 type Status = { replicas_ready: number | null; replicas_desired: number | null; replicas_unavailable: number | null };
 
@@ -79,6 +80,7 @@ describe('application monitoring tab', () => {
     await TestBed.configureTestingModule({
       imports: [AppMonitoringTabComponent],
       providers: [
+        { provide: ApplicationService, useValue: { selectedApplication: () => null } },
         { provide: ActivatedRoute, useValue: { parent: { snapshot: { paramMap: convertToParamMap({ id: 'app-1' }) } } } },
         { provide: UserEventsService, useValue: { onAlert: () => () => undefined } },
         { provide: ApplicationMonitoringService, useValue: monitoring },

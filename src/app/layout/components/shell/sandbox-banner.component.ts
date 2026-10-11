@@ -46,7 +46,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
             [disabled]="keeping()"
             (click)="keep()"
           >
-            {{ kept() ? 'Kept' : 'Keep my apps' }}
+            {{ kept() ? keptLabel() : 'Keep my apps' }}
           </button>
         }
 
@@ -61,6 +61,13 @@ export class SandboxBannerComponent {
   protected readonly sandbox = inject(SandboxService);
   protected readonly keeping = signal(false);
   protected readonly kept = signal(false);
+
+  protected readonly keptLabel = computed(() => {
+    const until = this.sandbox.appsKeptUntil();
+    if (!until) return 'Kept';
+    const at = new Date(until);
+    return `Kept until ${at.toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' })}`;
+  });
 
   protected keep(): void {
     this.keeping.set(true);

@@ -5,6 +5,9 @@ import { DashboardService } from '../../service/dashboard.service';
 import { FLEET_WINDOWS, FleetService, FleetWindow } from '../../service/fleet.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { AddWorkloadMenuComponent } from '../application/add-workload-menu.component';
+import { SandboxService } from '../../../core/services/sandbox.service';
+import { ApplicationService } from '../../service/application.service';
+import { accessOf } from '../../model/app-access';
 
 @Component({
   selector: 'app-dashboard-home-header',
@@ -26,12 +29,21 @@ import { AddWorkloadMenuComponent } from '../application/add-workload-menu.compo
               <span class="h-2 w-2 rounded-full bg-destructive animate-pulse"></span>API offline
             </span>
           }
-          <span class="text-border">·</span>
-          <span>{{ plural(pulse().providersConnected, 'provider') }}</span>
-          <span class="text-border">·</span>
-          <span>{{ plural(pulse().totalClusters, 'cluster') }}</span>
-          <span class="text-border">·</span>
-          <span>{{ fresh() ? pulse().runningApps + ' system apps running' : pulse().runningApps + ' running' }}</span>
+          @if (guest()) {
+            <span class="text-border">·</span>
+            <span>{{ plural(pulse().totalClusters, 'cluster') }}</span>
+            <span class="text-border">·</span>
+            <span>{{ guestApps().showcase }} in the showcase</span>
+            <span class="text-border">·</span>
+            <span>{{ guestApps().own === 0 ? 'none of yours yet' : guestApps().own + ' of yours' }}</span>
+          } @else {
+            <span class="text-border">·</span>
+            <span>{{ plural(pulse().providersConnected, 'provider') }}</span>
+            <span class="text-border">·</span>
+            <span>{{ plural(pulse().totalClusters, 'cluster') }}</span>
+            <span class="text-border">·</span>
+            <span>{{ fresh() ? pulse().runningApps + ' system apps running' : pulse().runningApps + ' running' }}</span>
+          }
           @if (pulse().activeOperations > 0) {
             <span class="text-border">·</span>
             <span class="font-medium text-primary" data-testid="home-operations">{{ plural(pulse().activeOperations, 'operation') }}</span>
@@ -78,6 +90,15 @@ export class DashboardHomeHeaderComponent {
   protected readonly fleet = inject(FleetService);
   private readonly dashboard = inject(DashboardService);
   private readonly permissions = inject(PermissionService);
+  private readonly sandbox = inject(SandboxService);
+  private readonly applications = inject(ApplicationService);
+
+  protected readonly guest = computed(() => this.sandbox.inSandbox());
+  protected readonly guestApps = computed(() => {
+    const groups = this.applications.applicationGroups();
+    const showcase = groups.filter((group) => group.components.some((c) => accessOf(c)?.showcase)).length;
+    return { showcase, own: groups.length - showcase };
+  });
 
   protected readonly windows = FLEET_WINDOWS;
   protected readonly pulse = this.dashboard.pulseSummary;

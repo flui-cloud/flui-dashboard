@@ -12,6 +12,7 @@ import {
 } from '../model/instance.models';
 import { InfrastructureWebSocketService } from './infrastructure-websocket.service';
 import { InstallLogService } from './install-log.service';
+import { SandboxService } from '../../core/services/sandbox.service';
 
 export interface ProviderInfo {
   id: string;
@@ -31,6 +32,7 @@ export class ClusterService {
   private readonly providersApi = inject(ProviderManagementService);
   private readonly infrastructureWs = inject(InfrastructureWebSocketService);
   private readonly installLogApi = inject(InstallLogService);
+  private readonly sandbox = inject(SandboxService);
 
   private readonly clusterInfo = signal<ClusterInfo | null>(null);
   private readonly isLoading = signal<boolean>(false);
@@ -687,13 +689,17 @@ export class ClusterService {
     this.nodesError.set(null);
 
     try {
-      if (this.isByosCluster()) {
+      // A demo guest reads the cluster's own nodes: the provider's server list
+      // answers them from the example world, which is not this cluster.
+      if (this.isByosCluster() || this.sandbox.inSandbox()) {
         const nodes = await firstValueFrom(
           this.clustersApi.clustersControllerGetClusterNodes(clusterId)
         );
         this.clusterNodes.set(
-          (Array.isArray(nodes) ? nodes : []).map((n) =>
-            mapClusterNodeToInstance(n, clusterId)
+          numberWorkers(
+            (Array.isArray(nodes) ? nodes : []).map((n) =>
+              mapClusterNodeToInstance(n, clusterId)
+            )
           )
         );
         return;
@@ -1297,4 +1303,15 @@ export class ClusterService {
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
+}
+
+/** Nodes shown without their names read "worker", "worker"; number them. */
+function numberWorkers<T extends { name?: string; displayName?: string }>(nodes: T[]): T[] {
+  const workers = nodes.filter((n) => n.name === 'worker').length;
+  let seen = 0;
+  return nodes.map((n) => {
+    if (n.name !== 'worker' || workers < 2) return n;
+    seen += 1;
+    return { ...n, name: `worker ${seen}`, displayName: `worker ${seen}` };
+  });
 }

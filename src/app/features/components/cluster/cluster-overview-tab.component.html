@@ -47,6 +47,7 @@
     <app-cluster-overview-nodes-card />
 
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      @if (!guest()) {
       <!-- Firewall -->
       <div class="card-surface p-4 flex flex-col">
         <div class="flex items-center justify-between mb-3">
@@ -98,7 +99,9 @@
           Manage firewall <ng-icon name="lucideArrowRight" class="h-3 w-3" />
         </a>
       </div>
+      }
 
+      @if (!guest()) {
       <!-- Backups -->
       <div class="card-surface p-4 flex flex-col">
         <div class="flex items-center justify-between mb-3">
@@ -142,6 +145,17 @@
           </button>
         }
       </div>
+      }
+
+      @if (guest()) {
+        <div class="card-surface p-4 flex flex-col">
+          <div class="flex items-center gap-1.5 text-label mb-3">
+            <ng-icon name="lucideShield" class="h-3.5 w-3.5" />
+            Outbound ports
+          </div>
+          <app-cluster-egress-line [clusterId]="cluster()?.id ?? null" [sayOpen]="true" />
+        </div>
+      }
 
       <!-- DNS Zone -->
       <div class="card-surface p-4 flex flex-col">
@@ -185,11 +199,14 @@
         } @else {
           <p class="text-sub flex-1">Not configured</p>
         }
+        @if (!guest()) {
         <a [routerLink]="['../dns']" class="card-link">
           Manage DNS <ng-icon name="lucideArrowRight" class="h-3 w-3" />
         </a>
+        }
       </div>
 
+      @if (!guest()) {
       <!-- Variables -->
       <div class="card-surface p-4 flex flex-col">
         <div class="flex items-center justify-between mb-3">
@@ -224,7 +241,9 @@
           Manage variables <ng-icon name="lucideArrowRight" class="h-3 w-3" />
         </a>
       </div>
+      }
 
+      @if (!guest()) {
       <!-- Platform Health -->
       <div class="card-surface p-4 flex flex-col">
         <div class="flex items-center gap-1.5 text-label mb-3">
@@ -259,7 +278,9 @@
           View all <ng-icon name="lucideArrowRight" class="h-3 w-3" />
         </a>
       </div>
+      }
 
+      @if (!guest()) {
       <!-- Network / VNet -->
       <div class="card-surface p-4 flex flex-col">
         <div class="flex items-center justify-between mb-3">
@@ -308,7 +329,7 @@
           Manage <ng-icon name="lucideArrowRight" class="h-3 w-3" />
         </a>
       </div>
-
+      }
     </div>
 
     <!-- Cluster Info strip -->
@@ -365,7 +386,7 @@
     />
   }
 
-  @if (cluster(); as mc) {
+  @if (!guest() && cluster(); as mc) {
     <app-cluster-maintenance-card [clusterId]="mc.id ?? null" />
   }
 </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideAlertCircle } from '@ng-icons/lucide';
@@ -11,18 +11,20 @@ import { AppAutoscalingCardComponent } from './app-autoscaling-card.component';
 import { AppEgressNoteComponent } from '../egress/app-egress-note.component';
 import { UpdateResourcesDto } from '../../../core/api/model/updateResourcesDto';
 import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
+import { LookOnlyDirective } from '../../../shared/directives/look-only.directive';
+import { accessOf } from '../../model/app-access';
 
 @Component({
   selector: 'app-resources-tab',
   standalone: true,
-  imports: [NgIconComponent, AppResourcesEditorComponent, AppResourceProposalComponent, AppMaintenanceCardComponent, AppAutoscalingCardComponent, AppEgressNoteComponent],
+  imports: [NgIconComponent, LookOnlyDirective, AppResourcesEditorComponent, AppResourceProposalComponent, AppMaintenanceCardComponent, AppAutoscalingCardComponent, AppEgressNoteComponent],
   providers: [
     provideIcons({ lucideLoader, lucideAlertCircle }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (app(); as app) {
-      <div class="space-y-4">
+      <div class="space-y-4" [appLookOnly]="readOnly()">
 
         @if (runtimeService.loading()) {
           <div class="flex items-center gap-2 py-4">
@@ -38,8 +40,10 @@ import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
           </div>
         }
 
-        <app-resource-proposal [appId]="app.id ?? null" (deferred)="maintenanceCard.reload()" />
-        <app-app-maintenance-card #maintenanceCard [appId]="app.id ?? null" />
+        @if (!readOnly()) {
+          <app-resource-proposal [appId]="app.id ?? null" (deferred)="maintenanceCard.reload()" />
+          <app-app-maintenance-card #maintenanceCard [appId]="app.id ?? null" />
+        }
 
         <app-resources-editor
           [runtime]="runtimeService.runtime()"
@@ -48,6 +52,7 @@ import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
           [savingRestart]="runtimeService.savingRestart()"
           [appId]="app.id ?? null"
           [clusterId]="app.clusterId ?? null"
+          [advice]="!readOnly()"
           [rollout]="runtimeService.rollout()"
           (saveResourcesEvent)="onSaveResources($event)"
           (saveReplicasEvent)="onSaveReplicas($event)"
@@ -55,9 +60,10 @@ import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
           (refreshEvent)="onRefresh()"
         />
 
-        <app-autoscaling-card [appId]="app.id ?? null" />
-
-        <app-egress-note [appId]="app.id ?? null" />
+        @if (!readOnly()) {
+          <app-autoscaling-card [appId]="app.id ?? null" />
+          <app-egress-note [appId]="app.id ?? null" />
+        }
 
       </div>
     }
@@ -68,6 +74,7 @@ export class AppResourcesTabComponent implements OnInit, OnDestroy {
   protected runtimeService = inject(AppRuntimeService);
 
   readonly app = this.appService.selectedApplication;
+  protected readonly readOnly = computed(() => accessOf(this.app())?.readOnly === true);
 
   ngOnInit(): void {
     void (async () => {

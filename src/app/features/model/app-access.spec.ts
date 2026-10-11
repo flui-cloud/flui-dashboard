@@ -3,13 +3,18 @@ import { accessOf, allowsTab } from './app-access';
 describe('app access summary', () => {
   it('reads the summary the API sent', () => {
     const access = accessOf({
-      access: { tabs: ['overview', 'logs'], readOnly: true, showcase: true },
+      access: { tabs: ['overview', 'logs'], readOnly: true, showcase: true, dataAccess: false },
     });
     expect(access).toEqual({
       tabs: ['overview', 'logs'],
       readOnly: true,
       showcase: true,
+      dataAccess: false,
     });
+  });
+
+  it('assumes data access when an older instance does not say', () => {
+    expect(accessOf({ access: { tabs: [], readOnly: false, showcase: false } })?.dataAccess).toBeTrue();
   });
 
   it('treats a missing summary as no opinion', () => {
@@ -36,6 +41,6 @@ describe('app access summary', () => {
     const access = accessOf({
       access: { tabs: [], readOnly: 'yes', showcase: 0 },
     });
-    expect(access).toEqual({ tabs: [], readOnly: true, showcase: false });
+    expect(access).toEqual({ tabs: [], readOnly: true, showcase: false, dataAccess: true });
   });
 });

@@ -66,8 +66,9 @@ export function mapClusterNodeToInstance(
   return {
     id: node.id,
     userId: '',
-    name: node.serverName,
-    displayName: node.serverName,
+    name: node.serverName ?? node.nodeType,
+    displayName: node.serverName ?? node.nodeType,
+    productName: node.serverType ?? undefined,
     type: 'virtual' as any,
     provider: 'byos' as any,
     providerId: node.providerResourceId || node.id,

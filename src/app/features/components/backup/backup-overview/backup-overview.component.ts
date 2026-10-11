@@ -1,3 +1,4 @@
+import { SandboxService } from '../../../../core/services/sandbox.service';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -101,6 +102,7 @@ interface OverviewCard {
           </div>
         </div>
 
+        @if (!example()) {
         <h2 class="text-sm font-semibold pt-2">Protect a cluster</h2>
         @if (clusters().length === 0) {
         <div class="rounded-lg border border-border bg-card p-5">
@@ -146,6 +148,7 @@ interface OverviewCard {
           </div>
         </div>
         }
+        }
       </section>
 
       <!-- Stats -->
@@ -177,7 +180,9 @@ interface OverviewCard {
       </section>
 
       <!-- Platform resilience (control-plane DR) -->
-      <app-platform-backup-card />
+      @if (!example()) {
+        <app-platform-backup-card />
+      }
 
       <!-- Section cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -211,6 +216,9 @@ interface OverviewCard {
 })
 export class BackupOverviewComponent implements OnInit, OnDestroy {
   private readonly backup = inject(BackupService);
+  private readonly sandbox = inject(SandboxService);
+  /** A demo guest reads this section from the example world: no real cluster and no platform recovery belong in it. */
+  protected readonly example = computed(() => this.sandbox.levelOf('backups') === 'stand-in');
   private readonly clusterService = inject(ClusterService);
   private readonly currentSurface = inject(CurrentSurfaceService);
 

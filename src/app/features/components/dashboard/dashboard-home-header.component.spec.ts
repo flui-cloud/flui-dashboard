@@ -4,6 +4,8 @@ import { provideRouter } from '@angular/router';
 import { FleetReadState, FleetService } from '../../service/fleet.service';
 import { DashboardService } from '../../service/dashboard.service';
 import { PermissionService } from '../../../core/services/permission.service';
+import { SandboxService } from '../../../core/services/sandbox.service';
+import { ApplicationService } from '../../service/application.service';
 import { DashboardHomeHeaderComponent } from './dashboard-home-header.component';
 
 describe('DashboardHomeHeaderComponent', () => {
@@ -11,6 +13,8 @@ describe('DashboardHomeHeaderComponent', () => {
   const state = signal<FleetReadState>('ready');
   const pulse = signal({ backendOnline: true, activeOperations: 1, providersConnected: 3, totalClusters: 4, runningApps: 17 });
   const setWindow = jasmine.createSpy('setWindow').and.returnValue(Promise.resolve());
+  const inSandbox = signal(false);
+  const groups = signal<unknown[]>([]);
 
   const q = (id: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 
@@ -22,6 +26,8 @@ describe('DashboardHomeHeaderComponent', () => {
         { provide: FleetService, useValue: { metricsState: state, window: signal('3h'), setWindow } },
         { provide: DashboardService, useValue: { pulseSummary: pulse, lastRefreshedAt: signal(new Date()) } },
         { provide: PermissionService, useValue: { hasSection: (s: string) => s === 'deploy' } },
+        { provide: SandboxService, useValue: { inSandbox } },
+        { provide: ApplicationService, useValue: { applicationGroups: groups } },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(DashboardHomeHeaderComponent);
@@ -29,7 +35,11 @@ describe('DashboardHomeHeaderComponent', () => {
     fixture.detectChanges();
   };
 
-  beforeEach(() => state.set('ready'));
+  beforeEach(() => {
+    state.set('ready');
+    inSandbox.set(false);
+    groups.set([]);
+  });
 
   it('states the platform at a glance', async () => {
     await build();
@@ -60,5 +70,18 @@ describe('DashboardHomeHeaderComponent', () => {
     await build(true);
     expect(q('home-status-line')!.textContent).toContain('17 system apps running');
     expect(q('home-window')).toBeNull();
+  });
+
+  it('tells a guest what is in the showcase and what is theirs, not the providers', async () => {
+    inSandbox.set(true);
+    groups.set([
+      { components: [{ access: { tabs: [], showcase: true } }] },
+      { components: [{ access: { tabs: [], showcase: false } }] },
+    ]);
+    await build();
+    const line = q('home-status-line')!.textContent!.replace(/\s+/g, ' ');
+    expect(line).toContain('1 in the showcase');
+    expect(line).toContain('1 of yours');
+    expect(line).not.toContain('provider');
   });
 });

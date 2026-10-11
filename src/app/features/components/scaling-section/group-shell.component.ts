@@ -22,6 +22,8 @@ import {
 } from '@ng-icons/lucide';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { GroupDraftStore } from './group-draft.store';
+import { LookOnlyDirective } from '../../../shared/directives/look-only.directive';
+import { SandboxService } from '../../../core/services/sandbox.service';
 import { ScalingGroupStore } from './scaling-group.store';
 import {
   SectionFailureComponent,
@@ -44,6 +46,7 @@ interface ShellTab {
   selector: 'app-scaling-group-shell',
   standalone: true,
   imports: [
+    LookOnlyDirective,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
@@ -187,7 +190,9 @@ interface ShellTab {
             ></div>
           </div>
 
-          <router-outlet />
+          <div [appLookOnly]="sandbox.inSandbox()">
+            <router-outlet />
+          </div>
         } @else {
           <section
             class="card-surface space-y-2 p-6"
@@ -218,6 +223,7 @@ interface ShellTab {
   `,
 })
 export class ScalingGroupShellComponent {
+  protected readonly sandbox = inject(SandboxService);
   protected readonly store = inject(ScalingGroupStore);
   private readonly route = inject(ActivatedRoute);
 

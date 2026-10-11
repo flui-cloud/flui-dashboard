@@ -1,3 +1,4 @@
+import { LookOnlyDirective } from '../../../shared/directives/look-only.directive';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 
@@ -52,12 +53,16 @@ interface TabItem {
   label: string;
   route: string;
   icon: string;
+  /** What the tab reads first; a demo guest sees the tab only when the API admits it. */
+  reads?: string;
 }
+
+const LOOK_ONLY_TABS = new Set(['storage', 'scaling', 'firewall', 'dns', 'variables', 'pricing']);
 
 @Component({
   selector: 'cluster-dashboard',
   standalone: true,
-  imports: [MaskIdPipe, 
+  imports: [MaskIdPipe, LookOnlyDirective,
     FormsModule,
     RouterModule,
     NgIconComponent
@@ -248,7 +253,7 @@ interface TabItem {
         <!-- Tab Navigation -->
         <div class="border-b border-border relative">
           <nav class="flex -mb-px gap-1 overflow-x-auto scrollbar-none pr-8">
-            @for (tab of tabs; track tab.route) {
+            @for (tab of visibleTabs(); track tab.route) {
               <a
                 [routerLink]="[tab.route]"
                 routerLinkActive #rla="routerLinkActive"
@@ -268,7 +273,7 @@ interface TabItem {
         </div>
 
         <!-- Tab Content -->
-        <div class="mt-6">
+        <div class="mt-6" [appLookOnly]="lookOnly()">
           <router-outlet />
         </div>
       }
@@ -341,14 +346,21 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
     { label: 'Overview', route: 'overview', icon: 'lucideLayoutDashboard' },
     { label: 'Monitoring', route: 'monitoring', icon: 'lucideChartArea' },
     { label: 'Network', route: 'network', icon: 'lucideNetwork' },
-    { label: 'Storage', route: 'storage', icon: 'lucideHardDrive' },
+    { label: 'Storage', route: 'storage', icon: 'lucideHardDrive', reads: '/infrastructure/clusters/:id/storage' },
     { label: 'Nodes', route: 'nodes', icon: 'lucideServer' },
-    { label: 'Scaling', route: 'scaling', icon: 'lucideSettings2' },
-    { label: 'Firewall', route: 'firewall', icon: 'lucideShield' },
-    { label: 'DNS', route: 'dns', icon: 'lucideGlobe' },
-    { label: 'Variables', route: 'variables', icon: 'lucideKey' },
-    { label: 'Pricing', route: 'pricing', icon: 'lucideCreditCard' },
+    { label: 'Scaling', route: 'scaling', icon: 'lucideSettings2', reads: '/infrastructure/clusters/:id/scaling' },
+    { label: 'Firewall', route: 'firewall', icon: 'lucideShield', reads: '/firewalls/cluster/:id' },
+    { label: 'DNS', route: 'dns', icon: 'lucideGlobe', reads: '/clusters/:id/dns-zone/issuers' },
+    { label: 'Variables', route: 'variables', icon: 'lucideKey', reads: '/variables/clusters/:id/namespaces/default' },
+    { label: 'Pricing', route: 'pricing', icon: 'lucideCreditCard', reads: '/infrastructure/clusters/:id/billing' },
   ];
+
+  protected readonly visibleTabs = computed(() => {
+    const id = this.clusterId() ?? '';
+    return this.tabs.filter(
+      (tab) => !tab.reads || this.sandbox.allows('GET', tab.reads.replace(':id', id)),
+    );
+  });
 
   private readonly clusterId = signal<string | null>(null);
 
@@ -401,7 +413,20 @@ export class ClusterDashboardComponent implements OnInit, OnDestroy {
     });
   });
 
+  /** A guest is shown these tabs and operates none of them: the levers on them are the instance's. */
+  protected readonly lookOnly = computed(
+    () => this.sandbox.inSandbox() && LOOK_ONLY_TABS.has(this.activeTab() ?? ''),
+  );
+
   constructor() {
+    // A tab a demo guest may not open, reached by its address, lands on the overview.
+    effect(() => {
+      const tab = this.activeTab();
+      const known = this.tabs.some((t) => t.route === tab);
+      if (tab && known && !this.visibleTabs().some((t) => t.route === tab)) {
+        void this.router.navigate(['overview'], { relativeTo: this.route, replaceUrl: true });
+      }
+    });
     // Publish this page's own Semantic Surface snapshot into the shared registry
     // whenever it changes. ngOnDestroy clears it, so the snapshot never outlives this
     // page — same discipline as ApplicationDetailComponent.

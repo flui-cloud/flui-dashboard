@@ -1,3 +1,6 @@
+import { databaseEngineOf } from '../../model/db-engine';
+import { accessOf } from '../../model/app-access';
+import { ApplicationService } from '../../service/application.service';
 import { Component, OnInit, OnDestroy, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
@@ -95,6 +98,13 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
     const advice = this.capacity.advice();
     const view = advice ? adviceView(advice.advice) : null;
     return advice && view ? { ...advice, ...view } : null;
+  });
+
+  private readonly apps = inject(ApplicationService);
+  /** The disk under a database is part of its data: shown only when that data is the caller's to read. */
+  protected readonly showsDisk = computed(() => {
+    const app = this.apps.selectedApplication();
+    return !!app && !!databaseEngineOf(app) && accessOf(app)?.dataAccess !== false;
   });
 
   protected appId(): string {

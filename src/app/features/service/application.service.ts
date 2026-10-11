@@ -1,3 +1,4 @@
+import { ApplicationGroupDto } from '../../core/api/model/applicationGroupDto';
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -137,6 +138,27 @@ function aggregateStatus(statuses: ApplicationStatus[]): ApplicationStatus {
   return ApplicationStatusEnum.Running;
 }
 
+function bundleMetaOf(group: ApplicationGroupDto): { installId: string; meta: BundleMeta } | null {
+  if (group.type !== 'composed' || !group.catalogInstallId) return null;
+  return {
+    installId: group.catalogInstallId,
+    meta: {
+      name: group.name,
+      slug: group.slug,
+      url: group.url,
+      primaryComponentId: group.primaryComponentId,
+      catalogSlug: group.catalogSlug,
+      category: group.category,
+      createdAt: group.createdAt,
+    },
+  };
+}
+
+/** A showcase component arrives without its cluster; the list it came from knows it. */
+function withClusterOf(components: Application[], clusterId: string): Application[] {
+  return components.map((c) => (c.clusterId ? c : { ...c, clusterId }));
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -240,9 +262,16 @@ export class ApplicationService {
     return groups.map(({ _sort, ...g }) => g);
   });
 
-  readonly selectedApplication = computed(() =>
-    this.selectedApplicationSignal(),
-  );
+  /**
+   * An application in the showcase arrives without its cluster (the API keeps
+   * placement to itself); the list it was asked from knows which cluster that was.
+   */
+  readonly selectedApplication = computed(() => {
+    const app = this.selectedApplicationSignal();
+    if (!app || app.clusterId) return app;
+    const listed = this.applicationsList().find((a) => a.id === app.id);
+    return listed?.clusterId ? { ...app, clusterId: listed.clusterId } : app;
+  });
 
   refreshSelectedApplication(app: Application): void {
     this.selectedApplicationSignal.set(app);
@@ -383,22 +412,14 @@ export class ApplicationService {
 
       const allApps: Application[] = [];
       const meta: Record<string, BundleMeta> = {};
-      for (const result of results) {
+      for (const [index, result] of results.entries()) {
         if (result.status !== 'fulfilled' || !Array.isArray(result.value))
           continue;
+        const askedCluster = validClusters[index].id!;
         for (const group of result.value) {
-          allApps.push(...group.components);
-          if (group.type === 'composed' && group.catalogInstallId) {
-            meta[group.catalogInstallId] = {
-              name: group.name,
-              slug: group.slug,
-              url: group.url,
-              primaryComponentId: group.primaryComponentId,
-              catalogSlug: group.catalogSlug,
-              category: group.category,
-              createdAt: group.createdAt,
-            };
-          }
+          allApps.push(...withClusterOf(group.components, askedCluster));
+          const bundle = bundleMetaOf(group);
+          if (bundle) meta[bundle.installId] = bundle.meta;
         }
       }
       this.bundleMeta.set(meta);

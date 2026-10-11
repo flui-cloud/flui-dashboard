@@ -87,6 +87,12 @@ describe('workload list', () => {
     expect(workloadListCounts([bundle])).toEqual({ applications: 1, data: 1, system: 0 });
   });
 
+  it('does not count the showcase among the caller\u2019s own', () => {
+    const shown = (a: Application) => ({ ...a, access: { tabs: [], readOnly: true, showcase: true } }) as Application;
+    const showcase = { ...bundle, id: 'install-live', components: bundle.components.map(shown) };
+    expect(workloadListCounts([bundle, showcase])).toEqual({ applications: 1, data: 1, system: 0 });
+  });
+
   it('never lists a data bundle twice', () => {
     const ferret = app('ferret', { kind: 'DATABASE' as Application['kind'] });
     const store = app('ferret-pg', { imageRef: 'postgres:16', labels: composedLabels });

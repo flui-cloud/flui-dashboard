@@ -176,8 +176,8 @@ describe('application surface producer', () => {
   });
 
   it('names the access banner the page actually shows, and nothing for full access', () => {
-    const showcase: AppAccess = { tabs: [], readOnly: true, showcase: true };
-    const readOnly: AppAccess = { tabs: [], readOnly: true, showcase: false };
+    const showcase: AppAccess = { tabs: [], readOnly: true, showcase: true, dataAccess: false };
+    const readOnly: AppAccess = { tabs: [], readOnly: true, showcase: false, dataAccess: true };
     expect(observation(snapshotOf({ access: showcase }), 'flui.application.access_mode')?.presentedAs.text).toBe('showcase');
     expect(observation(snapshotOf({ access: readOnly }), 'flui.application.access_mode')?.presentedAs.text).toBe('read-only');
     expect(observation(snapshotOf({ access: null }), 'flui.application.access_mode')).toBeUndefined();

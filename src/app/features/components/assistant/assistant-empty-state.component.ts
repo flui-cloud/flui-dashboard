@@ -36,7 +36,7 @@ import { RecommendedProviderDto } from '../../../core/api/model/recommendedProvi
       <div class="mb-8 flex flex-col items-center gap-4 text-center">
         <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/10 border border-blue-500/20">
           @if (imgOk()) {
-            <img src="icons/assistant.png" class="h-10 w-10 object-contain" alt="" (error)="imgError.emit()" />
+            <img src="icons/assistant.svg" class="h-10 w-10 object-contain" alt="" (error)="imgError.emit()" />
           } @else {
             <ng-icon name="lucideBot" class="h-8 w-8 text-blue-500" />
           }
@@ -55,7 +55,7 @@ import { RecommendedProviderDto } from '../../../core/api/model/recommendedProvi
       <div class="flex flex-col items-center justify-center h-full py-10 gap-4 text-center">
         <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/10 border border-blue-500/20">
           @if (imgOk()) {
-            <img src="icons/assistant.png" class="h-9 w-9 object-contain" alt="" (error)="imgError.emit()" />
+            <img src="icons/assistant.svg" class="h-9 w-9 object-contain" alt="" (error)="imgError.emit()" />
           } @else {
             <ng-icon name="lucideBot" class="h-7 w-7 text-blue-500" />
           }

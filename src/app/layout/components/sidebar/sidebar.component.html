@@ -56,7 +56,7 @@
       <hlm-sidebar-group>
         <hlm-sidebar-group-label
           [label]="'Flui Clusters'"
-          [items]="clusterItems"
+          [items]="clusterItems()"
         >
           <ng-icon
             hlm
@@ -64,7 +64,7 @@
             class="h-4 w-4 text-primary"
           />
         </hlm-sidebar-group-label>
-        <hlm-sidebar-group-content [items]="clusterItems" />
+        <hlm-sidebar-group-content [items]="clusterItems()" />
       </hlm-sidebar-group>
     </div>
     }

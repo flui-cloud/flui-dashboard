@@ -18,6 +18,21 @@ export interface ComponentCard {
   backup: BackupBand | null;
 }
 
+export interface ComponentTrend {
+  cpu: number[];
+  memory: number[];
+}
+
+/** CPU and memory percentages from a metrics history, oldest first, gaps left out. */
+export function trendOf(points: ReadonlyArray<{ cpu_utilization_percent?: number | null; memory_utilization_percent?: number | null }>): ComponentTrend {
+  const values = (pick: (p: (typeof points)[number]) => number | null | undefined) =>
+    points.map(pick).filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+  return {
+    cpu: values((p) => p.cpu_utilization_percent),
+    memory: values((p) => p.memory_utilization_percent),
+  };
+}
+
 export interface RecentEvent {
   id: string;
   at: string;

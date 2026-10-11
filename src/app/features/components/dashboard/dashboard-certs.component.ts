@@ -1,3 +1,4 @@
+import { SandboxService } from '../../../core/services/sandbox.service';
 import { Component, OnDestroy, OnInit, effect, inject, input, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -211,6 +212,7 @@ export class DashboardCertsComponent implements OnInit, OnDestroy {
 
   protected dnsService = inject(DashboardDnsService);
   private readonly notifService = inject(NotificationService);
+  private readonly sandbox = inject(SandboxService);
   protected showWizard = signal(false);
   protected appRows = computed(() =>
     ALL_APP_ROWS.filter(row => row.key !== 'zitadel' || this.dnsService.status()?.zitadel !== null)
@@ -230,7 +232,8 @@ export class DashboardCertsComponent implements OnInit, OnDestroy {
       const hasStatus = this.dnsService.hasStatus();
       const fullyConfigured = this.dnsService.isFullyConfigured();
 
-      if (!hasStatus) return;
+      // The platform's own names are not a demo guest's to configure.
+      if (!hasStatus || this.sandbox.inSandbox()) return;
 
       if (fullyConfigured) {
         // Fully configured — remove the pending notification

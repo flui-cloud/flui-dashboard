@@ -1,3 +1,4 @@
+import { accessOf } from '../../model/app-access';
 import { availabilityOf } from '../../model/application.models';
 import {
   Component,
@@ -130,7 +131,9 @@ export class AppOverviewTabComponent implements OnInit {
     if (!this.appService.applicationGroups().length) {
       void this.appService.loadApplications();
     }
-    this.variablesService.loadVariables(app.id);
+    if (accessOf(app)?.dataAccess !== false) {
+      this.variablesService.loadVariables(app.id);
+    }
     if (app.clusterId) {
       this.endpointsService.loadEndpoints(app.clusterId);
     }

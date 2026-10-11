@@ -90,7 +90,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
           } @else {
             <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10">
               @if (imgOk()) {
-                <img src="icons/assistant.png" class="h-6 w-6 object-contain brightness-0 invert" alt="" (error)="imgOk.set(false)" />
+                <img src="icons/assistant.svg" class="h-6 w-6 object-contain brightness-0 invert" alt="" (error)="imgOk.set(false)" />
               } @else {
                 <ng-icon name="lucideBot" class="h-4 w-4 text-white" />
               }
@@ -189,7 +189,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
                 <div class="flex gap-2">
                   <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20 mt-0.5">
                     @if (imgOk()) {
-                      <img src="icons/assistant.png" class="h-4 w-4 object-contain" alt="" (error)="imgOk.set(false)" />
+                      <img src="icons/assistant.svg" class="h-4 w-4 object-contain" alt="" (error)="imgOk.set(false)" />
                     } @else {
                       <ng-icon name="lucideBot" class="h-3.5 w-3.5 text-blue-500" />
                     }
@@ -218,7 +218,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
                 <div class="flex gap-2">
                   <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20">
                     @if (imgOk()) {
-                      <img src="icons/assistant.png" class="h-4 w-4 object-contain" alt="" (error)="imgOk.set(false)" />
+                      <img src="icons/assistant.svg" class="h-4 w-4 object-contain" alt="" (error)="imgOk.set(false)" />
                     } @else {
                       <ng-icon name="lucideBot" class="h-3.5 w-3.5 text-blue-500" />
                     }
@@ -271,7 +271,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
             <ng-icon name="lucideChevronLeft" class="h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:-translate-x-0.5" />
             <span class="inline-flex w-0 items-center overflow-hidden opacity-0 transition-all duration-300 group-hover:ml-1 group-hover:w-5 group-hover:opacity-100">
               @if (imgOk()) {
-                <img src="icons/assistant.png" class="h-5 w-5 max-w-none object-contain" alt="Flui Assistant" (error)="imgOk.set(false)" />
+                <img src="icons/assistant.svg" class="h-5 w-5 max-w-none object-contain" alt="Flui Assistant" (error)="imgOk.set(false)" />
               } @else {
                 <ng-icon name="lucideBot" class="h-5 w-5 max-w-none text-blue-600" />
               }

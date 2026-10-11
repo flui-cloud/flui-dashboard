@@ -1,283 +1,137 @@
-import { Component, computed, input, output, signal, inject, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCheck, lucideExternalLink, lucideInfo, lucideMinus } from '@ng-icons/lucide';
 import { PricingService } from '../../../shared/services/pricing.service';
 import { ProviderMarkComponent } from '../../../shared/components/provider-mark.component';
+import { ProviderConfigurationDto, ProviderDefinitionDto } from '../../../core/api';
 import {
-  lucideSettings,
-  lucideCheck,
-  lucideX,
-  lucideTriangleAlert,
-  lucideExternalLink,
-  lucideShield,
-  lucideZap,
-  lucideGlobe,
-  lucideHardDrive,
-  lucideActivity,
-  lucideClock,
-  lucideMapPin,
-  lucideServer,
-  lucideWifi,
-  lucideCalendar,
-} from '@ng-icons/lucide';
-import {
-  ProviderConfigurationDto,
-  ProviderDefinitionDto,
-} from '../../../core/api';
-import { ProviderStatus } from '../../model/provider.models';
+  PROVIDER_DOT,
+  PROVIDER_TEXT,
+  credentialKind,
+  credentialKindLabel,
+  providerCapabilities,
+  providerState,
+} from './provider-presentation';
 
 @Component({
   selector: 'provider-card',
   standalone: true,
-  imports: [CommonModule, RouterLink, NgIcon, ProviderMarkComponent],
-  providers: [
-    provideIcons({
-      lucideSettings,
-      lucideCheck,
-      lucideX,
-      lucideTriangleAlert,
-      lucideExternalLink,
-      lucideShield,
-      lucideZap,
-      lucideGlobe,
-      lucideHardDrive,
-      lucideActivity,
-      lucideClock,
-      lucideMapPin,
-      lucideServer,
-      lucideWifi,
-      lucideCalendar,
-    }),
-  ],
+  imports: [CurrencyPipe, RouterLink, NgIcon, ProviderMarkComponent],
+  providers: [provideIcons({ lucideCheck, lucideExternalLink, lucideInfo, lucideMinus })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div
-      class="group relative rounded-lg border border-border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md h-full flex flex-col"
-    >
-      <div class="p-6 flex-1 flex flex-col">
-        <!-- Header - Always the same structure -->
-        <div class="flex items-start justify-between mb-4">
-          <div class="flex items-center space-x-3">
-            <app-provider-mark [name]="getProvider().displayName" [size]="40" />
-            <div>
-              <h3 class="font-semibold text-lg">
-                {{ getProvider().displayName }}
-              </h3>
-              <p class="text-sm text-muted-foreground">
-                {{ getProvider().description }}
-              </p>
-            </div>
+    <article class="card-surface h-full flex flex-col p-5 gap-4" [attr.data-testid]="'provider-card-' + definition().id">
+      <header class="flex items-start gap-3">
+        <app-provider-mark [name]="definition().displayName" [size]="36" />
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="font-semibold text-foreground truncate">{{ definition().displayName }}</h3>
+            <span class="inline-flex items-center gap-1.5 text-xs font-medium shrink-0" [class]="stateText()" data-testid="provider-state">
+              <span class="h-1.5 w-1.5 rounded-full" [class]="stateDot()"></span>
+              {{ state().label }}
+            </span>
           </div>
-
-          <div [class]="statusBadgeClass()">
-            <ng-icon [name]="statusIcon()" class="h-3 w-3" />
-            <span class="text-xs font-medium">{{ statusText() }}</span>
-          </div>
+          <p class="text-sm text-muted-foreground truncate" [attr.title]="definition().description">{{ definition().description }}</p>
         </div>
+      </header>
 
-        <!-- Content Area - Flexible based on configuration status -->
-        <div class="flex-1 space-y-4">
-          @if (isConfigured()) {
-          <!-- Configuration Status Info -->
-          <div class="space-y-2">
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-muted-foreground flex items-center">
-                <ng-icon name="lucideMapPin" class="h-4 w-4 mr-1" />
-                Active Regions
-              </span>
-              <span class="font-medium">
-                @if (getSupportedRegionsCount() > 0) {
-                  {{ getEnabledRegions().length }} of {{ getSupportedRegionsCount() }}
-                } @else {
-                  {{ getEnabledRegions().length }} active
-                }
-              </span>
-            </div>
-
-            @if (getLastHealthCheck()) {
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-muted-foreground flex items-center">
-                <ng-icon name="lucideActivity" class="h-4 w-4 mr-1" />
-                Last Health Check
-              </span>
-              <span class="font-medium">{{ lastHealthCheckText() }}</span>
-            </div>
+      <dl class="grid grid-cols-3 gap-3">
+        <div class="min-w-0">
+          <dt class="text-label">Regions</dt>
+          <dd class="text-sm font-medium text-foreground mt-1" [attr.title]="regionNames()">
+            @if (isConfigured()) {
+              {{ enabledRegions().length }} <span class="text-muted-foreground font-normal">of {{ regionCount() }}</span>
+            } @else {
+              {{ regionCount() || '—' }}
             }
-
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-muted-foreground flex items-center">
-                <ng-icon name="lucideCalendar" class="h-4 w-4 mr-1" />
-                Configured
-              </span>
-              <span class="font-medium">{{ getFormattedDate($safeNavigationMigration(configuration()?.createdAt)) }}</span>
-            </div>
-          </div>
-
-          <!-- Active Regions Display -->
-          @if (getEnabledRegions().length > 0) {
-          <div>
-            <p class="text-sm text-muted-foreground mb-2 flex items-center">
-              <ng-icon name="lucideServer" class="h-4 w-4 mr-1" />
-              Active Regions
-            </p>
-            <div class="flex flex-wrap gap-1">
-              @for (regionId of getEnabledRegions(); track regionId) {
-              <span
-                class="inline-flex items-center px-2 py-1 rounded-md bg-primary/10 text-primary text-xs"
-              >
-                {{ getRegionDisplay(regionId) }}
-              </span>
-              }
-            </div>
-          </div>
-          }
-
-          } @else {
-          <!-- Non-configured provider info -->
-          <div class="space-y-4">
-            <!-- Available Regions -->
-            @if (getSupportedRegionsCount() > 0) {
-            <div>
-              <p class="text-sm text-muted-foreground mb-2 flex items-center">
-                <ng-icon name="lucideGlobe" class="h-4 w-4 mr-1" />
-                Available Regions ({{ getSupportedRegionsCount() }})
-              </p>
-              <div class="flex flex-wrap gap-1">
-                @for (region of getProvider().capabilities.supportedRegions.slice(0, 6); track region.id) {
-                <span
-                  class="inline-flex items-center px-2 py-1 rounded-md bg-muted/50 text-muted-foreground text-xs"
-                >
-                  {{ getRegionDisplay(region.id) }}
-                </span>
-                }
-                @if (getSupportedRegionsCount() > 6) {
-                <span class="text-xs text-muted-foreground px-2 py-1">
-                  +{{ getSupportedRegionsCount() - 6 }} more
-                </span>
-                }
-              </div>
-            </div>
-            }
-
-            <!-- Credential Type -->
-            @if (getCredentialType()) {
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-muted-foreground flex items-center">
-                <ng-icon name="lucideShield" class="h-4 w-4 mr-1" />
-                Authentication
-              </span>
-              <span class="font-medium">{{ getCredentialTypeDisplay() }}</span>
-            </div>
-            }
-
-            <!-- Configuration Notice -->
-            <div class="p-3 rounded-md bg-blue-50 dark:bg-blue-900/20">
-              <p class="text-sm text-blue-700 dark:text-blue-300 flex items-center">
-                <ng-icon name="lucideSettings" class="h-4 w-4 mr-1" />
-                This provider needs to be configured before use
-              </p>
-            </div>
-          </div>
-          }
-
-          <!-- Features Section - Always shown if available -->
-          @if (featuresEnabled() && hasFeatures()) {
-          <div>
-            <p class="text-sm text-muted-foreground mb-2 flex items-center">
-              <ng-icon name="lucideZap" class="h-4 w-4 mr-1" />
-              Features
-            </p>
-            <div class="grid grid-cols-2 gap-2">
-              @for (feature of displayFeatures(); track feature.key) {
-              <div class="flex items-center space-x-2 text-xs">
+          </dd>
+        </div>
+        <div class="min-w-0">
+          <dt class="text-label">Sign-in</dt>
+          <dd class="text-sm font-medium text-foreground mt-1 truncate" [attr.title]="credentialLabel()">{{ credentialLabel() || '—' }}</dd>
+        </div>
+        <div class="min-w-0">
+          <dt class="text-label flex items-center gap-1">
+            From
+            @if (price(); as p) {
+              @if (p.estimated) {
                 <ng-icon
-                  [name]="feature.enabled ? 'lucideCheck' : 'lucideX'"
-                  [class]="
-                    feature.enabled
-                      ? 'h-3 w-3 text-green-500'
-                      : 'h-3 w-3 text-muted-foreground'
-                  "
+                  name="lucideInfo"
+                  class="h-3 w-3 shrink-0 normal-case"
+                  tabindex="0"
+                  role="img"
+                  title="Smallest machine, estimated from its hourly price."
+                  aria-label="Smallest machine, estimated from its hourly price."
                 />
-                <span
-                  [class]="
-                    feature.enabled ? 'text-foreground' : 'text-muted-foreground'
-                  "
-                >
-                  {{ feature.label }}
-                </span>
-              </div>
               }
-            </div>
-          </div>
-          }
-
-          <!-- Pricing Section - Always shown if available -->
-          @if (hasPricing()) {
-          <div class="p-3 rounded-md bg-muted/50">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-muted-foreground">Starting from</span>
-              <span class="font-semibold">
-                {{ monthlyPriceDisplay()?.currency }}
-                {{ $safeNavigationMigration(monthlyPriceDisplay()?.price) | number:'1.2-2' }}
-                <span class="text-xs text-muted-foreground">/month</span>
-              </span>
-            </div>
-
-            <div class="space-y-1">
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted-foreground">{{ billingCycleText() }}</span>
-                @if (monthlyPriceDisplay()?.isConverted) {
-                <span class="text-xs text-amber-600 dark:text-amber-400">*Estimated</span>
-                }
-              </div>
-
-              @if (getProvider().pricingUrl) {
-              <div class="pt-2 border-t border-border/50">
-                <button
-                  (click)="openPricing()"
-                  class="inline-flex items-center text-xs text-primary hover:text-primary/80 hover:underline transition-colors"
-                >
-                  <ng-icon name="lucideExternalLink" class="h-3 w-3 mr-1" />
-                  View current pricing
-                </button>
-              </div>
-              }
-            </div>
-          </div>
-          }
+            }
+          </dt>
+          <dd class="text-sm font-medium text-foreground mt-1">
+            @if (price(); as p) {
+              {{ p.amount | currency: p.currency : 'symbol' : '1.2-2' }}<span class="text-xs text-muted-foreground font-normal">/mo</span>
+            } @else {
+              —
+            }
+          </dd>
         </div>
+      </dl>
 
-        <!-- Action Buttons - Always at the bottom -->
-        <div class="flex space-x-2 pt-4">
-          @if (!isConfigured() || getStatus() === 'not_configured') {
-          <button
-            (click)="configure.emit(getProvider().id)"
-            class="flex-1 inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <ng-icon name="lucideSettings" class="h-4 w-4 mr-2" />
-            Configure
-          </button>
-          } @else {
+      @if (capabilities().length > 0) {
+        <div>
+          <p class="text-label mb-2">Capabilities</p>
+          <ul class="grid grid-cols-2 gap-x-3 gap-y-1.5">
+            @for (item of capabilities(); track item.key) {
+              <li
+                class="flex items-center gap-1.5 text-xs"
+                [class]="item.on ? 'text-foreground' : 'text-muted-foreground/70'"
+                [attr.title]="item.hint"
+                [attr.data-testid]="'capability-' + item.key"
+              >
+                <ng-icon [name]="item.on ? 'lucideCheck' : 'lucideMinus'" class="h-3 w-3 shrink-0 text-muted-foreground" />
+                {{ item.label }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (isConfigured() && lastCheckText()) {
+        <p class="text-sub">Checked {{ lastCheckText() }}</p>
+      }
+
+      <footer class="mt-auto flex items-center gap-3 pt-1">
+        @if (isConfigured()) {
           <a
-            [routerLink]="['/management/providers', getProvider().id]"
-            class="flex-1 inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+            [routerLink]="['/management/providers', definition().id]"
+            class="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            <ng-icon name="lucideSettings" class="h-4 w-4 mr-2" />
             Manage
           </a>
-          }
-
+        } @else {
           <button
-            (click)="openDocs()"
-            class="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
-            title="View Documentation"
+            type="button"
+            (click)="configure.emit(definition().id)"
+            class="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            data-testid="provider-connect"
           >
-            <ng-icon name="lucideExternalLink" class="h-4 w-4" />
+            Connect
           </button>
-        </div>
-      </div>
-    </div>
+        }
+        @if (definition().documentationUrl) {
+          <a
+            [href]="definition().documentationUrl"
+            target="_blank"
+            rel="noopener"
+            class="ml-auto inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            Docs
+            <ng-icon name="lucideExternalLink" class="h-3 w-3" />
+          </a>
+        }
+      </footer>
+    </article>
   `,
 })
 export class ProviderCardComponent {
@@ -287,251 +141,52 @@ export class ProviderCardComponent {
   provider = input<ProviderDefinitionDto>();
 
   configure = output<string>();
-  featuresEnabled = signal<boolean>(true); // Enable features by default
 
+  readonly definition = computed(() => this.provider()!);
   readonly isConfigured = computed(() => !!this.configuration());
 
-  readonly getProvider = computed(() => {
-    return this.provider()!;
+  readonly state = computed(() => providerState(this.configuration()?.status));
+  readonly stateDot = computed(() => PROVIDER_DOT[this.state().tone]);
+  readonly stateText = computed(() => PROVIDER_TEXT[this.state().tone]);
+
+  readonly enabledRegions = computed(() => this.configuration()?.enabledRegions ?? []);
+
+  private readonly regions = computed(() => {
+    const fromConfig = (this.configuration()?.availableRegions as Array<{ id: string; displayName?: string; name?: string }> | undefined) ?? [];
+    return fromConfig.length ? fromConfig : this.definition().capabilities?.supportedRegions ?? [];
   });
 
-  readonly getStatus = computed(() => {
-    return this.configuration()?.status || 'not_configured';
-  });
+  readonly regionCount = computed(() => this.regions().length);
 
-  readonly getIsActive = computed(() => {
-    return this.configuration()?.isActive || false;
-  });
+  readonly regionNames = computed(() =>
+    this.regions()
+      .map((r) => r.displayName || r.name || r.id)
+      .join(', '),
+  );
 
-  readonly getEnabledRegions = computed(() => {
-    return this.configuration()?.enabledRegions || [];
-  });
+  readonly credentialLabel = computed(() => credentialKindLabel(credentialKind(this.definition())));
 
-  readonly getAvailableRegions = computed(() => {
-    const enabledRegions = this.getEnabledRegions();
-    const allRegions =
-      this.getProvider().capabilities?.supportedRegions?.map((r) => r.id) || [];
-    return allRegions.filter((regionId) => !enabledRegions.includes(regionId));
-  });
+  readonly capabilities = computed(() => providerCapabilities(this.definition()));
 
-  readonly hasAvailableRegions = computed(() => {
-    return this.getAvailableRegions().length > 0;
-  });
-
-  readonly getLastHealthCheck = computed(() => {
-    const lastCheck = this.configuration()?.lastHealthCheck;
-    return lastCheck ? new Date(lastCheck) : undefined;
-  });
-
-  // Add new computed properties for additional info
-  readonly getCredentialType = computed(() => {
-    return this.getProvider().capabilities?.credentialType;
-  });
-
-  readonly getConfigurationId = computed(() => {
-    return this.configuration()?.id?.slice(0, 8); // Show first 8 chars of ID
-  });
-
-  readonly statusBadgeClass = computed(() => {
-    const status = this.getStatus();
-    const baseClass =
-      'inline-flex items-center space-x-1 rounded-full px-2 py-1';
-
-    switch (status) {
-      case ProviderStatus.ACTIVE:
-        return `${baseClass} bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400`;
-      case ProviderStatus.ERROR:
-        return `${baseClass} bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400`;
-      case ProviderStatus.CONFIGURING:
-      case ProviderStatus.VALIDATING:
-        return `${baseClass} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400`;
-      case ProviderStatus.DISABLED:
-        return `${baseClass} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
-      default:
-        return `${baseClass} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
-    }
-  });
-
-  readonly statusIcon = computed(() => {
-    const status = this.getStatus();
-    switch (status) {
-      case ProviderStatus.ACTIVE:
-        return 'lucideCheck';
-      case ProviderStatus.ERROR:
-        return 'lucideX';
-      case ProviderStatus.CONFIGURING:
-      case ProviderStatus.VALIDATING:
-        return 'lucideTriangleAlert';
-      default:
-        return 'lucideX';
-    }
-  });
-
-  readonly statusText = computed(() => {
-    const status = this.getStatus();
-    switch (status) {
-      case ProviderStatus.ACTIVE:
-        return 'Active';
-      case ProviderStatus.ERROR:
-        return 'Error';
-      case ProviderStatus.CONFIGURING:
-        return 'Configuring';
-      case ProviderStatus.VALIDATING:
-        return 'Validating';
-      case ProviderStatus.DISABLED:
-        return 'Disabled';
-      case ProviderStatus.NOT_CONFIGURED:
-        return 'Not Configured';
-      default:
-        return 'Unknown';
-    }
-  });
-
-  readonly displayFeatures = computed(() => {
-    const features = this.getProvider().capabilities?.features;
-    if (!features) return [];
-
-    return [
-      {
-        key: 'loadBalancers',
-        label: 'Load Balancers',
-        enabled: features.loadBalancers || false,
-      },
-      {
-        key: 'privateNetworking',
-        label: 'Private Network',
-        enabled: features.privateNetworking || false,
-      },
-      {
-        key: 'snapshots',
-        label: 'Snapshots',
-        enabled: features.snapshots || false,
-      },
-      {
-        key: 'backups',
-        label: 'Backups',
-        enabled: features.backups || false,
-      },
-    ];
-  });
-
-  readonly lastHealthCheckText = computed(() => {
-    const lastCheck = this.getLastHealthCheck();
-    if (!lastCheck) return 'Never';
-
-    const now = new Date();
-    const diff = now.getTime() - lastCheck.getTime();
-    const minutes = Math.floor(diff / 60000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  });
-
-  readonly monthlyPriceDisplay = computed(() => {
-    const pricing = this.getProvider().capabilities?.pricing;
-    if (!pricing) return null;
-
-    const { currency, minimumCost, billingCycle } = pricing;
-    let monthlyPrice = minimumCost;
-    let actualBilling = billingCycle;
-
-    // Convert hourly to monthly using shared pricing service
-    if (billingCycle === 'hourly') {
-      monthlyPrice = this.pricingService.calculateMonthlyPrice(minimumCost);
-    }
-
+  readonly price = computed(() => {
+    const pricing = this.definition().capabilities?.pricing;
+    if (!pricing?.minimumCost) return null;
+    const hourly = pricing.billingCycle === 'hourly';
     return {
-      currency: currency || 'EUR',
-      price: monthlyPrice,
-      actualBilling,
-      isConverted: billingCycle === 'hourly',
+      currency: pricing.currency || 'EUR',
+      amount: hourly ? this.pricingService.calculateMonthlyPrice(pricing.minimumCost) : pricing.minimumCost,
+      estimated: hourly,
     };
   });
 
-  readonly billingCycleText = computed(() => {
-    const pricing = this.getProvider().capabilities?.pricing;
-    if (!pricing) return '';
-
-    switch (pricing.billingCycle) {
-      case 'hourly':
-        return 'Billed hourly';
-      case 'monthly':
-        return 'Billed monthly';
-      default:
-        return 'Billing varies';
-    }
+  readonly lastCheckText = computed(() => {
+    const lastCheck = this.configuration()?.lastHealthCheck;
+    if (!lastCheck) return '';
+    const minutes = Math.floor((Date.now() - new Date(lastCheck).getTime()) / 60000);
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
   });
-
-  readonly getCredentialTypeDisplay = computed(() => {
-    const type = this.getCredentialType() as string;
-    switch (type) {
-      case 'api_key':
-        return 'API Key';
-      case 'access_key_secret':
-        return 'Access Key + Secret';
-      case 'bearer_token':
-        return 'Bearer Token';
-      case 'user_password':
-        return 'Username/Password';
-      default:
-        return type || 'Unknown';
-    }
-  });
-
-  getSupportedRegionsCount(): number {
-    // Prefer availableRegions from configuration (populated after setup)
-    const fromConfig = (this.configuration()?.availableRegions as any[])?.length;
-    if (fromConfig) return fromConfig;
-    return this.getProvider().capabilities?.supportedRegions?.length || 0;
-  }
-
-  hasFeatures(): boolean {
-    return this.getProvider().capabilities?.features !== undefined;
-  }
-
-  hasPricing(): boolean {
-    return this.getProvider().capabilities?.pricing !== undefined;
-  }
-
-  getRegionDisplay(regionId: string): string {
-    const region = this.getProvider().capabilities?.supportedRegions?.find(
-      (r) => r.id === regionId
-    );
-    return region ? `${'🌍'} ${region.displayName || regionId}` : regionId;
-  }
-
-  openDocs(): void {
-    const docUrl = this.getProvider().documentationUrl;
-    if (docUrl) {
-      window.open(docUrl, '_blank');
-    }
-  }
-
-  openPricing(): void {
-    const pricingUrl = this.getProvider().pricingUrl;
-    if (pricingUrl) {
-      window.open(pricingUrl, '_blank');
-    }
-  }
-
-  getFormattedDate(dateString?: string): string {
-    if (!dateString) return 'Unknown';
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-
-    return date.toLocaleDateString();
-  }
 }

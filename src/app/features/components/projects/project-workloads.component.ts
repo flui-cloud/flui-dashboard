@@ -445,7 +445,7 @@ export class ProjectWorkloadsComponent implements OnInit, OnDestroy {
   protected summary(section: ProjectSection): string {
     if (section.groups.length === 0) return 'No workloads';
     return section.counts
-      .map(({ kind, count }) => `${count} ${getKindLabel(kind).toLowerCase()}`)
+      .map(({ kind, count }) => `${count} ${singularWhenOne(getKindLabel(kind).toLowerCase(), count)}`)
       .join(' · ');
   }
 
@@ -552,4 +552,9 @@ export class ProjectWorkloadsComponent implements OnInit, OnDestroy {
     }
     return [...counts.entries()].map(([kind, count]) => ({ kind, count }));
   }
+}
+
+/** "1 application", "2 applications"; "system" has no plural to drop. */
+function singularWhenOne(label: string, count: number): string {
+  return count === 1 && label.endsWith('s') ? label.slice(0, -1) : label;
 }

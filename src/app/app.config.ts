@@ -15,12 +15,19 @@ import { OidcAuthService } from './core/services/oidc-auth.service';
 import { AuthService } from './core/services/auth.service';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { maskModeInterceptor } from './core/interceptors/mask-mode.interceptor';
+import { sandboxFenceInterceptor } from './core/interceptors/sandbox-fence.interceptor';
+import { apiErrorMessageInterceptor } from './core/interceptors/api-error-message.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withXhr(), withInterceptors([authInterceptor, maskModeInterceptor])),
+    provideHttpClient(withXhr(), withInterceptors([
+        authInterceptor,
+        maskModeInterceptor,
+        apiErrorMessageInterceptor,
+        sandboxFenceInterceptor,
+      ])),
     provideEcharts(),
     provideMarkdown({
       markedOptions: {

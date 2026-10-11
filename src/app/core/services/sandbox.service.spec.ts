@@ -78,6 +78,10 @@ describe('telling a refusal from a failure', () => {
 describe('the area a screen belongs to', () => {
   it('reads the area off the route', () => {
     expect(sandboxAreaForUrl('/infrastructure/keys')).toBe('keys');
+    expect(sandboxAreaForUrl('/cluster/c-1/firewall')).toBe('firewall');
+    expect(sandboxAreaForUrl('/cluster/c-1/pricing?from=home')).toBe('pricing');
+    expect(sandboxAreaForUrl('/cluster/c-1/monitoring')).toBe('cluster');
+    expect(sandboxAreaForUrl('/scaling/g-1/now')).toBe('scaling');
     expect(sandboxAreaForUrl('/infrastructure/domains/zones')).toBe('dns-zones');
     expect(sandboxAreaForUrl('/management/backup/policies')).toBe('backups');
   });

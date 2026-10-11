@@ -206,7 +206,7 @@ export class ClusterScalingTabComponent {
   protected readonly failed = computed(() => this.loaded().failed);
   protected readonly row = computed(() => this.loaded().data);
   protected readonly decisions = computed(
-    () => this.decisionsRes.value() ?? [],
+    () => (this.decisionsRes.hasValue() ? this.decisionsRes.value() : []),
   );
 
   protected onGroupSaved(): void {

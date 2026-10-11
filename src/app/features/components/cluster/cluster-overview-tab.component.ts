@@ -35,6 +35,7 @@ import { EnableBackupsModalComponent } from '../backup/enable-backups/enable-bac
 import { ClusterMaintenanceCardComponent } from '../maintenance/cluster-maintenance-card.component';
 import { ClusterEgressLineComponent } from '../egress/cluster-egress-line.component';
 import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
+import { SandboxService } from '../../../core/services/sandbox.service';
 import { ClusterOverviewNodesCardComponent } from './cluster-overview-nodes-card.component';
 import { meterBarClass } from './cluster-overview-nodes';
 
@@ -66,6 +67,9 @@ import { meterBarClass } from './cluster-overview-nodes';
 })
 export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
   readonly clusterService = inject(ClusterService);
+  private readonly sandbox = inject(SandboxService);
+  /** A demo guest sees the cluster, not the levers that run it. */
+  readonly guest = computed(() => this.sandbox.inSandbox());
   readonly monitoring = inject(ClusterMonitoringService);
   readonly dnsZoneService = inject(ClusterDnsZoneService);
   readonly variablesService = inject(ClusterVariablesService);

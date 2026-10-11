@@ -9,7 +9,10 @@ import type { AppMetricsDto } from '../../../core/api/model/appMetricsDto';
 import type { ApplicationReleaseDto } from '../../../core/api/model/applicationReleaseDto';
 import { DbConnectionInfo } from '../../model/db-console.models';
 import { AppGroupView, Application } from '../../model/application.models';
-import { RecentEvent, recentEvents } from './app-recap-bundle';
+import { ComponentTrend, RecentEvent, recentEvents, trendOf } from './app-recap-bundle';
+
+const TREND_WINDOW_MS = 3 * 3_600_000;
+const TREND_STEP = '180s';
 import { RunState } from './app-recap-view';
 
 @Injectable()
@@ -21,6 +24,8 @@ export class AppRecapStore {
   private readonly applicationsApi = inject(ApplicationsService);
 
   readonly metrics = signal<Record<string, AppMetricsDto>>({});
+  /** The last three hours of CPU and memory per component, for the cards' sparklines. */
+  readonly trends = signal<Record<string, ComponentTrend>>({});
   readonly protection = signal<Record<string, AppProtection>>({});
   readonly protectionLoaded = signal(false);
   readonly release = signal<ApplicationReleaseDto | null>(null);
@@ -34,7 +39,7 @@ export class AppRecapStore {
   async load(group: AppGroupView, primary: Application | null): Promise<void> {
     const ids = group.components.map((c) => c.id);
     const loads = [this.loadMetrics(ids), this.loadProtection(ids), this.loadAvailability(ids)];
-    if (group.type === 'composed') loads.push(this.loadEvents(group.components));
+    if (group.type === 'composed') loads.push(this.loadEvents(group.components), this.loadTrends(ids));
     else if (primary) loads.push(this.loadRelease(primary.id));
     await Promise.all(loads);
   }
@@ -66,6 +71,21 @@ export class AppRecapStore {
       if (r.status === 'fulfilled') next[ids[i]] = r.value;
     });
     this.availability.set(next);
+  }
+
+  private async loadTrends(ids: string[], now = Date.now()): Promise<void> {
+    const start = new Date(now - TREND_WINDOW_MS).toISOString();
+    const end = new Date(now).toISOString();
+    const results = await Promise.allSettled(
+      ids.map((id) =>
+        firstValueFrom(this.metricsApi.applicationMetricsControllerGetAppMetricsHistory(id, start, end, TREND_STEP)),
+      ),
+    );
+    const next: Record<string, ComponentTrend> = {};
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') next[ids[i]] = trendOf(r.value?.data_points ?? []);
+    });
+    this.trends.set(next);
   }
 
   private async loadMetrics(ids: string[]): Promise<void> {

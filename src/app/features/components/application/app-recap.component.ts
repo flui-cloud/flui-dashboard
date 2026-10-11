@@ -1,3 +1,4 @@
+import { accessOf } from '../../model/app-access';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -106,9 +107,11 @@ import {
 
           <app-recap-manage [appId]="p.id" [recapPath]="recapPath()" />
 
-          <app-delete-dialog [group]="g" [primary]="p" [listRoute]="listRoute()" [compact]="true">
-            {{ sourceLabel(p) }} · {{ p.exposure }} · namespace <span class="font-mono">{{ p.k8sNamespace | maskId }}</span>
-          </app-delete-dialog>
+          @if (!readOnly()) {
+            <app-delete-dialog [group]="g" [primary]="p" [listRoute]="listRoute()" [compact]="true">
+              {{ sourceLabel(p) }} · {{ p.exposure }} · namespace <span class="font-mono">{{ p.k8sNamespace | maskId }}</span>
+            </app-delete-dialog>
+          }
         } @else if (p) {
           @for (alarm of alarms(); track alarm.app.id) {
             <a
@@ -134,6 +137,7 @@ import {
             [protectionLoaded]="store.protectionLoaded()"
             [availability]="store.availability()"
             [runState]="store.runState()"
+            [trends]="store.trends()"
             [recapPath]="recapPath()"
             (backUp)="store.backUpNow($event)"
           />
@@ -153,12 +157,14 @@ import {
             <app-recap-activity [events]="store.events()" [loaded]="store.eventsLoaded()" [appId]="p.id" [recapPath]="recapPath()" />
           </div>
 
-          <app-delete-dialog [group]="g" [primary]="p" [listRoute]="listRoute()" [compact]="true">
-            ID <span class="font-mono">{{ p.slug | maskId }}</span> · components
-            @for (c of g.components; track c.id; let last = $last) {
-              <span class="font-mono">{{ c.slug | maskId }}</span>{{ last ? '' : ', ' }}
-            }
-          </app-delete-dialog>
+          @if (!readOnly()) {
+            <app-delete-dialog [group]="g" [primary]="p" [listRoute]="listRoute()" [compact]="true">
+              ID <span class="font-mono">{{ p.slug | maskId }}</span> · components
+              @for (c of g.components; track c.id; let last = $last) {
+                <span class="font-mono">{{ c.slug | maskId }}</span>{{ last ? '' : ', ' }}
+              }
+            </app-delete-dialog>
+          }
         }
       } @else if (loadAttempted()) {
         <a
@@ -229,8 +235,14 @@ export class AppRecapComponent implements OnInit, OnDestroy {
     const g = this.group();
     if (!g) return null;
     if (!this.isComposed()) return this.primary()?.id ?? null;
-    return g.components.length === 1 ? g.components[0].id : null;
+    return g.components.length === 1 ? g.components[0].id : (this.primary()?.id ?? null);
   });
+  /** Databases whose connection details the caller may read: never a showcase's without `data:access`. */
+  private readonly connectable = computed(() =>
+    this.dbComponents()
+      .filter((db) => accessOf(db)?.dataAccess !== false)
+      .map((db) => db.id),
+  );
   protected readonly recapPath = computed(() => `/apps/recap/${this.group()?.id ?? ''}`);
 
   protected readonly dbComponents = computed(() =>
@@ -292,8 +304,12 @@ export class AppRecapComponent implements OnInit, OnDestroy {
 
   protected readonly runningSummary = computed(() => runningSummary(this.group()?.components ?? []));
   protected readonly internalNote = computed(() => internalNote(this.topology().back));
+  /** A reader: nothing on this page may change the application. */
+  protected readonly readOnly = computed(() => !!accessOf(this.primary())?.readOnly);
   protected readonly alarms = computed(() =>
-    backupAlarms(this.group()?.components ?? [], this.store.protection(), this.store.metrics()),
+    accessOf(this.primary())?.readOnly
+      ? []
+      : backupAlarms(this.group()?.components ?? [], this.store.protection(), this.store.metrics()),
   );
 
   private readonly accessKind = computed<'db' | 'web' | 'none'>(() => {
@@ -356,7 +372,7 @@ export class AppRecapComponent implements OnInit, OnDestroy {
     });
 
     effect(() => {
-      this.store.requestConnInfo(this.dbComponents().map((db) => db.id));
+      this.store.requestConnInfo(this.connectable());
     });
 
     effect(() => {
@@ -375,7 +391,7 @@ export class AppRecapComponent implements OnInit, OnDestroy {
         first = false;
         return;
       }
-      this.store.reloadConnInfo(this.dbComponents().map((db) => db.id));
+      this.store.reloadConnInfo(this.connectable());
     });
   }
 

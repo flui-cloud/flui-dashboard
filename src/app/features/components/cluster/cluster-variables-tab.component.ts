@@ -86,6 +86,7 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
                 <button
                   type="button"
                   class="w-full flex items-center justify-between px-4 py-3 bg-muted/50 hover:bg-muted transition-colors text-left"
+                  [attr.aria-expanded]="isExpanded(set.name)"
                   (click)="toggleSet(set)"
                 >
                   <div class="flex items-center gap-3">

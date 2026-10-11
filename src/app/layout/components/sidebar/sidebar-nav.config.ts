@@ -23,6 +23,19 @@ export const FULL_ACCESS_ONLY_LABELS: ReadonlySet<string> = new Set([
   'Image registry',
 ]);
 
+/**
+ * What each entry reads first. A demo guest sees an entry only when the API's
+ * fence admits that read, so the menu never leads into a refusal.
+ */
+export const READS_BY_LABEL: Record<string, string> = {
+  Scaling: '/infrastructure/scaling',
+  'SSH Keys': '/access/ssh-keys',
+  Platform: '/infrastructure/clusters/any/platform-components',
+  'Image registry': '/image-registry',
+  'GitHub Setup': '/repositories/github/setup/health',
+  Updates: '/platform/updates',
+};
+
 export const INFRASTRUCTURE_SECTION_BY_LABEL: Record<string, string> = {
   Compute: 'infrastructure',
   Costs: 'infrastructure',

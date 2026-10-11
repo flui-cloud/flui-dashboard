@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, map, of } from 'rxjs';
 import { AppConfigService } from './app-config.service';
+import { FenceRule, fenceAllows, parseFenceRule } from './sandbox-fence';
 
 export interface SandboxSession {
   /** False while the guest has only looked around: the first deploy takes an area. */
@@ -16,6 +17,8 @@ export interface SandboxSession {
    * quiet about it.
    */
   workloadTtlHours?: number;
+  /** Until when the guest's applications stay if nothing else happens; each action moves it. */
+  appsKeptUntil?: string | null;
   loginUrl: string;
 }
 
@@ -28,8 +31,17 @@ export interface SandboxArea {
   why: string;
 }
 
+export interface SandboxQuota {
+  cpu: string;
+  memory: string;
+  storage: string;
+  pods?: number | string;
+}
+
 interface SandboxLimits {
   areas: SandboxArea[];
+  allowed?: Array<{ routes: string[] }>;
+  quota?: SandboxQuota;
 }
 
 export const SANDBOX_LEVEL_LABEL: Record<SandboxLevel, string> = {
@@ -39,6 +51,33 @@ export const SANDBOX_LEVEL_LABEL: Record<SandboxLevel, string> = {
   closed: 'Not part of the trial',
 };
 
+/** The last answer, so a reload knows it is a guest before the first call leaves. */
+const REMEMBERED_KEY = 'flui:sandbox';
+
+interface Remembered {
+  session: SandboxSession;
+  areas: SandboxArea[];
+  fence: string[];
+}
+
+function recall(): Remembered | null {
+  try {
+    const raw = sessionStorage.getItem(REMEMBERED_KEY);
+    return raw ? (JSON.parse(raw) as Remembered) : null;
+  } catch {
+    return null;
+  }
+}
+
+function remember(value: Remembered | null): void {
+  try {
+    if (value) sessionStorage.setItem(REMEMBERED_KEY, JSON.stringify(value));
+    else sessionStorage.removeItem(REMEMBERED_KEY);
+  } catch {
+    // A browser that refuses storage only loses the head start.
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class SandboxService {
   private readonly http = inject(HttpClient);
@@ -46,9 +85,36 @@ export class SandboxService {
 
   private readonly _session = signal<SandboxSession | null>(null);
   private readonly _areas = signal<SandboxArea[]>([]);
+  private readonly _fence = signal<FenceRule[]>([]);
+  private readonly _quota = signal<SandboxQuota | null>(null);
+  /** What one guest's space may use, as the API states it. */
+  readonly quota = this._quota.asReadonly();
   // Counted down locally: the display moves every second, the server is asked rarely.
   private readonly _secondsRemaining = signal(0);
   private ticker?: ReturnType<typeof setInterval>;
+  private fenceRoutes: string[] = [];
+  private markKnown!: () => void;
+  private readonly known = new Promise<void>((resolve) => (this.markKnown = resolve));
+
+  constructor() {
+    const remembered = recall();
+    if (!remembered) return;
+    this._session.set(remembered.session);
+    this._areas.set(remembered.areas);
+    this.setFence(remembered.fence);
+    this.markKnown();
+  }
+
+  /**
+   * Whether the caller is a demo guest, once that is known. Screens that load
+   * the operator's control room ask this first, so a guest's first page does not
+   * send what the fence refuses. Never waits more than a few seconds: an answer
+   * that does not come is taken as "not a guest", and the API still decides.
+   */
+  async whenKnown(maxWaitMs = 4000): Promise<boolean> {
+    await Promise.race([this.known, new Promise((r) => setTimeout(r, maxWaitMs))]);
+    return this.inSandbox();
+  }
 
   readonly session = this._session.asReadonly();
   readonly areas = this._areas.asReadonly();
@@ -59,6 +125,7 @@ export class SandboxService {
   );
 
   readonly hasArea = computed(() => this._session()?.hasArea === true);
+  readonly appsKeptUntil = computed(() => this._session()?.appsKeptUntil ?? null);
 
   readonly urgent = computed(
     () => this.hasArea() && this._secondsRemaining() < 3600,
@@ -91,16 +158,34 @@ export class SandboxService {
     return this._areas().find((a) => a.key === key)?.level ?? 'full';
   }
 
+  /**
+   * Whether the API's fence lets a guest make this call. Until the limits
+   * arrive the answer is yes: the API still decides.
+   */
+  allows(method: string, apiPath: string): boolean {
+    if (!this.inSandbox()) return true;
+    const fence = this._fence();
+    return fence.length === 0 || fenceAllows(fence, method, apiPath);
+  }
+
   whyFor(key: string): string {
     return this._areas().find((a) => a.key === key)?.why ?? '';
   }
 
+  private limitsAsked = false;
+
   private loadAreas(): void {
-    if (this._areas().length > 0) return;
+    if (this.limitsAsked) return;
+    this.limitsAsked = true;
     this.http
       .get<SandboxLimits>(`${this.base}/limits`)
-      .pipe(catchError(() => of({ areas: [] as SandboxArea[] })))
-      .subscribe((limits) => this._areas.set(limits.areas ?? []));
+      .pipe(catchError(() => of({ areas: [] as SandboxArea[] } as SandboxLimits)))
+      .subscribe((limits) => {
+        this._areas.set(limits.areas ?? []);
+        this._quota.set(limits.quota ?? null);
+        this.setFence((limits.allowed ?? []).flatMap((rule) => rule.routes));
+        this.persist();
+      });
   }
 
   // Never errors: not being in a sandbox is an answer, not a failure.
@@ -117,8 +202,24 @@ export class SandboxService {
     );
   }
 
+  private setFence(routes: string[]): void {
+    this.fenceRoutes = routes;
+    this._fence.set(
+      routes.map(parseFenceRule).filter((rule): rule is FenceRule => rule !== null),
+    );
+  }
+
+  private persist(): void {
+    const session = this._session();
+    remember(
+      session ? { session, areas: this._areas(), fence: this.fenceRoutes } : null,
+    );
+  }
+
   private adopt(session: SandboxSession): void {
     this._session.set(session);
+    this.persist();
+    this.markKnown();
     this.loadAreas();
     this._secondsRemaining.set(Math.max(0, session.secondsRemaining));
     if (session.hasArea) this.startTicking();
@@ -127,6 +228,8 @@ export class SandboxService {
 
   private clear(): void {
     this._session.set(null);
+    remember(null);
+    this.markKnown();
     this._secondsRemaining.set(0);
     this.stopTicking();
   }
@@ -165,12 +268,26 @@ export const SANDBOX_ROUTE_AREAS: ReadonlyArray<readonly [string, string]> = [
   ['/management/mail', 'mail'],
   ['/mail', 'mail'],
   ['/cluster', 'cluster'],
+  ['/cluster/*/storage', 'storage'],
+  ['/cluster/*/scaling', 'scaling'],
+  ['/cluster/*/firewall', 'firewall'],
+  ['/cluster/*/variables', 'platform-config'],
+  ['/cluster/*/pricing', 'pricing'],
+  ['/scaling', 'scaling'],
   ['/management/operating-context', 'operating-context'],
 ];
 
+/** A prefix of path segments, where `*` stands for any one segment (a cluster's id). */
+function prefixMatches(prefix: string, url: string): boolean {
+  const want = prefix.split('/');
+  const have = url.split(/[?#]/)[0].split('/');
+  if (have.length < want.length) return false;
+  return want.every((segment, i) => segment === '*' || segment === have[i]);
+}
+
 export function sandboxAreaForUrl(url: string): string | null {
   const match = SANDBOX_ROUTE_AREAS.filter(([prefix]) =>
-    url.startsWith(prefix),
+    prefix.includes('*') ? prefixMatches(prefix, url) : url.startsWith(prefix),
   ).sort((a, b) => b[0].length - a[0].length)[0];
   return match ? match[1] : null;
 }

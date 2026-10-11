@@ -309,6 +309,8 @@ export class AppResourcesEditorComponent implements OnChanges {
   readonly savingRestart = input(false);
   readonly appId = input<string | null>(null);
   readonly clusterId = input<string | null>(null);
+  /** Shown to somebody who cannot change it: the advice on sizing is not theirs to act on. */
+  readonly advice = input(true);
 
   protected roomWait(): string | null {
     if (this.rollout?.waitingForRoom) return this.rollout.message;
@@ -539,6 +541,7 @@ export class AppResourcesEditorComponent implements OnChanges {
   }
 
   protected resourceHint(pct: number, resource: 'CPU' | 'Memory'): { level: 'low' | 'warn' | 'critical'; message: string } | null {
+    if (!this.advice()) return null;
     if (pct >= 90) return { level: 'critical', message: `${resource} limit almost reached — risk of ${resource === 'CPU' ? 'throttling' : 'OOM kill'}` };
     if (pct >= 70) return { level: 'warn', message: `${resource} usage at ${pct.toFixed(0)}% of limit — consider increasing` };
     if (pct > 0 && pct < 15) return { level: 'low', message: `${resource} limit is much higher than actual usage — consider reducing` };

@@ -1,5 +1,6 @@
 import { AppGroupView, Application, ApplicationGroupTypeEnum } from './application.models';
 import { DbEngineFamily, databaseEngineOf, engineFamilyOf } from './db-engine';
+import { accessOf } from './app-access';
 
 export type WorkloadList = 'applications' | 'data' | 'system';
 
@@ -85,12 +86,20 @@ export function workloadEntries(groups: AppGroupView[], list: WorkloadList): Wor
   return entries;
 }
 
+/** Counts of the caller's own workloads; showcase groups are left out. */
 export function workloadListCounts(groups: AppGroupView[]): Record<WorkloadList, number> {
+  const own = groups.filter((g) => !isShowcaseGroup(g));
   return {
-    applications: workloadEntries(groups, 'applications').length,
-    data: workloadEntries(groups, 'data').length,
-    system: workloadEntries(groups, 'system').length,
+    applications: workloadEntries(own, 'applications').length,
+    data: workloadEntries(own, 'data').length,
+    system: workloadEntries(own, 'system').length,
   };
+}
+
+function isShowcaseGroup(group: AppGroupView): boolean {
+  const primary =
+    group.components.find((c) => c.id === group.primaryComponentId) ?? group.components[0];
+  return !!accessOf(primary)?.showcase;
 }
 
 /**

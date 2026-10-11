@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideEye, lucideInfo, lucideLock } from '@ng-icons/lucide';
+import { ExplainComponent } from './explain.component';
 import {
   SANDBOX_LEVEL_LABEL,
   SandboxLevel,
@@ -10,21 +11,20 @@ import {
 @Component({
   selector: 'app-sandbox-level-notice',
   standalone: true,
-  imports: [NgIcon],
+  imports: [NgIcon, ExplainComponent],
   providers: [provideIcons({ lucideEye, lucideInfo, lucideLock })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (visible()) {
       <div
         role="note"
-        class="flex items-start gap-2.5 rounded-lg border border-border bg-muted/40
-               px-3.5 py-2.5 text-sm text-muted-foreground"
+        class="inline-flex max-w-full items-center gap-2 rounded-lg border border-border bg-card
+               px-3 py-1.5 text-sm text-muted-foreground"
       >
-        <ng-icon [name]="icon()" class="mt-0.5 h-4 w-4 flex-shrink-0 opacity-70" />
-        <p class="leading-relaxed">
-          <span class="font-medium text-foreground">{{ label() }}.</span>
-          {{ why() }}
-        </p>
+        @if (icon(); as name) {
+          <ng-icon [name]="name" class="h-4 w-4 flex-shrink-0 opacity-70" />
+        }
+        <app-explain [label]="label()" labelClass="text-[13px] font-medium text-foreground" floating>{{ why() }}</app-explain>
       </div>
     }
   `,
@@ -48,7 +48,7 @@ export class SandboxLevelNoticeComponent {
       case 'closed':
         return 'lucideLock';
       default:
-        return 'lucideInfo';
+        return null;
     }
   });
 }

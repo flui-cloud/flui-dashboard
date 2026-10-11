@@ -178,7 +178,8 @@ export class DashboardClustersTableComponent implements OnInit, OnDestroy {
           c,
           metrics.get(c.id!),
           apps.get(c.id!),
-          (c.provider && this.providers.getProviderById(c.provider)?.displayName) || c.provider || 'Unknown',
+          (c.provider && this.providers.getProviderById(c.provider)?.displayName) ||
+            (c.provider ? this.clusters.getProviderDisplayName(c.provider) : 'Unknown'),
         ),
       );
   });

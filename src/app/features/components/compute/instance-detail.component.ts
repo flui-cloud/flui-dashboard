@@ -10,8 +10,6 @@ import {
   lucideHardDrive,
   lucideMapPin,
   lucideGlobe,
-  lucideCalendar,
-  lucideActivity,
   lucideExternalLink,
   lucideLoader,
   lucideTrash2,
@@ -19,23 +17,15 @@ import {
   lucideChevronDown,
   lucideChevronUp,
   lucideNetwork,
-  lucideDatabase,
-  lucideClock,
   lucideBox,
   lucideInfo,
   lucideKey,
+  lucideCircleAlert,
 } from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
-import {
-  HlmCardContentDirective,
-  HlmCardDirective,
-  HlmCardHeaderDirective,
-  HlmCardTitleDirective,
-} from '@spartan-ng/ui-card-helm';
 import { VirtualInstancesService, InfrastructureServersService } from '../../../core/api';
 import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { InstanceWithLabels, isManagedByFlui, getOwnership, getClusterInfo } from '../../model/instance.models';
-import { InstanceManagedBadgeComponent } from './instance-managed-badge.component';
 import { InstanceDeleteDialogComponent } from './instance-delete-dialog.component';
 import { SshTerminalComponent } from './ssh-terminal.component';
 import { ClusterService } from '../../service/cluster.service';
@@ -48,6 +38,26 @@ import {
   presentedContent,
 } from './instance-detail-surface';
 
+const STATUS_DOT = {
+  ok: 'bg-green-500',
+  warn: 'bg-amber-500',
+  danger: 'bg-destructive',
+  muted: 'bg-muted-foreground/50',
+} as const;
+
+const STATUS_TEXT = {
+  ok: 'text-green-700 dark:text-green-400',
+  warn: 'text-amber-700 dark:text-amber-400',
+  danger: 'text-destructive',
+  muted: 'text-muted-foreground',
+} as const;
+
+const OWNERSHIP_LABEL: Record<string, string> = {
+  self: 'Managed by Flui',
+  'other-flui': 'Other installation',
+  unmanaged: 'Unmanaged',
+};
+
 @Component({
   selector: 'app-instance-detail',
   standalone: true,
@@ -56,11 +66,6 @@ import {
     RouterModule,
     NgIcon,
     HlmButtonDirective,
-    HlmCardDirective,
-    HlmCardHeaderDirective,
-    HlmCardTitleDirective,
-    HlmCardContentDirective,
-    InstanceManagedBadgeComponent,
     InstanceDeleteDialogComponent,
     SshTerminalComponent,
   ],
@@ -73,8 +78,6 @@ import {
       lucideHardDrive,
       lucideMapPin,
       lucideGlobe,
-      lucideCalendar,
-      lucideActivity,
       lucideExternalLink,
       lucideLoader,
       lucideTrash2,
@@ -82,11 +85,10 @@ import {
       lucideChevronDown,
       lucideChevronUp,
       lucideNetwork,
-      lucideDatabase,
-      lucideClock,
       lucideBox,
       lucideInfo,
       lucideKey,
+      lucideCircleAlert,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -117,213 +119,155 @@ import {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <!-- Main Content (2/3) -->
           <div class="lg:col-span-2 space-y-4">
-            <!-- Instance Header Card - Compact with Status Border -->
-            <div hlmCard [class]="getStatusBorderClass()">
-              <div hlmCardHeader class="pb-3">
-                <div class="flex items-start justify-between">
-                  <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
-                      <ng-icon name="lucideServer" class="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h1 class="text-xl font-bold">
-                        {{ instance()!.displayName || instance()!.name }}
-                      </h1>
-                      @if (instance()!.displayName && instance()!.displayName !== instance()!.name) {
-                        <p class="text-xs font-mono text-muted-foreground">{{ instance()!.name }}</p>
-                      }
-                    </div>
+            <div class="card-surface p-5">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="icon-chip chip-brand">
+                    <ng-icon name="lucideServer" class="h-5 w-5" />
+                  </span>
+                  <div class="min-w-0">
+                    <h1 class="m-0 text-xl font-semibold text-foreground truncate">
+                      {{ instance()!.displayName || instance()!.name }}
+                    </h1>
+                    @if (instance()!.displayName && instance()!.displayName !== instance()!.name) {
+                      <p class="m-0 text-xs font-mono text-muted-foreground">{{ instance()!.name }}</p>
+                    }
                   </div>
-
-                  @if (isManaged()) {
-                    <button
-                      hlmBtn
-                      variant="destructive"
-                      size="sm"
-                      (click)="openDeleteDialog()"
-                      [disabled]="isDeleting() || isObservabilityInstance()"
-                      [title]="isObservabilityInstance() ? 'Control instance can only be managed via CLI' : 'Delete instance'"
-                    >
-                      @if (isDeleting()) {
-                        <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                        Deleting...
-                      } @else {
-                        <ng-icon name="lucideTrash2" class="h-4 w-4 mr-2" />
-                        Delete
-                      }
-                    </button>
-                  }
                 </div>
+
+                @if (isManaged()) {
+                  <button
+                    hlmBtn
+                    variant="outline"
+                    size="sm"
+                    class="text-destructive hover:text-destructive"
+                    (click)="openDeleteDialog()"
+                    [disabled]="isDeleting() || isObservabilityInstance()"
+                    [title]="isObservabilityInstance() ? 'Control instance can only be managed via CLI' : 'Delete instance'"
+                  >
+                    @if (isDeleting()) {
+                      <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
+                      Deleting...
+                    } @else {
+                      <ng-icon name="lucideTrash2" class="h-4 w-4 mr-2" />
+                      Delete
+                    }
+                  </button>
+                }
               </div>
 
-              <div hlmCardContent class="pt-0">
-                <!-- Inline Badges -->
-                <div class="flex flex-wrap items-center gap-2">
-                  <app-instance-managed-badge [ownership]="ownership()" />
-
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                    <ng-icon name="lucideBox" class="h-3 w-3" />
-                    {{ instance()!.provider }}
-                  </span>
-
-                  <span [class]="getStatusBadgeClass()">
-                    <ng-icon name="lucideActivity" class="h-3 w-3" />
-                    {{ instance()!.status }}
-                  </span>
-
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                    <ng-icon name="lucideMapPin" class="h-3 w-3" />
-                    {{ instance()!.regionName || instance()!.region }}
-                  </span>
-
-                  @if (instance()!.dataCenter) {
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                      <ng-icon name="lucideDatabase" class="h-3 w-3" />
-                      {{ instance()!.dataCenter }}
-                    </span>
+              <div class="mt-4 flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 mr-1 text-xs font-medium" [class]="statusTextClass()">
+                  <span class="h-1.5 w-1.5 rounded-full" [class]="statusDotClass()"></span>
+                  {{ instance()!.status }}
+                </span>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground" [attr.title]="ownershipHint()">
+                  @if (ownership() !== 'self') {
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                   }
-                </div>
+                  {{ ownershipLabel() }}
+                </span>
+                <span class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  {{ instance()!.provider }}
+                </span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  <ng-icon name="lucideMapPin" class="h-3 w-3" />
+                  {{ instance()!.regionName || instance()!.region }}
+                </span>
+                @if (instance()!.dataCenter) {
+                  <span class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-mono text-muted-foreground">
+                    {{ instance()!.dataCenter }}
+                  </span>
+                }
               </div>
             </div>
 
-            <!-- Overview: Resources + Network Unified -->
-            <div hlmCard>
-              <div hlmCardHeader class="pb-3">
-                <h2 hlmCardTitle class="text-base">Overview</h2>
-              </div>
-              <div hlmCardContent class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Resources Column -->
-                <div class="space-y-3">
-                  <div class="flex items-center gap-3">
-                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 shadow-sm">
-                      <ng-icon name="lucideCpu" class="h-5 w-5 text-white" />
-                    </div>
-                    <div class="flex-1">
-                      <p class="text-xs text-muted-foreground">CPU Cores</p>
-                      <p class="text-lg font-bold">{{ instance()!.cpuCores }}</p>
-                    </div>
-                  </div>
-
-                  <div class="flex items-center gap-3">
-                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 shadow-sm">
-                      <ng-icon name="lucideMemoryStick" class="h-5 w-5 text-white" />
-                    </div>
-                    <div class="flex-1">
-                      <p class="text-xs text-muted-foreground">RAM</p>
-                      <p class="text-lg font-bold">{{ formatMemory(instance()!.ramMb) }}</p>
-                    </div>
-                  </div>
-
-                  <div class="flex items-center gap-3">
-                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-teal-500 shadow-sm">
-                      <ng-icon name="lucideHardDrive" class="h-5 w-5 text-white" />
-                    </div>
-                    <div class="flex-1">
-                      <p class="text-xs text-muted-foreground">Storage</p>
-                      <p class="text-lg font-bold">{{ formatDisk(instance()!.diskMb) }}</p>
-                    </div>
-                  </div>
+            <section class="card-surface p-5">
+              <h2 class="m-0 mb-4 text-label">Overview</h2>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div class="card-inner px-3 py-2.5">
+                  <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideCpu" class="h-3.5 w-3.5" />CPU Cores</p>
+                  <p class="m-0 mt-1 text-lg font-semibold text-foreground tabular-nums">{{ instance()!.cpuCores }}</p>
                 </div>
-
-                <!-- Network Column -->
-                <div class="space-y-3">
-                  @if (instance()!.ipConfig?.v4?.ip) {
-                    <div class="flex items-center gap-3">
-                      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm">
-                        <ng-icon name="lucideGlobe" class="h-5 w-5 text-white" />
-                      </div>
-                      <div class="flex-1">
-                        <p class="text-xs text-muted-foreground">IPv4 Address</p>
-                        <p class="text-sm font-mono font-semibold">{{ instance()!.ipConfig?.v4?.ip }}</p>
-                      </div>
-                    </div>
-                  }
-
-                  @if (instance()!.ipConfig?.v6?.ip) {
-                    <div class="flex items-center gap-3">
-                      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-green-600 shadow-sm">
-                        <ng-icon name="lucideGlobe" class="h-5 w-5 text-white" />
-                      </div>
-                      <div class="flex-1">
-                        <p class="text-xs text-muted-foreground">IPv6 Address</p>
-                        <p class="text-xs font-mono font-semibold break-all">{{ instance()!.ipConfig?.v6?.ip }}</p>
-                      </div>
-                    </div>
-                  }
-
-                  @if (instance()!.macAddress) {
-                    <div class="flex items-center gap-3">
-                      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-gray-500 to-gray-600 shadow-sm">
-                        <ng-icon name="lucideNetwork" class="h-5 w-5 text-white" />
-                      </div>
-                      <div class="flex-1">
-                        <p class="text-xs text-muted-foreground">MAC Address</p>
-                        <p class="text-sm font-mono font-semibold">{{ instance()!.macAddress }}</p>
-                      </div>
-                    </div>
-                  }
+                <div class="card-inner px-3 py-2.5">
+                  <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideMemoryStick" class="h-3.5 w-3.5" />RAM</p>
+                  <p class="m-0 mt-1 text-lg font-semibold text-foreground tabular-nums">{{ formatMemory(instance()!.ramMb) }}</p>
                 </div>
+                <div class="card-inner px-3 py-2.5">
+                  <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideHardDrive" class="h-3.5 w-3.5" />Storage</p>
+                  <p class="m-0 mt-1 text-lg font-semibold text-foreground tabular-nums">{{ formatDisk(instance()!.diskMb) }}</p>
+                </div>
+                @if (instance()!.ipConfig?.v4?.ip) {
+                  <div class="card-inner px-3 py-2.5">
+                    <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideGlobe" class="h-3.5 w-3.5" />IPv4 Address</p>
+                    <p class="m-0 mt-1 text-sm font-mono font-semibold text-foreground">{{ instance()!.ipConfig?.v4?.ip }}</p>
+                  </div>
+                }
+                @if (instance()!.ipConfig?.v6?.ip) {
+                  <div class="card-inner px-3 py-2.5">
+                    <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideGlobe" class="h-3.5 w-3.5" />IPv6 Address</p>
+                    <p class="m-0 mt-1 text-xs font-mono font-semibold text-foreground break-all">{{ instance()!.ipConfig?.v6?.ip }}</p>
+                  </div>
+                }
+                @if (instance()!.macAddress) {
+                  <div class="card-inner px-3 py-2.5">
+                    <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideNetwork" class="h-3.5 w-3.5" />MAC Address</p>
+                    <p class="m-0 mt-1 text-sm font-mono font-semibold text-foreground">{{ instance()!.macAddress }}</p>
+                  </div>
+                }
               </div>
-            </div>
+            </section>
 
-            <!-- Observability Instance Warning -->
             @if (isObservabilityInstance()) {
-              <div class="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                <div class="flex items-center gap-3">
-                  <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                  <div class="flex-1">
-                    <p class="text-sm font-medium text-yellow-900 dark:text-yellow-200">Observability Instance</p>
-                    <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                      This instance is part of the control cluster and can only be managed via CLI.
-                    </p>
-                  </div>
+              <div class="card-surface px-4 py-3 flex items-start gap-3">
+                <ng-icon name="lucideCircleAlert" class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <div>
+                  <p class="m-0 text-sm font-medium text-foreground">Observability Instance</p>
+                  <p class="m-0 mt-0.5 text-sm text-muted-foreground">
+                    This instance is part of the control cluster and can only be managed via CLI.
+                  </p>
                 </div>
               </div>
             }
 
-            <!-- Cluster Banner (if part of cluster) -->
             @if (clusterInfo()) {
-              <div class="px-4 py-3 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200 dark:border-indigo-800">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <ng-icon name="lucideBox" class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                    <div>
-                      <p class="text-sm font-semibold text-indigo-900 dark:text-indigo-100">
-                        Part of <span class="font-bold">{{ clusterInfo()!.clusterName }}</span> cluster
-                      </p>
-                      <p class="text-xs text-indigo-700 dark:text-indigo-300">
-                        {{ clusterInfo()!.nodeType }} node
-                      </p>
-                    </div>
+              <div class="card-surface px-4 py-3 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <ng-icon name="lucideBox" class="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div class="min-w-0">
+                    <p class="m-0 text-sm text-foreground">
+                      Part of <span class="font-semibold">{{ clusterInfo()!.clusterName }}</span> cluster
+                    </p>
+                    <p class="m-0 text-xs text-muted-foreground">{{ clusterInfo()!.nodeType }} node</p>
                   </div>
-                  <a
-                    [routerLink]="['/cluster', clusterInfo()!.clusterId]"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-100 transition-colors"
-                  >
-                    View cluster
-                    <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-                  </a>
                 </div>
+                <a
+                  [routerLink]="['/cluster', clusterInfo()!.clusterId]"
+                  class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline shrink-0"
+                >
+                  View cluster
+                  <ng-icon name="lucideExternalLink" class="h-3 w-3" />
+                </a>
               </div>
             }
 
             <!-- SSH Terminal (Collapsible) -->
             @if (isManaged()) {
-              <div hlmCard class="border-l-4 border-l-emerald-500">
-                <div hlmCardHeader class="pb-3">
+              <div class="card-surface">
+                <div class="p-5">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                      <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 shadow-sm">
-                        <ng-icon name="lucideTerminal" class="h-4 w-4 text-white" />
-                      </div>
+                      <span class="icon-chip icon-chip-sm bg-muted text-muted-foreground">
+                        <ng-icon name="lucideTerminal" class="h-4 w-4" />
+                      </span>
                       <div>
-                        <h2 class="text-base font-semibold">SSH Terminal</h2>
+                        <h2 class="m-0 text-sm font-semibold text-foreground">SSH Terminal</h2>
                         @if (!canConnectSsh()) {
                           <p class="text-xs text-muted-foreground">
                             {{ instance()?.status !== 'running' ? 'Instance must be running' : 'No IP address available' }}
                           </p>
                         } @else if (isTerminalVisible()) {
-                          <p class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Connected</p>
+                          <p class="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 dark:text-green-400"><span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>Connected</p>
                         } @else {
                           <p class="text-xs text-muted-foreground">Ready to connect</p>
                         }
@@ -379,7 +323,7 @@ import {
                 </div>
 
                 @if (isTerminalVisible() && canConnectSsh()) {
-                  <div hlmCardContent class="pt-0">
+                  <div class="px-5 pb-5">
                     @if (useBootstrapKey()) {
                       <div class="flex items-center gap-1.5 mb-2 rounded-md border border-amber-400/40 bg-amber-500/8 px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400">
                         <ng-icon name="lucideKey" class="h-3.5 w-3.5 shrink-0" />
@@ -402,71 +346,45 @@ import {
 
           <!-- Sidebar (1/3) -->
           <div class="space-y-4">
-            <!-- Metadata Card -->
-            <div hlmCard class="bg-muted/30">
-              <div hlmCardHeader class="pb-3">
-                <h2 hlmCardTitle class="text-base">Instance Details</h2>
-              </div>
-              <div hlmCardContent class="space-y-3">
+            <section class="card-surface p-5">
+              <h2 class="m-0 mb-4 text-label">Instance Details</h2>
+              <div class="space-y-3">
                 @if (instance()!.osType) {
-                  <div class="flex items-start gap-2">
-                    <ng-icon name="lucideServer" class="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div class="flex-1">
-                      <p class="text-xs text-muted-foreground">Operating System</p>
-                      <p class="text-sm font-medium">{{ instance()!.osType }}</p>
-                    </div>
+                  <div>
+                    <p class="m-0 text-label">Operating System</p>
+                    <p class="m-0 mt-0.5 text-sm font-semibold text-foreground">{{ instance()!.osType }}</p>
                   </div>
                 }
-
                 @if (instance()!.productType) {
-                  <div class="flex items-start gap-2">
-                    <ng-icon name="lucideBox" class="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div class="flex-1">
-                      <p class="text-xs text-muted-foreground">Product Type</p>
-                      <p class="text-sm font-medium">{{ instance()!.productType }}</p>
-                    </div>
+                  <div>
+                    <p class="m-0 text-label">Product Type</p>
+                    <p class="m-0 mt-0.5 text-sm font-semibold text-foreground">{{ instance()!.productType }}</p>
                   </div>
                 }
-
                 @if (instance()!.productName) {
-                  <div class="flex items-start gap-2">
-                    <ng-icon name="lucideDatabase" class="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div class="flex-1">
-                      <p class="text-xs text-muted-foreground">Product Name</p>
-                      <p class="text-sm font-medium">{{ instance()!.productName }}</p>
-                    </div>
+                  <div>
+                    <p class="m-0 text-label">Product Name</p>
+                    <p class="m-0 mt-0.5 text-sm font-semibold text-foreground">{{ instance()!.productName }}</p>
                   </div>
                 }
-
                 @if (instance()!.defaultUser) {
-                  <div class="flex items-start gap-2">
-                    <ng-icon name="lucideActivity" class="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div class="flex-1">
-                      <p class="text-xs text-muted-foreground">Default User</p>
-                      <p class="text-sm font-mono font-medium">{{ instance()!.defaultUser }}</p>
-                    </div>
+                  <div>
+                    <p class="m-0 text-label">Default User</p>
+                    <p class="m-0 mt-0.5 text-sm font-mono font-semibold text-foreground">{{ instance()!.defaultUser }}</p>
                   </div>
                 }
-
-                <div class="border-t border-border pt-3 mt-3">
-                  <div class="flex items-start gap-2 mb-2">
-                    <ng-icon name="lucideClock" class="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div class="flex-1">
-                      <p class="text-xs text-muted-foreground">Created</p>
-                      <p class="text-xs font-medium">{{ instance()!.createdAt | date: 'short' }}</p>
-                    </div>
+                <div class="border-t border-border pt-3 space-y-3">
+                  <div>
+                    <p class="m-0 text-label">Created</p>
+                    <p class="m-0 mt-0.5 text-sm text-foreground">{{ instance()!.createdAt | date: 'short' }}</p>
                   </div>
-
-                  <div class="flex items-start gap-2">
-                    <ng-icon name="lucideClock" class="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div class="flex-1">
-                      <p class="text-xs text-muted-foreground">Last Updated</p>
-                      <p class="text-xs font-medium">{{ instance()!.updatedAt | date: 'short' }}</p>
-                    </div>
+                  <div>
+                    <p class="m-0 text-label">Last Updated</p>
+                    <p class="m-0 mt-0.5 text-sm text-foreground">{{ instance()!.updatedAt | date: 'short' }}</p>
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
           </div>
         </div>
       } @else {
@@ -742,41 +660,27 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     return this.instance()?.ipConfig?.v4?.ip || '';
   }
 
-  /**
-   * Get dynamic status border class based on instance status
-   */
-  getStatusBorderClass(): string {
-    const status = this.instance()?.status?.toLowerCase();
-    switch (status) {
+  private readonly statusTone = computed(() => {
+    switch (this.instance()?.status?.toLowerCase()) {
       case 'running':
-        return 'border-l-4 border-l-green-500';
+        return 'ok';
       case 'stopped':
-        return 'border-l-4 border-l-amber-500';
+        return 'warn';
       case 'error':
       case 'failed':
-        return 'border-l-4 border-l-red-500';
+        return 'danger';
       default:
-        return 'border-l-4 border-l-gray-400';
+        return 'muted';
     }
-  }
+  });
 
-  /**
-   * Get dynamic status badge class based on instance status
-   */
-  getStatusBadgeClass(): string {
-    const status = this.instance()?.status?.toLowerCase();
-    const baseClass = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border';
+  readonly statusDotClass = computed(() => STATUS_DOT[this.statusTone()]);
+  readonly statusTextClass = computed(() => STATUS_TEXT[this.statusTone()]);
 
-    switch (status) {
-      case 'running':
-        return `${baseClass} bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800`;
-      case 'stopped':
-        return `${baseClass} bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800`;
-      case 'error':
-      case 'failed':
-        return `${baseClass} bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800`;
-      default:
-        return `${baseClass} bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700`;
-    }
-  }
+  readonly ownershipLabel = computed(() => OWNERSHIP_LABEL[this.ownership()] ?? OWNERSHIP_LABEL['unmanaged']);
+  readonly ownershipHint = computed(() =>
+    this.ownership() === 'other-flui'
+      ? 'Provisioned by another Flui installation sharing this cloud provider account'
+      : null,
+  );
 }

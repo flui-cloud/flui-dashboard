@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, effect, untracked, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -101,6 +101,7 @@ import { ToastService } from '../../../shared/services/toast.service';
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-white">App Endpoints</h3>
             <div class="flex items-center gap-3">
+              @if (!readOnly()) {
               <button
                 (click)="openAddForm()"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors"
@@ -108,6 +109,7 @@ import { ToastService } from '../../../shared/services/toast.service';
                 <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
                 Add Endpoint
               </button>
+              }
               <button
                 (click)="refreshEndpoints()"
                 [disabled]="refreshingEndpoints()"
@@ -241,11 +243,23 @@ export class AppDnsTabComponent implements OnInit {
     return this.appEndpointsService.endpoints().filter(ep => ep.applicationId === id);
   });
 
-  ngOnInit(): void {
-    void (async () => {
+  private loadedFor: string | null = null;
+
+  constructor() {
+    effect(() => {
       const id = this.clusterId();
-      if (!id) return;
-  
+      if (id && id !== this.loadedFor) untracked(() => this.load(id));
+    });
+  }
+
+  ngOnInit(): void {
+    const id = this.clusterId();
+    if (id) this.load(id);
+  }
+
+  private load(id: string): void {
+    this.loadedFor = id;
+    void (async () => {
       this.isLoading.set(true);
       await Promise.all([
         this.clusterDnsZoneService.loadAssignment(id),

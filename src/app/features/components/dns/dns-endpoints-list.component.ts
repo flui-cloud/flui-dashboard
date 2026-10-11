@@ -155,6 +155,7 @@ interface CertificatePhase {
                 >
                   <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
                 </a>
+                @if (writable()) {
                 <!-- Divider + inline action buttons -->
                 <span class="w-px h-3.5 bg-gray-300 dark:bg-gray-600"></span>
                 <button
@@ -176,6 +177,7 @@ interface CertificatePhase {
                   <ng-icon name="lucideRefreshCw" class="h-3 w-3" [class.animate-spin]="reconcilingId() === ep.id" />
                   Sync
                 </button>
+                }
                 @if (writable()) {
                   <button
                     *fluiCan="'app:write'"

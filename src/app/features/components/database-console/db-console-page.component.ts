@@ -22,6 +22,8 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { DbConsoleService } from '../../service/db-console.service';
+import { ApplicationService } from '../../service/application.service';
+import { accessOf } from '../../model/app-access';
 import {
   AssistFn,
   DbAssistantChatComponent,
@@ -151,9 +153,13 @@ type ConnState = 'connecting' | 'connected' | 'error';
               <span class="text-xs opacity-70">{{ runShortcut }}</span>
             </button>
 
-            <label class="flex items-center gap-2 text-sm">
-              <input type="checkbox" [(ngModel)]="readOnly" /> Read-only
-            </label>
+            @if (reader()) {
+              <span class="text-sm text-muted-foreground" data-testid="db-console-reader">Read-only · the showcase's own data</span>
+            } @else {
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" [(ngModel)]="readOnly" /> Read-only
+              </label>
+            }
 
             <label class="flex items-center gap-2 text-sm">
               Limit
@@ -212,6 +218,7 @@ export class DbConsolePageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dbConsole = inject(DbConsoleService);
+  private readonly applications = inject(ApplicationService);
 
   protected readonly isMac =
     typeof navigator !== 'undefined' &&
@@ -242,6 +249,12 @@ export class DbConsolePageComponent implements OnInit {
       .pipe(map((r) => ({ text: r.explanation, code: r.sql || undefined, mutation: r.mutation })));
   };
 
+  /** An application shown read-only — the showcase: the API runs every statement as a role that can only read. */
+  readonly reader = computed(() => {
+    const id = this.applicationId();
+    return !!accessOf(this.applications.applications().find((app) => app.id === id))?.readOnly;
+  });
+
   readOnly = true;
   limit = DEFAULT_LIMIT;
 
@@ -250,6 +263,7 @@ export class DbConsolePageComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (this.applications.applications().length === 0) void this.applications.loadApplications();
     this.connect();
   }
 
@@ -283,7 +297,7 @@ export class DbConsolePageComponent implements OnInit {
     this.dbConsole
       .runQuery(id, {
         sql: sqlText,
-        readOnly: forceWrite ? false : this.readOnly,
+        readOnly: this.reader() || (forceWrite ? false : this.readOnly),
         limit: this.limit,
       })
       .subscribe({

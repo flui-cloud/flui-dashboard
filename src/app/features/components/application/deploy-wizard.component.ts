@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 
 import { ProjectPickerComponent } from '../projects/project-picker.component';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
@@ -2344,6 +2344,13 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
+    // One cluster to choose from — always the case for a demo guest — is chosen
+    // for the person, so the step does not sit with Next switched off.
+    effect(() => {
+      if (this.currentStep().id !== 'cluster' || this.selectedCluster()) return;
+      const only = this.activeClusters();
+      if (only.length === 1) untracked(() => this.selectCluster(only[0]));
+    });
     effect(() => {
       const clusterId = this.state.clusterId();
       if (clusterId && this.isInternalDeploy()) {

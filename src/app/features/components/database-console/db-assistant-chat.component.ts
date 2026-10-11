@@ -102,7 +102,7 @@ interface StoredChat {
         <div class="border-b border-border bg-muted/40">
           <div class="flex items-center gap-2 px-3 py-2 text-sm font-medium">
             @if (imgOk()) {
-              <img src="icons/assistant.png" class="h-4 w-4 object-contain" alt="" (error)="imgOk.set(false)" />
+              <img src="icons/assistant.svg" class="h-4 w-4 object-contain" alt="" (error)="imgOk.set(false)" />
             } @else {
               <ng-icon name="lucideSparkles" class="h-4 w-4 text-primary" />
             }
@@ -159,7 +159,7 @@ interface StoredChat {
               <div class="mr-2 space-y-2">
                 <div class="flex items-start gap-2 text-sm text-muted-foreground">
                   @if (imgOk()) {
-                    <img src="icons/assistant.png" class="mt-0.5 h-4 w-4 shrink-0 object-contain" alt="" (error)="imgOk.set(false)" />
+                    <img src="icons/assistant.svg" class="mt-0.5 h-4 w-4 shrink-0 object-contain" alt="" (error)="imgOk.set(false)" />
                   } @else {
                     <ng-icon name="lucideSparkles" class="mt-0.5 h-4 w-4 shrink-0" />
                   }

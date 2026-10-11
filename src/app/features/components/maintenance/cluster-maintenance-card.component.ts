@@ -22,7 +22,7 @@ import { CanDirective } from '../../../core/directives/can.directive';
         <div class="min-w-0">
           <h3 class="m-0 text-sm font-semibold text-foreground">Maintenance window</h3>
           <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
-            {{ reading()?.says ?? 'Reading…' }}
+            {{ reading()?.says ?? (failed() ? 'Could not be read right now.' : 'Reading…') }}
             @if (reading()?.nextOpening; as next) { · next {{ label(next) }} }
           </p>
         </div>
@@ -52,6 +52,7 @@ export class ClusterMaintenanceCardComponent {
   protected readonly held = signal<DeferredAction[]>([]);
   protected readonly editing = signal(false);
   protected readonly saving = signal(false);
+  protected readonly failed = signal(false);
   protected label = openingLabel;
 
   constructor() {
@@ -66,8 +67,10 @@ export class ClusterMaintenanceCardComponent {
       const [reading, held] = await Promise.all([this.api.cluster(id), this.api.clusterDeferred(id)]);
       this.reading.set(reading);
       this.held.set(held);
+      this.failed.set(false);
     } catch {
       this.reading.set(null);
+      this.failed.set(true);
     }
   }
 

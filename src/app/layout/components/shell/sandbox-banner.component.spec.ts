@@ -16,6 +16,7 @@ describe('SandboxBannerComponent', () => {
             hasArea: signal(hasArea),
             expired: signal(false),
             urgent: signal(false),
+            appsKeptUntil: signal('2026-10-12T08:00:00.000Z'),
             keep,
           },
         },
@@ -41,6 +42,6 @@ describe('SandboxBannerComponent', () => {
     fixture.detectChanges();
 
     expect(keep).toHaveBeenCalled();
-    expect(button.textContent).toContain('Kept');
+    expect(button.textContent).toContain('Kept until');
   });
 });

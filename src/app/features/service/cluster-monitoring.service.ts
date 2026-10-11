@@ -156,6 +156,11 @@ export class ClusterMonitoringService {
     }
   }
 
+  /** Health only adds a badge to the charts: without it they still stand. */
+  private readHealth(clusterId: string): Promise<ClusterHealthResponseDto | null> {
+    return firstValueFrom(this.healthApi.clusterHealthControllerGetClusterHealth(clusterId)).catch(() => null);
+  }
+
   private async loadMetrics(_isManualRefresh: boolean = false): Promise<void> {
     const clusterId = this.clusterService.cluster()?.id;
     if (!clusterId) {
@@ -177,7 +182,7 @@ export class ClusterMonitoringService {
 
       const [metricsResponse, healthResponse] = await Promise.all([
         firstValueFrom(this.metricsApi.serverMetricsControllerGetClusterMetrics(clusterId)),
-        firstValueFrom(this.healthApi.clusterHealthControllerGetClusterHealth(clusterId)),
+        this.readHealth(clusterId),
       ]);
 
       // A slow answer for the cluster we left must not overwrite the one we opened.

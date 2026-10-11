@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { accessOf } from '../../model/app-access';
 import { RouterLink } from '@angular/router';
 import { Application } from '../../model/application.models';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
@@ -44,7 +45,7 @@ import { placementOf, replicaPodsOf } from './replica-pods';
             }
           </ul>
         }
-        <a [routerLink]="['../resources']" class="mt-2 text-xs font-medium text-primary hover:underline">Edit</a>
+        @if (!readOnly()) {<a [routerLink]="['../resources']" class="mt-2 text-xs font-medium text-primary hover:underline">Edit</a>}
       </div>
 
       <div class="flex min-w-0 flex-col">
@@ -60,18 +61,21 @@ import { placementOf, replicaPodsOf } from './replica-pods';
         } @else {
           <p class="mt-1 text-base font-semibold text-muted-foreground">—</p>
         }
-        <a [routerLink]="['../resources']" class="mt-2 text-xs font-medium text-primary hover:underline">Edit</a>
+        @if (!readOnly()) {<a [routerLink]="['../resources']" class="mt-2 text-xs font-medium text-primary hover:underline">Edit</a>}
       </div>
 
       <div class="flex min-w-0 flex-col">
         <p class="text-label">Configuration</p>
-        @if (variables.loading()) {
+        @if (valuesHidden()) {
+          <p class="mt-1 text-base font-semibold text-foreground tabular-nums">{{ plural(app().env?.length ?? 0, 'env var') }}</p>
+          <p class="text-xs text-muted-foreground">Values not shown</p>
+        } @else if (variables.loading()) {
           <p class="mt-1 text-sm text-muted-foreground">Loading…</p>
         } @else {
           <p class="mt-1 text-base font-semibold text-foreground tabular-nums">{{ plural(varCount(), 'env var') }}</p>
           <p class="text-xs text-muted-foreground">{{ plural(secretCount(), 'secret') }}</p>
         }
-        <a [routerLink]="['../configuration']" class="mt-2 text-xs font-medium text-primary hover:underline">Manage</a>
+        @if (!readOnly()) {<a [routerLink]="['../configuration']" class="mt-2 text-xs font-medium text-primary hover:underline">Manage</a>}
       </div>
 
       @if (showDns()) {
@@ -94,7 +98,7 @@ import { placementOf, replicaPodsOf } from './replica-pods';
               </p>
             }
           }
-          <a [routerLink]="['../dns']" class="mt-2 text-xs font-medium text-primary hover:underline">Manage</a>
+          @if (!readOnly()) {<a [routerLink]="['../dns']" class="mt-2 text-xs font-medium text-primary hover:underline">Manage</a>}
         </div>
       }
     </div>
@@ -108,6 +112,8 @@ export class AppOverviewFactsComponent {
 
   readonly app = input.required<Application>();
   readonly showDns = input(false);
+  protected readonly readOnly = computed(() => accessOf(this.app())?.readOnly === true);
+  protected readonly valuesHidden = computed(() => accessOf(this.app())?.dataAccess === false);
 
   protected readonly text = TONE_TEXT;
   protected readonly dot = TONE_DOT;

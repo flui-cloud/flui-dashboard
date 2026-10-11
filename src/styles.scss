@@ -407,3 +407,14 @@ hlm-sidebar a.active ng-icon {
 .md-user-bubble .md code:not(pre code) {
   background: rgba(255,255,255,0.18);
 }
+
+.look-only button:not([aria-expanded]),
+.look-only [role='button']:not([aria-expanded]) {
+  display: none !important;
+}
+
+.look-only input,
+.look-only select,
+.look-only textarea {
+  pointer-events: none;
+}

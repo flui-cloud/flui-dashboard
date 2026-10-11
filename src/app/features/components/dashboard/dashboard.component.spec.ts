@@ -1,3 +1,4 @@
+import { SandboxService } from '../../../core/services/sandbox.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
 import { DashboardService } from '../../service/dashboard.service';
@@ -54,6 +55,10 @@ describe('DashboardComponent', () => {
         { provide: ClusterService, useValue: { clusters } },
         { provide: PermissionService, useValue: { loadSections: () => undefined } },
         { provide: CurrentSurfaceService, useValue: { set: () => undefined } },
+        {
+          provide: SandboxService,
+          useValue: { inSandbox: () => false, whenKnown: () => Promise.resolve(false) },
+        },
       ],
     });
     TestBed.overrideComponent(DashboardComponent, {

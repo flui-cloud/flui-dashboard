@@ -1,4 +1,6 @@
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { LookOnlyDirective } from '../../../shared/directives/look-only.directive';
+import { accessOf } from '../../model/app-access';
 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -25,7 +27,7 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
 @Component({
   selector: 'app-images-tab',
   standalone: true,
-  imports: [FormsModule, NgIcon, RouterLink, HlmButtonDirective, HlmInputDirective, HlmLabelDirective],
+  imports: [FormsModule, NgIcon, RouterLink, HlmButtonDirective, HlmInputDirective, HlmLabelDirective, LookOnlyDirective],
   providers: [provideIcons({
     lucideRefreshCw, lucideLoader, lucideRocket, lucideCircleCheck,
     lucideImage, lucideTriangleAlert, lucideTag, lucideX, lucideArrowDown,
@@ -34,7 +36,7 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
   })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="space-y-4">
+    <div class="space-y-4" [appLookOnly]="readOnly()">
       <!-- Header -->
       <div class="flex items-start justify-between gap-3">
         <div class="space-y-1 min-w-0">
@@ -434,6 +436,8 @@ export class AppImagesTabComponent implements OnInit {
   readonly hiddenCount = computed(
     () => this.versioning.versions().filter((v) => !this.isReleasable(v)).length,
   );
+
+  protected readonly readOnly = computed(() => accessOf(this.appService.selectedApplication())?.readOnly === true);
 
   /**
    * The application redeploys itself from its branch, so a release chosen here

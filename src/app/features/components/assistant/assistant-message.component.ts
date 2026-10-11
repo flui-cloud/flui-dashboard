@@ -18,7 +18,7 @@ import { AssistantToolResultComponent } from './assistant-tool-result.component'
       @if (message().role !== 'user') {
         <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20 mt-0.5">
           @if (imgOk()) {
-            <img src="icons/assistant.png" class="h-4 w-4 object-contain" alt="" (error)="imgError.emit()" />
+            <img src="icons/assistant.svg" class="h-4 w-4 object-contain" alt="" (error)="imgError.emit()" />
           } @else {
             <ng-icon name="lucideBot" class="h-3.5 w-3.5 text-blue-500" />
           }

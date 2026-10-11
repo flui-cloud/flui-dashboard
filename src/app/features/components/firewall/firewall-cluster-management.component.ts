@@ -3,9 +3,14 @@ import { Component, OnInit, OnDestroy, computed, effect, inject, signal, ChangeD
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FirewallV2Service } from '../../service/firewall-v2.service';
-import { ReconciliationStatusBadgeComponent } from './reconciliation-status-badge.component';
-import { DriftIndicatorComponent } from './drift-indicator.component';
-import { ReconciliationStatus, CoverageStatus, getCoverageStatusLabel } from '../../model/firewall-v2.models';
+import {
+  ReconciliationStatus,
+  CoverageStatus,
+  getCoverageStatusLabel,
+  getDriftIndicator,
+  getStatusBadgeLabel,
+} from '../../model/firewall-v2.models';
+import { StatTileComponent, StatTileData, StatTileNote } from '../../../shared/components/charts';
 import { FirewallClusterInfoDto, FirewallNodeInfoDto } from '../../../core/api/model/models';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
@@ -24,12 +29,11 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 @Component({
   selector: 'app-firewall-cluster-management',
   standalone: true,
-  imports: [MaskIdPipe, 
+  imports: [MaskIdPipe,
     ReadOnlySectionDirective,
     FormsModule,
     RouterLink,
-    ReconciliationStatusBadgeComponent,
-    DriftIndicatorComponent
+    StatTileComponent,
 ],
   templateUrl: './firewall-cluster-management.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -51,6 +55,31 @@ export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
   stats = this.firewallService.stats;
   loading = this.firewallService.loading;
   error = this.firewallService.error;
+
+  readonly tiles = computed<StatTileData[]>(() => {
+    const s = this.stats();
+    const notes = (entries: [number, string, StatTileNote['tone']][]): StatTileNote[] =>
+      entries.filter(([count]) => count > 0).map(([count, text, tone]) => ({ text: `${count} ${text}`, tone }));
+    return [
+      { label: 'Firewalls', value: String(s.total) },
+      { label: 'In sync', value: String(s.inSync) },
+      {
+        label: 'In progress',
+        value: String(s.pending + s.reconciling),
+        notes: notes([[s.pending, 'pending', 'muted'], [s.reconciling, 'reconciling', 'muted']]),
+      },
+      {
+        label: 'Out of sync',
+        value: String(s.drift + s.error),
+        notes: notes([[s.drift, 'drift', 'warn'], [s.error, 'error', 'bad']]),
+      },
+      {
+        label: 'Coverage gaps',
+        value: String(s.partial + s.orphaned),
+        notes: notes([[s.partial, 'partial coverage', 'warn'], [s.orphaned, 'orphaned', 'bad']]),
+      },
+    ];
+  });
 
   readonly surface = computed(() => {
     const input: FirewallClusterManagementSurfaceInput = {
@@ -161,60 +190,78 @@ export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
     return getCoverageStatusLabel(status);
   }
 
-  getCoverageBadgeClass(status: CoverageStatus): string {
-    const base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
+  coverageDotClass(status: CoverageStatus): string | null {
     switch (status) {
-      case 'FULL':     return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400`;
-      case 'PARTIAL':  return `${base} bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400`;
-      case 'ORPHANED': return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400`;
-      default:         return `${base} bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400`;
+      case 'PARTIAL':  return 'bg-amber-500';
+      case 'ORPHANED': return 'bg-destructive';
+      default:         return null;
     }
   }
 
-  getCardClass(status: CoverageStatus): string {
-    const base = 'border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer';
-    switch (status) {
-      case 'ORPHANED':
-        return `${base} bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50`;
-      case 'PARTIAL':
-        return `${base} bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-800/50`;
-      default:
-        return `${base} bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700`;
-    }
+  statusLabel(status: ReconciliationStatus | string): string {
+    return getStatusBadgeLabel(status as ReconciliationStatus);
+  }
+
+  driftMessage(hasDrift: boolean, status: ReconciliationStatus | string): string {
+    return getDriftIndicator(hasDrift, status as ReconciliationStatus).replace(/^\S+\s/, '');
+  }
+
+  statusDotClass(status: ReconciliationStatus | string): string {
+    return STATUS_DOT[statusTone(status)];
+  }
+
+  statusTextClass(status: ReconciliationStatus | string): string {
+    return STATUS_TEXT[statusTone(status)];
   }
 
   getNodeDotClass(status: FirewallNodeInfoDto.StatusEnum): string {
-    const base = 'inline-block w-2.5 h-2.5 rounded-full';
+    const base = 'inline-block h-2 w-2 rounded-full';
     switch (status) {
       case 'ready':    return `${base} bg-green-500`;
       case 'creating':
-      case 'joining':  return `${base} bg-blue-400`;
-      case 'error':    return `${base} bg-red-500`;
-      case 'deleting': return `${base} bg-gray-400`;
-      default:         return `${base} bg-gray-300`;
-    }
-  }
-
-  getNodeCountClass(coverage: CoverageStatus): string {
-    switch (coverage) {
-      case 'FULL':     return 'font-medium text-green-700 dark:text-green-400';
-      case 'PARTIAL':  return 'font-medium text-orange-700 dark:text-orange-400';
-      case 'ORPHANED': return 'font-medium text-red-700 dark:text-red-400';
-      default:         return 'text-gray-500 dark:text-gray-400';
+      case 'joining':  return `${base} bg-primary`;
+      case 'error':    return `${base} bg-destructive`;
+      default:         return `${base} bg-muted-foreground/50`;
     }
   }
 
   getClusterStatusClass(status: FirewallClusterInfoDto.ClusterStatusEnum): string {
     switch (status) {
-      case 'ready':    return 'text-green-600 dark:text-green-400 font-medium';
+      case 'ready':    return STATUS_TEXT.ok;
       case 'creating':
-      case 'scaling':  return 'text-blue-600 dark:text-blue-400 font-medium';
+      case 'scaling':  return STATUS_TEXT.info;
       case 'error':
-      case 'deletion_failed': return 'text-red-600 dark:text-red-400 font-medium';
-      case 'deleting':
-      case 'deleted':  return 'text-gray-500 dark:text-gray-400 font-medium';
-      case 'stopped':  return 'text-yellow-600 dark:text-yellow-400 font-medium';
-      default:         return 'text-gray-500 dark:text-gray-400';
+      case 'deletion_failed': return STATUS_TEXT.danger;
+      case 'stopped':  return STATUS_TEXT.warn;
+      default:         return STATUS_TEXT.muted;
     }
+  }
+}
+
+type Tone = 'ok' | 'info' | 'warn' | 'danger' | 'muted';
+
+const STATUS_DOT: Record<Tone, string> = {
+  ok: 'bg-green-500',
+  info: 'bg-primary',
+  warn: 'bg-amber-500',
+  danger: 'bg-destructive',
+  muted: 'bg-muted-foreground/50',
+};
+
+const STATUS_TEXT: Record<Tone, string> = {
+  ok: 'text-green-700 dark:text-green-400',
+  info: 'text-primary',
+  warn: 'text-amber-700 dark:text-amber-400',
+  danger: 'text-destructive',
+  muted: 'text-muted-foreground',
+};
+
+function statusTone(status: ReconciliationStatus | string): Tone {
+  switch (status) {
+    case ReconciliationStatus.IN_SYNC:     return 'ok';
+    case ReconciliationStatus.RECONCILING: return 'info';
+    case ReconciliationStatus.DRIFT:       return 'warn';
+    case ReconciliationStatus.ERROR:       return 'danger';
+    default:                               return 'muted';
   }
 }
