@@ -26,5 +26,9 @@ export interface CatalogOptionDto {
      * Default enabled state when the user does not toggle it. Mirrors what the backend applies when options[key] is omitted.
      */
     'default': boolean;
+    /**
+     * Key of another option this one only means something with. While that option is off, this one is off whatever is sent, and a form shows it disabled.
+     */
+    requires?: string;
 }
 

@@ -88,6 +88,24 @@ describe('migrations list surface producer', () => {
     expect(obs('flui.migration.cutover_mode')?.presentedAs.text).toBe('manual');
   });
 
+  it('presents the state of an open bridge, as the API reports it', () => {
+    const bridging: MigrationRow = {
+      ...ROW,
+      status: 'bridging',
+      bridge: {
+        mode: 'bridge',
+        skipReason: null,
+        state: 'active',
+        hosts: [],
+        closableAt: null,
+        readyToClose: false,
+        summary: 'The old cluster forwards to the new one.',
+      },
+    };
+    const row = rowScope(snapshotOf({ migrations: [bridging] }));
+    expect(row.observations?.find((o) => o.key === 'flui.migration.bridge_state')?.presentedAs.text).toBe('active');
+  });
+
   it('declares completeness, and truncates past the row cap', () => {
     const many = Array.from({ length: 60 }, (_, i) => ({ ...ROW, id: `m${i}` }));
     const snapshot = snapshotOf({ migrations: many });

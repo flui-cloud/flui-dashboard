@@ -8,6 +8,55 @@ export type CutoverMode = 'auto' | 'manual';
 export type DbMigrationMode = 'live' | 'restore';
 export type StagingMode = 'scaled-down' | 'live-fenced';
 
+/** The API's bridge block: rendered as is, never recomputed here. */
+export interface MigrationBridge {
+  mode: 'bridge' | 'dns-only';
+  skipReason: string | null;
+  state: 'preparing' | 'active' | 'closed' | null;
+  hosts: { fqdn: string; certificate: string | null; certificateReady: boolean }[];
+  activatedAt?: string | null;
+  dnsFlippedAt?: string | null;
+  closableAt: string | null;
+  readyToClose: boolean;
+  blockedBy?: 'ttl' | 'dns' | null;
+  summary: string;
+}
+
+export interface MigrationNextStep {
+  key: string;
+  text: string;
+}
+
+/** Extra fields the API reports for db and full migrations. */
+export interface MigrationMeasures {
+  kind?: 'logical' | 'physical' | null;
+  link?: {
+    state: 'open' | 'closing' | 'closed';
+    listenerNode: string | null;
+    dialerNode: string | null;
+    handshakeSeen: boolean;
+  } | null;
+  fence?: {
+    appliedAt: string | null;
+    fenceLsn: string | null;
+    promoteIssuedAt: string | null;
+    released: boolean;
+  } | null;
+  baseBackup?: { phase: string; lagBytes: number | null } | null;
+  pooler?: {
+    paused: boolean;
+    pausedAt: string | null;
+    resumedAt: string | null;
+    deadlineMs: number;
+    cut: Array<{ clientApp: string | null; heldMs: number | null }>;
+  } | null;
+  sourceWalCap?: { value: string; note: string | null } | null;
+  writePauseMs?: number | null;
+  writePauseEndedBy?: 'bridge' | 'dns' | 'promote' | 'resume' | null;
+  interruptionMs?: number | null;
+  nextSteps?: MigrationNextStep[];
+}
+
 export interface AppMigration {
   id: string;
   srcAppId: string;
@@ -16,13 +65,17 @@ export interface AppMigration {
   cutoverMode: CutoverMode;
   status: string;
   fullMigrationId?: string | null;
+  bridge?: MigrationBridge | null;
+  canResumeCutover?: boolean;
+  interruptionMs?: number | null;
+  sourceDestroyedAt?: string | null;
   errorMessage?: string | null;
   startedAt?: string | null;
   finishedAt?: string | null;
   createdAt?: string;
 }
 
-export interface DbMigration {
+export interface DbMigration extends MigrationMeasures {
   id: string;
   srcAppId: string;
   dstAppId?: string | null;
@@ -38,7 +91,7 @@ export interface DbMigration {
   createdAt?: string;
 }
 
-export interface FullMigration {
+export interface FullMigration extends MigrationMeasures {
   id: string;
   appId: string;
   dbAppId: string;
@@ -48,6 +101,8 @@ export interface FullMigration {
   status: string;
   dbMigrationId?: string | null;
   appMigrationId?: string | null;
+  bridge?: MigrationBridge | null;
+  canResumeCutover?: boolean;
   errorMessage?: string | null;
   startedAt?: string | null;
   finishedAt?: string | null;
@@ -134,9 +189,12 @@ export class MigrationService {
   cutover(type: MigrationType, id: string): Promise<unknown> {
     return firstValueFrom(this.http.post(this.url(`${this.resource[type]}/${id}/cutover`), {}));
   }
-  destroySource(type: 'app' | 'full', id: string): Promise<unknown> {
+  destroySource(type: 'app' | 'full', id: string, opts: { closeBridge?: boolean } = {}): Promise<unknown> {
     return firstValueFrom(
-      this.http.post(this.url(`${this.resource[type]}/${id}/destroy-source`), {}),
+      this.http.post(
+        this.url(`${this.resource[type]}/${id}/destroy-source`),
+        opts.closeBridge ? { closeBridge: true } : {},
+      ),
     );
   }
   abort(type: MigrationType, id: string): Promise<unknown> {

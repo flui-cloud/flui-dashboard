@@ -31,6 +31,7 @@ import {
   lucideShieldAlert,
   lucideBug,
   lucideChevronDown,
+  lucideActivity,
 } from '@ng-icons/lucide';
 
 import { ApplicationService } from '../../service/application.service';
@@ -101,6 +102,7 @@ interface TabItem {
       lucideShieldAlert,
       lucideBug,
       lucideChevronDown,
+      lucideActivity,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -606,6 +608,9 @@ export class ApplicationDetailComponent implements OnDestroy {
     const isDatabase = isBuildingBlock(app) || !!databaseEngineOf(app);
     if (isDatabase) {
       baseTabs.push({ label: 'Access', route: 'clients', icon: 'lucidePlug' });
+    }
+    if (databaseEngineOf(app) === 'postgres' && accessOf(app)?.dataAccess !== false) {
+      baseTabs.push({ label: 'Sessions', route: 'sessions', icon: 'lucideActivity' });
     }
     baseTabs.push(
       { label: 'Monitoring', route: 'monitoring', icon: 'lucideChartArea' },

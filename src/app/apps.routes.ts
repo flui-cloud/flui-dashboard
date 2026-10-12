@@ -145,6 +145,13 @@ export const appsRoutes: Routes = [
               ),
           },
           {
+            path: 'sessions',
+            loadComponent: () =>
+              import('./features/components/application/app-sessions-tab.component').then(
+                (m) => m.AppSessionsTabComponent
+              ),
+          },
+          {
             path: 'gateway',
             loadComponent: () =>
               import('./features/components/application/app-gateway-tab.component').then(

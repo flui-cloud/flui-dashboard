@@ -66,6 +66,7 @@ import { CatalogInputsStepComponent } from './deploy-wizard-catalog-steps/catalo
 import { CatalogConfigStepComponent } from './deploy-wizard-catalog-steps/catalog-config-step.component';
 import { CatalogDomainStepComponent } from './deploy-wizard-catalog-steps/catalog-domain-step.component';
 import { CatalogFeaturesStepComponent, catalogAuthLabel } from './deploy-wizard-catalog-steps/catalog-features-step.component';
+import { catalogOptionEnabled } from './deploy-wizard-catalog-steps/catalog-options';
 import { CatalogLinkedBbStepComponent } from './deploy-wizard-catalog-steps/catalog-linked-bb-step.component';
 import { CatalogDependenciesStepComponent } from './deploy-wizard-catalog-steps/catalog-dependencies-step.component';
 import { CatalogSuccessStepComponent } from './deploy-wizard-catalog-steps/catalog-success-step.component';
@@ -3806,7 +3807,13 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   readonly enabledFeatureLabels = computed<string[]>(() =>
     this.state
       .catalogFeatureOptions()
-      .filter((o) => this.state.catalogFeatureToggles()[o.key] ?? o.default)
+      .filter((o) =>
+        catalogOptionEnabled(
+          this.state.catalogFeatureOptions(),
+          this.state.catalogFeatureToggles(),
+          o.key,
+        ),
+      )
       .map((o) => o.label),
   );
 

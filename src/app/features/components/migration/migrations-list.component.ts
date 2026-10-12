@@ -25,6 +25,26 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { ClusterService } from '../../service/cluster.service';
 import { MigrationRow, MigrationService } from '../../service/migration.service';
 import { MigrationLaunchModalComponent } from './migration-launch-modal.component';
+import {
+  bridgeLine,
+  canAbort,
+  canCutover,
+  canDestroySource,
+  cutoverLabel,
+  destroyConfirmation,
+  pendingConfirmation,
+  type PendingMigrationAction,
+} from './migration-bridge';
+import { kindLabel, measuresLine, nextStepsOf, poolerLine } from './migration-measures';
+import {
+  formatWhen,
+  shortId,
+  sourceLabel,
+  statusBadgeClass,
+  statusLabel,
+  typeBadgeClass,
+  typeLabel,
+} from './migration-row-view';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
@@ -33,17 +53,6 @@ import {
   buildMigrationsListSurface,
   presentedContent,
 } from './migrations-list-surface';
-
-type PendingAction = { kind: 'abort' | 'destroy'; row: MigrationRow };
-
-const ABORTABLE = new Set([
-  'pending',
-  'provisioning',
-  'db_replicating',
-  'app_staging',
-  'ready',
-  'synced',
-]);
 
 /**
  * Monitor + drive surface for cross-cluster migrations. Lists app / DB / full
@@ -147,6 +156,9 @@ const ABORTABLE = new Set([
                     >
                       {{ typeLabel(row.type) }}
                     </span>
+                    @if (kindLabel(row); as kind) {
+                      <p class="mt-1 text-xs text-muted-foreground">{{ kind }}</p>
+                    }
                   </td>
                   <td class="px-4 py-3">
                     <span
@@ -155,6 +167,32 @@ const ABORTABLE = new Set([
                     >
                       {{ statusLabel(row.status) }}
                     </span>
+                    @if (bridgeLine(row); as line) {
+                      <p class="mt-1 max-w-xs text-xs text-muted-foreground">{{ line }}</p>
+                    }
+                    @if (measuresLine(row); as measures) {
+                      <p class="mt-1 max-w-xs text-xs text-muted-foreground">{{ measures }}</p>
+                    }
+                    @if (poolerLine(row); as pooler) {
+                      <p class="mt-1 max-w-xs text-xs text-muted-foreground">{{ pooler }}</p>
+                    }
+                    @if (nextStepsOf(row).length) {
+                      <button
+                        type="button"
+                        (click)="toggleSteps(row)"
+                        [attr.aria-expanded]="stepsOpen() === rowKey(row)"
+                        class="mt-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        Next steps ({{ nextStepsOf(row).length }})
+                      </button>
+                      @if (stepsOpen() === rowKey(row)) {
+                        <ul class="mt-1 max-w-xs list-disc space-y-0.5 pl-4 text-xs text-muted-foreground">
+                          @for (step of nextStepsOf(row); track step.key) {
+                            <li>{{ step.text }}</li>
+                          }
+                        </ul>
+                      }
+                    }
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-1.5 font-mono text-xs">
@@ -185,7 +223,7 @@ const ABORTABLE = new Set([
                           } @else {
                             <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5" />
                           }
-                          Cutover
+                          {{ cutoverLabel(row) }}
                         </button>
                       }
                       @if (canAbort(row)) {
@@ -243,7 +281,7 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly busyId = signal<string | null>(null);
-  readonly pending = signal<PendingAction | null>(null);
+  readonly pending = signal<PendingMigrationAction | null>(null);
 
   private readonly surfaceRevision = new MigrationsListSurfaceRevision();
 
@@ -269,17 +307,26 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
     this.currentSurface.set(null);
   }
 
-  readonly confirmTitle = computed(() =>
-    this.pending()?.kind === 'destroy' ? 'Destroy source' : 'Abort migration',
-  );
-  readonly confirmMessage = computed(() =>
-    this.pending()?.kind === 'destroy'
-      ? 'Destroy the drained source workload? This is irreversible.'
-      : 'Abort this migration? The destination is torn down; the source is untouched.',
-  );
-  readonly confirmButton = computed(() =>
-    this.pending()?.kind === 'destroy' ? 'Destroy' : 'Abort',
-  );
+  readonly confirmTitle = computed(() => pendingConfirmation(this.pending()).title);
+  readonly confirmMessage = computed(() => pendingConfirmation(this.pending()).message);
+  readonly confirmButton = computed(() => pendingConfirmation(this.pending()).confirmText);
+
+  readonly bridgeLine = bridgeLine;
+  readonly cutoverLabel = cutoverLabel;
+  readonly kindLabel = kindLabel;
+  readonly measuresLine = measuresLine;
+  readonly poolerLine = poolerLine;
+  readonly nextStepsOf = nextStepsOf;
+  readonly stepsOpen = signal<string | null>(null);
+
+  rowKey(row: MigrationRow): string {
+    return `${row.type}:${row.id}`;
+  }
+
+  toggleSteps(row: MigrationRow): void {
+    const key = this.rowKey(row);
+    this.stepsOpen.set(this.stepsOpen() === key ? null : key);
+  }
 
   ngOnInit(): void {
     void this.clusterService.loadClusters().catch(() => undefined);
@@ -308,20 +355,11 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
   }
 
   // ── Status gating ──────────────────────────────────────────────────────────
-  canCutover(row: MigrationRow): boolean {
-    const s = row.status.toLowerCase();
-    return row.type === 'db' ? s === 'synced' : s === 'ready';
-  }
-
-  canAbort(row: MigrationRow): boolean {
-    return ABORTABLE.has(row.status.toLowerCase());
-  }
+  readonly canCutover = canCutover;
+  readonly canAbort = canAbort;
 
   canDestroySource(row: MigrationRow): boolean {
-    return (
-      row.status.toLowerCase() === 'completed' &&
-      (row.type === 'app' || row.type === 'full')
-    );
+    return canDestroySource(row);
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────
@@ -360,7 +398,9 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
         await this.migrationService.abort(row.type, row.id);
         this.toast.showSuccess('Migration aborted');
       } else if (row.type === 'app' || row.type === 'full') {
-        await this.migrationService.destroySource(row.type, row.id);
+        await this.migrationService.destroySource(row.type, row.id, {
+          closeBridge: destroyConfirmation(row).closeBridge,
+        });
         this.toast.showSuccess('Source workload destroyed');
       }
       await this.reload();
@@ -375,56 +415,13 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
   }
 
   // ── Rendering helpers ────────────────────────────────────────────────────────
-  typeLabel(type: MigrationRow['type']): string {
-    return { app: 'App', db: 'Database', full: 'Full' }[type];
-  }
+  readonly typeLabel = typeLabel;
+  readonly typeBadgeClass = typeBadgeClass;
+  readonly statusLabel = statusLabel;
+  readonly statusBadgeClass = statusBadgeClass;
+  readonly fmt = formatWhen;
 
-  typeBadgeClass(type: MigrationRow['type']): string {
-    switch (type) {
-      case 'app':
-        return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
-      case 'db':
-        return 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-300';
-      case 'full':
-        return 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-300';
-    }
-  }
-
-  statusLabel(status: string): string {
-    return status.replaceAll('_', ' ');
-  }
-
-  statusBadgeClass(status: string): string {
-    const s = status.toLowerCase();
-    if (s === 'completed') {
-      return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400';
-    }
-    if (s === 'failed' || s === 'failed_forward' || s === 'aborted') {
-      return 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400';
-    }
-    if (
-      s === 'ready' ||
-      s === 'synced' ||
-      s === 'pending' ||
-      s === 'provisioning' ||
-      s === 'db_replicating' ||
-      s === 'app_staging' ||
-      s === 'cutover'
-    ) {
-      return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400';
-    }
-    return 'border-border bg-muted text-muted-foreground';
-  }
-
-  srcLabel(row: MigrationRow): string {
-    switch (row.type) {
-      case 'app':
-      case 'db':
-        return this.short(row.srcAppId);
-      case 'full':
-        return this.short(row.appId);
-    }
-  }
+  readonly srcLabel = sourceLabel;
 
   dstLabel(row: MigrationRow): string {
     const cluster = this.clusterName(row.targetClusterId);
@@ -434,18 +431,8 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
     return cluster;
   }
 
-  fmt(iso: string | null | undefined): string {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
-  }
-
   private clusterName(id: string): string {
-    return this.clusterService.clusters().find((c) => c.id === id)?.name ?? this.short(id);
-  }
-
-  private short(id: string | null | undefined): string {
-    return id ? id.slice(0, 8) : '—';
+    return this.clusterService.clusters().find((c) => c.id === id)?.name ?? shortId(id);
   }
 
   private msg(e: unknown): string {

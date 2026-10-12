@@ -4,6 +4,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideShieldCheck, lucideSlidersHorizontal } from '@ng-icons/lucide';
 import { CatalogAuthSpecDto } from '../../../../core/api/model/models';
 import { DeployWizardStateService } from '../../../service/deploy-wizard-state.service';
+import { catalogOptionBlocked, catalogOptionEnabled } from './catalog-options';
 
 type AuthMode = CatalogAuthSpecDto.ModesEnum;
 
@@ -83,15 +84,13 @@ const AUTH_DESCRIPTIONS: Record<AuthMode, string> = {
 
           <div class="space-y-2">
             @for (option of state.catalogFeatureOptions(); track option.key) {
-              <label
-                class="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3
-                       transition hover:bg-accent/40"
-              >
+              <label [class]="optionClass(option.key)">
                 <input
                   type="checkbox"
                   class="mt-0.5 h-4 w-4 shrink-0"
-                  [ngModel]="isEnabled(option.key, option.default)"
+                  [ngModel]="isEnabled(option.key)"
                   (ngModelChange)="setOption(option.key, $event)"
+                  [disabled]="isBlocked(option.key)"
                   [name]="'option-' + option.key"
                 />
                 <span class="flex-1">
@@ -125,12 +124,31 @@ export class CatalogFeaturesStepComponent {
     this.state.catalogAuthMode.set(mode);
   }
 
-  isEnabled(key: string, def: boolean): boolean {
-    return this.state.catalogFeatureToggles()[key] ?? def;
+  isEnabled(key: string): boolean {
+    return catalogOptionEnabled(
+      this.state.catalogFeatureOptions(),
+      this.state.catalogFeatureToggles(),
+      key,
+    );
+  }
+
+  isBlocked(key: string): boolean {
+    return catalogOptionBlocked(
+      this.state.catalogFeatureOptions(),
+      this.state.catalogFeatureToggles(),
+      key,
+    );
   }
 
   setOption(key: string, enabled: boolean): void {
     this.state.catalogFeatureToggles.update((current) => ({ ...current, [key]: enabled }));
+  }
+
+  optionClass(key: string): string {
+    const base = 'flex items-start gap-3 rounded-lg border border-border p-3 transition';
+    return this.isBlocked(key)
+      ? `${base} opacity-60`
+      : `${base} cursor-pointer hover:bg-accent/40`;
   }
 
   cardClass(active: boolean): string {
