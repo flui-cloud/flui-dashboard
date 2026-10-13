@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
   ChangeDetectionStrategy
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -18,6 +19,7 @@ import {
   lucideShieldPlus,
   lucideNetwork,
   lucideBot,
+  lucideLogIn,
 } from '@ng-icons/lucide';
 import { AuthService } from '../../../core/services/auth.service';
 import { AppConfigService } from '../../../core/services/app-config.service';
@@ -40,13 +42,17 @@ import { SecurityTabComponent } from './security-tab.component';
 import { InfrastructureAuthProxyComponent } from '../infrastructure/infrastructure-auth-proxy.component';
 import { InferenceConnectionsComponent } from './inference-connections.component';
 import { AgentKeysComponent } from './agent-keys/agent-keys.component';
+import { DemoSignInComponent } from './demo-sign-in.component';
+import { PermissionService } from '../../../core/services/permission.service';
+import { SandboxSignInService } from '../../service/sandbox-sign-in.service';
 
 type SectionId =
   | 'profile'
   | 'security'
   | 'agent-keys'
   | 'auth-proxy'
-  | 'inference-connections';
+  | 'inference-connections'
+  | 'demo-sign-in';
 
 interface SectionDef {
   id: SectionId;
@@ -68,6 +74,7 @@ interface SectionDef {
     InfrastructureAuthProxyComponent,
     InferenceConnectionsComponent,
     AgentKeysComponent,
+    DemoSignInComponent,
   ],
   providers: [
     provideIcons({
@@ -76,6 +83,7 @@ interface SectionDef {
       lucideShieldPlus,
       lucideNetwork,
       lucideBot,
+      lucideLogIn,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -176,6 +184,15 @@ interface SectionDef {
               <app-inference-connections />
             </section>
           }
+          @case ('demo-sign-in') {
+            <section class="space-y-3">
+              <header>
+                <h3 class="text-lg font-semibold text-foreground">Demo sign-in</h3>
+                <p class="text-sm text-muted-foreground">Let the demo's guests sign in with GitHub or Google.</p>
+              </header>
+              <app-demo-sign-in />
+            </section>
+          }
         }
       </div>
     </div>
@@ -189,6 +206,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private readonly currentSurface = inject(CurrentSurfaceService);
   private readonly inference = inject(InferenceSettingsService);
+  private readonly perms = inject(PermissionService);
+  private readonly signIn = inject(SandboxSignInService);
+
+  private readonly demoInstall = signal(false);
+  private demoAsked = false;
+  private readonly requestedSection = signal<string | null>(null);
 
   readonly activeSection = signal<SectionId>('profile');
 
@@ -222,6 +245,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
       label: 'LLM Connections',
       icon: 'lucideNetwork',
       visible: () => true,
+    },
+    {
+      id: 'demo-sign-in',
+      label: 'Demo sign-in',
+      icon: 'lucideLogIn',
+      visible: () => this.perms.can('sandbox:operate') && this.demoInstall(),
     },
   ];
 
@@ -257,6 +286,28 @@ export class SettingsComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
+    effect(() => {
+      if (!this.perms.can('sandbox:operate') || this.demoAsked) return;
+      this.demoAsked = true;
+      untracked(() =>
+        this.signIn
+          .list()
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: (view) => this.demoInstall.set(view.demo),
+            error: () => this.demoInstall.set(false),
+          }),
+      );
+    });
+
+    effect(() => {
+      const wanted = this.requestedSection();
+      if (wanted && this.isVisibleSection(wanted)) {
+        this.activeSection.set(wanted);
+        this.requestedSection.set(null);
+      }
+    });
+
     effect(() => {
       const visible = this.visibleSections();
       if (!visible.some((s) => s.id === this.activeSection())) {
@@ -299,9 +350,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.route.fragment
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((fragment) => {
-        if (fragment && this.isVisibleSection(fragment)) {
-          this.activeSection.set(fragment);
-        }
+        this.requestedSection.set(fragment);
       });
   }
 

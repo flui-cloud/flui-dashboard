@@ -15,7 +15,13 @@ const PAGE_PREFIX = 'settings';
 // `visibleSections`), not the 3 named in the original brief — `agent-keys` and
 // `auth-proxy` also exist and are reachable. Anti-drift (§3.4) means the type here
 // tracks what the page can actually be showing, not a narrower assumption.
-export type SettingsTabId = 'profile' | 'security' | 'agent-keys' | 'auth-proxy' | 'inference-connections';
+export type SettingsTabId =
+  | 'profile'
+  | 'security'
+  | 'agent-keys'
+  | 'auth-proxy'
+  | 'inference-connections'
+  | 'demo-sign-in';
 
 export interface InferenceConnectionSummary {
   id: string;
