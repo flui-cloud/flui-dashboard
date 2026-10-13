@@ -22,6 +22,7 @@ export interface WizardFakes {
   assignment?: Partial<ClusterDnsZoneResponseDto> | null;
   hostnames?: SystemHostnames;
   check?: SystemHostnamesCheck;
+  appEndpoints?: object;
 }
 
 export function wizardProviders(fakes: WizardFakes = {}) {
@@ -64,7 +65,7 @@ export function wizardProviders(fakes: WizardFakes = {}) {
     DnsSetupWizardService,
     { provide: DnsZonesService, useValue: dnsZones },
     { provide: ClusterDnsZoneService, useValue: clusterDnsZone },
-    { provide: AppEndpointsService, useValue: {} },
+    { provide: AppEndpointsService, useValue: fakes.appEndpoints ?? {} },
     { provide: AppRuntimeWebSocketService, useValue: {} },
     { provide: DNSZonesService, useValue: {} },
     { provide: InfrastructureClustersService, useValue: {} },

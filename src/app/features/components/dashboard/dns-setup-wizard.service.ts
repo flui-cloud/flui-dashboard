@@ -184,6 +184,7 @@ export class DnsSetupWizardService {
   readonly namesError = signal<string | null>(null);
   private namesLoadedForZone: string | null = null;
   private readonly chosenFqdns = signal<Partial<Record<string, string>>>({});
+  private readonly currentFqdns = signal<Partial<Record<string, string>>>({});
 
   // ── Step 3: Issuer ──────────────────────────────────────────────────
   readonly issuerPhase = signal<'idle' | 'zone' | 'staging' | 'prod' | 'verifying' | 'done' | 'error'>('idle');
@@ -405,6 +406,11 @@ export class DnsSetupWizardService {
   }
 
   selectZone(key: string): void {
+    if (key !== this.selectedZoneKey()) {
+      this.chosenFqdns.set({});
+      this.currentFqdns.set({});
+      this.namesLoadedForZone = null;
+    }
     this.selectedZoneKey.set(key);
     this.zoneError.set(null);
     const option = this.zoneOptions().find(o => o.key === key);
@@ -494,6 +500,9 @@ export class DnsSetupWizardService {
     }
     this.chosenFqdns.set(Object.fromEntries(
       check.result.hostnames.filter(h => !!h.fqdn).map(h => [h.app, h.fqdn as string])
+    ));
+    this.currentFqdns.set(Object.fromEntries(
+      check.result.hostnames.filter(h => !!h.currentFqdn).map(h => [h.app, h.currentFqdn as string])
     ));
     return true;
   }
@@ -902,10 +911,12 @@ export class DnsSetupWizardService {
     } else {
       this.appEndpointsDataSignal.set(appDefs.map(d => {
         const ep = existingEndpoints.find(e => e.fqdn === d.fqdn);
-        const applicationId = ep?.applicationId ?? appIdByKey.get(d.key) ?? null;
+        const appId = appIdByKey.get(d.key) ?? null;
+        const toRename = ep ? undefined : this.endpointToRename(d.slug, appId, existingEndpoints);
+        const applicationId = ep?.applicationId ?? toRename?.applicationId ?? appId;
         return {
           key: d.key, label: d.label, fqdn: d.fqdn,
-          applicationId, endpointId: ep?.id ?? null,
+          applicationId, endpointId: ep?.id ?? toRename?.id ?? null,
           status: 'pending' as const,
           phase: 'idle' as const,
           rolloutProgress: null,
@@ -918,6 +929,24 @@ export class DnsSetupWizardService {
         };
       }));
     }
+  }
+
+  /**
+   * The domain endpoint a platform application already has under another name:
+   * it is renamed, never doubled. The install address (IP mode) is not a
+   * candidate: it stays as the way back in, and the domain endpoint is created beside it.
+   */
+  private endpointToRename(
+    slug: string,
+    applicationId: string | null,
+    existingEndpoints: AppEndpointResponseDto[],
+  ): AppEndpointResponseDto | undefined {
+    if (!applicationId || !SYSTEM_APPS.has(slug)) return undefined;
+    const own = existingEndpoints.filter(e =>
+      e.applicationId === applicationId && e.hostnameMode === AppEndpointResponseDto.HostnameModeEnum.Domain
+    );
+    const current = this.currentFqdns()[slug];
+    return own.find(e => e.fqdn === current) ?? own[0];
   }
 
   private async processEndpointSetupDef(
@@ -933,7 +962,9 @@ export class DnsSetupWizardService {
     this.updateAppStatus(def.key, { status: 'running', phase: 'creating-endpoint' });
 
     let endpointId = current.endpointId;
-    if (!endpointId) {
+    if (endpointId) {
+      if (!(await this.ensureEndpointName(def, endpointId, zoneId, isDirect))) return;
+    } else {
       endpointId = await this.ensureEndpointCreated(def, clusterId, zoneId, isDirect, sanCertificateId, current);
       if (!endpointId) return;
     }
@@ -947,6 +978,38 @@ export class DnsSetupWizardService {
     }
 
     // Domain sync runs after production certs are valid (see pollEndpointStatuses).
+  }
+
+  /** Moves an existing endpoint to the chosen address. Returns false (and sets the error status) on failure. */
+  private async ensureEndpointName(
+    def: { key: string; fqdn: string; hostnameMode: 'ip' | 'domain' },
+    endpointId: string,
+    zoneId: string,
+    isDirect: boolean,
+  ): Promise<boolean> {
+    const existing = this.appEndpointsService.endpoints().find(e => e.id === endpointId);
+    if (!existing || !def.fqdn || existing.fqdn === def.fqdn) return true;
+    const dto: UpdateAppEndpointDto = {
+      fqdn: def.fqdn,
+      ...(zoneId ? { clusterDnsZoneId: zoneId } : {}),
+      certificateRequired: true,
+      certificateProvider: this.startsInStaging
+        ? UpdateAppEndpointDto.CertificateProviderEnum.LetsEncryptStaging
+        : UpdateAppEndpointDto.CertificateProviderEnum.LetsEncrypt,
+      hostnameMode: def.hostnameMode === 'ip'
+        ? UpdateAppEndpointDto.HostnameModeEnum.Ip
+        : UpdateAppEndpointDto.HostnameModeEnum.Domain,
+      certChallenge: isDirect
+        ? UpdateAppEndpointDto.CertChallengeEnum.Http01
+        : UpdateAppEndpointDto.CertChallengeEnum.Dns01,
+    };
+    const updated = await this.appEndpointsService.updateEndpoint(endpointId, dto);
+    if (!updated) {
+      this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: this.appEndpointsService.error() ?? 'Failed to change the address' });
+      return false;
+    }
+    this.updateAppStatus(def.key, { certStatus: null, certMessage: null, ingressConfigured: false });
+    return true;
   }
 
   /** Creates the endpoint for a def that doesn't have one yet. Returns null (and sets the error status) on failure. */

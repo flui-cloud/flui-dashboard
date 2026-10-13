@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { DnsSetupWizardService, wildcardLabelHint } from './dns-setup-wizard.service';
 import { WizardFakes, wizardProviders } from './dns-setup-wizard.testing';
@@ -174,6 +175,165 @@ describe('DnsSetupWizardService', () => {
 
     expect(await wiz.checkSystemNames('c-1')).toBeTrue();
     expect(wiz['chosenFqdns']()).toEqual({ 'flui-web': 'dashboard-demo.flui.cloud' });
+  });
+
+  describe('choosing another zone', () => {
+    const check = {
+      ok: true as const,
+      result: {
+        zoneName: 'flui.cloud',
+        hostnames: [
+          { app: 'flui-web' as const, applicationId: 'w', defaultLabel: 'dashboard', label: 'dashboard', fqdn: 'dashboard.flui.cloud', currentFqdn: 'old.flui.cloud' },
+        ],
+      },
+    };
+
+    it('forgets the addresses chosen under the previous zone', async () => {
+      const { wiz } = setup({ check });
+      wiz.selectZone('zone:z1');
+      await wiz.checkSystemNames('c-1');
+      wiz['namesLoadedForZone'] = 'z1';
+
+      wiz.selectZone('zone:z2');
+
+      expect(wiz['chosenFqdns']()).toEqual({});
+      expect(wiz['currentFqdns']()).toEqual({});
+      expect(wiz['namesLoadedForZone']).toBeNull();
+    });
+
+    it('keeps them when the same zone is selected again', async () => {
+      const { wiz } = setup({ check });
+      wiz.selectZone('zone:z1');
+      await wiz.checkSystemNames('c-1');
+
+      wiz.selectZone('zone:z1');
+
+      expect(wiz['chosenFqdns']()).toEqual({ 'flui-web': 'dashboard.flui.cloud' });
+    });
+  });
+
+  describe('changing the address of an exposed platform application', () => {
+    const def = { key: 'flui-web', label: 'Dashboard', fqdn: 'console.flui.cloud', slug: 'flui-web', hostnameMode: 'domain' as const };
+    const systemAppDefs = [{ key: 'flui-web', label: 'Dashboard', slug: 'flui-web', applicationId: 'w' }];
+
+    function withEndpoints(existing: { id: string; applicationId: string; fqdn: string; hostnameMode: 'ip' | 'domain' }[], currentFqdn: string | null) {
+      const endpoints = signal(existing as never[]);
+      const appEndpoints = {
+        endpoints,
+        error: signal<string | null>(null),
+        updateEndpoint: jasmine.createSpy('updateEndpoint').and.callFake(async (id: string, dto: { fqdn: string }) => ({ id, applicationId: 'w', fqdn: dto.fqdn })),
+        createEndpoint: jasmine.createSpy('createEndpoint').and.callFake(async () => ({ id: 'ep-new', applicationId: 'w' })),
+        reconcileEndpoint: jasmine.createSpy('reconcileEndpoint').and.resolveTo({}),
+        loadEndpoints: jasmine.createSpy('loadEndpoints').and.resolveTo(),
+      };
+      const built = setup({
+        appEndpoints,
+        check: {
+          ok: true,
+          result: {
+            zoneName: 'flui.cloud',
+            hostnames: [{ app: 'flui-web', applicationId: 'w', defaultLabel: 'dashboard', label: 'console', fqdn: def.fqdn, currentFqdn }],
+          },
+        },
+      });
+      return { ...built, appEndpoints, existing: existing as never[] };
+    }
+
+    async function run(wiz: DnsSetupWizardService, existing: never[]) {
+      await wiz.checkSystemNames('c-1');
+      wiz['seedEndpointStatuses'](false, [def], systemAppDefs, existing);
+      await wiz['processEndpointSetupDef'](def, 'c-1', 'a1', false, null);
+    }
+
+    it('renames the endpoint it already has instead of adding a second one', async () => {
+      const { wiz, appEndpoints, existing } = withEndpoints(
+        [{ id: 'ep-old', applicationId: 'w', fqdn: 'dashboard.flui.cloud', hostnameMode: 'domain' }],
+        'dashboard.flui.cloud',
+      );
+
+      await run(wiz, existing);
+
+      expect(appEndpoints.createEndpoint).not.toHaveBeenCalled();
+      expect(appEndpoints.updateEndpoint).toHaveBeenCalledOnceWith('ep-old', jasmine.objectContaining({
+        fqdn: 'console.flui.cloud',
+        clusterDnsZoneId: 'a1',
+        certChallenge: 'dns-01',
+        hostnameMode: 'domain',
+      }));
+      expect(appEndpoints.reconcileEndpoint).toHaveBeenCalledWith('ep-old');
+      expect(wiz.appEndpoints()[0]).toEqual(jasmine.objectContaining({ endpointId: 'ep-old', fqdn: 'console.flui.cloud' }));
+    });
+
+    it('leaves an endpoint that already has the chosen address alone', async () => {
+      const { wiz, appEndpoints, existing } = withEndpoints(
+        [{ id: 'ep-1', applicationId: 'w', fqdn: 'console.flui.cloud', hostnameMode: 'domain' }],
+        'console.flui.cloud',
+      );
+
+      await run(wiz, existing);
+
+      expect(appEndpoints.updateEndpoint).not.toHaveBeenCalled();
+      expect(appEndpoints.createEndpoint).not.toHaveBeenCalled();
+      expect(appEndpoints.reconcileEndpoint).toHaveBeenCalledWith('ep-1');
+    });
+
+    it('creates the domain endpoint beside the install address of a fresh installation', async () => {
+      const { wiz, appEndpoints, existing } = withEndpoints(
+        [{ id: 'ep-ip', applicationId: 'w', fqdn: 'flui-web.203-0-113-10.nip.io', hostnameMode: 'ip' }],
+        'flui-web.203-0-113-10.nip.io',
+      );
+
+      await run(wiz, existing);
+
+      expect(appEndpoints.updateEndpoint).not.toHaveBeenCalled();
+      expect(appEndpoints.createEndpoint).toHaveBeenCalledOnceWith('c-1', jasmine.objectContaining({
+        applicationId: 'w',
+        fqdn: 'console.flui.cloud',
+        hostnameMode: 'domain',
+      }));
+      expect(wiz.appEndpoints()[0].endpointId).toBe('ep-new');
+    });
+
+    it('renames the domain endpoint, not the install address, when both exist', async () => {
+      const { wiz, appEndpoints, existing } = withEndpoints(
+        [
+          { id: 'ep-ip', applicationId: 'w', fqdn: 'flui-web.203-0-113-10.nip.io', hostnameMode: 'ip' },
+          { id: 'ep-old', applicationId: 'w', fqdn: 'dashboard.flui.cloud', hostnameMode: 'domain' },
+        ],
+        'dashboard.flui.cloud',
+      );
+
+      await run(wiz, existing);
+
+      expect(appEndpoints.createEndpoint).not.toHaveBeenCalled();
+      expect(appEndpoints.updateEndpoint).toHaveBeenCalledOnceWith('ep-old', jasmine.objectContaining({ fqdn: 'console.flui.cloud' }));
+    });
+
+    it('creates the endpoint when the application has none yet', async () => {
+      const { wiz, appEndpoints, existing } = withEndpoints([], null);
+
+      await run(wiz, existing);
+
+      expect(appEndpoints.updateEndpoint).not.toHaveBeenCalled();
+      expect(appEndpoints.createEndpoint).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows the refusal when the rename fails', async () => {
+      const { wiz, appEndpoints, existing } = withEndpoints(
+        [{ id: 'ep-old', applicationId: 'w', fqdn: 'dashboard.flui.cloud', hostnameMode: 'domain' }],
+        'dashboard.flui.cloud',
+      );
+      appEndpoints.updateEndpoint.and.resolveTo(null);
+      appEndpoints.error.set('console.flui.cloud is already used by another endpoint.');
+
+      await run(wiz, existing);
+
+      expect(appEndpoints.reconcileEndpoint).not.toHaveBeenCalled();
+      expect(wiz.appEndpoints()[0]).toEqual(jasmine.objectContaining({
+        status: 'error',
+        errorMessage: 'console.flui.cloud is already used by another endpoint.',
+      }));
+    });
   });
 
   describe('wildcardLabelHint', () => {
