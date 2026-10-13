@@ -20,6 +20,15 @@ export interface ManifestFormData {
   webhooksEnabled: boolean;
   publicApp: boolean;
   publicApiUrl: string;
+  organization: string;
+}
+
+const GITHUB_LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
+
+export function organizationProblem(organization: string): string | null {
+  const value = organization.trim();
+  if (!value || GITHUB_LOGIN.test(value)) return null;
+  return 'Use the organisation\u2019s GitHub login, as in github.com/<organisation>: letters, digits and single hyphens.';
 }
 
 export interface PatFormData {
@@ -43,6 +52,7 @@ export class GithubSetupWizardService {
     webhooksEnabled: false,
     publicApp: false,
     publicApiUrl: '',
+    organization: '',
   });
   readonly patForm = signal<PatFormData>({ token: '' });
   readonly patValidation = signal<PatValidationResultDto | null>(null);
@@ -82,6 +92,12 @@ export class GithubSetupWizardService {
       this.error.set('Flui public URL is required.');
       return null;
     }
+    const organizationError = organizationProblem(form.organization);
+    if (organizationError) {
+      this.error.set(organizationError);
+      return null;
+    }
+    const organization = form.organization.trim();
 
     this.isConfiguring.set(true);
     this.error.set(null);
@@ -92,6 +108,7 @@ export class GithubSetupWizardService {
           webhooksEnabled: form.webhooksEnabled,
           publicApp: form.publicApp,
           publicApiUrl: form.publicApiUrl.trim(),
+          ...(organization ? { organization } : {}),
         }),
       );
     } catch (err: any) {
@@ -229,7 +246,7 @@ export class GithubSetupWizardService {
       webhookSecret: '',
       appSlug: '',
     });
-    this.manifestForm.set({ name: '', webhooksEnabled: false, publicApp: false, publicApiUrl: '' });
+    this.manifestForm.set({ name: '', webhooksEnabled: false, publicApp: false, publicApiUrl: '', organization: '' });
     this.patForm.set({ token: '' });
     this.patValidation.set(null);
     this.isConfiguring.set(false);

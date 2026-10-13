@@ -22,6 +22,7 @@ import {
 import {
   GithubSetupWizardService,
   SetupMethod,
+  organizationProblem,
 } from '../../service/github-setup-wizard.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
@@ -192,6 +193,26 @@ const PAT_DEEP_LINK =
                   class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p class="mt-1 text-xs text-slate-400">Must be unique across GitHub. Pick something descriptive (your company or instance).</p>
+              </div>
+
+              <div>
+                <label for="github-app-organization" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Create it under an organisation <span class="text-slate-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  id="github-app-organization"
+                  type="text"
+                  autocomplete="off"
+                  [ngModel]="wizardService.manifestForm().organization"
+                  (ngModelChange)="wizardService.updateManifestForm({ organization: $event })"
+                  placeholder="acme"
+                  class="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                @if (organizationProblem(); as problem) {
+                  <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ problem }}</p>
+                } @else {
+                  <p class="mt-1 text-xs text-slate-400">Leave empty to create it on your own account. You must be an owner of the organisation.</p>
+                }
               </div>
 
               <div>
@@ -604,6 +625,10 @@ export class GithubSetupWizardComponent implements OnInit, OnDestroy {
     return environment.apiBaseUrl.replace(/\/$/, '');
   }
 
+  organizationProblem(): string | null {
+    return organizationProblem(this.wizardService.manifestForm().organization);
+  }
+
   isLocalPublicApiUrl(): boolean {
     const url = this.wizardService.manifestForm().publicApiUrl.trim();
     if (!url) return false;
@@ -644,7 +669,7 @@ export class GithubSetupWizardComponent implements OnInit, OnDestroy {
       const f = this.wizardService.manifestForm();
       if (!f.name.trim()) return false;
       if (!f.publicApiUrl.trim()) return false;
-      return true;
+      return !organizationProblem(f.organization);
     }
     return false;
   }

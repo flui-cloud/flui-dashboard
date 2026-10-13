@@ -26,5 +26,9 @@ export interface GitHubAppManifestStartDto {
      * Public base URL of this Flui API instance. Used to derive the manifest redirect URL, the OAuth callback URL and (when webhooks are enabled) the webhook URL. If omitted, the API falls back to the PUBLIC_API_URL env var and finally to the request Host header.
      */
     publicApiUrl?: string;
+    /**
+     * GitHub organisation login to create the App under, instead of the account of the person confirming it. They must be an owner of that organisation (or an App manager there). Leave it out to create the App on their own account.
+     */
+    organization?: string;
 }
 
