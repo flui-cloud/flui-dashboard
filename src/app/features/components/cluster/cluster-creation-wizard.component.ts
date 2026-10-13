@@ -51,7 +51,7 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
 import { ClusterNameAvailabilityService } from '../../service/cluster-name-availability.service';
 import { AutoscaleDefaults } from '../../model/autoscale.models';
 import { AccessManagementService } from '../../../core/api/api/accessManagement.service';
-import { VNetInfo, AddSubnetConfiguration } from '../../model/vnet.models';
+import { VNetInfo, SubnetInfo, AddSubnetConfiguration, subnetServesRegion } from '../../model/vnet.models';
 import { VNetService } from '../../service/vnet.service';
 import { DnsZonesService } from '../../service/dns-zones.service';
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
@@ -554,10 +554,10 @@ interface FirewallRuleDto {
                         (click)="selectSubnet(subnet.id)"
                         [class]="getSubnetCardClass(subnet.id)"
                         class="p-4 border-2 rounded-lg transition-all"
-                        [class.cursor-pointer]="isIpv4Subnet(subnet.ipRange)"
-                        [class.hover:shadow-md]="isIpv4Subnet(subnet.ipRange)"
-                        [class.opacity-50]="!isIpv4Subnet(subnet.ipRange)"
-                        [attr.aria-disabled]="!isIpv4Subnet(subnet.ipRange)"
+                        [class.cursor-pointer]="isSubnetUsable(subnet)"
+                        [class.hover:shadow-md]="isSubnetUsable(subnet)"
+                        [class.opacity-50]="!isSubnetUsable(subnet)"
+                        [attr.aria-disabled]="!isSubnetUsable(subnet)"
                         >
                         <div class="flex items-center justify-between">
                           <div class="flex items-center gap-3 flex-1">
@@ -571,6 +571,8 @@ interface FirewallRuleDto {
                                 </span>
                                 @if (!isIpv4Subnet(subnet.ipRange)) {
                                   <span class="text-xs text-muted-foreground">IPv6 only — nodes need an IPv4 subnet</span>
+                                } @else if (!servesSelectedRegion(subnet)) {
+                                  <span class="text-xs text-muted-foreground">Not reachable from {{ selectedRegion() }}</span>
                                 }
                               </div>
                               <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
@@ -802,16 +804,6 @@ interface FirewallRuleDto {
                       </p>
                     </div>
                   }
-    
-                  <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                    <div class="flex items-start gap-2">
-                      <ng-icon name="lucideInfo" class="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                      <p class="text-xs text-amber-800 dark:text-amber-300">
-                        Built-in services (auth, web, API) start on test addresses regardless of this choice.
-                        Move them onto your domain with the DNS setup wizard once the cluster is ready.
-                      </p>
-                    </div>
-                  </div>
                 }
               </div>
             }
@@ -1539,9 +1531,14 @@ export class ClusterCreationWizardComponent implements OnInit {
   // Wizard steps - Consolidated (6 steps total)
   private isNetworkStepValid(): boolean {
     if (this.environmentNetwork()) return true;
-    if (this.vnetRequired()) return !!this.selectedVNetId() && !!this.selectedSubnetId();
-    if (this.selectedVNetId()) return !!this.selectedSubnetId();
+    if (this.vnetRequired()) return !!this.selectedVNetId() && this.hasUsableSubnetSelected();
+    if (this.selectedVNetId()) return this.hasUsableSubnetSelected();
     return true;
+  }
+
+  private hasUsableSubnetSelected(): boolean {
+    const subnet = this.selectedVNetData()?.subnets.find((s) => s.id === this.selectedSubnetId());
+    return !!subnet && this.isSubnetUsable(subnet);
   }
 
   readonly wizardSteps = computed<WizardStep[]>(() => {
@@ -1840,8 +1837,8 @@ export class ClusterCreationWizardComponent implements OnInit {
     if (vnet) {
       this.selectedVNetId.set(vnet.id);
       this.selectedVNetData.set(vnet);
-      const ipv4 = vnet.subnets.filter((s) => this.isIpv4Subnet(s.ipRange));
-      this.selectedSubnetId.set(ipv4.length === 1 ? ipv4[0].id : null);
+      const usable = vnet.subnets.filter((s) => this.isSubnetUsable(s));
+      this.selectedSubnetId.set(usable.length === 1 ? usable[0].id : null);
     } else {
       this.selectedVNetId.set(null);
       this.selectedVNetData.set(null);
@@ -1851,8 +1848,16 @@ export class ClusterCreationWizardComponent implements OnInit {
 
   selectSubnet(subnetId: string): void {
     const subnet = this.selectedVNetData()?.subnets.find((s) => s.id === subnetId);
-    if (subnet && !this.isIpv4Subnet(subnet.ipRange)) return;
+    if (subnet && !this.isSubnetUsable(subnet)) return;
     this.selectedSubnetId.set(subnetId);
+  }
+
+  isSubnetUsable(subnet: SubnetInfo): boolean {
+    return this.isIpv4Subnet(subnet.ipRange) && this.servesSelectedRegion(subnet);
+  }
+
+  servesSelectedRegion(subnet: SubnetInfo): boolean {
+    return subnetServesRegion(subnet, this.selectedRegion());
   }
 
   /** Nodes get their private address from an IPv4 subnet; an IPv6-only one cannot carry them. */

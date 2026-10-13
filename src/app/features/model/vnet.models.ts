@@ -35,6 +35,8 @@ export interface SubnetInfo {
   providerSubnetId?: string;
   ipRange: string;
   networkZone: string;
+  /** Null when the provider declares no regions for the zone, so any region may try. */
+  servedRegions: string[] | null;
   gateway?: string;
   vswitchId?: string;
   attachedServerIds: string[];
@@ -72,6 +74,20 @@ export interface VNetInfo {
   updatedAt: Date;
 }
 
+/** Whether a server in this region can join the subnet, by the regions the API reports for it. */
+export function subnetServesRegion(subnet: SubnetInfo, region: string | null | undefined): boolean {
+  return !region || !subnet.servedRegions || subnet.servedRegions.includes(region);
+}
+
+export function vnetServesRegion(vnet: VNetInfo, region: string | null | undefined): boolean {
+  return vnet.subnets.length === 0 || vnet.subnets.some((s) => subnetServesRegion(s, region));
+}
+
+/** The regions a network reaches, for saying where it can be used instead. */
+export function vnetServedRegions(vnet: VNetInfo): string[] {
+  return [...new Set(vnet.subnets.flatMap((s) => s.servedRegions ?? []))];
+}
+
 /**
  * Computed property helper: Get all attached server IDs from all subnets
  */
@@ -86,6 +102,7 @@ export interface CreateVNetConfiguration {
   name: string;
   provider: string;
   ipRange: string;
+  networkZone?: string;
   labels?: VNetLabel[];
   metadata?: Record<string, any>;
   subnet?: {

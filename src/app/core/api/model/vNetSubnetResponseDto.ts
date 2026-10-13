@@ -27,6 +27,10 @@ export interface VNetSubnetResponseDto {
      */
     networkZone: string;
     /**
+     * Regions whose servers can join this subnet, as the provider declares them. Null when the provider makes no such claim, so any region may try.
+     */
+    servedRegions: Array<string> | null;
+    /**
      * Gateway IP address
      */
     gateway?: string;

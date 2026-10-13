@@ -202,6 +202,7 @@ export class VNetService {
         name: config.name,
         provider: config.provider as any,
         ipRange: config.ipRange,
+        networkZone: config.networkZone,
         labels: config.labels?.map(l => `${l.key}:${l.value}`),
         metadata: config.metadata,
         subnets: config.subnet ? [{
@@ -594,6 +595,7 @@ export class VNetService {
       providerSubnetId: dto.providerSubnetId,
       ipRange: dto.ipRange,
       networkZone: dto.networkZone,
+      servedRegions: dto.servedRegions ?? null,
       gateway: dto.gateway,
       vswitchId: dto.vswitchId,
       attachedServerIds: dto.attachedServerIds || [],

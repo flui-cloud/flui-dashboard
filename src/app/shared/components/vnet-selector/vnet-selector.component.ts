@@ -1,4 +1,4 @@
-import { Component, OnInit, input, output, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, input, output, signal, computed, inject, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -13,7 +13,7 @@ import {
   lucidePlus,
 } from '@ng-icons/lucide';
 import { VNetService } from '../../../features/service/vnet.service';
-import { VNetInfo, VNetStatus, CreateVNetConfiguration } from '../../../features/model/vnet.models';
+import { VNetInfo, VNetStatus, CreateVNetConfiguration, vnetServesRegion, vnetServedRegions } from '../../../features/model/vnet.models';
 import { ProviderWizardService } from '../../services/provider-wizard.service';
 import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
 
@@ -137,9 +137,15 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
           <!-- VNet Cards -->
           @for (vnet of filteredVNets(); track vnet) {
             <div
-              (click)="selectVNet(vnet)"
+              (click)="isUsable(vnet) && selectVNet(vnet)"
               [class]="getVNetCardClass(vnet)"
-              class="p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md"
+              class="p-4 border-2 rounded-lg transition-all"
+              [class.cursor-pointer]="isUsable(vnet)"
+              [class.hover:shadow-md]="isUsable(vnet)"
+              [class.cursor-not-allowed]="!isUsable(vnet)"
+              [class.opacity-50]="!isUsable(vnet)"
+              [attr.aria-disabled]="!isUsable(vnet)"
+              [attr.data-testid]="'vnet-card-' + vnet.name"
               >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -165,6 +171,11 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
                       <span>{{ vnet.subnets.length }} subnet(s)</span>
                       <span class="capitalize">{{ vnet.provider }}</span>
                     </div>
+                    @if (!isUsable(vnet)) {
+                      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400" data-testid="vnet-other-region">
+                        Not reachable from {{ region() }}: only from {{ servedRegions(vnet).join(', ') }}
+                      </p>
+                    }
                   </div>
                 </div>
                 <!-- Selection Indicator -->
@@ -314,7 +325,7 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
                 class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                 @for (zone of vnetZones(); track zone.id) {
-                  <option [value]="zone.id">{{ zone.displayName }}</option>
+                  <option [value]="zone.id" [disabled]="!zoneServesRegion(zone)">{{ zone.displayName }}</option>
                 }
               </select>
             </div>
@@ -495,6 +506,12 @@ export class VNetSelectorComponent implements OnInit {
       this.provider();
       this.loadVNets();
     });
+    effect(() => {
+      const selected = this.selectedVNet();
+      if (selected && !vnetServesRegion(selected, this.region())) {
+        untracked(() => this.selectVNet(null));
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -507,7 +524,9 @@ export class VNetSelectorComponent implements OnInit {
   async openCreateForm(): Promise<void> {
     const p = this.provider() ?? '';
     const zones = this.vnetZones();
-    this.newSubnetZone = zones[0]?.id ?? this.regionForNew();
+    const region = this.region();
+    const covering = region ? zones.find((z) => z.coveredRegions?.includes(region)) : undefined;
+    this.newSubnetZone = covering?.id ?? zones[0]?.id ?? this.regionForNew();
     this.newVnetName = this.newSubnetZone ? `${p}-${this.newSubnetZone}` : `${p}-vnet`;
     this.newCreateSubnet = this.supportsSubnets();
     this.createError.set(null);
@@ -628,6 +647,7 @@ export class VNetSelectorComponent implements OnInit {
       name: this.newVnetName,
       provider: this.provider() ?? '',
       ipRange: this.newIpRange,
+      networkZone: this.newSubnetZone || undefined,
       subnet: includeSubnet
         ? {
             networkZone: this.newSubnetZone,
@@ -668,6 +688,19 @@ export class VNetSelectorComponent implements OnInit {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  zoneServesRegion(zone: { coveredRegions?: string[] }): boolean {
+    const region = this.region();
+    return !region || !zone.coveredRegions?.length || zone.coveredRegions.includes(region);
+  }
+
+  isUsable(vnet: VNetInfo): boolean {
+    return vnetServesRegion(vnet, this.region());
+  }
+
+  servedRegions(vnet: VNetInfo): string[] {
+    return vnetServedRegions(vnet);
   }
 
   selectVNet(vnet: VNetInfo | null): void {

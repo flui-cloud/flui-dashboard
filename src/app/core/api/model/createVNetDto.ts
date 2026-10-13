@@ -25,6 +25,10 @@ export interface CreateVNetDto {
      */
     ipRange: string;
     /**
+     * Network zone the VNet is created in, one of the zones the provider declares (e.g. nl-ams). Servers can join only from the regions it covers.
+     */
+    networkZone?: string;
+    /**
      * Subnets to create within the VNet
      */
     subnets?: Array<CreateVNetSubnetDto>;
