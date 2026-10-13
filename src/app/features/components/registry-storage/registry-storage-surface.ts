@@ -15,6 +15,7 @@ import {
 } from '../../../shared/utils/surface-kit';
 import { applicationEntityRef } from '../application/application-surface';
 import {
+  RegistryModeStatus,
   RegistryStorageStatus,
   RegistryTraffic,
   RegistryUsage,
@@ -51,6 +52,8 @@ export interface RegistryStorageSurfaceInput {
   trafficWindow: string;
   trafficLoading: boolean;
   trafficHidden: boolean;
+  mode?: RegistryModeStatus | null;
+  switching?: 'enable' | 'disable' | null;
 }
 
 export interface RegistryStorageSurfaceContext {
@@ -82,6 +85,11 @@ function pageScopeOf(input: RegistryStorageSurfaceInput, status: RegistryStorage
       boolObservation('flui.registry.refused', input.refused, 'api'),
       status ? textObservation('flui.registry.backend', backendLabel(status), 'api') : null,
       status ? boolObservation('flui.registry.own_registry', keepsOwnImages, 'derived') : null,
+      input.mode ? textObservation('flui.registry.mode', input.mode.mode, 'api') : null,
+      input.mode?.mode === 'flui'
+        ? boolObservation('flui.registry.ready', !!input.mode.ready, 'api')
+        : null,
+      input.switching ? textObservation('flui.registry.switching', input.switching, 'ui') : null,
     ]),
     state: {
       loading: input.loading && !status,

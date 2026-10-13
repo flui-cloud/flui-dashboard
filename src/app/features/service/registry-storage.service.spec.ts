@@ -159,4 +159,119 @@ describe('RegistryStorageService', () => {
     expect(service.trafficFailed()).toBe(true);
     expect(service.trafficHidden()).toBe(false);
   });
+  describe('which registry new builds push to', () => {
+    const modeUrl = 'http://api/api/v1/registry';
+    const ghcr = {
+      mode: 'ghcr',
+      source: 'install',
+      storage: null,
+      host: 'api.example.test',
+      ready: null,
+      detail: null,
+      bucketConnected: false,
+      applicationsOnRegistry: 0,
+    };
+
+    afterEach(() => service.stopFollowing());
+
+    it('reads the mode', async () => {
+      const pending = service.loadMode();
+      http.expectOne(`${modeUrl}/mode`).flush(ghcr);
+      await pending;
+      expect(service.mode()?.mode).toBe('ghcr');
+    });
+
+    it('turns on the Flui registry with the chosen storage, then reads the status again', async () => {
+      const pending = service.enable('volume');
+      expect(service.switching()).toBe('enable');
+      const req = http.expectOne(`${modeUrl}/enable`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ storage: 'volume' });
+      req.flush({ ...ghcr, mode: 'flui', storage: 'volume', ready: true, source: 'setting' });
+      await Promise.resolve();
+      http.expectOne(base).flush({ backend: 'filesystem', connected: false, mode: 'flui' });
+      expect(await pending).toBe(true);
+      expect(service.switching()).toBeNull();
+      expect(service.mode()?.mode).toBe('flui');
+    });
+
+    it('keeps the refusal to show it', async () => {
+      const pending = service.enable('s3');
+      http
+        .expectOne(`${modeUrl}/enable`)
+        .flush(
+          { message: 'No bucket is connected for the registry.' },
+          { status: 400, statusText: 'Bad Request' },
+        );
+      expect(await pending).toBe(false);
+      expect(service.switchError()).toContain('No bucket is connected');
+    });
+
+    it('asks again while the registry is starting, and stops when asked', async () => {
+      jasmine.clock().install();
+      try {
+        const pending = service.loadMode();
+        http.expectOne(`${modeUrl}/mode`).flush({ ...ghcr, mode: 'flui', storage: 'volume', ready: false });
+        await pending;
+        jasmine.clock().tick(5_000);
+        http.expectOne(`${modeUrl}/mode`).flush({ ...ghcr, mode: 'flui', storage: 'volume', ready: false });
+        service.stopFollowing();
+        jasmine.clock().tick(10_000);
+        http.expectNone(`${modeUrl}/mode`);
+        expect(service.mode()?.ready).toBeFalse();
+      } finally {
+        jasmine.clock().uninstall();
+      }
+    });
+
+    it('asks less often while the registry is starting, then says it is still not ready', async () => {
+      const settle = async () => {
+        for (let i = 0; i < 10; i++) await Promise.resolve();
+      };
+      const starting = { ...ghcr, mode: 'flui', storage: 'volume', ready: false };
+      jasmine.clock().install();
+      jasmine.clock().mockDate(new Date(2026, 0, 1));
+      try {
+        const pending = service.loadMode();
+        http.expectOne(`${modeUrl}/mode`).flush(starting);
+        await pending;
+        for (const wait of [5_000, 10_000, 20_000, 30_000, 30_000]) {
+          jasmine.clock().tick(wait - 1);
+          http.expectNone(`${modeUrl}/mode`);
+          jasmine.clock().tick(1);
+          http.expectOne(`${modeUrl}/mode`).flush(starting);
+          await settle();
+        }
+        expect(service.stillNotReady()).toBeFalse();
+
+        for (let i = 0; i < 20 && !service.stillNotReady(); i++) {
+          jasmine.clock().tick(30_000);
+          http.match(`${modeUrl}/mode`).forEach((req) => req.flush(starting));
+          await settle();
+        }
+        expect(service.stillNotReady()).toBeTrue();
+        jasmine.clock().tick(120_000);
+        http.expectNone(`${modeUrl}/mode`);
+
+        const again = service.checkReadyAgain();
+        http.expectOne(`${modeUrl}/mode`).flush({ ...starting, ready: true });
+        await settle();
+        http.expectOne(base).flush({ backend: 'filesystem', connected: false, mode: 'flui' });
+        await again;
+        expect(service.stillNotReady()).toBeFalse();
+        expect(service.mode()?.ready).toBeTrue();
+      } finally {
+        jasmine.clock().uninstall();
+      }
+    });
+
+    it('goes back to GitHub Container Registry', async () => {
+      const pending = service.disable();
+      http.expectOne(`${modeUrl}/disable`).flush(ghcr);
+      await Promise.resolve();
+      http.expectOne(base).flush({ backend: 'filesystem', connected: false, mode: 'ghcr' });
+      expect(await pending).toBe(true);
+      expect(service.mode()?.mode).toBe('ghcr');
+    });
+  });
 });

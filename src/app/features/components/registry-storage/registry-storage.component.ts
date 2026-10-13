@@ -30,6 +30,7 @@ import {
   RegistryTrafficWindow,
   formatMbitPerSecond,
   RegistryBucketProvider,
+  RegistryStorageChoice,
   SCALEWAY_REGION_LABELS,
   SCALEWAY_REGISTRY_REGIONS,
   ScalewayRegistryRegion,
@@ -115,6 +116,43 @@ const INPUT_CLASS =
           <span>{{ message }}</span>
           <button type="button" class="text-xs underline" (click)="reload()">Try again</button>
         </div>
+      }
+
+      @if (registry.mode(); as m) {
+        @if (m.mode === 'flui' && !m.ready && registry.stillNotReady()) {
+          <div
+            data-testid="registry-not-ready"
+            class="flex flex-wrap items-start justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+          >
+            <span>
+              The Flui registry is still not ready after five minutes. New builds push to it and fail until it is.
+              @if (m.detail) {
+                <span class="block text-xs">{{ m.detail }}</span>
+              }
+            </span>
+            <button
+              type="button"
+              data-testid="registry-check-ready"
+              class="text-xs underline"
+              (click)="checkReady()"
+            >
+              Check again
+            </button>
+          </div>
+        } @else if (m.mode === 'flui' && !m.ready) {
+          <div
+            data-testid="registry-starting"
+            class="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground"
+          >
+            <ng-icon name="lucideLoader" class="mt-0.5 h-4 w-4 flex-shrink-0 animate-spin" />
+            <span>
+              Starting the Flui registry. New builds push to it; this page updates when it is ready.
+              @if (m.detail) {
+                <span class="block text-xs">{{ m.detail }}</span>
+              }
+            </span>
+          </div>
+        }
       }
 
       @if (registry.status(); as status) {
@@ -286,14 +324,103 @@ const INPUT_CLASS =
               </table>
             }
           </section>
+        } @else if (onGhcr()) {
+          <section class="card-surface p-5 space-y-4" data-testid="registry-enable">
+            <div class="flex items-start gap-3">
+              <div class="icon-chip icon-chip-sm chip-brand">
+                <ng-icon name="lucideInfo" class="h-4 w-4" />
+              </div>
+              <div>
+                <h2 class="text-sm font-semibold">New builds push to GitHub Container Registry</h2>
+                <p class="text-xs text-muted-foreground">
+                  Flui can keep them in its own registry instead. Running applications keep their images.
+                </p>
+              </div>
+            </div>
+            <div class="inline-flex rounded-md border border-border p-0.5 text-sm" role="radiogroup">
+              <button
+                type="button"
+                role="radio"
+                data-testid="registry-enable-volume"
+                [attr.aria-checked]="enableStorage() === 'volume'"
+                [disabled]="switchBusy()"
+                (click)="enableStorage.set('volume')"
+                class="flex items-center gap-1.5 rounded px-3 py-1.5"
+                [class.bg-muted]="enableStorage() === 'volume'"
+                [class.font-medium]="enableStorage() === 'volume'"
+              >
+                <ng-icon name="lucideHardDrive" class="h-3.5 w-3.5" />
+                Volume
+              </button>
+              <button
+                type="button"
+                role="radio"
+                data-testid="registry-enable-s3"
+                [attr.aria-checked]="enableStorage() === 's3'"
+                [disabled]="switchBusy()"
+                (click)="enableStorage.set('s3')"
+                class="flex items-center gap-1.5 rounded px-3 py-1.5"
+                [class.bg-muted]="enableStorage() === 's3'"
+                [class.font-medium]="enableStorage() === 's3'"
+              >
+                <ng-icon name="lucideCloud" class="h-3.5 w-3.5" />
+                Bucket
+              </button>
+            </div>
+            @if (enableStorage() === 's3' && !bucketReady()) {
+              <p class="text-xs text-muted-foreground" data-testid="registry-enable-needs-bucket">
+                Connect a bucket below first.
+              </p>
+            }
+            <div class="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                data-testid="registry-enable-submit"
+                (click)="enableRegistry()"
+                [disabled]="switchBusy() || (enableStorage() === 's3' && !bucketReady())"
+                class="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                @if (registry.switching() === 'enable') {
+                  <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
+                }
+                Use the Flui registry
+              </button>
+              <app-explain label="How this works" labelClass="text-xs text-muted-foreground">
+                The registry runs on the control cluster. On a volume it is one copy with a fixed
+                size; a bucket never fills and you pay for the space used. New builds push to it,
+                so connecting GitHub needs no container token. Applications already running keep
+                their images until their build is set up again.
+              </app-explain>
+            </div>
+            @if (registry.switchError(); as message) {
+              <div
+                data-testid="registry-switch-error"
+                class="rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive"
+              >
+                {{ message }}
+              </div>
+            }
+          </section>
+        } @else {
+          <div
+            data-testid="registry-ghcr"
+            class="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-4 text-sm text-muted-foreground"
+          >
+            <ng-icon name="lucideInfo" class="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <span>This installation keeps images on GitHub's registry. There is nothing to show here.</span>
+          </div>
+        }
 
+        @if (usage() || bucketForEnable()) {
           <section class="card-surface p-5 space-y-4" data-testid="registry-bucket">
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 class="text-sm font-semibold">Bucket</h2>
                 @if (!status.connected) {
                   <p class="text-xs text-muted-foreground">
-                    @if (status.backend === 's3') {
+                    @if (onGhcr()) {
+                      Connect a bucket, then use the Flui registry with it. A bucket never fills up; you pay for the space used.
+                    } @else if (status.backend === 's3') {
                       The registry waits for a bucket. A bucket never fills up; you pay for the space used.
                     } @else {
                       This installation keeps images on a volume. A bucket connected here is used once the installation is set to object storage.
@@ -331,7 +458,7 @@ const INPUT_CLASS =
               @if (status.connectedAt) {
                 <p class="text-xs text-muted-foreground">Connected {{ status.connectedAt | date: 'd MMM y, HH:mm' }}</p>
               }
-              @if (status.backend === 'filesystem') {
+              @if (status.backend === 'filesystem' && !onGhcr()) {
                 <p
                   class="flex items-start gap-2 rounded-md bg-muted/40 p-3 text-xs text-muted-foreground"
                   data-testid="registry-not-in-use"
@@ -559,13 +686,22 @@ const INPUT_CLASS =
               </div>
             }
           </section>
-        } @else {
-          <div
-            data-testid="registry-ghcr"
-            class="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-4 text-sm text-muted-foreground"
-          >
-            <ng-icon name="lucideInfo" class="mt-0.5 h-4 w-4 flex-shrink-0" />
-            <span>This installation keeps images on GitHub's registry. There is nothing to show here.</span>
+        }
+
+        @if (canDisable()) {
+          <div class="flex flex-wrap items-center justify-end gap-3">
+            @if (registry.switchError(); as message) {
+              <span class="text-xs text-destructive" data-testid="registry-disable-error">{{ message }}</span>
+            }
+            <button
+              type="button"
+              data-testid="registry-disable"
+              [disabled]="switchBusy()"
+              (click)="confirmDisable.set(true)"
+              class="text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+            >
+              Send new builds back to GitHub Container Registry
+            </button>
           </div>
         }
       } @else if (registry.loading()) {
@@ -609,6 +745,36 @@ const INPUT_CLASS =
               class="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90"
             >
               Replace
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (confirmDisable()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" data-testid="registry-disable-confirm">
+        <div class="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6" role="dialog" aria-modal="true">
+          <div class="flex items-start gap-3">
+            <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
+            <p class="text-sm">
+              Send new builds back to GitHub Container Registry and stop the Flui registry? Its volume or bucket is kept.
+            </p>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button
+              type="button"
+              (click)="confirmDisable.set(false)"
+              class="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              data-testid="registry-disable-submit"
+              (click)="disableRegistry()"
+              class="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90"
+            >
+              Switch back
             </button>
           </div>
         </div>
@@ -671,6 +837,18 @@ export class RegistryStorageComponent implements OnInit, OnDestroy {
   protected readonly advancedOpen = signal(false);
   protected readonly confirmReplace = signal<RegistryConnectOption | null>(null);
   protected readonly confirmRemove = signal<RegistryBucket | null>(null);
+  protected readonly confirmDisable = signal(false);
+  protected readonly enableStorage = signal<RegistryStorageChoice>('volume');
+  protected readonly onGhcr = computed(() => this.registry.mode()?.mode === 'ghcr');
+  protected readonly bucketReady = computed(
+    () => !!this.registry.status()?.connected || !!this.registry.mode()?.bucketConnected,
+  );
+  protected readonly bucketForEnable = computed(() => this.onGhcr() && this.enableStorage() === 's3');
+  protected readonly switchBusy = computed(() => this.registry.switching() !== null);
+  protected readonly canDisable = computed(() => {
+    const mode = this.registry.mode();
+    return mode?.mode === 'flui' && mode.applicationsOnRegistry === 0;
+  });
   protected readonly replacedBuckets = computed(() =>
     this.registry.buckets().filter((b) => !b.active),
   );
@@ -726,6 +904,8 @@ export class RegistryStorageComponent implements OnInit, OnDestroy {
       trafficWindow: this.registry.trafficWindow(),
       trafficLoading: this.registry.trafficLoading(),
       trafficHidden: this.registry.trafficHidden(),
+      mode: this.registry.mode(),
+      switching: this.registry.switching(),
     };
     return buildRegistryStorageSurface(input, {
       revision: this.surfaceRevision.next(presentedContent(input)),
@@ -743,6 +923,9 @@ export class RegistryStorageComponent implements OnInit, OnDestroy {
     void this.registry.load();
     void this.registry.loadBuckets();
     void this.registry.loadTraffic();
+    void this.registry.loadMode().then(() => {
+      if (this.registry.mode()?.bucketConnected) this.enableStorage.set('s3');
+    });
   }
 
   protected setTrafficWindow(window: RegistryTrafficWindow): void {
@@ -754,8 +937,28 @@ export class RegistryStorageComponent implements OnInit, OnDestroy {
     return formatMbitPerSecond(bytesPerSecond);
   }
 
+  protected checkReady(): void {
+    void this.registry.checkReadyAgain();
+  }
+
   ngOnDestroy(): void {
+    this.registry.stopFollowing();
     this.currentSurface.set(null);
+  }
+
+  protected async enableRegistry(): Promise<void> {
+    const storage = this.enableStorage();
+    if (this.switchBusy() || (storage === 's3' && !this.bucketReady())) return;
+    if (await this.registry.enable(storage)) {
+      this.toast.showSuccess('New builds now push to the Flui registry');
+    }
+  }
+
+  protected async disableRegistry(): Promise<void> {
+    this.confirmDisable.set(false);
+    if (await this.registry.disable()) {
+      this.toast.showSuccess('New builds now push to GitHub Container Registry');
+    }
   }
 
   protected reload(): void {

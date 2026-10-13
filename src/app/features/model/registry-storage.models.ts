@@ -20,8 +20,22 @@ export interface RegistryUsage {
   unreadable: number;
 }
 
+export type RegistryStorageChoice = 'volume' | 's3';
+
+export interface RegistryModeStatus {
+  mode: 'ghcr' | 'flui';
+  source: 'setting' | 'install';
+  storage: RegistryStorageChoice | null;
+  host: string | null;
+  ready: boolean | null;
+  detail: string | null;
+  bucketConnected: boolean;
+  applicationsOnRegistry: number;
+}
+
 export interface RegistryStorageStatus {
   backend: 'filesystem' | 's3';
+  mode?: 'ghcr' | 'flui';
   connected: boolean;
   provider?: RegistryBucketProvider;
   endpoint?: string;

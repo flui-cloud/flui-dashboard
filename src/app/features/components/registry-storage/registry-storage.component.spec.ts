@@ -1,9 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
-import { RegistryBucket, RegistryStorageStatus, RegistryTraffic, RegistryTrafficWindow } from '../../model/registry-storage.models';
+import {
+  RegistryBucket,
+  RegistryModeStatus,
+  RegistryStorageStatus,
+  RegistryTraffic,
+  RegistryTrafficWindow,
+} from '../../model/registry-storage.models';
 import { ToastService } from '../../../shared/services/toast.service';
-import { RegistryConnecting, RegistryStorageService } from '../../service/registry-storage.service';
+import {
+  RegistryConnecting,
+  RegistryStorageService,
+  RegistrySwitching,
+} from '../../service/registry-storage.service';
 import { RegistryStorageComponent } from './registry-storage.component';
 
 const GIB = 1024 ** 3;
@@ -53,6 +63,30 @@ class FakeRegistry {
   readonly trafficHidden = signal(false);
   readonly trafficFailed = signal(false);
   readonly loadTraffic = jasmine.createSpy('loadTraffic').and.resolveTo();
+  readonly mode = signal<RegistryModeStatus | null>(null);
+  readonly switching = signal<RegistrySwitching>(null);
+  readonly switchError = signal<string | null>(null);
+  readonly loadMode = jasmine.createSpy('loadMode').and.resolveTo();
+  readonly enable = jasmine.createSpy('enable').and.resolveTo(true);
+  readonly disable = jasmine.createSpy('disable').and.resolveTo(true);
+  readonly stopFollowing = jasmine.createSpy('stopFollowing');
+  readonly stillNotReady = signal(false);
+  readonly checkReadyAgain = jasmine.createSpy('checkReadyAgain').and.resolveTo();
+  readonly clearSwitchError = jasmine.createSpy('clearSwitchError');
+}
+
+function mode(over: Partial<RegistryModeStatus> = {}): RegistryModeStatus {
+  return {
+    mode: 'ghcr',
+    source: 'install',
+    storage: null,
+    host: 'api.example.test',
+    ready: null,
+    detail: null,
+    bucketConnected: false,
+    applicationsOnRegistry: 0,
+    ...over,
+  };
 }
 
 function traffic(over: Partial<RegistryTraffic> = {}): RegistryTraffic {
@@ -159,6 +193,83 @@ describe('image registry page', () => {
     expect(q('registry-ghcr')).not.toBeNull();
     expect(q('registry-usage')).toBeNull();
     expect(q('registry-bucket')).toBeNull();
+  });
+
+  describe('switching to the Flui registry', () => {
+    it('offers the Flui registry on a volume when builds go to GitHub', async () => {
+      registry.mode.set(mode());
+      await render(status({ usage: undefined, mode: 'ghcr' }));
+      expect(q('registry-enable')).not.toBeNull();
+      expect(q('registry-ghcr')).toBeNull();
+      expect(q('registry-bucket')).toBeNull();
+      q('registry-enable-submit')!.click();
+      expect(registry.enable).toHaveBeenCalledWith('volume');
+      await fixture.whenStable();
+      expect(toast.showSuccess).toHaveBeenCalled();
+    });
+
+    it('asks for a bucket before using one, and shows where to connect it', async () => {
+      registry.mode.set(mode());
+      await render(status({ usage: undefined, mode: 'ghcr' }));
+      q('registry-enable-s3')!.click();
+      fixture.detectChanges();
+      expect(q('registry-enable-needs-bucket')).not.toBeNull();
+      expect(q('registry-bucket')).not.toBeNull();
+      expect(q('registry-not-in-use')).toBeNull();
+      expect((q('registry-enable-submit') as HTMLButtonElement).disabled).toBeTrue();
+    });
+
+    it('uses the connected bucket', async () => {
+      registry.mode.set(mode({ bucketConnected: true }));
+      await render(status({ usage: undefined, mode: 'ghcr', connected: true, bucket: 'b' }));
+      q('registry-enable-s3')!.click();
+      fixture.detectChanges();
+      expect(q('registry-enable-needs-bucket')).toBeNull();
+      q('registry-enable-submit')!.click();
+      expect(registry.enable).toHaveBeenCalledWith('s3');
+    });
+
+    it('shows why the switch was refused', async () => {
+      registry.mode.set(mode());
+      registry.switchError.set('No bucket is connected for the registry.');
+      await render(status({ usage: undefined, mode: 'ghcr' }));
+      expect(q('registry-switch-error')!.textContent).toContain('No bucket is connected');
+    });
+
+    it('shows progress until the registry is ready', async () => {
+      registry.mode.set(mode({ mode: 'flui', storage: 'volume', ready: false }));
+      await render(status({ mode: 'flui' }));
+      expect(q('registry-starting')).not.toBeNull();
+      expect(q('registry-enable')).toBeNull();
+
+      registry.mode.set(mode({ mode: 'flui', storage: 'volume', ready: true }));
+      fixture.detectChanges();
+      expect(q('registry-starting')).toBeNull();
+    });
+
+    it('says so when the registry is still not ready, and checks again on request', async () => {
+      registry.mode.set(mode({ mode: 'flui', storage: 'volume', ready: false }));
+      registry.stillNotReady.set(true);
+      await render(status({ mode: 'flui' }));
+      expect(q('registry-starting')).toBeNull();
+      expect(q('registry-not-ready')!.textContent).toContain('still not ready');
+
+      q('registry-check-ready')!.click();
+      expect(registry.checkReadyAgain).toHaveBeenCalled();
+    });
+
+    it('offers to go back to GitHub only while no application uses the registry', async () => {
+      registry.mode.set(mode({ mode: 'flui', storage: 'volume', ready: true, applicationsOnRegistry: 2 }));
+      await render(status({ mode: 'flui' }));
+      expect(q('registry-disable')).toBeNull();
+
+      registry.mode.set(mode({ mode: 'flui', storage: 'volume', ready: true }));
+      fixture.detectChanges();
+      q('registry-disable')!.click();
+      fixture.detectChanges();
+      q('registry-disable-submit')!.click();
+      expect(registry.disable).toHaveBeenCalled();
+    });
   });
 
   it('draws a refusal calmly, without the error box', async () => {
