@@ -1,5 +1,6 @@
 import { Component, OnInit, input, output, signal, computed, effect, inject, untracked, ChangeDetectionStrategy } from '@angular/core';
 
+import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideCloud,
@@ -40,7 +41,7 @@ import { ProviderMarkComponent } from '../provider-mark.component';
 @Component({
   selector: 'app-provider-region-selector',
   standalone: true,
-  imports: [NgIconComponent, ProviderMarkComponent],
+  imports: [NgIconComponent, ProviderMarkComponent, RouterLink],
   providers: [
     provideIcons({
       lucideCloud,
@@ -81,6 +82,16 @@ import { ProviderMarkComponent } from '../provider-mark.component';
               <span>Workloads must run on the same provider as the control cluster.</span>
             </div>
           }
+          @if (!wizardService.isProviderLoading() && !wizardService.providerError() && !hasConfiguredProvider()) {
+            <div
+              data-testid="no-provider-configured"
+              class="flex items-center gap-2 mb-3 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 rounded-lg text-sm"
+              >
+              <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
+              <span>No provider is connected yet. Connect one to create a cluster.</span>
+              <a routerLink="/management/providers" class="ml-auto font-medium underline underline-offset-2">Providers</a>
+            </div>
+          }
           <!-- Provider Grid -->
           @if (!wizardService.isProviderLoading() && !wizardService.providerError()) {
             <div
@@ -106,6 +117,16 @@ import { ProviderMarkComponent } from '../provider-mark.component';
                         >
                         Soon
                       </span>
+                    } @else if (!provider.configured) {
+                      <span class="text-xs text-slate-500 dark:text-slate-400">Not connected</span>
+                      <a
+                        [routerLink]="['/management/providers']"
+                        [queryParams]="{ configure: provider.id }"
+                        [attr.data-testid]="'connect-provider-' + provider.id"
+                        class="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                        Connect {{ provider.name }}
+                      </a>
                     }
                   </div>
                 </div>
@@ -295,6 +316,10 @@ export class ProviderRegionSelectorComponent implements OnInit {
   readonly serverTypes = signal<ServerTypeOption[]>([]);
 
   // === Computed ===
+  readonly hasConfiguredProvider = computed(() =>
+    this.wizardService.providersData().some((p) => !p.comingSoon && p.configured)
+  );
+
   readonly filteredServerTypes = computed<ServerTypeOption[]>(() => {
     const filter = this.cpuTypeFilter();
     const types = this.serverTypes();
@@ -360,7 +385,7 @@ export class ProviderRegionSelectorComponent implements OnInit {
   }
 
   isProviderDisabled(provider: ProviderOption): boolean {
-    if (provider.comingSoon) return true;
+    if (provider.comingSoon || !provider.configured) return true;
     const locked = this.lockedProvider();
     return !!locked && provider.id !== locked;
   }
@@ -380,6 +405,9 @@ export class ProviderRegionSelectorComponent implements OnInit {
   // === Styling Methods ===
 
   getProviderCardClass(provider: ProviderOption): string {
+    if (!provider.comingSoon && !provider.configured) {
+      return 'border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50';
+    }
     if (this.isProviderDisabled(provider)) {
       return 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed opacity-60';
     }

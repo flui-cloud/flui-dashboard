@@ -18,6 +18,7 @@ export interface ProviderOption {
   displayName: string;
   regions: number;
   comingSoon?: boolean;
+  configured: boolean;
 }
 
 /**
@@ -120,19 +121,21 @@ export class ProviderWizardService {
    * Provider definitions are cached; regions are pre-fetched in parallel for all enabled providers.
    */
   async loadProviders(): Promise<ProviderOption[]> {
-    // Return cached data if both providers and definitions are already loaded
     const cached = this.providers();
     if (cached.length > 0 && Object.keys(this.providerDefinitions()).length > 0) {
-      return cached;
+      const configured = await this.fetchConfiguredProviderIds();
+      this.providers.set(cached.map((p) => ({ ...p, configured: configured?.has(p.id) ?? true })));
+      return this.providers();
     }
 
     this.isLoadingProviders.set(true);
     this.providersError.set(null);
 
     try {
-      const providersDto = await firstValueFrom(
-        this.providerManagementService.managementControllerGetAvailableProviders()
-      );
+      const [providersDto, configured] = await Promise.all([
+        firstValueFrom(this.providerManagementService.managementControllerGetAvailableProviders()),
+        this.fetchConfiguredProviderIds(),
+      ]);
 
       // Cache raw DTOs for topology/capability access
       const defsMap: Record<string, ProviderDefinitionDto> = {};
@@ -145,6 +148,7 @@ export class ProviderWizardService {
         displayName: provider.displayName || provider.name || '',
         regions: 0,
         comingSoon: !(provider.enabled ?? false),
+        configured: configured?.has(provider.id || '') ?? true,
       }));
       this.providers.set(mappedProviders);
 
@@ -183,6 +187,18 @@ export class ProviderWizardService {
       throw error;
     } finally {
       this.isLoadingProviders.set(false);
+    }
+  }
+
+  /** Null when the configurations cannot be read, so a failed read never locks every provider. */
+  private async fetchConfiguredProviderIds(): Promise<Set<string> | null> {
+    try {
+      const configurations = await firstValueFrom(
+        this.providerManagementService.managementControllerGetUserProviderConfigurations()
+      );
+      return new Set(configurations.filter((c) => c.status === 'active').map((c) => c.provider));
+    } catch {
+      return null;
     }
   }
 
