@@ -16,6 +16,7 @@ import { DashboardDnsService } from '../../service/dashboard-dns.service';
 import { DnsSetupWizardService } from './dns-setup-wizard.service';
 import { DnsWizardModeStepComponent } from './dns-wizard-mode-step.component';
 import { DnsWizardZoneStepComponent } from './dns-wizard-zone-step.component';
+import { DnsWizardNamesStepComponent } from './dns-wizard-names-step.component';
 import { DnsWizardIssuerStepComponent } from './dns-wizard-issuer-step.component';
 import { DnsWizardEndpointsStepComponent } from './dns-wizard-endpoints-step.component';
 import { DnsWizardEndpointsConfigStepComponent } from './dns-wizard-endpoints-config-step.component';
@@ -28,6 +29,7 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
     NgIconComponent,
     DnsWizardModeStepComponent,
     DnsWizardZoneStepComponent,
+    DnsWizardNamesStepComponent,
     DnsWizardIssuerStepComponent,
     DnsWizardEndpointsStepComponent,
     DnsWizardEndpointsConfigStepComponent,
@@ -178,6 +180,7 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
               @switch (wiz.currentStep()) {
                 @case ('mode')      { <app-dns-wizard-mode-step /> }
                 @case ('zone')      { <app-dns-wizard-zone-step /> }
+                @case ('names')     { <app-dns-wizard-names-step /> }
                 @case ('issuer')    { <app-dns-wizard-issuer-step /> }
                 @case ('endpoints-config') { <app-dns-wizard-endpoints-config-step /> }
                 @case ('endpoints') { <app-dns-wizard-endpoints-step /> }
@@ -258,9 +261,12 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
                   @if (wiz.saving()) {
                     <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                     Configuring…
-                  } @else if (wiz.zoneRegPhase() === 'registering') {
+                  } @else if (wiz.registeringZone()) {
                     <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                    Registering…
+                    Adding domain…
+                  } @else if (wiz.checkingNames() || wiz.checkingDirect()) {
+                    <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+                    Checking…
                   } @else {
                     Next
                     <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5" />
@@ -320,6 +326,7 @@ export class DnsSetupWizardComponent implements OnInit {
     const step = this.wiz.currentStep();
     if (step === 'mode') return this.nextFromMode();
     if (step === 'zone') return this.nextFromZone();
+    if (step === 'names') return this.nextFromNames();
     if (step === 'issuer') return this.nextFromIssuer();
     if (step === 'endpoints-config') return this.nextFromEndpointsConfig();
     this.wiz.advance();
@@ -335,13 +342,17 @@ export class DnsSetupWizardComponent implements OnInit {
   }
 
   private async nextFromZone(): Promise<void> {
-    if (this.wiz.dnsZonesService.zones().length === 0 && this.wiz.zoneRegPhase() !== 'done') {
-      await this.wiz.registerZoneInline();
-      if (this.wiz.zoneRegPhase() !== 'done') return;
-    }
+    if (!(await this.wiz.ensureSelectedZoneRegistered())) return;
     this.wiz.advance();
     const clusterId = this.clusterId();
-    if (clusterId) this.wiz.runSetup(clusterId);
+    if (clusterId) await this.wiz.loadSystemNames(clusterId);
+  }
+
+  private async nextFromNames(): Promise<void> {
+    const clusterId = this.clusterId();
+    if (!clusterId || !(await this.wiz.checkSystemNames(clusterId))) return;
+    this.wiz.advance();
+    this.wiz.runSetup(clusterId);
   }
 
   private async nextFromIssuer(): Promise<void> {
@@ -361,9 +372,10 @@ export class DnsSetupWizardComponent implements OnInit {
     }
   }
 
-  private nextFromEndpointsConfig(): void {
-    this.wiz.advance();
+  private async nextFromEndpointsConfig(): Promise<void> {
     const clusterId = this.clusterId();
+    if (clusterId && !(await this.wiz.checkDirectEndpoints(clusterId))) return;
+    this.wiz.advance();
     if (clusterId) this.wiz.runEndpointSetup(clusterId);
   }
 

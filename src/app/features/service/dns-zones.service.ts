@@ -105,22 +105,26 @@ export class DnsZonesService {
 
   async loadProviderZones(provider: string): Promise<void> {
     try {
-      const result = await firstValueFrom(
-        this.apiService.dnsZoneControllerListProviderZones(provider as 'hetzner' | 'none')
-      );
-      let raw: unknown[];
-      if (Array.isArray(result)) raw = result;
-      else if (Array.isArray((result as { zones?: unknown[] })?.zones)) raw = (result as { zones: unknown[] }).zones;
-      else raw = [];
-      const zones: ProviderZone[] = raw.map((z) => {
-        const zone = z as { zoneId?: string; id?: string; name?: string; zoneName?: string };
-        return { zoneId: zone.zoneId ?? zone.id ?? '', name: zone.name ?? zone.zoneName ?? '' };
-      });
-      this.providerZonesData.set(zones);
+      this.providerZonesData.set(await this.fetchProviderZones(provider));
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to load provider zones'));
       this.providerZonesData.set([]);
     }
+  }
+
+  /** Reads the zones of one provider account without touching the shared state. Throws on failure. */
+  async fetchProviderZones(provider: string): Promise<ProviderZone[]> {
+    const result = await firstValueFrom(
+      this.apiService.dnsZoneControllerListProviderZones(provider as 'hetzner' | 'none')
+    );
+    let raw: unknown[];
+    if (Array.isArray(result)) raw = result;
+    else if (Array.isArray((result as { zones?: unknown[] })?.zones)) raw = (result as { zones: unknown[] }).zones;
+    else raw = [];
+    return raw.map((z) => {
+      const zone = z as { zoneId?: string; id?: string; name?: string; zoneName?: string };
+      return { zoneId: zone.zoneId ?? zone.id ?? '', name: zone.name ?? zone.zoneName ?? '' };
+    });
   }
 
   async registerZone(dto: CreateDnsZoneDto): Promise<DnsZoneResponseDto | null> {

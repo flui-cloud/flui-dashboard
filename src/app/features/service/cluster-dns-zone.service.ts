@@ -37,6 +37,32 @@ export interface ClusterWildcard {
   actualValue: string | null;
 }
 
+export type SystemHostnameApp = 'flui-web' | 'flui-api' | 'zitadel';
+
+export interface SystemHostname {
+  app: SystemHostnameApp;
+  applicationId: string;
+  defaultLabel: string;
+  label: string | null;
+  fqdn: string | null;
+  currentFqdn: string | null;
+}
+
+export interface SystemHostnames {
+  zoneName: string | null;
+  hostnames: SystemHostname[];
+}
+
+export interface SystemHostnameChoice {
+  app: SystemHostnameApp;
+  label?: string;
+  fqdn?: string;
+}
+
+export type SystemHostnamesCheck =
+  | { ok: true; result: SystemHostnames }
+  | { ok: false; field: SystemHostnameApp | null; message: string };
+
 @Injectable({ providedIn: 'root' })
 export class ClusterDnsZoneService {
   private readonly apiService = inject(ClusterDNSZoneService);
@@ -367,6 +393,28 @@ export class ClusterDnsZoneService {
 
   clearAssignment(): void {
     this.assignmentsData.set([]);
+  }
+
+  /** Raw HttpClient: the system-hostnames endpoints are not in the generated client yet. */
+  async getSystemHostnames(clusterId: string, dnsZoneId?: string): Promise<SystemHostnames> {
+    const url = `${this.basePath}/api/v1/clusters/${encodeURIComponent(clusterId)}/dns-zone/system-hostnames`;
+    const params: Record<string, string> = dnsZoneId ? { dnsZoneId } : {};
+    return firstValueFrom(this.http.get<SystemHostnames>(url, { params }));
+  }
+
+  async checkSystemHostnames(
+    clusterId: string,
+    body: { dnsZoneId?: string; hostnames: SystemHostnameChoice[] }
+  ): Promise<SystemHostnamesCheck> {
+    const url = `${this.basePath}/api/v1/clusters/${encodeURIComponent(clusterId)}/dns-zone/system-hostnames/check`;
+    try {
+      const result = await firstValueFrom(this.http.post<SystemHostnames>(url, body));
+      return { ok: true, result };
+    } catch (err: unknown) {
+      const body = (err as { error?: { field?: SystemHostnameApp; message?: string | string[] } })?.error;
+      const message = Array.isArray(body?.message) ? body.message.join(' ') : body?.message;
+      return { ok: false, field: body?.field ?? null, message: message ?? 'Could not check the addresses.' };
+    }
   }
 
   private extractErrorMessage(err: unknown, fallback: string): string {

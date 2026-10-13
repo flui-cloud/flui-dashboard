@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { DnsZonesService } from '../../service/dns-zones.service';
-import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
+import { ClusterDnsZoneService, SystemHostnameApp } from '../../service/cluster-dns-zone.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { AppRuntimeWebSocketService } from '../../service/app-runtime-websocket.service';
 import { DNSZonesService } from '../../../core/api/api/dNSZones.service';
@@ -25,7 +25,7 @@ import { SystemDnsStatusResponseDto } from '../../../core/api/model/systemDnsSta
 import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../../../core/api/model/clusterDnsZoneControllerGetIssuers200ResponseInner';
 import { AppConfigService } from '../../../core/services/app-config.service';
 
-export type WizardStep = 'mode' | 'zone' | 'issuer' | 'endpoints-config' | 'endpoints' | 'done';
+export type WizardStep = 'mode' | 'zone' | 'names' | 'issuer' | 'endpoints-config' | 'endpoints' | 'done';
 export type CertMode = 'wildcard' | 'direct';
 export type EndpointPhase = 'idle' | 'configuring' | 'polling' | 'done' | 'error';
 
@@ -81,7 +81,42 @@ export interface DirectEndpointRow {
   error: string | null;
 }
 
-const WILDCARD_STEPS: WizardStep[] = ['mode', 'zone', 'issuer', 'endpoints', 'done'];
+export interface ZoneOption {
+  key: string;
+  zoneName: string;
+  provider: string;
+  registeredId: string | null;
+  providerZoneId: string | null;
+}
+
+export interface SystemNameRow {
+  app: SystemHostnameApp;
+  label: string;
+  defaultLabel: string;
+  error: string | null;
+}
+
+export const SYSTEM_APP_TITLES: Record<SystemHostnameApp, string> = {
+  'flui-web': 'Dashboard',
+  'flui-api': 'API',
+  'zitadel': 'Sign-in',
+};
+
+const SYSTEM_APPS = new Set<string>(Object.keys(SYSTEM_APP_TITLES));
+
+const DNS_LABEL = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
+
+export function wildcardLabelHint(label: string, zoneName: string): string | null {
+  if (!label) return 'Enter a name.';
+  if (label.includes('.')) {
+    return `One name, no dots: the certificate for *.${zoneName || 'your domain'} covers a single level.`;
+  }
+  if (label.length > 63) return 'At most 63 characters.';
+  if (!DNS_LABEL.test(label)) return 'Lowercase letters, digits and hyphens, not at the start or end.';
+  return null;
+}
+
+const WILDCARD_STEPS: WizardStep[] = ['mode', 'zone', 'names', 'issuer', 'endpoints', 'done'];
 const DIRECT_STEPS: WizardStep[] = ['mode', 'issuer', 'endpoints-config', 'endpoints', 'done'];
 
 @Injectable()
@@ -124,18 +159,31 @@ export class DnsSetupWizardService {
   readonly certMode = signal<CertMode>('wildcard');
 
   // ── Step 2: Zone ────────────────────────────────────────────────────
-  selectedZoneId = '';
-  acmeEmail = '';
+  readonly selectedZoneId = signal('');
+  readonly acmeEmail = signal('');
   readonly existingZone = signal<ClusterDnsZoneResponseDto | null>(null);
   readonly loadingExisting = signal(true);
-  readonly zoneRegPhase = signal<'idle' | 'loading' | 'select' | 'registering' | 'done' | 'error'>('idle');
-  readonly zoneRegProviders = signal<string[]>([]);
-  readonly zoneRegSelectedProvider = signal('');
-  readonly zoneRegProviderZones = signal<{ zoneId: string; name: string }[]>([]);
-  readonly zoneRegSelectedZoneId = signal('');
-  readonly zoneRegEmail = signal('');
-  readonly zoneRegError = signal<string | null>(null);
-  readonly zoneRegLoadingZones = signal(false);
+  readonly zoneOptions = signal<ZoneOption[]>([]);
+  readonly selectedZoneKey = signal('');
+  readonly loadingZoneOptions = signal(false);
+  readonly unreadableZoneProviders = signal<string[]>([]);
+  readonly registeringZone = signal(false);
+  readonly zoneError = signal<string | null>(null);
+  readonly configuredDnsProviders = computed(() => {
+    const supported = new Set(this.dnsZonesService.providers());
+    return this.dnsZonesService.dnsCapableProviders()
+      .map(p => p.id)
+      .filter(id => supported.has(id));
+  });
+
+  // ── Step 2b (wildcard only): System app names ───────────────────────
+  readonly systemNames = signal<SystemNameRow[]>([]);
+  readonly namesZoneName = signal('');
+  readonly loadingNames = signal(false);
+  readonly checkingNames = signal(false);
+  readonly namesError = signal<string | null>(null);
+  private namesLoadedForZone: string | null = null;
+  private readonly chosenFqdns = signal<Partial<Record<string, string>>>({});
 
   // ── Step 3: Issuer ──────────────────────────────────────────────────
   readonly issuerPhase = signal<'idle' | 'zone' | 'staging' | 'prod' | 'verifying' | 'done' | 'error'>('idle');
@@ -151,6 +199,8 @@ export class DnsSetupWizardService {
   // ── Step 4 (direct only): Endpoint configuration ─────────────────────
   readonly directEndpoints = signal<DirectEndpointRow[]>([]);
   readonly loadingDirectConfig = signal(false);
+  readonly checkingDirect = signal(false);
+  readonly endpointsConfigError = signal<string | null>(null);
   readonly masterIp = signal<string>('');
 
   // ── Step 4/5: Run progress ───────────────────────────────────────────
@@ -212,6 +262,7 @@ export class DnsSetupWizardService {
     switch (this.currentStep()) {
       case 'mode': return true;
       case 'zone': return this.canProceedFromZone();
+      case 'names': return this.canProceedFromNames();
       case 'issuer': return this.canProceedFromIssuer();
       case 'endpoints-config': return this.canProceedFromEndpointsConfig();
       case 'endpoints':        return this.endpointPhase() === 'done' && !this.hasFailedEndpoint();
@@ -220,13 +271,15 @@ export class DnsSetupWizardService {
   });
 
   private canProceedFromZone(): boolean {
-    if (this.dnsZonesService.zones().length === 0) {
-      const phase = this.zoneRegPhase();
-      if (phase === 'done') return true;
-      return !!this.zoneRegSelectedZoneId() && !!this.zoneRegEmail()
-        && phase !== 'registering' && phase !== 'loading';
-    }
-    return !!this.selectedZoneId && !!this.acmeEmail;
+    return !!this.selectedZoneKey() && !!this.acmeEmail().trim()
+      && !this.registeringZone() && !this.loadingZoneOptions();
+  }
+
+  private canProceedFromNames(): boolean {
+    const rows = this.systemNames();
+    return rows.length > 0
+      && rows.every(r => !!r.label && !r.error)
+      && !this.loadingNames() && !this.checkingNames();
   }
 
   private canProceedFromIssuer(): boolean {
@@ -244,7 +297,7 @@ export class DnsSetupWizardService {
 
   private canProceedFromEndpointsConfig(): boolean {
     const rows = this.directEndpoints();
-    if (rows.length === 0) return false;
+    if (rows.length === 0 || this.checkingDirect()) return false;
     return rows.every(r => {
       if (!r.configured) return false;
       if (r.draftHostnameMode === 'ip') return !!r.draftPrefix.trim() && !!this.masterIp();
@@ -266,21 +319,21 @@ export class DnsSetupWizardService {
   }
 
   selectedZoneName(): string {
-    const zone = this.dnsZonesService.zones().find(z => z.id === this.selectedZoneId);
+    const zone = this.dnsZonesService.zones().find(z => z.id === this.selectedZoneId());
     return zone?.zoneName ?? '';
   }
 
   // ── Init ─────────────────────────────────────────────────────────────
   async init(clusterId: string | null): Promise<void> {
+    this.loadingExisting.set(true);
     await Promise.all([
-      this.dnsZonesService.zones().length === 0 ? this.dnsZonesService.loadZones() : Promise.resolve(),
+      this.dnsZonesService.loadZones(),
+      this.dnsZonesService.loadProviders(),
+      this.dnsZonesService.loadDnsCapableProviders(),
       clusterId ? this.loadExistingConfig(clusterId) : Promise.resolve(),
     ]);
     this.loadingExisting.set(false);
-
-    if (this.dnsZonesService.zones().length === 0) {
-      await this.initZoneRegistration();
-    }
+    await this.loadZoneOptions();
   }
 
   private async loadExistingConfig(clusterId: string): Promise<void> {
@@ -289,8 +342,8 @@ export class DnsSetupWizardService {
       const assignment = this.clusterDnsZoneService.assignment();
       if (assignment) {
         this.existingZone.set(assignment);
-        this.selectedZoneId = assignment.dnsZoneId;
-        this.acmeEmail = assignment.acmeEmail ?? '';
+        this.selectedZoneId.set(assignment.dnsZoneId);
+        this.acmeEmail.set(assignment.acmeEmail ?? '');
         this.certMode.set(assignment.wildcardCertificate ? 'wildcard' : 'direct');
       }
     } catch { /* no assignment */ }
@@ -302,79 +355,147 @@ export class DnsSetupWizardService {
     } catch { /* no issuers */ }
   }
 
-  // ── Step 2: Inline zone registration ────────────────────────────────
-  private async initZoneRegistration(): Promise<void> {
-    this.zoneRegPhase.set('loading');
-    this.zoneRegError.set(null);
-    try {
-      await Promise.all([
-        this.dnsZonesService.loadProviders(),
-        this.dnsZonesService.loadDnsCapableProviders(),
-      ]);
-      const providers = this.dnsZonesService.providers();
-      this.zoneRegProviders.set(providers);
-      if (providers.length === 0) {
-        this.zoneRegPhase.set('error');
-        this.zoneRegError.set('No DNS provider configured. Set one up first in the DNS section.');
-        return;
+  // ── Step 2: Zone choice (registered + provider zones) ──────────────
+  /** Registered zones first, then the configured providers' zones not registered yet. */
+  async loadZoneOptions(): Promise<void> {
+    this.loadingZoneOptions.set(true);
+    this.zoneError.set(null);
+    const registered = this.dnsZonesService.zones();
+    const options: ZoneOption[] = registered.map(z => ({
+      key: `zone:${z.id}`,
+      zoneName: z.zoneName,
+      provider: z.dnsProvider,
+      registeredId: z.id,
+      providerZoneId: z.providerZoneId,
+    }));
+    const unreadable: string[] = [];
+    const perProvider = await Promise.all(
+      this.configuredDnsProviders().map(async provider => {
+        try {
+          return { provider, zones: await this.dnsZonesService.fetchProviderZones(provider) };
+        } catch {
+          unreadable.push(provider);
+          return { provider, zones: [] };
+        }
+      })
+    );
+    for (const { provider, zones } of perProvider) {
+      for (const zone of zones) {
+        const known = registered.some(r =>
+          r.dnsProvider === provider && (r.providerZoneId === zone.zoneId || r.zoneName === zone.name)
+        );
+        if (known || !zone.name) continue;
+        options.push({
+          key: `provider:${provider}:${zone.zoneId}`,
+          zoneName: zone.name,
+          provider,
+          registeredId: null,
+          providerZoneId: zone.zoneId,
+        });
       }
-      const first = providers[0];
-      this.zoneRegSelectedProvider.set(first);
-      await this.loadZoneRegProviderZones(first);
-    } catch {
-      this.zoneRegPhase.set('error');
-      this.zoneRegError.set('Could not load DNS providers.');
     }
+    this.zoneOptions.set(options);
+    this.unreadableZoneProviders.set(unreadable);
+
+    const current = options.find(o => o.key === this.selectedZoneKey())
+      ?? options.find(o => !!o.registeredId && o.registeredId === this.selectedZoneId())
+      ?? (options.length === 1 ? options[0] : undefined);
+    this.selectZone(current?.key ?? '');
+    this.loadingZoneOptions.set(false);
   }
 
-  private async loadZoneRegProviderZones(provider: string): Promise<void> {
-    this.zoneRegLoadingZones.set(true);
-    this.zoneRegError.set(null);
-    try {
-      await this.dnsZonesService.loadProviderZones(provider);
-      this.zoneRegProviderZones.set(this.dnsZonesService.providerZones());
-      this.zoneRegPhase.set('select');
-    } catch {
-      this.zoneRegPhase.set('error');
-      this.zoneRegError.set(`Could not load zones from ${provider}.`);
-    } finally {
-      this.zoneRegLoadingZones.set(false);
+  selectZone(key: string): void {
+    this.selectedZoneKey.set(key);
+    this.zoneError.set(null);
+    const option = this.zoneOptions().find(o => o.key === key);
+    this.selectedZoneId.set(option?.registeredId ?? '');
+  }
+
+  /** Registers the chosen provider zone when it is not registered yet. */
+  async ensureSelectedZoneRegistered(): Promise<boolean> {
+    const option = this.zoneOptions().find(o => o.key === this.selectedZoneKey());
+    if (!option) return false;
+    if (option.registeredId) {
+      this.selectedZoneId.set(option.registeredId);
+      return true;
     }
-  }
 
-  async onZoneRegProviderChange(provider: string): Promise<void> {
-    this.zoneRegSelectedProvider.set(provider);
-    this.zoneRegSelectedZoneId.set('');
-    await this.loadZoneRegProviderZones(provider);
-  }
-
-  async registerZoneInline(): Promise<void> {
-    const zoneId = this.zoneRegSelectedZoneId();
-    const provider = this.zoneRegSelectedProvider();
-    const email = this.zoneRegEmail();
-    if (!zoneId || !provider || !email) return;
-
-    const zone = this.zoneRegProviderZones().find(z => z.zoneId === zoneId);
-    if (!zone) return;
-
-    this.zoneRegPhase.set('registering');
-    this.zoneRegError.set(null);
-
+    this.registeringZone.set(true);
+    this.zoneError.set(null);
     const dto: CreateDnsZoneDto = {
-      providerZoneId: zoneId,
-      zoneName: zone.name,
-      dnsProvider: provider as CreateDnsZoneDto.DnsProviderEnum,
+      providerZoneId: option.providerZoneId ?? undefined,
+      zoneName: option.zoneName,
+      dnsProvider: option.provider as CreateDnsZoneDto.DnsProviderEnum,
     };
-
     const result = await this.dnsZonesService.registerZone(dto);
-    if (result) {
-      this.selectedZoneId = result.id;
-      this.acmeEmail = email;
-      this.zoneRegPhase.set('done');
-    } else {
-      this.zoneRegPhase.set('error');
-      this.zoneRegError.set(this.dnsZonesService.error() ?? 'Failed to register zone.');
+    this.registeringZone.set(false);
+    if (!result) {
+      this.zoneError.set(this.dnsZonesService.error() ?? 'Could not add this domain.');
+      return false;
     }
+
+    const key = `zone:${result.id}`;
+    this.zoneOptions.update(list =>
+      list.map(o => (o.key === option.key ? { ...o, key, registeredId: result.id } : o))
+    );
+    this.selectedZoneKey.set(key);
+    this.selectedZoneId.set(result.id);
+    return true;
+  }
+
+  // ── Step 2b (wildcard only): System app names ───────────────────────
+  async loadSystemNames(clusterId: string): Promise<void> {
+    const zoneId = this.selectedZoneId();
+    if (this.namesLoadedForZone === zoneId && this.systemNames().length > 0) return;
+    this.loadingNames.set(true);
+    this.namesError.set(null);
+    try {
+      const result = await this.clusterDnsZoneService.getSystemHostnames(clusterId, zoneId || undefined);
+      const zoneName = result.zoneName ?? this.selectedZoneName();
+      this.namesZoneName.set(zoneName);
+      this.systemNames.set(result.hostnames.map(h => {
+        const label = h.label ?? h.defaultLabel;
+        return { app: h.app, label, defaultLabel: h.defaultLabel, error: wildcardLabelHint(label, zoneName) };
+      }));
+      this.namesLoadedForZone = zoneId;
+    } catch (err: unknown) {
+      const message = (err as { error?: { message?: string } })?.error?.message;
+      this.namesError.set(message ?? 'Could not load the addresses.');
+      this.systemNames.set([]);
+    } finally {
+      this.loadingNames.set(false);
+    }
+  }
+
+  setSystemName(app: SystemHostnameApp, value: string): void {
+    const label = value.trim().toLowerCase();
+    this.namesError.set(null);
+    this.systemNames.update(rows => rows.map(r =>
+      r.app === app ? { ...r, label, error: wildcardLabelHint(label, this.namesZoneName()) } : r
+    ));
+  }
+
+  /** Asks the API whether the chosen names are valid and free; keeps the resulting addresses. */
+  async checkSystemNames(clusterId: string): Promise<boolean> {
+    this.checkingNames.set(true);
+    this.namesError.set(null);
+    const check = await this.clusterDnsZoneService.checkSystemHostnames(clusterId, {
+      dnsZoneId: this.selectedZoneId() || undefined,
+      hostnames: this.systemNames().map(r => ({ app: r.app, label: r.label })),
+    });
+    this.checkingNames.set(false);
+    if (!check.ok) {
+      if (check.field && this.systemNames().some(r => r.app === check.field)) {
+        this.systemNames.update(rows => rows.map(r => (r.app === check.field ? { ...r, error: check.message } : r)));
+      } else {
+        this.namesError.set(check.message);
+      }
+      return false;
+    }
+    this.chosenFqdns.set(Object.fromEntries(
+      check.result.hostnames.filter(h => !!h.fqdn).map(h => [h.app, h.fqdn as string])
+    ));
+    return true;
   }
 
   // ── Step 3: Issuer setup ─────────────────────────────────────────────
@@ -416,11 +537,11 @@ export class DnsSetupWizardService {
 
     this.issuerPhase.set('zone');
 
-    const hasZone = !!this.existingZone() && this.existingZone()!.dnsZoneId === this.selectedZoneId;
+    const hasZone = !!this.existingZone() && this.existingZone()!.dnsZoneId === this.selectedZoneId();
     if (!hasZone) {
       const dto: AssignDnsZoneDto = {
-        dnsZoneId: this.selectedZoneId,
-        acmeEmail: this.acmeEmail,
+        dnsZoneId: this.selectedZoneId(),
+        acmeEmail: this.acmeEmail().trim(),
         wildcardCertificate: true,
       };
       const zoneOk = await this.clusterDnsZoneService.assignZone(clusterId, dto);
@@ -433,7 +554,7 @@ export class DnsSetupWizardService {
 
     // Always (re)apply secret and issuers — both calls are idempotent
     this.issuerPhase.set('staging');
-    const issuerDto: ConfigureIssuerDto = { acmeEmail: this.acmeEmail };
+    const issuerDto: ConfigureIssuerDto = { acmeEmail: this.acmeEmail().trim() };
 
     const secretOk = await this.clusterDnsZoneService.configureDnsSecret(clusterId);
     if (!secretOk) {
@@ -588,6 +709,29 @@ export class DnsSetupWizardService {
     });
   }
 
+  /** Asks the API whether the addresses of the direct-mode rows are valid and free. */
+  async checkDirectEndpoints(clusterId: string): Promise<boolean> {
+    const rows = this.directEndpoints().filter(r => SYSTEM_APPS.has(r.key));
+    if (rows.length === 0) return true;
+    rows.forEach(r => this.updateDirectRow(r.key, { error: null }));
+    this.endpointsConfigError.set(null);
+    this.checkingDirect.set(true);
+    const check = await this.clusterDnsZoneService.checkSystemHostnames(clusterId, {
+      hostnames: rows.map(r => ({
+        app: r.key as SystemHostnameApp,
+        fqdn: r.endpoint?.fqdn ?? this.resolveDraftFqdn(r),
+      })),
+    });
+    this.checkingDirect.set(false);
+    if (check.ok) return true;
+    if (check.field && rows.some(r => r.key === check.field)) {
+      this.updateDirectRow(check.field, { error: check.message });
+    } else {
+      this.endpointsConfigError.set(check.message);
+    }
+    return false;
+  }
+
   updateDirectRow(key: DirectEndpointRow['key'], patch: Partial<DirectEndpointRow>): void {
     this.directEndpoints.update(rows =>
       rows.map(r => r.key === key ? { ...r, ...patch } : r)
@@ -599,8 +743,7 @@ export class DnsSetupWizardService {
     // In direct mode, FQDNs come from directEndpoints; in wildcard mode, auto-generated from zone
     const isDirect = this.certMode() === 'direct';
 
-    const zoneName = this.resolveEndpointSetupZoneName(isDirect);
-    if (zoneName === null) return; // error already set
+    if (this.resolveEndpointSetupZoneName(isDirect) === null) return;
 
     this.endpointError.set(null);
     this.endpointPhase.set('configuring');
@@ -613,7 +756,12 @@ export class DnsSetupWizardService {
     await this.appEndpointsService.loadEndpoints(clusterId);
     const existingEndpoints = this.appEndpointsService.endpoints();
 
-    const appDefs = this.buildEndpointSetupAppDefs(isDirect, zoneName, systemAppDefs);
+    const appDefs = this.buildEndpointSetupAppDefs(isDirect, systemAppDefs);
+    if (!isDirect && appDefs.some(d => !d.fqdn)) {
+      this.endpointError.set('Choose the addresses first: go back to the names step.');
+      this.endpointPhase.set('error');
+      return;
+    }
 
     // Direct mode batch optimisation: one SAN certificate covering all FQDNs
     // (HTTP-01 in this wizard) → 1 ACME challenge instead of N. The id is reused
@@ -668,7 +816,6 @@ export class DnsSetupWizardService {
   // In wildcard mode, build from system-status (source of truth for which apps exist).
   private buildEndpointSetupAppDefs(
     isDirect: boolean,
-    zoneName: string,
     systemAppDefs: Array<{ key: string; label: string; slug: string; applicationId: string }>,
   ): Array<{ key: string; label: string; fqdn: string; slug: string; hostnameMode: 'ip' | 'domain' }> {
     if (isDirect) {
@@ -680,16 +827,11 @@ export class DnsSetupWizardService {
         hostnameMode: r.draftHostnameMode,
       }));
     }
-    // Subdomain prefix per slug for wildcard mode (convention: api.*, dashboard.*, auth.*)
-    const SLUG_SUBDOMAIN: Record<string, string> = {
-      'flui-api': 'api',
-      'flui-web': 'dashboard',
-      'zitadel':  'auth',
-    };
+    const chosen = this.chosenFqdns();
     return systemAppDefs.map(d => ({
       key: d.key,
       label: d.label,
-      fqdn: `${SLUG_SUBDOMAIN[d.slug] ?? d.slug}.${zoneName}`,
+      fqdn: chosen[d.slug] ?? '',
       slug: d.slug,
       hostnameMode: 'domain' as const,
     }));

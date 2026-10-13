@@ -46,10 +46,13 @@ function validateDomain(value: string): string | null {
   return null;
 }
 
-function validatePrefix(value: string): string | null {
-  if (value.length > 63) return 'Must be 63 characters or fewer';
+export function validatePrefix(value: string): string | null {
   const labelRe = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
-  if (!labelRe.test(value)) return 'Letters, numbers and hyphens only';
+  for (const label of value.split('.')) {
+    if (!label) return 'Cannot have empty parts';
+    if (label.length > 63) return 'Each part must be 63 characters or fewer';
+    if (!labelRe.test(label)) return 'Letters, numbers, hyphens and dots only';
+  }
   return null;
 }
 
@@ -102,6 +105,9 @@ function validatePrefix(value: string): string | null {
                 </div>
               } @else {
                 <p class="text-xs text-muted-foreground italic">No endpoint configured</p>
+              }
+              @if (row.error && activeFormKey() !== row.key) {
+                <p class="text-xs text-destructive mt-0.5" [attr.data-testid]="'direct-row-error-' + row.key">{{ row.error }}</p>
               }
             </div>
 
@@ -255,6 +261,10 @@ function validatePrefix(value: string): string | null {
         </div>
       }
     </div>
+
+    @if (wiz.endpointsConfigError()) {
+      <p class="mt-3 text-xs text-destructive">{{ wiz.endpointsConfigError() }}</p>
+    }
 
     @if (allConfigured()) {
       <div class="mt-3 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2 flex items-center gap-2">

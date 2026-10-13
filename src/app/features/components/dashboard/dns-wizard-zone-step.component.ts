@@ -14,181 +14,115 @@ import { DnsSetupWizardService } from './dns-setup-wizard.service';
   template: `
     <h3 class="text-sm font-semibold text-foreground mb-1">Which domain do you want to use?</h3>
 
-    @if (wiz.loadingExisting()) {
-      <div class="flex-1 flex items-center justify-center">
+    @if (wiz.loadingExisting() || wiz.loadingZoneOptions()) {
+      <div class="flex-1 flex flex-col items-center justify-center gap-2 py-6" data-testid="zone-loading">
         <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin text-muted-foreground" />
+        <p class="text-xs text-muted-foreground">Loading your domains…</p>
       </div>
-    } @else if (wiz.dnsZonesService.zones().length === 0) {
-      <!-- Inline zone registration flow -->
-      <div class="flex flex-col gap-3 flex-1 p-2">
-
-        @if (wiz.zoneRegPhase() === 'loading') {
-          <div class="flex-1 flex flex-col items-center justify-center gap-2">
-            <ng-icon name="lucideLoader" class="h-6 w-6 animate-spin text-muted-foreground" />
-            <p class="text-xs text-muted-foreground">Loading DNS providers…</p>
-          </div>
-
-        } @else if (wiz.zoneRegPhase() === 'error' && wiz.zoneRegProviders().length === 0) {
-          <!-- No provider configured at all -->
-          <div class="flex-1 flex flex-col items-center justify-center gap-3 py-4">
-            <ng-icon name="lucideGlobe" class="h-8 w-8 text-muted-foreground/40" />
-            <div class="text-center">
-              <p class="text-sm font-medium text-foreground">No DNS provider configured</p>
-              <p class="text-xs text-muted-foreground mt-0.5">Set up a DNS provider first to register a domain.</p>
-            </div>
-            <a routerLink="/infrastructure/domains" class="text-xs text-primary hover:underline flex items-center gap-1">
-              Go to DNS section
-              <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-            </a>
-          </div>
-
-        } @else if (wiz.zoneRegPhase() === 'select' || wiz.zoneRegPhase() === 'registering' || wiz.zoneRegPhase() === 'error') {
-          <!-- Provider selector (if more than one) -->
-          @if (wiz.zoneRegProviders().length > 1) {
-            <div>
-              <label class="text-xs font-medium text-foreground block mb-1.5">DNS Provider</label>
-              <select
-                [ngModel]="wiz.zoneRegSelectedProvider()"
-                (ngModelChange)="wiz.onZoneRegProviderChange($event)"
-                class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                @for (p of wiz.zoneRegProviders(); track p) {
-                  <option [value]="p">{{ p }}</option>
-                }
-              </select>
-            </div>
-          }
-
-          <!-- Zone list or empty state -->
-          @if (wiz.zoneRegLoadingZones()) {
-            <div class="flex items-center gap-2 py-3">
-              <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-muted-foreground" />
-              <p class="text-xs text-muted-foreground">Loading zones from {{ wiz.zoneRegSelectedProvider() }}…</p>
-            </div>
-          } @else if (wiz.zoneRegProviderZones().length === 0) {
-            <!-- No zones on this provider -->
-            <div class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4 space-y-2">
-              <p class="text-xs font-semibold text-amber-800 dark:text-amber-300">No DNS zones found in your {{ wiz.zoneRegSelectedProvider() }} account</p>
-              <p class="text-xs text-amber-700 dark:text-amber-400">
-                Zones are read directly from <span class="font-semibold">{{ wiz.zoneRegSelectedProvider() }}</span> via API. To add a domain:
-              </p>
-              <ul class="text-xs text-amber-700 dark:text-amber-400 list-disc list-inside space-y-0.5">
-                <li>Purchase a domain on <span class="font-semibold">{{ wiz.zoneRegSelectedProvider() }}</span> — it will appear here automatically.</li>
-                <li>Transfer an existing domain by updating its nameservers at your current registrar.</li>
-              </ul>
-            </div>
-          } @else {
-            <!-- Zone picker -->
-            <div>
-              <label class="text-xs font-medium text-foreground block mb-1.5">
-                Select a domain from <span class="font-semibold">{{ wiz.zoneRegSelectedProvider() }}</span>
-              </label>
-              <div class="space-y-1 max-h-36 overflow-y-auto rounded-md border border-input p-1.5">
-                @for (zone of wiz.zoneRegProviderZones(); track zone.zoneId) {
-                  <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded cursor-pointer hover:bg-muted/60 transition-colors">
-                    <input
-                      type="radio"
-                      name="zoneReg"
-                      [value]="zone.zoneId"
-                      [ngModel]="wiz.zoneRegSelectedZoneId()"
-                      (ngModelChange)="wiz.zoneRegSelectedZoneId.set($event)"
-                      class="text-primary"
-                    />
-                    <span class="text-sm font-mono text-foreground">{{ zone.name }}</span>
-                  </label>
-                }
-              </div>
-            </div>
-
-            <!-- Email field -->
-            <div>
-              <label class="text-xs font-medium text-foreground block mb-1.5">Contact email</label>
-              <input
-                type="email"
-                [ngModel]="wiz.zoneRegEmail()"
-                (ngModelChange)="wiz.zoneRegEmail.set($event)"
-                placeholder="your@email.com"
-                class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              <p class="text-xs text-muted-foreground mt-1">Used by Let's Encrypt for certificate expiry notifications.</p>
-            </div>
-
-            <!-- Error -->
-            @if (wiz.zoneRegError()) {
-              <p class="text-xs text-destructive">{{ wiz.zoneRegError() }}</p>
-            }
-          }
-        }
+    } @else if (wiz.zoneOptions().length === 0 && wiz.configuredDnsProviders().length === 0) {
+      <div class="flex-1 flex flex-col items-center justify-center gap-3 py-4" data-testid="zone-no-provider">
+        <ng-icon name="lucideGlobe" class="h-8 w-8 text-muted-foreground/40" />
+        <div class="text-center">
+          <p class="text-sm font-medium text-foreground">No DNS provider configured</p>
+          <p class="text-xs text-muted-foreground mt-0.5">Set up a DNS provider first to use a domain.</p>
+        </div>
+        <a routerLink="/infrastructure/domains" class="text-xs text-primary hover:underline flex items-center gap-1">
+          Go to DNS section
+          <ng-icon name="lucideExternalLink" class="h-3 w-3" />
+        </a>
       </div>
-
     } @else {
       <div class="flex flex-col gap-3 flex-1 p-2">
-        <!-- Domain — always editable -->
-        <div>
-          <label class="text-xs font-medium text-foreground block mb-1.5">Domain</label>
-          <select
-            [(ngModel)]="wiz.selectedZoneId"
-            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="">Select a domain…</option>
-            @for (zone of wiz.dnsZonesService.zones(); track zone.id) {
-              <option [value]="zone.id">{{ zone.zoneName }} ({{ zone.dnsProvider }})</option>
-            }
-          </select>
-        </div>
+        @if (wiz.zoneOptions().length > 0) {
+          <div>
+            <label class="text-xs font-medium text-foreground block mb-1.5">Domain</label>
+            <div class="space-y-1 max-h-36 overflow-y-auto rounded-md border border-input p-1.5" data-testid="zone-options">
+              @for (zone of wiz.zoneOptions(); track zone.key) {
+                <label
+                  class="flex items-center gap-2.5 px-2.5 py-1.5 rounded cursor-pointer hover:bg-muted/60 transition-colors"
+                  [attr.data-testid]="'zone-option-' + zone.zoneName"
+                >
+                  <input
+                    type="radio"
+                    name="zoneChoice"
+                    [value]="zone.key"
+                    [ngModel]="wiz.selectedZoneKey()"
+                    (ngModelChange)="wiz.selectZone($event)"
+                    [disabled]="wiz.registeringZone()"
+                    class="text-primary"
+                  />
+                  <span class="text-sm font-mono text-foreground flex-1 truncate">{{ zone.zoneName }}</span>
+                  @if (!zone.registeredId) {
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground" data-testid="zone-not-added">Not added yet</span>
+                  }
+                  <span class="text-[11px] text-muted-foreground">{{ zone.provider }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5" data-testid="zone-none-found">
+            <p class="text-xs font-medium text-amber-800 dark:text-amber-300">
+              No domains found in {{ wiz.configuredDnsProviders().join(', ') }}
+            </p>
+          </div>
+        }
 
-        <!-- Email — read-only when existing, editable otherwise -->
+        @if (wiz.unreadableZoneProviders().length > 0) {
+          <p class="text-xs text-muted-foreground" data-testid="zone-unreadable">
+            Could not read the domains of {{ wiz.unreadableZoneProviders().join(', ') }}.
+          </p>
+        }
+
         <div>
           <label class="text-xs font-medium text-foreground block mb-1.5">Contact email</label>
           @if (wiz.existingZone()) {
-            <div class="w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-foreground flex items-center gap-2">
+            <div class="w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-foreground flex items-center gap-2" data-testid="zone-email-fixed">
               <ng-icon name="lucideMail" class="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              {{ wiz.acmeEmail }}
+              {{ wiz.acmeEmail() }}
             </div>
             <p class="text-xs text-muted-foreground mt-1">
-              Email cannot be changed after initial setup. To start fresh,
-              <a routerLink="/infrastructure/domains" class="text-primary hover:underline">manage DNS zones</a>.
+              Fixed after the first setup.
+              <a routerLink="/infrastructure/domains" class="text-primary hover:underline">Manage DNS zones</a>
             </p>
           } @else {
             <input
               type="email"
-              [(ngModel)]="wiz.acmeEmail"
+              [ngModel]="wiz.acmeEmail()"
+              (ngModelChange)="wiz.acmeEmail.set($event)"
               placeholder="your@email.com"
+              data-testid="zone-email"
               class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
             />
-            <p class="text-xs text-muted-foreground mt-1">Used by Let's Encrypt for certificate expiry notifications.</p>
+            <p class="text-xs text-muted-foreground mt-1">Let's Encrypt writes here about expiring certificates.</p>
           }
         </div>
 
-        <!-- Info: how to add a new domain -->
-        <div class="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5 space-y-1.5">
+        @if (wiz.zoneError()) {
+          <p class="text-xs text-destructive" data-testid="zone-error">{{ wiz.zoneError() }}</p>
+        }
+
+        <div class="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5 space-y-1" data-testid="zone-hint">
           <p class="text-xs font-medium text-amber-800 dark:text-amber-300">Don't see your domain?</p>
-          @if (wiz.dnsZonesService.providers().length > 0) {
+          @if (wiz.configuredDnsProviders().length > 0) {
             <p class="text-xs text-amber-700 dark:text-amber-400">
-              Your configured DNS
-              {{ wiz.dnsZonesService.providers().length === 1 ? 'provider is' : 'providers are' }}
-              <span class="font-semibold">{{ wiz.dnsZonesService.providers().join(', ') }}</span>.
-              To add a domain, either:
+              Buy it on <span class="font-semibold">{{ wiz.configuredDnsProviders()[0] }}</span>, or point its nameservers there from your registrar. It then shows up here.
             </p>
-            <ul class="text-xs text-amber-700 dark:text-amber-400 space-y-0.5 list-disc list-inside">
-              <li>Purchase a domain directly on <span class="font-semibold">{{ wiz.dnsZonesService.providers()[0] }}</span> — it will appear here automatically.</li>
-              <li>Bring an existing domain by updating its NS records at your registrar to point to <span class="font-semibold">{{ wiz.dnsZonesService.providers()[0] }}</span>'s nameservers.</li>
-            </ul>
             @if (firstProviderDelegation; as delegation) {
-              <div class="pt-1 border-t border-amber-200 dark:border-amber-700">
-                <a
-                  [href]="delegation.delegationGuideUrl"
-                  target="_blank"
-                  class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 underline"
-                >
-                  View official delegation guide
-                  <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-                </a>
-              </div>
+              <a
+                [href]="delegation.delegationGuideUrl"
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 underline"
+              >
+                How to point the nameservers
+                <ng-icon name="lucideExternalLink" class="h-3 w-3" />
+              </a>
             }
           } @else {
             <p class="text-xs text-amber-700 dark:text-amber-400">
-              No DNS provider is configured yet. Go to DNS zones to set one up first.
+              No DNS provider is configured yet.
+              <a routerLink="/infrastructure/domains" class="underline">Set one up</a>.
             </p>
           }
         </div>
@@ -200,7 +134,7 @@ export class DnsWizardZoneStepComponent {
   protected wiz = inject(DnsSetupWizardService);
 
   get firstProviderDelegation() {
-    const first = this.wiz.dnsZonesService.providers()[0];
+    const first = this.wiz.configuredDnsProviders()[0];
     if (!first) return undefined;
     return this.wiz.dnsZonesService.dnsCapableProviders().find((p) => p.id === first)
       ?.dnsZoneDelegation;
