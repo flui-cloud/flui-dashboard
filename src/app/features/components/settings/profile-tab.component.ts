@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideAlertCircle } from '@ng-icons/lucide';
 import { AuthService } from '../../../core/services/auth.service';
@@ -19,6 +20,7 @@ import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     NgIcon,
     HlmCardDirective,
     HlmCardContentDirective,
@@ -95,14 +97,8 @@ import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
             <input hlmInput class="w-full" [value]="_name()" disabled />
           </div>
           <p class="text-sm text-muted-foreground">
-            Your profile is managed by your sign-in provider. To change your name or email,
-            update them
-            @if (_oidcIssuer()) {
-              on <a [href]="_oidcIssuer()" target="_blank" rel="noopener noreferrer"
-                class="font-medium text-primary underline-offset-4 hover:underline">your provider's account page</a>.
-            } @else {
-              on your provider's account page.
-            }
+            Change your name, password and sign-in options in
+            <a routerLink="/account" class="font-medium text-primary underline-offset-4 hover:underline">your account</a>.
           </p>
         }
       </div>
@@ -121,7 +117,6 @@ export class ProfileTabComponent implements OnInit {
   protected readonly _isLocal = computed(() => this.cfg.authMode === 'local');
   protected readonly _email = computed(() => this.authService.currentUser()?.email ?? '');
   protected readonly _name = computed(() => this.authService.currentUser()?.name ?? '');
-  protected readonly _oidcIssuer = computed(() => this.cfg.oidcIssuer || '');
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],

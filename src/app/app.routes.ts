@@ -121,6 +121,14 @@ export const routes: Routes = [
         children: agentsRoutes,
       },
       {
+        path: 'account',
+        loadComponent: () =>
+          import('./features/components/account/account.component').then(
+            (m) => m.AccountComponent
+          ),
+        title: 'Account - flui.cloud',
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/components/settings/settings.component').then(

@@ -207,10 +207,12 @@
 <ng-template #menu>
   <hlm-menu [class]="_computedHlmMenuClass()">
     <hlm-menu-group>
-      <button hlmMenuItem routerLink="/settings">
-        <ng-icon hlm name="lucideUser" hlmMenuIcon />
-        <span>Profile</span>
-      </button>
+      @if (!_visitor()) {
+        <button hlmMenuItem routerLink="/account" data-testid="menu-account">
+          <ng-icon hlm name="lucideUser" hlmMenuIcon />
+          <span>Account</span>
+        </button>
+      }
       <button hlmMenuItem routerLink="/settings">
         <ng-icon hlm name="lucideSettings" hlmMenuIcon />
         <span>Settings</span>

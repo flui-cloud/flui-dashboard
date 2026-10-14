@@ -286,6 +286,7 @@ export class SidebarComponent implements OnInit {
       visitor: this._sandbox.visitor(),
     }),
   );
+  protected readonly _visitor = computed(() => this._sandbox.visitor());
   protected readonly _userDisplayName = computed(() => this._userBadge().name);
   protected readonly _userEmail = computed(() => this._userBadge().email);
   protected readonly _userInitials = computed(() => this._userBadge().initials);
