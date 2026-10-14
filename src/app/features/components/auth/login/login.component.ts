@@ -189,6 +189,14 @@ import { visitorRefusalLine } from '../try/visitor-refusal';
               <button type="button" class="underline" style="color: hsl(217,91%,70%)" (click)="signIn()">Sign in</button>
             </div>
           </div>
+        } @else if (signedOut()) {
+          <div class="glass-card rounded-xl p-6 text-center space-y-4" data-testid="signed-out">
+            <p class="text-sm" style="color: hsl(210,40%,85%)">You are signed out.</p>
+            <button type="button" (click)="signIn()"
+              class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background: hsl(221,83%,53%)">
+              Sign in again
+            </button>
+          </div>
         } @else if (authMode() === 'oidc') {
           <div class="glass-card rounded-xl p-6 text-center text-sm" style="color: hsl(210,40%,80%)">
             Redirecting to authentication provider...
@@ -283,6 +291,7 @@ export class LoginComponent implements OnInit {
   loopDetected = signal(false);
   loopHost = signal<string>('');
   visitorRefused = signal<string | null>(null);
+  signedOut = signal(false);
   readonly year = new Date().getFullYear();
 
   ngOnInit(): void {
@@ -312,8 +321,9 @@ export class LoginComponent implements OnInit {
     }
 
     if (this.cfg.authMode === 'oidc') {
-      const loggedOut = this.route.snapshot.queryParamMap.get('loggedOut') === 'true';
-      if (!loggedOut) {
+      if (query.get('loggedOut') === 'true') {
+        this.signedOut.set(true);
+      } else {
         this.auth.login();
       }
     }
@@ -321,6 +331,7 @@ export class LoginComponent implements OnInit {
 
   signIn(): void {
     this.visitorRefused.set(null);
+    this.signedOut.set(false);
     if (this.cfg.authMode === 'oidc') this.auth.login();
   }
 
