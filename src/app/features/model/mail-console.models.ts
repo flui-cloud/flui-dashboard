@@ -438,3 +438,19 @@ export const MAIL_PROVIDERS: MailProviderProfile[] = [
     ],
   },
 ];
+
+export type MailIdentityState = 'active' | 'attention' | 'not_configured' | 'error';
+
+export interface MailIdentityStatus {
+  state: MailIdentityState;
+  reason: string | null;
+  mailProvider: string | null;
+  providerId: string | null;
+  active: boolean;
+  endpoint: string | null;
+  lastSyncAt: string | null;
+  lastSyncError: string | null;
+  lastDeliveryAt: string | null;
+  lastErrorAt: string | null;
+  lastError: string | null;
+}

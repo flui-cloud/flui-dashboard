@@ -27,6 +27,7 @@ import { MailRecordRowComponent } from './mail-record-row.component';
 import { MailDomainPickerComponent } from './mail-domain-picker.component';
 import { MailTestSendComponent } from './mail-test-send.component';
 import { MailConnectionSetupComponent } from './mail-connection-setup.component';
+import { MailIdentityEmailComponent } from './mail-identity-email.component';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { MailConsoleService } from '../../service/mail-console.service';
 import {
@@ -75,6 +76,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
     MailDomainPickerComponent,
     MailTestSendComponent,
     MailConnectionSetupComponent,
+    MailIdentityEmailComponent,
     ConfirmationDialogComponent,
   ],
   providers: [
@@ -567,6 +569,8 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
             }
           </div>
         }
+
+        <app-mail-identity-email />
 
         @if (result(); as r) {
           <div class="rounded-lg border border-border bg-card p-4">

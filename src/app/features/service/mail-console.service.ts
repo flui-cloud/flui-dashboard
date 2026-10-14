@@ -18,6 +18,7 @@ import {
   MailConnectResult,
   MailConnection,
   MailConnectionSetup,
+  MailIdentityStatus,
 } from '../model/mail-console.models';
 
 export interface MailEventFilter {
@@ -158,5 +159,13 @@ export class MailConsoleService {
 
   disconnect(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/connections/${encodeURIComponent(id)}`);
+  }
+
+  identity(): Observable<MailIdentityStatus> {
+    return this.http.get<MailIdentityStatus>(`${this.base}/identity`);
+  }
+
+  syncIdentity(): Observable<MailIdentityStatus> {
+    return this.http.post<MailIdentityStatus>(`${this.base}/identity/sync`, {});
   }
 }
