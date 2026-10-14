@@ -35,6 +35,7 @@ interface Ratings {
   community?: number;
 }
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
 import {
   CatalogDetailSurfaceInput,
   CatalogDetailSurfaceRevision,
@@ -384,6 +385,7 @@ export class CatalogDetailComponent implements OnDestroy {
   protected readonly catalog = inject(CatalogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly visitorSignIn = inject(VisitorSignInService);
 
   protected readonly detail = this.catalog.detail;
   protected readonly activeTab = signal<DetailTab>('description');
@@ -513,7 +515,9 @@ export class CatalogDetailComponent implements OnDestroy {
     const autoConnectTo = this.route.snapshot.queryParamMap.get('autoConnectTo');
     const queryParams: Record<string, string> = { catalogSlug: slug };
     if (autoConnectTo) queryParams['autoConnectTo'] = autoConnectTo;
-    this.router.navigate(['/apps/deploy/new'], { queryParams });
+    const install = this.router.createUrlTree(['/apps/deploy/new'], { queryParams });
+    if (this.visitorSignIn.requireSignIn(this.router.serializeUrl(install))) return;
+    void this.router.navigateByUrl(install);
   }
 
   statusClass(status: string): string {

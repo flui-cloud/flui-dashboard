@@ -1,4 +1,5 @@
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { userBadge } from './user-badge';
 import { Component, computed, inject, input, signal, viewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -279,29 +280,15 @@ export class SidebarComponent implements OnInit {
     this._themeService.isDarkMode() ? 'dark w-56' : 'w-56'
   );
 
-  protected readonly _userDisplayName = computed(() => {
-    if (this._maskMode.enabled()) return 'Signed-in user';
-    const user = this._authService.currentUser();
-    return user?.name || user?.email || 'User';
-  });
-
-  protected readonly _userEmail = computed(() => {
-    if (this._maskMode.enabled()) return 'user@example.com';
-    return this._authService.currentUser()?.email ?? '';
-  });
-
-  protected readonly _userInitials = computed(() => {
-    if (this._maskMode.enabled()) return '••';
-    const user = this._authService.currentUser();
-    if (!user) return '';
-    const source = user.name || user.email || '';
-    return source
-      .split(/[\s@]+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((w: string) => w[0].toUpperCase())
-      .join('');
-  });
+  private readonly _userBadge = computed(() =>
+    userBadge(this._authService.currentUser(), {
+      masked: this._maskMode.enabled(),
+      visitor: this._sandbox.visitor(),
+    }),
+  );
+  protected readonly _userDisplayName = computed(() => this._userBadge().name);
+  protected readonly _userEmail = computed(() => this._userBadge().email);
+  protected readonly _userInitials = computed(() => this._userBadge().initials);
 
   onLogout(): void {
     this._authService.logout().subscribe({

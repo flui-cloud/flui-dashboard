@@ -132,6 +132,14 @@ export class GroupsTabComponent {
   protected readonly fieldClass = FIELD;
   protected readonly selectClass = FIELD + ' h-9 pr-8 appearance-none';
 
+  constructor() {
+    // The People tab may have left the shared list filtered to one kind.
+    if (this.iam.userKind() !== null) {
+      this.iam.userKind.set(null);
+      this.iam.loadUsers();
+    }
+  }
+
   private readonly deleteDialog =
     viewChild.required<DeleteConfirmationDialogComponent>('deleteDialog');
   protected readonly pendingGroup = signal<GroupRecord | null>(null);

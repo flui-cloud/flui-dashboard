@@ -1,7 +1,7 @@
 import { Component, HostBinding, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { filter, map } from 'rxjs';
+import { filter, map, take } from 'rxjs';
 import { UniverseMapComponent } from '../../../features/components/topology/universe-map.component';
 import { UniverseOverlayService } from '../../../features/service/universe-overlay.service';
 import {
@@ -26,10 +26,12 @@ import { ToastContainerComponent } from '../../../shared/components/toast-contai
 import { AssistantWidgetComponent } from '../../../features/components/assistant/assistant-widget.component';
 import { FluiBackdropComponent } from '../../../shared/components/flui-backdrop/flui-backdrop.component';
 import { SandboxBannerComponent } from './sandbox-banner.component';
+import { VisitorSignInDialogComponent } from './visitor-sign-in-dialog.component';
 import { SandboxSectionNoticeComponent } from './sandbox-section-notice.component';
 import { PAGE_WIDTH_CLASS, pageWidth } from './page-width';
 import { PlatformUpdateWatcherComponent } from '../../../features/components/platform-updates/platform-update-watcher.component';
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
 
 @Component({
   selector: 'app-shell-layout',
@@ -49,6 +51,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
     AssistantWidgetComponent,
     FluiBackdropComponent,
     SandboxBannerComponent,
+    VisitorSignInDialogComponent,
   ],
   providers: [
     BrnSidebarService,
@@ -117,6 +120,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
     <app-quick-ssh-overlay />
     <app-quick-ssh-dock />
     <app-toast-container />
+    <app-visitor-sign-in-dialog />
     <app-platform-update-watcher />
     <!-- Hide the global Flui assistant where a section has its own assistant
          (e.g. the SQL console), to avoid two floating assistants competing. -->
@@ -134,6 +138,7 @@ export class ShellLayoutComponent {
   protected readonly universeOverlay = inject(UniverseOverlayService);
   private readonly router = inject(Router);
   private readonly sandbox = inject(SandboxService);
+  private readonly visitorSignIn = inject(VisitorSignInService);
 
   /** Recomputed on each navigation, from the route the page was reached by. */
   protected readonly widthClass = toSignal(
@@ -147,6 +152,9 @@ export class ShellLayoutComponent {
   constructor() {
     // A guest returning to an open tab has the cookie but not the session state.
     this.sandbox.refresh();
+    this.router.events
+      .pipe(filter((e) => e instanceof NavigationEnd), take(1))
+      .subscribe(() => void this.visitorSignIn.handleReturn());
   }
 
   // Routes that ship their own assistant — hide the global floating one there.

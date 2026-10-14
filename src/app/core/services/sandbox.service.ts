@@ -2,11 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, map, of } from 'rxjs';
 import { AppConfigService } from './app-config.service';
-import { FenceRule, fenceAllows, parseFenceRule } from './sandbox-fence';
+import { FenceRule, fenceAllows, parseFenceRule, visitorMustSignIn } from './sandbox-fence';
 
 export interface SandboxSession {
   /** False while the guest has only looked around: the first deploy takes an area. */
   hasArea: boolean;
+  /** A visitor who has not signed in: reads, and signs in to deploy. Absent on an older instance. */
+  visitor?: boolean;
   expiresAt: string | null;
   secondsRemaining: number;
   ttlHours: number;
@@ -40,7 +42,7 @@ export interface SandboxQuota {
 
 interface SandboxLimits {
   areas: SandboxArea[];
-  allowed?: Array<{ routes: string[] }>;
+  allowed?: Array<{ routes: string[]; visitor?: boolean }>;
   quota?: SandboxQuota;
 }
 
@@ -58,6 +60,7 @@ interface Remembered {
   session: SandboxSession;
   areas: SandboxArea[];
   fence: string[];
+  visitorFence?: string[];
 }
 
 function recall(): Remembered | null {
@@ -78,6 +81,9 @@ function remember(value: Remembered | null): void {
   }
 }
 
+const parseRules = (routes: string[]): FenceRule[] =>
+  routes.map(parseFenceRule).filter((rule): rule is FenceRule => rule !== null);
+
 @Injectable({ providedIn: 'root' })
 export class SandboxService {
   private readonly http = inject(HttpClient);
@@ -86,6 +92,7 @@ export class SandboxService {
   private readonly _session = signal<SandboxSession | null>(null);
   private readonly _areas = signal<SandboxArea[]>([]);
   private readonly _fence = signal<FenceRule[]>([]);
+  private readonly _visitorFence = signal<FenceRule[]>([]);
   private readonly _quota = signal<SandboxQuota | null>(null);
   /** What one guest's space may use, as the API states it. */
   readonly quota = this._quota.asReadonly();
@@ -93,6 +100,7 @@ export class SandboxService {
   private readonly _secondsRemaining = signal(0);
   private ticker?: ReturnType<typeof setInterval>;
   private fenceRoutes: string[] = [];
+  private visitorFenceRoutes: string[] = [];
   private markKnown!: () => void;
   private readonly known = new Promise<void>((resolve) => (this.markKnown = resolve));
 
@@ -101,7 +109,7 @@ export class SandboxService {
     if (!remembered) return;
     this._session.set(remembered.session);
     this._areas.set(remembered.areas);
-    this.setFence(remembered.fence);
+    this.setFence(remembered.fence, remembered.visitorFence ?? []);
     this.markKnown();
   }
 
@@ -125,6 +133,7 @@ export class SandboxService {
   );
 
   readonly hasArea = computed(() => this._session()?.hasArea === true);
+  readonly visitor = computed(() => this._session()?.visitor === true);
   readonly appsKeptUntil = computed(() => this._session()?.appsKeptUntil ?? null);
 
   readonly urgent = computed(
@@ -168,6 +177,17 @@ export class SandboxService {
     return fence.length === 0 || fenceAllows(fence, method, apiPath);
   }
 
+  /** A visitor's write the API would answer with "sign in"; unknown until the limits arrive. */
+  needsSignIn(method: string, apiPath: string): boolean {
+    if (!this.visitor() || this._fence().length === 0) return false;
+    return visitorMustSignIn(this._visitorFence(), method, apiPath);
+  }
+
+  /** Drops what is known about the guest, before they sign in as somebody else. */
+  forget(): void {
+    this.clear();
+  }
+
   whyFor(key: string): string {
     return this._areas().find((a) => a.key === key)?.why ?? '';
   }
@@ -183,7 +203,11 @@ export class SandboxService {
       .subscribe((limits) => {
         this._areas.set(limits.areas ?? []);
         this._quota.set(limits.quota ?? null);
-        this.setFence((limits.allowed ?? []).flatMap((rule) => rule.routes));
+        const allowed = limits.allowed ?? [];
+        this.setFence(
+          allowed.flatMap((rule) => rule.routes),
+          allowed.filter((rule) => rule.visitor === true).flatMap((rule) => rule.routes),
+        );
         this.persist();
       });
   }
@@ -202,17 +226,24 @@ export class SandboxService {
     );
   }
 
-  private setFence(routes: string[]): void {
+  private setFence(routes: string[], visitorRoutes: string[]): void {
     this.fenceRoutes = routes;
-    this._fence.set(
-      routes.map(parseFenceRule).filter((rule): rule is FenceRule => rule !== null),
-    );
+    this.visitorFenceRoutes = visitorRoutes;
+    this._fence.set(parseRules(routes));
+    this._visitorFence.set(parseRules(visitorRoutes));
   }
 
   private persist(): void {
     const session = this._session();
     remember(
-      session ? { session, areas: this._areas(), fence: this.fenceRoutes } : null,
+      session
+        ? {
+            session,
+            areas: this._areas(),
+            fence: this.fenceRoutes,
+            visitorFence: this.visitorFenceRoutes,
+          }
+        : null,
     );
   }
 

@@ -19,6 +19,14 @@ interface ApiAuthConfig {
   issuer?: string;
   clientId?: string;
   cliClientId?: string;
+  visitorClientId?: string;
+  turnstileSiteKey?: string;
+}
+
+/** How an anonymous visitor enters the demo; empty when this instance has no visitors. */
+export interface VisitorEntry {
+  clientId: string | null;
+  turnstileSiteKey: string | null;
 }
 
 const VALID_CERT_MODES: ReadonlySet<CertificateMode> = new Set(['staging', 'preflight', 'production']);
@@ -76,10 +84,8 @@ export class AppConfigService {
     if (this.config.authMode !== 'oidc' || this.config.oidcClientId) {
       return of(void 0);
     }
-    return this.http
-      .get<ApiAuthConfig>(`${this.config.apiBaseUrl}/api/v1/auth/config`)
+    return this.fetchApiAuthConfig()
       .pipe(
-        timeout(5000),
         tap((api) => {
           if (api?.clientId) {
             this.config.oidcClientId = api.clientId;
@@ -89,7 +95,28 @@ export class AppConfigService {
           }
         }),
         map(() => void 0),
-        catchError(() => of(void 0)),
+      );
+  }
+
+  visitorEntry(): Observable<VisitorEntry> {
+    if (this.config.authMode !== 'oidc') {
+      return of({ clientId: null, turnstileSiteKey: null });
+    }
+    return this.fetchApiAuthConfig().pipe(
+      map((api) => ({
+        clientId: api.visitorClientId || null,
+        turnstileSiteKey: api.turnstileSiteKey || null,
+      })),
+    );
+  }
+
+  private fetchApiAuthConfig(): Observable<ApiAuthConfig> {
+    return this.http
+      .get<ApiAuthConfig>(`${this.config.apiBaseUrl}/api/v1/auth/config`)
+      .pipe(
+        timeout(5000),
+        map((api) => api ?? {}),
+        catchError(() => of({} as ApiAuthConfig)),
       );
   }
 

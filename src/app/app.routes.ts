@@ -35,8 +35,15 @@ export const routes: Routes = [
       ),
     title: 'Sign in - flui.cloud',
   },
-  // Earlier demo links point here: they land on sign-in, not a dead end.
-  { path: 'try', redirectTo: 'login', pathMatch: 'full' },
+  {
+    path: 'try',
+    pathMatch: 'full',
+    loadComponent: () =>
+      import('./features/components/auth/try/try.component').then(
+        (m) => m.TryComponent
+      ),
+    title: 'Demo - flui.cloud',
+  },
   // Fixtures, for the visual bench. Left out of a production build entirely:
   // the route sits outside the authenticated shell, so shipping it would put
   // invented cluster data on an open page.

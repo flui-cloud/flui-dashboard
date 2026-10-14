@@ -162,6 +162,18 @@ describe('DemoSignInComponent', () => {
     expect(button('google', 'Disconnect')).toBeUndefined();
   });
 
+  it('names where a visitor who signs in comes back, and the GitHub root that covers both', async () => {
+    await build({ ...VIEW, intentCallbackUrl: 'https://auth.demo.example.com/idps/callback' });
+    const line = fixture.nativeElement.querySelector('[data-testid="intent-callback-url"]').textContent;
+    expect(line).toContain('https://auth.demo.example.com/idps/callback');
+    expect(line).toContain('https://auth.demo.example.com/ ');
+  });
+
+  it('says nothing about a second callback when the API does not name one', async () => {
+    await build();
+    expect(fixture.nativeElement.querySelector('[data-testid="intent-callback-url"]')).toBeNull();
+  });
+
   it('notes that the callback must follow a change of the sign-in address', async () => {
     await build();
     expect(

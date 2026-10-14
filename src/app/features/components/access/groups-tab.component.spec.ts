@@ -17,6 +17,8 @@ describe('deleting an access group', () => {
         { name: 'platform', description: 'Runs the clusters', members: ['a@x.io', 'b@x.io'] },
       ]),
       users: signal([]),
+      userKind: signal(null),
+      loadUsers: jasmine.createSpy('loadUsers'),
       removeGroup,
       removeGroupMember: jasmine.createSpy('removeGroupMember'),
       createGroup: jasmine.createSpy('createGroup'),
@@ -84,5 +86,37 @@ describe('deleting an access group', () => {
     byText('Cancel')!.click();
     fixture.detectChanges();
     expect(removeGroup).not.toHaveBeenCalled();
+  });
+});
+
+describe('the groups tab and the shared list of people', () => {
+  const open = (kind: 'visitor' | null) => {
+    const iam = {
+      groups: signal([]),
+      users: signal([]),
+      userKind: signal<'visitor' | null>(kind),
+      loadUsers: jasmine.createSpy('loadUsers'),
+    };
+    TestBed.configureTestingModule({
+      imports: [GroupsTabComponent],
+      providers: [
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
+        { provide: IamService, useValue: iam },
+        { provide: PermissionService, useValue: { can: () => true } },
+      ],
+    });
+    TestBed.createComponent(GroupsTabComponent).detectChanges();
+    return iam;
+  };
+
+  it('asks for everyone again when the People tab left it filtered', () => {
+    const iam = open('visitor');
+    expect(iam.userKind()).toBeNull();
+    expect(iam.loadUsers).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks nothing when the list already holds everyone', () => {
+    expect(open(null).loadUsers).not.toHaveBeenCalled();
   });
 });

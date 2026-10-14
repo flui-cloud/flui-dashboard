@@ -95,7 +95,7 @@ export class AuthService {
 
   login(email?: string, password?: string): void | Observable<void> {
     if (this.isOidc) {
-      this.oidc.login();
+      void this.oidc.login();
       return;
     }
     return this.local.login(email!, password!).pipe(

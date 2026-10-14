@@ -15,6 +15,7 @@ import {
   PrincipalOption,
   RoleDef,
   SectionOption,
+  UserKind,
   UserRecord,
   UserStatus,
 } from '../model/iam.model';
@@ -121,6 +122,7 @@ export class IamService {
 
   private readonly _users = signal<UserRecord[]>([]);
   readonly users = this._users.asReadonly();
+  readonly userKind = signal<UserKind | null>(null);
 
   private readonly _usersError = signal<string | null>(null);
   readonly usersError = this._usersError.asReadonly();
@@ -140,13 +142,10 @@ export class IamService {
   }
 
   private loadProjects(): void {
-    this.http
-      .get<ProjectOption[]>(`${this.appConfig.apiBaseUrl}/api/v1/projects`)
-      .subscribe({
-        next: (rows) =>
-          this.projects.set(rows.map((r) => ({ slug: r.slug, name: r.name }))),
-        error: () => this.projects.set([]),
-      });
+    this.http.get<ProjectOption[]>(`${this.appConfig.apiBaseUrl}/api/v1/projects`).subscribe({
+      next: (rows) => this.projects.set(rows.map((r) => ({ slug: r.slug, name: r.name }))),
+      error: () => this.projects.set([]),
+    });
   }
 
   private loadRoles(): void {
@@ -245,10 +244,13 @@ export class IamService {
       .pipe(catchError(() => of(null)));
   }
 
-  private loadUsers(): void {
+  loadUsers(): void {
     this._usersError.set(null);
+    const kind = this.userKind();
     this.http
-      .get<IdentityUserDto[]>(`${this.appConfig.apiBaseUrl}/api/v1/auth/users`)
+      .get<IdentityUserDto[]>(`${this.appConfig.apiBaseUrl}/api/v1/auth/users`, {
+        params: kind ? { kind } : {},
+      })
       .subscribe({
         next: (rows) => this._users.set(rows.map((u) => toUserRecord(u))),
         error: (e) => {

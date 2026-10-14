@@ -28,6 +28,7 @@ import {
   AccessRole,
   ALL_SECTION_KEYS,
   SECTION_LABELS,
+  UserKind,
   UserRecord,
   UserStatus,
   accessDeltaLines,
@@ -124,6 +125,18 @@ export class PeopleTabComponent {
 
   sectionLabel(key: string): string {
     return SECTION_LABELS[key] ?? key;
+  }
+
+  protected readonly kindFilters: ReadonlyArray<{ label: string; kind: UserKind | null }> = [
+    { label: 'All', kind: null },
+    { label: 'People', kind: 'person' },
+    { label: 'Visitors', kind: 'visitor' },
+  ];
+
+  showKind(kind: UserKind | null): void {
+    if (this.iam.userKind() === kind) return;
+    this.iam.userKind.set(kind);
+    this.iam.loadUsers();
   }
 
   segClass(active: boolean): string {

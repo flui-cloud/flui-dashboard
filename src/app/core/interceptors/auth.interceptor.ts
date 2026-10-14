@@ -13,6 +13,8 @@ import { AuthService } from '../services/auth.service';
 import { LocalAuthService } from '../services/local-auth.service';
 import { OidcAuthService } from '../services/oidc-auth.service';
 import { AppConfigService } from '../services/app-config.service';
+import { isSignInRequired, visitEndOf } from '../services/sandbox-fence';
+import { VisitEndService } from '../services/visit-end.service';
 
 // Module-level singletons: shared across all concurrent interceptor invocations
 let isRefreshing = false;
@@ -28,11 +30,17 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
   if (cfg.authMode === 'oidc') {
+    const visitEnd = inject(VisitEndService);
     const token = auth.getToken();
     const outReq = token ? withBearer(req, token) : withSessionCookie(req);
     return next(outReq).pipe(
       catchError((err: unknown) => {
-        if (!(err instanceof HttpErrorResponse) || err.status !== 401) {
+        if (!(err instanceof HttpErrorResponse) || err.status !== 401 || isSignInRequired(err)) {
+          return throwError(() => err);
+        }
+        const ended = visitEndOf(err);
+        if (ended) {
+          visitEnd.end(ended);
           return throwError(() => err);
         }
         return tryOidcRenew(req, next, oidc);
@@ -47,7 +55,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(outReq).pipe(
     catchError((err: unknown) => {
-      if (!(err instanceof HttpErrorResponse) || err.status !== 401 || isRefreshCall) {
+      if (
+        !(err instanceof HttpErrorResponse) ||
+        err.status !== 401 ||
+        isRefreshCall ||
+        isSignInRequired(err)
+      ) {
         return throwError(() => err);
       }
       return tryRefresh(req, next, auth, local, router);

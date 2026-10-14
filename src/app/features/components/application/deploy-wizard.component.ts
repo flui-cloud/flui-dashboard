@@ -93,6 +93,7 @@ import { internalHostingErrorMessage } from '../../model/app-exposure';
 import { stripHyphenEdges } from '../../../shared/utils/slug';
 import { AuthzInstallService } from '../../service/authz-install.service';
 import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallResponseDto';
+import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
 
 @Component({
   selector: 'app-deploy-wizard',
@@ -2176,6 +2177,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   });
 
   private readonly router = inject(Router);
+  private readonly visitorSignIn = inject(VisitorSignInService);
   private readonly route = inject(ActivatedRoute);
   repoService = inject(RepositoryService);
   private readonly clusterService = inject(ClusterService);
@@ -3819,6 +3821,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
 
   // Deploy — dispatches on flowSubtype
   async deployApplication(): Promise<void> {
+    if (this.visitorSignIn.requireSignIn()) return;
     if (!this.canComplete() || !this.canDeploy()) return;
 
     const cluster = this.selectedCluster();

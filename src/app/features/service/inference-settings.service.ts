@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { InferenceService } from '../../core/api/api/inference.service';
@@ -9,6 +10,21 @@ import { ValidationResultDto } from '../../core/api/model/validationResultDto';
 import { AssistantRecommendationsDto } from '../../core/api/model/assistantRecommendationsDto';
 import { RecommendationGroupDto } from '../../core/api/model/recommendationGroupDto';
 import { RecommendedModelDto } from '../../core/api/model/recommendedModelDto';
+import { AppConfigService } from '../../core/services/app-config.service';
+
+export type UsageKind = 'visitor' | 'guest' | 'person' | 'platform';
+
+export interface InferenceUsageByKind {
+  kind: UsageKind;
+  people: number;
+  calls: number;
+  tokens: number;
+}
+
+export interface InferenceUsage {
+  since: string | null;
+  byKind: InferenceUsageByKind[];
+}
 
 type InferenceProvider = 'contabo' | 'hetzner' | 'scaleway';
 
@@ -18,6 +34,8 @@ type ModelOpts = { model?: string; provider?: string; connectionId?: string } | 
 export class InferenceSettingsService {
   private readonly api = inject(InferenceService);
   private readonly assistantApi = inject(AssistantService);
+  private readonly http = inject(HttpClient);
+  private readonly appConfig = inject(AppConfigService);
 
   readonly providers = signal<InferenceProviderInfoDto[]>([]);
   readonly configuredProviders = computed(() => this.providers().filter((p) => p.configured));
@@ -85,5 +103,11 @@ export class InferenceSettingsService {
     return this.api.inferenceControllerDeleteConnection(id).pipe(
       tap(() => this.loadConnections()),
     );
+  }
+
+  usage(days: number): Observable<InferenceUsage> {
+    return this.http.get<InferenceUsage>(`${this.appConfig.apiBaseUrl}/api/v1/inference/usage`, {
+      params: { days },
+    });
   }
 }

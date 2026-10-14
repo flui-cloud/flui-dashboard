@@ -1,17 +1,18 @@
 import { Component, HostBinding, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { REDIRECT_KEY, consumeLoginRedirect, bumpLoopGuard, clearLoopGuard, LOOP_GUARD_MAX_ATTEMPTS } from '../../../../core/utils/safe-redirect';
 import { AppConfigService } from '../../../../core/services/app-config.service';
 import { ThemeService } from '../../../../core/services/theme.service';
+import { visitorRefusalLine } from '../try/visitor-refusal';
 
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   styles: [`
     .login-bg {
       background: hsl(224, 50%, 6%);
@@ -180,6 +181,14 @@ import { ThemeService } from '../../../../core/services/theme.service';
             </p>
             <a href="/" class="text-xs underline" style="color: hsl(217,91%,70%)">← Back to dashboard</a>
           </div>
+        } @else if (visitorRefused(); as line) {
+          <div class="glass-card rounded-xl p-6 text-center space-y-4" data-testid="visitor-refused">
+            <p class="text-sm" style="color: hsl(210,40%,85%)">{{ line }}</p>
+            <div class="flex justify-center gap-3 text-xs">
+              <a routerLink="/try" class="underline" style="color: hsl(217,91%,70%)">Try again</a>
+              <button type="button" class="underline" style="color: hsl(217,91%,70%)" (click)="signIn()">Sign in</button>
+            </div>
+          </div>
         } @else if (authMode() === 'oidc') {
           <div class="glass-card rounded-xl p-6 text-center text-sm" style="color: hsl(210,40%,80%)">
             Redirecting to authentication provider...
@@ -273,6 +282,7 @@ export class LoginComponent implements OnInit {
   authMode = signal<'local' | 'oidc'>('local');
   loopDetected = signal(false);
   loopHost = signal<string>('');
+  visitorRefused = signal<string | null>(null);
   readonly year = new Date().getFullYear();
 
   ngOnInit(): void {
@@ -295,12 +305,23 @@ export class LoginComponent implements OnInit {
       }
     }
 
+    const query = this.route.snapshot.queryParamMap;
+    if (query.get('visitor') === 'refused') {
+      this.visitorRefused.set(visitorRefusalLine(query.get('reason')));
+      return;
+    }
+
     if (this.cfg.authMode === 'oidc') {
       const loggedOut = this.route.snapshot.queryParamMap.get('loggedOut') === 'true';
       if (!loggedOut) {
         this.auth.login();
       }
     }
+  }
+
+  signIn(): void {
+    this.visitorRefused.set(null);
+    if (this.cfg.authMode === 'oidc') this.auth.login();
   }
 
   isInvalid(field: string): boolean {

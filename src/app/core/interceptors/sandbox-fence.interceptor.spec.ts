@@ -4,20 +4,31 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { apiPath, sandboxFenceInterceptor } from './sandbox-fence.interceptor';
 import { AppConfigService } from '../services/app-config.service';
 import { SandboxService } from '../services/sandbox.service';
+import { ToastService } from '../../shared/services/toast.service';
+import { VisitorSignInService } from '../services/visitor-sign-in.service';
 
 describe('sandboxFenceInterceptor', () => {
   let http: HttpClient;
   let backend: HttpTestingController;
   let allowed: boolean;
+  let signInNeeded: boolean;
+  let notices: Array<{ title?: string; message: string }>;
 
   beforeEach(() => {
     allowed = false;
+    signInNeeded = false;
+    notices = [];
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([sandboxFenceInterceptor])),
         provideHttpClientTesting(),
         { provide: AppConfigService, useValue: { apiBaseUrl: 'https://api.example.test' } },
-        { provide: SandboxService, useValue: { allows: () => allowed } },
+        {
+          provide: SandboxService,
+          useValue: { allows: () => allowed, needsSignIn: () => signInNeeded },
+        },
+        { provide: VisitorSignInService, useValue: { signIn: () => undefined } },
+        { provide: ToastService, useValue: { showInfo: (n: { title?: string; message: string }) => notices.push(n) } },
       ],
     });
     http = TestBed.inject(HttpClient);
@@ -40,12 +51,59 @@ describe('sandboxFenceInterceptor', () => {
     expect(code).toBe('SANDBOX_ROUTE_FORBIDDEN');
   });
 
+  it('keeps a visitor’s write at home and answers it with sign-in', () => {
+    allowed = true;
+    signInNeeded = true;
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date(0));
+    let status = 0;
+    let code = '';
+    http.post('https://api.example.test/api/v1/catalog/install', {}).subscribe({
+      error: (e) => {
+        status = e.status;
+        code = e.error.code;
+      },
+    });
+    jasmine.clock().uninstall();
+    backend.expectNone('https://api.example.test/api/v1/catalog/install');
+    expect(status).toBe(401);
+    expect(code).toBe('SANDBOX_SIGN_IN_REQUIRED');
+  });
+
   it('sends what the fence admits', () => {
     allowed = true;
     let body: unknown;
     http.get('https://api.example.test/api/v1/showcase').subscribe((b) => (body = b));
     backend.expectOne('https://api.example.test/api/v1/showcase').flush([]);
     expect(body).toEqual([]);
+  });
+
+  it('asks a visitor to sign in once, and passes the refusal on untouched', () => {
+    allowed = true;
+    const codes: string[] = [];
+    for (let i = 0; i < 2; i++) {
+      http.post('https://api.example.test/api/v1/sandbox/keep', {}).subscribe({
+        error: (e) => codes.push(e.error.code),
+      });
+      backend
+        .expectOne('https://api.example.test/api/v1/sandbox/keep')
+        .flush(
+          { statusCode: 401, code: 'SANDBOX_SIGN_IN_REQUIRED', message: 'Sign in' },
+          { status: 401, statusText: 'Unauthorized' },
+        );
+    }
+    expect(codes).toEqual(['SANDBOX_SIGN_IN_REQUIRED', 'SANDBOX_SIGN_IN_REQUIRED']);
+    expect(notices).toHaveSize(1);
+    expect(notices[0].title).toBe('Sign in to continue');
+  });
+
+  it('says nothing about signing in for any other refusal', () => {
+    allowed = true;
+    http.post('https://api.example.test/api/v1/applications/a/deploy', {}).subscribe({ error: () => undefined });
+    backend
+      .expectOne('https://api.example.test/api/v1/applications/a/deploy')
+      .flush({ statusCode: 401, message: 'jwt expired' }, { status: 401, statusText: 'Unauthorized' });
+    expect(notices).toEqual([]);
   });
 
   it('leaves other hosts alone', () => {

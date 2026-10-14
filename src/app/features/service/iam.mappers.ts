@@ -49,6 +49,7 @@ export interface IdentityUserDto {
   state?: string;
   isBootstrapAdmin?: boolean;
   isSystemUser?: boolean;
+  kind?: 'person' | 'visitor';
 }
 
 export interface CreatedIdentityUserDto {
@@ -157,6 +158,7 @@ export function toUserRecord(u: IdentityUserDto): UserRecord {
     status: statusFromState(u.state),
     isBootstrapAdmin: u.isBootstrapAdmin ?? false,
     isSystemUser: u.isSystemUser ?? false,
+    kind: u.kind === 'visitor' ? 'visitor' : 'person',
   };
 }
 

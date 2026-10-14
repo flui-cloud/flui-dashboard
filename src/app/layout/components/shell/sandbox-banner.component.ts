@@ -8,6 +8,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideClock, lucideTriangleAlert } from '@ng-icons/lucide';
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
 
 @Component({
   selector: 'app-sandbox-banner',
@@ -24,7 +25,20 @@ import { SandboxService } from '../../../core/services/sandbox.service';
       >
         <ng-icon [name]="icon()" class="h-3.5 w-3.5 flex-shrink-0" />
 
-        @if (!sandbox.hasArea()) {
+        @if (sandbox.visitor()) {
+          <span class="font-medium">Visitor</span>
+          <span class="opacity-80">
+            You are looking around as a visitor. Sign in to deploy.
+          </span>
+          <button
+            type="button"
+            class="rounded border border-current/30 px-2 py-0.5 font-medium hover:bg-foreground/5"
+            data-testid="visitor-sign-in"
+            (click)="signIn()"
+          >
+            Sign in
+          </button>
+        } @else if (!sandbox.hasArea()) {
           <span class="font-medium">Demo guest</span>
           <span class="opacity-80">
             You are looking around. Deploy something to get a space of your
@@ -59,6 +73,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
 })
 export class SandboxBannerComponent {
   protected readonly sandbox = inject(SandboxService);
+  private readonly visitorSignIn = inject(VisitorSignInService);
   protected readonly keeping = signal(false);
   protected readonly kept = signal(false);
 
@@ -68,6 +83,10 @@ export class SandboxBannerComponent {
     const at = new Date(until);
     return `Kept until ${at.toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' })}`;
   });
+
+  protected signIn(): void {
+    this.visitorSignIn.signIn();
+  }
 
   protected keep(): void {
     this.keeping.set(true);

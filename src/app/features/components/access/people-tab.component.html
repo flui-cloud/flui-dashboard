@@ -1,6 +1,14 @@
 <div class="space-y-4">
-  <div class="flex items-center justify-between">
-    <p class="text-sm text-muted-foreground">{{ iam.users().length }} people</p>
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-3">
+      <fieldset class="inline-flex rounded-md border border-border p-0.5 text-sm" aria-label="Show">
+        @for (f of kindFilters; track f.label) {
+          <button type="button" (click)="showKind(f.kind)" [class]="segClass(iam.userKind() === f.kind)"
+            [attr.data-testid]="'kind-' + f.label">{{ f.label }}</button>
+        }
+      </fieldset>
+      <p class="text-sm text-muted-foreground">{{ iam.users().length }} shown</p>
+    </div>
     @if (perms.can('iam:manage-users')) {
       <button type="button" (click)="showInvite.set(!showInvite())"
         class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
@@ -189,13 +197,21 @@
           <tbody>
             @for (u of iam.users(); track u.id) {
               <tr class="border-b border-border/60 last:border-0">
-                <td class="py-2.5 pr-4">{{ u.displayName }}</td>
+                <td class="py-2.5 pr-4">
+                  {{ u.displayName }}
+                  @if (u.kind === 'visitor') {
+                    <span class="ml-1.5 inline-flex rounded-full bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-600"
+                      data-testid="visitor-badge">Visitor</span>
+                  }
+                </td>
                 <td class="py-2.5 pr-4 text-muted-foreground">{{ u.email }}</td>
                 <td class="py-2.5 pr-4">
                   @if (u.isAdmin) {
                     <span class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                       <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5" /> Platform admin
                     </span>
+                  } @else if (u.kind === 'visitor') {
+                    <span class="text-xs text-muted-foreground" data-testid="visitor-role">Read-only</span>
                   } @else {
                     @if (!canEditGlobal(u)) {
                       <span class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
@@ -237,10 +253,12 @@
                           <ng-icon name="lucideShield" class="h-4 w-4" />
                         </button>
                       }
-                      <button type="button" (click)="iam.createInviteLink(u.id, u.email)"
-                        class="text-muted-foreground hover:text-foreground" title="Generate invite link">
-                        <ng-icon name="lucideLink" class="h-4 w-4" />
-                      </button>
+                      @if (u.kind !== 'visitor') {
+                        <button type="button" (click)="iam.createInviteLink(u.id, u.email)"
+                          class="text-muted-foreground hover:text-foreground" title="Generate invite link">
+                          <ng-icon name="lucideLink" class="h-4 w-4" />
+                        </button>
+                      }
                     }
                     @if (!u.isAdmin && !u.isBootstrapAdmin && !u.isSystemUser) {
                     <button *fluiCan="'iam:manage-users'" type="button" (click)="toggleStatus(u.id, u.status)"
@@ -256,7 +274,7 @@
             @if (!iam.users().length) {
               <tr>
                 <td colspan="5" class="py-6 text-center text-sm text-muted-foreground">
-                  No users yet.
+                  {{ iam.userKind() ? 'Nobody here.' : 'No users yet.' }}
                 </td>
               </tr>
             }

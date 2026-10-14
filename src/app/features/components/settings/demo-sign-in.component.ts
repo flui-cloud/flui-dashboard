@@ -62,6 +62,13 @@ import {
             <p class="text-xs text-muted-foreground" data-testid="callback-note">
               If you change the sign-in address, update the callback at GitHub and Google.
             </p>
+            @if (v.intentCallbackUrl) {
+              <p class="text-xs text-muted-foreground" data-testid="intent-callback-url">
+                Visitors who sign in come back to
+                <span class="font-mono break-all">{{ v.intentCallbackUrl }}</span>. Add it at Google as well; at GitHub
+                register <span class="font-mono break-all">{{ signInRoot(v.callbackUrl) }}</span> instead, which covers both.
+              </p>
+            }
           }
 
           <div hlmCard>
@@ -192,6 +199,13 @@ export class DemoSignInComponent implements OnInit {
     clientId: ['', Validators.required],
     clientSecret: ['', Validators.required],
   });
+
+  /** GitHub accepts any callback under the one registered, so the sign-in root covers both. */
+  signInRoot(callbackUrl: string): string {
+    const path = '/ui/login/login/externalidp/callback';
+    const base = callbackUrl.endsWith(path) ? callbackUrl.slice(0, -path.length) : new URL(callbackUrl).origin;
+    return `${base}/`;
+  }
 
   ngOnInit(): void {
     this.load();

@@ -43,6 +43,8 @@ import { InfrastructureAuthProxyComponent } from '../infrastructure/infrastructu
 import { InferenceConnectionsComponent } from './inference-connections.component';
 import { AgentKeysComponent } from './agent-keys/agent-keys.component';
 import { DemoSignInComponent } from './demo-sign-in.component';
+import { DemoVisitorsComponent } from './demo-visitors.component';
+import { InferenceUsageComponent } from './inference-usage.component';
 import { PermissionService } from '../../../core/services/permission.service';
 import { SandboxSignInService } from '../../service/sandbox-sign-in.service';
 
@@ -75,6 +77,8 @@ interface SectionDef {
     InferenceConnectionsComponent,
     AgentKeysComponent,
     DemoSignInComponent,
+    DemoVisitorsComponent,
+    InferenceUsageComponent,
   ],
   providers: [
     provideIcons({
@@ -182,6 +186,7 @@ interface SectionDef {
                 <p class="text-sm text-muted-foreground">Bring your own API key to connect any OpenAI-compatible language model.</p>
               </header>
               <app-inference-connections />
+              <app-inference-usage />
             </section>
           }
           @case ('demo-sign-in') {
@@ -191,6 +196,7 @@ interface SectionDef {
                 <p class="text-sm text-muted-foreground">Let the demo's guests sign in with GitHub or Google.</p>
               </header>
               <app-demo-sign-in />
+              <app-demo-visitors />
             </section>
           }
         }

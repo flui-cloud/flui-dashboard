@@ -6,6 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { LocalAuthService } from '../services/local-auth.service';
 import { AppConfigService } from '../services/app-config.service';
+import { VisitEndService } from '../services/visit-end.service';
 
 export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
@@ -22,9 +23,10 @@ export const authGuard: CanActivateFn = (_route, state) => {
   const loginUrl = () =>
     router.createUrlTree(['/login'], { queryParams: { redirect: state.url } });
 
-  // OIDC: no silent refresh here, redirect to login.
+  // No silent refresh with OIDC: redirect to login, unless the page load found
+  // the visit already over, which starts a new one.
   if (cfg.authMode === 'oidc') {
-    return loginUrl();
+    return inject(VisitEndService).landing() ?? loginUrl();
   }
 
   // Local mode: try to refresh the access token silently

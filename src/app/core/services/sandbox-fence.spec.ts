@@ -1,4 +1,4 @@
-import { fenceAllows, parseFenceRule } from './sandbox-fence';
+import { fenceAllows, parseFenceRule, visitorMustSignIn } from './sandbox-fence';
 
 describe('sandbox fence in the dashboard', () => {
   const rules = [
@@ -28,5 +28,23 @@ describe('sandbox fence in the dashboard', () => {
 
   it('lets HEAD through wherever GET is', () => {
     expect(fenceAllows(rules, 'HEAD', '/applications/abc')).toBeTrue();
+  });
+});
+
+describe('what a visitor who has not signed in may send', () => {
+  const visitorRules = ['POST /sandbox/visitor/**', 'POST /auth/oidc-session']
+    .map(parseFenceRule)
+    .filter((r) => r !== null);
+
+  it('reads anything', () => {
+    expect(visitorMustSignIn(visitorRules, 'GET', '/applications/abc')).toBeFalse();
+    expect(visitorMustSignIn(visitorRules, 'head', '/catalog')).toBeFalse();
+  });
+
+  it('writes only where a rule is marked for visitors', () => {
+    expect(visitorMustSignIn(visitorRules, 'POST', '/auth/oidc-session')).toBeFalse();
+    expect(visitorMustSignIn(visitorRules, 'POST', '/sandbox/visitor/admission')).toBeFalse();
+    expect(visitorMustSignIn(visitorRules, 'POST', '/catalog/install')).toBeTrue();
+    expect(visitorMustSignIn(visitorRules, 'DELETE', '/auth/oidc-session')).toBeTrue();
   });
 });

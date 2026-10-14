@@ -1,4 +1,4 @@
-import { matchesSelector, toCreateBody, toGrantRecord } from './iam.mappers';
+import { matchesSelector, toCreateBody, toGrantRecord, toUserRecord } from './iam.mappers';
 import { AppAttributes } from '../model/iam.model';
 
 const app = (over: Partial<AppAttributes> = {}): AppAttributes => ({
@@ -85,5 +85,17 @@ describe('grant end on the wire', () => {
     });
     expect(rec.expiresAt).toBe('2026-10-01T08:00:00.000Z');
     expect(rec.grantedBy).toBe('owner@acme.com');
+  });
+});
+
+describe('toUserRecord kind', () => {
+  const base = { id: 'u1', email: 'a@x.io', role: 'user' as const };
+
+  it('keeps a visitor a visitor', () => {
+    expect(toUserRecord({ ...base, kind: 'visitor' }).kind).toBe('visitor');
+  });
+
+  it('treats a row without a kind as a person', () => {
+    expect(toUserRecord(base).kind).toBe('person');
   });
 });

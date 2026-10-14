@@ -47,6 +47,51 @@ describe('SandboxService and the guest area', () => {
     expect(service.urgent()).toBeFalse();
   });
 
+  it('knows a visitor who has not signed in, and a guest who has', () => {
+    answer({
+      hasArea: false,
+      visitor: true,
+      expiresAt: null,
+      secondsRemaining: 0,
+      ttlHours: 168,
+      loginUrl: 'https://demo.flui.cloud',
+    });
+    expect(service.visitor()).toBeTrue();
+
+    answer({
+      hasArea: false,
+      expiresAt: null,
+      secondsRemaining: 0,
+      ttlHours: 168,
+      loginUrl: 'https://demo.flui.cloud',
+    });
+    expect(service.visitor()).toBeFalse();
+  });
+
+  it('asks a visitor to sign in for a write not marked for visitors', () => {
+    service.refresh();
+    http.expectOne('http://api/api/v1/sandbox/session').flush({
+      hasArea: false,
+      visitor: true,
+      expiresAt: null,
+      secondsRemaining: 0,
+      ttlHours: 168,
+      loginUrl: 'https://demo.flui.cloud',
+    });
+
+    http.expectOne('http://api/api/v1/sandbox/limits').flush({
+      areas: [],
+      allowed: [
+        { routes: ['GET /catalog/**', 'POST /catalog/install'], visitor: false },
+        { routes: ['POST /catalog/validate'], visitor: true },
+      ],
+    });
+
+    expect(service.needsSignIn('GET', '/catalog/apps')).toBeFalse();
+    expect(service.needsSignIn('POST', '/catalog/validate')).toBeFalse();
+    expect(service.needsSignIn('POST', '/catalog/install')).toBeTrue();
+  });
+
   it('counts down for a guest who holds an area', () => {
     answer({
       hasArea: true,

@@ -17,6 +17,7 @@ import { GitHubOAuthService } from '../../../core/api/api/gitHubOAuth.service';
 import { GitHubSetupStatusResponseDto } from '../../../core/api/model/gitHubSetupStatusResponseDto';
 import { GithubAppOAuthService } from '../../../core/services/github-app-oauth.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
 import { firstValueFrom } from 'rxjs';
 
 const REQUIRED_SCOPES = ['repo', 'write:packages', 'user:email', 'admin:repo_hook', 'workflow'];
@@ -215,6 +216,7 @@ export class GithubConnectComponent {
   private readonly gitHubOAuthApi = inject(GitHubOAuthService);
   private readonly githubAppOAuth = inject(GithubAppOAuthService);
   protected readonly sandbox = inject(SandboxService);
+  private readonly visitorSignIn = inject(VisitorSignInService);
 
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
@@ -226,6 +228,7 @@ export class GithubConnectComponent {
   readonly patCreateUrl = PAT_CREATE_URL;
 
   async installGithubApp(): Promise<void> {
+    if (this.visitorSignIn.requireSignIn()) return;
     this.isLoading.set(true);
     this.error.set(null);
     try {
@@ -254,6 +257,7 @@ export class GithubConnectComponent {
 
   async connectPat(): Promise<void> {
     if (!this.patToken.trim()) return;
+    if (this.visitorSignIn.requireSignIn()) return;
 
     this.isLoading.set(true);
     this.error.set(null);

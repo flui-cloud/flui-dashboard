@@ -161,7 +161,10 @@ export interface UserRecord {
   status: UserStatus;
   isBootstrapAdmin?: boolean;
   isSystemUser?: boolean;
+  kind?: UserKind;
 }
+
+export type UserKind = 'person' | 'visitor';
 
 export interface GroupRecord {
   name: string;
