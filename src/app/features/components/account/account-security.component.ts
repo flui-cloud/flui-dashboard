@@ -307,11 +307,16 @@ export class AccountSecurityComponent implements OnInit {
     this.totpQr.set(null);
     // Drawn here, never by a remote service: the image carries the secret.
     import('qrcode')
-      .then(({ toDataURL }) =>
-        toDataURL(uri, { margin: 1, width: 176, errorCorrectionLevel: 'M' }),
-      )
+      .then((lib) => {
+        // A CommonJS package: production builds put its functions under `default`.
+        const qr = (lib as unknown as { default?: typeof lib }).default ?? lib;
+        return qr.toDataURL(uri, { margin: 1, width: 176, errorCorrectionLevel: 'M' });
+      })
       .then((url) => this.totpQr.set(url))
-      .catch(() => this.totpQr.set(null));
+      .catch((error: unknown) => {
+        console.warn('The QR code could not be drawn', error);
+        this.totpQr.set(null);
+      });
   }
 
   startTotp(): void {
