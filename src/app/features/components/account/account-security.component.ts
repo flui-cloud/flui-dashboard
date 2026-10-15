@@ -152,7 +152,11 @@ export function requirementMet(rule: string, password: string, minLength: number
           }
         } @else if (totp(); as reg) {
           <div class="space-y-2 max-w-md" data-testid="totp-setup">
-            <p class="text-sm">Add this secret to your authenticator app, then type the code it shows.</p>
+            <p class="text-sm">Scan the code with your authenticator app, or add the secret by hand, then type the code it shows.</p>
+            @if (totpQr(); as qr) {
+              <img [src]="qr" alt="Authenticator app QR code" width="176" height="176"
+                class="rounded-md border border-border bg-white p-2" data-testid="totp-qr" />
+            }
             <code class="block break-all rounded-md bg-muted px-3 py-2 text-sm" data-testid="totp-secret">{{ reg.secret }}</code>
             <a class="text-xs text-primary underline-offset-4 hover:underline" [href]="reg.uri">Open in an authenticator app on this device</a>
             <form class="flex items-center gap-2" (ngSubmit)="verifyTotp()">
@@ -239,6 +243,7 @@ export class AccountSecurityComponent implements OnInit {
 
   protected readonly policy = signal<PasswordPolicy | null>(null);
   protected readonly totp = signal<TotpRegistration | null>(null);
+  protected readonly totpQr = signal<string | null>(null);
   protected readonly askingTotpPassword = signal(false);
   protected readonly pending = signal<Pending | null>(null);
   protected readonly busy = signal(false);
@@ -298,6 +303,17 @@ export class AccountSecurityComponent implements OnInit {
     this.totpPassword = '';
   }
 
+  private drawQr(uri: string): void {
+    this.totpQr.set(null);
+    // Drawn here, never by a remote service: the image carries the secret.
+    import('qrcode')
+      .then(({ toDataURL }) =>
+        toDataURL(uri, { margin: 1, width: 176, errorCorrectionLevel: 'M' }),
+      )
+      .then((url) => this.totpQr.set(url))
+      .catch(() => this.totpQr.set(null));
+  }
+
   startTotp(): void {
     const password = this.overview().security.password ? this.totpPassword : undefined;
     if (password === '') return;
@@ -311,6 +327,7 @@ export class AccountSecurityComponent implements OnInit {
           this.busy.set(false);
           this.cancelTotp();
           this.totp.set(reg);
+          this.drawQr(reg.uri);
         },
         error: (err) => {
           this.busy.set(false);

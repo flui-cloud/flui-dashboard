@@ -98,6 +98,18 @@ describe('AccountSecurityComponent', () => {
     expect(api['verifyTotp']).toHaveBeenCalledWith('123456');
   });
 
+  it('draws the QR code in the page from the registration link', async () => {
+    const { fixture, el } = build(base({ password: false }));
+    (el.querySelector('[data-testid="totp-start"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    for (let i = 0; i < 20 && !el.querySelector('[data-testid="totp-qr"]'); i++) {
+      await new Promise((r) => setTimeout(r, 25));
+      fixture.detectChanges();
+    }
+    const img = el.querySelector<HTMLImageElement>('[data-testid="totp-qr"]');
+    expect(img?.src.startsWith('data:image/png;base64,')).toBeTrue();
+  });
+
   it('sets up the app without a password on an account that has none', () => {
     const { fixture, el } = build(base({ password: false }));
     (el.querySelector('[data-testid="totp-start"]') as HTMLButtonElement).click();
