@@ -33,6 +33,10 @@ export interface ServerResponseDto {
      */
     server_type: string;
     /**
+     * CPU architecture of the server type; null where the provider does not say
+     */
+    architecture?: ServerResponseDto.ArchitectureEnum | null;
+    /**
      * Server location/datacenter
      */
     location: string;
@@ -78,6 +82,11 @@ export namespace ServerResponseDto {
         Byos: 'byos'
     } as const;
     export type ProviderEnum = typeof ProviderEnum[keyof typeof ProviderEnum];
+    export const ArchitectureEnum = {
+        X86: 'x86',
+        Arm: 'arm'
+    } as const;
+    export type ArchitectureEnum = typeof ArchitectureEnum[keyof typeof ArchitectureEnum];
 }
 
 

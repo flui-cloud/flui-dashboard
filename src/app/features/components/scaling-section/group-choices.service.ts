@@ -6,6 +6,7 @@ import {
 } from '../../../shared/services/provider-wizard.service';
 import { PricingService } from '../../../shared/services/pricing.service';
 import { ListChoice } from './settings-list-editor.component';
+import { architectureWarning } from '../../../shared/components/architecture-badge.component';
 
 /**
  * The regions and machines a scaling group may be pointed at, read from the
@@ -99,6 +100,8 @@ export class GroupChoicesService {
         label: machine.name,
         note: `${machine.vcpu} vCPU · ${machine.ram} GB · \u20ac${this.pricing.formatMonthlyPrice(machine.pricePerHour)}/mo`,
         unavailable: !offeredHere(machine),
+        architecture: machine.architecture,
+        warning: architectureWarning(machine.architecture),
       }));
   }
 
@@ -119,6 +122,15 @@ export class GroupChoicesService {
         this.pricing.calculateMonthlyPrice(machine.pricePerHour),
       ),
     );
+  }
+
+  /** The CPU architecture of every machine the catalogue names. */
+  architectures(provider: string): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const machine of this.machinesByProvider()[provider] ?? []) {
+      out[machine.name] = machine.architecture;
+    }
+    return out;
   }
 
   /** How a code already saved should read, for both lists. */

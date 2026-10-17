@@ -432,6 +432,7 @@ const CATALOGUE: ShapeCatalogue = {
     {
       shape: 'cx42',
       allowed: true,
+      architecture: 'x86',
       outlook: {
         state: 'available',
         upIn: ['fsn1', 'nbg1'],
@@ -444,6 +445,7 @@ const CATALOGUE: ShapeCatalogue = {
     {
       shape: 'cx32',
       allowed: true,
+      architecture: 'x86',
       outlook: {
         state: 'limited',
         upIn: ['nbg1'],
@@ -482,6 +484,7 @@ const FLEET: FleetReading = {
       region: 'fsn1',
       role: 'master',
       hourlyEur: 0.0074,
+      architecture: 'x86',
       since: ago(2200),
       standIn: false,
       neverReplace:
@@ -494,6 +497,7 @@ const FLEET: FleetReading = {
       region: 'fsn1',
       role: 'worker',
       hourlyEur: 0.0074,
+      architecture: 'x86',
       since: ago(1400),
       standIn: false,
       neverReplace: null,
@@ -505,6 +509,7 @@ const FLEET: FleetReading = {
       region: 'fsn1',
       role: 'worker',
       hourlyEur: 0.0074,
+      architecture: 'x86',
       since: ago(9),
       standIn: false,
       neverReplace: null,

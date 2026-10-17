@@ -17,6 +17,10 @@ export interface OrderedShapeDto {
      */
     allowed: boolean;
     /**
+     * CPU architecture as the provider names it; null where its catalogue was not read. An arm shape is bought like any other, but apps deployed from a repository are built for x86 and will not run on it.
+     */
+    architecture: OrderedShapeDto.ArchitectureEnum | null;
+    /**
      * Null when the catalogue does not name this shape, which is not a claim that it is unavailable.
      */
     outlook: AvailabilityOutlookDto | null;
@@ -24,5 +28,12 @@ export interface OrderedShapeDto {
      * Why it sits where it sits
      */
     why: string;
+}
+export namespace OrderedShapeDto {
+    export const ArchitectureEnum = {
+        X86: 'x86',
+        Arm: 'arm'
+    } as const;
+    export type ArchitectureEnum = typeof ArchitectureEnum[keyof typeof ArchitectureEnum];
 }
 

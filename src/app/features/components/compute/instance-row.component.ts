@@ -20,6 +20,7 @@ import { InstanceManagedBadgeComponent } from './instance-managed-badge.componen
 import { InstanceActionsComponent } from './instance-actions.component';
 import { InstanceStatusBadgeComponent } from './instance-status-badge.component';
 import { ProviderMarkComponent } from '../../../shared/components/provider-mark.component';
+import { ArchitectureBadgeComponent } from '../../../shared/components/architecture-badge.component';
 
 @Component({
   selector: 'app-instance-row',
@@ -29,7 +30,8 @@ import { ProviderMarkComponent } from '../../../shared/components/provider-mark.
     NgIcon,
     InstanceManagedBadgeComponent,
     InstanceActionsComponent,
-    InstanceStatusBadgeComponent
+    InstanceStatusBadgeComponent,
+    ArchitectureBadgeComponent
 ],
   providers: [
     provideIcons({
@@ -93,6 +95,7 @@ import { ProviderMarkComponent } from '../../../shared/components/provider-mark.
             <ng-icon name="lucideHardDrive" class="h-3 w-3 text-green-600" />
             {{ formatDisk(instance.diskMb) }}
           </span>
+          <app-architecture-badge [architecture]="instance.architecture" />
         </div>
 
         <!-- Location -->

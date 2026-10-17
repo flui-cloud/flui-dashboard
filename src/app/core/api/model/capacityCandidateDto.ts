@@ -34,6 +34,10 @@ export interface CapacityCandidateDto {
     monthlyDeltaEur: string;
     cpuType: CapacityCandidateDto.CpuTypeEnum;
     /**
+     * CPU architecture. An arm type can be chosen; apps deployed from a repository are built for x86 and will not run on it.
+     */
+    architecture: CapacityCandidateDto.ArchitectureEnum;
+    /**
      * True if deprecated by the provider
      */
     deprecated: boolean;
@@ -50,6 +54,11 @@ export namespace CapacityCandidateDto {
         Dedicated: 'dedicated'
     } as const;
     export type CpuTypeEnum = typeof CpuTypeEnum[keyof typeof CpuTypeEnum];
+    export const ArchitectureEnum = {
+        X86: 'x86',
+        Arm: 'arm'
+    } as const;
+    export type ArchitectureEnum = typeof ArchitectureEnum[keyof typeof ArchitectureEnum];
 }
 
 

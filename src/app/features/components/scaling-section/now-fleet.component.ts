@@ -16,6 +16,7 @@ import {
 import { FleetNode } from '../../model/scaling-group.models';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingGroupStore } from './scaling-group.store';
+import { ArchitectureBadgeComponent } from '../../../shared/components/architecture-badge.component';
 import { TABLE, eurHour } from './now-format';
 import {
   SectionFailureComponent,
@@ -39,7 +40,12 @@ interface FleetRow {
 @Component({
   selector: 'app-scaling-now-fleet',
   standalone: true,
-  imports: [NgIcon, SectionFailureComponent, SectionSkeletonComponent],
+  imports: [
+    NgIcon,
+    SectionFailureComponent,
+    SectionSkeletonComponent,
+    ArchitectureBadgeComponent,
+  ],
   providers: [
     provideIcons({
       lucideChevronDown,
@@ -119,9 +125,14 @@ interface FleetRow {
                         <span [class]="t.mono">{{ row.node.name }}</span>
                       </th>
                       <td [class]="t.td">
-                        <span [class]="t.mono"
-                          >{{ row.node.shape }} · {{ row.node.region }}</span
-                        >
+                        <span class="inline-flex items-center gap-1.5">
+                          <span [class]="t.mono"
+                            >{{ row.node.shape }} · {{ row.node.region }}</span
+                          >
+                          <app-architecture-badge
+                            [architecture]="row.node.architecture"
+                          />
+                        </span>
                       </td>
                       <td [class]="t.tdMuted">{{ row.node.role }}</td>
                       <td

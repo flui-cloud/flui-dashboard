@@ -70,6 +70,7 @@ import { ShapeSpec } from '../../model/scaling-section.models';
             [labels]="labels()"
             emptyNote="nothing to buy"
             [ordered]="true"
+            [architectures]="architectures()"
             [items]="g().shapes"
             (add)="d().addShape($event)"
             (remove)="d().removeShape($event)"
@@ -319,6 +320,16 @@ export class GroupCatalogueRowsComponent {
         return spec ? { ...choice, note: specNote(spec) } : choice;
       }) ?? null,
   );
+
+  protected readonly architectures = computed(() => {
+    const out: Record<string, string | null> = {
+      ...this.catalogue.architectures(this.draft().provider()),
+    };
+    for (const shape of this.store.catalogue().data?.shapes ?? []) {
+      if (shape.architecture) out[shape.shape] = shape.architecture;
+    }
+    return out;
+  });
 
   protected readonly labels = computed(() => {
     const out = { ...this.catalogue.labels(this.draft().provider()) };

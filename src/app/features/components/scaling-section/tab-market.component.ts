@@ -8,6 +8,10 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideClock } from '@ng-icons/lucide';
 import { ExplainComponent } from '../../../shared/components/explain.component';
+import {
+  ArchitectureBadgeComponent,
+  architectureWarning,
+} from '../../../shared/components/architecture-badge.component';
 import { AvailabilityOutlook } from '../../model/scaling-group.models';
 import { SectionGroup, ShapeSpec } from '../../model/scaling-section.models';
 import { GroupDraftStore } from './group-draft.store';
@@ -41,6 +45,7 @@ interface MarketRow {
   rank: number | null;
   awaited: boolean;
   spec: string | null;
+  architecture: string | null;
 }
 
 @Component({
@@ -52,6 +57,7 @@ interface MarketRow {
     ExplainComponent,
     SectionFailureComponent,
     SectionSkeletonComponent,
+    ArchitectureBadgeComponent,
   ],
   providers: [provideIcons({ lucideClock })],
   host: { class: 'block' },
@@ -161,7 +167,10 @@ interface MarketRow {
                       [attr.data-state]="row.state"
                     >
                       <th scope="row" [class]="t.td + ' font-normal'">
-                        <span [class]="t.mono">{{ row.shape }}</span>
+                        <span class="inline-flex items-center gap-1.5">
+                          <span [class]="t.mono">{{ row.shape }}</span>
+                          <app-architecture-badge [architecture]="row.architecture" />
+                        </span>
                         @if (row.spec) {
                           <span class="block text-[12px] text-muted-foreground" [attr.data-testid]="'spec-' + row.shape">{{ row.spec }}</span>
                         }
@@ -276,6 +285,15 @@ interface MarketRow {
               </table>
             </div>
           </div>
+
+          @if (armWarning(); as warning) {
+            <p
+              class="m-0 text-[12px] text-muted-foreground"
+              data-testid="market-architecture-warning"
+            >
+              {{ warning }}
+            </p>
+          }
         }
       </section>
     } @else {
@@ -338,8 +356,8 @@ export class ScalingMarketTabComponent {
     if (!g) return [];
 
     const outlook = this.store.outlook();
-    const facts = new Map(
-      (this.store.catalogue().data?.shapes ?? []).map((s) => [s.shape, s.facts]),
+    const listed = new Map(
+      (this.store.catalogue().data?.shapes ?? []).map((s) => [s.shape, s]),
     );
     const awaited = new Set(g.standingOrders.map((o) => o.shape));
     const refused = this.refusesEverything();
@@ -354,6 +372,8 @@ export class ScalingMarketTabComponent {
       const age = reading?.ageSeconds ?? null;
       const onList = index !== -1;
       const state: CatalogueState = reading?.state ?? 'unknown';
+      const entry = listed.get(shape);
+      const architecture = entry?.architecture ?? null;
       const held = reading?.sinceHours ? heldFor(reading.sinceHours) : '';
 
       return {
@@ -369,10 +389,18 @@ export class ScalingMarketTabComponent {
         allowance: this.allowance(onList, refused),
         rank: onList ? index + 1 : null,
         awaited: awaited.has(shape),
-        spec: specLine(facts.get(shape)),
+        spec: specLine(entry?.facts),
+        architecture,
       };
     });
   });
+
+  protected readonly armWarning = computed(
+    () =>
+      this.rows()
+        .map((row) => architectureWarning(row.architecture))
+        .find(Boolean) ?? null,
+  );
 
   /**
    * The banner above already carries the reading's own sentence, so an unread

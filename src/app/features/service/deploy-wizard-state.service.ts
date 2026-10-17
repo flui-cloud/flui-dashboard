@@ -1170,6 +1170,15 @@ export class DeployWizardStateService {
       );
 
       this.applicationId.set(response.applicationId);
+      for (const warning of response.warnings ?? []) {
+        this.notifications.add({
+          title: 'Arm server in this cluster',
+          body: warning,
+          type: 'warning',
+          source: 'system',
+          category: 'app-deploy',
+        });
+      }
       this.orchestrationPhase.set('done');
       return response.applicationId;
     } catch (e: any) {

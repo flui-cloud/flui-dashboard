@@ -61,6 +61,7 @@ import { firstValueFrom } from 'rxjs';
 import { WizardShellComponent } from '../../../shared/components/wizard-shell/wizard-shell.component';
 import { ProviderRegionSelectorComponent } from '../../../shared/components/provider-region-selector/provider-region-selector.component';
 import { RegionServerSelectorComponent } from '../../../shared/components/region-server-selector/region-server-selector.component';
+import { ArchitectureBadgeComponent, architectureWarning } from '../../../shared/components/architecture-badge.component';
 import { SshKeySelectorComponent } from '../../../shared/components/ssh-key-selector/ssh-key-selector.component';
 import { VNetSelectorComponent } from '../../../shared/components/vnet-selector/vnet-selector.component';
 import { ProviderWizardService } from '../../../shared/services/provider-wizard.service';
@@ -105,6 +106,7 @@ interface FirewallRuleDto {
     WizardShellComponent,
     ProviderRegionSelectorComponent,
     RegionServerSelectorComponent,
+    ArchitectureBadgeComponent,
     SshKeySelectorComponent,
     VNetSelectorComponent
 ],
@@ -1163,10 +1165,11 @@ interface FirewallRuleDto {
                             : 'text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded'">
                             {{ serverType.cpuType === 'dedicated' ? 'Dedicated CPU' : 'Shared CPU' }}
                           </span>
-                          <span class="text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 px-2 py-1 rounded">
-                            {{ serverType.architecture === 'x86' ? 'x86' : 'ARM' }}
-                          </span>
+                          <app-architecture-badge [architecture]="serverType.architecture" />
                         </div>
+                        @if (architectureWarning(serverType.architecture); as warning) {
+                          <p class="text-xs text-amber-600 mt-1" data-testid="architecture-warning">{{ warning }}</p>
+                        }
                       </div>
                       <div class="text-right ml-4">
                         <div class="text-sm font-medium">€{{ serverType.pricePerHour }}/hour</div>
@@ -1437,6 +1440,8 @@ export class ClusterCreationWizardComponent implements OnInit {
   });
 
   // Computed: whether current node type needs network storage config
+  protected readonly architectureWarning = architectureWarning;
+
   readonly needsDiskConfig = computed(() => this.selectedServerType()?.storageType === 'network');
 
   // Computed: storage cost per hour (€/GB/month ÷ 730 hours × diskSizeGb)

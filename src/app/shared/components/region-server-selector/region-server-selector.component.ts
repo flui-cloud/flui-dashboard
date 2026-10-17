@@ -17,13 +17,17 @@ import {
   ServerTypeOption,
 } from '../../services/provider-wizard.service';
 import { PricingService } from '../../services/pricing.service';
+import {
+  ArchitectureBadgeComponent,
+  architectureWarning,
+} from '../architecture-badge.component';
 
 type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
 
 @Component({
   selector: 'app-region-server-selector',
   standalone: true,
-  imports: [NgIconComponent],
+  imports: [NgIconComponent, ArchitectureBadgeComponent],
   providers: [
     provideIcons({
       lucideCheck,
@@ -143,16 +147,16 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
               <button
                 type="button"
                 (click)="selectServerType(serverType)"
-                [disabled]="!serverType.managedFirewall"
+                [disabled]="!isSelectable(serverType)"
+                [attr.title]="cardTitle(serverType)"
+                [attr.data-testid]="'server-type-' + serverType.id"
                 [class]="serverCardClass(serverType)"
                 class="relative p-4 border-2 rounded-lg text-left transition-all"
                 >
                 <div class="flex items-start justify-between mb-3">
-                  <div class="min-w-0">
+                  <div class="min-w-0 flex items-center gap-1.5">
                     <p class="text-base font-bold truncate">{{ serverType.name }}</p>
-                    <p class="text-xs text-muted-foreground">
-                      {{ serverType.architecture === 'x86' ? 'x86' : 'ARM' }}
-                    </p>
+                    <app-architecture-badge [architecture]="serverType.architecture" />
                   </div>
                   <span [class]="cpuBadgeClass(serverType.cpuType)" class="px-2 py-0.5 text-xs font-medium rounded flex-shrink-0">
                     {{ serverType.cpuType === 'dedicated' ? 'Dedicated' : 'Shared' }}
@@ -202,6 +206,10 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
               </button>
             }
           </div>
+
+          @if (selectedArchitectureWarning(); as warning) {
+            <p class="mt-3 text-xs text-amber-600 dark:text-amber-400" data-testid="architecture-warning">{{ warning }}</p>
+          }
 
           @if (!isShowingAll() && hiddenServerTypeCount() > 0) {
             <button
@@ -330,7 +338,7 @@ export class RegionServerSelectorComponent {
     const result: Record<string, number> = {};
     for (const region of this.regions()) {
       const selectable = (catalog[`${provider}:${region.id}`] ?? []).filter(
-        (type) => type.managedFirewall
+        (type) => this.isSelectable(type)
       );
       if (selectable.length > 0) {
         result[region.id] = Math.min(...selectable.map((type) => type.pricePerHour));
@@ -338,6 +346,13 @@ export class RegionServerSelectorComponent {
     }
     return result;
   });
+
+  readonly selectedArchitectureWarning = computed(() =>
+    architectureWarning(
+      this.serverTypesForRegion().find((type) => type.id === this.selectedServerTypeId())
+        ?.architecture
+    )
+  );
 
   private readonly regionNamesById = computed<Record<string, string>>(() => {
     const result: Record<string, string> = {};
@@ -381,8 +396,19 @@ export class RegionServerSelectorComponent {
     this.regionSelected.emit(region.id);
   }
 
+  isSelectable(serverType: ServerTypeOption): boolean {
+    return serverType.managedFirewall;
+  }
+
+  cardTitle(serverType: ServerTypeOption): string | null {
+    return (
+      architectureWarning(serverType.architecture) ??
+      (serverType.managedFirewall ? null : 'No managed firewall')
+    );
+  }
+
   selectServerType(serverType: ServerTypeOption): void {
-    if (!serverType.managedFirewall) return;
+    if (!this.isSelectable(serverType)) return;
     this.serverTypeSelected.emit(serverType.id);
   }
 
@@ -409,7 +435,7 @@ export class RegionServerSelectorComponent {
   }
 
   serverCardClass(serverType: ServerTypeOption): string {
-    if (!serverType.managedFirewall) {
+    if (!this.isSelectable(serverType)) {
       return 'border-border bg-muted/30 opacity-70 cursor-not-allowed';
     }
     return this.selectedServerTypeId() === serverType.id

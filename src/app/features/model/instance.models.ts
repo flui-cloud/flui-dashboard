@@ -1,4 +1,5 @@
 import { InstanceDto } from '../../core/api';
+import { ServerArchitecture } from '../../shared/components/architecture-badge.component';
 
 export interface FluiLabels {
   'managed-by'?: string;
@@ -15,6 +16,7 @@ export interface InstanceWithLabels extends InstanceDto {
   metadata?: {
     labels?: FluiLabels;
   };
+  architecture?: ServerArchitecture | null;
 }
 
 export function isManagedByFlui(instance: InstanceWithLabels): boolean {
@@ -69,6 +71,7 @@ export function mapClusterNodeToInstance(
     name: node.serverName ?? node.nodeType,
     displayName: node.serverName ?? node.nodeType,
     productName: node.serverType ?? undefined,
+    architecture: node.architecture ?? null,
     type: 'virtual' as any,
     provider: 'byos' as any,
     providerId: node.providerResourceId || node.id,

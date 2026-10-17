@@ -13,6 +13,7 @@ import {
 import { InfrastructureWebSocketService } from './infrastructure-websocket.service';
 import { InstallLogService } from './install-log.service';
 import { SandboxService } from '../../core/services/sandbox.service';
+import { ServerArchitecture } from '../../shared/components/architecture-badge.component';
 
 export interface ProviderInfo {
   id: string;
@@ -724,6 +725,7 @@ export class ClusterService {
       }
 
       this.clusterNodes.set(response.data as InstanceWithLabels[]);
+      void this.attachNodeArchitectures(clusterId);
     } catch (error: any) {
       console.error('❌ Failed to load cluster nodes:', error);
       this.nodesError.set(error?.message || 'Failed to load cluster nodes');
@@ -732,6 +734,27 @@ export class ClusterService {
     } finally {
       this.nodesLoading.set(false);
     }
+  }
+
+  /** The provider's server list does not name the CPU architecture; the cluster's own nodes do. */
+  private async attachNodeArchitectures(clusterId: string): Promise<void> {
+    let nodes: { serverName?: string; architecture?: ServerArchitecture | null }[];
+    try {
+      const answer = await firstValueFrom(this.clustersApi.clustersControllerGetClusterNodes(clusterId));
+      nodes = Array.isArray(answer) ? answer : [];
+    } catch {
+      return;
+    }
+    const byName = new Map(
+      nodes.filter((n) => n.serverName && n.architecture).map((n) => [n.serverName!, n.architecture!]),
+    );
+    if (byName.size === 0 || this.clusterInfo()?.id !== clusterId) return;
+    this.clusterNodes.update((current) =>
+      current.map((node) => {
+        const architecture = byName.get(node.name) ?? byName.get(node.displayName ?? '');
+        return architecture ? { ...node, architecture } : node;
+      }),
+    );
   }
 
   clearClusterNodes(): void {

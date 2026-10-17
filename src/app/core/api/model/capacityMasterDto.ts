@@ -16,6 +16,10 @@ export interface CapacityMasterDto {
      */
     serverType: string;
     /**
+     * CPU architecture of the master's server type; null where the catalogue does not name it
+     */
+    architecture: CapacityMasterDto.ArchitectureEnum | null;
+    /**
      * Allocatable CPU in millicores
      */
     allocatableCpuMillicores: number;
@@ -37,5 +41,12 @@ export interface CapacityMasterDto {
      * Monthly cost of current server type in EUR (net)
      */
     monthlyCostEur?: string;
+}
+export namespace CapacityMasterDto {
+    export const ArchitectureEnum = {
+        X86: 'x86',
+        Arm: 'arm'
+    } as const;
+    export type ArchitectureEnum = typeof ArchitectureEnum[keyof typeof ArchitectureEnum];
 }
 

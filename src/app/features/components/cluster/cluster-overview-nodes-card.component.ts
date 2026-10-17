@@ -5,13 +5,14 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideServer } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterMonitoringService } from '../../service/cluster-monitoring.service';
+import { ArchitectureBadgeComponent } from '../../../shared/components/architecture-badge.component';
 import { OVERVIEW_NODE_LIMIT, buildOverviewNodeRows, meterBarClass } from './cluster-overview-nodes';
 
 @Component({
   selector: 'app-cluster-overview-nodes-card',
   host: { class: 'block' },
   standalone: true,
-  imports: [RouterModule, NgIconComponent, NgTemplateOutlet],
+  imports: [RouterModule, NgIconComponent, NgTemplateOutlet, ArchitectureBadgeComponent],
   providers: [provideIcons({ lucideArrowRight, lucideServer })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
@@ -77,6 +78,7 @@ import { OVERVIEW_NODE_LIMIT, buildOverviewNodeRows, meterBarClass } from './clu
           @if (row.role) {
             <span class="flex-shrink-0 rounded border border-border px-1.5 py-px text-[10px] uppercase tracking-wide text-muted-foreground">{{ row.role }}</span>
           }
+          <app-architecture-badge class="flex-shrink-0" [architecture]="row.architecture" />
         </div>
         <div class="hidden sm:block text-sub truncate">{{ meta(row.serverType, row.location) }}</div>
         <div class="hidden sm:block">

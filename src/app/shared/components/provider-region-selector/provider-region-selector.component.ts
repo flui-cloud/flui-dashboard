@@ -19,6 +19,10 @@ import {
 } from '../../services/provider-wizard.service';
 import { PricingService } from '../../services/pricing.service';
 import { ProviderMarkComponent } from '../provider-mark.component';
+import {
+  ArchitectureBadgeComponent,
+  architectureWarning,
+} from '../architecture-badge.component';
 
 /**
  * Provider Region Selector Component
@@ -41,7 +45,7 @@ import { ProviderMarkComponent } from '../provider-mark.component';
 @Component({
   selector: 'app-provider-region-selector',
   standalone: true,
-  imports: [NgIconComponent, ProviderMarkComponent, RouterLink],
+  imports: [NgIconComponent, ProviderMarkComponent, RouterLink, ArchitectureBadgeComponent],
   providers: [
     provideIcons({
       lucideCloud,
@@ -221,15 +225,19 @@ import { ProviderMarkComponent } from '../provider-mark.component';
               >
               @for (serverType of filteredServerTypes(); track serverType) {
                 <div
-                  (click)="serverType.managedFirewall && selectServerType(serverType.id)"
+                  (click)="isSelectable(serverType) && selectServerType(serverType.id)"
+                  [attr.title]="architectureWarning(serverType.architecture)"
                   [class]="getServerTypeCardClass(serverType)"
-                  [class.opacity-50]="!serverType.managedFirewall"
-                  [class.cursor-not-allowed]="!serverType.managedFirewall"
-                  [class.cursor-pointer]="serverType.managedFirewall"
+                  [class.opacity-50]="!isSelectable(serverType)"
+                  [class.cursor-not-allowed]="!isSelectable(serverType)"
+                  [class.cursor-pointer]="isSelectable(serverType)"
                   class="p-3 border-2 rounded-lg transition-all"
                   >
                   <div class="flex items-center justify-between mb-2">
-                    <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ serverType.name }}</p>
+                    <p class="flex items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-white">
+                      {{ serverType.name }}
+                      <app-architecture-badge [architecture]="serverType.architecture" />
+                    </p>
                     <div class="flex items-center gap-1">
                       @if (serverType.managedFirewall) {
                         <ng-icon
@@ -279,6 +287,9 @@ import { ProviderMarkComponent } from '../provider-mark.component';
               }
             </div>
           }
+          @if (selectedArchitectureWarning(); as warning) {
+            <p class="mt-2 text-xs text-amber-800 dark:text-amber-300" data-testid="architecture-warning">{{ warning }}</p>
+          }
           <!-- Empty State -->
           @if (!wizardService.isServerTypeLoading() && filteredServerTypes().length === 0) {
             <div
@@ -327,6 +338,12 @@ export class ProviderRegionSelectorComponent implements OnInit {
     if (filter === 'all') return types;
     return types.filter((type) => type.cpuType === filter);
   });
+
+  readonly selectedArchitectureWarning = computed(() =>
+    architectureWarning(
+      this.serverTypes().find((type) => type.id === this.selectedServerTypeId())?.architecture,
+    )
+  );
 
   // === Effects ===
 
@@ -435,8 +452,14 @@ export class ProviderRegionSelectorComponent implements OnInit {
     return 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800/50';
   }
 
+  protected readonly architectureWarning = architectureWarning;
+
+  isSelectable(serverType: ServerTypeOption): boolean {
+    return serverType.managedFirewall;
+  }
+
   getServerTypeCardClass(serverType: ServerTypeOption): string {
-    if (!serverType.managedFirewall) {
+    if (!this.isSelectable(serverType)) {
       return 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30';
     }
 

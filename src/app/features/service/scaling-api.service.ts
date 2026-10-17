@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { AppConfigService } from '../../core/services/app-config.service';
+import { ServerArchitecture } from '../../shared/components/architecture-badge.component';
 import {
   AvailabilityOutlook,
   DrainCheck,
@@ -184,6 +185,7 @@ interface WireDecision {
 interface WireOrderedShape {
   shape: string;
   allowed: boolean;
+  architecture?: ServerArchitecture | null;
   outlook: WireOutlook | null;
   why: string;
   facts?: { cores: number; memoryMi: number; hourlyEur: number | null; monthlyEur: number | null } | null;
@@ -219,6 +221,7 @@ interface WireNode {
   region: string | null;
   serverType: string | null;
   hourlyPriceEur: number | null;
+  architecture?: ServerArchitecture | null;
   createdAt: string;
   metadata: Record<string, unknown>;
 }
@@ -569,6 +572,7 @@ function toCatalogue(wire: WireCatalogue): ShapeCatalogue {
     shapes: wire.shapes.map((shape) => ({
       shape: shape.shape,
       allowed: shape.allowed,
+      architecture: shape.architecture ?? null,
       outlook: shape.outlook ? toOutlook(shape.outlook) : null,
       why: shape.why,
       facts: shape.facts ?? null,
@@ -612,6 +616,7 @@ function toFleetNode(wire: WireNode): FleetNode {
     region: wire.region ?? UNKNOWN_SHAPE,
     role: wire.nodeType,
     hourlyEur: wire.hourlyPriceEur ?? null,
+    architecture: wire.architecture ?? null,
     since: wire.createdAt,
     standIn: false,
     neverReplace: wire.nodeType === 'master' ? MASTER_NEVER_REPLACED : null,

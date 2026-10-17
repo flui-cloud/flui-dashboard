@@ -88,4 +88,9 @@ describe('cluster overview — node rows', () => {
     expect(row.statusLabel).toBe('never joined');
     expect(row.failed).toBe(true);
   });
+
+  it('carries the CPU architecture the node reports, and none it does not', () => {
+    expect(buildOverviewNodeRows([node({ architecture: 'x86' })], [])[0].architecture).toBe('x86');
+    expect(buildOverviewNodeRows([node({})], [])[0].architecture).toBeNull();
+  });
 });

@@ -33,5 +33,9 @@ export interface DeployFromYamlResponseDto {
      * True when nothing in `checks` would stop a deploy. An unanswered check never blocks: not being able to look is not a refusal.
      */
     wouldDeploy?: boolean;
+    /**
+     * Things worth saying that never block the deploy. Set when the target cluster has an arm server, where an app built from a repository will not run.
+     */
+    warnings?: Array<string>;
 }
 

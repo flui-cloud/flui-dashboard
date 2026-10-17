@@ -16,6 +16,11 @@ import {
 } from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { ListMove } from './group-draft';
+import {
+  ArchitectureBadgeComponent,
+  architectureLabel,
+  architectureWarning,
+} from '../../../shared/components/architecture-badge.component';
 
 /**
  * One thing that may be added, described rather than spelled.
@@ -30,12 +35,14 @@ export interface ListChoice {
   label: string;
   note?: string;
   unavailable?: boolean;
+  architecture?: string | null;
+  warning?: string | null;
 }
 
 @Component({
   selector: 'app-settings-list-editor',
   standalone: true,
-  imports: [FormsModule, NgIcon, HlmButtonDirective],
+  imports: [FormsModule, NgIcon, HlmButtonDirective, ArchitectureBadgeComponent],
   providers: [
     provideIcons({ lucideArrowDown, lucideArrowUp, lucidePlus, lucideX }),
   ],
@@ -56,6 +63,7 @@ export interface ListChoice {
             <span class="font-mono text-[13px] text-foreground">{{
               item
             }}</span>
+            <app-architecture-badge [architecture]="architectures()[item]" />
             @if (label(item) !== item) {
               <span class="truncate text-[12px] text-muted-foreground">{{
                 label(item)
@@ -107,6 +115,7 @@ export interface ListChoice {
               [attr.data-testid]="kind() + '-' + item"
             >
               <span class="font-mono text-foreground">{{ item }}</span>
+              <app-architecture-badge [architecture]="architectures()[item]" />
               @if (label(item) !== item) {
                 <span class="text-muted-foreground">{{ label(item) }}</span>
               }
@@ -131,6 +140,14 @@ export interface ListChoice {
         </span>
       }
 
+      @if (listedWarning(); as warning) {
+        <span
+          class="text-[12px] text-muted-foreground"
+          [attr.data-testid]="kind() + '-warning'"
+          >{{ warning }}</span
+        >
+      }
+
       <span class="flex items-center gap-2">
         @if (choices(); as all) {
           @if (all.length) {
@@ -148,6 +165,8 @@ export interface ListChoice {
                 <option
                   [value]="choice.value"
                   [disabled]="listed(choice.value)"
+                  [attr.title]="choice.warning ?? null"
+                  [attr.data-testid]="kind() + '-option-' + choice.value"
                 >
                   {{ optionText(choice) }}
                 </option>
@@ -207,6 +226,9 @@ export class SettingsListEditorComponent {
   /** How a value already chosen should read, where a bare code would not. */
   readonly labels = input<Record<string, string>>({});
 
+  /** The CPU architecture of a value, shown beside it where known. */
+  readonly architectures = input<Record<string, string | null>>({});
+
   /** Said where the list of choices is known and empty. */
   readonly exhausted = input('nothing to choose from');
 
@@ -224,6 +246,19 @@ export class SettingsListEditorComponent {
     return all.filter((choice) => !this.items().includes(choice.value));
   });
 
+  protected readonly listedWarning = computed(() => {
+    const known = new Map(
+      (this.choices() ?? []).map((choice) => [choice.value, choice.architecture]),
+    );
+    for (const item of this.items()) {
+      const warning = architectureWarning(
+        this.architectures()[item] ?? known.get(item),
+      );
+      if (warning) return warning;
+    }
+    return null;
+  });
+
   /**
    * Kept in the menu and greyed out rather than hidden: a machine missing from
    * the list reads as one that does not exist.
@@ -238,6 +273,7 @@ export class SettingsListEditorComponent {
 
   protected optionText(choice: ListChoice): string {
     const marks = [
+      architectureLabel(choice.architecture),
       choice.note,
       choice.unavailable ? 'unavailable' : null,
       this.listed(choice.value) ? 'already in the list' : null,

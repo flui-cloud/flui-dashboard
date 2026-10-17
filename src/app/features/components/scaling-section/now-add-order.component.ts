@@ -17,6 +17,10 @@ import { ScalingApiService } from '../../service/scaling-api.service';
 import { GroupChoicesService } from './group-choices.service';
 import { ScalingGroupStore } from './scaling-group.store';
 import { withExpansion } from './standing-order-write';
+import {
+  architectureLabel,
+  architectureWarning,
+} from '../../../shared/components/architecture-badge.component';
 
 /**
  * "Add this machine as soon as it can be had", whatever the load.
@@ -80,7 +84,9 @@ function regionAvailability(up: string[] | null, region: string): string {
             data-testid="add-order-shape"
           >
             @for (option of shapes(); track option.value) {
-              <option [value]="option.value">{{ option.text }}</option>
+              <option [value]="option.value" [attr.title]="option.warning">{{
+                option.text
+              }}</option>
             }
           </select>
           <span class="text-muted-foreground">in</span>
@@ -134,6 +140,14 @@ function regionAvailability(up: string[] | null, region: string): string {
         >
           {{ failure() ?? refused() ?? says() }}
         </p>
+        @if (warning(); as text) {
+          <p
+            class="m-0 text-[12px] text-muted-foreground"
+            data-testid="add-order-warning"
+          >
+            {{ text }}
+          </p>
+        }
       </div>
     }
   `,
@@ -179,17 +193,24 @@ export class ScalingNowAddOrderComponent {
 
   protected readonly shapes = computed(() => {
     const labels = this.choices.labels(this.group().provider);
-    const facts = new Map(
-      (this.store.catalogue().data?.shapes ?? []).map((s) => [s.shape, s.facts]),
+    const architectures = this.choices.architectures(this.group().provider);
+    const listed = new Map(
+      (this.store.catalogue().data?.shapes ?? []).map((s) => [s.shape, s]),
     );
     const total = this.group().regions.length;
     return this.group().shapes.map((value) => {
-      const spec = facts.get(value);
+      const entry = listed.get(value);
+      const spec = entry?.facts;
       const label = spec ? specLabel(spec) : labels[value];
       const up = this.upIn(value);
       const where = up === null ? '' : ` — available in ${up.length} of ${total} regions`;
-      const named = label ? ` — ${label}` : '';
-      return { value, text: `${value}${named}${where}` };
+      const architecture = entry?.architecture ?? architectures[value];
+      const named = [architectureLabel(architecture), label].filter(Boolean).join(' · ');
+      return {
+        value,
+        text: `${value}${named ? ` — ${named}` : ''}${where}`,
+        warning: architectureWarning(architecture),
+      };
     });
   });
 
@@ -225,6 +246,10 @@ export class ScalingNowAddOrderComponent {
       region: this.region(),
       wanted: this.wanted(),
     }),
+  );
+
+  protected readonly warning = computed(
+    () => this.shapes().find((option) => option.value === this.shape())?.warning ?? null,
   );
 
   protected readonly refused = computed(() => {

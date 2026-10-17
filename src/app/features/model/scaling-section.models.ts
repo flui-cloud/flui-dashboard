@@ -1,3 +1,4 @@
+import { ServerArchitecture } from '../../shared/components/architecture-badge.component';
 import {
   AvailabilityOutlook,
   FleetNode,
@@ -133,6 +134,7 @@ export type CatalogueReadingState =
 export interface OrderedShape {
   shape: string;
   allowed: boolean;
+  architecture: ServerArchitecture | null;
   outlook: AvailabilityOutlook | null;
   why: string;
   /** The machine as the provider describes it, priced the way the ceiling counts. */

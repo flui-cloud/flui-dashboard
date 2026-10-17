@@ -8,6 +8,7 @@ export interface OverviewNodeRow {
   name: string;
   role: string | null;
   serverType: string | null;
+  architecture: string | null;
   location: string | null;
   cpu: number | null;
   memory: number | null;
@@ -91,6 +92,7 @@ export function buildOverviewNodeRow(
     name: node.displayName || node.name || node.id,
     role: getClusterInfo(node)?.nodeType ?? null,
     serverType: serverTypeOf(node),
+    architecture: node.architecture ?? null,
     location: locationOf(node),
     cpu: metrics ? metrics.cpu.current : null,
     memory: metrics ? metrics.memory.current : null,

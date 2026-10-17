@@ -1,3 +1,4 @@
+import { ServerArchitecture } from '../../shared/components/architecture-badge.component';
 
 export type ProvisionMode = 'automatic' | 'manual';
 
@@ -149,6 +150,7 @@ export interface FleetNode {
   region: string;
   role: 'master' | 'worker';
   hourlyEur: number | null;
+  architecture: ServerArchitecture | null;
   since: string;
   standIn: boolean;
   neverReplace: string | null;
