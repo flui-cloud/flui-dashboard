@@ -34,8 +34,10 @@ import { accessOf } from '../../model/app-access';
             <span>{{ plural(pulse().totalClusters, 'cluster') }}</span>
             <span class="text-border">·</span>
             <span>{{ guestApps().showcase }} in the showcase</span>
-            <span class="text-border">·</span>
-            <span>{{ guestApps().own === 0 ? 'none of yours yet' : guestApps().own + ' of yours' }}</span>
+            @if (guestApps().own > 0) {
+              <span class="text-border">·</span>
+              <span>{{ guestApps().own }} of yours</span>
+            }
           } @else {
             <span class="text-border">·</span>
             <span>{{ plural(pulse().providersConnected, 'provider') }}</span>

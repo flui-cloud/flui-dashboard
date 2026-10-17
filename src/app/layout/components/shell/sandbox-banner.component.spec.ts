@@ -3,12 +3,11 @@ import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { SandboxBannerComponent } from './sandbox-banner.component';
 import { SandboxService } from '../../../core/services/sandbox.service';
-import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
+import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
 
 describe('SandboxBannerComponent', () => {
   const build = (hasArea: boolean, visitor = false) => {
     const keep = jasmine.createSpy('keep').and.returnValue(of(true));
-    const signIn = jasmine.createSpy('signIn');
     TestBed.configureTestingModule({
       providers: [
         {
@@ -23,18 +22,19 @@ describe('SandboxBannerComponent', () => {
             keep,
           },
         },
-        { provide: VisitorSignInService, useValue: { signIn } },
       ],
     });
     const fixture = TestBed.createComponent(SandboxBannerComponent);
     fixture.detectChanges();
-    return { fixture, keep, signIn, el: fixture.nativeElement as HTMLElement };
+    return { fixture, keep, el: fixture.nativeElement as HTMLElement };
   };
 
-  it('tells a guest who is only looking around how to get a space', () => {
+  it('tells a guest who is only looking around that the demo is read-only', () => {
     const { el } = build(false);
     expect(el.textContent).toContain('Demo guest');
+    expect(el.textContent).toContain('read-only demo');
     expect(el.querySelector('button')).toBeNull();
+    expect(el.querySelector('[data-testid="install-flui"]')?.getAttribute('href')).toBe(INSTALL_FLUI_URL);
   });
 
   it('lets a guest with a space keep their apps', () => {
@@ -49,10 +49,13 @@ describe('SandboxBannerComponent', () => {
     expect(button.textContent).toContain('Kept until');
   });
 
-  it('offers a visitor the way to sign in', () => {
-    const { el, signIn } = build(false, true);
-    expect(el.textContent).toContain('as a visitor');
-    (el.querySelector('[data-testid="visitor-sign-in"]') as HTMLButtonElement).click();
-    expect(signIn).toHaveBeenCalled();
+  it('points a visitor to installing Flui instead of signing in', () => {
+    const { el } = build(false, true);
+    expect(el.textContent).toContain('You are looking around a read-only demo.');
+    expect(el.textContent).not.toContain('Sign in');
+    const link = el.querySelector('[data-testid="install-flui"]') as HTMLAnchorElement;
+    expect(link.textContent).toContain('Install Flui');
+    expect(link.getAttribute('href')).toBe(INSTALL_FLUI_URL);
+    expect(link.target).toBe('_blank');
   });
 });

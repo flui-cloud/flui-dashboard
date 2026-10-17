@@ -7,7 +7,7 @@ import { FenceRule, fenceAllows, parseFenceRule, visitorMustSignIn } from './san
 export interface SandboxSession {
   /** False while the guest has only looked around: the first deploy takes an area. */
   hasArea: boolean;
-  /** A visitor who has not signed in: reads, and signs in to deploy. Absent on an older instance. */
+  /** A visitor without an account: the demo is read-only for them. Absent on an older instance. */
   visitor?: boolean;
   expiresAt: string | null;
   secondsRemaining: number;
@@ -177,7 +177,7 @@ export class SandboxService {
     return fence.length === 0 || fenceAllows(fence, method, apiPath);
   }
 
-  /** A visitor's write the API would answer with "sign in"; unknown until the limits arrive. */
+  /** A visitor's write the API refuses as read-only; unknown until the limits arrive. */
   needsSignIn(method: string, apiPath: string): boolean {
     if (!this.visitor() || this._fence().length === 0) return false;
     return visitorMustSignIn(this._visitorFence(), method, apiPath);

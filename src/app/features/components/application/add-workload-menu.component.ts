@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
+import { InstallPromptService } from '../../../core/services/install-prompt.service';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronDown, lucideGitBranch, lucidePlus, lucideStore } from '@ng-icons/lucide';
 import { BrnMenuTriggerDirective } from '@spartan-ng/brain/menu';
@@ -53,10 +53,10 @@ export class AddWorkloadMenuComponent {
   readonly label = input('Add');
 
   private readonly router = inject(Router);
-  private readonly visitorSignIn = inject(VisitorSignInService);
+  private readonly installPrompt = inject(InstallPromptService);
 
   protected deploy(): void {
-    if (this.visitorSignIn.requireSignIn(DEPLOY_FROM_REPOSITORY)) return;
+    if (this.installPrompt.requireInstall()) return;
     void this.router.navigate([DEPLOY_FROM_REPOSITORY]);
   }
 

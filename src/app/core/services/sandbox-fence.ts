@@ -2,7 +2,7 @@ export const SANDBOX_ROUTE_FORBIDDEN = 'SANDBOX_ROUTE_FORBIDDEN';
 
 export const SANDBOX_SIGN_IN_REQUIRED = 'SANDBOX_SIGN_IN_REQUIRED';
 
-/** A visitor who has not signed in asked for something only a signed-in guest may do. */
+/** A visitor asked to change something in the read-only demo. */
 export function isSignInRequired(error: unknown): boolean {
   const e = error as { status?: unknown; error?: { code?: unknown } } | null;
   return e?.status === 401 && e.error?.code === SANDBOX_SIGN_IN_REQUIRED;

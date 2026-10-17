@@ -13,6 +13,7 @@ import { lucideShield, lucideUser } from '@ng-icons/lucide';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
 import {
   AccountOverview,
   AccountProfile,
@@ -44,7 +45,9 @@ type Tab = 'profile' | 'security';
 
       @if (visitor()) {
         <p class="text-sm text-muted-foreground" data-testid="visitor-note">
-          Sign in to have an account of your own.
+          This demo is read-only.
+          <a [href]="installUrl" target="_blank" rel="noopener" class="font-medium text-primary hover:underline">Install Flui</a>
+          to have your own.
         </p>
       } @else {
         <nav class="flex gap-1 border-b border-border">
@@ -86,6 +89,7 @@ export class AccountComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly cfg = inject(AppConfigService);
   private readonly sandbox = inject(SandboxService);
+  protected readonly installUrl = INSTALL_FLUI_URL;
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly tabs: Array<{ id: Tab; label: string; icon: string }> = [

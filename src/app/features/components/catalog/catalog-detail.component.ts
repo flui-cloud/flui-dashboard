@@ -35,7 +35,7 @@ interface Ratings {
   community?: number;
 }
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
-import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
+import { InstallPromptService } from '../../../core/services/install-prompt.service';
 import {
   CatalogDetailSurfaceInput,
   CatalogDetailSurfaceRevision,
@@ -385,7 +385,7 @@ export class CatalogDetailComponent implements OnDestroy {
   protected readonly catalog = inject(CatalogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly visitorSignIn = inject(VisitorSignInService);
+  private readonly installPrompt = inject(InstallPromptService);
 
   protected readonly detail = this.catalog.detail;
   protected readonly activeTab = signal<DetailTab>('description');
@@ -516,7 +516,7 @@ export class CatalogDetailComponent implements OnDestroy {
     const queryParams: Record<string, string> = { catalogSlug: slug };
     if (autoConnectTo) queryParams['autoConnectTo'] = autoConnectTo;
     const install = this.router.createUrlTree(['/apps/deploy/new'], { queryParams });
-    if (this.visitorSignIn.requireSignIn(this.router.serializeUrl(install))) return;
+    if (this.installPrompt.requireInstall()) return;
     void this.router.navigateByUrl(install);
   }
 

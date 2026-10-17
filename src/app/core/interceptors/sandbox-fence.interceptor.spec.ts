@@ -5,19 +5,21 @@ import { apiPath, sandboxFenceInterceptor } from './sandbox-fence.interceptor';
 import { AppConfigService } from '../services/app-config.service';
 import { SandboxService } from '../services/sandbox.service';
 import { ToastService } from '../../shared/services/toast.service';
-import { VisitorSignInService } from '../services/visitor-sign-in.service';
+import { InstallPromptService } from '../services/install-prompt.service';
 
 describe('sandboxFenceInterceptor', () => {
   let http: HttpClient;
   let backend: HttpTestingController;
   let allowed: boolean;
   let signInNeeded: boolean;
-  let notices: Array<{ title?: string; message: string }>;
+  let notices: Array<{ title?: string; message: string; action?: { label: string; onClick: () => void } }>;
+  let visitInstallPage: jasmine.Spy;
 
   beforeEach(() => {
     allowed = false;
     signInNeeded = false;
     notices = [];
+    visitInstallPage = jasmine.createSpy('visitInstallPage');
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([sandboxFenceInterceptor])),
@@ -27,8 +29,8 @@ describe('sandboxFenceInterceptor', () => {
           provide: SandboxService,
           useValue: { allows: () => allowed, needsSignIn: () => signInNeeded },
         },
-        { provide: VisitorSignInService, useValue: { signIn: () => undefined } },
-        { provide: ToastService, useValue: { showInfo: (n: { title?: string; message: string }) => notices.push(n) } },
+        { provide: InstallPromptService, useValue: { visitInstallPage } },
+        { provide: ToastService, useValue: { showInfo: (n: { title?: string; message: string; action?: { label: string; onClick: () => void } }) => notices.push(n) } },
       ],
     });
     http = TestBed.inject(HttpClient);
@@ -51,7 +53,7 @@ describe('sandboxFenceInterceptor', () => {
     expect(code).toBe('SANDBOX_ROUTE_FORBIDDEN');
   });
 
-  it('keeps a visitor’s write at home and answers it with sign-in', () => {
+  it('keeps a visitor’s write at home and answers it with the read-only notice', () => {
     allowed = true;
     signInNeeded = true;
     jasmine.clock().install();
@@ -94,10 +96,13 @@ describe('sandboxFenceInterceptor', () => {
     }
     expect(codes).toEqual(['SANDBOX_SIGN_IN_REQUIRED', 'SANDBOX_SIGN_IN_REQUIRED']);
     expect(notices).toHaveSize(1);
-    expect(notices[0].title).toBe('Sign in to continue');
+    expect(notices[0].title).toBe('This demo is read-only');
+    expect(notices[0].action?.label).toBe('Install Flui');
+    notices[0].action?.onClick();
+    expect(visitInstallPage).toHaveBeenCalled();
   });
 
-  it('says nothing about signing in for any other refusal', () => {
+  it('says nothing about the read-only demo for any other refusal', () => {
     allowed = true;
     http.post('https://api.example.test/api/v1/applications/a/deploy', {}).subscribe({ error: () => undefined });
     backend

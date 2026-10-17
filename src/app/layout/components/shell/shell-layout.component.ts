@@ -27,6 +27,7 @@ import { AssistantWidgetComponent } from '../../../features/components/assistant
 import { FluiBackdropComponent } from '../../../shared/components/flui-backdrop/flui-backdrop.component';
 import { SandboxBannerComponent } from './sandbox-banner.component';
 import { VisitorSignInDialogComponent } from './visitor-sign-in-dialog.component';
+import { InstallFluiDialogComponent } from './install-flui-dialog.component';
 import { SandboxSectionNoticeComponent } from './sandbox-section-notice.component';
 import { PAGE_WIDTH_CLASS, pageWidth } from './page-width';
 import { PlatformUpdateWatcherComponent } from '../../../features/components/platform-updates/platform-update-watcher.component';
@@ -52,6 +53,7 @@ import { VisitorSignInService } from '../../../core/services/visitor-sign-in.ser
     FluiBackdropComponent,
     SandboxBannerComponent,
     VisitorSignInDialogComponent,
+    InstallFluiDialogComponent,
   ],
   providers: [
     BrnSidebarService,
@@ -121,6 +123,7 @@ import { VisitorSignInService } from '../../../core/services/visitor-sign-in.ser
     <app-quick-ssh-dock />
     <app-toast-container />
     <app-visitor-sign-in-dialog />
+    <app-install-flui-dialog />
     <app-platform-update-watcher />
     <!-- Hide the global Flui assistant where a section has its own assistant
          (e.g. the SQL console), to avoid two floating assistants competing. -->

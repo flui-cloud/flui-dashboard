@@ -4,7 +4,7 @@ import { catchError, throwError } from 'rxjs';
 import { AppConfigService } from '../services/app-config.service';
 import { SandboxService } from '../services/sandbox.service';
 import { ToastService } from '../../shared/services/toast.service';
-import { VisitorSignInService } from '../services/visitor-sign-in.service';
+import { InstallPromptService } from '../services/install-prompt.service';
 import {
   SANDBOX_NOT_IN_TRIAL,
   SANDBOX_ROUTE_FORBIDDEN,
@@ -25,7 +25,7 @@ export const sandboxFenceInterceptor: HttpInterceptorFn = (req, next) => {
   if (path === null) return next(req);
   const sandbox = inject(SandboxService);
   const toast = inject(ToastService);
-  const gate = inject(VisitorSignInService);
+  const gate = inject(InstallPromptService);
   if (sandbox.allows(req.method, path)) {
     if (sandbox.needsSignIn(req.method, path)) {
       noticeSignIn(toast, gate);
@@ -57,14 +57,14 @@ export const sandboxFenceInterceptor: HttpInterceptorFn = (req, next) => {
   );
 };
 
-function noticeSignIn(toast: ToastService, gate: VisitorSignInService): void {
+function noticeSignIn(toast: ToastService, gate: InstallPromptService): void {
   const now = Date.now();
   if (now - lastSignInNoticeAt < SIGN_IN_NOTICE_GAP_MS) return;
   lastSignInNoticeAt = now;
   toast.showInfo({
-    title: 'Sign in to continue',
-    message: 'Sign in with GitHub, Google or email to do this. You can keep looking around.',
-    action: { label: 'Sign in', onClick: () => gate.signIn() },
+    title: 'This demo is read-only',
+    message: 'Install Flui on your own server to do this.',
+    action: { label: 'Install Flui', onClick: () => gate.visitInstallPage() },
   });
 }
 

@@ -84,4 +84,13 @@ describe('DashboardHomeHeaderComponent', () => {
     expect(line).toContain('1 of yours');
     expect(line).not.toContain('provider');
   });
+
+  it('does not suggest a guest owns anything in the read-only demo', async () => {
+    inSandbox.set(true);
+    groups.set([{ components: [{ access: { tabs: [], showcase: true } }] }]);
+    await build();
+    const line = q('home-status-line')!.textContent!.replace(/\s+/g, ' ');
+    expect(line).toContain('1 in the showcase');
+    expect(line).not.toContain('yours');
+  });
 });

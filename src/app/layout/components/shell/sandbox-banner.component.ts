@@ -8,7 +8,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideClock, lucideTriangleAlert } from '@ng-icons/lucide';
 import { SandboxService } from '../../../core/services/sandbox.service';
-import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
+import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
 
 @Component({
   selector: 'app-sandbox-banner',
@@ -25,25 +25,18 @@ import { VisitorSignInService } from '../../../core/services/visitor-sign-in.ser
       >
         <ng-icon [name]="icon()" class="h-3.5 w-3.5 flex-shrink-0" />
 
-        @if (sandbox.visitor()) {
-          <span class="font-medium">Visitor</span>
-          <span class="opacity-80">
-            You are looking around as a visitor. Sign in to deploy.
-          </span>
-          <button
-            type="button"
+        @if (sandbox.visitor() || !sandbox.hasArea()) {
+          <span class="font-medium">{{ sandbox.visitor() ? 'Visitor' : 'Demo guest' }}</span>
+          <span class="opacity-80">You are looking around a read-only demo.</span>
+          <a
+            [href]="installUrl"
+            target="_blank"
+            rel="noopener"
             class="rounded border border-current/30 px-2 py-0.5 font-medium hover:bg-foreground/5"
-            data-testid="visitor-sign-in"
-            (click)="signIn()"
+            data-testid="install-flui"
           >
-            Sign in
-          </button>
-        } @else if (!sandbox.hasArea()) {
-          <span class="font-medium">Demo guest</span>
-          <span class="opacity-80">
-            You are looking around. Deploy something to get a space of your
-            own.
-          </span>
+            Install Flui
+          </a>
         } @else if (sandbox.expired()) {
           <span class="font-medium">Your demo space has expired.</span>
           <span class="opacity-80">
@@ -73,7 +66,7 @@ import { VisitorSignInService } from '../../../core/services/visitor-sign-in.ser
 })
 export class SandboxBannerComponent {
   protected readonly sandbox = inject(SandboxService);
-  private readonly visitorSignIn = inject(VisitorSignInService);
+  protected readonly installUrl = INSTALL_FLUI_URL;
   protected readonly keeping = signal(false);
   protected readonly kept = signal(false);
 
@@ -83,10 +76,6 @@ export class SandboxBannerComponent {
     const at = new Date(until);
     return `Kept until ${at.toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' })}`;
   });
-
-  protected signIn(): void {
-    this.visitorSignIn.signIn();
-  }
 
   protected keep(): void {
     this.keeping.set(true);

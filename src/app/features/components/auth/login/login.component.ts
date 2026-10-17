@@ -7,6 +7,7 @@ import { REDIRECT_KEY, consumeLoginRedirect, bumpLoopGuard, clearLoopGuard, LOOP
 import { AppConfigService } from '../../../../core/services/app-config.service';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { visitorRefusalLine } from '../try/visitor-refusal';
+import { INSTALL_FLUI_URL } from '../../../../core/utils/install-flui';
 
 
 @Component({
@@ -186,7 +187,7 @@ import { visitorRefusalLine } from '../try/visitor-refusal';
             <p class="text-sm" style="color: hsl(210,40%,85%)">{{ line }}</p>
             <div class="flex justify-center gap-3 text-xs">
               <a routerLink="/try" class="underline" style="color: hsl(217,91%,70%)">Try again</a>
-              <button type="button" class="underline" style="color: hsl(217,91%,70%)" (click)="signIn()">Sign in</button>
+              <a [href]="installUrl" target="_blank" rel="noopener" class="underline" style="color: hsl(217,91%,70%)" data-testid="install-flui">Install Flui</a>
             </div>
           </div>
         } @else if (signedOut()) {
@@ -275,6 +276,7 @@ export class LoginComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly themeService = inject(ThemeService);
+  protected readonly installUrl = INSTALL_FLUI_URL;
 
   @HostBinding('class.dark') get darkMode() {
     return this.themeService.isDarkMode();

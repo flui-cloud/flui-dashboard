@@ -13,11 +13,11 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideArrowRight,
-  lucideBot,
+  lucideArrowUpRight,
   lucideExternalLink,
-  lucideGitBranch,
-  lucideStore,
+  lucideKeyRound,
+  lucideServer,
+  lucideTerminal,
 } from '@ng-icons/lucide';
 import { catchError, forkJoin, of } from 'rxjs';
 import { StatTileComponent } from '../../../shared/components/charts';
@@ -25,6 +25,7 @@ import { ExplainComponent } from '../../../shared/components/explain.component';
 import { StatTileData } from '../../../shared/components/charts/chart.models';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
 import { ApplicationService } from '../../service/application.service';
 import { ClusterService } from '../../service/cluster.service';
 import { FleetService } from '../../service/fleet.service';
@@ -39,13 +40,13 @@ const REFRESH_MS = 60_000;
 /**
  * The first screen of a demo guest, laid out like the operator's: the cluster
  * they are on with the same tiles and table, the showcase with its own charts,
- * and the space they get by deploying. Every figure is read from the instance.
+ * and the ways to install Flui for themselves. Every figure is read from the instance.
  */
 @Component({
   selector: 'app-guest-home',
   standalone: true,
   imports: [RouterLink, NgIcon, ExplainComponent, StatTileComponent, DashboardFleetTilesComponent, DashboardClustersTableComponent],
-  providers: [provideIcons({ lucideArrowRight, lucideBot, lucideExternalLink, lucideGitBranch, lucideStore })],
+  providers: [provideIcons({ lucideArrowUpRight, lucideExternalLink, lucideKeyRound, lucideServer, lucideTerminal })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4 md:gap-5" data-testid="guest-home">
@@ -92,9 +93,9 @@ const REFRESH_MS = 60_000;
         </div>
 
         <div class="flex flex-col gap-4">
-          <section class="card-surface p-5 flex flex-col gap-3" data-testid="guest-space">
-            <p class="text-label">Your space</p>
-            @if (sandbox.hasArea()) {
+          @if (sandbox.hasArea()) {
+            <section class="card-surface p-5 flex flex-col gap-3" data-testid="guest-space">
+              <p class="text-label">Your space</p>
               <app-explain [label]="ownApps().length === 1 ? '1 application' : ownApps().length + ' applications'" labelClass="font-semibold text-foreground" floating>
                 They stay while you use them: removed after {{ sandbox.workloadTtlHours() ?? 24 }} hours without activity.
               </app-explain>
@@ -110,45 +111,48 @@ const REFRESH_MS = 60_000;
                   }
                 </ul>
               }
-            } @else {
-              <app-explain label="Try the thing that matters" labelClass="font-semibold text-foreground" floating>
-                <span data-testid="sandbox-guide-text">
-                  The apps in the showcase are real and running: open them, read their logs and metrics. Install one
-                  yourself and you get a space of your own.
-                </span>
-              </app-explain>
-              <p class="text-sm text-muted-foreground">Your app, live on a real address with a real certificate, in about a minute.</p>
-              <a
-                routerLink="/apps/catalog"
-                class="inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-              >
-                Open the catalogue
-                <ng-icon name="lucideArrowRight" class="h-4 w-4" />
-              </a>
-            }
-            @if (sandbox.quota(); as q) {
-              <dl class="grid grid-cols-3 gap-2 pt-1 border-t border-border">
-                <div class="pt-2"><dt class="text-label">CPU</dt><dd class="text-sm font-semibold text-foreground">{{ q.cpu }}</dd></div>
-                <div class="pt-2"><dt class="text-label">Memory</dt><dd class="text-sm font-semibold text-foreground">{{ q.memory }}</dd></div>
-                <div class="pt-2"><dt class="text-label">Disk</dt><dd class="text-sm font-semibold text-foreground">{{ q.storage }}</dd></div>
-              </dl>
-            }
+              @if (sandbox.quota(); as q) {
+                <dl class="grid grid-cols-3 gap-2 pt-1 border-t border-border">
+                  <div class="pt-2"><dt class="text-label">CPU</dt><dd class="text-sm font-semibold text-foreground">{{ q.cpu }}</dd></div>
+                  <div class="pt-2"><dt class="text-label">Memory</dt><dd class="text-sm font-semibold text-foreground">{{ q.memory }}</dd></div>
+                  <div class="pt-2"><dt class="text-label">Disk</dt><dd class="text-sm font-semibold text-foreground">{{ q.storage }}</dd></div>
+                </dl>
+              }
+            </section>
+          }
+
+          <section class="card-surface p-5 flex flex-col gap-2" data-testid="guest-explore">
+            <p class="text-label">Look around</p>
+            <h2 class="font-semibold text-foreground">Explore the showcase</h2>
+            <p class="text-sm text-muted-foreground" data-testid="sandbox-guide-text">
+              The apps here are real and running. Open them, read their logs and metrics, look inside their database.
+            </p>
           </section>
 
-          <section class="card-surface p-5 flex flex-col gap-2" data-testid="guest-ways">
-            <p class="text-label">Three ways in</p>
-            <a routerLink="/apps/catalog" class="guest-way">
-              <ng-icon name="lucideStore" class="h-4 w-4 text-muted-foreground" /> From the catalogue
-              <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5 ml-auto text-muted-foreground" />
+          <section class="card-surface p-5 flex flex-col gap-3" data-testid="guest-install">
+            <p class="text-label">Run it yourself</p>
+            <p class="text-sm text-muted-foreground">
+              This demo is read-only. Install Flui on your own server: it is free and open source.
+            </p>
+            <a
+              [href]="installUrl"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+              data-testid="guest-install-link"
+            >
+              Install Flui
+              <ng-icon name="lucideExternalLink" class="h-4 w-4" />
             </a>
-            <a routerLink="/apps/repositories" class="guest-way">
-              <ng-icon name="lucideGitBranch" class="h-4 w-4 text-muted-foreground" /> From your GitHub repository
-              <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5 ml-auto text-muted-foreground" />
-            </a>
-            <a routerLink="/agents" class="guest-way">
-              <ng-icon name="lucideBot" class="h-4 w-4 text-muted-foreground" /> With your coding agent
-              <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5 ml-auto text-muted-foreground" />
-            </a>
+            <div class="flex flex-col gap-1 pt-3 border-t border-border" data-testid="guest-ways">
+              <p class="text-label">Three ways to install</p>
+              @for (way of installWays; track way.label) {
+                <a [href]="installUrl" target="_blank" rel="noopener" class="guest-way">
+                  <ng-icon [name]="way.icon" class="h-4 w-4 text-muted-foreground" /> {{ way.label }}
+                  <ng-icon name="lucideArrowUpRight" class="h-3.5 w-3.5 ml-auto text-muted-foreground" />
+                </a>
+              }
+            </div>
           </section>
         </div>
       </div>
@@ -174,6 +178,12 @@ const REFRESH_MS = 60_000;
 })
 export class GuestHomeComponent implements OnInit {
   protected readonly sandbox = inject(SandboxService);
+  protected readonly installUrl = INSTALL_FLUI_URL;
+  protected readonly installWays = [
+    { icon: 'lucideKeyRound', label: 'Guided, with your provider API key' },
+    { icon: 'lucideServer', label: 'On a server you already have' },
+    { icon: 'lucideTerminal', label: 'From the command line' },
+  ];
   private readonly applications = inject(ApplicationService);
   private readonly clusters = inject(ClusterService);
   private readonly fleet = inject(FleetService);

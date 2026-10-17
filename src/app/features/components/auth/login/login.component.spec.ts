@@ -4,6 +4,7 @@ import { LoginComponent } from './login.component';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AppConfigService } from '../../../../core/services/app-config.service';
 import { ThemeService } from '../../../../core/services/theme.service';
+import { INSTALL_FLUI_URL } from '../../../../core/utils/install-flui';
 
 describe('LoginComponent with an identity provider', () => {
   const setUp = (query: Record<string, string>) => {
@@ -43,5 +44,17 @@ describe('LoginComponent with an identity provider', () => {
     button!.click();
     fixture.detectChanges();
     expect(auth.login).toHaveBeenCalledTimes(1);
+  });
+
+  it('when the demo turns a visitor away, offers to try again or install Flui', () => {
+    const { auth, el } = setUp({ visitor: 'refused', reason: 'limit' });
+    expect(auth.login).not.toHaveBeenCalled();
+    const card = el.querySelector('[data-testid="visitor-refused"]')!;
+    expect(card.textContent).toContain('The demo is busy right now. Try again in a minute.');
+    expect(card.textContent).not.toContain('sign in');
+    expect(card.querySelector('a[routerLink="/try"], a[href="/try"]')).not.toBeNull();
+    const install = card.querySelector<HTMLAnchorElement>('[data-testid="install-flui"]')!;
+    expect(install.getAttribute('href')).toBe(INSTALL_FLUI_URL);
+    expect(install.target).toBe('_blank');
   });
 });
