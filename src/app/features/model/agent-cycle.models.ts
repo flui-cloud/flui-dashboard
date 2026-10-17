@@ -29,6 +29,8 @@ export interface AgentProposal {
   argsDigest: string;
   sentence: string;
   offersAlways: boolean;
+  /** True for removals and key widening: answered one call at a time, never "always". */
+  asksEveryTime?: boolean;
   consequence?: string | null;
   estimateRef?: string | null;
   estimate?: Record<string, unknown> | null;

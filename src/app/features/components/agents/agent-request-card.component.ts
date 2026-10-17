@@ -118,6 +118,11 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
             <code class="font-mono text-[12.5px] font-medium">{{ proposal().sentence }}</code
             >. No other action, no other resource.
           </p>
+        } @else if (proposal().asksEveryTime) {
+          <p class="m-0 text-[13px] text-muted-foreground" data-testid="every-time-note">
+            Removing something, or widening what a key may do, is allowed one call
+            at a time: there is no "always" for it.
+          </p>
         } @else {
           <p class="m-0 text-[13px] text-muted-foreground" data-testid="no-always-note">
             This request did not state its own boundary, so there is no standing

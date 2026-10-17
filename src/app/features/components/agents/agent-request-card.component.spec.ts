@@ -130,6 +130,12 @@ describe('one request, and the answers on offer', () => {
         'did not state its own boundary',
       );
     });
+
+    it('says why when the action is one a person answers every time', async () => {
+      await build({ offersAlways: false, asksEveryTime: true });
+      expect(find('no-always-note')).toBeNull();
+      expect(find('every-time-note')?.textContent).toContain('one call');
+    });
   });
 
   describe('the cost, before the decision', () => {
