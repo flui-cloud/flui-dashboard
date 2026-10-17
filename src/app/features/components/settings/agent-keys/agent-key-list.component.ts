@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   output,
@@ -32,6 +33,7 @@ import { AgentKeyApplicationsService } from './agent-key-applications.service';
 import { AgentKeyApplicationPickerComponent } from './agent-key-application-picker.component';
 import { AgentKeyProjectsService } from './agent-key-projects.service';
 import { AgentKeyProjectPickerComponent } from './agent-key-project-picker.component';
+import { AgentKeyPermissionsEditorComponent } from './agent-key-permissions-editor.component';
 
 interface KeyRow {
   key: ApiKeyResponseDto;
@@ -46,10 +48,10 @@ interface KeyRow {
   projectNames: string[] | null;
 }
 
-/** Which of a row's two scope pickers, if either, is open right now. */
+/** Which of a row's editors, if any, is open right now. */
 interface EditTarget {
   keyId: string;
-  field: 'applications' | 'projects';
+  field: 'applications' | 'projects' | 'permissions';
 }
 
 /** An id absent from the lookup is one the list no longer has — deleted, not hidden. */
@@ -71,6 +73,7 @@ function resolveNames(
     DeleteConfirmationDialogComponent,
     AgentKeyApplicationPickerComponent,
     AgentKeyProjectPickerComponent,
+    AgentKeyPermissionsEditorComponent,
   ],
   providers: [
     provideIcons({ lucideChevronDown, lucideChevronRight, lucideKeyRound, lucidePencil, lucidePlugZap, lucideTriangleAlert }),
@@ -115,6 +118,17 @@ function resolveNames(
 
               @if (!row.key.revoked) {
                 <div class="flex shrink-0 items-center gap-2">
+                  @if (row.key.scopes?.length) {
+                    <button
+                      type="button"
+                      [attr.data-testid]="'edit-permissions-' + row.key.id"
+                      (click)="toggleEdit(row.key, 'permissions')"
+                      class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
+                      Permissions
+                    </button>
+                  }
                   <button
                     type="button"
                     [attr.data-testid]="'edit-applications-' + row.key.id"
@@ -200,6 +214,19 @@ function resolveNames(
               }
               <p class="font-mono text-[11px] text-muted-foreground/80 break-all">{{ row.scopes }}</p>
             </div>
+
+            @if (editing()?.keyId === row.key.id && editing()?.field === 'permissions') {
+              <div class="rounded-md border border-border bg-muted/20 p-3" [attr.data-testid]="'edit-permissions-panel-' + row.key.id">
+                <app-agent-key-permissions-editor
+                  [catalogue]="catalogue()"
+                  [scopes]="row.key.scopes ?? []"
+                  [saving]="updatingScopes() === row.key.id"
+                  [error]="updateScopesError()"
+                  (save)="saveScopes(row.key, $event)"
+                  (cancel)="editing.set(null)"
+                />
+              </div>
+            }
 
             @if (editing()?.keyId === row.key.id && editing()?.field === 'applications') {
               <div class="space-y-2 rounded-md border border-border bg-muted/20 p-3" [attr.data-testid]="'edit-applications-panel-' + row.key.id">
@@ -313,6 +340,8 @@ export class AgentKeyListComponent {
   readonly updateApplicationsError = input<string | null>(null);
   readonly updatingProjects = input<string | null>(null);
   readonly updateProjectsError = input<string | null>(null);
+  readonly updatingScopes = input<string | null>(null);
+  readonly updateScopesError = input<string | null>(null);
 
   readonly revoke = output<ApiKeyResponseDto>();
   readonly updateApplications = output<{
@@ -323,6 +352,7 @@ export class AgentKeyListComponent {
     key: ApiKeyResponseDto;
     projectIds: string[];
   }>();
+  readonly updateScopes = output<{ key: ApiKeyResponseDto; scopes: string[] }>();
 
   private readonly dialog = viewChild.required<DeleteConfirmationDialogComponent>('revokeDialog');
   private readonly appsService = inject(AgentKeyApplicationsService);
@@ -347,6 +377,13 @@ export class AgentKeyListComponent {
   private readonly projectNamesById = signal<Map<string, string>>(new Map());
 
   constructor() {
+    // The permissions panel closes once its save went through, and only then.
+    let saving: string | null = null;
+    effect(() => {
+      const now = this.updatingScopes();
+      if (saving && !now && !this.updateScopesError()) this.editing.set(null);
+      saving = now;
+    });
     this.appsService.list().subscribe((apps) => {
       this.appNamesById.set(new Map(apps.map((a) => [a.id, a.name])));
     });
@@ -385,15 +422,22 @@ export class AgentKeyListComponent {
       this.editing.set(null);
       return;
     }
-    this.editPicked.set(
-      (field === 'applications' ? key.applicationIds : key.projectIds) ?? [],
-    );
+    if (field !== 'permissions') {
+      this.editPicked.set(
+        (field === 'applications' ? key.applicationIds : key.projectIds) ?? [],
+      );
+    }
     this.editing.set({ keyId: key.id, field });
   }
 
   protected saveApplications(key: ApiKeyResponseDto): void {
     this.updateApplications.emit({ key, applicationIds: this.editPicked() });
     this.editing.set(null);
+  }
+
+  /** Kept open until the page reports back: a refusal is read where it was asked. */
+  protected saveScopes(key: ApiKeyResponseDto, scopes: string[]): void {
+    this.updateScopes.emit({ key, scopes });
   }
 
   protected saveProjects(key: ApiKeyResponseDto): void {

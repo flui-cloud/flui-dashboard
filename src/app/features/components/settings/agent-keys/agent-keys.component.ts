@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -132,6 +133,9 @@ import { ConnectAgentComponent } from './connect-agent.component';
               [updateApplicationsError]="updateApplicationsError()"
               [updatingProjects]="updatingProjects()"
               [updateProjectsError]="updateProjectsError()"
+              [updatingScopes]="updatingScopes()"
+              [updateScopesError]="updateScopesError()"
+              (updateScopes)="updateScopes($event)"
               (revoke)="revokeKey($event)"
               (updateApplications)="updateApplications($event)"
               (updateProjects)="updateProjects($event)"
@@ -145,6 +149,7 @@ import { ConnectAgentComponent } from './connect-agent.component';
 export class AgentKeysComponent implements OnInit {
   private readonly api = inject(ApiAuthService);
   private readonly cfg = inject(AppConfigService);
+  private readonly http = inject(HttpClient);
   private readonly skills = inject(AgentSkillService);
 
   private readonly mint = viewChild<AgentKeyMintComponent>('mint');
@@ -161,6 +166,8 @@ export class AgentKeysComponent implements OnInit {
   protected readonly updateApplicationsError = signal<string | null>(null);
   protected readonly updatingProjects = signal<string | null>(null);
   protected readonly updateProjectsError = signal<string | null>(null);
+  protected readonly updatingScopes = signal<string | null>(null);
+  protected readonly updateScopesError = signal<string | null>(null);
   protected readonly skill = signal<AgentSkill | null>(null);
   protected readonly skillError = signal<string | null>(null);
 
@@ -317,6 +324,28 @@ export class AgentKeysComponent implements OnInit {
           this.updateProjectsError.set(
             messageOf(err, `${event.key.name}'s projects could not be updated.`),
           );
+        },
+      });
+  }
+
+  protected updateScopes(event: { key: ApiKeyResponseDto; scopes: string[] }): void {
+    this.updatingScopes.set(event.key.id);
+    this.updateScopesError.set(null);
+    this.http
+      .patch<ApiKeyResponseDto>(
+        `${this.cfg.apiBaseUrl}/api/v1/auth/api-keys/${encodeURIComponent(event.key.id)}/scopes`,
+        { scopes: event.scopes },
+      )
+      .subscribe({
+        next: () => {
+          this.updatingScopes.set(null);
+          this.loadKeys();
+        },
+        error: (err: unknown) => {
+          this.updateScopesError.set(
+            messageOf(err, `What ${event.key.name} may do could not be changed.`),
+          );
+          this.updatingScopes.set(null);
         },
       });
   }

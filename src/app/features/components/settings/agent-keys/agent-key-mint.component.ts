@@ -28,6 +28,7 @@ import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDt
 import { AgentKeyApplicationPickerComponent } from './agent-key-application-picker.component';
 import { AgentKeyProjectPickerComponent } from './agent-key-project-picker.component';
 import { ConnectAgentComponent } from './connect-agent.component';
+import { AREA_LABEL, DEPTH_WORD } from './agent-key-scopes-edit';
 
 export interface MintRequest {
   name: string;
@@ -41,23 +42,6 @@ export interface MintRequest {
 // section falls back to the raw key — but it puts a lower-case machine word
 // where a heading belongs, which is how `access` read until the switches for
 // who-can-reach-what arrived under it.
-const AREA_LABEL: Record<string, string> = {
-  apps: 'Applications',
-  observability: 'Logs and health',
-  backups: 'Backups',
-  migrations: 'Migrations',
-  mail: 'Mail',
-  access: 'Who has access',
-  infrastructure: 'Infrastructure',
-  platform: 'Platform updates',
-};
-
-const DEPTH_WORD: Record<string, string> = {
-  look: 'See',
-  change: 'Change',
-  destroy: 'Delete',
-};
-
 const LIFETIMES: { id: string; label: string; days: number | null }[] = [
   { id: '1d', label: '24 hours', days: 1 },
   { id: '30d', label: '30 days', days: 30 },
