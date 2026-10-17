@@ -18,6 +18,7 @@ import {
 } from '@ng-icons/lucide';
 import { AppConfigService } from '../../../../core/services/app-config.service';
 import { AgentSkill } from './agent-skill.service';
+import { mcpServerName } from './mcp-server-name';
 
 /**
  * The copy-paste-into-chat message, built once and shown identically whether
@@ -30,27 +31,46 @@ import { AgentSkill } from './agent-skill.service';
  * also why the text is the same in both modes. A key minted five minutes ago
  * and one minted five weeks ago are told to do the exact same thing.
  */
-function buildChatPrompt(mcpEndpoint: string): string {
+export function buildChatPrompt(mcpEndpoint: string): string {
+  const name = mcpServerName(mcpEndpoint);
+  const host = hostOf(mcpEndpoint);
   return [
-    "I'm connected to a Flui instance. Before anything else, get yourself talking to it directly.",
+    `I'm connected to the Flui instance at ${host}. Before anything else, get yourself talking to it directly.`,
     '',
-    '1. Ask the person guiding you to open a terminal — not this chat — and run, replacing the placeholder with the key they were given:',
+    '1. Ask the person guiding you to open a terminal (not this chat) and run, replacing the placeholder with the key they were given:',
     '',
     "   export FLUI_MCP_TOKEN='paste-the-key-here'",
     '',
-    '2. Then, in that same terminal, run whichever of these matches you:',
+    `2. Then, in that same terminal, run whichever of these matches you. The server is named \`${name}\` so it never collides with another Flui instance:`,
     '',
     '   Claude Code:',
-    `     claude mcp add --transport http flui ${mcpEndpoint} --header "Authorization: Bearer \${FLUI_MCP_TOKEN}"`,
+    `     claude mcp add --transport http ${name} ${mcpEndpoint} --header "Authorization: Bearer \${FLUI_MCP_TOKEN}"`,
     '',
     '   Codex CLI:',
-    `     codex mcp add flui --url ${mcpEndpoint} --bearer-token-env-var FLUI_MCP_TOKEN`,
+    `     codex mcp add ${name} --url ${mcpEndpoint} --bearer-token-env-var FLUI_MCP_TOKEN`,
     '',
     '   OpenCode (add to opencode.json):',
-    `     {"mcp":{"flui":{"type":"remote","url":"${mcpEndpoint}","headers":{"Authorization":"Bearer {env:FLUI_MCP_TOKEN}"}}}}`,
+    `     {"mcp":{"${name}":{"type":"remote","url":"${mcpEndpoint}","headers":{"Authorization":"Bearer {env:FLUI_MCP_TOKEN}"}}}}`,
     '',
-    "3. Once connected, call the `get_started` tool it offers — it explains how to operate here, in the same session, no separate fetch or header needed.",
+    `   If a server named \`${name}\` already exists, remove it first (\`claude mcp remove ${name}\` or \`codex mcp remove ${name}\`) or choose another name.`,
+    '',
+    '3. Reload so the new server is picked up:',
+    '',
+    '   Claude Code: run `/mcp` in the session, or restart it.',
+    '   Codex CLI and OpenCode: restart the session.',
+    '',
+    '4. Call the `get_started` tool it offers. It explains how to operate here, in the same session, with no separate fetch or header.',
+    '',
+    `5. Call \`my_permissions\` and check that \`instance.apiUrl\` is on ${host}, so you know you are connected to the right instance.`,
   ].join('\n');
+}
+
+function hostOf(endpoint: string): string {
+  try {
+    return new URL(endpoint).host;
+  } catch {
+    return endpoint;
+  }
 }
 
 @Component({
@@ -170,7 +190,7 @@ function buildChatPrompt(mcpEndpoint: string): string {
                   </span>
                   <p class="text-xs text-muted-foreground">
                     Already included the moment your agent calls <code>get_started</code> over MCP,
-                    in step 3 above — that is the same document. This is only for an agent that
+                    in step 4 above — that is the same document. This is only for an agent that
                     cannot make MCP tool calls at all; it carries no credential, so it is safe to
                     commit.
                   </p>
@@ -242,7 +262,7 @@ export class ConnectAgentComponent implements OnInit {
   protected readonly skillCopied = signal(false);
 
   protected readonly chatPrompt = computed(() =>
-    buildChatPrompt(`${this.cfg.apiBaseUrl}/api/v1/mcp`),
+    buildChatPrompt(`${this.cfg.apiBaseUrl || globalThis.location?.origin || ''}/api/v1/mcp`),
   );
 
   ngOnInit(): void {
