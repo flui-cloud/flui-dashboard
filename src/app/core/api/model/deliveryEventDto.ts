@@ -28,6 +28,10 @@ export interface DeliveryEventDto {
      */
     code?: number;
     subject?: string;
+    /**
+     * Which Flui flow sent it. `identity` is sign-in mail.
+     */
+    category?: string;
 }
 export namespace DeliveryEventDto {
     export const KindEnum = {

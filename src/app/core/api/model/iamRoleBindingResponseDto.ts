@@ -18,5 +18,13 @@ export interface IamRoleBindingResponseDto {
     scopeRef?: string | null;
     selector?: object | null;
     createdAt: string;
+    /**
+     * When the grant stops counting. Null is a standing grant.
+     */
+    expiresAt?: string | null;
+    /**
+     * Who created the grant.
+     */
+    grantedBy?: string | null;
 }
 

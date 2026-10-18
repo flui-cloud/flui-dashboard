@@ -16,6 +16,8 @@ import { HttpClient, HttpHeaders, HttpParams,
 import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
+// @ts-ignore
+import { InstallLogChunkDto } from '../model/installLogChunkDto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -94,7 +96,7 @@ export class InfrastructureOperationsService extends BaseService {
 
     /**
      * Download the captured install log for an operation
-     * Bootstrap output captured while a master node was created, as plain text — available live and after completion or failure. 404 if the operation never reached the tailing window (predates this feature, or was a node type not yet covered).
+     * Bootstrap output captured while a new node came up — a master until it wrote its kubeconfig, a single added worker until it joined — as plain text, available live and after completion or failure. 404 if the operation never reached the tailing window (predates this feature, or added several workers at once, whose logs are not captured).
      * @endpoint get /api/v1/infrastructure/operations/{operationId}/log
      * @param operationId Operation ID
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -201,6 +203,79 @@ export class InfrastructureOperationsService extends BaseService {
         return this.httpClient.request<object>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Read a node\&#39;s install log from a cursor onwards
+     * The same captured log as the download, read a piece at a time so it can be followed while the node installs: send &#x60;since&#x3D;0&#x60; first, then the &#x60;next&#x60; of each answer. &#x60;more&#x60; says another piece is already waiting; &#x60;done&#x60; says the operation has finished and the end was reached. An operation with nothing captured answers with an empty piece and a &#x60;note&#x60; saying why, not with an error.
+     * @endpoint get /api/v1/infrastructure/operations/{operationId}/log/chunk
+     * @param operationId Operation ID
+     * @param since Cursor: the &#x60;next&#x60; of the previous read, 0 to start.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public infrastructureOperationsControllerReadLogChunk(operationId: string, since?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<InstallLogChunkDto>;
+    public infrastructureOperationsControllerReadLogChunk(operationId: string, since?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<InstallLogChunkDto>>;
+    public infrastructureOperationsControllerReadLogChunk(operationId: string, since?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<InstallLogChunkDto>>;
+    public infrastructureOperationsControllerReadLogChunk(operationId: string, since?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (operationId === null || operationId === undefined) {
+            throw new Error('Required parameter operationId was null or undefined when calling infrastructureOperationsControllerReadLogChunk.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'since',
+            <any>since,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/operations/${this.configuration.encodeParam({name: "operationId", value: operationId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/log/chunk`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<InstallLogChunkDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

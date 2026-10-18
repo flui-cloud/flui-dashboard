@@ -92,6 +92,15 @@ export const routes: Routes = [
           ),
         title: 'Dashboard - flui.cloud',
       },
+      {
+        path: 'topology',
+        loadComponent: () =>
+          import('./features/components/topology/topology-page.component').then(
+            (m) => m.TopologyPageComponent
+          ),
+        data: { width: 'full' },
+        title: 'Topology - flui.cloud',
+      },
 
       ...databaseConsoleRoutes,
 

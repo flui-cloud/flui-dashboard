@@ -14,5 +14,17 @@ export interface StartPlatformUpdateDto {
      * The release to move to. Must match the one currently on offer — a mismatch is refused rather than resolved, so nobody applies a release they did not read about.
      */
     targetVersion: string;
+    /**
+     * The plan id `POST /platform/updates/plan` returned. With it, the whole update runs: backup, manifests, images, K3s and checks, and only as planned. Without it, only a release that moves nothing but images is applied, the way it always was.
+     */
+    planId?: string;
+    /**
+     * Skip the platform backup the update takes first. Needs `acknowledgement`; recorded in the operation and in the audit log.
+     */
+    withoutBackup?: boolean;
+    /**
+     * With `withoutBackup`, exactly: \"Without a backup, a database migration cannot be undone.\"
+     */
+    acknowledgement?: string;
 }
 

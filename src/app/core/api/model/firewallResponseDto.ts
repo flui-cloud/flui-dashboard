@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { HostFirewallLayerDto } from './hostFirewallLayerDto';
 import { FirewallRuleDto } from './firewallRuleDto';
 import { FirewallClusterInfoDto } from './firewallClusterInfoDto';
 
@@ -68,6 +69,10 @@ export interface FirewallResponseDto {
      * Cluster node information for coverage assessment
      */
     clusterInfo?: FirewallClusterInfoDto;
+    /**
+     * The host firewall on the nodes, beneath the provider firewall. Its failures never change reconciliationStatus.
+     */
+    hostLayer?: HostFirewallLayerDto;
     /**
      * Creation timestamp
      */

@@ -18,6 +18,16 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
 import { DbPitrRestoreDto } from '../model/dbPitrRestoreDto';
+// @ts-ignore
+import { DbPoolerClientCloseDto } from '../model/dbPoolerClientCloseDto';
+// @ts-ignore
+import { DbPoolerClientCloseResultDto } from '../model/dbPoolerClientCloseResultDto';
+// @ts-ignore
+import { DbSessionActionDto } from '../model/dbSessionActionDto';
+// @ts-ignore
+import { DbSessionActionResultDto } from '../model/dbSessionActionResultDto';
+// @ts-ignore
+import { DbSessionsResponseDto } from '../model/dbSessionsResponseDto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -149,6 +159,301 @@ export class DatabaseConsoleService extends BaseService {
         return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Close a connection held by the pooler
+     * Send pod and connectTime exactly as the session list returned them: a client that has ended since, or whose id now names another client, answers 409.
+     * @endpoint post /api/v1/applications/{id}/db/pooler/clients/{clientId}/close
+     * @param id 
+     * @param clientId 
+     * @param dbPoolerClientCloseDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public dbPoolerClientsControllerClose(id: string, clientId: number, dbPoolerClientCloseDto: DbPoolerClientCloseDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<DbPoolerClientCloseResultDto>;
+    public dbPoolerClientsControllerClose(id: string, clientId: number, dbPoolerClientCloseDto: DbPoolerClientCloseDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<DbPoolerClientCloseResultDto>>;
+    public dbPoolerClientsControllerClose(id: string, clientId: number, dbPoolerClientCloseDto: DbPoolerClientCloseDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<DbPoolerClientCloseResultDto>>;
+    public dbPoolerClientsControllerClose(id: string, clientId: number, dbPoolerClientCloseDto: DbPoolerClientCloseDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling dbPoolerClientsControllerClose.');
+        }
+        if (clientId === null || clientId === undefined) {
+            throw new Error('Required parameter clientId was null or undefined when calling dbPoolerClientsControllerClose.');
+        }
+        if (dbPoolerClientCloseDto === null || dbPoolerClientCloseDto === undefined) {
+            throw new Error('Required parameter dbPoolerClientCloseDto was null or undefined when calling dbPoolerClientsControllerClose.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/db/pooler/clients/${this.configuration.encodeParam({name: "clientId", value: clientId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/close`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<DbPoolerClientCloseResultDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: dbPoolerClientCloseDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Cancel the statement a session is running
+     * Send backendStart exactly as the session list returned it: a session that has ended since, or whose pid now belongs to another session, answers 409.
+     * @endpoint post /api/v1/applications/{id}/db/sessions/{pid}/cancel
+     * @param id 
+     * @param pid 
+     * @param dbSessionActionDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public dbSessionsControllerCancel(id: string, pid: number, dbSessionActionDto: DbSessionActionDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<DbSessionActionResultDto>;
+    public dbSessionsControllerCancel(id: string, pid: number, dbSessionActionDto: DbSessionActionDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<DbSessionActionResultDto>>;
+    public dbSessionsControllerCancel(id: string, pid: number, dbSessionActionDto: DbSessionActionDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<DbSessionActionResultDto>>;
+    public dbSessionsControllerCancel(id: string, pid: number, dbSessionActionDto: DbSessionActionDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling dbSessionsControllerCancel.');
+        }
+        if (pid === null || pid === undefined) {
+            throw new Error('Required parameter pid was null or undefined when calling dbSessionsControllerCancel.');
+        }
+        if (dbSessionActionDto === null || dbSessionActionDto === undefined) {
+            throw new Error('Required parameter dbSessionActionDto was null or undefined when calling dbSessionsControllerCancel.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/db/sessions/${this.configuration.encodeParam({name: "pid", value: pid, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/cancel`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<DbSessionActionResultDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: dbSessionActionDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Sessions connected to a managed PostgreSQL
+     * Who is connected, what each session is doing (statement with literals masked), how long, what it waits for and which sessions block which. Idle sessions are left out unless all&#x3D;true.
+     * @endpoint get /api/v1/applications/{id}/db/sessions
+     * @param id 
+     * @param all 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public dbSessionsControllerList(id: string, all?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<DbSessionsResponseDto>;
+    public dbSessionsControllerList(id: string, all?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<DbSessionsResponseDto>>;
+    public dbSessionsControllerList(id: string, all?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<DbSessionsResponseDto>>;
+    public dbSessionsControllerList(id: string, all?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling dbSessionsControllerList.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'all',
+            <any>all,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/db/sessions`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<DbSessionsResponseDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Close a session
+     * Send backendStart exactly as the session list returned it: a session that has ended since, or whose pid now belongs to another session, answers 409.
+     * @endpoint post /api/v1/applications/{id}/db/sessions/{pid}/terminate
+     * @param id 
+     * @param pid 
+     * @param dbSessionActionDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public dbSessionsControllerTerminate(id: string, pid: number, dbSessionActionDto: DbSessionActionDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<DbSessionActionResultDto>;
+    public dbSessionsControllerTerminate(id: string, pid: number, dbSessionActionDto: DbSessionActionDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<DbSessionActionResultDto>>;
+    public dbSessionsControllerTerminate(id: string, pid: number, dbSessionActionDto: DbSessionActionDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<DbSessionActionResultDto>>;
+    public dbSessionsControllerTerminate(id: string, pid: number, dbSessionActionDto: DbSessionActionDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling dbSessionsControllerTerminate.');
+        }
+        if (pid === null || pid === undefined) {
+            throw new Error('Required parameter pid was null or undefined when calling dbSessionsControllerTerminate.');
+        }
+        if (dbSessionActionDto === null || dbSessionActionDto === undefined) {
+            throw new Error('Required parameter dbSessionActionDto was null or undefined when calling dbSessionsControllerTerminate.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/db/sessions/${this.configuration.encodeParam({name: "pid", value: pid, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/terminate`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<DbSessionActionResultDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: dbSessionActionDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

@@ -11,6 +11,18 @@
 
 export interface ScalingActuationDto { 
     /**
+     * `alarm-only` where the provider has no create API, whatever the group says
+     */
+    mode: ScalingActuationDto.ModeEnum;
+    /**
+     * The mode in the same words on every surface: \"Manual — Flui does not buy\", \"Automatic — buys up to 3 nodes (spending ceiling €30/mo)\", \"Alarm only — Flui cannot buy on contabo\"
+     */
+    label: string;
+    /**
+     * True where a person may expect scaling that will not happen: a group Flui could buy for, set to manual
+     */
+    attention: boolean;
+    /**
      * Whether a decision by this group would reach a provider
      */
     acts: boolean;
@@ -19,4 +31,13 @@ export interface ScalingActuationDto {
      */
     says: string;
 }
+export namespace ScalingActuationDto {
+    export const ModeEnum = {
+        Automatic: 'automatic',
+        Manual: 'manual',
+        AlarmOnly: 'alarm-only'
+    } as const;
+    export type ModeEnum = typeof ModeEnum[keyof typeof ModeEnum];
+}
+
 

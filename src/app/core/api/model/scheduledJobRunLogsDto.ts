@@ -12,8 +12,12 @@
 export interface ScheduledJobRunLogsDto { 
     jobName: string;
     /**
-     * Pod logs for the run (empty if no pod yet).
+     * Output of the run (empty when there is none).
      */
     logs: string;
+    /**
+     * Why the run failed, when it did.
+     */
+    reason?: string;
 }
 

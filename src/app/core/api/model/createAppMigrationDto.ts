@@ -22,6 +22,14 @@ export interface CreateAppMigrationDto {
      * manual parks the migration at READY (workload up on the destination) until the cutover endpoint is called.
      */
     cutover?: CreateAppMigrationDto.CutoverEnum;
+    /**
+     * Backup destination the volumes move through. Defaults to the one protecting the application, or to your only one.
+     */
+    backupDestinationId?: string;
+    /**
+     * Forward clients that still resolve the source cluster to the destination after the DNS switch. When the bridge cannot be used the migration moves DNS only and says why.
+     */
+    bridge?: boolean;
 }
 export namespace CreateAppMigrationDto {
     export const CutoverEnum = {

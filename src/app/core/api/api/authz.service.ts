@@ -19,6 +19,12 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 // @ts-ignore
 import { AuthzInstallResponseDto } from '../model/authzInstallResponseDto';
 // @ts-ignore
+import { ForwardAuthDecideDto } from '../model/forwardAuthDecideDto';
+// @ts-ignore
+import { ForwardAuthVerdictDto } from '../model/forwardAuthVerdictDto';
+// @ts-ignore
+import { GatewaySsoCodeDto } from '../model/gatewaySsoCodeDto';
+// @ts-ignore
 import { InstallAuthzDto } from '../model/installAuthzDto';
 
 // @ts-ignore
@@ -35,6 +41,80 @@ export class AuthzService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
+    }
+
+    /**
+     * Sign-in decision asked by a cluster relay
+     * Called by the sign-in relay running on a cluster the API does not run on. The relay sends the page, method, Accept and Cookie of the request it holds in fields of its own, and a Flui credential, if the request had one, as its own Authorization header. The answer says what the relay must reply: let the request through with the given headers, send the browser to an address (setting the route\&#39;s cookie), or refuse it.
+     * @endpoint post /api/v1/authz/gateway/{endpointId}/decide
+     * @param endpointId 
+     * @param forwardAuthDecideDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerDecideForRelay(endpointId: string, forwardAuthDecideDto: ForwardAuthDecideDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ForwardAuthVerdictDto>;
+    public authzControllerDecideForRelay(endpointId: string, forwardAuthDecideDto: ForwardAuthDecideDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ForwardAuthVerdictDto>>;
+    public authzControllerDecideForRelay(endpointId: string, forwardAuthDecideDto: ForwardAuthDecideDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ForwardAuthVerdictDto>>;
+    public authzControllerDecideForRelay(endpointId: string, forwardAuthDecideDto: ForwardAuthDecideDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (endpointId === null || endpointId === undefined) {
+            throw new Error('Required parameter endpointId was null or undefined when calling authzControllerDecideForRelay.');
+        }
+        if (forwardAuthDecideDto === null || forwardAuthDecideDto === undefined) {
+            throw new Error('Required parameter forwardAuthDecideDto was null or undefined when calling authzControllerDecideForRelay.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway/${this.configuration.encodeParam({name: "endpointId", value: endpointId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/decide`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ForwardAuthVerdictDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: forwardAuthDecideDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
@@ -472,8 +552,494 @@ export class AuthzService extends BaseService {
     }
 
     /**
+     * ForwardAuth decision for one gateway SSO route
+     * Called by Traefik on every request to a route whose gateway config enables SSO; the route id is part of the address the route was published with. Accepts a Flui credential (Bearer) or the route\&#39;s own sign-in cookie and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application. A browser without either is redirected to sign in; any other client gets 401.
+     * @endpoint delete /api/v1/authz/gateway/{endpointId}
+     * @param endpointId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayRouteDelete(endpointId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayRouteDelete(endpointId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayRouteDelete(endpointId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayRouteDelete(endpointId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (endpointId === null || endpointId === undefined) {
+            throw new Error('Required parameter endpointId was null or undefined when calling authzControllerGatewayRouteDelete.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway/${this.configuration.encodeParam({name: "endpointId", value: endpointId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for one gateway SSO route
+     * Called by Traefik on every request to a route whose gateway config enables SSO; the route id is part of the address the route was published with. Accepts a Flui credential (Bearer) or the route\&#39;s own sign-in cookie and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application. A browser without either is redirected to sign in; any other client gets 401.
+     * @endpoint get /api/v1/authz/gateway/{endpointId}
+     * @param endpointId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayRouteGet(endpointId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayRouteGet(endpointId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayRouteGet(endpointId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayRouteGet(endpointId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (endpointId === null || endpointId === undefined) {
+            throw new Error('Required parameter endpointId was null or undefined when calling authzControllerGatewayRouteGet.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway/${this.configuration.encodeParam({name: "endpointId", value: endpointId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for one gateway SSO route
+     * Called by Traefik on every request to a route whose gateway config enables SSO; the route id is part of the address the route was published with. Accepts a Flui credential (Bearer) or the route\&#39;s own sign-in cookie and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application. A browser without either is redirected to sign in; any other client gets 401.
+     * @endpoint head /api/v1/authz/gateway/{endpointId}
+     * @param endpointId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayRouteHead(endpointId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayRouteHead(endpointId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayRouteHead(endpointId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayRouteHead(endpointId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (endpointId === null || endpointId === undefined) {
+            throw new Error('Required parameter endpointId was null or undefined when calling authzControllerGatewayRouteHead.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway/${this.configuration.encodeParam({name: "endpointId", value: endpointId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('head', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for one gateway SSO route
+     * Called by Traefik on every request to a route whose gateway config enables SSO; the route id is part of the address the route was published with. Accepts a Flui credential (Bearer) or the route\&#39;s own sign-in cookie and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application. A browser without either is redirected to sign in; any other client gets 401.
+     * @endpoint options /api/v1/authz/gateway/{endpointId}
+     * @param endpointId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayRouteOptions(endpointId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayRouteOptions(endpointId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayRouteOptions(endpointId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayRouteOptions(endpointId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (endpointId === null || endpointId === undefined) {
+            throw new Error('Required parameter endpointId was null or undefined when calling authzControllerGatewayRouteOptions.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway/${this.configuration.encodeParam({name: "endpointId", value: endpointId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('options', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for one gateway SSO route
+     * Called by Traefik on every request to a route whose gateway config enables SSO; the route id is part of the address the route was published with. Accepts a Flui credential (Bearer) or the route\&#39;s own sign-in cookie and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application. A browser without either is redirected to sign in; any other client gets 401.
+     * @endpoint patch /api/v1/authz/gateway/{endpointId}
+     * @param endpointId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayRoutePatch(endpointId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayRoutePatch(endpointId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayRoutePatch(endpointId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayRoutePatch(endpointId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (endpointId === null || endpointId === undefined) {
+            throw new Error('Required parameter endpointId was null or undefined when calling authzControllerGatewayRoutePatch.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway/${this.configuration.encodeParam({name: "endpointId", value: endpointId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('patch', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for one gateway SSO route
+     * Called by Traefik on every request to a route whose gateway config enables SSO; the route id is part of the address the route was published with. Accepts a Flui credential (Bearer) or the route\&#39;s own sign-in cookie and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application. A browser without either is redirected to sign in; any other client gets 401.
+     * @endpoint post /api/v1/authz/gateway/{endpointId}
+     * @param endpointId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayRoutePost(endpointId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayRoutePost(endpointId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayRoutePost(endpointId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayRoutePost(endpointId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (endpointId === null || endpointId === undefined) {
+            throw new Error('Required parameter endpointId was null or undefined when calling authzControllerGatewayRoutePost.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway/${this.configuration.encodeParam({name: "endpointId", value: endpointId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * ForwardAuth decision for one gateway SSO route
+     * Called by Traefik on every request to a route whose gateway config enables SSO; the route id is part of the address the route was published with. Accepts a Flui credential (Bearer) or the route\&#39;s own sign-in cookie and, when the route sets a minRole, asks the PolicyEngine whether the user holds it on the target application. A browser without either is redirected to sign in; any other client gets 401.
+     * @endpoint put /api/v1/authz/gateway/{endpointId}
+     * @param endpointId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewayRoutePut(endpointId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewayRoutePut(endpointId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewayRoutePut(endpointId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewayRoutePut(endpointId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (endpointId === null || endpointId === undefined) {
+            throw new Error('Required parameter endpointId was null or undefined when calling authzControllerGatewayRoutePut.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway/${this.configuration.encodeParam({name: "endpointId", value: endpointId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('put', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * One-time sign-in code for a gateway route
+     * Called by the dashboard for a signed-in person: returns the address on the route\&#39;s own host that exchanges the code for the route\&#39;s sign-in cookie. Refused unless the person may open the route and the return address is on the route\&#39;s host.
+     * @endpoint post /api/v1/authz/gateway/{endpointId}/sso-code
+     * @param endpointId 
+     * @param gatewaySsoCodeDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authzControllerGatewaySsoCode(endpointId: string, gatewaySsoCodeDto: GatewaySsoCodeDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public authzControllerGatewaySsoCode(endpointId: string, gatewaySsoCodeDto: GatewaySsoCodeDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public authzControllerGatewaySsoCode(endpointId: string, gatewaySsoCodeDto: GatewaySsoCodeDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public authzControllerGatewaySsoCode(endpointId: string, gatewaySsoCodeDto: GatewaySsoCodeDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (endpointId === null || endpointId === undefined) {
+            throw new Error('Required parameter endpointId was null or undefined when calling authzControllerGatewaySsoCode.');
+        }
+        if (gatewaySsoCodeDto === null || gatewaySsoCodeDto === undefined) {
+            throw new Error('Required parameter gatewaySsoCodeDto was null or undefined when calling authzControllerGatewaySsoCode.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/authz/gateway/${this.configuration.encodeParam({name: "endpointId", value: endpointId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/sso-code`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: gatewaySsoCodeDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * ForwardAuth decision for internal apps
-     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
+     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer), checks that the targeted app exists and has exposure&#x3D;internal, and that the caller holds app:read on it and data:access. Emits an audit event on each call.
      * @endpoint delete /api/v1/authz/internal-app
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -528,7 +1094,7 @@ export class AuthzService extends BaseService {
 
     /**
      * ForwardAuth decision for internal apps
-     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
+     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer), checks that the targeted app exists and has exposure&#x3D;internal, and that the caller holds app:read on it and data:access. Emits an audit event on each call.
      * @endpoint get /api/v1/authz/internal-app
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -583,7 +1149,7 @@ export class AuthzService extends BaseService {
 
     /**
      * ForwardAuth decision for internal apps
-     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
+     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer), checks that the targeted app exists and has exposure&#x3D;internal, and that the caller holds app:read on it and data:access. Emits an audit event on each call.
      * @endpoint head /api/v1/authz/internal-app
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -638,7 +1204,7 @@ export class AuthzService extends BaseService {
 
     /**
      * ForwardAuth decision for internal apps
-     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
+     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer), checks that the targeted app exists and has exposure&#x3D;internal, and that the caller holds app:read on it and data:access. Emits an audit event on each call.
      * @endpoint options /api/v1/authz/internal-app
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -693,7 +1259,7 @@ export class AuthzService extends BaseService {
 
     /**
      * ForwardAuth decision for internal apps
-     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
+     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer), checks that the targeted app exists and has exposure&#x3D;internal, and that the caller holds app:read on it and data:access. Emits an audit event on each call.
      * @endpoint patch /api/v1/authz/internal-app
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -748,7 +1314,7 @@ export class AuthzService extends BaseService {
 
     /**
      * ForwardAuth decision for internal apps
-     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
+     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer), checks that the targeted app exists and has exposure&#x3D;internal, and that the caller holds app:read on it and data:access. Emits an audit event on each call.
      * @endpoint post /api/v1/authz/internal-app
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -803,7 +1369,7 @@ export class AuthzService extends BaseService {
 
     /**
      * ForwardAuth decision for internal apps
-     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer) and checks that the targeted app exists and has exposure&#x3D;internal. Emits an audit event on each call.
+     * Called by the user-cluster Ingress on every request to a &#x60;*.internal.*&#x60; host. Validates the Flui session (JWT in cookie or Bearer), checks that the targeted app exists and has exposure&#x3D;internal, and that the caller holds app:read on it and data:access. Emits an audit event on each call.
      * @endpoint put /api/v1/authz/internal-app
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.

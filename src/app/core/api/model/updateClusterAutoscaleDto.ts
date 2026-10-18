@@ -13,8 +13,5 @@ export interface UpdateClusterAutoscaleDto {
     autoscalingEnabled?: boolean;
     minNodes?: number;
     maxNodes?: number;
-    scaleUpMemoryPct?: number;
-    scaleUpCpuPct?: number;
-    cooldownSeconds?: number;
 }
 

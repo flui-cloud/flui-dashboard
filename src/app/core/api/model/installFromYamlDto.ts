@@ -21,7 +21,7 @@ export interface InstallFromYamlDto {
      */
     clusterId: string;
     /**
-     * Project the installed applications belong to, and therefore their namespace. Omitted: the installer's personal project.
+     * Project the installed applications belong to, and therefore their namespace. Omitted: the installer\'s personal project.
      */
     projectId?: string;
     /**

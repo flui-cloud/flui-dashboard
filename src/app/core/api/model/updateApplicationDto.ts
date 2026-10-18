@@ -26,7 +26,7 @@ export interface UpdateApplicationDto {
      */
     description?: string;
     /**
-     * Updated source configuration
+     * Updated source configuration. A registryAuth credential is refused.
      */
     sourceConfig?: object;
     /**

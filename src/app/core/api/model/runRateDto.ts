@@ -12,7 +12,7 @@ import { BillingBreakdownDto } from './billingBreakdownDto';
 
 export interface RunRateDto { 
     /**
-     * Cost of running the current configuration (active nodes + active volumes) for a full month. Independent of how many hours have elapsed.
+     * Monthly cost of the current configuration (active nodes + active volumes) over a whole month. Not a forecast of this month: see forecast.
      */
     monthlyGross: string;
     monthlyNet: string;

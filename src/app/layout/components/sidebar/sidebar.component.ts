@@ -1,6 +1,7 @@
+import { SystemAppsPreference } from '../../../core/services/system-apps-preference.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { userBadge } from './user-badge';
-import { Component, computed, inject, input, signal, viewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, computed, inject, input, viewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideLayoutDashboard,
@@ -47,6 +48,7 @@ import {
   lucideGithub,
   lucideBot,
   lucideBookOpen,
+  lucideWaypoints,
 } from '@ng-icons/lucide';
 import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { WORKLOAD_LIST_LABEL, WORKLOAD_LIST_ROUTE, openedWorkloadList } from '../../../features/model/workload-list';
@@ -98,7 +100,6 @@ import {
   INFRASTRUCTURE_ITEMS,
   INFRASTRUCTURE_SECTION_BY_LABEL,
   MANAGEMENT_SECTION_BY_LABEL,
-  SHOW_SYSTEM_APPS_KEY,
 } from './sidebar-nav.config';
 
 @Component({
@@ -172,6 +173,7 @@ import {
       lucideGithub,
       lucideBot,
       lucideBookOpen,
+      lucideWaypoints,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -257,23 +259,15 @@ export class SidebarComponent implements OnInit {
     this.infrastructureItems().some((item) => this._search.matches(item)),
   );
 
-  protected readonly showSystemApps = signal<boolean>(this._readShowSystemApps());
+  private readonly _systemApps = inject(SystemAppsPreference);
+  protected readonly showSystemApps = this._systemApps.shown;
 
   protected readonly _workloadsGroup = viewChild('workloadsGroup', {
     read: BrnSidebarGroupDirective,
   });
 
-  private _readShowSystemApps(): boolean {
-    if (typeof localStorage === 'undefined') return false;
-    return localStorage.getItem(SHOW_SYSTEM_APPS_KEY) === 'true';
-  }
-
   toggleShowSystemApps(): void {
-    const next = !this.showSystemApps();
-    this.showSystemApps.set(next);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(SHOW_SYSTEM_APPS_KEY, String(next));
-    }
+    this._systemApps.toggle();
   }
 
   protected readonly _computedHlmMenuClass = computed(() =>
@@ -375,8 +369,21 @@ export class SidebarComponent implements OnInit {
 
   readonly homeHasMatch = computed(() => this._search.matches(this._homeItem));
 
+  private readonly _topologyItem: SidebarNavItem = {
+    label: 'Topology',
+    link: '/topology',
+    routerLinkActive: 'active',
+    icon: 'lucideWaypoints',
+    keywords: ['map', 'service map', 'servers', 'replicas', 'topology'],
+  };
+
+  readonly topologyShown = computed(
+    () => this.admitted(this._topologyItem) && this._search.matches(this._topologyItem),
+  );
+
   readonly allNavItems = computed<SidebarNavItem[]>(() => [
     this._homeItem,
+    ...(this.admitted(this._topologyItem) ? [this._topologyItem] : []),
     ...this.clusterItems(),
     ...this.workloadItems(),
     ...this.deployItems,

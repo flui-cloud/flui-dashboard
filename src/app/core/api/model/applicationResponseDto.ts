@@ -7,9 +7,9 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { AvailabilityEntryDto } from './availabilityEntryDto';
 import { ApplicationAccessDto } from './applicationAccessDto';
 import { AppOperationResponseDto } from './appOperationResponseDto';
+import { AvailabilityEntryDto } from './availabilityEntryDto';
 
 
 export interface ApplicationResponseDto { 

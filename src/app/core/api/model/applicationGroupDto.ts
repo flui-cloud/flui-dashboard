@@ -49,9 +49,9 @@ export interface ApplicationGroupDto {
      */
     componentCount: number;
     /**
-     * Replicas asked for across every component; null when no component says.
+     * Replicas asked for across every component; null when no component says. For a standalone app, its own.
      */
-    replicas?: number | null;
+    replicas: number | null;
     /**
      * Component apps; a single-element array for standalone groups.
      */

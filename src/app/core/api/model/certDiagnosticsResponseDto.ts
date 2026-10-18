@@ -8,10 +8,15 @@
  * Do not edit the class manually.
  */
 import { CertificateDiagnosticsDto } from './certificateDiagnosticsDto';
+import { AcmeResolversDto } from './acmeResolversDto';
 
 
 export interface CertDiagnosticsResponseDto { 
     clusterId: string;
+    /**
+     * Null when cert-manager could not be read.
+     */
+    acmeResolvers: AcmeResolversDto | null;
     namespace: string;
     certificates: Array<CertificateDiagnosticsDto>;
 }

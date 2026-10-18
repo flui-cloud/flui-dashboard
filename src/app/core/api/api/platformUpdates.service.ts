@@ -17,6 +17,16 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
+import { ApplyInstallValuesDto } from '../model/applyInstallValuesDto';
+// @ts-ignore
+import { ApplyManifestsDto } from '../model/applyManifestsDto';
+// @ts-ignore
+import { PlanInstallValuesDto } from '../model/planInstallValuesDto';
+// @ts-ignore
+import { PlanManifestsDto } from '../model/planManifestsDto';
+// @ts-ignore
+import { PlanPlatformUpgradeDto } from '../model/planPlatformUpgradeDto';
+// @ts-ignore
 import { PlatformUpdateOperationDto } from '../model/platformUpdateOperationDto';
 // @ts-ignore
 import { PlatformUpdateStatusDto } from '../model/platformUpdateStatusDto';
@@ -40,17 +50,167 @@ export class PlatformUpdatesService extends BaseService {
     }
 
     /**
-     * Apply a manifest plan that was previewed
-     * Recomputes the plan and refuses if it differs, so only what was previewed — against the state it was previewed on — can be written. It never writes a file that carries a Secret, never supplies a value, and never deletes.
-     * @endpoint post /api/v1/platform/updates/manifests/apply
+     * Record the proven values of a reconstruction that was previewed
+     * Recomputes the reconstruction and refuses if it differs from the plan. Writes only proven values, and never over a record the installer or an earlier reconstruction already wrote.
+     * @endpoint post /api/v1/platform/updates/manifests/values/apply
+     * @param applyInstallValuesDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public platformUpdatesControllerApplyManifests(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public platformUpdatesControllerApplyManifests(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public platformUpdatesControllerApplyManifests(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public platformUpdatesControllerApplyManifests(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public installValuesControllerApply(applyInstallValuesDto: ApplyInstallValuesDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public installValuesControllerApply(applyInstallValuesDto: ApplyInstallValuesDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public installValuesControllerApply(applyInstallValuesDto: ApplyInstallValuesDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public installValuesControllerApply(applyInstallValuesDto: ApplyInstallValuesDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (applyInstallValuesDto === null || applyInstallValuesDto === undefined) {
+            throw new Error('Required parameter applyInstallValuesDto was null or undefined when calling installValuesControllerApply.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/platform/updates/manifests/values/apply`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: applyInstallValuesDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Which values a cluster master was built with, proven file by file
+     * For an installation that predates the record the installer now keeps. Without a clusterId, the control cluster. Gathers candidate values from Flui and the running platform, and keeps one only when rendering a file with it reproduces the copy on the master exactly. Reads only digests from the master, never supplies a secret, and writes nothing. The plan id it returns is what the apply call must be given.
+     * @endpoint post /api/v1/platform/updates/manifests/values/plan
+     * @param planInstallValuesDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public installValuesControllerPlan(planInstallValuesDto: PlanInstallValuesDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public installValuesControllerPlan(planInstallValuesDto: PlanInstallValuesDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public installValuesControllerPlan(planInstallValuesDto: PlanInstallValuesDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public installValuesControllerPlan(planInstallValuesDto: PlanInstallValuesDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (planInstallValuesDto === null || planInstallValuesDto === undefined) {
+            throw new Error('Required parameter planInstallValuesDto was null or undefined when calling installValuesControllerPlan.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/platform/updates/manifests/values/plan`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: planInstallValuesDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * What upgrading K3s to this release would do, per cluster
+     * Reads each cluster’s nodes and reports the K3s versions it would pass through, one minor version at a time, and what stops it: a node that is not Ready, a missing upgrade controller, or a minor version no published release ships. Changes nothing.
+     * @endpoint get /api/v1/platform/updates/k3s/plan
+     * @param clusterId The cluster to plan for. Omitted means every ready cluster, workload clusters first and the control last.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public k3sUpgradeControllerPlan(clusterId?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public k3sUpgradeControllerPlan(clusterId?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public k3sUpgradeControllerPlan(clusterId?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public k3sUpgradeControllerPlan(clusterId?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'clusterId',
+            <any>clusterId,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -79,11 +239,81 @@ export class PlatformUpdatesService extends BaseService {
             }
         }
 
+        let localVarPath = `/api/v1/platform/updates/k3s/plan`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Apply a manifest plan that was previewed
+     * Recomputes the plan and refuses if it differs, so only what was previewed — against the state it was previewed on — can be written. It never writes a file that carries a Secret or needs a secret value, renders a templated file only with values proven for this installation (image tags are the ones running), and never deletes.
+     * @endpoint post /api/v1/platform/updates/manifests/apply
+     * @param applyManifestsDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public platformUpdatesControllerApplyManifests(applyManifestsDto: ApplyManifestsDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public platformUpdatesControllerApplyManifests(applyManifestsDto: ApplyManifestsDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public platformUpdatesControllerApplyManifests(applyManifestsDto: ApplyManifestsDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public platformUpdatesControllerApplyManifests(applyManifestsDto: ApplyManifestsDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (applyManifestsDto === null || applyManifestsDto === undefined) {
+            throw new Error('Required parameter applyManifestsDto was null or undefined when calling platformUpdatesControllerApplyManifests.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
         let localVarPath = `/api/v1/platform/updates/manifests/apply`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: applyManifestsDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -152,7 +382,7 @@ export class PlatformUpdatesService extends BaseService {
 
     /**
      * The update running right now, if any
-     * Poll this while an update is in flight. It keeps answering across the API restart — from the outgoing pod, then from the one that replaced it.
+     * Poll this while an update is in flight. It keeps answering across the API restart — from the outgoing pod, then from the one that replaced it. A planned update also reports its phases, each cluster it reached and, for K3s, every node.
      * @endpoint get /api/v1/platform/updates/current
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -331,17 +561,21 @@ export class PlatformUpdatesService extends BaseService {
     }
 
     /**
-     * What a release would change in the manifests on the master, without changing it
-     * Compares the files k3s re-applies at every start with the ones a release ships, and reports what it would replace, what it would add, and — the part that matters — what it will not touch and why. Writes nothing. The plan id it returns is what the apply call must be given.
-     * @endpoint post /api/v1/platform/updates/manifests/plan
+     * Plan a platform update, phase by phase, without changing anything
+     * Backup, system manifests (the control first), platform images (the API last), K3s (workload clusters first, the control last) and the checks: what each would do, and what stops it. A missing platform backup is the one blocker an acknowledgement may pass. Reads each cluster, writes nothing. Apply with the plan id it returns.
+     * @endpoint post /api/v1/platform/updates/plan
+     * @param planPlatformUpgradeDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public platformUpdatesControllerPlanManifests(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public platformUpdatesControllerPlanManifests(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public platformUpdatesControllerPlanManifests(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public platformUpdatesControllerPlanManifests(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public platformUpdatesControllerPlan(planPlatformUpgradeDto: PlanPlatformUpgradeDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public platformUpdatesControllerPlan(planPlatformUpgradeDto: PlanPlatformUpgradeDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public platformUpdatesControllerPlan(planPlatformUpgradeDto: PlanPlatformUpgradeDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public platformUpdatesControllerPlan(planPlatformUpgradeDto: PlanPlatformUpgradeDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (planPlatformUpgradeDto === null || planPlatformUpgradeDto === undefined) {
+            throw new Error('Required parameter planPlatformUpgradeDto was null or undefined when calling platformUpdatesControllerPlan.');
+        }
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -359,6 +593,84 @@ export class PlatformUpdatesService extends BaseService {
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
 
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/platform/updates/plan`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: planPlatformUpgradeDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * What a release would change in the manifests on the master, without changing it
+     * Compares the files k3s re-applies at every start with the ones a release ships, and reports what it would replace, what it would add, and — the part that matters — what it will not touch and why. Writes nothing. The plan id it returns is what the apply call must be given.
+     * @endpoint post /api/v1/platform/updates/manifests/plan
+     * @param planManifestsDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public platformUpdatesControllerPlanManifests(planManifestsDto: PlanManifestsDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public platformUpdatesControllerPlanManifests(planManifestsDto: PlanManifestsDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public platformUpdatesControllerPlanManifests(planManifestsDto: PlanManifestsDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public platformUpdatesControllerPlanManifests(planManifestsDto: PlanManifestsDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (planManifestsDto === null || planManifestsDto === undefined) {
+            throw new Error('Required parameter planManifestsDto was null or undefined when calling platformUpdatesControllerPlanManifests.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
             if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
@@ -375,6 +687,7 @@ export class PlatformUpdatesService extends BaseService {
         return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: planManifestsDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -441,8 +754,68 @@ export class PlatformUpdatesService extends BaseService {
     }
 
     /**
+     * Resume a planned update that stopped
+     * Starts the phase that failed again, from the cluster it reached. Every phase first checks what is already in place, so nothing done is repeated.
+     * @endpoint post /api/v1/platform/updates/{id}/resume
+     * @param id 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public platformUpdatesControllerResume(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<PlatformUpdateOperationDto>;
+    public platformUpdatesControllerResume(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<PlatformUpdateOperationDto>>;
+    public platformUpdatesControllerResume(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<PlatformUpdateOperationDto>>;
+    public platformUpdatesControllerResume(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling platformUpdatesControllerResume.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/platform/updates/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/resume`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<PlatformUpdateOperationDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Apply a platform release
-     * Queues the update: components first, the API last. Refuses when a release is already being applied, when the offered release has changed since it was read, or when the release needs the CLI.
+     * With a plan id: runs the planned update — backup, manifests, images, K3s, checks — and refuses when the plan changed since it was read. Without one: moves the component images only, components first and the API last, and refuses a release that also changes K3s or the manifests. Refuses when a release is already being applied or the offered release changed.
      * @endpoint post /api/v1/platform/updates
      * @param startPlatformUpdateDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

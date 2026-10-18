@@ -21,6 +21,8 @@ import { ConnectMailProviderDto } from '../model/connectMailProviderDto';
 // @ts-ignore
 import { DeliveryEventDto } from '../model/deliveryEventDto';
 // @ts-ignore
+import { IdentityEmailStatusDto } from '../model/identityEmailStatusDto';
+// @ts-ignore
 import { MailConnectResultDto } from '../model/mailConnectResultDto';
 // @ts-ignore
 import { MailConnectionDto } from '../model/mailConnectionDto';
@@ -763,14 +765,15 @@ export class MailService extends BaseService {
      * @param q Substring of either address.
      * @param limit Up to 200. Defaults to 50.
      * @param offset 
+     * @param category Only mail sent by one Flui flow, e.g. &#x60;identity&#x60; for sign-in mail.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public mailControllerEvents(since?: string, until?: string, kind?: string, sender?: string, q?: string, limit?: string, offset?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<DeliveryEventDto>>;
-    public mailControllerEvents(since?: string, until?: string, kind?: string, sender?: string, q?: string, limit?: string, offset?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<DeliveryEventDto>>>;
-    public mailControllerEvents(since?: string, until?: string, kind?: string, sender?: string, q?: string, limit?: string, offset?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<DeliveryEventDto>>>;
-    public mailControllerEvents(since?: string, until?: string, kind?: string, sender?: string, q?: string, limit?: string, offset?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public mailControllerEvents(since?: string, until?: string, kind?: string, sender?: string, q?: string, limit?: string, offset?: string, category?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<DeliveryEventDto>>;
+    public mailControllerEvents(since?: string, until?: string, kind?: string, sender?: string, q?: string, limit?: string, offset?: string, category?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<DeliveryEventDto>>>;
+    public mailControllerEvents(since?: string, until?: string, kind?: string, sender?: string, q?: string, limit?: string, offset?: string, category?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<DeliveryEventDto>>>;
+    public mailControllerEvents(since?: string, until?: string, kind?: string, sender?: string, q?: string, limit?: string, offset?: string, category?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
 
@@ -832,6 +835,15 @@ export class MailService extends BaseService {
             localVarQueryParameters,
             'offset',
             <any>offset,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'category',
+            <any>category,
             QueryParamStyle.Form,
             true,
         );
@@ -950,6 +962,118 @@ export class MailService extends BaseService {
             {
                 context: localVarHttpContext,
                 params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Whether sign-in mail goes through Flui
+     * The identity provider sends its verification and password-reset mail to Flui, which sends it through the transactional provider. Reports the email provider kept at the identity provider, the last delivery and the last error.
+     * @endpoint get /api/v1/mail/identity
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public mailControllerIdentityStatus(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<IdentityEmailStatusDto>;
+    public mailControllerIdentityStatus(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<IdentityEmailStatusDto>>;
+    public mailControllerIdentityStatus(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<IdentityEmailStatusDto>>;
+    public mailControllerIdentityStatus(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/mail/identity`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<IdentityEmailStatusDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Point the identity provider at Flui for its mail now
+     * Idempotent. With a transactional sender ready, makes sure the identity provider has an active HTTP email provider pointing at Flui and that Flui holds its signing key. Without one, leaves the identity provider as it is and reports why.
+     * @endpoint post /api/v1/mail/identity/sync
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public mailControllerIdentitySync(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<IdentityEmailStatusDto>;
+    public mailControllerIdentitySync(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<IdentityEmailStatusDto>>;
+    public mailControllerIdentitySync(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<IdentityEmailStatusDto>>;
+    public mailControllerIdentitySync(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/mail/identity/sync`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<IdentityEmailStatusDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

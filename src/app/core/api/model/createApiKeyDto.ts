@@ -52,7 +52,8 @@ export namespace CreateApiKeyDto {
         AccessChange: 'access:change',
         InfrastructureLook: 'infrastructure:look',
         InfrastructureChange: 'infrastructure:change',
-        InfrastructureDestroy: 'infrastructure:destroy'
+        InfrastructureDestroy: 'infrastructure:destroy',
+        PlatformChange: 'platform:change'
     } as const;
     export type GroupsEnum = typeof GroupsEnum[keyof typeof GroupsEnum];
     export const ScopesEnum = {
@@ -68,6 +69,7 @@ export namespace CreateApiKeyDto {
         McpInfraRead: 'mcp:infra:read',
         McpInfraWrite: 'mcp:infra:write',
         McpInfraDestructive: 'mcp:infra:destructive',
+        McpPlatformUpdate: 'mcp:platform:update',
         McpSpecValidate: 'mcp:spec:validate',
         McpAppWrite: 'mcp:app:write',
         McpBackupWrite: 'mcp:backup:write',

@@ -13,6 +13,10 @@ import { RebuildClusterSideDto } from './rebuildClusterSideDto';
 
 
 export interface RebuildPlanResponseDto { 
+    /**
+     * `control` when the applications come back onto this installation’s own control cluster
+     */
+    mode: RebuildPlanResponseDto.ModeEnum;
     from: RebuildClusterSideDto;
     to: RebuildClusterSideDto;
     apps: Array<RebuildPlanAppDto>;
@@ -20,6 +24,18 @@ export interface RebuildPlanResponseDto {
      * Empty means the rebuild can start
      */
     refusals: Array<string>;
+    /**
+     * True of the whole rebuild and not disqualifying
+     */
+    warnings: Array<string>;
     capacity?: RebuildCapacityDto;
 }
+export namespace RebuildPlanResponseDto {
+    export const ModeEnum = {
+        Workload: 'workload',
+        Control: 'control'
+    } as const;
+    export type ModeEnum = typeof ModeEnum[keyof typeof ModeEnum];
+}
+
 

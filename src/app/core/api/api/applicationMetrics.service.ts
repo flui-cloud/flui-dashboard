@@ -17,6 +17,10 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
+import { AppCapacityAdviceResponseDto } from '../model/appCapacityAdviceResponseDto';
+// @ts-ignore
+import { AppHealthChecksResponseDto } from '../model/appHealthChecksResponseDto';
+// @ts-ignore
 import { ClusterAppsMetricsHistoryResponseDto } from '../model/clusterAppsMetricsHistoryResponseDto';
 // @ts-ignore
 import { ClusterAppsMetricsResponseDto } from '../model/clusterAppsMetricsResponseDto';
@@ -201,6 +205,66 @@ export class ApplicationMetricsService extends BaseService {
     }
 
     /**
+     * Whether the application needs more copies, a node to put them on, or neither
+     * Judged on the last minutes of CPU throttling, CPU and memory against their limits, failed health checks, copies waiting for a node and the autoscaler. When copies are saturated, the answer says whether another one has room, makes the scaling group buy a node, or has nowhere to run. Thresholds come from FLUI_ADVICE_* variables.
+     * @endpoint get /api/v1/observability/applications/{appId}/capacity-advice
+     * @param appId Application ID (UUID)
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applicationMetricsControllerGetCapacityAdvice(appId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<AppCapacityAdviceResponseDto>;
+    public applicationMetricsControllerGetCapacityAdvice(appId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<AppCapacityAdviceResponseDto>>;
+    public applicationMetricsControllerGetCapacityAdvice(appId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<AppCapacityAdviceResponseDto>>;
+    public applicationMetricsControllerGetCapacityAdvice(appId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (appId === null || appId === undefined) {
+            throw new Error('Required parameter appId was null or undefined when calling applicationMetricsControllerGetCapacityAdvice.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/observability/applications/${this.configuration.encodeParam({name: "appId", value: appId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/capacity-advice`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<AppCapacityAdviceResponseDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Get metrics for readable applications in a cluster
      * Returns instant metrics for applications in the cluster that the caller may read. Fetches the app list from the database, then queries Prometheus for each app in parallel.
      * @endpoint get /api/v1/observability/clusters/{clusterId}/applications/metrics
@@ -349,6 +413,66 @@ export class ApplicationMetricsService extends BaseService {
             {
                 context: localVarHttpContext,
                 params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * The application\&#39;s failed health checks in the last hour, as the cluster recorded them
+     * A copy that stops answering its readiness check is taken out of the route; with no other copy ready, visitors get errors. Such a gap can be shorter than the interval metrics are sampled at, so it is read from the events, which keep it.
+     * @endpoint get /api/v1/observability/applications/{appId}/health-checks
+     * @param appId Application ID (UUID)
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applicationMetricsControllerGetHealthChecks(appId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<AppHealthChecksResponseDto>;
+    public applicationMetricsControllerGetHealthChecks(appId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<AppHealthChecksResponseDto>>;
+    public applicationMetricsControllerGetHealthChecks(appId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<AppHealthChecksResponseDto>>;
+    public applicationMetricsControllerGetHealthChecks(appId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (appId === null || appId === undefined) {
+            throw new Error('Required parameter appId was null or undefined when calling applicationMetricsControllerGetHealthChecks.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/observability/applications/${this.configuration.encodeParam({name: "appId", value: appId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/health-checks`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<AppHealthChecksResponseDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

@@ -47,6 +47,21 @@
     </hlm-sidebar-item>
     }
 
+    @if (topologyShown()) {
+    <hlm-sidebar-item
+      label="Topology"
+      routerLink="/topology"
+      routerLinkActive="active"
+      [pinnable]="false"
+    >
+      <ng-icon
+        hlm
+        name="lucideWaypoints"
+        class="h-4 w-4 text-muted-foreground"
+      />
+    </hlm-sidebar-item>
+    }
+
     <hlm-sidebar-pinned [items]="allNavItems()" />
 
     @if (canSee('clusters') && clusterHasMatch()) {

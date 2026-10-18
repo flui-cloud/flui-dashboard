@@ -10,7 +10,15 @@
 
 
 export interface SandboxSessionDto { 
-    expiresAt: string;
+    /**
+     * Whether the guest holds an area yet. False while they have only looked around: the first deploy takes one.
+     */
+    hasArea: boolean;
+    /**
+     * A visitor without an account: looks around the read-only demo and connects a read-only agent.
+     */
+    visitor: boolean;
+    expiresAt: string | null;
     /**
      * Seconds left. The countdown is the only channel the sandbox has — there is no email to warn anyone.
      */
@@ -23,6 +31,10 @@ export interface SandboxSessionDto {
      * How long what the guest deploys lasts, which is the shorter of the two and the one that costs. Served rather than assumed, so the screen that states the rule and the sweep that enforces it cannot end up saying different numbers.
      */
     workloadTtlHours: number;
+    /**
+     * Until when the guest’s applications stay if the guest does nothing more. Every action, \"Keep my apps\" included, moves it.
+     */
+    appsKeptUntil?: string | null;
     /**
      * Where this tenancy is opened. Present on the session too, so a visitor coming back can be sent straight in instead of claiming another one.
      */

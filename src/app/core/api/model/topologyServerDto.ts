@@ -7,18 +7,49 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { TopologyServerSpecsDto } from './topologyServerSpecsDto';
+import { TopologyServerCapacityDto } from './topologyServerCapacityDto';
 
 
 export interface TopologyServerDto { 
+    /**
+     * The server record id; `node:<clusterId>:<digest>` for a node Flui holds no record of
+     */
     id: string;
-    name: string;
-    displayName: string;
+    clusterId: string;
+    nodeName: string;
+    provider: string;
+    /**
+     * The provider\'s id for this server, for the link to its page
+     */
+    providerResourceId: string | null;
+    serverType: string | null;
+    architecture: TopologyServerDto.ArchitectureEnum | null;
     role: TopologyServerDto.RoleEnum;
+    /**
+     * Whether new apps may be placed here
+     */
+    takesWork: boolean;
     status: TopologyServerDto.StatusEnum;
-    specs: TopologyServerSpecsDto;
+    capacity: TopologyServerCapacityDto | null;
+    /**
+     * Replicas of Flui-managed apps on this server
+     */
+    podCount: number;
+    /**
+     * Whether the server sits on its provider\'s private network
+     */
+    privateNetwork: boolean;
+    /**
+     * Its place on the Flui network: connected, waiting for its first handshake, silent, or not on it
+     */
+    fluiNetwork: TopologyServerDto.FluiNetworkEnum;
 }
 export namespace TopologyServerDto {
+    export const ArchitectureEnum = {
+        X86: 'x86',
+        Arm: 'arm'
+    } as const;
+    export type ArchitectureEnum = typeof ArchitectureEnum[keyof typeof ArchitectureEnum];
     export const RoleEnum = {
         ControlPlane: 'control-plane',
         Worker: 'worker'
@@ -30,6 +61,13 @@ export namespace TopologyServerDto {
         Down: 'down'
     } as const;
     export type StatusEnum = typeof StatusEnum[keyof typeof StatusEnum];
+    export const FluiNetworkEnum = {
+        Active: 'active',
+        Pending: 'pending',
+        Stale: 'stale',
+        None: 'none'
+    } as const;
+    export type FluiNetworkEnum = typeof FluiNetworkEnum[keyof typeof FluiNetworkEnum];
 }
 
 

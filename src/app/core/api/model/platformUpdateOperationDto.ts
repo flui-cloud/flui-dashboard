@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { PlatformUpdateComponentProgressDto } from './platformUpdateComponentProgressDto';
+import { PlatformUpdatePhaseDto } from './platformUpdatePhaseDto';
 
 
 export interface PlatformUpdateOperationDto { 
@@ -36,5 +37,21 @@ export interface PlatformUpdateOperationDto {
      * Who started it. Null for an update started by no person.
      */
     userId?: string | null;
+    /**
+     * 2 for a planned update with phases; 1 for an update that moved images only.
+     */
+    schema: number;
+    planId?: string | null;
+    k3sVersion?: string | null;
+    /**
+     * True when the update was applied without the backup, by an acknowledgement.
+     */
+    withoutBackup?: boolean;
+    phases?: Array<PlatformUpdatePhaseDto>;
+    failedPhase?: string | null;
+    /**
+     * What a person can do after a failure. Nothing is rolled back on its own.
+     */
+    guidance?: string | null;
 }
 

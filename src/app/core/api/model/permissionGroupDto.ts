@@ -44,7 +44,8 @@ export namespace PermissionGroupDto {
         AccessChange: 'access:change',
         InfrastructureLook: 'infrastructure:look',
         InfrastructureChange: 'infrastructure:change',
-        InfrastructureDestroy: 'infrastructure:destroy'
+        InfrastructureDestroy: 'infrastructure:destroy',
+        PlatformChange: 'platform:change'
     } as const;
     export type KeyEnum = typeof KeyEnum[keyof typeof KeyEnum];
     export const AreaEnum = {
@@ -54,7 +55,8 @@ export namespace PermissionGroupDto {
         Migrations: 'migrations',
         Mail: 'mail',
         Access: 'access',
-        Infrastructure: 'infrastructure'
+        Infrastructure: 'infrastructure',
+        Platform: 'platform'
     } as const;
     export type AreaEnum = typeof AreaEnum[keyof typeof AreaEnum];
     export const DepthEnum = {

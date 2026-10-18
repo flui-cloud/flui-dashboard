@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { GatewayAuthPolicyDto } from './gatewayAuthPolicyDto';
+import { CertificatePhaseDto } from './certificatePhaseDto';
 import { GatewayRateLimitPolicyDto } from './gatewayRateLimitPolicyDto';
 
 
@@ -38,6 +39,7 @@ export interface GatewayRouteDto {
      */
     tlsEnabled: boolean;
     certificateStatus?: GatewayRouteDto.CertificateStatusEnum;
+    certificatePhase?: CertificatePhaseDto;
     auth?: GatewayAuthPolicyDto;
     rateLimit?: GatewayRateLimitPolicyDto;
     allowIps?: Array<string>;

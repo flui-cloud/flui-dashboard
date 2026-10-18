@@ -16,8 +16,6 @@ import { HttpClient, HttpHeaders, HttpParams,
 import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
-// @ts-ignore
-import { PrometheusTargetDto } from '../model/prometheusTargetDto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -36,18 +34,16 @@ export class ObservabilityService extends BaseService {
     }
 
     /**
-     * [deprecated] Get Prometheus service discovery targets
-     * Deprecated. New clusters use push-based vmagent. Returns scrape targets for legacy Prometheus HTTP SD only.
-     * @endpoint get /api/v1/observability/prometheus/targets
+     * Everything that runs out first under a crowd, in one reading: nodes (CPU, memory, bandwidth, the month at its pace), requests at each cluster, platform components against their limits, the image registry over the last hour, the demo spaces and waiting list, and the alerts firing
+     * @endpoint get /api/v1/observability/now
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
-     * @deprecated
      */
-    public observabilityControllerGetPrometheusTargets(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<PrometheusTargetDto>>;
-    public observabilityControllerGetPrometheusTargets(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<PrometheusTargetDto>>>;
-    public observabilityControllerGetPrometheusTargets(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<PrometheusTargetDto>>>;
-    public observabilityControllerGetPrometheusTargets(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public trafficWatchControllerInstallationNow(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public trafficWatchControllerInstallationNow(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public trafficWatchControllerInstallationNow(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public trafficWatchControllerInstallationNow(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -55,7 +51,6 @@ export class ObservabilityService extends BaseService {
         localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -77,9 +72,9 @@ export class ObservabilityService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/observability/prometheus/targets`;
+        let localVarPath = `/api/v1/observability/now`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Array<PrometheusTargetDto>>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -93,17 +88,16 @@ export class ObservabilityService extends BaseService {
     }
 
     /**
-     * Get observability statistics
-     * Returns statistics about service discovery targets and monitoring coverage
-     * @endpoint get /api/v1/observability/stats
+     * Bandwidth of each node and the month at its current pace, requests arriving at each cluster, rate-limited and failed requests, with the thresholds that raise alerts
+     * @endpoint get /api/v1/observability/traffic
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public observabilityControllerGetServiceDiscoveryStats(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public observabilityControllerGetServiceDiscoveryStats(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public observabilityControllerGetServiceDiscoveryStats(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public observabilityControllerGetServiceDiscoveryStats(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public trafficWatchControllerRead(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public trafficWatchControllerRead(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public trafficWatchControllerRead(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public trafficWatchControllerRead(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -132,7 +126,7 @@ export class ObservabilityService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/observability/stats`;
+        let localVarPath = `/api/v1/observability/traffic`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {

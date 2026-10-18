@@ -10,6 +10,7 @@
 import { ProviderScalingCapabilityDto } from './providerScalingCapabilityDto';
 import { OpenAlarmDto } from './openAlarmDto';
 import { ScalingBoundsResponseDto } from './scalingBoundsResponseDto';
+import { ScalingModeDto } from './scalingModeDto';
 import { ClusterScalingGroupRefDto } from './clusterScalingGroupRefDto';
 
 
@@ -48,6 +49,10 @@ export interface ClusterScalingRowDto {
      * Whether any group of this cluster is set to act, not merely to decide. False beside a provider Flui can buy from is the case worth naming: the provider allows a purchase that no group here will make.
      */
     acts: boolean;
+    /**
+     * The first group\'s mode, as its own page says it. Null with no group.
+     */
+    mode: ScalingModeDto | null;
     openOrders: number;
     /**
      * Standing orders held back by a refused drain

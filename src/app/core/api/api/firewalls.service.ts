@@ -31,6 +31,8 @@ import { ProviderUpdateFirewallRulesDto } from '../model/providerUpdateFirewallR
 // @ts-ignore
 import { ReconciliationStatusDto } from '../model/reconciliationStatusDto';
 // @ts-ignore
+import { SetHostFirewallLayerDto } from '../model/setHostFirewallLayerDto';
+// @ts-ignore
 import { UpdateFirewallRulesDto } from '../model/updateFirewallRulesDto';
 
 // @ts-ignore
@@ -547,6 +549,80 @@ export class FirewallsService extends BaseService {
         return this.httpClient.request<FirewallResponseDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Turn the host firewall of a workload cluster on or off
+     * Workload clusters on providers with their own firewall (Hetzner, Scaleway) can also filter on each node, with the same rules. On for clusters created from now on; clusters that already exist stay off until turned on here. The result is applied now and reported in hostLayer; a failure here never changes the cluster firewall status.
+     * @endpoint post /api/v1/firewalls/cluster/{clusterId}/host-layer
+     * @param clusterId Cluster ID
+     * @param setHostFirewallLayerDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterFirewallsControllerSetHostLayer(clusterId: string, setHostFirewallLayerDto: SetHostFirewallLayerDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<FirewallResponseDto>;
+    public clusterFirewallsControllerSetHostLayer(clusterId: string, setHostFirewallLayerDto: SetHostFirewallLayerDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<FirewallResponseDto>>;
+    public clusterFirewallsControllerSetHostLayer(clusterId: string, setHostFirewallLayerDto: SetHostFirewallLayerDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<FirewallResponseDto>>;
+    public clusterFirewallsControllerSetHostLayer(clusterId: string, setHostFirewallLayerDto: SetHostFirewallLayerDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterFirewallsControllerSetHostLayer.');
+        }
+        if (setHostFirewallLayerDto === null || setHostFirewallLayerDto === undefined) {
+            throw new Error('Required parameter setHostFirewallLayerDto was null or undefined when calling clusterFirewallsControllerSetHostLayer.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/firewalls/cluster/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/host-layer`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<FirewallResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: setHostFirewallLayerDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

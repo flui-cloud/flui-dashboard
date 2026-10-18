@@ -48,18 +48,6 @@ export interface CreateClusterDto {
     /**
      * Memory utilization percentage that triggers a scale-up. Overrides global default.
      */
-    scaleUpMemoryPct?: number;
-    /**
-     * CPU utilization percentage that triggers a scale-up. Overrides global default.
-     */
-    scaleUpCpuPct?: number;
-    /**
-     * Cooldown period (seconds) between consecutive scale events. Overrides global default.
-     */
-    cooldownSeconds?: number;
-    /**
-     * K3s version (default: v1.35.4+k3s1)
-     */
     k3sVersion?: string;
     /**
      * SSH key IDs for node access

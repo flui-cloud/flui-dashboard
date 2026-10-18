@@ -42,6 +42,23 @@ export interface ScheduledJobDto {
      * CronJob creation timestamp.
      */
     createdAt?: string;
+    lastRunStatus?: ScheduledJobDto.LastRunStatusEnum | null;
+    /**
+     * Failed runs in a row, newest first.
+     */
+    consecutiveFailures?: number;
+    /**
+     * True after 3 failed runs in a row.
+     */
+    failing?: boolean;
+    /**
+     * Who owns it: a person, or the application flui.yaml (read-only here).
+     */
+    origin?: ScheduledJobDto.OriginEnum;
+    /**
+     * False while the cluster does not have it yet; the next release or a run puts it back.
+     */
+    onCluster?: boolean;
 }
 export namespace ScheduledJobDto {
     export const ConcurrencyPolicyEnum = {
@@ -50,6 +67,16 @@ export namespace ScheduledJobDto {
         Replace: 'Replace'
     } as const;
     export type ConcurrencyPolicyEnum = typeof ConcurrencyPolicyEnum[keyof typeof ConcurrencyPolicyEnum];
+    export const LastRunStatusEnum = {
+        Succeeded: 'Succeeded',
+        Failed: 'Failed'
+    } as const;
+    export type LastRunStatusEnum = typeof LastRunStatusEnum[keyof typeof LastRunStatusEnum];
+    export const OriginEnum = {
+        User: 'user',
+        Manifest: 'manifest'
+    } as const;
+    export type OriginEnum = typeof OriginEnum[keyof typeof OriginEnum];
 }
 
 

@@ -11,7 +11,7 @@
 
 export interface UpdateClusterMetadataDto { 
     /**
-     * Metadata object to merge with existing metadata
+     * Metadata to merge with the existing metadata. Only `byos` (host, port, user, nodeNetwork) is accepted; any other key is refused with 400.
      */
     metadata: object;
 }

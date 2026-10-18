@@ -21,6 +21,8 @@ import { AppEndpointResponseDto } from '../model/appEndpointResponseDto';
 // @ts-ignore
 import { CreateAppEndpointDto } from '../model/createAppEndpointDto';
 // @ts-ignore
+import { EndpointSyncResponseDto } from '../model/endpointSyncResponseDto';
+// @ts-ignore
 import { UpdateAppEndpointDto } from '../model/updateAppEndpointDto';
 
 // @ts-ignore
@@ -421,17 +423,17 @@ export class AppEndpointsService extends BaseService {
     }
 
     /**
-     * Trigger reconciliation for an app endpoint
-     * Create or update the DNS record, TLS certificate, and Kubernetes Ingress for this endpoint.
+     * Sync an app endpoint
+     * Bring the address record, the route and the certificate in line; a per-host certificate that failed is ordered again. &#x60;sync&#x60; says what was found and done.
      * @endpoint post /api/v1/endpoints/{id}/reconcile
      * @param id Endpoint ID
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public appEndpointControllerReconcile(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<AppEndpointResponseDto>;
-    public appEndpointControllerReconcile(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<AppEndpointResponseDto>>;
-    public appEndpointControllerReconcile(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<AppEndpointResponseDto>>;
+    public appEndpointControllerReconcile(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EndpointSyncResponseDto>;
+    public appEndpointControllerReconcile(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EndpointSyncResponseDto>>;
+    public appEndpointControllerReconcile(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EndpointSyncResponseDto>>;
     public appEndpointControllerReconcile(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling appEndpointControllerReconcile.');
@@ -467,7 +469,7 @@ export class AppEndpointsService extends BaseService {
 
         let localVarPath = `/api/v1/endpoints/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/reconcile`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<AppEndpointResponseDto>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<EndpointSyncResponseDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

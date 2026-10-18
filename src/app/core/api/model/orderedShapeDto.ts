@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { AvailabilityOutlookDto } from './availabilityOutlookDto';
+import { ShapeSpecDto } from './shapeSpecDto';
 
 
 export interface OrderedShapeDto { 
@@ -28,6 +29,10 @@ export interface OrderedShapeDto {
      * Why it sits where it sits
      */
     why: string;
+    /**
+     * The machine as the provider describes it; null where the provider\'s catalogue was not read
+     */
+    facts: ShapeSpecDto | null;
 }
 export namespace OrderedShapeDto {
     export const ArchitectureEnum = {
@@ -36,4 +41,5 @@ export namespace OrderedShapeDto {
     } as const;
     export type ArchitectureEnum = typeof ArchitectureEnum[keyof typeof ArchitectureEnum];
 }
+
 

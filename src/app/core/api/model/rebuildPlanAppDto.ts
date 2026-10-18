@@ -20,8 +20,16 @@ export interface RebuildPlanAppDto {
     blocked?: string;
     warnings: Array<string>;
     /**
+     * What comes back, and from where
+     */
+    restores: Array<string>;
+    /**
      * Where a previous run got to
      */
     phase?: string;
+    /**
+     * Applications rebuilt before this one because it uses them — a database before the application reading it
+     */
+    after?: Array<string>;
 }
 

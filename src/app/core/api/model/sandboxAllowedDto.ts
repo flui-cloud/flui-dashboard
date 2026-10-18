@@ -13,6 +13,10 @@ export interface SandboxAllowedDto {
     routes: Array<string>;
     why: string;
     level: SandboxAllowedDto.LevelEnum;
+    /**
+     * Whether a visitor may make these writes too. Reads are always open to visitors; the demo refuses any other write as read-only.
+     */
+    visitor: boolean;
 }
 export namespace SandboxAllowedDto {
     export const LevelEnum = {

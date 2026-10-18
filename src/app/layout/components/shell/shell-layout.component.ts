@@ -2,8 +2,6 @@ import { Component, HostBinding, inject, input, ChangeDetectionStrategy } from '
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map, take } from 'rxjs';
-import { UniverseMapComponent } from '../../../features/components/topology/universe-map.component';
-import { UniverseOverlayService } from '../../../features/service/universe-overlay.service';
 import {
   SidebarVariant,
   CollapsibleMode,
@@ -48,7 +46,6 @@ import { VisitorSignInService } from '../../../core/services/visitor-sign-in.ser
     QuickSshOverlayComponent,
     QuickSshDockComponent,
     ToastContainerComponent,
-    UniverseMapComponent,
     AssistantWidgetComponent,
     FluiBackdropComponent,
     SandboxBannerComponent,
@@ -83,12 +80,6 @@ import { VisitorSignInService } from '../../../core/services/visitor-sign-in.ser
     }
     .subtle-scroll:hover::-webkit-scrollbar-thumb {
       box-shadow: inset 0 0 0 4px hsl(var(--muted-foreground) / 0.4);
-    }
-    .universe-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 60;
-      background: #02040d;
     }
   `],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -130,15 +121,10 @@ import { VisitorSignInService } from '../../../core/services/visitor-sign-in.ser
     @if (!hideAssistant()) {
       <app-assistant-widget />
     }
-
-    @if (universeOverlay.isOpen()) {
-      <app-universe-map class="universe-overlay" />
-    }
   `,
 })
 export class ShellLayoutComponent {
   protected readonly themeService = inject(ThemeService);
-  protected readonly universeOverlay = inject(UniverseOverlayService);
   private readonly router = inject(Router);
   private readonly sandbox = inject(SandboxService);
   private readonly visitorSignIn = inject(VisitorSignInService);

@@ -16,7 +16,7 @@ export interface CapacityMasterDto {
      */
     serverType: string;
     /**
-     * CPU architecture of the master's server type; null where the catalogue does not name it
+     * CPU architecture of the master\'s server type; null where the catalogue does not name it
      */
     architecture: CapacityMasterDto.ArchitectureEnum | null;
     /**
@@ -49,4 +49,5 @@ export namespace CapacityMasterDto {
     } as const;
     export type ArchitectureEnum = typeof ArchitectureEnum[keyof typeof ArchitectureEnum];
 }
+
 

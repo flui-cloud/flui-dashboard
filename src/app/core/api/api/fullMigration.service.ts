@@ -18,6 +18,10 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
 import { CreateFullMigrationDto } from '../model/createFullMigrationDto';
+// @ts-ignore
+import { DestroySourceDto } from '../model/destroySourceDto';
+// @ts-ignore
+import { FullMigrationCutoverDto } from '../model/fullMigrationCutoverDto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -165,16 +169,20 @@ export class FullMigrationService extends BaseService {
      * Fire the joint cutover of a READY full-migration
      * @endpoint post /api/v1/full-migrations/{id}/cutover
      * @param id 
+     * @param fullMigrationCutoverDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public fullMigrationControllerCutover(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public fullMigrationControllerCutover(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public fullMigrationControllerCutover(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public fullMigrationControllerCutover(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public fullMigrationControllerCutover(id: string, fullMigrationCutoverDto: FullMigrationCutoverDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public fullMigrationControllerCutover(id: string, fullMigrationCutoverDto: FullMigrationCutoverDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public fullMigrationControllerCutover(id: string, fullMigrationCutoverDto: FullMigrationCutoverDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public fullMigrationControllerCutover(id: string, fullMigrationCutoverDto: FullMigrationCutoverDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling fullMigrationControllerCutover.');
+        }
+        if (fullMigrationCutoverDto === null || fullMigrationCutoverDto === undefined) {
+            throw new Error('Required parameter fullMigrationCutoverDto was null or undefined when calling fullMigrationControllerCutover.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -192,6 +200,15 @@ export class FullMigrationService extends BaseService {
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -209,6 +226,7 @@ export class FullMigrationService extends BaseService {
         return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: fullMigrationCutoverDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -220,19 +238,23 @@ export class FullMigrationService extends BaseService {
     }
 
     /**
-     * Destroy the drained source app workload after completion
+     * Close the bridge and destroy the source app workload after the cutover
      * @endpoint post /api/v1/full-migrations/{id}/destroy-source
      * @param id 
+     * @param destroySourceDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public fullMigrationControllerDestroySource(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public fullMigrationControllerDestroySource(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public fullMigrationControllerDestroySource(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public fullMigrationControllerDestroySource(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public fullMigrationControllerDestroySource(id: string, destroySourceDto: DestroySourceDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public fullMigrationControllerDestroySource(id: string, destroySourceDto: DestroySourceDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public fullMigrationControllerDestroySource(id: string, destroySourceDto: DestroySourceDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public fullMigrationControllerDestroySource(id: string, destroySourceDto: DestroySourceDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling fullMigrationControllerDestroySource.');
+        }
+        if (destroySourceDto === null || destroySourceDto === undefined) {
+            throw new Error('Required parameter destroySourceDto was null or undefined when calling fullMigrationControllerDestroySource.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -251,6 +273,15 @@ export class FullMigrationService extends BaseService {
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
 
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
             if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
@@ -267,6 +298,7 @@ export class FullMigrationService extends BaseService {
         return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: destroySourceDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

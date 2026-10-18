@@ -7,6 +7,8 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { PodPlacementDto } from './podPlacementDto';
+import { RestartPendingDto } from './restartPendingDto';
 import { ReplicaStatusDto } from './replicaStatusDto';
 import { ContainerRuntimeDetailDto } from './containerRuntimeDetailDto';
 import { RoomWaitDto } from './roomWaitDto';
@@ -19,24 +21,16 @@ export interface AppRuntimeResponseDto {
     replicas: ReplicaStatusDto;
     containers: Array<ContainerRuntimeDetailDto>;
     /**
+     * Each replica and the node it runs on, or null while it waits for room
+     */
+    pods?: Array<PodPlacementDto>;
+    /**
+     * Set when saved variables have not reached the running pods yet: a restart applies them. `changes` names each variable (added / changed / removed), never a value.
+     */
+    restartPending?: RestartPendingDto | null;
+    /**
      * Set when some replicas wait for a node with room: that is a wait, not a failure, and it lasts as long as scaling takes.
      */
     waitingForRoom?: RoomWaitDto | null;
-    /**
-     * Each replica and the node it runs on, or null while it waits for room
-     */
-    /**
-     * Saved variables the running pods do not have yet; a restart applies them.
-     */
-    restartPending?: { changes: string[] } | null;
-    pods?: Array<{
-        name: string;
-        node: string | null;
-        role: 'master' | 'worker' | null;
-        serverType: string | null;
-        region: string | null;
-        phase: string;
-        ready: boolean;
-    }>;
 }
 

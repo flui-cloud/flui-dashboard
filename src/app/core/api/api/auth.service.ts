@@ -29,6 +29,10 @@ import { AgentSkillDto } from '../model/agentSkillDto';
 // @ts-ignore
 import { ApiKeyResponseDto } from '../model/apiKeyResponseDto';
 // @ts-ignore
+import { BlockUserDto } from '../model/blockUserDto';
+// @ts-ignore
+import { BlockedUserResponseDto } from '../model/blockedUserResponseDto';
+// @ts-ignore
 import { ChangePasswordDto } from '../model/changePasswordDto';
 // @ts-ignore
 import { ConfigureAuthModeDto } from '../model/configureAuthModeDto';
@@ -68,6 +72,8 @@ import { ResetPasswordResultDto } from '../model/resetPasswordResultDto';
 import { UpdateApiKeyApplicationsDto } from '../model/updateApiKeyApplicationsDto';
 // @ts-ignore
 import { UpdateApiKeyProjectsDto } from '../model/updateApiKeyProjectsDto';
+// @ts-ignore
+import { UpdateApiKeyScopesDto } from '../model/updateApiKeyScopesDto';
 // @ts-ignore
 import { UpdateIdentityRoleDto } from '../model/updateIdentityRoleDto';
 // @ts-ignore
@@ -801,6 +807,80 @@ export class AuthService extends BaseService {
     }
 
     /**
+     * Change what a key may do, without reissuing it
+     * Send &#x60;scopes&#x60; (the complete new list) or &#x60;add&#x60; (scopes to add). The key itself does not change; an agent holding it reconnects to see the tools it now has. A scope is granted only if you hold the permission it needs. An agent asking this for its own key waits for a person to allow it, every time.
+     * @endpoint patch /api/v1/auth/api-keys/{id}/scopes
+     * @param id 
+     * @param updateApiKeyScopesDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public apiKeysControllerUpdateApiKeyScopes(id: string, updateApiKeyScopesDto: UpdateApiKeyScopesDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ApiKeyResponseDto>;
+    public apiKeysControllerUpdateApiKeyScopes(id: string, updateApiKeyScopesDto: UpdateApiKeyScopesDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ApiKeyResponseDto>>;
+    public apiKeysControllerUpdateApiKeyScopes(id: string, updateApiKeyScopesDto: UpdateApiKeyScopesDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ApiKeyResponseDto>>;
+    public apiKeysControllerUpdateApiKeyScopes(id: string, updateApiKeyScopesDto: UpdateApiKeyScopesDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling apiKeysControllerUpdateApiKeyScopes.');
+        }
+        if (updateApiKeyScopesDto === null || updateApiKeyScopesDto === undefined) {
+            throw new Error('Required parameter updateApiKeyScopesDto was null or undefined when calling apiKeysControllerUpdateApiKeyScopes.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/auth/api-keys/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/scopes`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ApiKeyResponseDto>('patch', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: updateApiKeyScopesDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Run full OIDC bootstrap for the control cluster (idempotent)
      * Creates the Flui project, roles, web + CLI OIDC apps, bootstrap admin, patches ConfigMap and triggers rolling restart. Called automatically by the CLI after Zitadel becomes ready during &#x60;flui env create&#x60;. Safe to re-run on existing installs.
      * @endpoint post /api/v1/auth/bootstrap
@@ -1234,7 +1314,7 @@ export class AuthService extends BaseService {
 
     /**
      * Clear flui_session cookie for OIDC logout (OIDC mode only)
-     * Called by the frontend before redirecting to the Zitadel end_session endpoint. Clears the httpOnly flui_session cookie so ForwardAuth stops accepting the old token.
+     * Called by the frontend before redirecting to the Zitadel end_session endpoint. Clears the httpOnly flui_session cookie, including the one older releases left on the parent domain.
      * @endpoint post /api/v1/auth/oidc-logout
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -1286,7 +1366,7 @@ export class AuthService extends BaseService {
 
     /**
      * Exchange a Zitadel access token for a flui_session cookie (OIDC mode only)
-     * The frontend calls this after OIDC code exchange. The Bearer token is validated by the JWKS strategy and mirrored into the httpOnly flui_session cookie so the browser can reach internal apps via ForwardAuth.
+     * The frontend calls this after OIDC code exchange. The Bearer token is validated by the JWKS strategy and mirrored into the httpOnly flui_session cookie of the API\&#39;s own host.
      * @endpoint post /api/v1/auth/oidc-session
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -1694,6 +1774,80 @@ export class AuthService extends BaseService {
     }
 
     /**
+     * Block a person
+     * Every request they make is refused, their sign-in is switched off, and on a demo their area ends. Nothing is deleted; unblock undoes it. :id is the local or the identity-provider id.
+     * @endpoint post /api/v1/auth/users/{id}/block
+     * @param id 
+     * @param blockUserDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public userManagementControllerBlock(id: string, blockUserDto: BlockUserDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<BlockedUserResponseDto>;
+    public userManagementControllerBlock(id: string, blockUserDto: BlockUserDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<BlockedUserResponseDto>>;
+    public userManagementControllerBlock(id: string, blockUserDto: BlockUserDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<BlockedUserResponseDto>>;
+    public userManagementControllerBlock(id: string, blockUserDto: BlockUserDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling userManagementControllerBlock.');
+        }
+        if (blockUserDto === null || blockUserDto === undefined) {
+            throw new Error('Required parameter blockUserDto was null or undefined when calling userManagementControllerBlock.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/auth/users/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/block`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<BlockedUserResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: blockUserDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Create a new identity user
      * @endpoint post /api/v1/auth/users
      * @param createIdentityUserDto 
@@ -1959,14 +2113,15 @@ export class AuthService extends BaseService {
      * @param limit 
      * @param offset 
      * @param emailContains Substring filter on email
+     * @param kind Only visitors of the demo, or only everybody else
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public userManagementControllerList(limit?: number, offset?: number, emailContains?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<IdentityUserResponseDto>>;
-    public userManagementControllerList(limit?: number, offset?: number, emailContains?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<IdentityUserResponseDto>>>;
-    public userManagementControllerList(limit?: number, offset?: number, emailContains?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<IdentityUserResponseDto>>>;
-    public userManagementControllerList(limit?: number, offset?: number, emailContains?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public userManagementControllerList(limit?: number, offset?: number, emailContains?: string, kind?: 'person' | 'visitor', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<IdentityUserResponseDto>>;
+    public userManagementControllerList(limit?: number, offset?: number, emailContains?: string, kind?: 'person' | 'visitor', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<IdentityUserResponseDto>>>;
+    public userManagementControllerList(limit?: number, offset?: number, emailContains?: string, kind?: 'person' | 'visitor', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<IdentityUserResponseDto>>>;
+    public userManagementControllerList(limit?: number, offset?: number, emailContains?: string, kind?: 'person' | 'visitor', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
 
@@ -1992,6 +2147,15 @@ export class AuthService extends BaseService {
             localVarQueryParameters,
             'emailContains',
             <any>emailContains,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'kind',
+            <any>kind,
             QueryParamStyle.Form,
             true,
         );
@@ -2177,6 +2341,65 @@ export class AuthService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: updateIdentityRoleDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Let a blocked person in again
+     * @endpoint post /api/v1/auth/users/{id}/unblock
+     * @param id 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public userManagementControllerUnblock(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<BlockedUserResponseDto>;
+    public userManagementControllerUnblock(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<BlockedUserResponseDto>>;
+    public userManagementControllerUnblock(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<BlockedUserResponseDto>>;
+    public userManagementControllerUnblock(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling userManagementControllerUnblock.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/auth/users/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/unblock`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<BlockedUserResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

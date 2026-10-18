@@ -104,6 +104,10 @@ export interface InstanceDto {
      */
     ownership?: InstanceDto.OwnershipEnum;
     /**
+     * CPU architecture of the server type; null where the provider does not say
+     */
+    architecture?: InstanceDto.ArchitectureEnum | null;
+    /**
      * Creation timestamp
      */
     createdAt: string;
@@ -151,6 +155,11 @@ export namespace InstanceDto {
         Unmanaged: 'unmanaged'
     } as const;
     export type OwnershipEnum = typeof OwnershipEnum[keyof typeof OwnershipEnum];
+    export const ArchitectureEnum = {
+        X86: 'x86',
+        Arm: 'arm'
+    } as const;
+    export type ArchitectureEnum = typeof ArchitectureEnum[keyof typeof ArchitectureEnum];
 }
 
 

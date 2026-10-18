@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { GiveBackAlarmDto } from './giveBackAlarmDto';
 
 
 export interface OpenAlarmDto { 
@@ -15,8 +16,25 @@ export interface OpenAlarmDto {
      */
     since: string;
     /**
+     * The group that raised it
+     */
+    groupId: string;
+    /**
      * What it asks for, in terms this cluster can be given
      */
     asks: string;
+    /**
+     * purchase: the group needs a machine it cannot get. give-back: the fleet is above its target and the node that would go back cannot be emptied.
+     */
+    kind: OpenAlarmDto.KindEnum;
+    giveBack: GiveBackAlarmDto | null;
 }
+export namespace OpenAlarmDto {
+    export const KindEnum = {
+        Purchase: 'purchase',
+        GiveBack: 'give-back'
+    } as const;
+    export type KindEnum = typeof KindEnum[keyof typeof KindEnum];
+}
+
 

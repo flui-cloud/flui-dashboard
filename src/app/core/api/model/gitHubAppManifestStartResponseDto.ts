@@ -15,7 +15,7 @@ export interface GitHubAppManifestStartResponseDto {
      */
     manifestJson: object;
     /**
-     * URL to POST the manifest to. Construct an HTML <form method=\"POST\" action=\"<this>\"> with a hidden <input name=\"manifest\" value=\"<JSON.stringify(manifestJson)>\"> and submit it from the browser.
+     * URL to POST the manifest to: https://github.com/settings/apps/new, or https://github.com/organizations/<organization>/settings/apps/new when an organisation was named. Construct an HTML <form method=\"POST\" action=\"<this>\"> with a hidden <input name=\"manifest\" value=\"<JSON.stringify(manifestJson)>\"> and submit it from the browser.
      */
     githubUrl: string;
     /**

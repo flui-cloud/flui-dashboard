@@ -18,6 +18,8 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
 import { CreateAppMigrationDto } from '../model/createAppMigrationDto';
+// @ts-ignore
+import { DestroySourceDto } from '../model/destroySourceDto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -220,19 +222,23 @@ export class AppMigrationService extends BaseService {
     }
 
     /**
-     * Destroy the drained source workload after a completed migration (plan §6 DESTROY)
+     * Close the bridge and destroy the source workload after the cutover (plan §6 DESTROY)
      * @endpoint post /api/v1/app-migrations/{id}/destroy-source
      * @param id 
+     * @param destroySourceDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public appMigrationControllerDestroySource(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public appMigrationControllerDestroySource(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public appMigrationControllerDestroySource(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public appMigrationControllerDestroySource(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public appMigrationControllerDestroySource(id: string, destroySourceDto: DestroySourceDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public appMigrationControllerDestroySource(id: string, destroySourceDto: DestroySourceDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public appMigrationControllerDestroySource(id: string, destroySourceDto: DestroySourceDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public appMigrationControllerDestroySource(id: string, destroySourceDto: DestroySourceDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling appMigrationControllerDestroySource.');
+        }
+        if (destroySourceDto === null || destroySourceDto === undefined) {
+            throw new Error('Required parameter destroySourceDto was null or undefined when calling appMigrationControllerDestroySource.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -251,6 +257,15 @@ export class AppMigrationService extends BaseService {
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
 
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
             if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
@@ -267,6 +282,7 @@ export class AppMigrationService extends BaseService {
         return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: destroySourceDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

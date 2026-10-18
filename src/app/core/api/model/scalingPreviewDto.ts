@@ -7,8 +7,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { AlarmBlockDto } from './alarmBlockDto';
 import { PendingPodDto } from './pendingPodDto';
+import { GiveBackDto } from './giveBackDto';
 import { LadderRungDto } from './ladderRungDto';
+import { FleetRoomDto } from './fleetRoomDto';
 
 
 export interface ScalingPreviewDto { 
@@ -18,7 +21,7 @@ export interface ScalingPreviewDto {
      */
     pending: PendingPodDto | null;
     /**
-     * Why the patient force is standing down. Urgency always wins, and no standing order runs while a pod is waiting.
+     * Why the patient force is standing down. Urgency always wins, and no standing order runs while an app is waiting to run.
      */
     opportunityHeldBecause: string | null;
     ladder: Array<LadderRungDto>;
@@ -30,5 +33,17 @@ export interface ScalingPreviewDto {
      * The sentence addressed to a person, when the answer is an alarm
      */
     asks: string | null;
+    /**
+     * When nothing would be bought: the main block in one headline and the ways out, each computed (the ceiling that is enough, the machine that would work). `asks` stays the long form.
+     */
+    blocked: AlarmBlockDto | null;
+    /**
+     * The node the group would give back now, the fleet being above its target. Null when nothing would go.
+     */
+    giveBack: GiveBackDto | null;
+    /**
+     * How much room each node has left for new apps, counted the way the scheduler counts it: what apps reserve, not what they use. Null when the cluster could not be asked.
+     */
+    room: FleetRoomDto | null;
 }
 

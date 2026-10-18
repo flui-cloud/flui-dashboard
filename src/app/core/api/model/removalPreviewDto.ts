@@ -35,6 +35,10 @@ export interface RemovalPreviewDto {
      * Services this application attached, each with the way to keep its data before the removal takes it. Empty when it attached none.
      */
     snapshotOffer: Array<RemovalSnapshotOfferDto>;
+    /**
+     * What happens to the backups of what is removed. Null when it has none.
+     */
+    backupNote?: string;
 }
 export namespace RemovalPreviewDto {
     export const RemovesEnum = {

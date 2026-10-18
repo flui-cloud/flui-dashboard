@@ -640,8 +640,8 @@ export class CatalogService extends BaseService {
     }
 
     /**
-     * Install a catalog app directly from a raw .flui.yaml
-     * Parses and validates the provided YAML, upserts the app definition in the catalog DB (same as the boot seeder), then queues an install job. Designed for CLI smoke-tests and agentic workflows where the app has not been pre-seeded. userInput fields not provided in userInputs are auto-filled with test-safe defaults.
+     * Install an app from a raw .flui.yaml of your own
+     * Parses and validates the provided YAML, stores it as a definition private to the caller (never listed in the shared catalog, installable and updatable only by the caller), then queues an install job. A manifest whose metadata.id is the id of an app in the shared catalog is refused with 409 before anything is written. userInput fields not provided in userInputs are auto-filled with test-safe defaults.
      * @endpoint post /api/v1/catalog/install-from-yaml
      * @param installFromYamlDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

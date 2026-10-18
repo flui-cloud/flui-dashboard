@@ -10,9 +10,12 @@
 import { ProviderScalingCapabilityDto } from './providerScalingCapabilityDto';
 import { NodeRequirementResponseDto } from './nodeRequirementResponseDto';
 import { ScalingActuationDto } from './scalingActuationDto';
+import { PurchaseHoldDto } from './purchaseHoldDto';
 import { ScalingLimitsResponseDto } from './scalingLimitsResponseDto';
+import { PurchaseInFlightDto } from './purchaseInFlightDto';
 import { ScalingBoundsResponseDto } from './scalingBoundsResponseDto';
 import { StandingOrderResponseDto } from './standingOrderResponseDto';
+import { ScalingCostDto } from './scalingCostDto';
 
 
 export interface ScalingGroupResponseDto { 
@@ -22,6 +25,10 @@ export interface ScalingGroupResponseDto {
     clusterName: string;
     provider: string;
     capability: ProviderScalingCapabilityDto;
+    /**
+     * The regions a node bought for this cluster could actually join it from, or null where geography fences nothing — an unknown provider, a global network, or one Flui builds itself. A property of the network this cluster was given, not of what its provider sells: a machine can be on offer somewhere its private network cannot be reached from.
+     */
+    buyableRegions: Array<string> | null;
     bounds: ScalingBoundsResponseDto;
     regions: Array<string>;
     /**
@@ -30,7 +37,7 @@ export interface ScalingGroupResponseDto {
     shapes: Array<string>;
     strategy: ScalingGroupResponseDto.StrategyEnum;
     /**
-     * How long a pod must be stuck before this buys. Never a wait for a cheaper shape.
+     * How long an app must be stuck before this buys. Never a wait for a cheaper machine.
      */
     settleSeconds: number;
     limits: ScalingLimitsResponseDto;
@@ -41,6 +48,18 @@ export interface ScalingGroupResponseDto {
      * What a machine must hold, where no catalogue names shapes
      */
     requirement: NodeRequirementResponseDto | null;
+    /**
+     * Set while a failed purchase holds this group back: nothing more is bought until someone asks it to try again (POST /infrastructure/scaling-groups/:id/retry-purchase) or a later purchase goes through.
+     */
+    purchaseHeld: PurchaseHoldDto | null;
+    /**
+     * The last purchase this group ordered, while it is on its way and for 30 minutes after it joined or failed. Null when nothing was bought lately.
+     */
+    purchase: PurchaseInFlightDto | null;
+    /**
+     * What the node limits cost with the provider prices, from the minimum to the maximum, and where the spending ceiling sits
+     */
+    cost: ScalingCostDto;
 }
 export namespace ScalingGroupResponseDto {
     export const StrategyEnum = {

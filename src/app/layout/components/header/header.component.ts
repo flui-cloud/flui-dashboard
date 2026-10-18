@@ -1,11 +1,10 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideGithub, lucideSun, lucideMoon, lucideTerminal, lucideOrbit, lucideEyeOff, lucideEye } from '@ng-icons/lucide';
+import { lucideGithub, lucideSun, lucideMoon, lucideTerminal, lucideEyeOff, lucideEye } from '@ng-icons/lucide';
 import { ThemeService } from '../../../core/services/theme.service';
 import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { NotificationPanelComponent } from '../notifications/notification-panel.component';
 import { QuickSshService } from '../../../features/service/quick-ssh.service';
-import { UniverseOverlayService } from '../../../features/service/universe-overlay.service';
 
 // Stated on the toggle rather than in a settings page: the address bar is
 // the one surface mask mode cannot reach, and that is worth reading at the
@@ -20,21 +19,12 @@ const MASK_MODE_TOOLTIP =
   standalone: true,
   imports: [NgIcon, NotificationPanelComponent],
   providers: [
-    provideIcons({ lucideGithub, lucideSun, lucideMoon, lucideTerminal, lucideOrbit, lucideEyeOff, lucideEye }),
+    provideIcons({ lucideGithub, lucideSun, lucideMoon, lucideTerminal, lucideEyeOff, lucideEye }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex items-center gap-1">
       <app-notification-panel />
-
-      <!-- Universe Map -->
-      <button
-        type="button"
-        (click)="universeOverlay.open()"
-        class="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        title="Universe Map">
-        <ng-icon name="lucideOrbit" class="h-4 w-4" />
-      </button>
 
       <!-- Quick SSH button -->
       <button
@@ -83,7 +73,6 @@ export class HeaderComponent {
   protected readonly themeService = inject(ThemeService);
   protected readonly maskMode = inject(MaskModeService);
   protected readonly quickSsh = inject(QuickSshService);
-  protected readonly universeOverlay = inject(UniverseOverlayService);
 
   protected readonly maskModeTooltip = MASK_MODE_TOOLTIP;
 

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideExternalLink, lucideLoader } from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideExternalLink, lucideLoader, lucideWaypoints } from '@ng-icons/lucide';
 import { Application } from '../../model/application.models';
 import { evaluateEndpointReadiness } from '../../model/endpoint-readiness';
 import { buildOpenAppUrl, CATALOG_APP_LABEL } from '../../model/open-app-url';
@@ -20,7 +20,7 @@ type InternalReadiness = 'pending' | 'failed' | 'ready' | 'not-configured';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, NgIcon, AppOverviewFactsComponent],
-  providers: [provideIcons({ lucideCircleAlert, lucideExternalLink, lucideLoader })],
+  providers: [provideIcons({ lucideCircleAlert, lucideExternalLink, lucideLoader, lucideWaypoints })],
   host: { class: 'block' },
   template: `
     @let a = app();
@@ -116,6 +116,12 @@ type InternalReadiness = 'pending' | 'failed' | 'ready' | 'not-configured';
       <div [class.border-t]="hasEndpointLine()" [class.pt-5]="hasEndpointLine()" class="border-border">
         <app-overview-facts [app]="a" [showDns]="isPublic()" />
       </div>
+      <div class="flex justify-end border-t border-border pt-4">
+        <a routerLink="/topology" [queryParams]="serviceMap()" data-testid="overview-service-map"
+           class="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline">
+          <ng-icon name="lucideWaypoints" class="h-3.5 w-3.5" />What it connects to
+        </a>
+      </div>
     </section>
   `,
 })
@@ -124,6 +130,11 @@ export class AppOverviewSummaryComponent {
   private readonly catalog = inject(CatalogService);
 
   readonly app = input.required<Application>();
+
+  protected readonly serviceMap = computed(() => {
+    const a = this.app();
+    return { view: 'services', level: 'app', app: a.id, cluster: a.clusterId, focus: `app:${a.id}` };
+  });
 
   protected readonly pill = TONE_PILL;
   protected readonly dot = TONE_DOT;

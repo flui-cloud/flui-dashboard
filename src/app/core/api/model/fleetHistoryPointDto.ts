@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { FleetLoadDto } from './fleetLoadDto';
 
 
 export interface FleetHistoryPointDto { 
@@ -30,5 +31,9 @@ export interface FleetHistoryPointDto {
      * Nodes alive at this instant with no price to add
      */
     unpricedNodes: number;
+    /**
+     * What running apps reserved against what the nodes could hold at this instant — the figures scaling decides on. Null where the cluster records no such metrics for that instant.
+     */
+    load: FleetLoadDto | null;
 }
 

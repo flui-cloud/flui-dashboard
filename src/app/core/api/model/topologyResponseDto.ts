@@ -7,14 +7,36 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { TopologyStackDto } from './topologyStackDto';
 import { TopologyClusterDto } from './topologyClusterDto';
+import { TopologyServerDto } from './topologyServerDto';
+import { TopologyLinkDto } from './topologyLinkDto';
 import { TopologyStatsDto } from './topologyStatsDto';
+import { TopologyClusterLinkDto } from './topologyClusterLinkDto';
+import { TopologyProjectDto } from './topologyProjectDto';
+import { TopologyAppDto } from './topologyAppDto';
 
 
 export interface TopologyResponseDto { 
-    version: string;
-    fetchedAt: string;
+    version: TopologyResponseDto.VersionEnum;
+    generatedAt: string;
     clusters: Array<TopologyClusterDto>;
+    servers: Array<TopologyServerDto>;
+    stacks: Array<TopologyStackDto>;
+    apps: Array<TopologyAppDto>;
+    links: Array<TopologyLinkDto>;
+    clusterLinks: Array<TopologyClusterLinkDto>;
+    /**
+     * The projects the apps on the map belong to, and only those
+     */
+    projects: Array<TopologyProjectDto>;
     stats: TopologyStatsDto;
 }
+export namespace TopologyResponseDto {
+    export const VersionEnum = {
+        _2: '2'
+    } as const;
+    export type VersionEnum = typeof VersionEnum[keyof typeof VersionEnum];
+}
+
 

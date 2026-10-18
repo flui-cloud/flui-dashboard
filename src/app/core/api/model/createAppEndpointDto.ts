@@ -23,6 +23,10 @@ export interface CreateAppEndpointDto {
      */
     fqdn?: string;
     /**
+     * Path prefix this endpoint answers for on its host (default `/`). A host can carry several paths, all owned by applications of one project.
+     */
+    routePath?: string;
+    /**
      * ID of the ClusterDnsZone to use. If omitted, DNS management is BYOD (user manages DNS externally).
      */
     clusterDnsZoneId?: string;

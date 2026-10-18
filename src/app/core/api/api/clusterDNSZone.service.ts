@@ -17,6 +17,8 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
+import { AcmeResolversDto } from '../model/acmeResolversDto';
+// @ts-ignore
 import { ApiDomainSyncResultDto } from '../model/apiDomainSyncResultDto';
 // @ts-ignore
 import { AssignDnsZoneDto } from '../model/assignDnsZoneDto';
@@ -24,6 +26,8 @@ import { AssignDnsZoneDto } from '../model/assignDnsZoneDto';
 import { AuthDomainSyncResultDto } from '../model/authDomainSyncResultDto';
 // @ts-ignore
 import { CertDiagnosticsResponseDto } from '../model/certDiagnosticsResponseDto';
+// @ts-ignore
+import { CheckSystemHostnamesDto } from '../model/checkSystemHostnamesDto';
 // @ts-ignore
 import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../model/clusterDnsZoneControllerGetIssuers200ResponseInner';
 // @ts-ignore
@@ -42,6 +46,8 @@ import { SyncAuthDomainDto } from '../model/syncAuthDomainDto';
 import { SyncWebDomainDto } from '../model/syncWebDomainDto';
 // @ts-ignore
 import { SystemDnsStatusResponseDto } from '../model/systemDnsStatusResponseDto';
+// @ts-ignore
+import { SystemHostnamesResponseDto } from '../model/systemHostnamesResponseDto';
 // @ts-ignore
 import { WebDomainSyncResultDto } from '../model/webDomainSyncResultDto';
 
@@ -125,6 +131,80 @@ export class ClusterDNSZoneService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: assignDnsZoneDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Check the public addresses chosen for the platform applications
+     * Validates each name (one label under the domain, or a full address), and refuses a name another application uses, another namespace serves, or a DNS record of the zone already points elsewhere. Returns the full addresses to create the endpoints with. Changes nothing.
+     * @endpoint post /api/v1/clusters/{clusterId}/dns-zone/system-hostnames/check
+     * @param clusterId Cluster ID
+     * @param checkSystemHostnamesDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterDnsZoneControllerCheckSystemHostnames(clusterId: string, checkSystemHostnamesDto: CheckSystemHostnamesDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SystemHostnamesResponseDto>;
+    public clusterDnsZoneControllerCheckSystemHostnames(clusterId: string, checkSystemHostnamesDto: CheckSystemHostnamesDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SystemHostnamesResponseDto>>;
+    public clusterDnsZoneControllerCheckSystemHostnames(clusterId: string, checkSystemHostnamesDto: CheckSystemHostnamesDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SystemHostnamesResponseDto>>;
+    public clusterDnsZoneControllerCheckSystemHostnames(clusterId: string, checkSystemHostnamesDto: CheckSystemHostnamesDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerCheckSystemHostnames.');
+        }
+        if (checkSystemHostnamesDto === null || checkSystemHostnamesDto === undefined) {
+            throw new Error('Required parameter checkSystemHostnamesDto was null or undefined when calling clusterDnsZoneControllerCheckSystemHostnames.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/dns-zone/system-hostnames/check`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<SystemHostnamesResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: checkSystemHostnamesDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -613,6 +693,66 @@ export class ClusterDNSZoneService extends BaseService {
     }
 
     /**
+     * How cert-manager checks names before asking for a certificate
+     * Pinned means it asks public resolvers, so a name published a moment ago is seen as it is; otherwise it asks the cluster\&#39;s own resolver, which can keep a new name cached as missing for up to an hour. Null when cert-manager cannot be read.
+     * @endpoint get /api/v1/clusters/{clusterId}/dns-zone/acme-resolvers
+     * @param clusterId Cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterDnsZoneControllerGetAcmeResolvers(clusterId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<AcmeResolversDto>;
+    public clusterDnsZoneControllerGetAcmeResolvers(clusterId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<AcmeResolversDto>>;
+    public clusterDnsZoneControllerGetAcmeResolvers(clusterId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<AcmeResolversDto>>;
+    public clusterDnsZoneControllerGetAcmeResolvers(clusterId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerGetAcmeResolvers.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/dns-zone/acme-resolvers`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<AcmeResolversDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Get full cert-manager diagnostic chain for a cluster
      * Returns the Certificate → CertificateRequest → Order → Challenge resource chain from cert-manager. Useful for diagnosing failed or stale ACME authorizations, identifying rate limit situations, and understanding certificate issuance failures.
      * @endpoint get /api/v1/clusters/{clusterId}/dns-zone/cert-diagnostics
@@ -865,6 +1005,79 @@ export class ClusterDNSZoneService extends BaseService {
     }
 
     /**
+     * Default public addresses of the platform applications
+     * For the dashboard, the API and sign-in (when present): the name each one gets under the domain by default, the name already in use there, and the full address. Without dnsZoneId the primary zone of the cluster is used.
+     * @endpoint get /api/v1/clusters/{clusterId}/dns-zone/system-hostnames
+     * @param clusterId Cluster ID
+     * @param dnsZoneId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterDnsZoneControllerGetSystemHostnames(clusterId: string, dnsZoneId?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SystemHostnamesResponseDto>;
+    public clusterDnsZoneControllerGetSystemHostnames(clusterId: string, dnsZoneId?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SystemHostnamesResponseDto>>;
+    public clusterDnsZoneControllerGetSystemHostnames(clusterId: string, dnsZoneId?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SystemHostnamesResponseDto>>;
+    public clusterDnsZoneControllerGetSystemHostnames(clusterId: string, dnsZoneId?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerGetSystemHostnames.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'dnsZoneId',
+            <any>dnsZoneId,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/dns-zone/system-hostnames`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<SystemHostnamesResponseDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Whether one record covers every application on this cluster
      * Applications are published at &#x60;&lt;slug&gt;.&lt;cluster&gt;.&lt;zone&gt;&#x60; and all point at the same address, so a single &#x60;*.&lt;cluster&gt;&#x60; record covers every one of them — including the ones that do not exist yet. That is what makes a newly deployed application reachable immediately instead of waiting for a brand-new name to propagate. Read live from the DNS provider, so a record removed by hand shows as missing here.
      * @endpoint get /api/v1/clusters/{clusterId}/dns-zone/{assignmentId}/wildcard
@@ -1036,6 +1249,66 @@ export class ClusterDNSZoneService extends BaseService {
         let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/dns-zone/list`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<ClusterDnsZoneResponseDto>>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Make cert-manager check names through public resolvers
+     * Adds only the settings that are missing and restarts cert-manager once; a cluster already set is left as it is. Flui also does this on its own the first time it reconciles an endpoint with a certificate on the cluster.
+     * @endpoint post /api/v1/clusters/{clusterId}/dns-zone/acme-resolvers
+     * @param clusterId Cluster ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public clusterDnsZoneControllerPinAcmeResolvers(clusterId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<AcmeResolversDto>;
+    public clusterDnsZoneControllerPinAcmeResolvers(clusterId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<AcmeResolversDto>>;
+    public clusterDnsZoneControllerPinAcmeResolvers(clusterId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<AcmeResolversDto>>;
+    public clusterDnsZoneControllerPinAcmeResolvers(clusterId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling clusterDnsZoneControllerPinAcmeResolvers.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/dns-zone/acme-resolvers`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<AcmeResolversDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

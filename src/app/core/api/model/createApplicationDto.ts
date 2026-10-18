@@ -22,7 +22,7 @@ export interface CreateApplicationDto {
      */
     slug?: string;
     /**
-     * Project the application belongs to, and therefore the namespace it runs in. Omitted: the creator's personal project. It cannot be changed after creation.
+     * Project the application belongs to, and therefore the namespace it runs in. Omitted: the creator\'s personal project. It cannot be changed after creation.
      */
     projectId?: string;
     /**
@@ -36,7 +36,7 @@ export interface CreateApplicationDto {
     kind?: CreateApplicationDto.KindEnum;
     sourceType: CreateApplicationDto.SourceTypeEnum;
     /**
-     * Polymorphic source configuration based on sourceType
+     * Polymorphic source configuration based on sourceType. docker_image takes public images; a registryAuth credential is refused.
      */
     sourceConfig: object;
     /**

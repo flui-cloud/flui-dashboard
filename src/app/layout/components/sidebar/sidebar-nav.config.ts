@@ -28,6 +28,7 @@ export const FULL_ACCESS_ONLY_LABELS: ReadonlySet<string> = new Set([
  * fence admits that read, so the menu never leads into a refusal.
  */
 export const READS_BY_LABEL: Record<string, string> = {
+  Topology: '/topology',
   Scaling: '/infrastructure/scaling',
   'SSH Keys': '/access/ssh-keys',
   Platform: '/infrastructure/clusters/any/platform-components',

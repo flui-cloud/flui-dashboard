@@ -1,27 +1,31 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Subject, firstValueFrom } from 'rxjs';
 
-import { Configuration } from '../../core/api';
+import { SystemAppsPreference } from '../../core/services/system-apps-preference.service';
 import { TopologyService as TopologyApiService } from '../../core/api/api/topology.service';
 import { TopologyResponseDto } from '../../core/api/model/topologyResponseDto';
-import { TopologyAppDto } from '../../core/api/model/topologyAppDto';
-import { TopologyServerDto } from '../../core/api/model/topologyServerDto';
+import { TopologyStreamMessageDto } from '../../core/api/model/topologyStreamMessageDto';
+import { TopologyStreamPayloadDto } from '../../core/api/model/topologyStreamPayloadDto';
 import { AuthService } from '../../core/services/auth.service';
+import { AppConfigService } from '../../core/services/app-config.service';
+import { MaskModeService } from '../../core/services/mask-mode.service';
+import { SandboxService } from '../../core/services/sandbox.service';
+import { maskModeHeaders } from '../../core/interceptors/mask-mode.interceptor';
+import { apiPath } from '../../core/interceptors/sandbox-fence.interceptor';
 
-export type TopologyEvent =
-  | { event: 'app.status_changed'; data: { appId: string; status: TopologyAppDto.StatusEnum; statusReason: string | null } }
-  | { event: 'app.scaled'; data: { appId: string; replicas: TopologyAppDto['replicas']; replicaCount: number; scalingNote?: string | null } }
-  | { event: 'app.deployed'; data: TopologyAppDto }
-  | { event: 'app.removed'; data: { appId: string } }
-  | { event: 'server.added'; data: { clusterId: string; server: TopologyServerDto } }
-  | { event: 'server.removed'; data: { clusterId: string; serverId: string } }
-  | { event: 'heartbeat'; data: { ts: string } };
+export interface TopologyEvent {
+  event: TopologyStreamMessageDto.TypeEnum;
+  data: TopologyStreamPayloadDto;
+}
 
 @Injectable({ providedIn: 'root' })
 export class TopologyDashboardService {
   private readonly api = inject(TopologyApiService);
-  private readonly apiConfig = inject(Configuration);
+  private readonly appConfig = inject(AppConfigService);
   private readonly auth = inject(AuthService);
+  private readonly mask = inject(MaskModeService);
+  private readonly sandbox = inject(SandboxService);
+  private readonly systemApps = inject(SystemAppsPreference);
 
   private readonly _data = signal<TopologyResponseDto | null>(null);
   readonly data = this._data.asReadonly();
@@ -38,7 +42,9 @@ export class TopologyDashboardService {
   private heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
 
   async load(): Promise<TopologyResponseDto> {
-    const data = await firstValueFrom(this.api.topologyControllerGetTopology());
+    const data = await firstValueFrom(
+      this.api.topologyControllerGetTopology(this.systemApps.shown() ? '1' : undefined),
+    );
     this._data.set(data);
     return data;
   }
@@ -63,8 +69,13 @@ export class TopologyDashboardService {
   }
 
   private async connect(): Promise<void> {
-    const base = this.apiConfig.basePath ?? '';
-    const url = `${base}/api/v1/topology/stream`;
+    const base = this.appConfig.apiBaseUrl ?? '';
+    const url = `${base}/api/v1/topology/stream${this.systemApps.shown() ? '?system=1' : ''}`;
+    const path = apiPath(url, base);
+    if (path !== null && (!this.sandbox.allows('GET', path) || this.sandbox.needsSignIn('GET', path))) {
+      this.abort = null;
+      return;
+    }
     const token = this.auth.getToken();
 
     const controller = new AbortController();
@@ -77,6 +88,7 @@ export class TopologyDashboardService {
         credentials: 'include',
         headers: {
           Accept: 'text/event-stream',
+          ...maskModeHeaders(this.mask.enabled(), url, base),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
@@ -84,7 +96,6 @@ export class TopologyDashboardService {
         throw new Error(`SSE connect failed: ${res.status}`);
       }
       this._connected.set(true);
-      this.reconnectAttempts = 0;
       this.armHeartbeatWatchdog();
 
       const reader = res.body.getReader();
@@ -127,14 +138,16 @@ export class TopologyDashboardService {
     } catch {
       return;
     }
-    if (eventName === 'heartbeat') this.armHeartbeatWatchdog();
-    this._events.next({ event: eventName, data } as TopologyEvent);
+    // Only a stream that delivers counts as healthy: one that closes at once must back off.
+    this.reconnectAttempts = 0;
+    const event = eventName as TopologyEvent['event'];
+    if (event === 'heartbeat') this.armHeartbeatWatchdog();
+    this._events.next({ event, data: data as TopologyStreamPayloadDto });
   }
 
   private armHeartbeatWatchdog(): void {
     if (this.heartbeatTimer) clearTimeout(this.heartbeatTimer);
     this.heartbeatTimer = setTimeout(() => {
-      // No heartbeat for >30s — force reconnect
       this.abort?.abort();
       this.abort = null;
       this._connected.set(false);

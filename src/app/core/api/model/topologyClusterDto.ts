@@ -7,8 +7,8 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { TopologyServerDto } from './topologyServerDto';
-import { TopologyAppDto } from './topologyAppDto';
+import { TopologyClusterCountsDto } from './topologyClusterCountsDto';
+import { TopologyInboundRuleDto } from './topologyInboundRuleDto';
 
 
 export interface TopologyClusterDto { 
@@ -17,17 +17,38 @@ export interface TopologyClusterDto {
     displayName: string;
     provider: string;
     region: string;
+    type: TopologyClusterDto.TypeEnum;
     status: TopologyClusterDto.StatusEnum;
-    servers: Array<TopologyServerDto>;
-    apps: Array<TopologyAppDto>;
+    k3sVersion: string | null;
+    /**
+     * How the control reaches this cluster: over the Flui network, on its public address, or with the Flui network off
+     */
+    overlay: TopologyClusterDto.OverlayEnum;
+    counts: TopologyClusterCountsDto;
+    /**
+     * What the firewall Flui applies lets in from the Internet; null when Flui manages no firewall for this cluster
+     */
+    inbound: Array<TopologyInboundRuleDto> | null;
 }
 export namespace TopologyClusterDto {
+    export const TypeEnum = {
+        Control: 'control',
+        Workload: 'workload',
+        Observability: 'observability'
+    } as const;
+    export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
     export const StatusEnum = {
         Healthy: 'healthy',
         Degraded: 'degraded',
         Down: 'down'
     } as const;
     export type StatusEnum = typeof StatusEnum[keyof typeof StatusEnum];
+    export const OverlayEnum = {
+        Tunnel: 'tunnel',
+        PublicAddress: 'public-address',
+        Off: 'off'
+    } as const;
+    export type OverlayEnum = typeof OverlayEnum[keyof typeof OverlayEnum];
 }
 
 

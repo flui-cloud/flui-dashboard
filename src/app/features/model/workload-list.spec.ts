@@ -88,7 +88,7 @@ describe('workload list', () => {
   });
 
   it('does not count the showcase among the caller\u2019s own', () => {
-    const shown = (a: Application) => ({ ...a, access: { tabs: [], readOnly: true, showcase: true } }) as Application;
+    const shown = (a: Application) => ({ ...a, access: { tabs: [], readOnly: true, showcase: true, dataAccess: false } }) as Application;
     const showcase = { ...bundle, id: 'install-live', components: bundle.components.map(shown) };
     expect(workloadListCounts([bundle, showcase])).toEqual({ applications: 1, data: 1, system: 0 });
   });

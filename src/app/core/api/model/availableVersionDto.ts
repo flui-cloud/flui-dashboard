@@ -51,12 +51,12 @@ export interface AvailableVersionDto {
      */
     isLatestRelease: boolean;
     /**
-     * Whether this application can actually be asked to run this version. False for an image built from another branch, or for a row that is only a moving tag.
+     * Whether this application can actually be asked to run this version. False for an image built from another branch, or for a row that is only a moving tag. A listing that offers what cannot be run teaches people not to trust the rest of it.
      */
     releasable: boolean;
     /**
      * Why it cannot be released, in one sentence. Null when it can.
      */
-    notReleasableReason: string | null;
+    notReleasableReason?: string | null;
 }
 

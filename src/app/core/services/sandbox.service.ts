@@ -305,6 +305,7 @@ export const SANDBOX_ROUTE_AREAS: ReadonlyArray<readonly [string, string]> = [
   ['/cluster/*/variables', 'platform-config'],
   ['/cluster/*/pricing', 'pricing'],
   ['/scaling', 'scaling'],
+  ['/topology', 'topology'],
   ['/management/operating-context', 'operating-context'],
 ];
 

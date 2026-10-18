@@ -22,5 +22,9 @@ export interface ApplicationAccessDto {
      * True when this application is part of the shared showcase — run by the platform’s operators and shown to others read-only. Label it as such; unlabelled content inside someone’s own space reads as a failure of isolation.
      */
     showcase: boolean;
+    /**
+     * False when the caller may see this application but not its data — logs, variable values, consoles, backups. The values are then not sent.
+     */
+    dataAccess: boolean;
 }
 

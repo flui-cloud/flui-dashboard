@@ -21,6 +21,10 @@ export interface ScheduledJobRunDto {
     manual: boolean;
     startTime?: string;
     completionTime?: string;
+    /**
+     * Why a failed run failed, in plain words, when the cluster still says.
+     */
+    reason?: string;
 }
 export namespace ScheduledJobRunDto {
     export const StatusEnum = {

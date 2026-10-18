@@ -28,6 +28,10 @@ export interface AppMetricsDataPointDto {
      */
     cpu_utilization_percent?: number;
     /**
+     * Share of CPU scheduling periods the limit held the application back, at the worst minute of the step
+     */
+    cpu_throttled_percent?: number;
+    /**
      * Memory usage in bytes
      */
     memory_usage_bytes?: number;

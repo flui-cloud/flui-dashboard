@@ -15,8 +15,12 @@ export interface SetPlatformConfigDto {
      */
     recipient: string;
     /**
-     * Dead-man\'s-switch URL the master POSTs to every 5 min while backups are fresh (healthchecks.io / ntfy / Uptime-Kuma push).
+     * Dead-man\'s-switch URL the master POSTs to every 5 min while the installation is healthy and its backups are fresh (healthchecks.io / ntfy / Uptime-Kuma push). Left out, the current one stays.
      */
     heartbeatUrl?: string;
+    /**
+     * Stop the heartbeat: forget the URL. Ignored when heartbeatUrl is set.
+     */
+    clearHeartbeat?: boolean;
 }
 

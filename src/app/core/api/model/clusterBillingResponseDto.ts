@@ -9,7 +9,9 @@
  */
 import { RunRateDto } from './runRateDto';
 import { MonthToDateDto } from './monthToDateDto';
+import { BillingForecastDto } from './billingForecastDto';
 import { BillingPeriodDto } from './billingPeriodDto';
+import { BillingVatDto } from './billingVatDto';
 
 
 export interface ClusterBillingResponseDto { 
@@ -21,6 +23,17 @@ export interface ClusterBillingResponseDto {
     billingPeriod: BillingPeriodDto;
     monthToDate: MonthToDateDto;
     runRate: RunRateDto;
+    forecast: BillingForecastDto;
+    vat: BillingVatDto;
+    billedAs: string | null;
+    /**
+     * Machines and volumes this month that Flui could not price, so the totals leave them out
+     */
+    unpricedItems: number;
+    /**
+     * Machines and volumes priced at the list price of today, because they started before Flui kept the price they were bought at
+     */
+    listPricedItems: number;
     calculatedAt: string;
 }
 

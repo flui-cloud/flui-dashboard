@@ -406,8 +406,8 @@ export class InferenceService extends BaseService {
     }
 
     /**
-     * Token usage by model and by person
-     * Rows are written by the one point every surface reaches a provider through — the assistant and the console copilots alike — so this is the whole bill, not one screen of it. &#x60;estimated&#x60; counts the calls whose provider reported nothing and whose size was worked out from the text.
+     * Token usage by model, by person and by kind of person
+     * Rows are written by the one point every surface reaches a provider through — the assistant and the console copilots alike — so this is the whole bill, not one screen of it. &#x60;estimated&#x60; counts the calls whose provider reported nothing and whose size was worked out from the text. &#x60;byKind&#x60; adds it up for the demo\&#39;s visitors, its guests, everybody else, and the platform itself.
      * @endpoint get /api/v1/inference/usage
      * @param days Window to report on. Default 7; 0 means everything.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

@@ -18,6 +18,17 @@ export interface RoomWaitDto {
     /**
      * What scaling does about it, as the what-if answer names it
      */
-    verdict: string | null;
+    verdict: RoomWaitDto.VerdictEnum | null;
 }
+export namespace RoomWaitDto {
+    export const VerdictEnum = {
+        Fits: 'fits',
+        Buys: 'buys',
+        Proposes: 'proposes',
+        NothingHosts: 'nothing-hosts',
+        Unknown: 'unknown'
+    } as const;
+    export type VerdictEnum = typeof VerdictEnum[keyof typeof VerdictEnum];
+}
+
 

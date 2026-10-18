@@ -18,6 +18,8 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
 import { TopologyResponseDto } from '../model/topologyResponseDto';
+// @ts-ignore
+import { TopologyStreamMessageDto } from '../model/topologyStreamMessageDto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -37,16 +39,28 @@ export class TopologyService extends BaseService {
 
     /**
      * Full topology snapshot (clusters → servers → apps)
-     * Powers the dashboard universe map. Cached server-side for 10s. Each app exposes a stable id, slug, category, status and primaryServerId so the frontend can render planets/stars/galaxies and deep-link to /applications/:id.
+     * Powers the dashboard topology. Refreshed every 10s and narrowed to the clusters and applications the caller may read.
      * @endpoint get /api/v1/topology
+     * @param system Include the apps Flui itself runs; shown only to callers who see every cluster
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public topologyControllerGetTopology(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TopologyResponseDto>;
-    public topologyControllerGetTopology(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TopologyResponseDto>>;
-    public topologyControllerGetTopology(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TopologyResponseDto>>;
-    public topologyControllerGetTopology(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public topologyControllerGetTopology(system?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TopologyResponseDto>;
+    public topologyControllerGetTopology(system?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TopologyResponseDto>>;
+    public topologyControllerGetTopology(system?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TopologyResponseDto>>;
+    public topologyControllerGetTopology(system?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'system',
+            <any>system,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -81,6 +95,7 @@ export class TopologyService extends BaseService {
         return this.httpClient.request<TopologyResponseDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -93,16 +108,28 @@ export class TopologyService extends BaseService {
 
     /**
      * Live topology change stream (Server-Sent Events)
-     * Emits app.status_changed, app.scaled, app.deployed, app.removed, server.added, server.removed, plus a heartbeat every 15s. Frontend should connect after the initial /topology fetch and patch its in-memory model.
+     * Emits app.status_changed, app.scaled, app.deployed, app.removed, server.added, server.removed, server.capacity (every 30s, changed servers only), links.changed, plus a heartbeat every 15s. Narrowed to what the caller may read. Connect after GET /topology and patch the snapshot.
      * @endpoint get /api/v1/topology/stream
+     * @param system 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public topologyControllerStream(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public topologyControllerStream(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public topologyControllerStream(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public topologyControllerStream(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public topologyControllerStream(system?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TopologyStreamMessageDto>;
+    public topologyControllerStream(system?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TopologyStreamMessageDto>>;
+    public topologyControllerStream(system?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TopologyStreamMessageDto>>;
+    public topologyControllerStream(system?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'system',
+            <any>system,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -110,6 +137,7 @@ export class TopologyService extends BaseService {
         localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -133,9 +161,10 @@ export class TopologyService extends BaseService {
 
         let localVarPath = `/api/v1/topology/stream`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<TopologyStreamMessageDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

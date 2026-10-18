@@ -21,6 +21,8 @@ import { ClusterScalingDecisionDto } from '../model/clusterScalingDecisionDto';
 // @ts-ignore
 import { ClusterScalingRowDto } from '../model/clusterScalingRowDto';
 // @ts-ignore
+import { ScalingCostDto } from '../model/scalingCostDto';
+// @ts-ignore
 import { ScalingDecisionResponseDto } from '../model/scalingDecisionResponseDto';
 // @ts-ignore
 import { ScalingGroupResponseDto } from '../model/scalingGroupResponseDto';
@@ -28,6 +30,10 @@ import { ScalingGroupResponseDto } from '../model/scalingGroupResponseDto';
 import { ScalingPreviewDto } from '../model/scalingPreviewDto';
 // @ts-ignore
 import { ShapeCatalogueDto } from '../model/shapeCatalogueDto';
+// @ts-ignore
+import { WhatIfAnswerDto } from '../model/whatIfAnswerDto';
+// @ts-ignore
+import { WhatIfRequestDto } from '../model/whatIfRequestDto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -43,6 +49,154 @@ export class InfrastructureScalingService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
+    }
+
+    /**
+     * Buy, once, the machine a manual group proposes
+     * For a group set to manual: the engine decides as on a pass and the purchase goes through every gate an automatic one would (ceilings in nodes and money, a purchase in flight, a failed one, the network). The body names the machine the person saw; if the proposal has changed since, nothing is bought and 409 says what it is now. The group stays manual. The decision row names who approved it.
+     * @endpoint post /api/v1/infrastructure/scaling-groups/{id}/approve-purchase
+     * @param id Scaling group ID
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public scalingControllerApprovePurchase(id: string, body: object, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ScalingDecisionResponseDto>;
+    public scalingControllerApprovePurchase(id: string, body: object, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ScalingDecisionResponseDto>>;
+    public scalingControllerApprovePurchase(id: string, body: object, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ScalingDecisionResponseDto>>;
+    public scalingControllerApprovePurchase(id: string, body: object, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling scalingControllerApprovePurchase.');
+        }
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling scalingControllerApprovePurchase.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/scaling-groups/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/approve-purchase`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ScalingDecisionResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: body,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Give back, once, the node a manual group names
+     * For a group set to manual whose fleet is above its target (the minimum was lowered): the engine decides as on a pass and the node goes through every gate an automatic removal would (a node on its way, one that just joined, a drain that cannot finish). The body names the node the person saw (preview &#x60;giveBack&#x60;); if the group names another since, nothing is removed and 409 says which. The group stays manual.
+     * @endpoint post /api/v1/infrastructure/scaling-groups/{id}/approve-removal
+     * @param id Scaling group ID
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public scalingControllerApproveRemoval(id: string, body: object, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ScalingDecisionResponseDto>;
+    public scalingControllerApproveRemoval(id: string, body: object, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ScalingDecisionResponseDto>>;
+    public scalingControllerApproveRemoval(id: string, body: object, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ScalingDecisionResponseDto>>;
+    public scalingControllerApproveRemoval(id: string, body: object, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling scalingControllerApproveRemoval.');
+        }
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling scalingControllerApproveRemoval.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/scaling-groups/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/approve-removal`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ScalingDecisionResponseDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: body,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
@@ -111,14 +265,20 @@ export class InfrastructureScalingService extends BaseService {
      * @endpoint get /api/v1/infrastructure/clusters/{clusterId}/scaling-decisions
      * @param clusterId Cluster ID
      * @param limit 
+     * @param collapse true: identical decisions in a row come back as one, with &#x60;repeats&#x60; and &#x60;since&#x60;
+     * @param before The &#x60;at&#x60; of the last row read: returns the next page, older rows only
+     * @param until ISO time, inclusive
+     * @param since ISO time, inclusive
+     * @param force Comma list: urgency, opportunity, person
+     * @param outcome Comma list: added, replaced, removed, declined, alerted, changed
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public scalingControllerClusterDecisions(clusterId: string, limit?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ClusterScalingDecisionDto>>;
-    public scalingControllerClusterDecisions(clusterId: string, limit?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ClusterScalingDecisionDto>>>;
-    public scalingControllerClusterDecisions(clusterId: string, limit?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ClusterScalingDecisionDto>>>;
-    public scalingControllerClusterDecisions(clusterId: string, limit?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public scalingControllerClusterDecisions(clusterId: string, limit?: string, collapse?: any, before?: any, until?: any, since?: any, force?: any, outcome?: any, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ClusterScalingDecisionDto>>;
+    public scalingControllerClusterDecisions(clusterId: string, limit?: string, collapse?: any, before?: any, until?: any, since?: any, force?: any, outcome?: any, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ClusterScalingDecisionDto>>>;
+    public scalingControllerClusterDecisions(clusterId: string, limit?: string, collapse?: any, before?: any, until?: any, since?: any, force?: any, outcome?: any, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ClusterScalingDecisionDto>>>;
+    public scalingControllerClusterDecisions(clusterId: string, limit?: string, collapse?: any, before?: any, until?: any, since?: any, force?: any, outcome?: any, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (clusterId === null || clusterId === undefined) {
             throw new Error('Required parameter clusterId was null or undefined when calling scalingControllerClusterDecisions.');
         }
@@ -129,6 +289,60 @@ export class InfrastructureScalingService extends BaseService {
             localVarQueryParameters,
             'limit',
             <any>limit,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'collapse',
+            <any>collapse,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'before',
+            <any>before,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'until',
+            <any>until,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'since',
+            <any>since,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'force',
+            <any>force,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'outcome',
+            <any>outcome,
             QueryParamStyle.Form,
             true,
         );
@@ -168,6 +382,80 @@ export class InfrastructureScalingService extends BaseService {
             {
                 context: localVarHttpContext,
                 params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * What these node limits would cost, before they are written
+     * The same reading every group carries in &#x60;cost&#x60;, for a draft: scenarios from the minimum to the maximum with the provider list prices, and where the spending ceiling would stop the fleet. Fields left out are read from the cluster’s first group. A machine with no published price is named and never priced. Spends nothing and changes nothing.
+     * @endpoint post /api/v1/infrastructure/clusters/{clusterId}/scaling/cost
+     * @param clusterId Cluster ID
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public scalingControllerCost(clusterId: string, body: object, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ScalingCostDto>;
+    public scalingControllerCost(clusterId: string, body: object, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ScalingCostDto>>;
+    public scalingControllerCost(clusterId: string, body: object, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ScalingCostDto>>;
+    public scalingControllerCost(clusterId: string, body: object, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling scalingControllerCost.');
+        }
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling scalingControllerCost.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/scaling/cost`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ScalingCostDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: body,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -258,14 +546,20 @@ export class InfrastructureScalingService extends BaseService {
      * @endpoint get /api/v1/infrastructure/scaling-groups/{id}/decisions
      * @param id Scaling group ID
      * @param limit 
+     * @param collapse true: identical decisions in a row come back as one, with &#x60;repeats&#x60; and &#x60;since&#x60;
+     * @param before The &#x60;at&#x60; of the last row read: returns the next page, older rows only
+     * @param until ISO time, inclusive
+     * @param since ISO time, inclusive
+     * @param force Comma list: urgency, opportunity, person
+     * @param outcome Comma list: added, replaced, removed, declined, alerted, changed
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public scalingControllerDecisions(id: string, limit?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ScalingDecisionResponseDto>>;
-    public scalingControllerDecisions(id: string, limit?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ScalingDecisionResponseDto>>>;
-    public scalingControllerDecisions(id: string, limit?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ScalingDecisionResponseDto>>>;
-    public scalingControllerDecisions(id: string, limit?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public scalingControllerDecisions(id: string, limit?: string, collapse?: any, before?: any, until?: any, since?: any, force?: any, outcome?: any, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ScalingDecisionResponseDto>>;
+    public scalingControllerDecisions(id: string, limit?: string, collapse?: any, before?: any, until?: any, since?: any, force?: any, outcome?: any, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ScalingDecisionResponseDto>>>;
+    public scalingControllerDecisions(id: string, limit?: string, collapse?: any, before?: any, until?: any, since?: any, force?: any, outcome?: any, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ScalingDecisionResponseDto>>>;
+    public scalingControllerDecisions(id: string, limit?: string, collapse?: any, before?: any, until?: any, since?: any, force?: any, outcome?: any, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling scalingControllerDecisions.');
         }
@@ -276,6 +570,60 @@ export class InfrastructureScalingService extends BaseService {
             localVarQueryParameters,
             'limit',
             <any>limit,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'collapse',
+            <any>collapse,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'before',
+            <any>before,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'until',
+            <any>until,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'since',
+            <any>since,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'force',
+            <any>force,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'outcome',
+            <any>outcome,
             QueryParamStyle.Form,
             true,
         );
@@ -506,7 +854,7 @@ export class InfrastructureScalingService extends BaseService {
 
     /**
      * Remove a scaling group and the decisions it took
-     * Removes no node and stops no machine: nothing runs off this group yet.
+     * Removes no node and stops no machine. The only group of a cluster Flui buys for cannot be removed: its nodes change through it (400).
      * @endpoint delete /api/v1/infrastructure/scaling-groups/{id}
      * @param id Scaling group ID
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -551,6 +899,66 @@ export class InfrastructureScalingService extends BaseService {
         let localVarPath = `/api/v1/infrastructure/scaling-groups/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Let a scaling group buy again after a purchase failed
+     * A failed purchase holds the group back so a failing one is not retried every minute. Call this once the cause is fixed: the next pass may buy again, inside the same bounds and ceiling. Buys nothing by itself.
+     * @endpoint post /api/v1/infrastructure/scaling-groups/{id}/retry-purchase
+     * @param id Scaling group ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public scalingControllerRetryPurchase(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ScalingGroupResponseDto>;
+    public scalingControllerRetryPurchase(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ScalingGroupResponseDto>>;
+    public scalingControllerRetryPurchase(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ScalingGroupResponseDto>>;
+    public scalingControllerRetryPurchase(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling scalingControllerRetryPurchase.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/scaling-groups/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/retry-purchase`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ScalingGroupResponseDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -679,6 +1087,80 @@ export class InfrastructureScalingService extends BaseService {
     }
 
     /**
+     * Move the floor of a scaling group — how a cluster gains or loses a node
+     * Sets &#x60;min&#x60; and the target with it; the ceiling never sits below them. A cluster changes its nodes only through its group: raise the floor for one more (a manual group then proposes the machine for approve-purchase, an automatic one buys it within its ceilings), lower it for one fewer (a manual group then names the node for approve-removal, an automatic one gives it back).
+     * @endpoint patch /api/v1/infrastructure/scaling-groups/{id}/floor
+     * @param id Scaling group ID
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public scalingControllerSetFloor(id: string, body: object, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ScalingGroupResponseDto>;
+    public scalingControllerSetFloor(id: string, body: object, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ScalingGroupResponseDto>>;
+    public scalingControllerSetFloor(id: string, body: object, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ScalingGroupResponseDto>>;
+    public scalingControllerSetFloor(id: string, body: object, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling scalingControllerSetFloor.');
+        }
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling scalingControllerSetFloor.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/scaling-groups/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/floor`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ScalingGroupResponseDto>('patch', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: body,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Change a scaling group
      * Every field present is replaced whole, and present is the test rather than truthy: the three bounds are three roles that only mean anything together, the limits are the same, and &#x60;regions: []&#x60;, &#x60;shapes: []&#x60;, &#x60;standingOrders: []&#x60; and &#x60;settleSeconds: 0&#x60; all land as sent. Leaving a field out is the only way to keep what is stored, and it is how a block is emptied — a body that says nothing about the limits keeps them, one that sends &#x60;limits&#x60; without &#x60;maxMonthlyCost&#x60; removes the ceiling.
      * @endpoint patch /api/v1/infrastructure/scaling-groups/{id}
@@ -742,6 +1224,80 @@ export class InfrastructureScalingService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: body,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * What would happen if an app asked for this much
+     * Asked before anything is written: whether the replicas fit on the nodes already there, which machine a group would buy (or, set to manual, propose) for them, or why none can take them. The same room and ladder the reconciler uses; spends nothing and changes nothing.
+     * @endpoint post /api/v1/infrastructure/clusters/{clusterId}/scaling/what-if
+     * @param clusterId Cluster ID
+     * @param whatIfRequestDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public scalingControllerWhatIf(clusterId: string, whatIfRequestDto: WhatIfRequestDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<WhatIfAnswerDto>;
+    public scalingControllerWhatIf(clusterId: string, whatIfRequestDto: WhatIfRequestDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<WhatIfAnswerDto>>;
+    public scalingControllerWhatIf(clusterId: string, whatIfRequestDto: WhatIfRequestDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<WhatIfAnswerDto>>;
+    public scalingControllerWhatIf(clusterId: string, whatIfRequestDto: WhatIfRequestDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (clusterId === null || clusterId === undefined) {
+            throw new Error('Required parameter clusterId was null or undefined when calling scalingControllerWhatIf.');
+        }
+        if (whatIfRequestDto === null || whatIfRequestDto === undefined) {
+            throw new Error('Required parameter whatIfRequestDto was null or undefined when calling scalingControllerWhatIf.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/infrastructure/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/scaling/what-if`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<WhatIfAnswerDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: whatIfRequestDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

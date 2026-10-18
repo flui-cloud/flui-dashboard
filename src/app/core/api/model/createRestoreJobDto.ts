@@ -16,10 +16,13 @@ export interface CreateRestoreJobDto {
     targetClusterId: string;
     targetKind: CreateRestoreJobDto.TargetKindEnum;
     /**
-     * Beside the original (`new`) or onto it, replacing what is there (`existing`). Required for cluster, namespace and application restores, where both are possible and the old default was neither. Derived for the engines that have only one meaning: a database PITR always builds a new install.
+     * Beside the original (`new`) or onto it (`existing`). A database restore always builds a new install, so this is recorded as `new` whatever is sent.
      */
     placement?: CreateRestoreJobDto.PlacementEnum;
     targetSelector?: RestoreTargetSelectorDto;
+    /**
+     * Ignored: the strategy is the one of the engine that wrote the backup.
+     */
     strategy?: CreateRestoreJobDto.StrategyEnum;
     /**
      * PG_PITR only: ISO-8601 instant to recover to; omit for latest (end of WAL).
@@ -44,7 +47,8 @@ export namespace CreateRestoreJobDto {
     export const StrategyEnum = {
         OsSnapshot: 'os_snapshot',
         PgPitr: 'pg_pitr',
-        MariadbPitr: 'mariadb_pitr'
+        MariadbPitr: 'mariadb_pitr',
+        LogicalDump: 'logical_dump'
     } as const;
     export type StrategyEnum = typeof StrategyEnum[keyof typeof StrategyEnum];
 }

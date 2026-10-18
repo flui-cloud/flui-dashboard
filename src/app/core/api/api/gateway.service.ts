@@ -25,6 +25,8 @@ import { CompiledGatewayRouteDto } from '../model/compiledGatewayRouteDto';
 // @ts-ignore
 import { GatewayRouteDto } from '../model/gatewayRouteDto';
 // @ts-ignore
+import { GatewayRouteSyncDto } from '../model/gatewayRouteSyncDto';
+// @ts-ignore
 import { GatewayStatusDto } from '../model/gatewayStatusDto';
 // @ts-ignore
 import { SetGatewayPolicyDto } from '../model/setGatewayPolicyDto';
@@ -305,7 +307,7 @@ export class GatewayService extends BaseService {
 
     /**
      * Reconcile a gateway route now
-     * Synchronously compiles the route policies to Traefik resources and refreshes DNS/TLS/Ingress.
+     * Compiles the route policies and brings the address record, route and certificate in line; a failed certificate is ordered again. &#x60;sync&#x60; says what was done.
      * @endpoint post /api/v1/applications/{id}/gateway/routes/{endpointId}/reconcile
      * @param id Application ID
      * @param endpointId Route (endpoint) ID
@@ -313,9 +315,9 @@ export class GatewayService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public gatewayControllerReconcile(id: string, endpointId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GatewayRouteDto>;
-    public gatewayControllerReconcile(id: string, endpointId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GatewayRouteDto>>;
-    public gatewayControllerReconcile(id: string, endpointId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GatewayRouteDto>>;
+    public gatewayControllerReconcile(id: string, endpointId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GatewayRouteSyncDto>;
+    public gatewayControllerReconcile(id: string, endpointId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GatewayRouteSyncDto>>;
+    public gatewayControllerReconcile(id: string, endpointId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GatewayRouteSyncDto>>;
     public gatewayControllerReconcile(id: string, endpointId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling gatewayControllerReconcile.');
@@ -354,7 +356,7 @@ export class GatewayService extends BaseService {
 
         let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/gateway/routes/${this.configuration.encodeParam({name: "endpointId", value: endpointId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/reconcile`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<GatewayRouteDto>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<GatewayRouteSyncDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

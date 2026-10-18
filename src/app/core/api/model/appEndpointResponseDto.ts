@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { GatewayConfigDto } from './gatewayConfigDto';
+import { CertificatePhaseDto } from './certificatePhaseDto';
 
 
 export interface AppEndpointResponseDto { 
@@ -40,6 +41,10 @@ export interface AppEndpointResponseDto {
     tlsEnabled: boolean;
     certificateStatus?: AppEndpointResponseDto.CertificateStatusEnum;
     certificateMessage?: string;
+    /**
+     * Where the certificate is, said plainly.
+     */
+    certificatePhase: CertificatePhaseDto;
     certificateExpiresAt?: string;
     reconciliationStatus: AppEndpointResponseDto.ReconciliationStatusEnum;
     lastReconciliationAt?: string;

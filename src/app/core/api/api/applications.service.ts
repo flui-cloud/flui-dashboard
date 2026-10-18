@@ -39,6 +39,8 @@ import { CreateApplicationDto } from '../model/createApplicationDto';
 // @ts-ignore
 import { CreateApplicationResponseDto } from '../model/createApplicationResponseDto';
 // @ts-ignore
+import { DbPoolerStatusDto } from '../model/dbPoolerStatusDto';
+// @ts-ignore
 import { DeleteApplicationResponseDto } from '../model/deleteApplicationResponseDto';
 // @ts-ignore
 import { DeployApplicationDto } from '../model/deployApplicationDto';
@@ -514,8 +516,87 @@ export class ApplicationsService extends BaseService {
     }
 
     /**
-     * Archive an application volume to S3-compatible storage
-     * Spawns a copy-pod Job that streams the live PVC contents to S3 via rclone. Pass &#x60;destinationId&#x60; to archive into a registered backup destination — the copy is then linked to it in the ledger and can be listed and restored like any other backup. Raw &#x60;destination&#x60; credentials still work. With neither, the bucket is auto-provisioned via the cluster provider object storage (Scaleway: full-auto using the compute key; Hetzner: requires Object Storage credentials connected; BYOS: no provisioner, pass one of the above).
+     * List the files of a directory inside a kopia volume backup
+     * Reads the snapshot read-only; nothing is restored. &#x60;path&#x60; is relative to the volume root (default: the root). Files copied with SQLite online backup are marked &#x60;consistentCopy&#x60;.
+     * @endpoint get /api/v1/applications/{id}/volume-backups/{backupId}/files
+     * @param id Application ID
+     * @param backupId Volume backup id
+     * @param path 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applicationSnapshotsControllerBrowseVolumeBackup(id: string, backupId: string, path: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public applicationSnapshotsControllerBrowseVolumeBackup(id: string, backupId: string, path: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public applicationSnapshotsControllerBrowseVolumeBackup(id: string, backupId: string, path: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public applicationSnapshotsControllerBrowseVolumeBackup(id: string, backupId: string, path: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling applicationSnapshotsControllerBrowseVolumeBackup.');
+        }
+        if (backupId === null || backupId === undefined) {
+            throw new Error('Required parameter backupId was null or undefined when calling applicationSnapshotsControllerBrowseVolumeBackup.');
+        }
+        if (path === null || path === undefined) {
+            throw new Error('Required parameter path was null or undefined when calling applicationSnapshotsControllerBrowseVolumeBackup.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'path',
+            <any>path,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/volume-backups/${this.configuration.encodeParam({name: "backupId", value: backupId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/files`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Back up an application volume to S3-compatible storage
+     * Answers at once with an operation id; the copy runs in the background and its result (or the reason it was refused) is recorded on the operation (GET /infrastructure/operations/:id, &#x60;metadata.result&#x60; / &#x60;metadata.error&#x60;). With &#x60;destinationId&#x60; (a registered destination) the volume becomes a kopia snapshot in the application\&#39;s encrypted, deduplicated repository on it, kept until deleted, recorded in the ledger, listable and restorable whole or file by file. Raw &#x60;destination&#x60; credentials still work and archive a full plaintext copy through rclone. With neither, the bucket is auto-provisioned via the cluster provider object storage (Scaleway: full-auto using the compute key; Hetzner: requires Object Storage credentials connected; BYOS: no provisioner, pass one of the above).
      * @endpoint post /api/v1/applications/{id}/backups
      * @param id Application ID
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -756,6 +837,131 @@ export class ApplicationsService extends BaseService {
     }
 
     /**
+     * Delete a restored or previous volume the application does not use
+     * @endpoint delete /api/v1/applications/{id}/volumes/spare/{name}
+     * @param id Application ID
+     * @param name The volume, from the list
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applicationSnapshotsControllerDeleteSpareVolume(id: string, name: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public applicationSnapshotsControllerDeleteSpareVolume(id: string, name: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public applicationSnapshotsControllerDeleteSpareVolume(id: string, name: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public applicationSnapshotsControllerDeleteSpareVolume(id: string, name: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling applicationSnapshotsControllerDeleteSpareVolume.');
+        }
+        if (name === null || name === undefined) {
+            throw new Error('Required parameter name was null or undefined when calling applicationSnapshotsControllerDeleteSpareVolume.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/volumes/spare/${this.configuration.encodeParam({name: "name", value: name, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Delete a volume backup
+     * Removes the kopia snapshot (its space comes back at the next maintenance) or the archive, then its record. A clone on the cluster is removed with DELETE /applications/:id/snapshots/:snapshotId.
+     * @endpoint delete /api/v1/applications/{id}/volume-backups/{backupId}
+     * @param id Application ID
+     * @param backupId Volume backup id
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applicationSnapshotsControllerDeleteVolumeBackup(id: string, backupId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public applicationSnapshotsControllerDeleteVolumeBackup(id: string, backupId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public applicationSnapshotsControllerDeleteVolumeBackup(id: string, backupId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public applicationSnapshotsControllerDeleteVolumeBackup(id: string, backupId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling applicationSnapshotsControllerDeleteVolumeBackup.');
+        }
+        if (backupId === null || backupId === undefined) {
+            throw new Error('Required parameter backupId was null or undefined when calling applicationSnapshotsControllerDeleteVolumeBackup.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/volume-backups/${this.configuration.encodeParam({name: "backupId", value: backupId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * List snapshots for an application
      * @endpoint get /api/v1/applications/{id}/snapshots
      * @param id Application ID
@@ -858,6 +1064,124 @@ export class ApplicationsService extends BaseService {
         }
 
         let localVarPath = `/api/v1/clusters/${this.configuration.encodeParam({name: "clusterId", value: clusterId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/snapshots`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Restored and previous volumes the application does not run on
+     * A copy restored beside the application and not put in use, and the data it ran on before a swap. Each is a full volume and is paid for.
+     * @endpoint get /api/v1/applications/{id}/volumes/spare
+     * @param id Application ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applicationSnapshotsControllerListSpareVolumes(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public applicationSnapshotsControllerListSpareVolumes(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public applicationSnapshotsControllerListSpareVolumes(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public applicationSnapshotsControllerListSpareVolumes(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling applicationSnapshotsControllerListSpareVolumes.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/volumes/spare`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * The application\&#39;s volume backups, newest first
+     * Every copy of its volumes in the ledger: kopia snapshots, archives written before kopia, and clones on the cluster. Each says what a restore writes back (logicalBytes), what it added to the destination (uploadedBytes), whether it is still stored, whether it is kept by retention or until someone deletes it, and whether single files can be listed and restored from it.
+     * @endpoint get /api/v1/applications/{id}/volume-backups
+     * @param id Application ID
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applicationSnapshotsControllerListVolumeBackups(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public applicationSnapshotsControllerListVolumeBackups(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public applicationSnapshotsControllerListVolumeBackups(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public applicationSnapshotsControllerListVolumeBackups(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling applicationSnapshotsControllerListVolumeBackups.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/volume-backups`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {
@@ -984,6 +1308,132 @@ export class ApplicationsService extends BaseService {
         }
 
         let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/snapshots/${this.configuration.encodeParam({name: "snapshotId", value: snapshotId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/restore`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Restore a volume backup into a new volume
+     * Writes the whole backup into a new volume beside the application — this one, or &#x60;targetApplicationId&#x60;, which the caller must be allowed to change. The running application is not touched: make it use the new volume with POST /applications/:id/volumes/:volumeName/swap. Archives written before kopia restore the same way.
+     * @endpoint post /api/v1/applications/{id}/volume-backups/{backupId}/restore
+     * @param id Application ID the backup belongs to
+     * @param backupId Volume backup id
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applicationSnapshotsControllerRestoreVolumeBackup(id: string, backupId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public applicationSnapshotsControllerRestoreVolumeBackup(id: string, backupId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public applicationSnapshotsControllerRestoreVolumeBackup(id: string, backupId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public applicationSnapshotsControllerRestoreVolumeBackup(id: string, backupId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling applicationSnapshotsControllerRestoreVolumeBackup.');
+        }
+        if (backupId === null || backupId === undefined) {
+            throw new Error('Required parameter backupId was null or undefined when calling applicationSnapshotsControllerRestoreVolumeBackup.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/volume-backups/${this.configuration.encodeParam({name: "backupId", value: backupId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/restore`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Restore selected files of a kopia volume backup into the volume
+     * Writes the named paths (files or directories, relative to the volume root) into the application volume, over the current ones — or under &#x60;targetDirectory&#x60; to keep both. A database file is written with its journal removed; stop the application first if it is writing to it.
+     * @endpoint post /api/v1/applications/{id}/volume-backups/{backupId}/restore-files
+     * @param id Application ID the backup belongs to
+     * @param backupId Volume backup id
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applicationSnapshotsControllerRestoreVolumeBackupFiles(id: string, backupId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public applicationSnapshotsControllerRestoreVolumeBackupFiles(id: string, backupId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public applicationSnapshotsControllerRestoreVolumeBackupFiles(id: string, backupId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public applicationSnapshotsControllerRestoreVolumeBackupFiles(id: string, backupId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling applicationSnapshotsControllerRestoreVolumeBackupFiles.');
+        }
+        if (backupId === null || backupId === undefined) {
+            throw new Error('Required parameter backupId was null or undefined when calling applicationSnapshotsControllerRestoreVolumeBackupFiles.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/volume-backups/${this.configuration.encodeParam({name: "backupId", value: backupId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/restore-files`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
             {
@@ -1199,17 +1649,29 @@ export class ApplicationsService extends BaseService {
      * Queues an async delete job that removes K8s resources and soft-deletes the application. Track progress via the returned operation (polling or WebSocket subscribe:application).
      * @endpoint delete /api/v1/applications/{id}
      * @param id Application ID
+     * @param onlyThis \&#39;true\&#39; removes this component alone from a composed install
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public applicationsControllerDelete(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<DeleteApplicationResponseDto>;
-    public applicationsControllerDelete(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<DeleteApplicationResponseDto>>;
-    public applicationsControllerDelete(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<DeleteApplicationResponseDto>>;
-    public applicationsControllerDelete(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public applicationsControllerDelete(id: string, onlyThis?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<DeleteApplicationResponseDto>;
+    public applicationsControllerDelete(id: string, onlyThis?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<DeleteApplicationResponseDto>>;
+    public applicationsControllerDelete(id: string, onlyThis?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<DeleteApplicationResponseDto>>;
+    public applicationsControllerDelete(id: string, onlyThis?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling applicationsControllerDelete.');
         }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'onlyThis',
+            <any>onlyThis,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -1244,6 +1706,7 @@ export class ApplicationsService extends BaseService {
         return this.httpClient.request<DeleteApplicationResponseDto>('delete', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -2080,10 +2543,10 @@ export class ApplicationsService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public applicationsControllerListByCluster(clusterId: string, refresh?: boolean, status?: 'pending' | 'awaiting_build' | 'provisioning' | 'running' | 'degraded' | 'stopped' | 'updating' | 'rolling_back' | 'failed' | 'deleting' | 'deleted', kind?: 'DATABASE' | 'APPLICATION' | 'TOOL' | 'SYSTEM', category?: 'system' | 'user', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ApplicationResponseDto>>;
-    public applicationsControllerListByCluster(clusterId: string, refresh?: boolean, status?: 'pending' | 'awaiting_build' | 'provisioning' | 'running' | 'degraded' | 'stopped' | 'updating' | 'rolling_back' | 'failed' | 'deleting' | 'deleted', kind?: 'DATABASE' | 'APPLICATION' | 'TOOL' | 'SYSTEM', category?: 'system' | 'user', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ApplicationResponseDto>>>;
-    public applicationsControllerListByCluster(clusterId: string, refresh?: boolean, status?: 'pending' | 'awaiting_build' | 'provisioning' | 'running' | 'degraded' | 'stopped' | 'updating' | 'rolling_back' | 'failed' | 'deleting' | 'deleted', kind?: 'DATABASE' | 'APPLICATION' | 'TOOL' | 'SYSTEM', category?: 'system' | 'user', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ApplicationResponseDto>>>;
-    public applicationsControllerListByCluster(clusterId: string, refresh?: boolean, status?: 'pending' | 'awaiting_build' | 'provisioning' | 'running' | 'degraded' | 'stopped' | 'updating' | 'rolling_back' | 'failed' | 'deleting' | 'deleted', kind?: 'DATABASE' | 'APPLICATION' | 'TOOL' | 'SYSTEM', category?: 'system' | 'user', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public applicationsControllerListByCluster(clusterId: string, refresh?: boolean, status?: 'pending' | 'awaiting_build' | 'provisioning' | 'waiting_for_room' | 'running' | 'degraded' | 'stopped' | 'updating' | 'rolling_back' | 'failed' | 'deleting' | 'deleted', kind?: 'DATABASE' | 'APPLICATION' | 'TOOL' | 'SYSTEM', category?: 'system' | 'user', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ApplicationResponseDto>>;
+    public applicationsControllerListByCluster(clusterId: string, refresh?: boolean, status?: 'pending' | 'awaiting_build' | 'provisioning' | 'waiting_for_room' | 'running' | 'degraded' | 'stopped' | 'updating' | 'rolling_back' | 'failed' | 'deleting' | 'deleted', kind?: 'DATABASE' | 'APPLICATION' | 'TOOL' | 'SYSTEM', category?: 'system' | 'user', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ApplicationResponseDto>>>;
+    public applicationsControllerListByCluster(clusterId: string, refresh?: boolean, status?: 'pending' | 'awaiting_build' | 'provisioning' | 'waiting_for_room' | 'running' | 'degraded' | 'stopped' | 'updating' | 'rolling_back' | 'failed' | 'deleting' | 'deleted', kind?: 'DATABASE' | 'APPLICATION' | 'TOOL' | 'SYSTEM', category?: 'system' | 'user', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ApplicationResponseDto>>>;
+    public applicationsControllerListByCluster(clusterId: string, refresh?: boolean, status?: 'pending' | 'awaiting_build' | 'provisioning' | 'waiting_for_room' | 'running' | 'degraded' | 'stopped' | 'updating' | 'rolling_back' | 'failed' | 'deleting' | 'deleted', kind?: 'DATABASE' | 'APPLICATION' | 'TOOL' | 'SYSTEM', category?: 'system' | 'user', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (clusterId === null || clusterId === undefined) {
             throw new Error('Required parameter clusterId was null or undefined when calling applicationsControllerListByCluster.');
         }
@@ -2696,6 +3159,69 @@ export class ApplicationsService extends BaseService {
     }
 
     /**
+     * Apply the change a crash diagnosis proposes
+     * Applies the resource change a diagnosis proposes (today: a higher memory limit after an out-of-memory kill) and marks the diagnosis resolved. Refused when the diagnosis proposes nothing Flui can apply, or was already resolved.
+     * @endpoint post /api/v1/applications/{id}/crash-diagnoses/{diagnosisId}/apply
+     * @param id 
+     * @param diagnosisId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public crashDiagnosesControllerApply(id: string, diagnosisId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public crashDiagnosesControllerApply(id: string, diagnosisId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public crashDiagnosesControllerApply(id: string, diagnosisId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public crashDiagnosesControllerApply(id: string, diagnosisId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling crashDiagnosesControllerApply.');
+        }
+        if (diagnosisId === null || diagnosisId === undefined) {
+            throw new Error('Required parameter diagnosisId was null or undefined when calling crashDiagnosesControllerApply.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/crash-diagnoses/${this.configuration.encodeParam({name: "diagnosisId", value: diagnosisId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/apply`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Mark a crash diagnosis as resolved
      * @endpoint post /api/v1/applications/{id}/crash-diagnoses/{diagnosisId}/dismiss
      * @param id 
@@ -2906,6 +3432,66 @@ export class ApplicationsService extends BaseService {
             {
                 context: localVarHttpContext,
                 params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * The connection pooler of a managed PostgreSQL
+     * Whether the database has a pooler, its mode, whether FLUI_CONNECTION_URL goes through it and, when it does not, why. Also the two in-cluster addresses: pooled (FLUI_CONNECTION_URL) and direct (FLUI_DIRECT_URL).
+     * @endpoint get /api/v1/applications/{id}/db/pooler
+     * @param id Application id of the database
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public dbPoolerControllerStatus(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<DbPoolerStatusDto>;
+    public dbPoolerControllerStatus(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<DbPoolerStatusDto>>;
+    public dbPoolerControllerStatus(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<DbPoolerStatusDto>>;
+    public dbPoolerControllerStatus(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling dbPoolerControllerStatus.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/applications/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/db/pooler`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<DbPoolerStatusDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

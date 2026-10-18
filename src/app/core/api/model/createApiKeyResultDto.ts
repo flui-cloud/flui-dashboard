@@ -68,7 +68,8 @@ export namespace CreateApiKeyResultDto {
         AccessChange: 'access:change',
         InfrastructureLook: 'infrastructure:look',
         InfrastructureChange: 'infrastructure:change',
-        InfrastructureDestroy: 'infrastructure:destroy'
+        InfrastructureDestroy: 'infrastructure:destroy',
+        PlatformChange: 'platform:change'
     } as const;
     export type GroupsEnum = typeof GroupsEnum[keyof typeof GroupsEnum];
 }

@@ -82,7 +82,7 @@ export class ClusterWorkersService {
   async addWorkers(clusterId: string, count: number): Promise<WorkerOperationEnvelope> {
     try {
       const res = await firstValueFrom(
-        this.clustersApi.clustersControllerAddWorkers(clusterId, { count }),
+        this.clustersApi.clustersControllerAddWorkers(clusterId),
       );
       const env = fromAddResponse(res, clusterId);
       const clusterName = this.resolveClusterName(clusterId);

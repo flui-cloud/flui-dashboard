@@ -11,7 +11,7 @@
 
 export interface UpdateNodeMetadataDto { 
     /**
-     * Metadata object to merge with existing node metadata
+     * Node metadata is kept by Flui; every key is currently refused with 400.
      */
     metadata: object;
 }

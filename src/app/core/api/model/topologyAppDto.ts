@@ -12,14 +12,22 @@ import { TopologyAppReplicaDto } from './topologyAppReplicaDto';
 
 export interface TopologyAppDto { 
     id: string;
+    clusterId: string;
+    stackId: string;
+    /**
+     * Equal across clusters for the same app, so its replicas can be read together
+     */
+    groupKey: string;
     name: string;
     /**
-     * Pre-computed short label, max 14 chars
+     * Short label, at most 14 characters
      */
     slug: string;
     displayName: string;
     category: TopologyAppDto.CategoryEnum;
     kind: TopologyAppDto.KindEnum;
+    workloadKind: TopologyAppDto.WorkloadKindEnum;
+    exposure: TopologyAppDto.ExposureEnum;
     namespace: string;
     status: TopologyAppDto.StatusEnum;
     statusReason: string | null;
@@ -34,17 +42,20 @@ export interface TopologyAppDto {
      */
     cpuLimitM: number;
     /**
-     * Server hosting the leader/primary planet for rendering
+     * Server of the primary replica
      */
     primaryServerId: string;
     replicas: Array<TopologyAppReplicaDto>;
     /**
-     * Sum of replicas[].count, denormalized for the client
+     * Sum of replicas[].count
      */
     replicaCount: number;
     scalingMode: TopologyAppDto.ScalingModeEnum;
     scalingNote?: string | null;
-    labels: { [key: string]: string; };
+    /**
+     * The project the app belongs to; null for one in no project
+     */
+    projectId: string | null;
 }
 export namespace TopologyAppDto {
     export const CategoryEnum = {
@@ -64,6 +75,18 @@ export namespace TopologyAppDto {
         System: 'system'
     } as const;
     export type KindEnum = typeof KindEnum[keyof typeof KindEnum];
+    export const WorkloadKindEnum = {
+        Deployment: 'deployment',
+        Statefulset: 'statefulset',
+        Daemonset: 'daemonset'
+    } as const;
+    export type WorkloadKindEnum = typeof WorkloadKindEnum[keyof typeof WorkloadKindEnum];
+    export const ExposureEnum = {
+        Public: 'public',
+        Internal: 'internal',
+        Cluster: 'cluster'
+    } as const;
+    export type ExposureEnum = typeof ExposureEnum[keyof typeof ExposureEnum];
     export const StatusEnum = {
         Running: 'running',
         Warning: 'warning',

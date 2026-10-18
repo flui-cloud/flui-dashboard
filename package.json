@@ -61,6 +61,7 @@
     "clsx": "^2.1.1",
     "codemirror": "^6.0.1",
     "echarts": "^6.0.0",
+    "elkjs": "0.11.0",
     "marked": "^18.0.11",
     "ngx-echarts": "^18.0.0",
     "ngx-markdown": "^22.0.2",

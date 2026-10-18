@@ -49,7 +49,8 @@ export namespace AppResourceResponseDto {
         ClusterIssuer: 'ClusterIssuer',
         Job: 'Job',
         CronJob: 'CronJob',
-        Namespace: 'Namespace'
+        Namespace: 'Namespace',
+        EndpointSlice: 'EndpointSlice'
     } as const;
     export type KindEnum = typeof KindEnum[keyof typeof KindEnum];
     export const StatusEnum = {

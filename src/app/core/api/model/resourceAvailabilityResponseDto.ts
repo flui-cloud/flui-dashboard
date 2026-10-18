@@ -7,8 +7,8 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { ResourceAmountStringDto } from './resourceAmountStringDto';
 import { WhatIfAnswerDto } from './whatIfAnswerDto';
+import { ResourceAmountStringDto } from './resourceAmountStringDto';
 
 
 export interface ResourceAvailabilityResponseDto { 

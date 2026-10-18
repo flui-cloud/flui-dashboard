@@ -11,12 +11,18 @@ import { AppConfigService } from '../services/app-config.service';
  * makes no decision of its own and never touches the response.
  */
 export const maskModeInterceptor: HttpInterceptorFn = (req, next) => {
-  const mask = inject(MaskModeService);
-  if (!mask.enabled() || !isFluiApi(req.url, inject(AppConfigService).apiBaseUrl)) {
-    return next(req);
-  }
-  return next(req.clone({ setHeaders: { 'x-mask-mode': 'on' } }));
+  const headers = maskModeHeaders(
+    inject(MaskModeService).enabled(),
+    req.url,
+    inject(AppConfigService).apiBaseUrl,
+  );
+  return Object.keys(headers).length ? next(req.clone({ setHeaders: headers })) : next(req);
 };
+
+/** The same decision for a request that does not go through HttpClient, such as a stream read with fetch. */
+export function maskModeHeaders(enabled: boolean, url: string, apiBaseUrl: string): Record<string, string> {
+  return enabled && isFluiApi(url, apiBaseUrl) ? { 'x-mask-mode': 'on' } : {};
+}
 
 function isFluiApi(url: string, apiBaseUrl: string): boolean {
   if (url.startsWith('/') && !url.startsWith('//')) return true;

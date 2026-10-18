@@ -17,19 +17,43 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
+import { ConnectSignInProviderDto } from '../model/connectSignInProviderDto';
+// @ts-ignore
 import { SandboxCapacityDto } from '../model/sandboxCapacityDto';
 // @ts-ignore
-import { SandboxClaimResultDto } from '../model/sandboxClaimResultDto';
-// @ts-ignore
 import { SandboxLimitsDto } from '../model/sandboxLimitsDto';
-// @ts-ignore
-import { SandboxSaveRequestDto } from '../model/sandboxSaveRequestDto';
-// @ts-ignore
-import { SandboxSaveResultDto } from '../model/sandboxSaveResultDto';
 // @ts-ignore
 import { SandboxSessionDto } from '../model/sandboxSessionDto';
 // @ts-ignore
 import { SandboxTenancyDto } from '../model/sandboxTenancyDto';
+// @ts-ignore
+import { SandboxVisitorAdmissionDto } from '../model/sandboxVisitorAdmissionDto';
+// @ts-ignore
+import { SandboxVisitorAdmissionRequestDto } from '../model/sandboxVisitorAdmissionRequestDto';
+// @ts-ignore
+import { SandboxVisitorStatsDto } from '../model/sandboxVisitorStatsDto';
+// @ts-ignore
+import { SignInProviderStatusDto } from '../model/signInProviderStatusDto';
+// @ts-ignore
+import { SignInProvidersDto } from '../model/signInProvidersDto';
+// @ts-ignore
+import { VisitorLinkDto } from '../model/visitorLinkDto';
+// @ts-ignore
+import { VisitorLinkIntentDto } from '../model/visitorLinkIntentDto';
+// @ts-ignore
+import { VisitorLinkIntentRequestDto } from '../model/visitorLinkIntentRequestDto';
+// @ts-ignore
+import { VisitorLinkRequestDto } from '../model/visitorLinkRequestDto';
+// @ts-ignore
+import { VisitorUpgradeFinishDto } from '../model/visitorUpgradeFinishDto';
+// @ts-ignore
+import { VisitorUpgradeFinishRequestDto } from '../model/visitorUpgradeFinishRequestDto';
+// @ts-ignore
+import { VisitorUpgradeIdpDto } from '../model/visitorUpgradeIdpDto';
+// @ts-ignore
+import { VisitorUpgradeIdpRequestDto } from '../model/visitorUpgradeIdpRequestDto';
+// @ts-ignore
+import { VisitorUpgradeProvidersDto } from '../model/visitorUpgradeProvidersDto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -48,17 +72,16 @@ export class SandboxService extends BaseService {
     }
 
     /**
-     * Claim a sandbox tenancy
-     * Assigns a tenancy — pre-built when one is waiting, built on the spot when none is — and returns a credential scoped to it. The countdown starts now, not when the tenancy was built.
-     * @endpoint post /api/v1/sandbox/claim
+     * Keep the applications in your demo space for longer
+     * @endpoint post /api/v1/sandbox/keep
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public sandboxClaimControllerClaim(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SandboxClaimResultDto>;
-    public sandboxClaimControllerClaim(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SandboxClaimResultDto>>;
-    public sandboxClaimControllerClaim(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SandboxClaimResultDto>>;
-    public sandboxClaimControllerClaim(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public sandboxClaimControllerKeep(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SandboxSessionDto>;
+    public sandboxClaimControllerKeep(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SandboxSessionDto>>;
+    public sandboxClaimControllerKeep(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SandboxSessionDto>>;
+    public sandboxClaimControllerKeep(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -85,9 +108,9 @@ export class SandboxService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/v1/sandbox/claim`;
+        let localVarPath = `/api/v1/sandbox/keep`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<SandboxClaimResultDto>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<SandboxSessionDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -101,141 +124,8 @@ export class SandboxService extends BaseService {
     }
 
     /**
-     * Follow a saved link back into a sandbox
-     * @endpoint get /api/v1/sandbox/resume
-     * @param token 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public sandboxClaimControllerResume(token: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public sandboxClaimControllerResume(token: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public sandboxClaimControllerResume(token: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public sandboxClaimControllerResume(token: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (token === null || token === undefined) {
-            throw new Error('Required parameter token was null or undefined when calling sandboxClaimControllerResume.');
-        }
-
-        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'token',
-            <any>token,
-            QueryParamStyle.Form,
-            true,
-        );
-
-
-        let localVarHeaders = this.defaultHeaders;
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/v1/sandbox/resume`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                params: localVarQueryParameters.toHttpParams(),
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Mail yourself the way back into this sandbox
-     * @endpoint post /api/v1/sandbox/save
-     * @param sandboxSaveRequestDto 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public sandboxClaimControllerSave(sandboxSaveRequestDto: SandboxSaveRequestDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SandboxSaveResultDto>;
-    public sandboxClaimControllerSave(sandboxSaveRequestDto: SandboxSaveRequestDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SandboxSaveResultDto>>;
-    public sandboxClaimControllerSave(sandboxSaveRequestDto: SandboxSaveRequestDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SandboxSaveResultDto>>;
-    public sandboxClaimControllerSave(sandboxSaveRequestDto: SandboxSaveRequestDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (sandboxSaveRequestDto === null || sandboxSaveRequestDto === undefined) {
-            throw new Error('Required parameter sandboxSaveRequestDto was null or undefined when calling sandboxClaimControllerSave.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-            'application/json'
-        ];
-        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
-        if (httpContentTypeSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
-        }
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/v1/sandbox/save`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<SandboxSaveResultDto>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                body: sandboxSaveRequestDto,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * The tenancy the caller is in, and how long is left of it
-     * Drives the permanent countdown. There is no email to warn anyone, so this is the only channel the sandbox has.
+     * Whether the caller is a demo guest, and the area they hold
+     * Answers 404 to anyone who is not a demo guest. A guest who has only looked around gets hasArea: false; their first deploy takes an area.
      * @endpoint get /api/v1/sandbox/session
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -544,6 +434,796 @@ export class SandboxService extends BaseService {
         return this.httpClient.request<Array<SandboxTenancyDto>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Connect GitHub or Google sign-in, or give it new credentials
+     * Creates the provider on the identity provider, or updates the one already there, and shows it on the sign-in page. The client secret is handed to the identity provider and kept nowhere else. Only on a demo installation.
+     * @endpoint put /api/v1/sandbox/sign-in/providers/{provider}
+     * @param provider 
+     * @param connectSignInProviderDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxSignInControllerConnect(provider: 'github' | 'google', connectSignInProviderDto: ConnectSignInProviderDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SignInProviderStatusDto>;
+    public sandboxSignInControllerConnect(provider: 'github' | 'google', connectSignInProviderDto: ConnectSignInProviderDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SignInProviderStatusDto>>;
+    public sandboxSignInControllerConnect(provider: 'github' | 'google', connectSignInProviderDto: ConnectSignInProviderDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SignInProviderStatusDto>>;
+    public sandboxSignInControllerConnect(provider: 'github' | 'google', connectSignInProviderDto: ConnectSignInProviderDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (provider === null || provider === undefined) {
+            throw new Error('Required parameter provider was null or undefined when calling sandboxSignInControllerConnect.');
+        }
+        if (connectSignInProviderDto === null || connectSignInProviderDto === undefined) {
+            throw new Error('Required parameter connectSignInProviderDto was null or undefined when calling sandboxSignInControllerConnect.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/sign-in/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'github' | 'google'", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<SignInProviderStatusDto>('put', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: connectSignInProviderDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Disconnect GitHub or Google sign-in
+     * Takes the provider off the sign-in page and deletes it, credentials included, from the identity provider. Remembered as disconnected, so the deprecated variables do not bring it back.
+     * @endpoint delete /api/v1/sandbox/sign-in/providers/{provider}
+     * @param provider 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxSignInControllerDisconnect(provider: 'github' | 'google', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SignInProviderStatusDto>;
+    public sandboxSignInControllerDisconnect(provider: 'github' | 'google', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SignInProviderStatusDto>>;
+    public sandboxSignInControllerDisconnect(provider: 'github' | 'google', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SignInProviderStatusDto>>;
+    public sandboxSignInControllerDisconnect(provider: 'github' | 'google', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (provider === null || provider === undefined) {
+            throw new Error('Required parameter provider was null or undefined when calling sandboxSignInControllerDisconnect.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/sign-in/providers/${this.configuration.encodeParam({name: "provider", value: provider, in: "path", style: "simple", explode: false, dataType: "'github' | 'google'", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<SignInProviderStatusDto>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * GitHub and Google sign-in on the demo, without their secrets
+     * Which providers guests can sign in with, where each came from, and the callback URL to register at GitHub or Google. A provider still configured through the deprecated SANDBOX_*_CLIENT_* variables reports &#x60;source: environment&#x60;; one they created before being removed reports &#x60;source: identity-provider&#x60;.
+     * @endpoint get /api/v1/sandbox/sign-in/providers
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxSignInControllerList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SignInProvidersDto>;
+    public sandboxSignInControllerList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SignInProvidersDto>>;
+    public sandboxSignInControllerList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SignInProvidersDto>>;
+    public sandboxSignInControllerList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (bearer) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/sign-in/providers`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<SignInProvidersDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Get a single-use ticket to enter the demo as a visitor
+     * Counted per address and for the whole instance, and checked with Cloudflare Turnstile when the instance has a key for it. The ticket expires in two minutes and is passed as &#x60;login_hint&#x60; to the sign-in of the \&quot;try\&quot; application.
+     * @endpoint post /api/v1/sandbox/visitor/admission
+     * @param sandboxVisitorAdmissionRequestDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxVisitorControllerAdmission(sandboxVisitorAdmissionRequestDto: SandboxVisitorAdmissionRequestDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SandboxVisitorAdmissionDto>;
+    public sandboxVisitorControllerAdmission(sandboxVisitorAdmissionRequestDto: SandboxVisitorAdmissionRequestDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SandboxVisitorAdmissionDto>>;
+    public sandboxVisitorControllerAdmission(sandboxVisitorAdmissionRequestDto: SandboxVisitorAdmissionRequestDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SandboxVisitorAdmissionDto>>;
+    public sandboxVisitorControllerAdmission(sandboxVisitorAdmissionRequestDto: SandboxVisitorAdmissionRequestDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (sandboxVisitorAdmissionRequestDto === null || sandboxVisitorAdmissionRequestDto === undefined) {
+            throw new Error('Required parameter sandboxVisitorAdmissionRequestDto was null or undefined when calling sandboxVisitorControllerAdmission.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/visitor/admission`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<SandboxVisitorAdmissionDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: sandboxVisitorAdmissionRequestDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Sign a visitor in with no screen (called by the identity provider)
+     * Where the identity provider sends the sign-in of the \&quot;try\&quot; applications. Redirects to the address the provider returns, or to the dashboard sign-in page with &#x60;visitor&#x3D;refused&#x60; and a reason.
+     * @endpoint get /api/v1/sandbox/visitor/login
+     * @param authRequest 
+     * @param requestId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxVisitorControllerEnter(authRequest?: string, requestId?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public sandboxVisitorControllerEnter(authRequest?: string, requestId?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public sandboxVisitorControllerEnter(authRequest?: string, requestId?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public sandboxVisitorControllerEnter(authRequest?: string, requestId?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'authRequest',
+            <any>authRequest,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'requestId',
+            <any>requestId,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/visitor/login`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * What the visitors’ entrance has been doing
+     * Visitors in the demo now, those made ahead of time, the last 24 hours (came in, turned away and why), and how many became an account or were added to one.
+     * @endpoint get /api/v1/sandbox/visitors/stats
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxVisitorStatsControllerGet(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SandboxVisitorStatsDto>;
+    public sandboxVisitorStatsControllerGet(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SandboxVisitorStatsDto>>;
+    public sandboxVisitorStatsControllerGet(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SandboxVisitorStatsDto>>;
+    public sandboxVisitorStatsControllerGet(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/visitors/stats`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<SandboxVisitorStatsDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Where the identity provider sends the browser back
+     * Redirects to the dashboard with a single-use &#x60;flow&#x60; for the visitor that started the sign-in, or with &#x60;visitor&#x3D;upgrade-failed&#x60;.
+     * @endpoint get /api/v1/sandbox/visitor/upgrade/callback
+     * @param token 
+     * @param id 
+     * @param result 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxVisitorUpgradeControllerCallback(token?: any, id?: any, result?: any, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public sandboxVisitorUpgradeControllerCallback(token?: any, id?: any, result?: any, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public sandboxVisitorUpgradeControllerCallback(token?: any, id?: any, result?: any, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public sandboxVisitorUpgradeControllerCallback(token?: any, id?: any, result?: any, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'token',
+            <any>token,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'id',
+            <any>id,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'result',
+            <any>result,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/visitor/upgrade/callback`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Finish signing in with GitHub or Google
+     * Sent by the same visitor that started it, with the &#x60;flow&#x60; the dashboard came back with. Idempotent.
+     * @endpoint post /api/v1/sandbox/visitor/upgrade/finish
+     * @param visitorUpgradeFinishRequestDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxVisitorUpgradeControllerFinish(visitorUpgradeFinishRequestDto: VisitorUpgradeFinishRequestDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<VisitorUpgradeFinishDto>;
+    public sandboxVisitorUpgradeControllerFinish(visitorUpgradeFinishRequestDto: VisitorUpgradeFinishRequestDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<VisitorUpgradeFinishDto>>;
+    public sandboxVisitorUpgradeControllerFinish(visitorUpgradeFinishRequestDto: VisitorUpgradeFinishRequestDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<VisitorUpgradeFinishDto>>;
+    public sandboxVisitorUpgradeControllerFinish(visitorUpgradeFinishRequestDto: VisitorUpgradeFinishRequestDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (visitorUpgradeFinishRequestDto === null || visitorUpgradeFinishRequestDto === undefined) {
+            throw new Error('Required parameter visitorUpgradeFinishRequestDto was null or undefined when calling sandboxVisitorUpgradeControllerFinish.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/visitor/upgrade/finish`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<VisitorUpgradeFinishDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: visitorUpgradeFinishRequestDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Add a visit to the signed-in account
+     * Moves the visitor’s keys, assistant history and agent decisions to the caller and ends the visitor. Idempotent for the same account.
+     * @endpoint post /api/v1/sandbox/visitor/link
+     * @param visitorLinkRequestDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxVisitorUpgradeControllerLink(visitorLinkRequestDto: VisitorLinkRequestDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<VisitorLinkDto>;
+    public sandboxVisitorUpgradeControllerLink(visitorLinkRequestDto: VisitorLinkRequestDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<VisitorLinkDto>>;
+    public sandboxVisitorUpgradeControllerLink(visitorLinkRequestDto: VisitorLinkRequestDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<VisitorLinkDto>>;
+    public sandboxVisitorUpgradeControllerLink(visitorLinkRequestDto: VisitorLinkRequestDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (visitorLinkRequestDto === null || visitorLinkRequestDto === undefined) {
+            throw new Error('Required parameter visitorLinkRequestDto was null or undefined when calling sandboxVisitorUpgradeControllerLink.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/visitor/link`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<VisitorLinkDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: visitorLinkRequestDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Get a single-use link to add this visit to an account
+     * For the email way: the visitor registers or signs in normally, then the account sends the nonce to &#x60;POST /sandbox/visitor/link&#x60;.
+     * @endpoint post /api/v1/sandbox/visitor/link-intent
+     * @param visitorLinkIntentRequestDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxVisitorUpgradeControllerLinkIntent(visitorLinkIntentRequestDto: VisitorLinkIntentRequestDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<VisitorLinkIntentDto>;
+    public sandboxVisitorUpgradeControllerLinkIntent(visitorLinkIntentRequestDto: VisitorLinkIntentRequestDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<VisitorLinkIntentDto>>;
+    public sandboxVisitorUpgradeControllerLinkIntent(visitorLinkIntentRequestDto: VisitorLinkIntentRequestDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<VisitorLinkIntentDto>>;
+    public sandboxVisitorUpgradeControllerLinkIntent(visitorLinkIntentRequestDto: VisitorLinkIntentRequestDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (visitorLinkIntentRequestDto === null || visitorLinkIntentRequestDto === undefined) {
+            throw new Error('Required parameter visitorLinkIntentRequestDto was null or undefined when calling sandboxVisitorUpgradeControllerLinkIntent.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/visitor/link-intent`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<VisitorLinkIntentDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: visitorLinkIntentRequestDto,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * The sign-ins a visitor can turn its visit into an account with
+     * @endpoint get /api/v1/sandbox/visitor/upgrade/providers
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxVisitorUpgradeControllerProviders(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<VisitorUpgradeProvidersDto>;
+    public sandboxVisitorUpgradeControllerProviders(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<VisitorUpgradeProvidersDto>>;
+    public sandboxVisitorUpgradeControllerProviders(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<VisitorUpgradeProvidersDto>>;
+    public sandboxVisitorUpgradeControllerProviders(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/visitor/upgrade/providers`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<VisitorUpgradeProvidersDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Start signing in with GitHub or Google as this visitor
+     * The visitor keeps its user, keys and history. Answers with the address the browser goes to; the browser comes back to the dashboard with &#x60;visitor&#x3D;finish&amp;flow&#x3D;…&#x60;, or &#x60;visitor&#x3D;upgrade-failed&#x60;.
+     * @endpoint post /api/v1/sandbox/visitor/upgrade/idp
+     * @param visitorUpgradeIdpRequestDto 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sandboxVisitorUpgradeControllerStart(visitorUpgradeIdpRequestDto: VisitorUpgradeIdpRequestDto, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<VisitorUpgradeIdpDto>;
+    public sandboxVisitorUpgradeControllerStart(visitorUpgradeIdpRequestDto: VisitorUpgradeIdpRequestDto, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<VisitorUpgradeIdpDto>>;
+    public sandboxVisitorUpgradeControllerStart(visitorUpgradeIdpRequestDto: VisitorUpgradeIdpRequestDto, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<VisitorUpgradeIdpDto>>;
+    public sandboxVisitorUpgradeControllerStart(visitorUpgradeIdpRequestDto: VisitorUpgradeIdpRequestDto, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (visitorUpgradeIdpRequestDto === null || visitorUpgradeIdpRequestDto === undefined) {
+            throw new Error('Required parameter visitorUpgradeIdpRequestDto was null or undefined when calling sandboxVisitorUpgradeControllerStart.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/sandbox/visitor/upgrade/idp`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<VisitorUpgradeIdpDto>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: visitorUpgradeIdpRequestDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

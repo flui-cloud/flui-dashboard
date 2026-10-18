@@ -54,7 +54,8 @@ export namespace AppRevisionResponseDto {
         ConfigUpdate: 'config_update',
         Reconciled: 'reconciled',
         Created: 'created',
-        Delete: 'delete'
+        Delete: 'delete',
+        Maintenance: 'maintenance'
     } as const;
     export type EventTypeEnum = typeof EventTypeEnum[keyof typeof EventTypeEnum];
     export const StatusEnum = {

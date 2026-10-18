@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { DecisionOperationDto } from './decisionOperationDto';
 import { ConsideredCandidateDto } from './consideredCandidateDto';
 
 
@@ -38,6 +39,18 @@ export interface ClusterScalingDecisionDto {
      * What it did not choose, and why each one lost
      */
     considered: Array<ConsideredCandidateDto>;
+    /**
+     * The purchase or removal this decision started, as it stands now. Null where the decision started nothing.
+     */
+    operation: DecisionOperationDto | null;
+    /**
+     * With collapse=true: how many identical decisions in a row this one stands for (1 when it stands alone)
+     */
+    repeats?: number;
+    /**
+     * With collapse=true and repeats above 1: when the first of them was taken; `at` is the latest
+     */
+    since?: string;
     groupId: string;
     /**
      * The name the group carries on this cluster
@@ -55,7 +68,8 @@ export namespace ClusterScalingDecisionDto {
         Replaced: 'replaced',
         Removed: 'removed',
         Declined: 'declined',
-        Alerted: 'alerted'
+        Alerted: 'alerted',
+        Changed: 'changed'
     } as const;
     export type OutcomeEnum = typeof OutcomeEnum[keyof typeof OutcomeEnum];
 }

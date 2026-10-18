@@ -30,6 +30,14 @@ export interface CreateFullMigrationDto {
      * live-fenced stages the app at full replicas against the destination DB while it is read-only: the app must boot and pass readiness against a read-only database (no write-migrations-on-start), and must not run background workers/schedulers with external side-effects (queue consumers, cron, outbound webhooks/email) while staged — only its DB writes are fenced (SQLSTATE 25006), external effects are not. Writes fail until cutover. Shrinks the write pause by moving image-pull + boot off the cutover critical path.
      */
     stagingMode?: CreateFullMigrationDto.StagingModeEnum;
+    /**
+     * Backup destination the application volumes move through. Defaults to the one protecting the application, or to your only one.
+     */
+    backupDestinationId?: string;
+    /**
+     * With a pooled database: how long, in seconds, the cutover lets transactions in flight finish while both poolers hold new requests. A transaction still open then is cut and its client reconnects into the queue.
+     */
+    pauseDeadlineSeconds?: number;
 }
 export namespace CreateFullMigrationDto {
     export const CutoverEnum = {

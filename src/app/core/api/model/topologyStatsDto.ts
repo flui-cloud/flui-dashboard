@@ -12,16 +12,21 @@
 export interface TopologyStatsDto { 
     totalClusters: number;
     totalServers: number;
+    totalStacks: number;
     totalApps: number;
     totalReplicas: number;
     totalRamMB: number;
     /**
-     * Apps with status=error
+     * Apps in error
      */
     errorCount: number;
     /**
-     * Apps with status=warning
+     * Apps in warning
      */
     warningCount: number;
+    /**
+     * Apps left out because their placement did not reconcile
+     */
+    droppedApps: number;
 }
 

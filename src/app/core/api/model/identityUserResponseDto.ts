@@ -27,6 +27,10 @@ export interface IdentityUserResponseDto {
      * True for a provider-internal service account, never a person.
      */
     isSystemUser: boolean;
+    /**
+     * `visitor` for a visitor of the demo who has no account yet.
+     */
+    kind: IdentityUserResponseDto.KindEnum;
 }
 export namespace IdentityUserResponseDto {
     export const RoleEnum = {
@@ -35,6 +39,11 @@ export namespace IdentityUserResponseDto {
         Readonly: 'readonly'
     } as const;
     export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];
+    export const KindEnum = {
+        Person: 'person',
+        Visitor: 'visitor'
+    } as const;
+    export type KindEnum = typeof KindEnum[keyof typeof KindEnum];
 }
 
 

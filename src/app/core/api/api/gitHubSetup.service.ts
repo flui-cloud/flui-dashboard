@@ -355,7 +355,7 @@ export class GitHubSetupService extends BaseService {
 
     /**
      * Start GitHub App creation via manifest flow
-     * Returns a GitHub App manifest payload + the GitHub URL where the admin should POST it. The dashboard/CLI builds a hidden HTML form and submits it to githubUrl with the manifest as a hidden field — GitHub then pre-fills its New-App form with all permissions, events, webhook and callback URLs. After the admin confirms, GitHub redirects back to our manifest-callback endpoint with a temporary code; we exchange it server-side for App credentials and persist them automatically.
+     * Returns a GitHub App manifest payload + the GitHub URL where the admin should POST it. The dashboard/CLI builds a hidden HTML form and submits it to githubUrl with the manifest as a hidden field — GitHub then pre-fills its New-App form with all permissions, events, webhook and callback URLs. After the admin confirms, GitHub redirects back to our manifest-callback endpoint with a temporary code; we exchange it server-side for App credentials and persist them automatically. With &#x60;organization&#x60; the App is created under that GitHub organisation instead of the confirming account; the callback is the same.
      * @endpoint post /api/v1/repositories/github/setup/github-app/manifest-start
      * @param gitHubAppManifestStartDto 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
