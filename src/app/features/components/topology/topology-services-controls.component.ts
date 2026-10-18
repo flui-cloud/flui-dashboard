@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideMaximize, lucideMinus, lucidePlus } from '@ng-icons/lucide';
+import { lucideMaximize2, lucideMinimize2, lucideMinus, lucidePlus, lucideScan } from '@ng-icons/lucide';
 import { TopologyResponseDto } from '../../../core/api/model/topologyResponseDto';
 import { TopologyViewState } from './topology-state';
 import { TopologyGraph } from './topology-graph';
@@ -10,7 +10,7 @@ import { TopologyGraph } from './topology-graph';
   selector: 'app-topology-services-controls',
   standalone: true,
   imports: [NgIcon],
-  providers: [provideIcons({ lucidePlus, lucideMinus, lucideMaximize })],
+  providers: [provideIcons({ lucidePlus, lucideMinus, lucideScan, lucideMaximize2, lucideMinimize2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
   template: `
@@ -25,7 +25,12 @@ import { TopologyGraph } from './topology-graph';
     <div class="absolute right-3 top-3 z-10 flex gap-1">
       <button type="button" class="rounded-md border border-border bg-card p-1.5 hover:bg-muted" aria-label="Zoom in" (click)="zoomed.emit(1.2)"><ng-icon name="lucidePlus" class="h-4 w-4" /></button>
       <button type="button" class="rounded-md border border-border bg-card p-1.5 hover:bg-muted" aria-label="Zoom out" (click)="zoomed.emit(1 / 1.2)"><ng-icon name="lucideMinus" class="h-4 w-4" /></button>
-      <button type="button" class="rounded-md border border-border bg-card p-1.5 hover:bg-muted" aria-label="Fit to view" (click)="fitted.emit()"><ng-icon name="lucideMaximize" class="h-4 w-4" /></button>
+      <button type="button" class="rounded-md border border-border bg-card p-1.5 hover:bg-muted" aria-label="Fit to view" title="Fit to view" (click)="fitted.emit()"><ng-icon name="lucideScan" class="h-4 w-4" /></button>
+      <button type="button" class="rounded-md border border-border bg-card p-1.5 hover:bg-muted"
+              [attr.aria-label]="expanded() ? 'Exit full window' : 'Full window'" [title]="expanded() ? 'Exit full window (Esc)' : 'Full window'"
+              [attr.aria-pressed]="expanded()" (click)="expandToggled.emit()">
+        <ng-icon [name]="expanded() ? 'lucideMinimize2' : 'lucideMaximize2'" class="h-4 w-4" />
+      </button>
     </div>
     @if (state().level === 'fleet' && snapshot().apps.length) {
       <div class="absolute bottom-3 left-3 z-10 flex items-center gap-2 text-xs text-muted-foreground" role="group" aria-label="Fleet drawn by">
@@ -83,6 +88,8 @@ export class TopologyServicesControlsComponent {
   readonly changed = output<Partial<TopologyViewState>>();
   readonly zoomed = output<number>();
   readonly fitted = output<void>();
+  readonly expanded = input(false);
+  readonly expandToggled = output<void>();
 
   protected readonly hopChoices = [1, 2] as const;
   protected readonly boxChoices = [

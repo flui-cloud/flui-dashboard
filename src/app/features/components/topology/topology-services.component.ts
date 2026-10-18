@@ -1,9 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
@@ -34,11 +36,13 @@ import { ExportHeader } from './topology-view-export';
     @media (prefers-reduced-motion: reduce) { .flow { animation: none; } }
   `],
   template: `
-    <div #viewport class="card-surface relative h-[38rem] touch-none overflow-hidden select-none"
+    <div #viewport class="card-surface touch-none overflow-hidden select-none"
+         [class]="expanded() ? 'fixed inset-0 z-50 rounded-none' : 'relative h-[38rem]'"
          (wheel)="view.wheel($event, viewport.getBoundingClientRect())" (pointerdown)="view.start($event)"
          (pointermove)="view.move($event)" (pointerup)="view.end()" (pointerleave)="view.end()" (keydown)="move($event)">
       <app-topology-services-controls
         [snapshot]="snapshot()" [state]="state()" [graph]="graph()" [fleetBy]="fleetBy()"
+        [expanded]="expanded()" (expandToggled)="expanded.update((on) => !on)"
         (changed)="levelChanged.emit($event)" (zoomed)="zoomStep($event)" (fitted)="fit()" />
 
       @if (layout(); as l) {
@@ -150,6 +154,7 @@ export class TopologyServicesComponent {
   protected readonly graph = computed(() => topologyGraph(this.snapshot(), this.state()));
   protected readonly layout = signal<GraphLayout | null>(null);
   protected readonly view = new PanZoom();
+  protected readonly expanded = signal(false);
   private readonly lit = computed(() => {
     const graph = this.graph();
     const focus = this.focus();
@@ -183,6 +188,14 @@ export class TopologyServicesComponent {
       resize.observe(this.viewport().nativeElement);
       onCleanup(() => resize.disconnect());
     });
+    // Captured before the page's own Escape, which would also clear the selection.
+    const leave = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || !this.expanded()) return;
+      event.stopPropagation();
+      this.expanded.set(false);
+    };
+    document.addEventListener('keydown', leave, true);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('keydown', leave, true));
     effect(() => {
       const graph = this.graph();
       void layoutGraph(graph).then((layout) => {
