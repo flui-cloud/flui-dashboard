@@ -163,7 +163,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // whenever it changes. ngOnDestroy clears it, so the snapshot never outlives this
     // page — same discipline as every other producer in this repo.
     effect(() => {
-      this.currentSurface.set(this.surface());
+      const surface = this.surface();
+      if (!this.guest()) this.currentSurface.set(surface);
     });
   }
 
@@ -171,6 +172,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.permissions.loadSections();
     void (async () => {
       if (await this.sandbox.whenKnown()) {
+        this.isInitializing.set(false);
         await this.dashboardService.checkBackendHealth();
         return;
       }

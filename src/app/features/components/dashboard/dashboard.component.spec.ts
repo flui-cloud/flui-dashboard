@@ -21,7 +21,11 @@ describe('DashboardComponent', () => {
       .map((e) => e.tagName.toLowerCase())
       .filter((t) => t.startsWith('app-dashboard-'));
 
+  let guest = false;
+  let surfaceSet: jasmine.Spy;
+
   const build = async () => {
+    surfaceSet = jasmine.createSpy('set');
     fleet = {
       loadAll: jasmine.createSpy('loadAll').and.returnValue(Promise.resolve()),
       loadMetrics: jasmine.createSpy('loadMetrics'),
@@ -35,6 +39,7 @@ describe('DashboardComponent', () => {
           provide: DashboardService,
           useValue: {
             initialize: () => Promise.resolve(),
+            checkBackendHealth: () => Promise.resolve(),
             refresh: () => Promise.resolve(),
             backendHealth: signal('online'),
             clustersInOperation: signal([]),
@@ -54,10 +59,10 @@ describe('DashboardComponent', () => {
         { provide: FleetService, useValue: fleet },
         { provide: ClusterService, useValue: { clusters } },
         { provide: PermissionService, useValue: { loadSections: () => undefined } },
-        { provide: CurrentSurfaceService, useValue: { set: () => undefined } },
+        { provide: CurrentSurfaceService, useValue: { set: surfaceSet } },
         {
           provide: SandboxService,
-          useValue: { inSandbox: () => false, whenKnown: () => Promise.resolve(false) },
+          useValue: { inSandbox: () => guest, whenKnown: () => Promise.resolve(guest) },
         },
       ],
     });
@@ -71,7 +76,17 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
   };
 
-  afterEach(() => fixture.destroy());
+  afterEach(() => {
+    fixture.destroy();
+    guest = false;
+  });
+
+  it('leaves a guest’s surface to the guest home and still finishes loading', async () => {
+    guest = true;
+    await build();
+    expect(fixture.componentInstance.isInitializing()).toBe(false);
+    expect(surfaceSet.calls.allArgs().filter(([snapshot]) => snapshot !== null)).toHaveSize(0);
+  });
 
   it('shows the just-installed board with DNS first when only the control cluster exists', async () => {
     clusters.set([{ id: 'c-1', status: ClusterStatus.ACTIVE, clusterType: ClusterType.CONTROL }]);

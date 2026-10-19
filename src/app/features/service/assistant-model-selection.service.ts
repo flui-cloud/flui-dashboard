@@ -1,5 +1,6 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { InferenceSettingsService } from './inference-settings.service';
+import { SandboxService } from '../../core/services/sandbox.service';
 
 export interface PickerOption {
   label: string;
@@ -29,11 +30,15 @@ const SELECTION_KEY = 'flui.assistant.modelSelection';
 @Injectable({ providedIn: 'root' })
 export class AssistantModelSelectionService {
   private readonly inference = inject(InferenceSettingsService);
+  private readonly sandbox = inject(SandboxService);
 
   readonly selectedIdx = signal(0);
 
+  readonly locked = computed(() => this.sandbox.inSandbox());
+
   readonly pickerOptions = computed<PickerOption[]>(() => {
     const opts: PickerOption[] = [{ label: 'Default (auto)', opts: null }];
+    if (this.locked()) return opts;
     for (const p of this.inference.configuredProviders()) {
       for (const m of p.models ?? []) {
         opts.push({ label: `${p.provider} — ${m}`, opts: { provider: p.provider, model: m } });
@@ -104,7 +109,7 @@ export class AssistantModelSelectionService {
 
   readonly recommendedHint = computed(() => {
     const rec = this.inference.recommendations()?.recommendedProvider;
-    if (!rec) return null;
+    if (!rec || this.locked()) return null;
     const configured = this.pickerOptions().some(
       (o, i) => i > 0 && this.inference.groupFor(o.opts)?.key === rec.key,
     );
@@ -157,6 +162,7 @@ export class AssistantModelSelectionService {
   }
 
   select(idx: number): void {
+    if (this.locked()) return;
     this.selectedIdx.set(idx);
     this.writeStored(this.pickerOptions()[idx]?.opts ?? null);
   }

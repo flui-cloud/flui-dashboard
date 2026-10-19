@@ -34,6 +34,12 @@ import { AppGroupView } from '../../model/application.models';
 import { DashboardFleetTilesComponent } from './dashboard-fleet-tiles.component';
 import { DashboardClustersTableComponent } from './dashboard-clusters-table.component';
 import { GuestAppReading, appTiles, copiesOf, historyRange, primaryOf } from './guest-home';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { DashboardSurfaceRevision } from './dashboard-surface';
+import { buildGuestHomeSurface, guestHomeContent, GuestHomeSurfaceInput } from './guest-home-surface';
+
+const EXPLORE_TEXT = 'The apps here are real and running. Open them, read their logs and metrics, look inside their database.';
+const INSTALL_TEXT = 'This demo is read-only. Install Flui on your own server: it is free and open source.';
 
 const REFRESH_MS = 60_000;
 
@@ -125,15 +131,13 @@ const REFRESH_MS = 60_000;
             <p class="text-label">Look around</p>
             <h2 class="font-semibold text-foreground">Explore the showcase</h2>
             <p class="text-sm text-muted-foreground" data-testid="sandbox-guide-text">
-              The apps here are real and running. Open them, read their logs and metrics, look inside their database.
+              {{ exploreText }}
             </p>
           </section>
 
           <section class="card-surface p-5 flex flex-col gap-3" data-testid="guest-install">
             <p class="text-label">Run it yourself</p>
-            <p class="text-sm text-muted-foreground">
-              This demo is read-only. Install Flui on your own server: it is free and open source.
-            </p>
+            <p class="text-sm text-muted-foreground">{{ installText }}</p>
             <a
               [href]="installUrl"
               target="_blank"
@@ -179,6 +183,8 @@ const REFRESH_MS = 60_000;
 export class GuestHomeComponent implements OnInit {
   protected readonly sandbox = inject(SandboxService);
   protected readonly installUrl = INSTALL_FLUI_URL;
+  protected readonly exploreText = EXPLORE_TEXT;
+  protected readonly installText = INSTALL_TEXT;
   protected readonly installWays = [
     { icon: 'lucideKeyRound', label: 'Guided, with your provider API key' },
     { icon: 'lucideServer', label: 'On a server you already have' },
@@ -191,6 +197,9 @@ export class GuestHomeComponent implements OnInit {
   private readonly base = `${inject(AppConfigService).apiBaseUrl}/api/v1`;
 
   private readonly readings = signal<Record<string, GuestAppReading>>({});
+  private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly surfaceRevision = new DashboardSurfaceRevision();
+  private readonly loaded = signal(false);
 
   protected readonly showcase = computed(() =>
     this.applications
@@ -220,13 +229,38 @@ export class GuestHomeComponent implements OnInit {
       })),
   );
 
+  private readonly surfaceInput = computed<GuestHomeSurfaceInput>(() => ({
+    loading: !this.loaded(),
+    showcase: this.showcase().map((item) => ({ id: item.id, name: item.name, note: item.note, hasLink: !!item.url })),
+    hasArea: this.sandbox.hasArea(),
+    visitor: this.sandbox.visitor(),
+    ownApps: this.ownApps(),
+    workloadTtlHours: this.sandbox.workloadTtlHours(),
+    quota: this.sandbox.quota(),
+    areas: this.sandbox.areas(),
+    exploreText: EXPLORE_TEXT,
+    installText: INSTALL_TEXT,
+    installWays: this.installWays.map((way) => way.label),
+  }));
+
+  private readonly surface = computed(() => {
+    const input = this.surfaceInput();
+    return buildGuestHomeSurface(input, {
+      revision: this.surfaceRevision.next(guestHomeContent(input)),
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
   ngOnInit(): void {
-    void this.applications.loadApplications();
+    void this.applications.loadApplications().finally(() => this.loaded.set(true));
     void this.clusters.loadClusters();
     void this.fleet.loadMetrics();
   }
 
   constructor() {
+    effect(() => {
+      this.currentSurface.set(this.surface());
+    });
     const asked = computed(() => `${this.fleet.window()}|${this.showcase().map((item) => item.id).join(',')}`);
     effect(() => {
       asked();
