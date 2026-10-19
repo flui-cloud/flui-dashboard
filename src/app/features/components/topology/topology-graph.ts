@@ -62,8 +62,17 @@ function clusterLevel(t: TopologyResponseDto, state: TopologyViewState): Topolog
 
 function fleetLevel(t: TopologyResponseDto, state: TopologyViewState): TopologyGraph {
   const collapsedFrom = state.level === 'fleet' || !knownCluster(t, state) ? null : state.level;
-  const apps = state.fleetBy === 'apps' && t.apps.length ? readable(appsGraph(t, state.boxBy), state.all) : null;
+  const apps = state.fleetBy === 'apps' && t.apps.length ? fleetByApps(t, state) : null;
   return { ...(apps ?? fleetGraph(t)), collapsedFrom };
+}
+
+/** The whole fleet, app by app, unless the viewer narrowed it to its problems and their neighbours. */
+function fleetByApps(t: TopologyResponseDto, state: TopologyViewState): TopologyGraph {
+  const graph = appsGraph(t, state.boxBy);
+  if (graph.nodes.length <= MAX_NODES) return graph;
+  const focused = problemsAndNeighbours(graph);
+  if (!focused.nodes.length || focused.nodes.length >= graph.nodes.length) return graph;
+  return state.problems ? focused : { ...graph, filterable: true };
 }
 
 /** What a focused element keeps lit: itself, its neighbours and the edges between them. */

@@ -86,12 +86,33 @@ describe('the service map graph', () => {
     expect(g.nodes.map((n) => n.id)).toContain('c-eu');
   });
 
-  it('draws a large fleet by app when asked to: its problems and their neighbours first, in their cluster boxes', () => {
+  it('opens a large fleet by app in full, offering its problems and their neighbours', () => {
     const g = topologyGraph(large(withCrossLink()), state({ level: 'fleet', fleetBy: 'apps' }));
+    expect(g.level).toBe('fleet');
+    expect(g.filtered).toBeFalsy();
+    expect(g.filterable).toBeTrue();
+    expect(g.nodes.length).toBeGreaterThan(MAX_NODES);
+    expect(g.nodes.some((n) => n.id.startsWith('quiet-'))).toBeTrue();
+  });
+
+  it('narrows a large fleet by app to its problems and their neighbours when asked to, in their cluster boxes', () => {
+    const g = topologyGraph(large(withCrossLink()), state({ level: 'fleet', fleetBy: 'apps', problems: true }));
     expect(g.filtered).toBeTrue();
+    expect(g.filterable).toBeFalsy();
     expect(g.nodes.some((n) => n.id.startsWith('quiet-'))).toBeFalse();
     const app = g.nodes.find((n) => n.kind === 'app')!;
     expect(g.nodes.some((n) => n.id === app.parent)).toBeTrue();
+  });
+
+  it('draws a large healthy fleet by app in full, with nothing to narrow to', () => {
+    const t = large(withCrossLink());
+    t.stacks.forEach((s) => (s.status = 'running'));
+    t.apps.forEach((a) => (a.status = 'running'));
+    t.links.forEach((l) => (l.traffic = { measured: false, rps: null, errorPct: null }));
+    const g = topologyGraph(t, state({ level: 'fleet', fleetBy: 'apps', problems: true }));
+    expect(g.filtered).toBeFalsy();
+    expect(g.filterable).toBeFalsy();
+    expect(g.nodes.some((n) => n.kind === 'region')).toBeTrue();
   });
 
   it('keeps a fleet drawn by cluster sparse: clusters, the Internet when traffic is measured, and links between clusters', () => {

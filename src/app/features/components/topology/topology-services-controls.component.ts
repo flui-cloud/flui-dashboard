@@ -72,7 +72,13 @@ import { TopologyGraph } from './topology-graph';
     @if (graph().filtered) {
       <p class="absolute bottom-3 right-3 z-10 flex items-center gap-2 rounded-full border border-border bg-card py-1 pl-3 pr-1 text-xs text-foreground">
         Showing problems and their neighbours
-        <button type="button" class="rounded-full px-2 py-0.5 font-medium text-primary hover:bg-muted" (click)="changed.emit({ all: true })">Show all</button>
+        <button type="button" class="rounded-full px-2 py-0.5 font-medium text-primary hover:bg-muted" data-testid="topology-show-all"
+                (click)="changed.emit(graph().level === 'fleet' ? { problems: false } : { all: true })">Show all</button>
+      </p>
+    } @else if (graph().filterable) {
+      <p class="absolute bottom-3 right-3 z-10 flex items-center rounded-full border border-border bg-card p-1 text-xs text-foreground">
+        <button type="button" class="rounded-full px-2 py-0.5 font-medium text-primary hover:bg-muted" data-testid="topology-show-problems"
+                (click)="changed.emit({ problems: true })">Show problems only</button>
       </p>
     }
     @if (graph().collapsedFrom) {

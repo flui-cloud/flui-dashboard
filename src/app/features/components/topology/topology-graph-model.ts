@@ -55,6 +55,8 @@ export interface TopologyGraph {
   collapsedFrom: TopologyViewState['level'] | null;
   /** Too many to draw: only the problems and what they touch are shown. */
   filtered?: boolean;
+  /** Crowded but drawn in full: its problems and their neighbours can be shown instead. */
+  filterable?: boolean;
 }
 
 const SIZE: Record<GraphNodeKind, [number, number]> = {

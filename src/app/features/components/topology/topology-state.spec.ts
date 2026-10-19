@@ -18,6 +18,7 @@ describe('topology state in the address', () => {
       app: 'a-7',
       hops: 2 as const,
       all: true,
+      problems: true,
       fleetBy: 'apps' as const,
       boxBy: 'project' as const,
       project: 'p-1',
@@ -47,6 +48,12 @@ describe('topology state in the address', () => {
       view: 'infrastructure',
       fleet: 'clusters',
     });
+  });
+
+  it('opens the fleet by app in full, and keeps the narrowing to problems in the address', () => {
+    expect(DEFAULT_TOPOLOGY_STATE.problems).toBeFalse();
+    expect(parseTopologyState({ problems: '1' }).problems).toBeTrue();
+    expect(topologyQueryParams({ ...DEFAULT_TOPOLOGY_STATE, problems: true })).toEqual({ problems: '1' });
   });
 
   it('keeps ids that hold colons', () => {
