@@ -66,7 +66,7 @@ import { FLUI_CORE_REPO_URL, INSTALL_FLUI_URL } from '../../../core/utils/instal
           data-testid="star-on-github"
         >
           <ng-icon name="lucideGithub" class="h-3.5 w-3.5 flex-shrink-0" />
-          <ng-icon name="lucideStar" class="h-3.5 w-3.5 flex-shrink-0" />
+          <ng-icon name="lucideStar" class="h-3.5 w-3.5 flex-shrink-0 text-amber-400 [&_svg]:fill-current" />
           <span>Star<span class="hidden sm:inline"> on GitHub</span></span>
         </a>
 
