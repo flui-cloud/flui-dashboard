@@ -1,6 +1,7 @@
-import { Component, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideAlertCircle, lucideSend } from '@ng-icons/lucide';
+import { SandboxService } from '../../../core/services/sandbox.service';
 import { AssistantChatService } from '../../service/assistant.service';
 import { AssistantModelSelectionService } from '../../service/assistant-model-selection.service';
 import { AssistantModelPickerComponent } from './assistant-model-picker.component';
@@ -13,8 +14,8 @@ import { AssistantModelPickerComponent } from './assistant-model-picker.componen
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-2" [class.mx-auto]="fullscreen()" [class.max-w-3xl]="fullscreen()" [class.w-full]="fullscreen()">
-      @if (chatService.destructiveEnabled()) {
-        <div class="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-1.5">
+      @if (destructiveNotice()) {
+        <div class="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-1.5" data-testid="assistant-destructive-notice">
           <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 shrink-0 text-destructive" />
           <p class="text-[11px] text-destructive leading-tight">
             Destructive actions (delete/uninstall) are enabled on this server — they still ask for confirmation, but proceed with care.
@@ -57,6 +58,11 @@ import { AssistantModelPickerComponent } from './assistant-model-picker.componen
 export class AssistantComposerComponent {
   protected readonly chatService = inject(AssistantChatService);
   private readonly sel = inject(AssistantModelSelectionService);
+  private readonly sandbox = inject(SandboxService);
+
+  protected readonly destructiveNotice = computed(
+    () => this.chatService.destructiveEnabled() && !this.sandbox.inSandbox(),
+  );
 
   readonly fullscreen = input(false);
   readonly sent = output<void>();

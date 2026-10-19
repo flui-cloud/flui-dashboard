@@ -15,6 +15,7 @@ import { WorkloadEntry, WorkloadList, isWorkloadList, workloadEntries, workloadT
 import { ClusterStatus } from '../../model/cluster.models';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { InstallPromptService } from '../../../core/services/install-prompt.service';
 import { accessOf } from '../../model/app-access';
 import {
   ApplicationsListSurfaceInput,
@@ -24,7 +25,7 @@ import {
 } from './applications-list-surface';
 import { ListFilters, ListRow, buildListRow, matchesView, primaryOf, sortRows, viewCounts } from './applications-list-rows';
 import { EMPTY_FILTERS, activeFilterCount, listCopy, listSummary, providerName } from './applications-list-kind';
-import { ApplicationsListShowcaseComponent } from './applications-list-showcase.component';
+import { ApplicationsListShowcaseComponent, showcaseNote } from './applications-list-showcase.component';
 import { ApplicationsListTableComponent } from './applications-list-table.component';
 import { ApplicationsListToolbarComponent } from './applications-list-toolbar.component';
 import { AddScope, AddWorkloadMenuComponent } from './add-workload-menu.component';
@@ -129,6 +130,7 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly currentSurface = inject(CurrentSurfaceService);
   private readonly sandbox = inject(SandboxService);
+  private readonly installPrompt = inject(InstallPromptService);
 
   readonly skeletonRows = [1, 2, 3, 4, 5];
 
@@ -286,7 +288,7 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     this.showcaseGroups().every((g) => !!accessOf(primaryOf(g))?.readOnly),
   );
 
-  showcaseWhy = computed(() => this.sandbox.whyFor('showcase'));
+  showcaseWhy = computed(() => showcaseNote(this.sandbox.whyFor('showcase'), this.installPrompt.readOnly()));
 
   activeFiltersCount = computed(() => activeFilterCount(this.filtersState()));
 

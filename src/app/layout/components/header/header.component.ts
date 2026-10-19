@@ -5,6 +5,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { NotificationPanelComponent } from '../notifications/notification-panel.component';
 import { QuickSshService } from '../../../features/service/quick-ssh.service';
+import { FLUI_CORE_REPO_URL } from '../../../core/utils/install-flui';
 
 // Stated on the toggle rather than in a settings page: the address bar is
 // the one surface mask mode cannot reach, and that is worth reading at the
@@ -60,9 +61,11 @@ const MASK_MODE_TOOLTIP =
         />
       </button>
       <a
-        href="https://github.com/flui-cloud"
+        [href]="repoUrl"
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Flui on GitHub"
+        title="Flui on GitHub"
         class="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
         <ng-icon name="lucideGithub" class="h-4 w-4" />
       </a>
@@ -75,6 +78,7 @@ export class HeaderComponent {
   protected readonly quickSsh = inject(QuickSshService);
 
   protected readonly maskModeTooltip = MASK_MODE_TOOLTIP;
+  protected readonly repoUrl = FLUI_CORE_REPO_URL;
 
   /**
    * Values already on screen came unmasked (or masked) from the API; only a

@@ -150,7 +150,10 @@ describe('ApplicationsListComponent', () => {
           },
         },
         { provide: CurrentSurfaceService, useValue: { set: () => undefined } },
-        { provide: SandboxService, useValue: { whyFor: () => null } },
+        {
+          provide: SandboxService,
+          useValue: { whyFor: () => '', visitor: signal(false), inSandbox: signal(false), hasArea: signal(false) },
+        },
         {
           provide: ActivatedRoute,
           useValue: {

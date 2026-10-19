@@ -6,21 +6,21 @@ import {
   signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideClock, lucideTriangleAlert } from '@ng-icons/lucide';
+import { lucideClock, lucideGithub, lucideStar, lucideTriangleAlert } from '@ng-icons/lucide';
 import { SandboxService } from '../../../core/services/sandbox.service';
-import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
+import { FLUI_CORE_REPO_URL, INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
 
 @Component({
   selector: 'app-sandbox-banner',
   standalone: true,
   imports: [NgIcon],
-  providers: [provideIcons({ lucideClock, lucideTriangleAlert })],
+  providers: [provideIcons({ lucideClock, lucideGithub, lucideStar, lucideTriangleAlert })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (sandbox.inSandbox()) {
       <div
         role="status"
-        class="flex items-center gap-2 px-3 py-1.5 text-xs border-b"
+        class="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5 text-xs border-b"
         [class]="tone()"
       >
         <ng-icon [name]="icon()" class="h-3.5 w-3.5 flex-shrink-0" />
@@ -57,6 +57,19 @@ import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
           </button>
         }
 
+        <a
+          [href]="repoUrl"
+          target="_blank"
+          rel="noopener"
+          aria-label="Star Flui on GitHub"
+          class="inline-flex items-center gap-1 rounded border border-current/30 px-2 py-0.5 font-medium hover:bg-foreground/5"
+          data-testid="star-on-github"
+        >
+          <ng-icon name="lucideGithub" class="h-3.5 w-3.5 flex-shrink-0" />
+          <ng-icon name="lucideStar" class="h-3.5 w-3.5 flex-shrink-0" />
+          <span>Star<span class="hidden sm:inline"> on GitHub</span></span>
+        </a>
+
         <span class="opacity-70 hidden lg:inline ml-auto">
           Shared cluster, with quotas. Flui is alpha.
         </span>
@@ -67,6 +80,7 @@ import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
 export class SandboxBannerComponent {
   protected readonly sandbox = inject(SandboxService);
   protected readonly installUrl = INSTALL_FLUI_URL;
+  protected readonly repoUrl = FLUI_CORE_REPO_URL;
   protected readonly keeping = signal(false);
   protected readonly kept = signal(false);
 
