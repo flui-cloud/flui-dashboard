@@ -43,7 +43,7 @@ export class TopologyDashboardService {
 
   async load(): Promise<TopologyResponseDto> {
     const data = await firstValueFrom(
-      this.api.topologyControllerGetTopology(this.systemApps.shown() ? '1' : undefined),
+      this.api.topologyControllerGetTopology(this.systemApps.shownOnMap() ? '1' : undefined),
     );
     this._data.set(data);
     return data;
@@ -70,7 +70,7 @@ export class TopologyDashboardService {
 
   private async connect(): Promise<void> {
     const base = this.appConfig.apiBaseUrl ?? '';
-    const url = `${base}/api/v1/topology/stream${this.systemApps.shown() ? '?system=1' : ''}`;
+    const url = `${base}/api/v1/topology/stream${this.systemApps.shownOnMap() ? '?system=1' : ''}`;
     const path = apiPath(url, base);
     if (path !== null && (!this.sandbox.allows('GET', path) || this.sandbox.needsSignIn('GET', path))) {
       this.abort = null;

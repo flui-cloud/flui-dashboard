@@ -24,8 +24,8 @@ export interface TopologyViewState {
   hops: TopologyHops;
   /** Draw a crowded level in full instead of only its problems and their neighbours. */
   all: boolean;
-  /** How the fleet level is drawn; unset, it follows the number of apps. */
-  fleetBy: TopologyFleetBy | null;
+  /** How the fleet level is drawn. */
+  fleetBy: TopologyFleetBy;
   /** The boxes the apps view draws: their clusters, or their projects. */
   boxBy: TopologyBoxBy;
   /** Only one project's apps stay lit, in both lenses. */
@@ -38,13 +38,13 @@ export interface TopologyViewState {
 }
 
 export const DEFAULT_TOPOLOGY_STATE: TopologyViewState = {
-  view: 'infrastructure',
+  view: 'services',
   level: 'fleet',
   cluster: null,
   app: null,
   hops: 1,
   all: false,
-  fleetBy: null,
+  fleetBy: 'apps',
   boxBy: 'cluster',
   project: null,
   focus: null,
@@ -90,7 +90,7 @@ export function parseTopologyState(params: Params): TopologyViewState {
     app: typeof params['app'] === 'string' && params['app'] ? params['app'] : null,
     hops: params['hops'] === '2' ? 2 : 1,
     all: params['all'] === '1',
-    fleetBy: params['fleet'] === 'apps' || params['fleet'] === 'clusters' ? params['fleet'] : null,
+    fleetBy: params['fleet'] === 'clusters' ? 'clusters' : 'apps',
     boxBy: params['box'] === 'project' ? 'project' : 'cluster',
     project: typeof params['project'] === 'string' && params['project'] ? params['project'] : null,
     focus: parseFocus(params['focus']),
@@ -111,7 +111,7 @@ export function topologyQueryParams(state: TopologyViewState): Params {
   if (state.app) params['app'] = state.app;
   if (state.hops !== d.hops) params['hops'] = String(state.hops);
   if (state.all) params['all'] = '1';
-  if (state.fleetBy) params['fleet'] = state.fleetBy;
+  if (state.fleetBy !== d.fleetBy) params['fleet'] = state.fleetBy;
   if (state.boxBy !== d.boxBy) params['box'] = state.boxBy;
   if (state.project) params['project'] = state.project;
   if (state.focus) params['focus'] = formatFocus(state.focus);

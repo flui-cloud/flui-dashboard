@@ -81,13 +81,13 @@ import {
             </label>
           }
           <button type="button" class="h-8 rounded-md border px-3 text-xs font-medium"
-                  [class.border-border]="!store.systemApps.shown()" [class.bg-card]="!store.systemApps.shown()"
-                  [class.text-muted-foreground]="!store.systemApps.shown()"
-                  [style.border-color]="store.systemApps.shown() ? 'hsl(var(--brand))' : null"
-                  [style.color]="store.systemApps.shown() ? 'hsl(var(--brand))' : null"
-                  [attr.aria-pressed]="store.systemApps.shown()"
+                  [class.border-border]="!store.systemApps.shownOnMap()" [class.bg-card]="!store.systemApps.shownOnMap()"
+                  [class.text-muted-foreground]="!store.systemApps.shownOnMap()"
+                  [style.border-color]="store.systemApps.shownOnMap() ? 'hsl(var(--brand))' : null"
+                  [style.color]="store.systemApps.shownOnMap() ? 'hsl(var(--brand))' : null"
+                  [attr.aria-pressed]="store.systemApps.shownOnMap()"
                   title="The apps Flui itself runs. Shown to whoever sees every cluster."
-                  (click)="store.systemApps.toggle()">System apps</button>
+                  (click)="store.systemApps.toggleOnMap()">System apps</button>
           <app-topology-choice label="View" [choices]="views" [value]="store.state().view"
                                (changed)="store.update({ view: $any($event) })" />
           <app-topology-choice label="Show as" [choices]="layouts" [value]="store.state().list ? 'list' : 'map'"

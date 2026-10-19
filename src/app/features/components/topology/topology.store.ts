@@ -75,7 +75,7 @@ export class TopologyStore {
     // Showing or hiding platform apps changes what the API sends: fetch again, stream again.
     let first = true;
     effect(() => {
-      this.systemApps.shown();
+      this.systemApps.shownOnMap();
       if (first) {
         first = false;
         return;

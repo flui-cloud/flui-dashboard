@@ -37,6 +37,18 @@ describe('topology state in the address', () => {
     ).toEqual({ focus: 'app:a1' });
   });
 
+  it('opens on the service map, every app drawn, unless the address says otherwise', () => {
+    expect(DEFAULT_TOPOLOGY_STATE.view).toBe('services');
+    expect(DEFAULT_TOPOLOGY_STATE.fleetBy).toBe('apps');
+    expect(parseTopologyState({ view: 'infrastructure', fleet: 'clusters' })).toEqual(
+      jasmine.objectContaining({ view: 'infrastructure', fleetBy: 'clusters' }),
+    );
+    expect(topologyQueryParams({ ...DEFAULT_TOPOLOGY_STATE, view: 'infrastructure', fleetBy: 'clusters' })).toEqual({
+      view: 'infrastructure',
+      fleet: 'clusters',
+    });
+  });
+
   it('keeps ids that hold colons', () => {
     expect(parseFocus('server:node:c1:abc')).toEqual({ type: 'server', id: 'node:c1:abc' });
   });

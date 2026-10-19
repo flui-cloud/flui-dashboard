@@ -62,8 +62,7 @@ function clusterLevel(t: TopologyResponseDto, state: TopologyViewState): Topolog
 
 function fleetLevel(t: TopologyResponseDto, state: TopologyViewState): TopologyGraph {
   const collapsedFrom = state.level === 'fleet' || !knownCluster(t, state) ? null : state.level;
-  const byApps = state.fleetBy ? state.fleetBy === 'apps' : t.apps.length > 0 && t.apps.length <= MAX_NODES;
-  const apps = byApps && t.apps.length ? readable(appsGraph(t, state.boxBy), state.all) : null;
+  const apps = state.fleetBy === 'apps' && t.apps.length ? readable(appsGraph(t, state.boxBy), state.all) : null;
   return { ...(apps ?? fleetGraph(t)), collapsedFrom };
 }
 

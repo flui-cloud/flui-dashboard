@@ -94,8 +94,8 @@ describe('the service map graph', () => {
     expect(g.nodes.some((n) => n.id === app.parent)).toBeTrue();
   });
 
-  it('keeps a large fleet sparse: clusters, the Internet when traffic is measured, and links between clusters', () => {
-    const g = topologyGraph(large(withCrossLink()), state({ level: 'fleet' }));
+  it('keeps a fleet drawn by cluster sparse: clusters, the Internet when traffic is measured, and links between clusters', () => {
+    const g = topologyGraph(large(withCrossLink()), state({ level: 'fleet', fleetBy: 'clusters' }));
     expect(g.nodes.map((n) => n.id)).toEqual(['internet', 'c-eu', 'c-asia']);
     expect(g.edges.map((e) => [e.from, e.to, e.measured])).toEqual([
       ['internet', 'c-eu', true],
@@ -140,7 +140,7 @@ describe('the service map graph', () => {
       ...t.links[0], id: 'internet>a-tools', to: { kind: 'app', appId: 'a-tools' },
       traffic: { measured: true, rps: 2000, errorPct: 0 },
     });
-    const fleet = topologyGraph(large(t), state({ level: 'fleet' }));
+    const fleet = topologyGraph(large(t), state({ level: 'fleet', fleetBy: 'clusters' }));
     expect(fleet.edges.find((e) => e.from === 'internet')?.failing).toBeFalse();
     expect(isFailing(t.links[0])).toBeTrue();
   });
