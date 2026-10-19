@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -15,20 +15,27 @@ import { CreateBackupDestinationDto } from '../../../../core/api/model/createBac
   imports: [FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="p-6 max-w-2xl space-y-6">
+    <div class="space-y-6" [class]="embedded() ? 'p-5' : 'p-6 max-w-2xl'">
       <header class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold">New backup destination</h1>
+        <h1 class="font-semibold" [class]="embedded() ? 'text-lg' : 'text-2xl'">New backup destination</h1>
+        @if (embedded()) {
+        <button type="button" class="text-sm text-muted-foreground hover:underline" (click)="cancelled.emit()">
+          Cancel
+        </button>
+        } @else {
         <a routerLink="/management/backup/destinations" class="text-sm text-muted-foreground hover:underline">
           Cancel
         </a>
+        }
       </header>
 
       <p class="text-sm text-muted-foreground">
         Add an <strong class="text-foreground">external</strong> S3-compatible bucket as a backup
         destination — AWS, Wasabi, Backblaze B2, Cloudflare R2, IDrive E2, MinIO, or any other
-        endpoint that speaks the S3 API. On Scaleway you don't need this form.
+        endpoint that speaks the S3 API.@if (!embedded()) { On Scaleway you don't need this form.}
       </p>
 
+      @if (!embedded()) {
       <div class="rounded-md border border-primary/30 bg-primary/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div class="text-sm">
           <p class="font-medium">⚡ Using Scaleway? Skip this form.</p>
@@ -44,6 +51,7 @@ import { CreateBackupDestinationDto } from '../../../../core/api/model/createBac
           Enable backups →
         </a>
       </div>
+      }
 
       <form (ngSubmit)="onSubmit()" #f="ngForm" class="space-y-5">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -217,6 +225,10 @@ export class DestinationFormComponent {
   private readonly backup = inject(BackupService);
   private readonly router = inject(Router);
 
+  readonly embedded = input(false);
+  readonly created = output<string>();
+  readonly cancelled = output<void>();
+
   readonly submitting = signal(false);
   readonly errorMsg = signal<string | null>(null);
   readonly testResult = signal<{ healthy: boolean; error?: string } | null>(null);
@@ -252,6 +264,10 @@ export class DestinationFormComponent {
     const test = await this.backup.testDestination(created.id);
     this.testResult.set(test);
     this.submitting.set(false);
+    if (this.embedded()) {
+      if (test?.healthy) this.created.emit(created.id);
+      return;
+    }
     setTimeout(() => this.router.navigate(['/management/backup/destinations', created.id]), 1500);
   }
 }

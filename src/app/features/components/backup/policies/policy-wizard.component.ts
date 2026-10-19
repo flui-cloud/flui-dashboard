@@ -15,6 +15,7 @@ import { CreateBackupPolicyDto } from '../../../../core/api/model/createBackupPo
 import { PolicyDestinationInputDto } from '../../../../core/api/model/policyDestinationInputDto';
 import { AppOption, PolicyAppPickerComponent } from './policy-app-picker.component';
 import { PROFILE_DESCRIPTION, policyDtoOf } from './policy-wizard.dto';
+import { DestinationFormComponent } from '../destinations/destination-form.component';
 
 interface WizardDestination {
   destinationId: string;
@@ -25,7 +26,7 @@ interface WizardDestination {
 @Component({
   selector: 'app-policy-wizard',
   standalone: true,
-  imports: [FormsModule, RouterLink, PolicyAppPickerComponent],
+  imports: [FormsModule, RouterLink, PolicyAppPickerComponent, DestinationFormComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-3xl space-y-5">
@@ -196,6 +197,30 @@ interface WizardDestination {
           }
         </div>
 
+        @if (noDestinations()) {
+        <div class="rounded-md border border-dashed border-border p-5 space-y-3" data-testid="no-destinations">
+          <div>
+            <p class="text-sm font-medium">No backup destination yet</p>
+            <p class="text-sm text-muted-foreground mt-1">
+              A destination is the bucket where Flui keeps the copies. Add one here: what you
+              filled in so far stays as it is.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              (click)="creatingDestination.set(true)"
+              data-testid="create-destination"
+            >
+              Add a destination
+            </button>
+            <a routerLink="/management/backup/destinations" class="text-sm text-muted-foreground hover:underline">
+              Go to destinations
+            </a>
+          </div>
+        </div>
+        } @else {
         <div class="space-y-2">
           @for (d of destinations(); track d.destinationId; let i = $index) {
           <div class="flex items-center gap-2 rounded-md border border-border p-2">
@@ -231,12 +256,34 @@ interface WizardDestination {
             + Add destination
           </button>
           }
+          <button
+            type="button"
+            class="ml-4 text-sm text-muted-foreground hover:underline"
+            (click)="creatingDestination.set(true)"
+          >
+            New destination…
+          </button>
         </div>
+        }
+
+        @if (creatingDestination()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" data-testid="destination-modal">
+          <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border bg-background shadow-xl">
+            <app-destination-form
+              [embedded]="true"
+              (created)="onDestinationCreated($event)"
+              (cancelled)="creatingDestination.set(false)"
+            />
+          </div>
+        </div>
+        }
 
         @if (validationError(); as v) {
+        @if (!noDestinations()) {
         <div class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
           {{ v }}
         </div>
+        }
         }
       </section>
       }
@@ -317,6 +364,11 @@ export class PolicyWizardComponent implements OnInit {
   readonly profiles: BackupPolicyProfile[] = ['single', 'mirrored', 'custom'];
 
   readonly step = signal(1);
+  readonly creatingDestination = signal(false);
+  private readonly destinationsLoaded = signal(false);
+  readonly noDestinations = computed(
+    () => this.destinationsLoaded() && this.backup.destinations().length === 0,
+  );
   readonly submitting = signal(false);
   readonly submitError = signal<string | null>(null);
   readonly destinations = signal<WizardDestination[]>([
@@ -379,9 +431,22 @@ export class PolicyWizardComponent implements OnInit {
 
   ngOnInit(): void {
     this.prefillFromLink();
-    void (async () => {
-      await Promise.all([this.clusterService.loadClusters(), this.backup.loadDestinations()]);
-    })();
+    void this.clusterService.loadClusters().catch(() => undefined);
+    void this.backup.loadDestinations().then(() => this.destinationsLoaded.set(!this.backup.error()));
+  }
+
+  /** A destination made from inside the wizard fills the first empty row, or joins as a replica. */
+  onDestinationCreated(id: string): void {
+    this.creatingDestination.set(false);
+    this.destinations.update((list) => {
+      const empty = list.findIndex((d) => !d.destinationId);
+      let next: WizardDestination[];
+      if (empty >= 0) next = list.map((d, i) => (i === empty ? { ...d, destinationId: id } : d));
+      else if (this.form.engineClass === 'database' && list.length > 0) next = [{ ...list[0], destinationId: id }];
+      else next = [...list, { destinationId: id, role: 'replica', priority: list.length }];
+      if (!next.some((d) => d.role === 'primary')) next = next.map((d, i) => (i === 0 ? { ...d, role: 'primary' } : d));
+      return next;
+    });
   }
 
   /** "Protect" from the home opens this with the cluster and the app already chosen. */
