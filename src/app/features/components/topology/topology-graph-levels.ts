@@ -46,7 +46,12 @@ export function fleetGraph(t: TopologyResponseDto): TopologyGraph {
 export function appsGraph(t: TopologyResponseDto, boxBy: TopologyViewState['boxBy'] = 'cluster'): TopologyGraph {
   const apps = new Map(t.apps.map((a) => [a.id, a]));
   const nodes = boxBy === 'project' ? projectBoxes(t) : clusterBoxes(t);
-  const edges = bundle(t.links, endsWithin(apps), apps);
+  const endOf = (id: string | undefined, internet: boolean): string | null => {
+    if (internet) return INTERNET;
+    const app = apps.get(id ?? '');
+    return app ? drawnAs(app) : null;
+  };
+  const edges = bundle(t.links, endOf, apps);
   if (edges.some((e) => e.from === INTERNET)) nodes.unshift(internetNode());
   return { level: 'fleet', nodes, edges, collapsedFrom: null };
 }
@@ -76,7 +81,11 @@ function projectBoxes(t: TopologyResponseDto): GraphNode[] {
       tone: worstTone(own.map((a) => toneOf(a.status))),
       problems: troubled(own),
     });
-    return [region, ...own.map((a) => ({ ...appNode(a, clusterNameOf(t, a.clusterId)), parent: region.id }))];
+    const users = own.filter((a) => a.kind !== 'system').map((a) => appNode(a, clusterNameOf(t, a.clusterId)));
+    const platforms = [...new Set(own.filter((a) => a.kind === 'system').map((a) => a.clusterId))].map((clusterId) =>
+      platformNode(t, clusterId, true),
+    );
+    return [region, ...[...users, ...platforms].map((n) => ({ ...n, parent: region.id }))];
   });
 }
 
@@ -93,7 +102,36 @@ function clusterBoxes(t: TopologyResponseDto): GraphNode[] {
     };
     if (!own.length) return [node('cluster', c.id, { ...common, sub: `${c.provider} · ${c.region} · no apps` })];
     const region = node('region', `region:${c.id}`, { ...common, sub: `${c.provider} · ${c.region}` });
-    return [region, ...own.map((a) => ({ ...appNode(a, stackOrCategory(t, a)), parent: region.id }))];
+    const users = own.filter((a) => a.kind !== 'system').map((a) => appNode(a, stackOrCategory(t, a)));
+    const platform = own.some((a) => a.kind === 'system') ? [platformNode(t, c.id, false)] : [];
+    return [region, ...[...users, ...platform].map((n) => ({ ...n, parent: region.id }))];
+  });
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+export const platformNodeId = (clusterId: string) => `platform:${clusterId}`;
+
+/** Where an app is drawn on the fleet map: on its own, or inside its cluster's platform node. */
+const drawnAs = (a: TopologyAppDto) => (a.kind === 'system' ? platformNodeId(a.clusterId) : a.id);
+
+/**
+ * The apps Flui runs on one cluster, drawn as one node: they are the platform
+ * the user's apps stand on, and a dozen of them would crowd the map. The
+ * cluster level still draws each one.
+ */
+function platformNode(t: TopologyResponseDto, clusterId: string, named: boolean): GraphNode {
+  const own = t.apps.filter((a) => a.clusterId === clusterId && a.kind === 'system');
+  const count = plural(own.length, 'app');
+  return node('platform', platformNodeId(clusterId), {
+    label: 'Flui platform',
+    sub: named ? `${clusterNameOf(t, clusterId)} · ${count}` : count,
+    tone: worstTone(own.map((a) => toneOf(a.status))),
+    focus: { type: 'platform', id: clusterId },
+    drill: { view: 'services', level: 'cluster', cluster: clusterId, focus: null },
+    category: 'infra',
+    problems: troubled(own),
+    muted: true,
   });
 }
 

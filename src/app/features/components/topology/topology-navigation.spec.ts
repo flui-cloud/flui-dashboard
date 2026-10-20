@@ -73,4 +73,16 @@ describe('where topology elements lead', () => {
   it('leads nowhere for an element the snapshot does not hold', () => {
     expect(destinationsFor({ type: 'app', id: 'gone' }, t, false)).toEqual({ open: null, quick: [], drills: [] });
   });
+
+  it('leads from a platform node to each of its apps at the cluster level, and to the cluster', () => {
+    const d = destinationsFor({ type: 'platform', id: 'c-eu' }, t, false);
+    expect(d.drills[0]).toEqual({
+      label: 'Each app',
+      state: { view: 'services', level: 'cluster', cluster: 'c-eu', focus: null, drill: null },
+    });
+    expect(d.open?.commands).toEqual(['/cluster', 'c-eu', 'overview']);
+    const guest = destinationsFor({ type: 'platform', id: 'c-eu' }, t, true);
+    expect(guest.open).toBeNull();
+    expect(guest.drills.map((x) => x.label)).toEqual(['Each app', 'Capacity']);
+  });
 });

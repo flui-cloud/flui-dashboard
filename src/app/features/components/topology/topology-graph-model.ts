@@ -7,7 +7,7 @@ export const FAILING_ERROR_PCT = 5;
 /** Above this many nodes a level collapses to the one above it. */
 export const MAX_NODES = 40;
 
-export type GraphNodeKind = 'internet' | 'cluster' | 'pill' | 'stack' | 'app' | 'region';
+export type GraphNodeKind = 'internet' | 'cluster' | 'pill' | 'stack' | 'app' | 'platform' | 'region';
 
 export interface GraphNode {
   id: string;
@@ -65,6 +65,7 @@ const SIZE: Record<GraphNodeKind, [number, number]> = {
   pill: [168, 40],
   stack: [216, 76],
   app: [196, 64],
+  platform: [196, 64],
   region: [0, 0],
 };
 

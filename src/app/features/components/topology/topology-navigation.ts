@@ -77,6 +77,8 @@ export function destinationsFor(
       return appDestinations(topology, focus, guest);
     case 'link':
       return linkDestinations(topology, focus, guest);
+    case 'platform':
+      return platformDestinations(topology, focus, guest);
   }
 }
 
@@ -140,6 +142,17 @@ function appDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest: bo
     ],
     drills,
   };
+}
+
+function platformDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest: boolean): TopologyDestinations {
+  const cluster = t.clusters.find((c) => c.id === focus.id);
+  if (!cluster) return NONE;
+  const drills = [
+    { label: 'Each app', state: { view: 'services' as const, level: 'cluster' as const, cluster: cluster.id, focus: null, drill: null } },
+    capacityOf(cluster.id, { type: 'cluster', id: cluster.id }),
+  ];
+  if (guest) return forGuest(drills);
+  return { open: clusterTab(cluster.id, 'overview', 'Open cluster'), quick: [], drills };
 }
 
 function linkDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest: boolean): TopologyDestinations {

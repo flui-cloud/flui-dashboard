@@ -56,6 +56,8 @@ export function topologyEntityRef(focus: TopologyFocus, t: TopologyResponseDto):
       return entityRef('stack', focus.id);
     case 'link':
       return entityRef('topology-link', focus.id);
+    case 'platform':
+      return clusterEntityRef(focus.id);
   }
 }
 
@@ -71,6 +73,8 @@ function labelOf(focus: TopologyFocus, t: TopologyResponseDto): string {
       return t.stacks.find((s) => s.id === focus.id)?.name ?? focus.id;
     case 'link':
       return 'Link';
+    case 'platform':
+      return `Flui platform on ${t.clusters.find((c) => c.id === focus.id)?.name ?? focus.id}`;
   }
 }
 

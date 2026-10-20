@@ -54,7 +54,8 @@ export class TopologyStore {
       (focus.type === 'server' && snapshot.servers.some((s) => s.id === focus.id)) ||
       (focus.type === 'stack' && snapshot.stacks.some((s) => s.id === focus.id)) ||
       (focus.type === 'app' && snapshot.apps.some((a) => a.id === focus.id)) ||
-      (focus.type === 'link' && snapshot.links.some((l) => l.id === focus.id));
+      (focus.type === 'link' && snapshot.links.some((l) => l.id === focus.id)) ||
+      (focus.type === 'platform' && snapshot.apps.some((a) => a.clusterId === focus.id && a.kind === 'system'));
     return found ? focus : null;
   });
 

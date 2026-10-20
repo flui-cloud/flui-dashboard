@@ -48,6 +48,8 @@ export function describeFocus(focus: TopologyFocus | null, t: Snapshot | null): 
       return describeApp(t, focus.id);
     case 'link':
       return describeLink(t, focus.id);
+    case 'platform':
+      return describePlatform(t, focus.id);
   }
 }
 
@@ -85,6 +87,28 @@ function describeCluster(t: Snapshot, id: string): InspectorView {
       ...section('Needs attention', problems.map((a) => appRow(a, a.statusReason ?? statusLabel(a.status)))),
       ...open,
     ],
+  };
+}
+
+const SEVERITY = ['error', 'warning', 'stopped'];
+
+/** The apps Flui runs on one cluster, the ones the fleet map draws as a single node. */
+function describePlatform(t: Snapshot, clusterId: string): InspectorView {
+  const own = t.apps.filter((a) => a.clusterId === clusterId && a.kind === 'system');
+  const worst = SEVERITY.find((s) => own.some((a) => a.status === s)) ?? 'running';
+  return {
+    kind: 'Flui platform',
+    title: clusterNameIn(t, clusterId),
+    subtitle: 'What Flui runs for itself',
+    status: statusLabel(worst),
+    tone: toneOf(worst),
+    facts: [
+      { label: 'Apps', value: `${own.length}` },
+      { label: 'Replicas', value: `${own.reduce((n, a) => n + a.replicaCount, 0)}` },
+      { label: 'Memory request', value: memory(own.reduce((n, a) => n + a.ramRequestMB * a.replicaCount, 0)) },
+      { label: 'CPU request', value: cpu(own.reduce((n, a) => n + a.cpuRequestM * a.replicaCount, 0)) },
+    ],
+    sections: [{ title: 'Apps', rows: own.map((a) => appRow(a, a.statusReason ?? `×${a.replicaCount}`)) }],
   };
 }
 

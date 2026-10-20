@@ -31,4 +31,22 @@ describe('the inspector', () => {
     expect(section({ type: 'app', id: 'a-db' }, 'Called by')!.rows.map((r) => r.label)).toEqual(['Web']);
     expect(section({ type: 'app', id: 'a-db' }, 'Reachable from the Internet')).toBeUndefined();
   });
+
+  it('lists the apps Flui runs on a cluster when its platform node is selected', () => {
+    const t = topologyFixture();
+    const base = t.apps.find((a) => a.id === 'a-tools')!;
+    t.apps.push(
+      { ...base, id: 'flui-system/flui-api', displayName: 'Flui API', clusterId: 'c-asia', kind: 'system', statusReason: null },
+      { ...base, id: 'flui-control/loki', displayName: 'Loki', clusterId: 'c-asia', kind: 'system', status: 'warning', statusReason: 'Restarting' },
+    );
+    const view = describeFocus({ type: 'platform', id: 'c-asia' }, t)!;
+    expect(view.kind).toBe('Flui platform');
+    expect(view.title).toBe('edge-asia');
+    expect(view.status).toBe('Warning');
+    expect(view.facts).toContain({ label: 'Apps', value: '2' });
+    expect(view.sections[0].rows.map((r) => [r.label, r.detail, r.focus])).toEqual([
+      ['Flui API', `×${base.replicaCount}`, { type: 'app', id: 'flui-system/flui-api' }],
+      ['Loki', 'Restarting', { type: 'app', id: 'flui-control/loki' }],
+    ]);
+  });
 });

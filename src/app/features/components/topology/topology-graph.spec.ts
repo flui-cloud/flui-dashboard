@@ -68,16 +68,62 @@ describe('the service map graph', () => {
     expect(lit.has('a-web-asia')).toBeFalse();
   });
 
-  it('draws platform apps quieter, and boxes them as Platform when grouped by project', () => {
-    const t = withCrossLink();
-    const base = t.apps.find((a) => a.id === 'a-tools')!;
-    t.apps.push({ ...base, id: 'flui-control/loki', displayName: 'Loki', kind: 'system', projectId: null, stackId: 'app:loki' });
-    const byCluster = topologyGraph(t, state({ level: 'fleet' }));
-    expect(byCluster.nodes.find((n) => n.id === 'flui-control/loki')?.muted).toBeTrue();
-    expect(byCluster.nodes.find((n) => n.id === 'a-tools')?.muted).toBeFalse();
-    const byProject = topologyGraph(t, state({ level: 'fleet', boxBy: 'project' }));
-    expect(byProject.nodes.find((n) => n.id === 'flui-control/loki')?.parent).toBe('region:platform');
-    expect(byProject.nodes.find((n) => n.id === 'a-tools')?.parent).toBe('region:no-project');
+  describe('the apps Flui runs for itself', () => {
+    /** Three platform apps on the Asia cluster, two of them published and linked to each other. */
+    function withPlatform() {
+      const t = withCrossLink();
+      const base = t.apps.find((a) => a.id === 'a-tools')!;
+      const platform = (id: string, displayName: string, status = 'running') => ({
+        ...base, id, displayName, clusterId: 'c-asia', kind: 'system', projectId: null, stackId: `app:${id}`, status,
+      } as typeof base);
+      t.apps.push(platform('flui-system/flui-api', 'Flui API'), platform('flui-system/postgres', 'PostgreSQL'), platform('flui-control/loki', 'Loki', 'warning'));
+      const link = (id: string, from: string | null, to: string) => ({
+        id, from: from ? { kind: 'app', appId: from } : { kind: 'internet' }, to: { kind: 'app', appId: to },
+        source: from ? 'env-reference' : 'gateway-route', label: ':5432', crossCluster: false, viaTunnel: false,
+        routeHost: null, routePath: null, targetPort: null, traffic: { measured: true, rps: 2, errorPct: 0 },
+      } as (typeof t.links)[number]);
+      t.links.push(link('in-api', null, 'flui-system/flui-api'), link('api-db', 'flui-system/flui-api', 'flui-system/postgres'));
+      return t;
+    }
+
+    it('draws them as one quiet platform node in their cluster box, with their count', () => {
+      const g = topologyGraph(withPlatform(), state({ level: 'fleet' }));
+      expect(g.nodes.some((n) => n.id.startsWith('flui-'))).toBeFalse();
+      const platform = g.nodes.find((n) => n.id === 'platform:c-asia')!;
+      expect(platform).toEqual(jasmine.objectContaining({
+        kind: 'platform', label: 'Flui platform', sub: '3 apps', parent: 'region:c-asia', muted: true, tone: 'degraded', problems: 1,
+      }));
+      expect(platform.focus).toEqual({ type: 'platform', id: 'c-asia' });
+      expect(platform.drill).toEqual(jasmine.objectContaining({ level: 'cluster', cluster: 'c-asia' }));
+    });
+
+    it('routes their links to the platform node and drops the ones among them', () => {
+      const g = topologyGraph(withPlatform(), state({ level: 'fleet' }));
+      const ids = g.edges.map((e) => e.id);
+      expect(ids).toContain('internet>platform:c-asia');
+      expect(ids.some((id) => id.includes('flui-system'))).toBeFalse();
+      expect(g.edges.some((e) => e.from === e.to)).toBeFalse();
+    });
+
+    it('keeps one platform node per cluster in the Platform box when grouped by project', () => {
+      const g = topologyGraph(withPlatform(), state({ level: 'fleet', boxBy: 'project' }));
+      const platform = g.nodes.find((n) => n.id === 'platform:c-asia')!;
+      expect(platform.parent).toBe('region:platform');
+      expect(platform.sub).toBe('edge-asia · 3 apps');
+      expect(g.nodes.find((n) => n.id === 'a-tools')?.parent).toBe('region:no-project');
+    });
+
+    it('still draws each of them at the cluster level', () => {
+      const t = withPlatform();
+      t.stacks.push(
+        ...t.apps.filter((a) => a.kind === 'system').map((a) => ({
+          id: a.stackId, clusterId: a.clusterId, name: a.displayName, type: 'standalone', primaryAppId: a.id, appIds: [a.id], status: a.status,
+        } as (typeof t.stacks)[number])),
+      );
+      const g = topologyGraph(t, state({ level: 'cluster', cluster: 'c-asia' }));
+      expect(g.nodes.map((n) => n.label)).toEqual(jasmine.arrayContaining(['Flui API', 'PostgreSQL', 'Loki']));
+      expect(g.nodes.some((n) => n.kind === 'platform')).toBeFalse();
+    });
   });
 
   it('draws a small fleet by cluster when asked to', () => {

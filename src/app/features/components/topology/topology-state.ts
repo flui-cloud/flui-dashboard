@@ -7,7 +7,8 @@ export type TopologyFleetBy = 'apps' | 'clusters';
 export type TopologyBoxBy = 'cluster' | 'project';
 export type TopologyColorBy = 'memory' | 'cpu' | 'pods' | 'network';
 export type TopologyGroupBy = 'cluster' | 'provider';
-export type TopologyEntityType = 'cluster' | 'server' | 'stack' | 'app' | 'link';
+/** `platform` is the apps Flui runs on one cluster, by that cluster's id. */
+export type TopologyEntityType = 'cluster' | 'server' | 'stack' | 'app' | 'link' | 'platform';
 export type TopologyDrill = 'capacity' | 'path';
 
 export interface TopologyFocus {
@@ -62,7 +63,7 @@ const LEVELS: readonly TopologyLevel[] = ['fleet', 'cluster', 'stack', 'app'];
 const COLORS: readonly TopologyColorBy[] = ['memory', 'cpu', 'pods', 'network'];
 const GROUPS: readonly TopologyGroupBy[] = ['cluster', 'provider'];
 const DRILLS: readonly TopologyDrill[] = ['capacity', 'path'];
-const TYPES: readonly TopologyEntityType[] = ['cluster', 'server', 'stack', 'app', 'link'];
+const TYPES: readonly TopologyEntityType[] = ['cluster', 'server', 'stack', 'app', 'link', 'platform'];
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return typeof value === 'string' && (allowed as readonly string[]).includes(value)
