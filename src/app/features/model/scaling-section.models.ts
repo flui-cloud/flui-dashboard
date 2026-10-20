@@ -41,10 +41,28 @@ export interface GiveBackAlarm {
 }
 
 export interface GiveBackReason {
-  kind: 'data-on-node' | 'not-restarted' | 'no-interruption' | 'placed-by-machine' | 'master';
+  kind: 'data-on-node' | 'not-restarted' | 'no-interruption' | 'placed-by-machine' | 'master' | 'runs-flui-api';
   title: string;
   fix: string;
   items: { label: string; applicationId: string | null }[];
+}
+
+/** What saving lower node limits would do to the machines, read before saving. */
+export interface RemovalPreview {
+  removes: boolean;
+  fleet: number;
+  target: number;
+  leaving: number;
+  node: string | null;
+  shape: string | null;
+  /** Whether the first removal could start now; false means it would wait, touching nothing. */
+  proceeds: boolean;
+  opensMaster: boolean;
+  moves: { what: string; system: boolean }[];
+  waitsFor: GiveBackReason[];
+  sentence: string;
+  /** The sentence without the list of what moves, shown beside that list. */
+  headline: string;
 }
 
 export interface ScalingModeLabel {

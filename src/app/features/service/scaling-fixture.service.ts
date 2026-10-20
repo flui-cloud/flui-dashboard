@@ -14,6 +14,7 @@ import {
   ProviderScalingCapability,
   SectionGroup,
   ShapeCatalogue,
+  RemovalPreview,
 } from '../model/scaling-section.models';
 import { ScalingApiService } from './scaling-api.service';
 
@@ -620,6 +621,34 @@ export class ScalingFixtureService extends ScalingApiService {
       bounds: { min, desired: min, max: Math.max(existing.bounds.max, min) },
     };
     return of(GROUPS[groupId]);
+  }
+
+  override removalPreview(groupId: string, proposed: { min?: number; desired?: number }): Observable<RemovalPreview> {
+    const group = GROUPS[groupId] ?? GROUPS['g-prod'];
+    const fleet = ROWS.find((row) => row.groupId === groupId)?.nodes ?? 3;
+    const target = Math.max(proposed.desired ?? group.bounds.desired, proposed.min ?? group.bounds.min);
+    const leaving = Math.max(fleet - target, 0);
+    if (!leaving) {
+      return of({
+        removes: false, fleet, target, leaving, node: null, shape: null, proceeds: false,
+        opensMaster: false, moves: [], waitsFor: [],
+        sentence: `Saving changes no machine: the cluster has ${fleet} node(s) and the target is ${target}.`,
+        headline: `Saving changes no machine: the cluster has ${fleet} node(s) and the target is ${target}.`,
+      });
+    }
+    return of({
+      removes: true, fleet, target, leaving, node: 'prod-eu-worker-3', shape: 'cx33', proceeds: true,
+      opensMaster: false,
+      moves: [
+        { what: 'flui-web', system: true },
+        { what: 'storefront', system: false },
+        { what: 'billing-api', system: false },
+      ],
+      waitsFor: [],
+      sentence:
+        'Saving gives back prod-eu-worker-3 (cx33). Started again on another machine: flui-web (Flui), storefront, billing-api.',
+      headline: 'Saving gives back prod-eu-worker-3 (cx33).',
+    });
   }
 
   override approvePurchase(): Observable<{ did: string }> {

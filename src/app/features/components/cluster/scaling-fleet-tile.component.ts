@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../shared/services/toast.service';
-import { ClusterScalingRow } from '../../model/scaling-section.models';
+import { ClusterScalingRow, RemovalPreview } from '../../model/scaling-section.models';
 import { ScalingApiService } from '../../service/scaling-api.service';
+import { RemovalPreviewNoteComponent } from '../scaling-section/removal-preview-note.component';
 
 const MAX_FLEET_NODES = 20;
 
@@ -21,6 +22,7 @@ type Step =
 @Component({
   selector: 'app-scaling-fleet-tile',
   standalone: true,
+  imports: [RemovalPreviewNoteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card-surface p-4 flex flex-col gap-2 h-full" data-testid="tile-fleet">
@@ -60,6 +62,11 @@ type Step =
         @case ('confirm') {
           <div class="flex flex-col gap-1.5 text-[11px] leading-relaxed" data-testid="tile-fleet-confirm">
             <span>{{ confirmText() }}</span>
+            @if (removal(); as preview) {
+              <app-removal-preview-note [preview]="preview" />
+            } @else if (removalLoading()) {
+              <span class="text-sub">Checking which node would go and what runs on it…</span>
+            }
             <span class="flex gap-2">
               <button type="button" class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50" [disabled]="busy()" (click)="moveFloor()" data-testid="tile-fleet-confirm-yes">
                 {{ busy() ? 'Saving…' : 'Confirm' }}
@@ -111,6 +118,9 @@ export class ScalingFleetTileComponent {
 
   protected readonly step = signal<Step>({ kind: 'idle' });
   protected readonly busy = signal(false);
+  /** Which node one fewer gives back and what runs on it, read before the person confirms. */
+  protected readonly removal = signal<RemovalPreview | null>(null);
+  protected readonly removalLoading = signal(false);
 
   protected readonly nodes = computed(() => this.row()?.nodes ?? 0);
   private readonly groupId = computed(() => this.row()?.groupId ?? null);
@@ -213,10 +223,27 @@ export class ScalingFleetTileComponent {
 
   protected ask(to: number): void {
     this.step.set({ kind: 'confirm', to });
+    this.removal.set(null);
+    const groupId = this.groupId();
+    if (groupId && to < this.nodes()) void this.readRemoval(groupId, to);
+  }
+
+  private async readRemoval(groupId: string, to: number): Promise<void> {
+    this.removalLoading.set(true);
+    try {
+      const preview = await firstValueFrom(this.api.removalPreview(groupId, { min: to, desired: to }));
+      const s = this.step();
+      if (s.kind === 'confirm' && s.to === to) this.removal.set(preview);
+    } catch {
+      // The confirmation still stands on its own words; the group checks again before it removes anything.
+    } finally {
+      this.removalLoading.set(false);
+    }
   }
 
   protected reset(): void {
     this.step.set({ kind: 'idle' });
+    this.removal.set(null);
   }
 
   protected later(): void {

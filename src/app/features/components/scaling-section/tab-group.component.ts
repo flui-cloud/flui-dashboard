@@ -16,7 +16,8 @@ import { consequenceOf } from './scaling-consequence';
 import { ScalingApiService } from '../../service/scaling-api.service';
 import { ScalingGroupStore } from './scaling-group.store';
 import { ToastService } from '../../../shared/services/toast.service';
-import { SectionGroup } from '../../model/scaling-section.models';
+import { RemovalPreview, SectionGroup } from '../../model/scaling-section.models';
+import { RemovalPreviewNoteComponent } from './removal-preview-note.component';
 import {
   ScalingCostDraft,
   WriteScalingGroup,
@@ -25,7 +26,7 @@ import {
 @Component({
   selector: 'app-scaling-group-tab',
   standalone: true,
-  imports: [RouterLink, GroupSettingsTableComponent, GroupCostComponent],
+  imports: [RouterLink, GroupSettingsTableComponent, GroupCostComponent, RemovalPreviewNoteComponent],
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -58,11 +59,14 @@ import {
           class="card-surface flex flex-wrap items-start justify-between gap-4 p-4"
           data-testid="group-save"
         >
-          <p
-            class="m-0 max-w-prose text-[13px] leading-relaxed text-foreground"
-          >
-            {{ consequence(d).sentence }}
-          </p>
+          <div class="flex max-w-prose flex-col gap-2">
+            <p class="m-0 text-[13px] leading-relaxed text-foreground">
+              {{ consequence(d).sentence }}
+            </p>
+            @if (removalFor(d); as preview) {
+              <app-removal-preview-note [preview]="preview" />
+            }
+          </div>
 
           <div class="flex shrink-0 items-center gap-2">
             @if (problem(d); as message) {
@@ -73,6 +77,17 @@ import {
                 {{ message }}
               </span>
             }
+            @if (removalFor(d)) {
+              <button
+                type="button"
+                class="min-h-11 rounded-lg px-3 text-[13px] text-muted-foreground hover:text-foreground"
+                [disabled]="saving()"
+                (click)="removal.set(null)"
+                data-testid="group-save-cancel"
+              >
+                Cancel
+              </button>
+            }
             <button
               type="button"
               (click)="save(d)"
@@ -80,7 +95,7 @@ import {
               class="min-h-11 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
               data-testid="group-save-button"
             >
-              {{ saving() ? 'Saving…' : changed(d) ? 'Save' : 'Saved' }}
+              {{ saveLabel(d) }}
             </button>
           </div>
         </div>
@@ -152,6 +167,8 @@ export class ScalingGroupTabComponent {
   private readonly params = this.route.parent?.paramMap ?? this.route.paramMap;
 
   protected readonly saving = signal(false);
+  /** The machine these limits would give back, shown before they are saved. */
+  protected readonly removal = signal<{ key: string; preview: RemovalPreview } | null>(null);
   private readonly failure = signal<string | null>(null);
   protected readonly confirmRemove = signal(false);
   protected readonly removing = signal(false);
@@ -254,7 +271,46 @@ export class ScalingGroupTabComponent {
     );
   }
 
+  /** The preview, only while the limits on screen are still the ones it was read for. */
+  protected removalFor(draft: GroupDraft): RemovalPreview | null {
+    const shown = this.removal();
+    return shown && shown.key === boundsKey(draft) ? shown.preview : null;
+  }
+
+  /** Reads what the limits on screen would give back; true when there is something to show first. */
+  private async showRemoval(draft: GroupDraft): Promise<boolean> {
+    const saved = this.store.group().data;
+    const { min, desired } = draft.group().bounds;
+    if (saved && min >= saved.bounds.min && desired >= saved.bounds.desired) return false;
+    try {
+      const preview = await firstValueFrom(
+        this.api.removalPreview(draft.group().id, { min, desired }),
+      );
+      if (!preview.removes) return false;
+      this.removal.set({ key: boundsKey(draft), preview });
+      return true;
+    } catch {
+      // Without a preview the save still goes through: the group checks again before it removes anything.
+      return false;
+    }
+  }
+
+  protected saveLabel(draft: GroupDraft): string {
+    if (this.saving()) return 'Saving…';
+    if (!this.changed(draft)) return 'Saved';
+    const preview = this.removalFor(draft);
+    if (!preview) return 'Save';
+    return preview.proceeds ? `Save and give back ${preview.node}` : 'Save, the removal waits';
+  }
+
+  /**
+   * Lower limits are saved in two steps: the first shows which machine goes
+   * and what runs on it, the second saves. Limits that remove nothing save at
+   * once, as before.
+   */
   protected async save(draft: GroupDraft): Promise<void> {
+    if (!this.removalFor(draft) && (await this.showRemoval(draft))) return;
+    this.removal.set(null);
     this.failure.set(null);
     this.saving.set(true);
     try {
@@ -278,6 +334,11 @@ export class ScalingGroupTabComponent {
       this.saving.set(false);
     }
   }
+}
+
+function boundsKey(draft: GroupDraft): string {
+  const { min, desired } = draft.group().bounds;
+  return `${draft.group().id}:${min}:${desired}`;
 }
 
 /** The draft holds a whole group; the API takes only what a person may set. */

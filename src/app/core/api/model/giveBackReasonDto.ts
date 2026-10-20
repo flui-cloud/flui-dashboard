@@ -25,7 +25,8 @@ export namespace GiveBackReasonDto {
         NotRestarted: 'not-restarted',
         NoInterruption: 'no-interruption',
         PlacedByMachine: 'placed-by-machine',
-        Master: 'master'
+        Master: 'master',
+        RunsFluiApi: 'runs-flui-api'
     } as const;
     export type KindEnum = typeof KindEnum[keyof typeof KindEnum];
 }

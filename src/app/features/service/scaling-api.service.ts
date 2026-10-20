@@ -34,6 +34,7 @@ import {
   NodeRequirement,
   OpenAlarm,
   ProviderScalingCapability,
+  RemovalPreview,
   ScalingModeLabel,
   SectionGroup,
   ShapeCatalogue,
@@ -372,6 +373,20 @@ export class ScalingApiService {
     return this.http
       .patch<WireGroup>(`${this.base}/scaling-groups/${groupId}/floor`, { min })
       .pipe(map(toGroup));
+  }
+
+  /**
+   * Which machine a lower floor or target would give back, what runs on it and
+   * where it would start again, asked before anything is saved.
+   */
+  removalPreview(
+    groupId: string,
+    proposed: { min?: number; desired?: number },
+  ): Observable<RemovalPreview> {
+    return this.http.post<RemovalPreview>(
+      `${this.base}/scaling-groups/${groupId}/removal-preview`,
+      proposed,
+    );
   }
 
   /** Lets a group held back by a failed purchase buy again; buys nothing itself. */
