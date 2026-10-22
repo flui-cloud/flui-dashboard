@@ -68,7 +68,9 @@ export function attentionOf(t: TopologyResponseDto | null): {
   ];
 
   const byGroup = new Map<string, typeof t.apps>();
-  for (const a of t.apps) byGroup.set(a.groupKey, [...(byGroup.get(a.groupKey) ?? []), a]);
+  for (const a of t.apps) {
+    if (a.kind !== 'system') byGroup.set(a.groupKey, [...(byGroup.get(a.groupKey) ?? []), a]);
+  }
   const spread = [...byGroup.values()]
     .filter((apps) => new Set(apps.map((a) => a.clusterId)).size > 1)
     .map((apps) => ({
