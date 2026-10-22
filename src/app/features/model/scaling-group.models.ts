@@ -2,7 +2,7 @@ import { ServerArchitecture } from '../../shared/components/architecture-badge.c
 
 export type ProvisionMode = 'automatic' | 'manual';
 
-export type PlacementStrategy = 'cheapest' | 'closest' | 'roomiest' | 'uniform';
+export type PlacementStrategy = 'cheapest' | 'closest' | 'roomiest' | 'uniform' | 'spread';
 
 export interface StrategyCopy {
   id: PlacementStrategy;
@@ -35,6 +35,12 @@ export const STRATEGIES: readonly StrategyCopy[] = [
     label: 'Uniform',
     optimises: 'predictability',
     when: 'A fleet where every node is the same. This is what happens today, unchosen.',
+  },
+  {
+    id: 'spread',
+    label: 'Spread',
+    optimises: 'resilience',
+    when: 'One node per region before a second anywhere. With three regions and min 3, each region gets one.',
   },
 ];
 

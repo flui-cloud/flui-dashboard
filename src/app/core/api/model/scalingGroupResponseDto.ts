@@ -66,7 +66,8 @@ export namespace ScalingGroupResponseDto {
         Cheapest: 'cheapest',
         Closest: 'closest',
         Roomiest: 'roomiest',
-        Uniform: 'uniform'
+        Uniform: 'uniform',
+        Spread: 'spread'
     } as const;
     export type StrategyEnum = typeof StrategyEnum[keyof typeof StrategyEnum];
     export const ProvisionEnum = {
