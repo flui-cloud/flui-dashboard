@@ -59,6 +59,18 @@ describe('the service map graph', () => {
     expect(g.nodes.find((n) => n.id === 'a-web-asia')?.sub).toBe('edge-asia');
   });
 
+  it('draws a selected project alone: its apps, their boxes and the Internet reaching them', () => {
+    const g = topologyGraph(withCrossLink(), state({ level: 'fleet', project: 'p-shop' }));
+    expect(g.nodes.map((n) => n.id)).toEqual(['internet', 'region:c-eu', 'a-web', 'a-db']);
+    expect(g.edges.map((e) => e.id).sort()).toEqual(['a-web>a-db', 'internet>a-web']);
+  });
+
+  it('draws a selected project alone when boxed by server, without the servers it does not use', () => {
+    const g = topologyGraph(withCrossLink(), state({ level: 'fleet', boxBy: 'server', project: 'p-shop' }));
+    expect(g.nodes.filter((n) => n.kind === 'region').map((n) => n.id)).toEqual(['server:s-1', 'server:s-2']);
+    expect(g.nodes.some((n) => n.id.startsWith('a-tools') || n.id.startsWith('a-web-asia'))).toBeFalse();
+  });
+
   it('keeps lit, for a project filter, its apps and where they run', () => {
     const t = withCrossLink();
     const g = topologyGraph(t, state({ level: 'fleet' }));

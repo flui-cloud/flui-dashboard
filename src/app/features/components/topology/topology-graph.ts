@@ -1,7 +1,7 @@
 import { TopologyResponseDto } from '../../../core/api/model/topologyResponseDto';
 import { TopologyFocus, TopologyViewState } from './topology-state';
-import { MAX_NODES, TopologyGraph } from './topology-graph-model';
-import { appGraph, appsGraph, clusterGraph, fleetGraph, stackGraph } from './topology-graph-levels';
+import { INTERNET, MAX_NODES, TopologyGraph } from './topology-graph-model';
+import { appGraph, appsGraph, clusterGraph, fleetGraph, projectLit, stackGraph } from './topology-graph-levels';
 
 export * from './topology-graph-model';
 export { neighbourhood, projectLit } from './topology-graph-levels';
@@ -38,7 +38,24 @@ function readable(graph: TopologyGraph, all: boolean): TopologyGraph | null {
 
 /** The graph a level draws, collapsing to the level above when it would be unreadable. */
 export function topologyGraph(t: TopologyResponseDto, state: TopologyViewState): TopologyGraph {
-  return centredGraph(t, state) ?? stackLevel(t, state) ?? clusterLevel(t, state) ?? fleetLevel(t, state);
+  const graph = centredGraph(t, state) ?? stackLevel(t, state) ?? clusterLevel(t, state) ?? fleetLevel(t, state);
+  return state.project ? onlyProject(t, graph, state.project) : graph;
+}
+
+/**
+ * A project filter draws that project alone: its apps, the boxes holding them
+ * and the Internet where it reaches them. Nothing else keeps a place on the map.
+ */
+export function onlyProject(t: TopologyResponseDto, graph: TopologyGraph, projectId: string): TopologyGraph {
+  const lit = projectLit(t, graph, projectId);
+  const kept = new Set(graph.nodes.filter((n) => n.kind !== 'region' && n.kind !== 'internet' && lit.has(n.id)).map((n) => n.id));
+  if (!kept.size) return graph;
+  const edges = graph.edges.filter((e) => (kept.has(e.from) || e.from === INTERNET) && kept.has(e.to));
+  for (const n of graph.nodes) {
+    if (n.kind === 'region' && graph.nodes.some((child) => child.parent === n.id && kept.has(child.id))) kept.add(n.id);
+  }
+  if (edges.some((e) => e.from === INTERNET)) kept.add(INTERNET);
+  return { ...graph, nodes: graph.nodes.filter((n) => kept.has(n.id)), edges };
 }
 
 function centredGraph(t: TopologyResponseDto, state: TopologyViewState): TopologyGraph | null {
