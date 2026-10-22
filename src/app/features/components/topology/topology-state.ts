@@ -4,7 +4,7 @@ export type TopologyView = 'services' | 'infrastructure';
 export type TopologyLevel = 'fleet' | 'cluster' | 'stack' | 'app';
 export type TopologyHops = 1 | 2;
 export type TopologyFleetBy = 'apps' | 'clusters';
-export type TopologyBoxBy = 'cluster' | 'project';
+export type TopologyBoxBy = 'cluster' | 'project' | 'server';
 export type TopologyColorBy = 'memory' | 'cpu' | 'pods' | 'network';
 export type TopologyGroupBy = 'cluster' | 'provider';
 /** `platform` is the apps Flui runs on one cluster, by that cluster's id. */
@@ -29,7 +29,7 @@ export interface TopologyViewState {
   problems: boolean;
   /** How the fleet level is drawn. */
   fleetBy: TopologyFleetBy;
-  /** The boxes the apps view draws: their clusters, or their projects. */
+  /** The boxes the apps view draws: their clusters, their projects, or the servers their copies run on. */
   boxBy: TopologyBoxBy;
   /** Only one project's apps stay lit, in both lenses. */
   project: string | null;
@@ -96,7 +96,7 @@ export function parseTopologyState(params: Params): TopologyViewState {
     all: params['all'] === '1',
     problems: params['problems'] === '1',
     fleetBy: params['fleet'] === 'clusters' ? 'clusters' : 'apps',
-    boxBy: params['box'] === 'project' ? 'project' : 'cluster',
+    boxBy: params['box'] === 'project' || params['box'] === 'server' ? params['box'] : 'cluster',
     project: typeof params['project'] === 'string' && params['project'] ? params['project'] : null,
     focus: parseFocus(params['focus']),
     colorBy: oneOf(params['colorBy'], COLORS, d.colorBy),

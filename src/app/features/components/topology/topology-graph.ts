@@ -78,13 +78,13 @@ function fleetByApps(t: TopologyResponseDto, state: TopologyViewState): Topology
 /** What a focused element keeps lit: itself, its neighbours and the edges between them. */
 export function litBy(graph: TopologyGraph, focus: TopologyFocus | null): { nodes: Set<string>; edges: Set<string> } | null {
   if (!focus) return null;
-  const self = graph.nodes.find((n) => n.focus?.type === focus.type && n.focus.id === focus.id);
+  const selves = new Set(graph.nodes.filter((n) => n.focus?.type === focus.type && n.focus.id === focus.id).map((n) => n.id));
   const edge = graph.edges.find((e) => e.focus?.type === focus.type && e.focus.id === focus.id);
   if (edge) return { nodes: new Set([edge.from, edge.to]), edges: new Set([edge.id]) };
-  if (!self) return null;
-  const edges = graph.edges.filter((e) => e.from === self.id || e.to === self.id);
+  if (!selves.size) return null;
+  const edges = graph.edges.filter((e) => selves.has(e.from) || selves.has(e.to));
   return {
-    nodes: new Set([self.id, ...edges.flatMap((e) => [e.from, e.to])]),
+    nodes: new Set([...selves, ...edges.flatMap((e) => [e.from, e.to])]),
     edges: new Set(edges.map((e) => e.id)),
   };
 }

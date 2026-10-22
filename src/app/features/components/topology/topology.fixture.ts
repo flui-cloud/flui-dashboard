@@ -33,17 +33,17 @@ export function topologyFixture(): TopologyResponseDto {
     servers: [
       {
         id: 's-1', clusterId: 'c-eu', nodeName: 'eu-worker-1', provider: 'hetzner', providerResourceId: '481',
-        serverType: 'cpx41', architecture: 'x86', role: 'worker', takesWork: true, status: 'healthy',
+        serverType: 'cpx41', region: 'fsn1', architecture: 'x86', role: 'worker', takesWork: true, status: 'healthy',
         capacity: capacity(92), podCount: 3, privateNetwork: true, fluiNetwork: 'active',
       },
       {
         id: 's-2', clusterId: 'c-eu', nodeName: 'eu-arm-1', provider: 'hetzner', providerResourceId: '482',
-        serverType: 'cax31', architecture: 'arm', role: 'worker', takesWork: true, status: 'healthy',
+        serverType: 'cax31', region: 'nbg1', architecture: 'arm', role: 'worker', takesWork: true, status: 'healthy',
         capacity: capacity(55), podCount: 1, privateNetwork: true, fluiNetwork: 'pending',
       },
       {
         id: 'node:c-asia:abc', clusterId: 'c-asia', nodeName: 'asia-1', provider: 'contabo', providerResourceId: null,
-        serverType: null, architecture: null, role: 'control-plane', takesWork: true, status: 'healthy',
+        serverType: null, region: null, architecture: null, role: 'control-plane', takesWork: true, status: 'healthy',
         capacity: null, podCount: 1, privateNetwork: false, fluiNetwork: 'none',
       },
     ],

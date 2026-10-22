@@ -1,6 +1,7 @@
 import { TopologyAppDto } from '../../../core/api/model/topologyAppDto';
 import { TopologyLinkDto } from '../../../core/api/model/topologyLinkDto';
 import { TopologyResponseDto } from '../../../core/api/model/topologyResponseDto';
+import { TopologyServerDto } from '../../../core/api/model/topologyServerDto';
 import { StatusTone, categoryLabel, toneOf } from './topology-format';
 import { TopologyViewState } from './topology-state';
 import {
@@ -9,6 +10,7 @@ import {
   TopologyGraph,
   appNode,
   bundle,
+  bundleAcross,
   endsWithin,
   internetNode,
   node,
@@ -44,6 +46,7 @@ export function fleetGraph(t: TopologyResponseDto): TopologyGraph {
  * fleet is drawn by cluster instead.
  */
 export function appsGraph(t: TopologyResponseDto, boxBy: TopologyViewState['boxBy'] = 'cluster'): TopologyGraph {
+  if (boxBy === 'server') return serversGraph(t);
   const apps = new Map(t.apps.map((a) => [a.id, a]));
   const nodes = boxBy === 'project' ? projectBoxes(t) : clusterBoxes(t);
   const endOf = (id: string | undefined, internet: boolean): string | null => {
@@ -55,6 +58,43 @@ export function appsGraph(t: TopologyResponseDto, boxBy: TopologyViewState['boxB
   if (edges.some((e) => e.from === INTERNET)) nodes.unshift(internetNode());
   return { level: 'fleet', nodes, edges, collapsedFrom: null };
 }
+
+/**
+ * Every server in a box, with the apps that have a copy on it: an app running
+ * on three servers is drawn three times, and a link reaches each of its copies.
+ */
+function serversGraph(t: TopologyResponseDto): TopologyGraph {
+  const apps = new Map(t.apps.map((a) => [a.id, a]));
+  const copies = new Map<string, string[]>();
+  const nodes = t.servers.flatMap((s) => serverBox(t, s, copies));
+  const endsOf = (id: string | undefined, internet: boolean): string[] =>
+    internet ? [INTERNET] : (copies.get(id ?? '') ?? []);
+  const edges = bundleAcross(t.links, endsOf, apps);
+  if (edges.some((e) => e.from === INTERNET)) nodes.unshift(internetNode());
+  return { level: 'fleet', nodes, edges, collapsedFrom: null };
+}
+
+function serverBox(t: TopologyResponseDto, s: TopologyServerDto, copies: Map<string, string[]>): GraphNode[] {
+  const on = t.apps.filter((a) => copiesOn(a, s.id) > 0);
+  const where = [clusterNameOf(t, s.clusterId), s.region ?? s.provider, s.serverType].filter(Boolean).join(' · ');
+  const common = { label: s.nodeName, tone: toneOf(s.status), focus: { type: 'server' as const, id: s.id } };
+  if (!on.length) return [node('cluster', `server:${s.id}`, { ...common, sub: `${where} · no apps` })];
+  const box = node('region', `server:${s.id}`, { ...common, sub: where, problems: troubled(on) });
+  const copy = (n: GraphNode, of: TopologyAppDto[]): GraphNode => {
+    const id = `${n.id}@${s.id}`;
+    for (const a of of) copies.set(a.id, [...(copies.get(a.id) ?? []), id]);
+    return { ...n, id, parent: box.id };
+  };
+  const users = on
+    .filter((a) => a.kind !== 'system')
+    .map((a) => copy({ ...appNode(a, stackOrCategory(t, a)), replicas: copiesOn(a, s.id) }, [a]));
+  const system = on.filter((a) => a.kind === 'system');
+  const platforms = system.length ? [copy(platformNode(t, s.clusterId, false, system), system)] : [];
+  return [box, ...users, ...platforms];
+}
+
+const copiesOn = (a: TopologyAppDto, serverId: string) =>
+  a.replicas.filter((r) => r.serverId === serverId).reduce((n, r) => n + r.count, 0);
 
 /** Under each app, its stack when it shares one, else what kind of app it is. */
 function stackOrCategory(t: TopologyResponseDto, a: TopologyAppDto): string {
@@ -120,8 +160,12 @@ const drawnAs = (a: TopologyAppDto) => (a.kind === 'system' ? platformNodeId(a.c
  * the user's apps stand on, and a dozen of them would crowd the map. The
  * cluster level still draws each one.
  */
-function platformNode(t: TopologyResponseDto, clusterId: string, named: boolean): GraphNode {
-  const own = t.apps.filter((a) => a.clusterId === clusterId && a.kind === 'system');
+function platformNode(
+  t: TopologyResponseDto,
+  clusterId: string,
+  named: boolean,
+  own = t.apps.filter((a) => a.clusterId === clusterId && a.kind === 'system'),
+): GraphNode {
   const count = plural(own.length, 'app');
   return node('platform', platformNodeId(clusterId), {
     label: 'Flui platform',
@@ -146,7 +190,14 @@ function worstTone(tones: StatusTone[]): StatusTone {
 export function projectLit(t: TopologyResponseDto, graph: TopologyGraph, projectId: string): Set<string> {
   const own = t.apps.filter((a) => a.projectId === projectId);
   const ids = new Set<string>(own.flatMap((a) => [a.id, a.stackId, a.clusterId, `region:${a.clusterId}`, `region:${projectId}`, `pill:${a.clusterId}`]));
-  for (const n of graph.nodes) if (n.kind === 'internet') ids.add(n.id);
+  const ownIds = new Set(own.map((a) => a.id));
+  for (const n of graph.nodes) {
+    if (n.kind === 'internet') ids.add(n.id);
+    if (n.focus?.type === 'app' && ownIds.has(n.focus.id)) {
+      ids.add(n.id);
+      if (n.parent) ids.add(n.parent);
+    }
+  }
   return ids;
 }
 

@@ -68,6 +68,60 @@ describe('the service map graph', () => {
     expect(lit.has('a-web-asia')).toBeFalse();
   });
 
+  describe('boxed by server', () => {
+    const byServer = (t = withCrossLink()) => topologyGraph(t, state({ level: 'fleet', boxBy: 'server' }));
+
+    it('opens boxed by cluster unless asked', () => {
+      expect(DEFAULT_TOPOLOGY_STATE.boxBy).toBe('cluster');
+    });
+
+    it('draws a box per server, named by its cluster, place and size', () => {
+      const g = byServer();
+      expect(g.nodes.filter((n) => n.kind === 'region').map((n) => [n.id, n.label, n.sub])).toEqual([
+        ['server:s-1', 'eu-worker-1', 'prod-eu · fsn1 · cpx41'],
+        ['server:s-2', 'eu-arm-1', 'prod-eu · nbg1 · cax31'],
+        ['server:node:c-asia:abc', 'asia-1', 'edge-asia · contabo'],
+      ]);
+    });
+
+    it('draws an app once on every server that runs a copy of it, with the copies there', () => {
+      const g = byServer();
+      expect(g.nodes.filter((n) => n.focus?.type === 'app' && n.focus.id === 'a-web').map((n) => [n.id, n.parent, n.replicas])).toEqual([
+        ['a-web@s-1', 'server:s-1', 2],
+        ['a-web@s-2', 'server:s-2', 1],
+      ]);
+    });
+
+    it('reaches every copy of an app with its links', () => {
+      expect(byServer().edges.map((e) => `${e.from}>${e.to}`).sort()).toEqual([
+        'a-web-asia@node:c-asia:abc>a-db@s-1',
+        'a-web@s-1>a-db@s-1',
+        'a-web@s-2>a-db@s-1',
+        'internet>a-web@s-1',
+        'internet>a-web@s-2',
+      ]);
+    });
+
+    it('draws a server with no app as a plain node, not an empty box', () => {
+      const t = withCrossLink();
+      t.servers.push({ ...t.servers[0], id: 's-3', nodeName: 'eu-worker-2', region: 'hel1' });
+      const empty = byServer(t).nodes.find((n) => n.id === 'server:s-3');
+      expect([empty?.kind, empty?.sub]).toEqual(['cluster', 'prod-eu · hel1 · cpx41 · no apps']);
+    });
+
+    it('lights every copy of a selected app', () => {
+      const lit = litBy(byServer(), { type: 'app', id: 'a-web' });
+      expect(['a-web@s-1', 'a-web@s-2', 'a-db@s-1', 'internet'].every((id) => lit?.nodes.has(id))).toBeTrue();
+    });
+
+    it('keeps lit, for a project filter, every copy and the servers holding them', () => {
+      const t = withCrossLink();
+      const lit = projectLit(t, byServer(t), 'p-shop');
+      expect(['a-web@s-2', 'server:s-2', 'a-db@s-1', 'server:s-1'].every((id) => lit.has(id))).toBeTrue();
+      expect(lit.has('a-tools@s-1')).toBeFalse();
+    });
+  });
+
   describe('the apps Flui runs for itself', () => {
     /** Three platform apps on the Asia cluster, two of them published and linked to each other. */
     function withPlatform() {
@@ -111,6 +165,19 @@ describe('the service map graph', () => {
       expect(platform.parent).toBe('region:platform');
       expect(platform.sub).toBe('edge-asia · 3 apps');
       expect(g.nodes.find((n) => n.id === 'a-tools')?.parent).toBe('region:no-project');
+    });
+
+    it('draws them, boxed by server, only on the servers they run on', () => {
+      const t = withPlatform();
+      for (const a of t.apps.filter((x) => x.kind === 'system')) {
+        a.replicas = a.displayName === 'Loki' ? [] : [{ serverId: 'node:c-asia:abc', count: 1 }];
+      }
+      const g = topologyGraph(t, state({ level: 'fleet', boxBy: 'server' }));
+      const platforms = g.nodes.filter((n) => n.kind === 'platform');
+      expect(platforms.map((n) => [n.id, n.parent, n.sub])).toEqual([
+        ['platform:c-asia@node:c-asia:abc', 'server:node:c-asia:abc', '2 apps'],
+      ]);
+      expect(g.edges.map((e) => e.id)).toContain('internet>platform:c-asia@node:c-asia:abc');
     });
 
     it('still draws each of them at the cluster level', () => {

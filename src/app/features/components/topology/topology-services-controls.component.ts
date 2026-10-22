@@ -43,10 +43,10 @@ import { TopologyGraph } from './topology-graph';
                     (click)="changed.emit({ fleetBy: choice.value, all: false })">{{ choice.label }}</button>
           }
         </span>
-        @if (fleetBy() === 'apps' && snapshot().projects.length) {
+        @if (fleetBy() === 'apps' && boxChoices().length > 1) {
           <span class="ml-2">Group by</span>
           <span class="flex rounded-md border border-border bg-card p-0.5">
-            @for (choice of boxChoices; track choice.value) {
+            @for (choice of boxChoices(); track choice.value) {
               <button type="button" class="rounded px-2 py-0.5 font-medium"
                       [class.bg-muted]="state().boxBy === choice.value" [class.text-foreground]="state().boxBy === choice.value"
                       [attr.aria-pressed]="state().boxBy === choice.value"
@@ -98,10 +98,11 @@ export class TopologyServicesControlsComponent {
   readonly expandToggled = output<void>();
 
   protected readonly hopChoices = [1, 2] as const;
-  protected readonly boxChoices = [
+  protected readonly boxChoices = computed(() => [
     { value: 'cluster' as const, label: 'Clusters' },
-    { value: 'project' as const, label: 'Projects' },
-  ];
+    ...(this.snapshot().projects.length ? [{ value: 'project' as const, label: 'Projects' }] : []),
+    ...(this.snapshot().servers.length ? [{ value: 'server' as const, label: 'Servers' }] : []),
+  ]);
   protected readonly fleetChoices = [
     { value: 'clusters' as const, label: 'Clusters' },
     { value: 'apps' as const, label: 'Apps' },

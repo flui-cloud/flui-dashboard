@@ -31,6 +31,12 @@ describe('topology state in the address', () => {
     expect(parseTopologyState(topologyQueryParams(state))).toEqual(state);
   });
 
+  it('reads the server boxes from the address', () => {
+    expect(parseTopologyState({ box: 'server' }).boxBy).toBe('server');
+    expect(topologyQueryParams({ ...DEFAULT_TOPOLOGY_STATE, boxBy: 'server' })).toEqual({ box: 'server' });
+    expect(parseTopologyState({ box: 'rack' }).boxBy).toBe('cluster');
+  });
+
   it('writes only what differs from the default, so a shared link stays short', () => {
     expect(topologyQueryParams(DEFAULT_TOPOLOGY_STATE)).toEqual({});
     expect(

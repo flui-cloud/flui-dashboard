@@ -23,6 +23,10 @@ export interface TopologyServerDto {
      */
     providerResourceId: string | null;
     serverType: string | null;
+    /**
+     * Where the provider placed this server; null for a machine Flui did not create
+     */
+    region: string | null;
     architecture: TopologyServerDto.ArchitectureEnum | null;
     role: TopologyServerDto.RoleEnum;
     /**

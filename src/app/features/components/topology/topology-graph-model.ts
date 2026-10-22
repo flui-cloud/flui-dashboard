@@ -120,13 +120,31 @@ export function bundle(
   endOf: (appId: string | undefined, internet: boolean) => string | null,
   apps: Map<string, TopologyAppDto>,
 ): GraphEdge[] {
+  return bundleAcross(
+    links,
+    (appId, internet) => {
+      const end = endOf(appId, internet);
+      return end ? [end] : [];
+    },
+    apps,
+  );
+}
+
+/** {@link bundle} for an app drawn more than once: a link joins every node of one end to every node of the other. */
+export function bundleAcross(
+  links: TopologyLinkDto[],
+  endsOf: (appId: string | undefined, internet: boolean) => string[],
+  apps: Map<string, TopologyAppDto>,
+): GraphEdge[] {
   const groups = new Map<string, TopologyLinkDto[]>();
   for (const link of links) {
-    const from = endOf(link.from.appId, link.from.kind === 'internet');
-    const to = endOf(link.to.appId, false);
-    if (!from || !to || from === to) continue;
-    const key = `${from}>${to}`;
-    groups.set(key, [...(groups.get(key) ?? []), link]);
+    for (const from of endsOf(link.from.appId, link.from.kind === 'internet')) {
+      for (const to of endsOf(link.to.appId, false)) {
+        if (from === to) continue;
+        const key = `${from}>${to}`;
+        groups.set(key, [...(groups.get(key) ?? []), link]);
+      }
+    }
   }
   return [...groups.entries()].map(([key, group]) => {
     const [from, to] = key.split('>');
