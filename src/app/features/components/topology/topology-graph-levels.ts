@@ -71,7 +71,7 @@ function serversGraph(t: TopologyResponseDto): TopologyGraph {
     internet ? [INTERNET] : (copies.get(id ?? '') ?? []);
   const edges = bundleAcross(t.links, endsOf, apps);
   if (edges.some((e) => e.from === INTERNET)) nodes.unshift(internetNode());
-  return { level: 'fleet', nodes, edges, collapsedFrom: null };
+  return { level: 'fleet', nodes, edges, collapsedFrom: null, stacked: true };
 }
 
 function serverBox(t: TopologyResponseDto, s: TopologyServerDto, copies: Map<string, string[]>): GraphNode[] {

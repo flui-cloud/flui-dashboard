@@ -57,6 +57,8 @@ export interface TopologyGraph {
   filtered?: boolean;
   /** Crowded but drawn in full: its problems and their neighbours can be shown instead. */
   filterable?: boolean;
+  /** Its boxes stacked one under the other rather than laid out side by side. */
+  stacked?: boolean;
 }
 
 const SIZE: Record<GraphNodeKind, [number, number]> = {

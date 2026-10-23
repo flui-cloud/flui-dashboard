@@ -1,4 +1,5 @@
 import { TopologyGraph } from './topology-graph';
+import { rowsLayout } from './topology-layout-rows';
 
 export interface Point {
   x: number;
@@ -22,7 +23,7 @@ export function graphDigest(graph: TopologyGraph): string {
   const byText = (a: string, b: string) => a.localeCompare(b);
   const nodes = graph.nodes.map((n) => `${n.id}:${n.width}x${n.height}:${n.parent ?? ''}`).sort(byText);
   const edges = graph.edges.map((e) => e.id).sort(byText);
-  return `${graph.level}|${nodes.join(',')}|${edges.join(',')}`;
+  return `${graph.level}${graph.stacked ? ':rows' : ''}|${nodes.join(',')}|${edges.join(',')}`;
 }
 
 type ElkCtor = new () => { layout: (g: unknown) => Promise<ElkResult> };
@@ -92,6 +93,7 @@ export async function layoutGraph(graph: TopologyGraph): Promise<GraphLayout> {
   const key = graphDigest(graph);
   const cached = cache.get(key);
   if (cached) return cached;
+  if (graph.stacked) return remember(key, rowsLayout(graph));
 
   const parentOf = new Map(graph.nodes.map((n) => [n.id, n.parent]));
   const edgesIn = (container: string | null) =>
@@ -198,7 +200,10 @@ export async function layoutGraph(graph: TopologyGraph): Promise<GraphLayout> {
     width = Math.max(width, 48 + topGrid.width);
     height = top + topGrid.height + 24;
   }
-  const layout: GraphLayout = { width, height, nodes, edges, sizes };
+  return remember(key, { width, height, nodes, edges, sizes });
+}
+
+function remember(key: string, layout: GraphLayout): GraphLayout {
   if (cache.size >= CACHE_LIMIT) cache.delete(cache.keys().next().value!);
   cache.set(key, layout);
   return layout;
