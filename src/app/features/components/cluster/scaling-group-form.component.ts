@@ -123,7 +123,7 @@ import { GroupCostComponent } from '../scaling-section/group-cost.component';
                   class="h-11 w-32 rounded-lg border border-primary bg-card px-3 font-mono text-sm text-foreground"
                 />
                 <span class="text-[11px] font-semibold text-primary"
-                  >Required while Flui buys</span
+                  >Required while Flui adds nodes</span
                 >
               </div>
               <p class="m-0 text-[11px] text-sub">
@@ -226,8 +226,8 @@ export class ScalingGroupFormComponent {
     },
     {
       value: 'automatic',
-      label: 'Buy the node',
-      help: 'Flui buys it when an app is stuck, and gives it back when the work fits without it.',
+      label: 'Add the node',
+      help: 'Flui adds it when an app is stuck, and removes it when the work fits without it. Each node added is a server billed by the provider.',
     },
   ];
 
@@ -315,7 +315,7 @@ export class ScalingGroupFormComponent {
     if (desired < min || desired > max)
       return 'The target sits between min and max nodes.';
     if (this.provision() === 'automatic' && !isPositiveAmount(this.cap())) {
-      return 'Automatic buying needs a spending ceiling, the safety net under the node limits.';
+      return 'Adding nodes automatically needs a spending ceiling, the safety net under the node limits.';
     }
     return null;
   });

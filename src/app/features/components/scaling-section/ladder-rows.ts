@@ -66,7 +66,7 @@ function verdict(ctx: LadderContext, rung: LadderRung): string {
   switch (rung.outcome) {
     case 'would-buy':
       if (manual(ctx)) return 'Would alert';
-      return withheld(ctx) ? 'Wins, buys nothing' : 'Would buy';
+      return withheld(ctx) ? 'Wins, adds nothing' : 'Would add';
     case 'unavailable':
       return 'Unavailable';
     case 'does-not-fit':
@@ -118,9 +118,9 @@ function why(ctx: LadderContext, rung: LadderRung): string {
 
 function whyWouldBuy(ctx: LadderContext): string {
   if (manual(ctx))
-    return 'Fits and is available — but nothing here can buy it.';
+    return 'Fits and is available — but nothing here can add it.';
   return withheld(ctx)
-    ? 'Fits, available, inside the spending ceiling — and this group buys nothing.'
+    ? 'Fits, available, inside the spending ceiling — and this group adds nothing.'
     : 'Fits, available, inside the spending ceiling.';
 }
 

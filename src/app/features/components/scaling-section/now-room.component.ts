@@ -36,7 +36,7 @@ import { TIGHT_PERCENT, cores, gib, nodeUsageLine, roomLine, share } from './roo
           >
             What apps reserve on each node against what it can hold, after the
             reserve kept for the system. This is what decides whether the next
-            app fits or Flui buys a node. Below each node: what the apps use now,
+            app fits or Flui adds a node. Below each node: what the apps use now,
             and what they may grow to at their limits.
           </app-explain>
         </h2>

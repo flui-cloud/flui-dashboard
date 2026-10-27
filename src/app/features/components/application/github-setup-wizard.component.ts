@@ -123,7 +123,7 @@ const PAT_DEEP_LINK =
               </p>
               <ul class="mt-3 space-y-1">
                 <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                  <span class="text-green-500">✓</span> Ready in a minute, no App to create
+                  <span class="text-[hsl(var(--ok))]">✓</span> Ready in a minute, no App to create
                 </li>
                 <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                   <span class="text-amber-500">△</span> Org PAT policies may block
@@ -153,13 +153,13 @@ const PAT_DEEP_LINK =
               </p>
               <ul class="mt-3 space-y-1">
                 <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                  <span class="text-green-500">✓</span> Works for any account or org
+                  <span class="text-[hsl(var(--ok))]">✓</span> Works for any account or org
                 </li>
                 <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                  <span class="text-green-500">✓</span> Auto webhooks for deploy-on-push
+                  <span class="text-[hsl(var(--ok))]">✓</span> Auto webhooks for deploy-on-push
                 </li>
                 <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                  <span class="text-green-500">✓</span> Bot identity, no token rotation
+                  <span class="text-[hsl(var(--ok))]">✓</span> Bot identity, no token rotation
                 </li>
               </ul>
             </button>
@@ -424,9 +424,9 @@ const PAT_DEEP_LINK =
 
             @if (wizardService.patValidation(); as v) {
               @if (v.valid && (v.missingScopes?.length ?? 0) === 0) {
-                <div class="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                  <ng-icon name="lucideCheckCircle" size="16" class="text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                  <div class="text-xs text-green-800 dark:text-green-300">
+                <div class="flex items-start gap-2 p-3 bg-muted/30 rounded-lg border border-border">
+                  <ng-icon name="lucideCheckCircle" size="16" class="text-[hsl(var(--ok))] flex-shrink-0 mt-0.5" />
+                  <div class="text-xs text-muted-foreground">
                     <p>Authenticated as <strong>&#64;{{ v.login }}</strong>.</p>
                     <p class="mt-0.5">Scopes: <span class="font-mono">{{ (v.scopes ?? []).join(', ') }}</span></p>
                   </div>
@@ -465,11 +465,9 @@ const PAT_DEEP_LINK =
       <!-- Step 2: Done -->
       @if (currentStepIndex() === 2) {
         <div class="flex flex-col items-center py-8 text-center space-y-4">
-          <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-            <ng-icon name="lucideCheckCircle" size="32" class="text-green-600 dark:text-green-400" />
-          </div>
+          <ng-icon name="lucideCheckCircle" size="24" class="text-[hsl(var(--ok))]" />
           <div>
-            <h3 class="text-base font-semibold text-slate-900 dark:text-white">GitHub Integration Configured</h3>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">GitHub integration configured</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
               @if (wizardService.selectedMethod() === 'github_app') {
                 GitHub App is active. Users can now install it on their accounts or organizations and start importing repositories.

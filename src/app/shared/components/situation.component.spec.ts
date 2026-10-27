@@ -16,7 +16,7 @@ import { SituationAction, SituationComponent } from './situation.component';
   `,
 })
 class Host {
-  readonly where = signal(['cx33 is down where you buy.']);
+  readonly where = signal(['cx33 is down where you add nodes.']);
   readonly actions = signal<SituationAction[]>([]);
 }
 
@@ -39,7 +39,7 @@ describe('where we are, and what there is to do', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   it('says where we are without anything being opened', () => {
-    expect(fixture.nativeElement.textContent).toContain('cx33 is down where you buy.');
+    expect(fixture.nativeElement.textContent).toContain('cx33 is down where you add nodes.');
   });
 
   it('says so when there is nothing to do', () => {

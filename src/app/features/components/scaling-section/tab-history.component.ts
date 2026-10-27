@@ -412,14 +412,14 @@ export class ScalingHistoryTabComponent {
     if (!g) return '';
 
     if (g.capability.canProvision) {
-      return 'Every purchase, replacement, removal, decline and alarm on one axis, against the fleet it changed. One band per machine type, because "3 nodes" does not tell you whether the next app will fit.';
+      return 'Every addition, replacement, removal, decline and alarm on one axis, against the fleet it changed. One band per machine type, because "3 nodes" does not tell you whether the next app will fit.';
     }
 
     const what = g.capability.hasCatalogue
-      ? 'an alarm Flui raised, naming a machine, or one somebody bought from the provider panel and joined'
+      ? 'an alarm Flui raised, naming a machine, or one somebody created in the provider panel and joined'
       : 'an alarm Flui raised, naming a requirement, or a machine somebody attached';
 
-    return `Nothing here bought anything. Every entry is ${what} — which makes this the only record of who changed the fleet and why, and the most useful of the four tabs on a cluster like this one.`;
+    return `Nothing here added anything. Every entry is ${what} — which makes this the only record of who changed the fleet and why, and the most useful of the four tabs on a cluster like this one.`;
   });
 
   protected readonly log = computed<LogRow[]>(() => {

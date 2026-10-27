@@ -51,7 +51,7 @@ describe('what the node limits cost', () => {
     expect(find('group-cost-use-suggested')).toBeNull();
   }));
 
-  it('offers the ceiling that covers the worst case when automatic buying has none', fakeAsync(() => {
+  it('offers the ceiling that covers the worst case when adding nodes automatically has none', fakeAsync(() => {
     build(true);
     const used: number[] = [];
     fixture.componentInstance.useCeiling.subscribe((v) => used.push(v));

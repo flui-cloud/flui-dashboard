@@ -217,7 +217,7 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
               @if (p.priced && (p.listPriced || p.unpriced)) {
                 <div class="px-4 pb-3 pt-1 text-xs text-sub space-y-0.5">
                   @if (p.listPriced) {
-                    <p>{{ p.listPriced }} priced at today's list price: they started before Flui kept the price they were bought at.</p>
+                    <p>{{ p.listPriced }} priced at today's list price: they started before Flui recorded the price they started at.</p>
                   }
                   @if (p.unpriced) {
                     <p>{{ p.unpriced }} could not be priced and {{ p.unpriced === 1 ? 'is' : 'are' }} left out.</p>

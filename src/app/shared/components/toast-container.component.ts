@@ -33,20 +33,19 @@ import { Toast, ToastService } from '../services/toast.service';
           class="pointer-events-auto rounded-lg border shadow-lg px-3 py-2.5 flex items-start gap-2.5 animate-in slide-in-from-right duration-200"
           [class]="containerClass(t)"
         >
-          <ng-icon [name]="iconName(t)" class="h-5 w-5 flex-shrink-0 mt-0.5" [class]="iconClass(t)" />
+          <ng-icon [name]="iconName(t)" class="h-4 w-4 flex-shrink-0 mt-0.5" [class]="iconClass(t)" />
           <div class="flex-1 min-w-0">
             @if (t.title) {
-              <p class="text-sm font-semibold" [class]="titleClass(t)">{{ t.title }}</p>
+              <p class="text-sm font-medium text-foreground">{{ t.title }}</p>
             }
-            <p class="text-xs" [class]="messageClass(t)">{{ t.message }}</p>
+            <p class="text-xs text-muted-foreground">{{ t.message }}</p>
             @if (t.action) {
               <div class="mt-1.5">
                 @if (t.action.routerLink) {
                   <a
                     [routerLink]="t.action.routerLink"
                     (click)="onActionClick(t)"
-                    class="text-xs font-medium underline hover:no-underline"
-                    [class]="titleClass(t)"
+                    class="text-xs font-medium text-foreground underline hover:no-underline"
                   >
                     {{ t.action.label }}
                   </a>
@@ -54,8 +53,7 @@ import { Toast, ToastService } from '../services/toast.service';
                   <button
                     type="button"
                     (click)="onActionClick(t)"
-                    class="text-xs font-medium underline hover:no-underline"
-                    [class]="titleClass(t)"
+                    class="text-xs font-medium text-foreground underline hover:no-underline"
                   >
                     {{ t.action.label }}
                   </button>
@@ -89,41 +87,14 @@ export class ToastContainerComponent {
   }
 
   containerClass(t: Toast): string {
-    switch (t.kind) {
-      case 'success':
-        return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20';
-      case 'warning':
-        return 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20';
-      case 'error':
-        return 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20';
-      default:
-        return 'border-border bg-background';
-    }
+    return t.kind === 'error' ? 'border-destructive/40 bg-card' : 'border-border bg-card';
   }
 
   iconClass(t: Toast): string {
     switch (t.kind) {
-      case 'success': return 'text-green-600 dark:text-green-400';
-      case 'warning': return 'text-yellow-600 dark:text-yellow-400';
-      case 'error': return 'text-red-600 dark:text-red-400';
-      default: return 'text-muted-foreground';
-    }
-  }
-
-  titleClass(t: Toast): string {
-    switch (t.kind) {
-      case 'success': return 'text-green-900 dark:text-green-200';
-      case 'warning': return 'text-yellow-900 dark:text-yellow-200';
-      case 'error': return 'text-red-900 dark:text-red-200';
-      default: return 'text-foreground';
-    }
-  }
-
-  messageClass(t: Toast): string {
-    switch (t.kind) {
-      case 'success': return 'text-green-800 dark:text-green-300';
-      case 'warning': return 'text-yellow-800 dark:text-yellow-300';
-      case 'error': return 'text-red-800 dark:text-red-300';
+      case 'success': return 'text-[hsl(var(--ok))]';
+      case 'warning': return 'text-[hsl(var(--warn))]';
+      case 'error': return 'text-destructive';
       default: return 'text-muted-foreground';
     }
   }

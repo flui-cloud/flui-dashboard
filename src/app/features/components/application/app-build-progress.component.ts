@@ -223,11 +223,11 @@ function phaseIndex(status: BuildPhase): number {
                 Copy
               </button>
             </div>
-            <div class="p-4 bg-gray-900 dark:bg-black rounded-b-lg">
+            <div class="p-4 bg-zinc-950 rounded-b-lg">
               <div #logContainer
-                class="font-mono text-xs text-green-400 space-y-0.5 h-80 overflow-y-auto">
+                class="font-mono text-xs text-zinc-300 space-y-0.5 h-80 overflow-y-auto">
                 @for (log of buildLogs(); track $index) {
-                  <div [class]="log.startsWith('[stderr]') ? 'text-yellow-400' : ''"
+                  <div [class]="log.startsWith('[stderr]') ? 'text-amber-300' : ''"
                     class="whitespace-pre-wrap leading-relaxed">{{ log }}</div>
                 }
                 @if (phase() === 'building' && buildLogs().length === 0) {
@@ -247,25 +247,23 @@ function phaseIndex(status: BuildPhase): number {
 
           <!-- Success -->
           @if (phase() === 'completed') {
-            <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
-              <div class="flex items-center mb-4">
-                <div class="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center mr-3">
-                  <ng-icon name="lucideCheck" class="h-5 w-5 text-white" />
-                </div>
+            <div class="bg-card border border-border rounded-lg p-5">
+              <div class="flex items-start gap-2 mb-4">
+                <ng-icon name="lucideCheck" class="h-4 w-4 mt-0.5 text-[hsl(var(--ok))]" />
                 <div>
-                  <h3 class="font-semibold text-green-900 dark:text-green-100">Build & Deploy Successful!</h3>
-                  <p class="text-xs text-green-700 dark:text-green-300">Application is running</p>
+                  <h3 class="text-sm font-medium">Deployed</h3>
+                  <p class="text-xs text-muted-foreground mt-0.5">The application is running</p>
                 </div>
               </div>
               <div class="space-y-2">
                 <button (click)="viewApplication()"
-                  class="inline-flex items-center justify-center w-full rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                  class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
                   <ng-icon name="lucideExternalLink" class="h-4 w-4 mr-2" />
-                  View Application
+                  View application
                 </button>
                 <button (click)="viewBuildHistory()"
-                  class="inline-flex items-center justify-center w-full rounded-md border border-green-300 dark:border-green-700 bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
-                  Build History
+                  class="inline-flex items-center justify-center w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
+                  Build history
                 </button>
               </div>
             </div>
@@ -273,21 +271,21 @@ function phaseIndex(status: BuildPhase): number {
 
           <!-- Failed -->
           @if (phase() === 'failed') {
-            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
-              <div class="flex items-center mb-4">
-                <div class="h-10 w-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
+            <div class="bg-card border border-destructive/40 rounded-lg p-5">
+              <div class="flex items-start gap-2 mb-4">
+                <div class="mt-0.5 text-destructive">
                   @if (isResourceError()) {
-                    <ng-icon name="lucideCpu" class="h-5 w-5 text-white" />
+                    <ng-icon name="lucideCpu" class="h-4 w-4" />
                   } @else {
-                    <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-white" />
+                    <ng-icon name="lucideTriangleAlert" class="h-4 w-4" />
                   }
                 </div>
                 <div>
-                  <h3 class="font-semibold text-red-900 dark:text-red-100">
-                    {{ isResourceError() ? 'Build Failed — Insufficient Resources' : 'Build Failed' }}
+                  <h3 class="text-sm font-medium">
+                    {{ isResourceError() ? 'Build failed: insufficient resources' : 'Build failed' }}
                   </h3>
                   @if (isResourceError()) {
-                    <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">
+                    <p class="text-xs text-muted-foreground mt-0.5">
                       The cluster did not have enough resources to run the build job.
                     </p>
                   }
@@ -297,15 +295,15 @@ function phaseIndex(status: BuildPhase): number {
               @if (errorMessage()) {
                 @if (isResourceError()) {
                   <!-- Structured resource error -->
-                  <div class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 rounded-lg space-y-2">
-                    <p class="text-xs font-medium text-red-800 dark:text-red-200">Error details:</p>
-                    <p class="text-xs text-red-700 dark:text-red-300 font-mono break-all">{{ errorMessage() }}</p>
-                    <div class="pt-2 border-t border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300">
+                  <div class="mb-4 p-3 bg-muted rounded-md space-y-2">
+                    <p class="text-xs font-medium">Error details</p>
+                    <p class="text-xs text-destructive font-mono break-all">{{ errorMessage() }}</p>
+                    <div class="pt-2 border-t border-border text-xs text-muted-foreground">
                       <strong>Tip:</strong> Free up resources on the cluster, or trigger a new build once autoscaling completes.
                     </div>
                   </div>
                 } @else {
-                  <div class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 rounded text-xs text-red-800 dark:text-red-200 font-mono break-all">
+                  <div class="mb-4 p-3 bg-muted rounded-md text-xs text-destructive font-mono break-all">
                     {{ errorMessage() }}
                   </div>
                 }
@@ -314,17 +312,17 @@ function phaseIndex(status: BuildPhase): number {
               <div class="space-y-2">
                 @if (!isResourceError()) {
                   <button (click)="retryBuild()" [disabled]="isRetrying()"
-                    class="inline-flex items-center justify-center w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60 transition-colors">
+                    class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors">
                     @if (isRetrying()) {
                       <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
                     } @else {
                       <ng-icon name="lucideRefreshCw" class="h-4 w-4 mr-2" />
                     }
-                    Retry Build
+                    Retry build
                   </button>
                 } @else {
                   <button (click)="retryBuild()" [disabled]="isRetrying()"
-                    class="inline-flex items-center justify-center w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60 transition-colors">
+                    class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors">
                     @if (isRetrying()) {
                       <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
                     } @else {
@@ -781,7 +779,7 @@ export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewCh
     const s = this.getPhaseStatus(phaseId);
     const base = 'h-6 w-6 rounded-full flex items-center justify-center text-sm';
     switch (s) {
-      case 'completed': return `${base} bg-green-500 text-white`;
+      case 'completed': return `${base} border border-border text-[hsl(var(--ok))]`;
       case 'running':   return `${base} bg-primary text-primary-foreground`;
       case 'error':     return `${base} bg-destructive text-destructive-foreground`;
       default:          return `${base} bg-muted text-muted-foreground`;
@@ -801,7 +799,7 @@ export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewCh
   getDeployPhaseIconClass(): string {
     const base = 'h-6 w-6 rounded-full flex items-center justify-center';
     return this.phase() === 'completed'
-      ? `${base} bg-green-500 text-white`
+      ? `${base} border border-border text-[hsl(var(--ok))]`
       : `${base} bg-primary text-primary-foreground`;
   }
 
@@ -822,8 +820,8 @@ export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewCh
 
   getStatusBadgeClass(): string {
     switch (this.phase()) {
-      case 'completed': return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-      case 'failed':    return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+      case 'completed': return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--ok)/0.12)] text-[hsl(var(--ok))]';
+      case 'failed':    return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive';
       default:          return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
     }
   }

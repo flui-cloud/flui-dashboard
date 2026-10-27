@@ -119,7 +119,7 @@ interface MarketRow {
             labelClass="text-[13px] text-muted-foreground"
             testid="informs-not-decides"
           >
-            A machine listed as up can still be refused when Flui tries to buy
+            A machine listed as up can still be refused when Flui tries to add
             it.
           </app-explain>
 
@@ -410,7 +410,7 @@ export class ScalingMarketTabComponent {
     const catalogue = this.reading();
     if (!catalogue) return 'Nothing has been read yet.';
     if (catalogue.reading !== 'read') return 'Nothing to list.';
-    return `Read, and it names no machine this group may buy — an answer about the group's list, not about the market.`;
+    return `Read, and it names no machine this group may add — an answer about the group's list, not about the provider.`;
   });
 
   protected pill(state: CatalogueState): string {

@@ -236,8 +236,8 @@ export class ScalingNowFleetComponent {
           id: 'stand-in',
           label: 'Stand-in',
           why: claim
-            ? `Bought in a hurry. A standing order waits on ${claim.shape} in ${claim.region} to swap it out.`
-            : 'Bought in a hurry. No standing order claims it.',
+            ? `Added in a hurry. A standing order waits on ${claim.shape} in ${claim.region} to swap it out.`
+            : 'Added in a hurry. No standing order claims it.',
           icon: null,
           pill: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
         });

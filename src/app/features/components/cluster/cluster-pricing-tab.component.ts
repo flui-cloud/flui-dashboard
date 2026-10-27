@@ -253,7 +253,7 @@ import {
             }
             @if (b.listPricedItems) {
               <p>
-                {{ b.listPricedItems }} priced at today's list price: they started before Flui kept the price they were bought at.
+                {{ b.listPricedItems }} priced at today's list price: they started before Flui recorded the price they started at.
               </p>
             }
           </div>

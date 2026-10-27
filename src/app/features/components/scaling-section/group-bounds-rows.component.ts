@@ -75,9 +75,9 @@ import { TABLE } from './scaling-tabs-format';
       </td>
       <td [class]="t.tdMuted">
         @if (d().canProvision()) {
-          Buys on its own, or names a machine and alerts you.
+          Adds nodes on its own, or names a machine and alerts you.
         } @else {
-          Fixed: nothing here can buy a machine.
+          Fixed: nothing here can add a machine.
         }
       </td>
     </tr>
@@ -126,7 +126,7 @@ import { TABLE } from './scaling-tabs-format';
           labelClass="text-[13px] text-foreground"
           testid="target-why"
         >
-          Nothing is bought to reach it — the fleet only drifts back to it when
+          Nothing is added to reach it — the fleet only drifts back to it when
           load subsides.
         </app-explain>
         <span class="font-mono text-[11px] text-muted-foreground">desired</span>
@@ -233,7 +233,7 @@ import { TABLE } from './scaling-tabs-format';
       <td [class]="t.tdMuted">
         How long an app must be stuck before this
         @if (d().canProvision()) {
-          buys.
+          adds a node.
         } @else {
           alerts.
         }

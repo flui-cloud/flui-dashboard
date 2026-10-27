@@ -183,7 +183,7 @@ export class ScalingGroupTabComponent {
   protected readonly removeNote = computed(() =>
     this.removable()
       ? 'Removing a group stops it deciding; no node is removed.'
-      : 'This is the only group of the cluster and its nodes change through it: set it to manual to stop it buying.',
+      : 'This is the only group of the cluster and its nodes change through it: set it to manual to stop it adding nodes.',
   );
 
   protected async remove(draft: GroupDraft): Promise<void> {
@@ -258,7 +258,7 @@ export class ScalingGroupTabComponent {
       group.provision === 'automatic' &&
       !isPositiveAmount(group.limits.maxMonthlyCost)
     ) {
-      return 'Automatic buying needs a spending ceiling, the safety net under the node limits.';
+      return 'Adding nodes automatically needs a spending ceiling, the safety net under the node limits.';
     }
     return null;
   }
@@ -300,7 +300,7 @@ export class ScalingGroupTabComponent {
     if (!this.changed(draft)) return 'Saved';
     const preview = this.removalFor(draft);
     if (!preview) return 'Save';
-    return preview.proceeds ? `Save and give back ${preview.node}` : 'Save, the removal waits';
+    return preview.proceeds ? `Save and remove ${preview.node}` : 'Save, the removal waits';
   }
 
   /**

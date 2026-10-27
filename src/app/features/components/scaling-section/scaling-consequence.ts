@@ -42,13 +42,13 @@ export function consequenceOf(
       : `by up to ${nodeWord(Math.max(0, draft.bounds.max - currentNodes))}`;
   const ceiling =
     cap == null
-      ? 'No spending ceiling is set, so nothing will be bought until one is.'
+      ? 'No spending ceiling is set, so no node will be added until one is.'
       : `Under that, it never lets the fleet pass the spending ceiling of €${cap.toFixed(2)} a month.`;
   return {
     sentence: `Flui may grow this cluster ${growth} without asking you again. ${ceiling}`,
     clauses: [
       `It acts only when an app has been stuck for ${draft.settleSeconds ?? 30} seconds.`,
-      `It gives a node back when the work fits without it, never going below ${draft.bounds.min}.`,
+      `It removes a node when the work fits without it, never going below ${draft.bounds.min}.`,
       `Every decision is written down, whether or not it acted.`,
     ],
   };

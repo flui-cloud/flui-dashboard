@@ -180,7 +180,7 @@ describe('scaling surface producer', () => {
     expect(
       rowA.observations!.find((o) => o.key === 'flui.scaling.mode')?.presentedAs
         .text,
-    ).toBe('Automatic — Flui buys');
+    ).toBe('Automatic — Flui adds nodes');
     expect(
       rowA.observations!.find((o) => o.key === 'flui.scaling.nodes')
         ?.presentedAs.value,

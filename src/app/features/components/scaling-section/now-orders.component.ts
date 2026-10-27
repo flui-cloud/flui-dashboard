@@ -26,9 +26,9 @@ const REPLACE_PLAN: ReplacePlan = {
     {
       at: 1,
       does: 'Ask whether the old node can be emptied',
-      note: 'Before spending. Buying first and finding out after means paying for two nodes for good.',
+      note: 'Before spending. Adding first and finding out after means paying for two nodes for good.',
     },
-    { at: 2, does: 'Buy the new node and wait for it to join' },
+    { at: 2, does: 'Add the new node and wait for it to join' },
     { at: 3, does: 'Cordon the old node, then drain it' },
     {
       at: 4,
@@ -247,12 +247,12 @@ export class ScalingNowOrdersComponent {
   protected readonly emptyLine = computed(() => {
     const group = this.group();
     if (!group.capability.hasCatalogue) {
-      return 'No standing order. There is no market to wait for — a machine arrives when a person attaches one.';
+      return 'No standing order. There is no catalogue to wait on — a machine arrives when a person attaches one.';
     }
     if (!group.capability.canProvision) {
-      return 'No standing order. Nothing here can buy, so the patient force has nothing to act with.';
+      return 'No standing order. Nothing here can add nodes, so the patient force has nothing to act with.';
     }
-    return 'No standing order. The fleet keeps whatever urgency bought.';
+    return 'No standing order. The fleet keeps whatever urgency added.';
   });
 
   protected readonly rows = computed<OrderRow[]>(() =>

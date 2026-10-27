@@ -12,13 +12,13 @@ function draft(over: Partial<WriteScalingGroup> = {}): WriteScalingGroup {
 }
 
 describe('consequenceOf', () => {
-  it('says nothing will be bought while Flui only alerts', () => {
+  it('says nothing will be added while Flui only alerts', () => {
     const reading = consequenceOf(draft(), 1);
     expect(reading.sentence).toContain('will not add a node or spend anything');
     expect(reading.sentence).not.toContain('without asking you');
   });
 
-  it('names how many nodes, with the spending ceiling underneath, before Flui may buy', () => {
+  it('names how many nodes, with the spending ceiling underneath, before Flui may add nodes', () => {
     const reading = consequenceOf(
       draft({ provision: 'automatic', limits: { maxMonthlyCost: 45 } }),
       1,
@@ -59,9 +59,9 @@ describe('consequenceOf', () => {
     expect(reading.sentence).toContain('to at most 4 nodes');
   });
 
-  it('says an automatic group without a spending ceiling buys nothing', () => {
+  it('says an automatic group without a spending ceiling adds nothing', () => {
     const reading = consequenceOf(draft({ provision: 'automatic' }), 1);
-    expect(reading.sentence).toContain('nothing will be bought until one is');
+    expect(reading.sentence).toContain('no node will be added until one is');
   });
 
   it('repeats the wait and the floor, the two things a reader forgets', () => {

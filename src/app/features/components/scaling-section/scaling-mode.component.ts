@@ -88,7 +88,7 @@ export class ScalingModeComponent {
     const g = this.group();
     if (g.acts.label) return g.acts.label;
     if (!g.capability.canProvision) return 'Alarm only';
-    return g.acts.acts ? 'Automatic' : 'Manual — Flui does not buy';
+    return g.acts.acts ? 'Automatic' : 'Manual — Flui does not add nodes';
   });
 
   protected readonly attention = computed(() => {
@@ -131,8 +131,8 @@ export class ScalingModeComponent {
     const worst = g.cost?.scenarios.find((s) => s.kind === 'worst-case')?.highEur ?? null;
     const ifFull = worst === null ? '' : ` At ${nodes} all month: €${worst.toFixed(2)}.`;
     return cap === null
-      ? `Flui buys on its own, up to ${nodes}, only under a spending ceiling.${ifFull}`
-      : `Flui will buy on its own, up to ${nodes}, never past a spending ceiling of €${cap.toFixed(2)} a month.${ifFull}`;
+      ? `Flui adds nodes on its own, up to ${nodes}, only under a spending ceiling.${ifFull}`
+      : `Flui will add nodes on its own, up to ${nodes}, never past a spending ceiling of €${cap.toFixed(2)} a month.${ifFull}`;
   });
 
   protected asAmount(value: string): number | null {

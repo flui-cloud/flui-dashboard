@@ -13,21 +13,21 @@ export interface ModeCopy {
 export const MODES: Record<ScalingMode, ModeCopy> = {
   'flui-buys': {
     id: 'flui-buys',
-    label: 'Automatic — Flui buys',
+    label: 'Automatic — Flui adds nodes',
     pill: 'bg-primary/10 text-primary',
-    how: 'Flui buys the machine and it joins on its own. Billed by the hour.',
+    how: 'Flui adds the machine and it joins on its own. The provider bills it by the hour.',
   },
   'flui-decides': {
     id: 'flui-decides',
-    label: 'Manual — Flui does not buy',
+    label: 'Manual — Flui does not add nodes',
     pill: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200',
-    how: 'Flui could buy here and is set not to. It names the machine and a person buys it, or switches the group to automatic.',
+    how: 'Flui could add nodes here and is set not to. It names the machine and a person adds it, or switches the group to automatic.',
   },
   'you-buy': {
     id: 'you-buy',
-    label: 'You buy, Flui asks',
+    label: 'You add, Flui asks',
     pill: 'bg-muted text-foreground',
-    how: 'Flui can read prices but cannot buy here. An alarm names the machine and its price; you order it.',
+    how: 'Flui can read prices but cannot add nodes here. An alarm names the machine and its price; you create it.',
   },
   'you-attach': {
     id: 'you-attach',

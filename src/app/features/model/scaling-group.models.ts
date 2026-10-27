@@ -28,7 +28,7 @@ export const STRATEGIES: readonly StrategyCopy[] = [
     id: 'roomiest',
     label: 'Roomiest',
     optimises: 'quiet',
-    when: 'Load that arrives in steps — the next pod should not trigger another purchase.',
+    when: 'Load that arrives in steps — the next pod should not trigger another node.',
   },
   {
     id: 'uniform',

@@ -28,14 +28,14 @@ const CATALOGUE: ShapeCatalogue = {
       allowed: true,
       architecture: 'x86',
       outlook: { state: 'available', upIn: ['fsn1'], downIn: [], sinceHours: null, ageSeconds: 60 },
-      why: 'Up where this group buys.',
+      why: 'Up where this group adds nodes.',
     },
     {
       shape: 'cax21',
       allowed: true,
       architecture: 'arm',
       outlook: { state: 'available', upIn: ['fsn1'], downIn: [], sinceHours: null, ageSeconds: 60 },
-      why: 'Up where this group buys.',
+      why: 'Up where this group adds nodes.',
     },
   ],
 };

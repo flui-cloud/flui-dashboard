@@ -80,7 +80,7 @@ const ROWS: ClusterScalingRow[] = [
     openAlarm: null,
     lastDecisionAt: ago(0.05),
     needsPerson:
-      'Two pods cannot be placed and this group only decides — it named the shape it would have bought and stopped.',
+      'Two pods cannot be placed and this group only decides — it named the shape it would have added and stopped.',
   },
   {
     clusterId: 'c-onprem',
@@ -212,7 +212,7 @@ const GROUPS: Record<string, SectionGroup> = {
     provision: 'automatic',
     acts: {
       acts: true,
-      says: 'This group buys through the provider API on its own, up to €60 a month and 6 nodes.',
+      says: 'This group adds nodes through the provider API on its own, up to €60 a month and 6 nodes.',
     },
     requirement: null,
     purchaseHeld: null,
@@ -269,7 +269,7 @@ const GROUPS: Record<string, SectionGroup> = {
     provision: 'manual',
     acts: {
       acts: false,
-      says: 'This group decides and does not act. Set it to buy automatically for anything it decides to reach a provider.',
+      says: 'This group decides and does not act. Set it to add nodes automatically for anything it decides to reach a provider.',
     },
     requirement: null,
     purchaseHeld: null,
@@ -292,7 +292,7 @@ const GROUPS: Record<string, SectionGroup> = {
     provision: 'automatic',
     acts: {
       acts: true,
-      says: 'This group buys through the provider API on its own, up to €30 a month and 3 nodes.',
+      says: 'This group adds nodes through the provider API on its own, up to €30 a month and 3 nodes.',
     },
     requirement: null,
     purchaseHeld: null,
@@ -373,7 +373,7 @@ const DECISIONS: Record<string, ScalingDecision[]> = {
       outcome: 'declined',
       saw: 'Nothing is waiting. The fleet is at 3 nodes against a target of 3.',
       did: 'Nothing.',
-      why: 'prod-eu-worker-2 cannot be emptied, so nothing is bought to replace it. postgres-main: back it up, then delete or redeploy it elsewhere. flui-apps/checkout-pdb: the budget permits no further disruption.',
+      why: 'prod-eu-worker-2 cannot be emptied, so nothing is added to replace it. postgres-main: back it up, then delete or redeploy it elsewhere. flui-apps/checkout-pdb: the budget permits no further disruption.',
       shape: 'cx42',
       region: 'fsn1',
       hourlyEur: 0.0148,
@@ -386,7 +386,7 @@ const DECISIONS: Record<string, ScalingDecision[]> = {
       outcome: 'added',
       saw: '1 pod(s) the scheduler could not place, waiting for 64s.',
       did: 'Ordered a cx32 in fsn1; it joins once provisioned.',
-      why: 'Would add a cx32 in fsn1 at €0.0074/h, about €5.4 a month. This group buys automatically, and the ladder chose within its ceilings.',
+      why: 'Would add a cx32 in fsn1 at €0.0074/h, about €5.4 a month. This group adds nodes automatically, and the ladder chose within its ceilings.',
       shape: 'cx32',
       region: 'fsn1',
       hourlyEur: 0.0074,
@@ -414,7 +414,7 @@ const DECISIONS: Record<string, ScalingDecision[]> = {
       outcome: 'declined',
       saw: '2 pod(s) the scheduler could not place, waiting for 402s. The largest asks for 2000m and 8192Mi (flui-apps/render-9f2).',
       did: 'Would add a cx42 in fsn1 at €0.0148/h, about €10.8 a month.',
-      why: 'Nothing may be bought without being asked: no spending was granted to this installation. Set SCALING_CONCESSION_MONTHLY_EUR to the most it may commit to per month, and scaling groups set to buy automatically will act up to that figure.',
+      why: 'Nothing may be added without being asked: no spending was granted to this installation. Set SCALING_CONCESSION_MONTHLY_EUR to the most it may commit to per month, and scaling groups set to add nodes automatically will act up to that figure.',
       shape: 'cx42',
       region: 'fsn1',
       hourlyEur: 0.0148,
@@ -441,7 +441,7 @@ const CATALOGUE: ShapeCatalogue = {
         sinceHours: null,
         ageSeconds: 214,
       },
-      why: 'Up in both regions this group may buy in.',
+      why: 'Up in both regions this group may add nodes in.',
     },
     {
       shape: 'cx32',
@@ -646,8 +646,8 @@ export class ScalingFixtureService extends ScalingApiService {
       ],
       waitsFor: [],
       sentence:
-        'Saving gives back prod-eu-worker-3 (cx33). Started again on another machine: flui-web (Flui), storefront, billing-api.',
-      headline: 'Saving gives back prod-eu-worker-3 (cx33).',
+        'Saving removes prod-eu-worker-3 (cx33). Started again on another machine: flui-web (Flui), storefront, billing-api.',
+      headline: 'Saving removes prod-eu-worker-3 (cx33).',
     });
   }
 

@@ -31,8 +31,8 @@ export function roomLine(
     return `An app waiting needs ${waiting.memory} and ${waiting.cpu}; the most any node has left is ${most}.`;
   }
   const bigger = buys
-    ? 'Anything bigger makes Flui buy a node.'
-    : 'Anything bigger needs a new node, and this group buys none on its own.';
+    ? 'Anything bigger makes Flui add a node.'
+    : 'Anything bigger needs a new node, and this group adds none on its own.';
   return `The largest app that still fits: ${most} (on ${fit.node}). ${bigger}`;
 }
 

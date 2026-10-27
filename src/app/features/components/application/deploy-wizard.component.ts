@@ -208,7 +208,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   [class]="getFlowCardClass('template')"
                   (click)="selectFlow('template')"
                 >
-                  <ng-icon name="lucideRocket" class="h-8 w-8 mb-3 text-purple-500" />
+                  <ng-icon name="lucideRocket" class="h-8 w-8 mb-3 text-muted-foreground" />
                   <div class="font-medium mb-1">From a Flui template</div>
                   <p class="text-xs text-muted-foreground">
                     A ready-made framework starter (Next.js, Spring Boot, FastAPI…). Flui creates a new repo in your GitHub, wires up the build and deploys it — the fastest way to see an end-to-end deploy in action.
@@ -224,7 +224,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   [class]="getFlowCardClass('image')"
                   (click)="selectFlow('image')"
                 >
-                  <ng-icon name="lucideContainer" class="h-8 w-8 mb-3 text-blue-500" />
+                  <ng-icon name="lucideContainer" class="h-8 w-8 mb-3 text-muted-foreground" />
                   <div class="font-medium mb-1">From a Docker image</div>
                   <p class="text-xs text-muted-foreground">
                     Ship a pre-built image from DockerHub or GHCR. No source build step. If the image is not Flui-compliant you'll be asked to fill in the required variables and runtime settings during the next steps.
@@ -240,7 +240,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   [class]="getFlowCardClass('existing-repo')"
                   (click)="selectFlow('existing-repo')"
                 >
-                  <ng-icon name="lucideGitMerge" class="h-8 w-8 mb-3 text-green-500" />
+                  <ng-icon name="lucideGitMerge" class="h-8 w-8 mb-3 text-muted-foreground" />
                   <div class="font-medium mb-1">From an existing repository</div>
                   <p class="text-xs text-muted-foreground">
                     Deploy from a Git repo you already have. Flui reads its flui.yaml, and its Dockerfile if it builds with one.
@@ -256,7 +256,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   [class]="getFlowCardClass('marketplace')"
                   (click)="selectFlow('marketplace')"
                 >
-                  <ng-icon name="lucideStore" class="h-8 w-8 mb-3 text-amber-500" />
+                  <ng-icon name="lucideStore" class="h-8 w-8 mb-3 text-muted-foreground" />
                   <div class="font-medium mb-1">From the Marketplace</div>
                   <p class="text-xs text-muted-foreground">
                     One-click install of pre-packaged apps curated by Flui (databases, CMS, analytics, queues…). No code, no Dockerfile — pick it and it runs.
@@ -444,8 +444,8 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 <p class="text-sm text-muted-foreground">Search DockerHub for an image and select a tag.</p>
               </div>
               @if (selectedImageRef()) {
-                <div class="flex items-center gap-3 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10">
-                  <ng-icon name="lucideCheck" class="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+                <div class="flex items-center gap-3 p-3 rounded-md border border-border bg-muted/30">
+                  <ng-icon name="lucideCheck" class="h-4 w-4 text-[hsl(var(--ok))] shrink-0" />
                   <span class="text-sm font-mono font-medium">{{ selectedImageRef() }}</span>
                   <button type="button" class="ml-auto text-xs text-muted-foreground hover:text-foreground" (click)="clearImageRef()">Change</button>
                 </div>
@@ -589,26 +589,26 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
 
                 @case ('flui-ready') {
                   @let m = manifestForSelector()!.manifest!;
-                  <div class="p-4 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 space-y-3">
+                  <div class="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
                     <div class="flex items-start gap-3">
-                      <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                      <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-[hsl(var(--ok))] shrink-0 mt-0.5" />
                       <div>
                         @if (validManifests().length > 1) {
-                          <p class="text-sm font-semibold text-green-800 dark:text-green-300">{{ validManifests().length }} deployable apps found</p>
-                          <p class="text-xs text-green-700 dark:text-green-400 mt-1">
+                          <p class="text-sm font-medium text-foreground">{{ validManifests().length }} deployable apps found</p>
+                          <p class="text-xs text-muted-foreground mt-1">
                             This repository is a monorepo with one <span class="font-mono">flui.yaml</span> per app. Pick the one to deploy — each app deploys independently (run the wizard again for the others).
                           </p>
                         } @else {
-                          <p class="text-sm font-semibold text-green-800 dark:text-green-300">flui.yaml found</p>
-                          <p class="text-xs text-green-700 dark:text-green-400 mt-1">
-                            This repository ships a valid Flui manifest. Port, healthcheck and resources come from the manifest and the repository is built as-is — exactly like <code class="font-mono bg-green-100/60 dark:bg-green-900/20 px-1 rounded">flui deploy</code>.
+                          <p class="text-sm font-medium text-foreground">flui.yaml found</p>
+                          <p class="text-xs text-muted-foreground mt-1">
+                            This repository ships a valid Flui manifest. Port, healthcheck and resources come from the manifest and the repository is built as-is — exactly like <code class="font-mono bg-muted px-1 rounded">flui deploy</code>.
                           </p>
                         }
                       </div>
                       <button
                         type="button"
                         (click)="downloadManifest()"
-                        class="ml-auto shrink-0 inline-flex items-center gap-1 text-xs text-green-800 dark:text-green-300 hover:underline"
+                        class="ml-auto shrink-0 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                         title="Download this flui.yaml"
                       >
                         <ng-icon name="lucideDownload" class="h-3.5 w-3.5" />
@@ -622,10 +622,10 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           <button type="button" (click)="selectManifest(entry.path)"
                             class="w-full flex items-center gap-3 p-2.5 rounded-md border text-left transition-colors"
                             [class]="selectedManifestPath() === entry.path
-                              ? 'border-green-500 dark:border-green-600 bg-green-100/70 dark:bg-green-900/30'
-                              : 'border-green-200/70 dark:border-green-800/60 hover:bg-green-100/40 dark:hover:bg-green-900/20'">
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:bg-accent'">
                             <span class="h-2 w-2 rounded-full shrink-0"
-                              [class]="selectedManifestPath() === entry.path ? 'bg-green-600 dark:bg-green-400' : 'bg-green-300 dark:bg-green-800'"></span>
+                              [class]="selectedManifestPath() === entry.path ? 'bg-primary' : 'bg-muted-foreground/30'"></span>
                             <span class="font-mono text-xs font-semibold">{{ entry.name }}</span>
                             <span class="font-mono text-[11px] text-muted-foreground">{{ entry.path }}</span>
                             <span class="ml-auto font-mono text-[11px] text-muted-foreground">port {{ entry.port }}</span>
@@ -635,22 +635,22 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     }
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs pt-1">
-                      <div class="p-2 rounded bg-green-100/60 dark:bg-green-900/20">
+                      <div class="p-2 rounded bg-card border border-border">
                         <div class="text-muted-foreground">App name</div>
                         <div class="font-mono font-medium">{{ m.metadata.name }}</div>
                       </div>
-                      <div class="p-2 rounded bg-green-100/60 dark:bg-green-900/20">
+                      <div class="p-2 rounded bg-card border border-border">
                         <div class="text-muted-foreground">Port</div>
                         <div class="font-mono font-medium">{{ m.deploy.port }}</div>
                       </div>
                       @if (m.deploy.healthcheck?.path) {
-                        <div class="p-2 rounded bg-green-100/60 dark:bg-green-900/20">
+                        <div class="p-2 rounded bg-card border border-border">
                           <div class="text-muted-foreground">Healthcheck</div>
                           <div class="font-mono font-medium">{{ m.deploy.healthcheck!.path }}</div>
                         </div>
                       }
                       @if (m.deploy.env?.length) {
-                        <div class="p-2 rounded bg-green-100/60 dark:bg-green-900/20">
+                        <div class="p-2 rounded bg-card border border-border">
                           <div class="text-muted-foreground">Env vars</div>
                           <div class="font-medium">{{ m.deploy.env!.length }} declared</div>
                         </div>
@@ -984,7 +984,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                             Detecting...
                           </span>
                         } @else if (portAutoDetected() && appPort()) {
-                          <span class="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          <span class="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                             <ng-icon name="lucideCircleCheck" class="h-3 w-3" />
                             Auto-detected
                           </span>
@@ -1426,10 +1426,10 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           </div>
                         </div>
                       } @else {
-                        <div class="flex items-start gap-3 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10">
-                          <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                        <div class="flex items-start gap-3 p-3 rounded-md border border-border bg-muted/30">
+                          <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-[hsl(var(--ok))] shrink-0 mt-0.5" />
                           <div class="text-sm flex-1">
-                            <p class="font-medium text-green-700 dark:text-green-400">Sufficient resources</p>
+                            <p class="font-medium text-foreground">Sufficient resources</p>
                             <div class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
                               <span>Required:</span><span class="text-right">{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span>
                               <span>Available (after 10% reserve):</span><span class="text-right">{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span>
@@ -1843,7 +1843,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Port:</span>
-                      <span class="font-medium">{{ state.deployConfig().port }} <span class="ml-1 text-[10px] px-1 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">from template</span></span>
+                      <span class="font-medium">{{ state.deployConfig().port }} <span class="ml-1 text-[10px] px-1 rounded bg-muted text-muted-foreground">from template</span></span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Healthcheck:</span>
@@ -1883,7 +1883,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       <span class="font-medium">
                         {{ state.deployConfig().port || '—' }}
                         @if (state.defaultsSource() === 'manifest') {
-                          <span class="ml-1 text-[10px] px-1 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">from flui.yaml</span>
+                          <span class="ml-1 text-[10px] px-1 rounded bg-muted text-muted-foreground">from flui.yaml</span>
                         } @else if (state.defaultsSource() === 'manual') {
                           <span class="ml-1 text-[10px] px-1 rounded bg-muted text-muted-foreground">manual</span>
                         }
@@ -2074,10 +2074,10 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     </div>
                   </div>
                 } @else {
-                  <div class="flex items-start gap-3 p-4 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 text-sm">
-                    <ng-icon name="lucideCheck" class="h-4 w-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                  <div class="flex items-start gap-3 p-4 rounded-lg border border-border bg-muted/30 text-sm">
+                    <ng-icon name="lucideCheck" class="h-4 w-4 text-[hsl(var(--ok))] shrink-0 mt-0.5" />
                     <div class="flex-1">
-                      <p class="font-medium text-green-700 dark:text-green-300">Sufficient resources</p>
+                      <p class="font-medium text-foreground">Sufficient resources</p>
                       <div class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
                         <span>Required:</span><span class="text-right">{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span>
                         <span>Available (after 10% reserve):</span><span class="text-right">{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span>
@@ -3138,7 +3138,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   getOrchestrationStepClass(id: string): string {
     const base = 'w-6 h-6 rounded-full flex items-center justify-center shrink-0 border';
     if (this.isOrchestrationStepDone(id)) {
-      return `${base} bg-green-100 dark:bg-green-900/30 border-green-500 text-green-700 dark:text-green-300`;
+      return `${base} border-border text-[hsl(var(--ok))]`;
     }
     if (this.isOrchestrationStepActive(id)) {
       return `${base} bg-primary/10 border-primary text-primary`;
@@ -3340,7 +3340,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
 
   checkStatusClass(status: ManifestCheckDto.StatusEnum): string {
     switch (status) {
-      case ManifestCheckDto.StatusEnum.Pass: return 'text-green-600 dark:text-green-400';
+      case ManifestCheckDto.StatusEnum.Pass: return 'text-[hsl(var(--ok))]';
       case ManifestCheckDto.StatusEnum.Warn: return 'text-amber-600 dark:text-amber-400';
       case ManifestCheckDto.StatusEnum.Fail: return 'text-red-600 dark:text-red-400';
       default: return 'text-muted-foreground';
@@ -3709,7 +3709,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
 
     switch (status) {
       case 'active':
-        return `${baseClass} bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400`;
+        return `${baseClass} bg-[hsl(var(--ok)/0.12)] text-[hsl(var(--ok))]`;
       case 'creating':
         return `${baseClass} bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400`;
       case 'error':

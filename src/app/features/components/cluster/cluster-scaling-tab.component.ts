@@ -234,7 +234,7 @@ export class ClusterScalingTabComponent {
       return 'No scaling set up. This cluster will not grow on its own, and nothing will raise an alarm.';
     }
     return row.acts
-      ? 'Within its limits. Flui will buy a node if one is needed.'
+      ? 'Within its limits. Flui will add a node if one is needed.'
       : 'Within its limits, and nothing is waiting on you.';
   });
 

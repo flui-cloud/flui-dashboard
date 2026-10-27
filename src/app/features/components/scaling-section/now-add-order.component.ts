@@ -265,16 +265,16 @@ export class ScalingNowAddOrderComponent {
     const now = this.availableNow();
     if (g.provision === 'automatic') {
       if (now === true)
-        return `${target} ${this.shape()} is available in ${this.where()} now: Flui buys ${machine} on its next pass, whatever the load.`;
+        return `${target} ${this.shape()} is available in ${this.where()} now: Flui adds ${machine} on its next pass, whatever the load.`;
       if (now === false) {
-        const soldOutWhere = this.region() === ANY ? ' everywhere this group buys' : ` in ${this.region()}`;
-        return `${target} ${this.shape()} is sold out${soldOutWhere}: Flui waits and buys ${machine} as soon as it can be had, then closes the order.`;
+        const soldOutWhere = this.region() === ANY ? ' everywhere this group adds nodes' : ` in ${this.region()}`;
+        return `${target} ${this.shape()} is sold out${soldOutWhere}: Flui waits and adds ${machine} as soon as it can be had, then closes the order.`;
       }
-      return `${target} Flui buys ${machine} as soon as it can be had, whatever the load, and closes the order once there.`;
+      return `${target} Flui adds ${machine} as soon as it can be had, whatever the load, and closes the order once there.`;
     }
     return now === true
-      ? `${target} ${this.shape()} is available in ${this.where()} now; this group only decides, so it names ${machine} and buys nothing.`
-      : `${target} This group only decides: it will name ${machine} when it can be had, and buy nothing.`;
+      ? `${target} ${this.shape()} is available in ${this.where()} now; this group only decides, so it names ${machine} and adds nothing.`
+      : `${target} This group only decides: it will name ${machine} when it can be had, and add nothing.`;
   });
 
   protected close(): void {

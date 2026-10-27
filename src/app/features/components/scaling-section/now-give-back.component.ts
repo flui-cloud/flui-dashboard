@@ -31,7 +31,7 @@ import { ScalingGroupStore } from './scaling-group.store';
         <span>{{ headline() }}</span>
       </p>
       <p class="m-0 mt-1 pl-6 text-[13px] text-muted-foreground">
-        {{ alarm().says }}, so Flui cannot give it back · open {{ age() }}
+        {{ alarm().says }}, so Flui cannot remove it · open {{ age() }}
       </p>
 
       <div class="mt-3 flex flex-wrap items-center gap-2 pl-6">

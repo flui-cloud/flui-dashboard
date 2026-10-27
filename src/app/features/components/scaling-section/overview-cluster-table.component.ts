@@ -307,9 +307,9 @@ export class OverviewClusterTableComponent {
   }
 
   private setupCopy(row: ClusterScalingRow, mode: ScalingMode): string {
-    const bounds = `Setting up scaling for ${row.clusterName} would ask for limits in nodes: a minimum held immediately, a target approached only when the market allows, and a maximum urgency may reach right now. What they can cost is shown beside them.`;
+    const bounds = `Setting up scaling for ${row.clusterName} would ask for limits in nodes: a minimum held immediately, a target approached only when the provider has the machine, and a maximum urgency may reach right now. What they can cost is shown beside them.`;
     const provider: Partial<Record<ScalingMode, string>> = {
-      'flui-buys': `${row.capability.provider} can create servers through its own API, so this cluster would buy for itself instead of waiting on you.`,
+      'flui-buys': `${row.capability.provider} can create servers through its own API, so this cluster would add nodes on its own instead of waiting on you.`,
       'you-buy': `${row.capability.provider} publishes a catalogue but has no create API, so the group would name a machine and its price and raise an alarm for you to act on.`,
       'you-attach':
         'There is no catalogue here, so the group would state what a machine has to hold rather than name one, and raise an alarm.',

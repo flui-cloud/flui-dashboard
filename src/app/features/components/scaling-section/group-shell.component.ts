@@ -18,7 +18,7 @@ import {
   lucideChartLine,
   lucideGauge,
   lucideSettings2,
-  lucideStore,
+  lucideServer,
 } from '@ng-icons/lucide';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { GroupDraftStore } from './group-draft.store';
@@ -62,7 +62,7 @@ interface ShellTab {
       lucideChartLine,
       lucideGauge,
       lucideSettings2,
-      lucideStore,
+      lucideServer,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -257,7 +257,7 @@ export class ScalingGroupShellComponent {
       return first.endsWith('.') ? first : `${first}.`;
     }
     if (g.capability.hasCatalogue) {
-      return 'Flui can name a machine and raise an alarm; only a person can buy it.';
+      return 'Flui can name a machine and raise an alarm; only a person can add it.';
     }
     return 'Flui can only ask for a machine; a person attaches it.';
   }
@@ -284,8 +284,8 @@ export class ScalingGroupShellComponent {
     if (g.capability.hasCatalogue) {
       tabs.push({
         path: 'market',
-        label: 'Market',
-        icon: 'lucideStore',
+        label: 'Machines',
+        icon: 'lucideServer',
         marker: this.marketMarker(g),
       });
     }

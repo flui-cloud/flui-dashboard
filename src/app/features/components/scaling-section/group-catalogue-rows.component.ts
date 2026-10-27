@@ -35,11 +35,11 @@ import { ShapeSpec } from '../../model/scaling-section.models';
   template: `
     @if (d().hasCatalogue()) {
       <tr [class]="t.row" data-testid="row-regions">
-        <th scope="row" [class]="t.td + ' font-normal'">Where it may buy</th>
+        <th scope="row" [class]="t.td + ' font-normal'">Where it may add nodes</th>
         <td [class]="t.td">
           <app-settings-list-editor
             kind="region"
-            emptyNote="nowhere to buy"
+            emptyNote="nowhere to add nodes"
             exhausted="this cluster's network reaches no other region"
             [items]="g().regions"
             [choices]="regionChoices()"
@@ -51,7 +51,7 @@ import { ShapeSpec } from '../../model/scaling-section.models';
         <td [class]="t.tdMuted">
           <app-explain
             [floating]="true"
-            label="Where it may buy."
+            label="Where it may add nodes."
             labelClass="text-[12px] text-muted-foreground"
             testid="regions-why"
           >
@@ -62,13 +62,13 @@ import { ShapeSpec } from '../../model/scaling-section.models';
       </tr>
 
       <tr [class]="t.row" data-testid="row-shapes">
-        <th scope="row" [class]="t.td + ' font-normal'">What it may buy</th>
+        <th scope="row" [class]="t.td + ' font-normal'">What it may add</th>
         <td [class]="t.td">
           <app-settings-list-editor
             kind="machine"
             [choices]="machineChoices()"
             [labels]="labels()"
-            emptyNote="nothing to buy"
+            emptyNote="nothing to add"
             [ordered]="true"
             [architectures]="architectures()"
             [items]="g().shapes"
@@ -197,9 +197,9 @@ import { ShapeSpec } from '../../model/scaling-section.models';
           labelClass="text-[13px] text-foreground"
           testid="cap-why"
         >
-          The safety net under the node limits. Before every purchase the
+          The safety net under the node limits. Before every node is added the
           fleet's whole monthly list price is weighed against it, not one
-          machine: what is already running counts. Required to buy
+          machine: what is already running counts. Required to add nodes
           automatically; set it above the worst case below and it only ever
           stops a runaway.
         </app-explain>
@@ -285,7 +285,7 @@ export class GroupCatalogueRowsComponent {
     const running = committed
       ? `The fleet already costs €${committed.toFixed(2)} a month and the `
       : 'The ';
-    return `${running}cheapest machine this group may buy adds €${cheapest.toFixed(2)}, so nothing can be bought under a spending ceiling of €${cap.toFixed(2)}.`;
+    return `${running}cheapest machine this group may add costs €${cheapest.toFixed(2)}, so nothing can be added under a spending ceiling of €${cap.toFixed(2)}.`;
   });
 
   constructor() {

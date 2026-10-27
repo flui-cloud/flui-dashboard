@@ -77,10 +77,10 @@ type Step =
         }
         @case ('buy') {
           <div class="flex flex-col gap-1.5 text-[11px] leading-relaxed" data-testid="tile-fleet-buy">
-            <span>Buy one {{ buyStep()?.shape }} in {{ buyStep()?.region }}{{ buyStep()?.price }}? The group stays manual.</span>
+            <span>Add one {{ buyStep()?.shape }} in {{ buyStep()?.region }}{{ buyStep()?.price }}? The group stays manual.</span>
             <span class="flex gap-2">
               <button type="button" class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50" [disabled]="busy()" (click)="buy()" data-testid="tile-fleet-buy-yes">
-                {{ busy() ? 'Ordering…' : 'Buy' }}
+                {{ busy() ? 'Adding…' : 'Add' }}
               </button>
               <button type="button" class="text-muted-foreground" [disabled]="busy()" (click)="later()">Later</button>
             </span>
@@ -177,7 +177,7 @@ export class ScalingFleetTileComponent {
   protected readonly addTooltip = computed(() => this.tooltip('One node more'));
   protected readonly removeTooltip = computed(() =>
     this.lowerTo() < 1
-      ? 'Only the master is left: it cannot be given back'
+      ? 'Only the master is left: it cannot be removed'
       : this.tooltip(this.lowerTo() === this.nodes() ? 'Back to the nodes the cluster has' : 'One node fewer'),
   );
 
@@ -201,11 +201,11 @@ export class ScalingFleetTileComponent {
     if (s.kind !== 'confirm') return '';
     const more = s.to > this.nodes();
     const head = `Hold ${s.to} ${s.to === 1 ? 'node' : 'nodes'}, master included.`;
-    if (s.to === this.nodes()) return `${head} Nothing is bought or removed: the + not yet bought is undone.`;
+    if (s.to === this.nodes()) return `${head} Nothing is added or removed: the + not yet acted on is undone.`;
     if (!this.manual()) {
       return more
-        ? `${head} The group buys the machine on its own, within its ceilings.`
-        : `${head} The group gives one node back on its own once it can be emptied.`;
+        ? `${head} The group adds the machine on its own, within its ceilings.`
+        : `${head} The group removes one node on its own once it can be emptied.`;
     }
     return more
       ? `${head} This group is manual: you approve the machine and its price next.`
@@ -216,7 +216,7 @@ export class ScalingFleetTileComponent {
     const row = this.row();
     if (!row) return action;
     if (!row.capability.canProvision)
-      return 'Flui cannot buy on this provider: attach your own machine with `flui node connect`, or detach one from the Nodes tab';
+      return 'Flui cannot add nodes on this provider: attach your own machine with `flui node connect`, or detach one from the Nodes tab';
     if (!row.groupId) return 'This cluster has no scaling group yet';
     return action;
   }
@@ -249,7 +249,7 @@ export class ScalingFleetTileComponent {
   protected later(): void {
     this.step.set({
       kind: 'waiting',
-      says: 'Nothing bought or removed. The proposal stays on the group’s Now tab.',
+      says: 'Nothing added or removed. The proposal stays on the group’s Now tab.',
     });
   }
 
@@ -267,7 +267,7 @@ export class ScalingFleetTileComponent {
         return;
       }
       if (s.to === this.nodes()) {
-        this.step.set({ kind: 'waiting', says: `Back to ${s.to} ${s.to === 1 ? 'node' : 'nodes'}. Nothing bought or removed.` });
+        this.step.set({ kind: 'waiting', says: `Back to ${s.to} ${s.to === 1 ? 'node' : 'nodes'}. Nothing added or removed.` });
         return;
       }
       await this.nextApproval(groupId, more);
@@ -305,8 +305,8 @@ export class ScalingFleetTileComponent {
     if (s.kind !== 'buy' || !groupId) return;
     await this.approve(
       () => firstValueFrom(this.api.approvePurchase(groupId, { shape: s.shape, region: s.region })),
-      'Purchase ordered',
-      'Nothing bought',
+      'Node being added',
+      'Nothing added',
     );
   }
 
@@ -316,7 +316,7 @@ export class ScalingFleetTileComponent {
     if (s.kind !== 'give-back' || !groupId) return;
     await this.approve(
       () => firstValueFrom(this.api.approveRemoval(groupId, s.node)),
-      'Node being given back',
+      'Node being removed',
       'Nothing removed',
     );
   }
@@ -332,7 +332,7 @@ export class ScalingFleetTileComponent {
       const reason = this.fail(failed, err);
       this.step.set({
         kind: 'waiting',
-        says: reason || 'Nothing bought or removed. The proposal stays on the group’s Now tab.',
+        says: reason || 'Nothing added or removed. The proposal stays on the group’s Now tab.',
       });
     } finally {
       this.busy.set(false);

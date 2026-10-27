@@ -63,8 +63,8 @@ export class OperationTrackerService {
   });
 
   readonly getCompletedStepsCount = computed(() => {
-    // Count only steps with status 'completed', capped at the backend total so the
-    // synthetic final step and reconstructed steps can never push it past totalSteps.
+    // Count only steps with status 'completed', capped at the backend total so
+    // reconstructed steps can never push it past totalSteps.
     const completed = this.creationSteps().filter(step => step.status === 'completed').length;
     const total = this.totalSteps();
     return total > 0 ? Math.min(completed, total) : completed;
@@ -222,17 +222,6 @@ export class OperationTrackerService {
                 : { ...step, status: 'completed', completedAt: step.completedAt ?? new Date() }
             )
           );
-
-          // Add final completion step
-          const finalStep: ClusterCreationStep = {
-            id: `step-final-${Date.now()}`,
-            title: 'Operation completed successfully!',
-            description: 'Resource is ready to use',
-            status: 'completed',
-            startedAt: new Date(),
-            completedAt: new Date(),
-          };
-          this.creationSteps.update((currentSteps) => [...currentSteps, finalStep]);
 
           return;
         } else if (status.status === 'FAILED') {

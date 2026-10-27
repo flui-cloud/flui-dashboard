@@ -12,7 +12,7 @@ const group = (over: Partial<SectionGroup> = {}): SectionGroup =>
     bounds: { min: 1, desired: 1, max: 3 },
     limits: { hourlyBillingOnly: true, maxMonthlyCost: null },
     capability: { canProvision: true, hasCatalogue: true, billing: 'hourly' },
-    acts: { acts: false, says: 'Nothing is bought on its own.', label: 'Manual — Flui does not buy', attention: true },
+    acts: { acts: false, says: 'Nothing is added on its own.', label: 'Manual — Flui does not add nodes', attention: true },
     ...over,
   }) as unknown as SectionGroup;
 

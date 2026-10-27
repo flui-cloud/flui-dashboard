@@ -102,7 +102,7 @@ import {
             <div class="flex-1">
               <p class="font-medium text-blue-800 dark:text-blue-200">
                 @if (av.placement?.verdict === 'buys') {
-                  Flui will buy a {{ av.placement?.shape }} in {{ av.placement?.region }} to fit this
+                  Flui will add a {{ av.placement?.shape }} in {{ av.placement?.region }} to fit this
                 } @else {
                   A node will be added to fit this
                 }
@@ -176,13 +176,13 @@ import {
               <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
               <div class="space-y-1 text-muted-foreground">
                 <p>
-                  The capacity check above follows what you write here: whether it fits, which machine scaling would buy, or that it would wait.
+                  The capacity check above follows what you write here: whether it fits, which machine scaling would add, or that it would wait.
                   Leave a field empty to keep the manifest value.
                   <button type="button" (click)="overrideWhyOpen.set(!overrideWhyOpen())" class="ml-1 underline underline-offset-2 font-medium text-foreground">{{ overrideWhyOpen() ? 'Hide' : 'Why' }}</button>
                 </p>
                 @if (overrideWhyOpen()) {
                   <p>
-                    A request reserves room on a node. One larger than any node has free does not overload anything: the app waits, and the scaling group buys a node inside its money ceiling or raises an alarm.
+                    A request reserves room on a node. One larger than any node has free does not overload anything: the app waits, and the scaling group adds a node inside its spending ceiling or raises an alarm.
                     A limit is what the app may really use. A memory limit far above the request is what can crowd a node; a limit below the app's real use gets it stopped (memory) or slowed down (CPU).
                   </p>
                 }

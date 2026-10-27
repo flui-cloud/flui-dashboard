@@ -78,7 +78,7 @@ const EMPTY_PREVIEW: ScalingPreview = {
           data-testid="ladder-give-back"
         >
           <span class="min-w-0 flex-1 text-[13px] leading-relaxed text-sub">
-            The fleet is above its target: this manual group would give back
+            The fleet is above its target: this manual group would remove
             <span class="font-medium text-foreground">{{ node }}</span>. Its work
             moves to the nodes that stay.
           </span>
@@ -136,7 +136,7 @@ const EMPTY_PREVIEW: ScalingPreview = {
             Not set up
           </span>
           <span class="min-w-0 flex-1 text-[13px] leading-relaxed text-sub">
-            No machines are chosen, so there is nothing Flui may buy and nothing
+            No machines are chosen, so there is nothing Flui may add and nothing
             for it to name when an app has nowhere to run.
           </span>
           <a
@@ -175,11 +175,11 @@ const EMPTY_PREVIEW: ScalingPreview = {
                 data-testid="ladder-buy-once"
                 (click)="confirmBuy.set(true)"
               >
-                Buy this {{ machine.shape }}
+                Add this {{ machine.shape }}
               </button>
             } @else {
               <span class="inline-flex flex-wrap items-center gap-2 text-[12px]" data-testid="ladder-buy-confirm">
-                Buy one {{ machine.shape }} in {{ machine.region }}{{ machine.price }}? The group stays manual.
+                Add one {{ machine.shape }} in {{ machine.region }}{{ machine.price }}? The group stays manual.
                 <button
                   type="button"
                   class="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground disabled:opacity-50"
@@ -187,7 +187,7 @@ const EMPTY_PREVIEW: ScalingPreview = {
                   (click)="buyOnce(machine.shape, machine.region)"
                   data-testid="ladder-buy-confirm-yes"
                 >
-                  {{ buying() ? 'Ordering…' : 'Buy' }}
+                  {{ buying() ? 'Adding…' : 'Add' }}
                 </button>
                 <button type="button" class="text-muted-foreground" [disabled]="buying()" (click)="confirmBuy.set(false)">Cancel</button>
               </span>
@@ -239,7 +239,7 @@ export class ScalingNowLadderComponent {
     this.removing.set(true);
     try {
       const decision = await firstValueFrom(this.api.approveRemoval(this.group().id, node));
-      this.toast.showSuccess({ title: 'Node being given back', message: decision.did });
+      this.toast.showSuccess({ title: 'Node being removed', message: decision.did });
       this.confirmRemove.set(false);
       this.store.reload();
     } catch (err: unknown) {
@@ -271,14 +271,14 @@ export class ScalingNowLadderComponent {
       const decision = await firstValueFrom(
         this.api.approvePurchase(this.group().id, { shape, region }),
       );
-      this.toast.showSuccess({ title: 'Purchase ordered', message: decision.did });
+      this.toast.showSuccess({ title: 'Node being added', message: decision.did });
       this.confirmBuy.set(false);
       this.store.reload();
     } catch (err: unknown) {
       const e = err as { error?: { message?: string | string[] }; message?: string };
-      const message = e?.error?.message ?? e?.message ?? 'Nothing was bought.';
+      const message = e?.error?.message ?? e?.message ?? 'Nothing was added.';
       this.toast.showError({
-        title: 'Nothing bought',
+        title: 'Nothing added',
         message: Array.isArray(message) ? message.join(' ') : message,
       });
       this.store.reload();
@@ -318,7 +318,7 @@ export class ScalingNowLadderComponent {
 
     return {
       ...first,
-      why: `Nothing this group may buy fits, each for its own reason. ${rows.length} steps were tried.`,
+      why: `Nothing this group may add fits, each for its own reason. ${rows.length} steps were tried.`,
     };
   });
 

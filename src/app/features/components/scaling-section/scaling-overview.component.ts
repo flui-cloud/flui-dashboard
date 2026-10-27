@@ -93,7 +93,7 @@ import {
 
         <app-explain
           [floating]="true"
-          label="An open alarm is a purchase in flight, by hand"
+          label="An open alarm is a node waiting to be added by hand"
           labelClass="text-[13px] font-medium text-foreground"
           testid="alarm-why"
         >

@@ -325,8 +325,8 @@ export interface AppOption {
                 <span class="text-muted-foreground">Verifying DNS…</span>
               } @else if (dnsResult()) {
                 @if (dnsResult()!.ok) {
-                  <ng-icon name="lucideCircleCheck" class="h-3 w-3 text-green-500 dark:text-green-400" />
-                  <span class="text-green-700 dark:text-green-400">Resolves correctly to {{ masterIp() }}</span>
+                  <ng-icon name="lucideCircleCheck" class="h-3 w-3 text-[hsl(var(--ok))]" />
+                  <span class="text-muted-foreground">Resolves correctly to {{ masterIp() }}</span>
                 } @else {
                   <ng-icon name="lucideCircleX" class="h-3 w-3 text-red-500 dark:text-red-400" />
                   <span class="text-red-700 dark:text-red-400">
@@ -436,7 +436,7 @@ export interface AppOption {
       <div class="space-y-3">
         <label class="flex items-center gap-2 text-sm text-foreground cursor-pointer select-none">
           <input type="checkbox" [(ngModel)]="form.certificateRequired" class="rounded" />
-          <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-green-600 dark:text-green-400" />
+          <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-muted-foreground" />
           Provision TLS certificate (HTTPS)
         </label>
 
@@ -484,8 +484,8 @@ export interface AppOption {
                   </div>
                 }
                 @default {
-                  <div class="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-xs text-green-800 dark:text-green-300">
-                    <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                  <div class="flex items-start gap-2 p-3 bg-muted/30 border border-border rounded-lg text-xs text-muted-foreground">
+                    <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-[hsl(var(--ok))]" />
                     <span>
                       A <strong>production</strong> certificate will be issued (Let's Encrypt — browser-trusted).
                     </span>
@@ -505,7 +505,7 @@ export interface AppOption {
               <!-- Staging valid → show promote callout -->
               @if (stagingCertValid()) {
                 <div class="p-3 border rounded-lg"
-                  [class]="promoteToProd() ? 'border-green-400 bg-green-50 dark:bg-green-900/20' : 'border-border bg-muted/30'">
+                  [class]="promoteToProd() ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'">
                   <label class="flex items-start gap-2 cursor-pointer select-none">
                     <input type="checkbox" [checked]="promoteToProd()" (change)="promoteToProd.set(!promoteToProd())" class="mt-0.5 rounded" />
                     <div>
@@ -518,8 +518,8 @@ export interface AppOption {
             }
             <!-- EDIT: already on production -->
             @if (isEditMode() && isProdCert()) {
-              <div class="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-xs text-green-800 dark:text-green-300">
-                <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5 flex-shrink-0 text-green-600 dark:text-green-400" />
+              <div class="flex items-center gap-2 p-3 bg-muted/30 border border-border rounded-lg text-xs text-muted-foreground">
+                <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5 flex-shrink-0 text-[hsl(var(--ok))]" />
                 <span>Using <strong>production</strong> certificate (Let's Encrypt).</span>
               </div>
             }

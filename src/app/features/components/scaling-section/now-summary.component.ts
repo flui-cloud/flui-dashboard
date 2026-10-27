@@ -178,7 +178,7 @@ interface StatCard {
                 </p>
               } @else {
                 <p class="m-0 text-foreground">
-                  A purchase failed {{ heldAge() }} ago — nothing more is bought
+                  A node failed to be added {{ heldAge() }} ago — nothing more is added
                   until you try again.
                 </p>
               }
@@ -485,14 +485,14 @@ export class ScalingNowSummaryComponent {
       const blocked = this.preview()?.blocked?.headline;
       return blocked
         ? `${since}. ${blocked}.${under}`
-        : `${since} — nothing this group may buy can be had, so it raises an alarm and buys nothing.${under}`;
+        : `${since} — nothing this group may add can be had, so it raises an alarm and adds nothing.${under}`;
     }
     if (this.manual()) {
-      return `${since} — it would name ${chosen.shape} in ${chosen.region} and raise an alarm. Nothing here can buy it.${under}`;
+      return `${since} — it would name ${chosen.shape} in ${chosen.region} and raise an alarm. Nothing here can add it.${under}`;
     }
     if (this.withheld()) {
-      return `${since} — a ${chosen.shape} in ${chosen.region} would fit, and this group is set to tell you rather than buy it.${under}`;
+      return `${since} — a ${chosen.shape} in ${chosen.region} would fit, and this group is set to tell you rather than add it.${under}`;
     }
-    return `${since} — Flui would buy a ${chosen.shape} in ${chosen.region}.${under}`;
+    return `${since} — Flui would add a ${chosen.shape} in ${chosen.region}.${under}`;
   });
 }

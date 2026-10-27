@@ -77,7 +77,7 @@ import { ClusterScalingRow } from '../../model/scaling-section.models';
             [href]="'/scaling/' + groupId + '/market'"
             class="ml-1 text-[13px] font-semibold text-primary hover:underline"
           >
-            What it would buy →
+            What it would add →
           </a>
         }
       </div>
@@ -102,10 +102,10 @@ export class ScalingGrowthCardComponent {
 
     if (row.groupCount === 0) {
       return row.capability.canProvision
-        ? 'Nothing grows it. Flui can buy a node on ' +
+        ? 'Nothing grows it. Flui can add a node on ' +
             row.capability.provider +
             ', but today one appears only when a person adds it.'
-        : 'Nothing grows it, and Flui cannot buy a node on ' +
+        : 'Nothing grows it, and Flui cannot add a node on ' +
             row.capability.provider +
             ': a node appears only when a person adds it.';
     }
@@ -116,8 +116,8 @@ export class ScalingGrowthCardComponent {
 
     if (!row.acts) {
       return row.capability.canProvision
-        ? 'Flui names the machine that would fit when an app has nowhere to run, and buys nothing: the group is manual. Switch it to automatic in the scaling section, or add the machine yourself.'
-        : 'Flui raises an alarm when an app has nowhere to run, and names the machine that would fit. It cannot buy one here.';
+        ? 'Flui names the machine that would fit when an app has nowhere to run, and adds nothing: the group is manual. Switch it to automatic in the scaling section, or add the machine yourself.'
+        : 'Flui raises an alarm when an app has nowhere to run, and names the machine that would fit. It cannot add one here.';
     }
 
     const ceiling = row.bounds
@@ -127,6 +127,6 @@ export class ScalingGrowthCardComponent {
       row.monthlyCap != null
         ? ` and €${row.monthlyCap.toFixed(0)} a month`
         : '';
-    return `Flui buys a node when an app has nowhere to run, ${ceiling}${cap}, without asking you. It gives one back when the work fits without it.`;
+    return `Flui adds a node when an app has nowhere to run, ${ceiling}${cap}, without asking you, and removes one when the work fits without it. Each node added is a server billed by the provider.`;
   });
 }

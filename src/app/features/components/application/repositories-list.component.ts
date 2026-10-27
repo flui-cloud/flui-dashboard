@@ -87,24 +87,24 @@ import {
   template: `
     <!-- Success Toast -->
     @if (showSuccessToast()) {
-      <div class="fixed top-4 right-4 z-50 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md">
+      <div class="fixed top-4 right-4 z-50 bg-card border border-border rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md">
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0">
-            <ng-icon name="lucideCircleCheck" class="h-6 w-6 text-green-600 dark:text-green-400" />
+            <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-[hsl(var(--ok))]" />
           </div>
           <div class="flex-1">
-            <h3 class="text-sm font-semibold text-green-900 dark:text-green-100">
+            <h3 class="text-sm font-medium">
               {{ successToastTitle() }}
             </h3>
             @if (successToastMessage()) {
-              <p class="text-sm text-green-700 dark:text-green-300 mt-1">
+              <p class="text-sm text-muted-foreground mt-1">
                 {{ successToastMessage() }}
               </p>
             }
           </div>
           <button
             (click)="showSuccessToast.set(false)"
-            class="flex-shrink-0 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+            class="flex-shrink-0 text-muted-foreground hover:text-foreground"
           >
             <ng-icon name="lucideX" class="h-5 w-5" />
           </button>
@@ -114,24 +114,24 @@ import {
 
     <!-- Error Toast -->
     @if (showErrorToast()) {
-      <div class="fixed top-4 right-4 z-50 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md">
+      <div class="fixed top-4 right-4 z-50 bg-card border border-destructive/40 rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md">
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0">
-            <ng-icon name="lucideCircleX" class="h-6 w-6 text-red-600 dark:text-red-400" />
+            <ng-icon name="lucideCircleX" class="h-5 w-5 text-destructive" />
           </div>
           <div class="flex-1">
-            <h3 class="text-sm font-semibold text-red-900 dark:text-red-100">
+            <h3 class="text-sm font-medium">
               {{ errorToastTitle() }}
             </h3>
             @if (errorToastMessage()) {
-              <p class="text-sm text-red-700 dark:text-red-300 mt-1">
+              <p class="text-sm text-muted-foreground mt-1">
                 {{ errorToastMessage() }}
               </p>
             }
           </div>
           <button
             (click)="showErrorToast.set(false)"
-            class="flex-shrink-0 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+            class="flex-shrink-0 text-muted-foreground hover:text-foreground"
           >
             <ng-icon name="lucideX" class="h-5 w-5" />
           </button>
@@ -141,22 +141,22 @@ import {
 
     <!-- Warning Toast -->
     @if (showWarningToast()) {
-      <div class="fixed top-4 right-4 z-50 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md">
+      <div class="fixed top-4 right-4 z-50 bg-card border border-border rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md">
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0">
-            <ng-icon name="lucideCircleAlert" class="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-[hsl(var(--warn))]" />
           </div>
           <div class="flex-1">
-            <h3 class="text-sm font-semibold text-yellow-900 dark:text-yellow-100">
-              Connection Cancelled
+            <h3 class="text-sm font-medium">
+              Connection cancelled
             </h3>
-            <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+            <p class="text-sm text-muted-foreground mt-1">
               {{ warningToastMessage() }}
             </p>
           </div>
           <button
             (click)="showWarningToast.set(false)"
-            class="flex-shrink-0 text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200"
+            class="flex-shrink-0 text-muted-foreground hover:text-foreground"
           >
             <ng-icon name="lucideX" class="h-5 w-5" />
           </button>
@@ -313,16 +313,16 @@ import {
 
         @case ('connected') {
           <!-- Connected: show GitHub status bar + existing repos UI -->
-          <div class="flex items-center justify-between bg-green-50 dark:bg-slate-800 border border-green-200 dark:border-slate-700 rounded-lg px-4 py-3">
+          <div class="flex items-center justify-between bg-card border border-border rounded-lg px-4 py-3">
             <div class="flex items-center gap-3">
-              <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-green-600 dark:text-emerald-500" />
+              <ng-icon name="lucideCircleCheck" class="h-4 w-4 text-[hsl(var(--ok))]" />
               <div>
                 @if (setupStatus()?.authMethod === 'github_app') {
-                  <span class="text-sm font-medium text-green-900 dark:text-slate-200">GitHub App Connected</span>
+                  <span class="text-sm font-medium">GitHub App connected</span>
                 } @else {
-                  <span class="text-sm font-medium text-green-900 dark:text-slate-200">GitHub Connected</span>
+                  <span class="text-sm font-medium">GitHub connected</span>
                   @if (gitHubUsername()) {
-                    <span class="text-sm text-green-700 dark:text-slate-400 ml-2">as {{ '@' + gitHubUsername() }}</span>
+                    <span class="text-sm text-muted-foreground ml-2">as {{ '@' + gitHubUsername() }}</span>
                   }
                 }
               </div>
@@ -416,31 +416,31 @@ import {
 
       <!-- Stats -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div class="bg-card border border-border rounded-lg p-4">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Total Repositories</p>
-              <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ allRepos().length }}</p>
+              <p class="text-sm text-muted-foreground">Total repositories</p>
+              <p class="text-2xl font-semibold tabular-nums">{{ allRepos().length }}</p>
             </div>
-            <ng-icon name="lucideGitBranch" class="h-8 w-8 text-gray-400" />
+            <ng-icon name="lucideGitBranch" class="h-5 w-5 text-muted-foreground" />
           </div>
         </div>
-        <div class="bg-green-50 dark:bg-slate-800 border border-green-200 dark:border-slate-700 rounded-lg p-4">
+        <div class="bg-card border border-border rounded-lg p-4">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-green-600 dark:text-slate-400">Connected</p>
-              <p class="text-2xl font-bold text-green-900 dark:text-emerald-400">{{ connectedCount() }}</p>
+              <p class="text-sm text-muted-foreground">Connected</p>
+              <p class="text-2xl font-semibold tabular-nums">{{ connectedCount() }}</p>
             </div>
-            <ng-icon name="lucideCircleCheck" class="h-8 w-8 text-green-500 dark:text-emerald-500/60" />
+            <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-muted-foreground" />
           </div>
         </div>
-        <div class="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-lg p-4">
+        <div class="bg-card border border-border rounded-lg p-4">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-blue-600 dark:text-slate-400">Auto-deploy Enabled</p>
-              <p class="text-2xl font-bold text-blue-900 dark:text-sky-400">{{ autoDeployCount() }}</p>
+              <p class="text-sm text-muted-foreground">Auto-deploy enabled</p>
+              <p class="text-2xl font-semibold tabular-nums">{{ autoDeployCount() }}</p>
             </div>
-            <ng-icon name="lucideRocket" class="h-8 w-8 text-blue-500 dark:text-sky-500/60" />
+            <ng-icon name="lucideRocket" class="h-5 w-5 text-muted-foreground" />
           </div>
         </div>
       </div>
@@ -548,7 +548,7 @@ import {
                     <!-- Status Badges -->
                     <div class="flex items-center gap-2 mb-4">
                       @if (repo.connected) {
-                        <span class="text-xs px-2 py-1 rounded bg-green-100 text-green-800 dark:bg-slate-700 dark:text-emerald-400">
+                        <span class="text-xs px-2 py-1 rounded bg-muted text-muted-foreground">
                           Imported
                         </span>
                       }
@@ -817,7 +817,7 @@ import {
                               </span>
                             }
                             @if (repo.isImported) {
-                              <span class="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800 dark:bg-slate-700 dark:text-emerald-400">
+                              <span class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
                                 Already imported
                               </span>
                             }
@@ -886,7 +886,7 @@ import {
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0">
               <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-                <ng-icon name="lucideCircleAlert" class="h-6 w-6 text-red-600 dark:text-red-400" />
+                <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-destructive" />
               </div>
             </div>
             <div class="flex-1">
@@ -1102,7 +1102,7 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
   patStatusColor = computed(() => {
     const s = this.patStatus()?.status;
     switch (s) {
-      case 'VALID': return 'text-emerald-600 dark:text-emerald-400 font-medium';
+      case 'VALID': return 'text-[hsl(var(--ok))] font-medium';
       case 'EXPIRING_SOON':
       case 'UNKNOWN_EXPIRY': return 'text-amber-600 dark:text-amber-400 font-medium';
       case 'EXPIRED':
@@ -1226,7 +1226,7 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
   async onGithubConnected(event: { username: string }): Promise<void> {
     await this.repoService.checkOAuthStatus();
     await this.loadRepos();
-    this.successToastTitle.set('GitHub Connected!');
+    this.successToastTitle.set('GitHub connected');
     this.successToastMessage.set(`Connected as @${event.username}`);
     this.showSuccessToast.set(true);
     setTimeout(() => this.showSuccessToast.set(false), 5000);
@@ -1249,7 +1249,7 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
    */
   private async handleOAuthSuccess() {
     // Show success notification
-    this.successToastTitle.set('GitHub Connected Successfully!');
+    this.successToastTitle.set('GitHub connected');
     this.successToastMessage.set('Your GitHub account is now connected. You can import repositories below.');
     this.showSuccessToast.set(true);
 
@@ -1411,8 +1411,8 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
     this.closeImportModal();
     await this.loadRepos();
 
-    this.successToastTitle.set('Import Successful');
-    this.successToastMessage.set(`${imported} ${imported === 1 ? 'repository' : 'repositories'} imported successfully.`);
+    this.successToastTitle.set('Repositories imported');
+    this.successToastMessage.set(`${imported} ${imported === 1 ? 'repository' : 'repositories'} imported.`);
     this.showSuccessToast.set(true);
     setTimeout(() => this.showSuccessToast.set(false), 5000);
   }

@@ -140,7 +140,7 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
             </div>
             <div class="bg-card text-card-foreground rounded-lg border p-4">
               <div class="flex items-center">
-                <div class="bg-green-500/10 text-green-600 p-2 rounded-md">
+                <div class="bg-muted text-muted-foreground p-2 rounded-md">
                   <ng-icon name="lucideServer" class="w-6 h-6"></ng-icon>
                 </div>
                 <div class="ml-3">
@@ -300,16 +300,16 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
                               </button>
                             }
                             @if (p.synced) {
-                              <div class="inline-flex items-center rounded border border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400 overflow-hidden">
+                              <div class="inline-flex items-center rounded border border-border bg-card text-foreground overflow-hidden">
                                 <span class="inline-flex items-center gap-1 px-2 py-1" [title]="p.displayName + ' — synced'">
                                   <app-provider-mark [name]="p.displayName" [size]="16" />
                                   <span>{{ p.displayName }}</span>
-                                  <ng-icon name="lucideCheck" class="w-3 h-3"></ng-icon>
+                                  <ng-icon name="lucideCheck" class="w-3 h-3 text-[hsl(var(--ok))]"></ng-icon>
                                 </span>
                                 <button
                                   (click)="unsyncKeyFromProvider(key, p.id)"
                                   [disabled]="isUnsyncing(key.id, p.id) || isSyncing(key.id, p.id)"
-                                  class="px-1 py-1 hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors border-l border-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  class="px-1 py-1 hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors border-l border-border disabled:opacity-50 disabled:cursor-not-allowed"
                                   [title]="'Remove from ' + p.displayName"
                                   >
                                   @if (isUnsyncing(key.id, p.id)) {
@@ -338,7 +338,7 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
                           </button>
                           <button
                             (click)="downloadKey(key)"
-                            class="text-muted-foreground hover:text-green-600 p-1 rounded hover:bg-green-600/10 transition-colors"
+                            class="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-accent transition-colors"
                             title="Download key"
                             >
                             <ng-icon name="lucideDownload" class="w-4 h-4"></ng-icon>
@@ -408,8 +408,8 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
               </div>
             }
             @if (bulkDeleteSuccess()) {
-              <div class="flex items-center gap-2 px-3 py-2 rounded-md bg-green-500/10 border border-green-500/20 text-sm text-green-600">
-                <ng-icon name="lucideCheck" class="w-4 h-4 shrink-0"></ng-icon>
+              <div class="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/30 border border-border text-sm text-foreground">
+                <ng-icon name="lucideCheck" class="w-4 h-4 shrink-0 text-[hsl(var(--ok))]"></ng-icon>
                 {{ bulkDeleteSuccessMessage() }}
               </div>
             }
@@ -512,8 +512,8 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
               </div>
             }
             @if (deleteSuccess()) {
-              <div class="flex items-center gap-2 px-3 py-2 rounded-md bg-green-500/10 border border-green-500/20 text-sm text-green-600">
-                <ng-icon name="lucideCheck" class="w-4 h-4 shrink-0"></ng-icon>
+              <div class="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/30 border border-border text-sm text-foreground">
+                <ng-icon name="lucideCheck" class="w-4 h-4 shrink-0 text-[hsl(var(--ok))]"></ng-icon>
                 Key deleted successfully.
               </div>
             }

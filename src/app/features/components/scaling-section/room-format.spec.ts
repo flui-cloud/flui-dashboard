@@ -8,14 +8,14 @@ describe('the room line', () => {
     expect(
       roomLine(room({ memoryMi: 2150, cpuMillicores: 1430, node: 'master' }), null),
     ).toBe(
-      'The largest app that still fits: 2.1 GiB · 1.4 CPU (on master). Anything bigger makes Flui buy a node.',
+      'The largest app that still fits: 2.1 GiB · 1.4 CPU (on master). Anything bigger makes Flui add a node.',
     );
   });
 
   it('does not promise a purchase from a group that buys nothing', () => {
     expect(
       roomLine(room({ memoryMi: 2150, cpuMillicores: 1430, node: 'master' }), null, false),
-    ).toContain('Anything bigger needs a new node, and this group buys none on its own.');
+    ).toContain('Anything bigger needs a new node, and this group adds none on its own.');
   });
 
   it('puts what is waiting against the most any node has left', () => {

@@ -30,7 +30,7 @@ describe('the nodes tile moves the group floor', () => {
   const build = async (r: ClusterScalingRow, acts = false): Promise<void> => {
     api = {
       setFloor: jasmine.createSpy('setFloor').and.returnValue(
-        of({ acts: { acts, says: 'This group buys on its own.' } }),
+        of({ acts: { acts, says: 'This group adds nodes on its own.' } }),
       ),
       preview: jasmine.createSpy('preview').and.returnValue(
         of({
@@ -68,7 +68,7 @@ describe('the nodes tile moves the group floor', () => {
     expect(find('tile-fleet-confirm')!.textContent).toContain('Hold 3 nodes');
     await click('tile-fleet-confirm-yes');
     expect(api.setFloor).toHaveBeenCalledWith('g-1', 3);
-    expect(find('tile-fleet-buy')!.textContent).toContain('Buy one cx23 in fsn1');
+    expect(find('tile-fleet-buy')!.textContent).toContain('Add one cx23 in fsn1');
     await click('tile-fleet-buy-yes');
     expect(api.approvePurchase).toHaveBeenCalledWith('g-1', { shape: 'cx23', region: 'fsn1' });
   });
@@ -99,7 +99,7 @@ describe('the nodes tile moves the group floor', () => {
     await click('tile-fleet-plus');
     await click('tile-fleet-confirm-yes');
     expect(api.preview).not.toHaveBeenCalled();
-    expect(find('tile-fleet-waiting')!.textContent).toContain('buys on its own');
+    expect(find('tile-fleet-waiting')!.textContent).toContain('adds nodes on its own');
   });
 
   it('offers again, after a reload, the purchase a manual group is waiting on', async () => {
@@ -107,14 +107,14 @@ describe('the nodes tile moves the group floor', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(api.preview).toHaveBeenCalledWith('g-1');
-    expect(find('tile-fleet-buy')!.textContent).toContain('Buy one cx23 in fsn1');
+    expect(find('tile-fleet-buy')!.textContent).toContain('Add one cx23 in fsn1');
   });
 
-  it('brings a floor above the fleet back down without buying or removing anything', async () => {
+  it('brings a floor above the fleet back down without adding or removing anything', async () => {
     await build(row({ nodes: 1, bounds: { min: 2, desired: 2, max: 2 } }));
     await fixture.whenStable();
     await click('tile-fleet-minus');
-    expect(find('tile-fleet-confirm')!.textContent).toContain('Nothing is bought or removed');
+    expect(find('tile-fleet-confirm')!.textContent).toContain('Nothing is added or removed');
     api.preview.calls.reset();
     await click('tile-fleet-confirm-yes');
     expect(api.setFloor).toHaveBeenCalledWith('g-1', 1);
@@ -129,13 +129,13 @@ describe('the nodes tile moves the group floor', () => {
     expect(find('tile-fleet-buy')).toBeNull();
   });
 
-  it('keeps both buttons off where Flui cannot buy', async () => {
+  it('keeps both buttons off where Flui cannot add nodes', async () => {
     await build(row({ groupId: null, capability: { provider: 'byos', canProvision: false, hasCatalogue: false, billing: 'none' } }));
     expect(find('tile-fleet-plus')!.disabled).toBeTrue();
     expect(find('tile-fleet-minus')!.disabled).toBeTrue();
   });
 
-  it('never offers to give back the master', async () => {
+  it('never offers to remove the master', async () => {
     await build(row({ nodes: 1, bounds: { min: 1, desired: 1, max: 3 } }));
     expect(find('tile-fleet-minus')!.disabled).toBeTrue();
   });

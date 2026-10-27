@@ -304,14 +304,14 @@ interface DecisionMarker {
               testid="declines-why"
             >
               “Why did you not scale?” is the only question anybody asks an
-              autoscaler, so the times it bought nothing sit on the same axis,
+              autoscaler, so the times it added nothing sit on the same axis,
               at the same size, as the times it did.
             </app-explain>
           </div>
         } @else {
           <app-explain
             [floating]="true"
-            label="Nothing bought or sold yet"
+            label="No nodes added or removed yet"
             labelClass="text-sm text-muted-foreground"
             testid="no-history"
           >
