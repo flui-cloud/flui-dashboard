@@ -21,6 +21,7 @@ import { ClusterStorageService } from '../../service/cluster-storage.service';
 import { ApplicationSnapshotsService } from '../../service/application-snapshots.service';
 import { ClusterOrphanedVolumesComponent } from './cluster-orphaned-volumes.component';
 import { ClusterReplicatedVolumesCardComponent } from './cluster-replicated-volumes-card.component';
+import { ClusterNodeDisksCardComponent } from './cluster-node-disks-card.component';
 import { ClusterStorageStatusDto } from '../../../core/api/model/clusterStorageStatusDto';
 import {
   ApplicationSnapshot,
@@ -75,7 +76,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
 @Component({
   selector: 'cluster-storage-tab',
   standalone: true,
-  imports: [RouterModule, NgIconComponent, ClusterOrphanedVolumesComponent, ClusterReplicatedVolumesCardComponent],
+  imports: [RouterModule, NgIconComponent, ClusterOrphanedVolumesComponent, ClusterReplicatedVolumesCardComponent, ClusterNodeDisksCardComponent],
   providers: [
     provideIcons({
       lucideHardDrive,
@@ -398,6 +399,8 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
         }
 
         <app-cluster-replicated-volumes-card class="block" [clusterId]="clusterId()" />
+
+        <app-cluster-node-disks-card class="block" [clusterId]="clusterId()" />
 
         <!-- Storage classes overview -->
         <div class="card-inner p-4">
