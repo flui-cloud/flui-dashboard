@@ -9,14 +9,16 @@ import {
   lucideCircleAlert,
   lucidePlus,
   lucideTrash,
+  lucideMoveVertical,
 } from '@ng-icons/lucide';
 
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
-import { ClusterStatus } from '../../model/cluster.models';
+import { ClusterStatus, ClusterType } from '../../model/cluster.models';
 import { InstanceWithLabels, getClusterInfo, getClusterNodeId } from '../../model/instance.models';
 import { InstanceRowComponent } from '../compute/instance-row.component';
 import { RemoveWorkerDialogComponent } from './remove-worker-dialog.component';
+import { ResizeNodeDialogComponent } from './resize-node-dialog.component';
 import { ByosConnectNodeDialogComponent } from './byos-connect-node-dialog.component';
 
 interface NodeRowMeta {
@@ -35,6 +37,7 @@ interface NodeRowMeta {
     InstanceRowComponent,
     RouterLink,
     RemoveWorkerDialogComponent,
+    ResizeNodeDialogComponent,
     ByosConnectNodeDialogComponent
 ],
   providers: [
@@ -45,6 +48,7 @@ interface NodeRowMeta {
       lucideCircleAlert,
       lucidePlus,
       lucideTrash,
+      lucideMoveVertical,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -132,6 +136,20 @@ interface NodeRowMeta {
             @for (row of nodeRows(); track row.node.id) {
               <div class="space-y-1">
                 <app-instance-row [instance]="row.node" />
+                @if (canResize()) {
+                  <div class="flex justify-end px-2">
+                    <button
+                      type="button"
+                      (click)="resizeTarget.set(row.node)"
+                      title="Move this node to another machine type"
+                      class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-border hover:bg-muted transition-colors text-muted-foreground"
+                      data-testid="node-resize"
+                    >
+                      <ng-icon name="lucideMoveVertical" class="h-3 w-3" />
+                      Resize
+                    </button>
+                  </div>
+                }
                 @if (!row.isMaster && isByos()) {
                   <div class="flex justify-end px-2">
                     <button
@@ -161,6 +179,16 @@ interface NodeRowMeta {
       />
     }
 
+    @if (resizeTarget(); as target) {
+      <app-resize-node-dialog
+        [clusterId]="cluster()!.id!"
+        [nodeId]="resolveNodeId(target)"
+        [nodeName]="target.name || target.displayName || ''"
+        [provider]="cluster()?.provider"
+        (closed)="resizeTarget.set(null); refreshNodes()"
+      />
+    }
+
     @if (removeTarget(); as target) {
       <app-remove-worker-dialog
         [clusterId]="cluster()!.id!"
@@ -183,6 +211,16 @@ export class ClusterNodesTabComponent implements OnInit {
 
   protected showByosDialog = signal<boolean>(false);
   protected removeTarget = signal<InstanceWithLabels | null>(null);
+  protected resizeTarget = signal<InstanceWithLabels | null>(null);
+  /**
+   * Workload clusters only: a node of the control cluster hosts this page and
+   * the API that would resize it, so that stays with `flui env scale-node`.
+   */
+  protected canResize = computed(
+    () =>
+      !this.isByos() &&
+      this.cluster()?.clusterType === ClusterType.WORKLOAD,
+  );
 
   protected isByos = computed(() => this.clusterService.isByosCluster());
 
