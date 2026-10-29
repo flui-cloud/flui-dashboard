@@ -47,6 +47,7 @@
     <app-cluster-overview-nodes-card />
 
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      <app-cluster-ha-card [clusterId]="c.id" />
       @if (!guest()) {
       <!-- Firewall -->
       <div class="card-surface p-4 flex flex-col">

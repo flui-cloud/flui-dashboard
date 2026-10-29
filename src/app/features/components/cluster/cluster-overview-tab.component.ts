@@ -1,3 +1,4 @@
+import { ClusterHaCardComponent } from './cluster-ha-card.component';
 import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterModule, Router } from '@angular/router';
@@ -42,7 +43,7 @@ import { meterBarClass } from './cluster-overview-nodes';
 @Component({
   selector: 'cluster-overview-tab',
   standalone: true,
-  imports: [MaskIdPipe, ClusterOverviewNodesCardComponent,
+  imports: [MaskIdPipe, ClusterOverviewNodesCardComponent, ClusterHaCardComponent,
     ClusterMaintenanceCardComponent,
     ClusterEgressLineComponent,
     RouterModule, NgIconComponent, AutoscaleWarningBannerComponent, AttachVNetDialogComponent, EnableBackupsModalComponent],

@@ -41,7 +41,7 @@ export interface GiveBackAlarm {
 }
 
 export interface GiveBackReason {
-  kind: 'data-on-node' | 'not-restarted' | 'no-interruption' | 'placed-by-machine' | 'master' | 'runs-flui-api';
+  kind: 'data-on-node' | 'not-restarted' | 'no-interruption' | 'placed-by-machine' | 'master' | 'server' | 'copies' | 'runs-flui-api';
   title: string;
   fix: string;
   items: { label: string; applicationId: string | null }[];
