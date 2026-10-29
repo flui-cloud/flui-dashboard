@@ -33,6 +33,7 @@ import { AppOverviewStatusStripComponent } from './app-overview-status-strip.com
 import { AppOverviewSummaryComponent } from './app-overview-summary.component';
 import { AppRecapActivityComponent } from './app-recap-activity.component';
 import { recentEvents } from './app-recap-bundle';
+import { DatabaseHaCardComponent } from './database-ha-card.component';
 
 @Component({
   selector: 'app-overview-tab',
@@ -49,6 +50,7 @@ import { recentEvents } from './app-recap-bundle';
     AppOverviewStatusStripComponent,
     AppOverviewSummaryComponent,
     AppRecapActivityComponent,
+    DatabaseHaCardComponent,
   ],
   providers: [provideIcons({ lucidePin, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.Eager,

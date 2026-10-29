@@ -20,6 +20,7 @@ import { ClusterService } from '../../service/cluster.service';
 import { ClusterStorageService } from '../../service/cluster-storage.service';
 import { ApplicationSnapshotsService } from '../../service/application-snapshots.service';
 import { ClusterOrphanedVolumesComponent } from './cluster-orphaned-volumes.component';
+import { ClusterReplicatedVolumesCardComponent } from './cluster-replicated-volumes-card.component';
 import { ClusterStorageStatusDto } from '../../../core/api/model/clusterStorageStatusDto';
 import {
   ApplicationSnapshot,
@@ -74,7 +75,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
 @Component({
   selector: 'cluster-storage-tab',
   standalone: true,
-  imports: [RouterModule, NgIconComponent, ClusterOrphanedVolumesComponent],
+  imports: [RouterModule, NgIconComponent, ClusterOrphanedVolumesComponent, ClusterReplicatedVolumesCardComponent],
   providers: [
     provideIcons({
       lucideHardDrive,
@@ -290,6 +291,12 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                   class="h-4 w-4 text-muted-foreground"
                 />
               </button>
+              @if (nfs.confirmsBeforeDisk) {
+                <p class="px-4 pb-3 -mt-1 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400">
+                  <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <span>{{ nfs.durability }}</span>
+                </p>
+              }
               @if (nfsOpen()) {
                 <dl class="px-4 pb-4 space-y-2 text-sm">
                   <div>
@@ -389,6 +396,8 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
             </p>
           </div>
         }
+
+        <app-cluster-replicated-volumes-card class="block" [clusterId]="clusterId()" />
 
         <!-- Storage classes overview -->
         <div class="card-inner p-4">

@@ -13,7 +13,9 @@
       [canRollback]="rollbackAvailable()"
     />
 
-    @if (app.persistenceScope === "dedicated") {
+    <app-database-ha-card #haCard class="block" [app]="app" />
+
+    @if (app.persistenceScope === "dedicated" && !haCard.active()) {
       <div
         class="flex items-start gap-3 rounded-lg border border-indigo-200 bg-indigo-50/70 px-4 py-2.5 dark:border-indigo-900 dark:bg-indigo-950/30"
       >
@@ -25,7 +27,9 @@
           <div class="font-medium text-indigo-900 dark:text-indigo-200">
             Pinned to {{ app.dedicatedNodeName ?? "the master node" }}
           </div>
-          <div class="mt-0.5 text-xs text-indigo-700/80 dark:text-indigo-300/80">
+          <div
+            class="mt-0.5 text-xs text-indigo-700/80 dark:text-indigo-300/80"
+          >
             This app keeps its data on one node's local disk, so it always runs
             there. Resizing that node will briefly stop the app.
           </div>
@@ -35,6 +39,7 @@
 
     @if (!isPublicApp()) {
       <app-internal-service-info
+        class="block"
         [applicationSlug]="app.slug"
         [namespace]="app.k8sNamespace"
         [port]="app.port"
@@ -77,8 +82,7 @@
         @if (app.status === "deleting") {
           <span class="min-w-0 animate-pulse text-xs text-muted-foreground">
             {{
-              deleteStepMessage() ||
-                "Removing application and its resources..."
+              deleteStepMessage() || "Removing application and its resources..."
             }}
           </span>
           <button

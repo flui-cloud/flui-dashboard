@@ -68,6 +68,13 @@ export const clusterRoutes: Routes = [
           ),
       },
       {
+        path: 'availability',
+        loadComponent: () =>
+          import('./features/components/cluster/cluster-ha-tab.component').then(
+            (m) => m.ClusterHaTabComponent
+          ),
+      },
+      {
         path: 'nodes',
         loadComponent: () =>
           import('./features/components/cluster/cluster-nodes-tab.component').then(
