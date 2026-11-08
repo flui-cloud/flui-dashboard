@@ -386,6 +386,8 @@ export * from './giveBackAlarmDto';
 export * from './giveBackDto';
 export * from './giveBackItemDto';
 export * from './giveBackReasonDto';
+export * from './haPlanResponseDto';
+export * from './haPlanServerDto';
 export * from './healthCheckConfigDto';
 export * from './healthHistoryPointDto';
 export * from './healthStatusDto';

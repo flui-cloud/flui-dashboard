@@ -5,7 +5,7 @@ import { InfrastructureClustersService } from '../../core/api/api/infrastructure
 import { InfrastructureOperationsService } from '../../core/api/api/infrastructureOperations.service';
 import { VirtualInstancesService } from '../../core/api/api/virtualInstances.service';
 import { ProviderManagementService } from '../../core/api/api/providerManagement.service';
-import { CreateClusterDto, UpdateClusterVNetDto, ProviderDefinitionDto, ClusterResponseDto, FirewallRuleDto } from '../../core/api/model/models';
+import { CreateClusterDto, UpdateClusterVNetDto, ProviderDefinitionDto, ClusterResponseDto, FirewallRuleDto, HaPlanResponseDto } from '../../core/api/model/models';
 import {
   InstanceWithLabels,
   mapClusterNodeToInstance,
@@ -245,8 +245,13 @@ export class ClusterService {
         region: config.region,
         nodeSize: config.nodeTypeId,
         workerCount: 0,
-        minNodes: config.minNodes,
-        maxNodes: config.maxNodes,
+        ...(config.highAvailability
+          ? {
+              highAvailability: CreateClusterDto.HighAvailabilityEnum.ThreeLocations,
+              shapes: config.highAvailability.shapes,
+              completeLater: config.highAvailability.completeLater,
+            }
+          : { minNodes: config.minNodes, maxNodes: config.maxNodes }),
         sshKeys: config.sshKeys,
         diskSizeGb: config.diskSizeGb,
         vnetConfig: config.vnetConfig,
@@ -664,6 +669,22 @@ export class ClusterService {
   }> {
     return firstValueFrom(
       this.clustersApi.clustersControllerIssueJoinToken(clusterId, opts),
+    );
+  }
+
+  async highAvailabilityPlan(query: {
+    provider: string;
+    region: string;
+    shapes: string[];
+    completeLater: boolean;
+  }): Promise<HaPlanResponseDto> {
+    return firstValueFrom(
+      this.clustersApi.clustersControllerHighAvailabilityPlan(
+        query.provider as CreateClusterDto.ProviderEnum,
+        query.region,
+        query.shapes.join(','),
+        query.completeLater,
+      ),
     );
   }
 

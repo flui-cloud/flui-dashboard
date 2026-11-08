@@ -64,6 +64,12 @@ import { RegionServerSelectorComponent } from '../../../shared/components/region
 import { ArchitectureBadgeComponent, architectureWarning } from '../../../shared/components/architecture-badge.component';
 import { SshKeySelectorComponent } from '../../../shared/components/ssh-key-selector/ssh-key-selector.component';
 import { VNetSelectorComponent } from '../../../shared/components/vnet-selector/vnet-selector.component';
+import {
+  AvailabilityChoice,
+  ClusterAvailabilityChoiceComponent,
+  STANDARD_AVAILABILITY,
+  STANDARD_DRAFT,
+} from './cluster-availability-choice.component';
 import { ProviderWizardService } from '../../../shared/services/provider-wizard.service';
 import { PricingService } from '../../../shared/services/pricing.service';
 
@@ -108,7 +114,8 @@ interface FirewallRuleDto {
     RegionServerSelectorComponent,
     ArchitectureBadgeComponent,
     SshKeySelectorComponent,
-    VNetSelectorComponent
+    VNetSelectorComponent,
+    ClusterAvailabilityChoiceComponent
 ],
   providers: [
     provideIcons({
@@ -407,6 +414,14 @@ interface FirewallRuleDto {
               }
             </div>
     
+            <cluster-availability-choice
+              [provider]="selectedProvider()"
+              [region]="selectedRegion()"
+              [serverTypeId]="selectedServerTypeId()"
+              [(draft)]="availabilityDraft"
+              (changed)="availability.set($event)"
+              />
+
             <!-- Nodes -->
             <div class="border-t pt-6">
               <h3 class="font-medium mb-4 flex items-center">
@@ -414,6 +429,12 @@ interface FirewallRuleDto {
                 Nodes
               </h3>
 
+              @if (highlyAvailable()) {
+                <div data-testid="ha-nodes-fixed">
+                  <p class="text-sm font-medium">3 servers, one in each location</p>
+                  <p class="text-xs text-muted-foreground mt-1">Add more once the cluster is ready.</p>
+                </div>
+              } @else {
               <div class="space-y-4">
                 <div class="w-32">
                   <label for="clusterNodes" class="text-sm font-medium block mb-2">Nodes</label>
@@ -435,6 +456,7 @@ interface FirewallRuleDto {
                   section once it exists.
                 </p>
               </div>
+              }
             </div>
           </div>
         }
@@ -1186,8 +1208,17 @@ interface FirewallRuleDto {
                 <div class="space-y-3 text-sm">
                   <div class="flex items-center justify-between">
                     <span class="text-muted-foreground">Nodes:</span>
-                    <span class="font-medium">{{ fixedNodes() }}</span>
+                    <span class="font-medium">{{ costedNodes() }}</span>
                   </div>
+                  @if (highlyAvailable()) {
+                    <div class="flex items-center justify-between" data-testid="review-availability">
+                      <span class="text-muted-foreground">Availability:</span>
+                      <span class="font-medium">
+                        Three locations ·
+                        <span class="font-mono text-xs">{{ availabilityZones() }}</span>
+                      </span>
+                    </div>
+                  }
                 </div>
               </div>
     
@@ -1313,7 +1344,7 @@ interface FirewallRuleDto {
                 </h4>
                 <div class="space-y-3 text-sm">
                   <div class="flex items-center justify-between">
-                    <span class="text-muted-foreground">Monthly cost ({{ fixedNodes() }} node{{ fixedNodes() > 1 ? 's' : '' }}):</span>
+                    <span class="text-muted-foreground">Monthly cost ({{ costedNodes() }} node{{ costedNodes() > 1 ? 's' : '' }}):</span>
                     <span class="font-medium text-green-700 dark:text-green-400">€{{ getEstimatedMonthlyCost() }}/month</span>
                   </div>
                 </div>
@@ -1388,6 +1419,16 @@ export class ClusterCreationWizardComponent implements OnInit {
   minNodes = signal<number>(1);
   maxNodes = signal<number>(3);
   fixedNodes = signal<number>(1);
+
+  readonly availabilityDraft = signal(STANDARD_DRAFT);
+  readonly availability = signal<AvailabilityChoice>(STANDARD_AVAILABILITY);
+  readonly highlyAvailable = computed(() => this.availability().level === 'three-locations');
+  readonly availabilityZones = computed(() =>
+    [...this.availability().servers.map((s) => s.zone), ...this.availability().later].join(' · '),
+  );
+  readonly costedNodes = computed(() =>
+    this.highlyAvailable() ? this.availability().servers.length : this.fixedNodes(),
+  );
 
   // Advanced autoscale thresholds (optional overrides — fall back to defaults server-side)
   autoscaleDefaults = signal<AutoscaleDefaults | null>(null);
@@ -1563,7 +1604,7 @@ export class ClusterCreationWizardComponent implements OnInit {
         title: 'Resources',
         description: 'Choose region, node size and scaling',
         icon: 'lucideServer',
-        isValid: !!this.selectedRegion() && !!this.selectedServerTypeId(),
+        isValid: !!this.selectedRegion() && !!this.selectedServerTypeId() && this.availability().ready,
         isCompleted: currentIndex > 1 && !!this.selectedRegion() && !!this.selectedServerTypeId(),
       },
       {
@@ -1791,6 +1832,8 @@ export class ClusterCreationWizardComponent implements OnInit {
     this.selectedProvider.set(providerId);
     this.selectedRegion.set('');
     this.selectedServerTypeId.set('');
+    this.availabilityDraft.set(STANDARD_DRAFT);
+    this.availability.set(STANDARD_AVAILABILITY);
     this.providerRefusal.set(null);
     this.environmentNetwork.set(null);
     if (providerId) {
@@ -2002,6 +2045,7 @@ export class ClusterCreationWizardComponent implements OnInit {
       !!this.selectedProvider() &&
       !!this.selectedRegion() &&
       !!this.selectedServerTypeId() &&
+      this.availability().ready &&
       vnetOk
     );
   }
@@ -2058,7 +2102,10 @@ export class ClusterCreationWizardComponent implements OnInit {
     const serverType = this.getSelectedServerType();
     if (!serverType) return '0.00';
 
-    const nodes = this.fixedNodes();
+    const haHourly = this.highlyAvailable() ? this.availability().pricePerHour : null;
+    if (haHourly !== null) return this.pricingService.formatMonthlyPrice(haHourly);
+
+    const nodes = this.costedNodes();
     return this.pricingService.formatClusterMonthlyCost(serverType.pricePerHour, nodes);
   }
 
@@ -2282,13 +2329,17 @@ export class ClusterCreationWizardComponent implements OnInit {
   }
 
   private buildClusterConfiguration(serverType: { id: string }): ClusterConfiguration {
+    const availability = this.availability();
     return {
       name: this.basicConfigForm.get('name')?.value || '',
       provider: this.selectedProvider() as ProviderType,
       region: this.selectedRegion(),
       nodeTypeId: serverType.id,
-      minNodes: this.fixedNodes(),
-      maxNodes: this.fixedNodes(),
+      minNodes: this.costedNodes(),
+      maxNodes: this.costedNodes(),
+      highAvailability: this.highlyAvailable()
+        ? { shapes: availability.shapes, completeLater: availability.completeLater }
+        : undefined,
       sshKeys: this.selectedSshKeyId() ? [this.selectedSshKeyId()!] : [],
       diskSizeGb: this.needsDiskConfig() ? this.diskSizeGb() : undefined,
       firewallRules: this.buildFirewallRules(),
