@@ -104,6 +104,7 @@ export interface ClusterConfiguration {
   endpointHostnameMode?: 'ip' | 'domain';
   sharedStorageEnabled?: boolean;
   sharedStorageVolumeSizeGb?: number;
+  highAvailability?: { shapes: string[]; completeLater: boolean };
 }
 
 export interface ClusterCreationStep {

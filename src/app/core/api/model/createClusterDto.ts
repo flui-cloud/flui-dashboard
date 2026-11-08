@@ -34,6 +34,18 @@ export interface CreateClusterDto {
      */
     workerCount: number;
     /**
+     * `three-locations`: one server in each of the three locations the provider validated for this region, bought together and joined one at a time. Only offered where the provider declares such a layout; `region` is the first server\'s location and must be one for data. Needs `workerCount: 0`.
+     */
+    highAvailability?: CreateClusterDto.HighAvailabilityEnum;
+    /**
+     * With `three-locations`: the sizes each location may take, in order of preference, all of one architecture. Each location gets the first one it has available. Omitted: `nodeSize` only.
+     */
+    shapes?: Array<string>;
+    /**
+     * With `three-locations`: when a location has none of `shapes` available, create the cluster in the others and leave that server to add later. Off: nothing is bought and the answer lists sizes every location has.
+     */
+    completeLater?: boolean;
+    /**
      * Enable autoscaling
      */
     autoscalingEnabled?: boolean;
@@ -103,6 +115,11 @@ export namespace CreateClusterDto {
         Byos: 'byos'
     } as const;
     export type ProviderEnum = typeof ProviderEnum[keyof typeof ProviderEnum];
+    export const HighAvailabilityEnum = {
+        Standard: 'standard',
+        ThreeLocations: 'three-locations'
+    } as const;
+    export type HighAvailabilityEnum = typeof HighAvailabilityEnum[keyof typeof HighAvailabilityEnum];
     export const EndpointHostnameModeEnum = {
         Ip: 'ip',
         Domain: 'domain'
