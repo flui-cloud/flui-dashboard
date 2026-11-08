@@ -83,13 +83,13 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
             }
           </div>
           <!-- Edit / Save-Cancel toggle -->
-          @if (!replicaEditing()) {
+          @if (!replicaEditing() && !runtime?.replicasRefusal) {
             <button type="button" (click)="startReplicaEdit()" [disabled]="savingReplicas() || !runtime"
               class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-40">
               <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
               Edit
             </button>
-          } @else {
+          } @else if (replicaEditing()) {
             <div class="flex items-center gap-1">
               <button type="button" (click)="cancelReplicaEdit()"
                 class="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg transition-colors">
@@ -126,6 +126,9 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
               </span>
             }
           </div>
+          @if (runtime?.replicasRefusal; as refusal) {
+            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="replicas-refusal">{{ refusal }}</p>
+          }
           @if (replicaEditing() && replicaValue() === 0) {
             <div class="flex items-center gap-1.5 mt-2 text-xs text-amber-600 dark:text-amber-400">
               <ng-icon name="lucideAlertTriangle" class="h-3.5 w-3.5 flex-shrink-0" />
