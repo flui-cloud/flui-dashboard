@@ -151,6 +151,11 @@ interface PlanAnswer {
                     </li>
                   }
                 </ul>
+                @if (p.measured === false) {
+                  <p class="text-xs text-muted-foreground" data-testid="ha-plan-unmeasured">
+                    The provider declares these as close zones of one region; Flui has not measured them yet.
+                  </p>
+                }
                 @if (monthlyCost(); as cost) {
                   <p class="text-xs text-muted-foreground" data-testid="ha-plan-cost">
                     ~€{{ cost }}/month for {{ p.servers.length }} servers
@@ -185,9 +190,9 @@ interface PlanAnswer {
               </button>
               @if (showWhy()) {
                 <p class="mt-1 text-xs text-muted-foreground leading-relaxed">
-                  One server in each location, joined one at a time. Two keep copies of your
-                  data; the third only votes, so the cluster keeps working when one location is
-                  lost. Add more servers once it is ready.
+                  One server in each location, joined one at a time. Each location marked copies
+                  of data keeps one copy of your data, any other only votes, so the cluster keeps
+                  working when one location is lost. Add more servers once it is ready.
                 </p>
               }
             </div>
