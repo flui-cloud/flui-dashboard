@@ -32,6 +32,10 @@ export interface HaPlanResponseDto {
      */
     region: string | null;
     /**
+     * False when Flui took the three locations on the provider's word that they are close zones of one region and has not measured them yet.
+     */
+    measured: boolean;
+    /**
      * The servers it would buy, in the order they join.
      */
     servers: Array<HaPlanServerDto>;

@@ -15,7 +15,10 @@ import {
   ReplicatedVolumesView,
 } from '../../service/replicated-volumes.service';
 
-const and = (names: string[]) => names.join(' and ');
+const and = (names: string[]) =>
+  names.length < 2
+    ? names.join('')
+    : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
 
 @Component({
   selector: 'app-cluster-replicated-volumes-card',
@@ -86,16 +89,15 @@ const and = (names: string[]) => names.join(' and ');
             <li>
               An application asks for it with
               <span class="font-mono">replicated: true</span> on a volume in
-              flui.yaml, and moves to the other copy only if every volume it
+              flui.yaml, and moves to another copy only if every volume it
               mounts is replicated.
             </li>
-            @if (!v.enabled && v.plan.feasible) {
+            @if (voteLine()) {
               <li>{{ voteLine() }}</li>
             }
-            <li>
-              One copy in each of two locations: it survives losing a server or
-              a location, and every write waits for the other location.
-            </li>
+            @if (copyLine()) {
+              <li>{{ copyLine() }}</li>
+            }
             <li>Volumes that already exist do not change.</li>
           </ul>
         }
@@ -127,16 +129,28 @@ export class ClusterReplicatedVolumesCardComponent {
       return `Copies on ${and(v.storageNodes)}, one in each location.`;
     }
     if (v.plan.feasible) {
-      return `Enabling keeps copies on ${and(v.plan.storageNodes)} (${v.plan.zones.join(', ')}).`;
+      return `Enabling keeps copies on ${and(v.plan.storageNodes)} (${and(v.plan.zones)}).`;
     }
     return `Not possible yet: ${v.plan.reason}`;
   });
 
   readonly voteLine = computed(() => {
-    const p = this.view()?.plan;
-    if (!p?.feasible) return '';
+    const v = this.view();
+    const p = v?.plan;
+    if (v?.enabled || !p?.feasible || !p.tieBreakers.length) return '';
     const s = p.tieBreakers.length === 1 ? 's' : '';
     return `${and(p.tieBreakers)} cast${s} the tie-breaking vote and hold${s} no data.`;
+  });
+
+  readonly copyLine = computed(() => {
+    const v = this.view();
+    if (!v) return '';
+    let copies = 0;
+    if (v.enabled) copies = v.storageNodes.length;
+    else if (v.plan.feasible) copies = v.plan.zones.length;
+    if (copies < 2) return '';
+    const other = copies === 2 ? 'the other location' : 'the other locations';
+    return `One copy in each of ${copies} locations: it survives losing a server or a location, and every write waits for ${other}.`;
   });
 
   constructor() {

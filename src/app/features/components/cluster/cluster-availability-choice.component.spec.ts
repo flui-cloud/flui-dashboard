@@ -32,6 +32,7 @@ const possible: HaPlanResponseDto = {
   refusal: null,
   completeLaterHelps: false,
   region: 'eu-central',
+  measured: true,
   servers: [
     { zone: 'fsn1', shape: 'cpx22', role: 'data', first: true },
     { zone: 'nbg1', shape: 'cpx22', role: 'data', first: false },
@@ -46,6 +47,7 @@ const refused: HaPlanResponseDto = {
   refusal: 'hel1 has none of cpx22 available now. Sizes every location has: cx23.',
   completeLaterHelps: true,
   region: null,
+  measured: true,
   servers: [],
   later: [],
 };
@@ -56,6 +58,7 @@ const noLayout: HaPlanResponseDto = {
   refusal: 'Flui has no highly available layout for this region.',
   completeLaterHelps: false,
   region: null,
+  measured: true,
   servers: [],
   later: [],
 };
@@ -157,6 +160,17 @@ describe('ClusterAvailabilityChoiceComponent', () => {
       }),
     );
     expect(last().pricePerHour).toBeCloseTo(0.06, 5);
+  }));
+
+  it('says when Flui has the three zones only on the provider\'s word', fakeAsync(() => {
+    render(() => possible);
+    chooseThreeLocations();
+    expect(q('ha-plan-unmeasured')).toBeNull();
+
+    TestBed.resetTestingModule();
+    render(() => ({ ...possible, region: 'nl-ams', measured: false }));
+    chooseThreeLocations();
+    expect(q('ha-plan-unmeasured')!.textContent).toContain('Flui has not measured them yet');
   }));
 
   it('offers only sizes of the same architecture as fallbacks and asks again in order', fakeAsync(() => {
