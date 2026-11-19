@@ -27,10 +27,10 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
       (click)="closed.emit()"
     >
       <div
-        class="w-full max-w-lg card-surface"
+        class="flex max-h-[90vh] w-full max-w-lg flex-col card-surface"
         (click)="$event.stopPropagation()"
       >
-        <div class="border-b border-border p-5">
+        <div class="shrink-0 border-b border-border p-5">
           <h3 class="text-base font-semibold">
             Update to Flui {{ updates.availableVersion() }}
           </h3>
@@ -43,7 +43,7 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
             started.
           </p>
         </div>
-        <div class="space-y-4 p-5">
+        <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
           @if (updates.planning()) {
             <div class="flex items-center gap-2 text-sm text-muted-foreground">
               <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
@@ -176,7 +176,7 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
           }
         </div>
         <div
-          class="flex justify-end gap-2 border-t border-border bg-muted/50 p-4"
+          class="flex shrink-0 justify-end gap-2 border-t border-border bg-muted/50 p-4"
         >
           <button
             type="button"
