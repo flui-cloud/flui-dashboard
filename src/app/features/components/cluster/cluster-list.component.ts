@@ -102,7 +102,7 @@ interface FilterState {
             [appReadOnlySection]="CLUSTER_SECTION_KEYS"
             (click)="createNewCluster()"
             title="Create a new cluster"
-            class="inline-flex items-center gap-2 px-3.5 py-2 bg-blue-600 dark:bg-blue-500/20 text-white dark:text-blue-400 border border-transparent dark:border-blue-500/40 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500/30 transition-colors text-sm font-medium"
+            class="inline-flex items-center gap-2 px-3.5 py-2 bg-blue-600 text-white border border-transparent rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
           >
             <ng-icon name="lucidePlus" class="h-4 w-4" />
             <span>Create Cluster</span>
@@ -155,7 +155,7 @@ interface FilterState {
             [ngModel]="filtersState().region"
             (ngModelChange)="updateFilter('region', $event)"
             placeholder="Filter by region..."
-            class="h-9 px-3 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
+            class="h-9 px-3 border border-gray-200 rounded-md bg-white text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
           />
         </div>
 
@@ -205,16 +205,12 @@ interface FilterState {
       }
 
       @if (errorMessage() && !isLoading()) {
-        <div
-          class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4"
-        >
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
           <div class="flex items-center gap-3">
-            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400" />
+            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600" />
             <div class="flex-1">
-              <p class="text-sm font-medium text-red-900 dark:text-red-200">
-                Failed to load clusters
-              </p>
-              <p class="text-sm text-red-700 dark:text-red-300 mt-1">{{ errorMessage() }}</p>
+              <p class="text-sm font-medium text-red-900">Failed to load clusters</p>
+              <p class="text-sm text-red-700 mt-1">{{ errorMessage() }}</p>
             </div>
           </div>
         </div>
@@ -224,12 +220,12 @@ interface FilterState {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (cluster of filteredClusters(); track cluster.id) {
             <div
-              class="relative card-surface overflow-hidden hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300 border-l-4"
+              class="relative card-surface overflow-hidden hover:shadow-lg transition-all duration-300 border-l-4"
               [class]="getStatusBorderClass(cluster.status)"
             >
               @if (cluster.status === ClusterStatus.DELETING) {
                 <div
-                  class="absolute inset-0 bg-background/70 dark:bg-background/80 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-lg"
+                  class="absolute inset-0 bg-background/70 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-lg"
                 >
                   <ng-icon name="lucideLoader" class="h-8 w-8 text-muted-foreground animate-spin" />
                   <span class="text-sm font-medium text-muted-foreground">
@@ -288,7 +284,7 @@ interface FilterState {
                   </span>
                   @if (cluster.autoScalingEnabled) {
                     <span class="text-border">•</span>
-                    <span class="flex items-center gap-1 text-purple-600 dark:text-purple-400">
+                    <span class="flex items-center gap-1 text-purple-600">
                       <ng-icon name="lucideZap" class="h-4 w-4" />
                       Auto
                     </span>
@@ -328,7 +324,7 @@ interface FilterState {
                     cluster.clusterType === ClusterType.CONTROL ||
                     cluster.clusterType === ClusterType.OBSERVABILITY
                   "
-                  class="h-10 w-10 inline-flex items-center justify-center border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="h-10 w-10 inline-flex items-center justify-center border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   [title]="
                     cluster.clusterType === ClusterType.CONTROL ||
                     cluster.clusterType === ClusterType.OBSERVABILITY
@@ -346,19 +342,19 @@ interface FilterState {
             <div
               [appReadOnlySection]="CLUSTER_SECTION_KEYS"
               (click)="createNewCluster()"
-              class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
+              class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
             >
               <div
-                class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors"
+                class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 group-hover:bg-blue-50 transition-colors"
               >
                 <ng-icon
                   name="lucidePlus"
-                  class="h-10 w-10 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+                  class="h-10 w-10 text-muted-foreground group-hover:text-blue-600 transition-colors"
                 />
               </div>
 
               <h3
-                class="text-lg font-semibold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+                class="text-lg font-semibold text-foreground mb-2 group-hover:text-blue-600 transition-colors"
               >
                 Create New Cluster
               </h3>
@@ -413,10 +409,8 @@ interface FilterState {
         <div class="card-surface rounded-lg max-w-md w-full p-6 shadow-xl">
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0">
-              <div
-                class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center"
-              >
-                <ng-icon name="lucideCircleAlert" class="h-6 w-6 text-red-600 dark:text-red-400" />
+              <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <ng-icon name="lucideCircleAlert" class="h-6 w-6 text-red-600" />
               </div>
             </div>
             <div class="flex-1">
@@ -635,22 +629,22 @@ export class ClusterListComponent implements OnInit, OnDestroy {
 
     switch (status) {
       case ClusterStatus.ACTIVE:
-        return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400`;
+        return `${baseClasses} bg-green-100 text-green-800`;
       case ClusterStatus.CREATING:
-        return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400`;
+        return `${baseClasses} bg-blue-100 text-blue-800`;
       case ClusterStatus.SCALING:
       case ClusterStatus.UPDATING:
       case ClusterStatus.STOPPING:
       case ClusterStatus.STARTING:
-        return `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400`;
+        return `${baseClasses} bg-yellow-100 text-yellow-800`;
       case ClusterStatus.STOPPED:
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
+        return `${baseClasses} bg-gray-100 text-gray-800`;
       case ClusterStatus.ERROR:
-        return `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400`;
+        return `${baseClasses} bg-red-100 text-red-800`;
       case ClusterStatus.DELETING:
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
+        return `${baseClasses} bg-gray-100 text-gray-800`;
       default:
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
+        return `${baseClasses} bg-gray-100 text-gray-800`;
     }
   }
 

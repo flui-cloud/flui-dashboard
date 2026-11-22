@@ -249,16 +249,12 @@ interface FilterState {
 
         <div hlmCardContent class="p-0">
           @if (partialErrors().length > 0) {
-            <div
-              class="mx-6 mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
-            >
-              <div
-                class="flex items-center gap-2 text-yellow-800 dark:text-yellow-200 font-medium mb-2"
-              >
+            <div class="mx-6 mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div class="flex items-center gap-2 text-yellow-800 font-medium mb-2">
                 <ng-icon name="lucideTriangleAlert" class="h-4 w-4" />
                 Partial Data Warning
               </div>
-              <div class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+              <div class="text-sm text-yellow-700 space-y-1">
                 @for (error of partialErrors(); track error.provider) {
                   <div>{{ error.provider }}: {{ error.message }}</div>
                 }

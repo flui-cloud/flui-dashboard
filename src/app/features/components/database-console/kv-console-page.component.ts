@@ -61,7 +61,7 @@ const SCAN_COUNT = 100;
         <span class="ml-auto text-xs">
           @switch (conn()) {
             @case ('connected') {
-              <span class="text-emerald-600 dark:text-emerald-400">Connected</span>
+              <span class="text-emerald-600">Connected</span>
             }
             @case ('connecting') {
               <span class="text-muted-foreground">Connecting…</span>
@@ -214,7 +214,7 @@ const SCAN_COUNT = 100;
                   </span>
                 </div>
                 @if (v.truncated) {
-                  <p class="mb-2 text-xs text-amber-600 dark:text-amber-400">
+                  <p class="mb-2 text-xs text-amber-600">
                     Showing the first elements{{ v.length ? ' of ' + v.length : '' }} — value
                     truncated.
                   </p>
@@ -247,8 +247,10 @@ const SCAN_COUNT = 100;
                     <ol class="space-y-0.5 font-mono text-xs">
                       @for (it of v.value.items; track $index) {
                         <li class="flex gap-2">
-                          <span class="text-muted-foreground">{{ $index }}</span
-                          ><span class="break-all">{{ it }}</span>
+                          <span class="text-muted-foreground">{{ $index }}</span><span
+                            class="break-all"
+                            >{{ it }}</span
+                          >
                         </li>
                       }
                     </ol>

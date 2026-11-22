@@ -101,7 +101,7 @@ import {
 
         @if (p.status === 'degraded') {
           <div
-            class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400"
+            class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700"
           >
             Policy is degraded — primary is healthy but a replica destination is failing. Recovery
             will retry automatically.
@@ -164,7 +164,7 @@ import {
           } @else {
             <div class="font-mono text-xs">{{ p.cronSchedule || 'on-demand' }}</div>
             @if (activityError()) {
-              <p class="text-xs text-red-600 dark:text-red-400">
+              <p class="text-xs text-red-600">
                 Could not load the schedule and run history.
                 <button type="button" class="underline" (click)="reloadActivity(p.id)">
                   Retry

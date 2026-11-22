@@ -198,11 +198,7 @@ interface MarketRow {
                       <td [class]="t.tdNum">
                         <span
                           class="inline-flex items-center gap-1 tabular-nums"
-                          [class]="
-                            row.stale
-                              ? 'text-amber-600 dark:text-amber-400'
-                              : 'text-muted-foreground'
-                          "
+                          [class]="row.stale ? 'text-amber-600' : 'text-muted-foreground'"
                           [attr.data-testid]="'read-' + row.shape"
                         >
                           <ng-icon name="lucideClock" class="h-3 w-3" />

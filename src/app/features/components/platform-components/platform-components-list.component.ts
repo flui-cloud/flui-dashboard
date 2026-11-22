@@ -62,13 +62,13 @@ import {
       <!-- Header -->
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Platform Components</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <h1 class="text-xl font-semibold text-gray-900">Platform Components</h1>
+          <p class="text-sm text-gray-500 mt-0.5">
             Live status of core system components across all clusters
           </p>
         </div>
         <button
-          class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded hover:border-gray-300 transition-colors"
           [disabled]="service.globalLoading()"
           (click)="reload()"
         >
@@ -84,38 +84,26 @@ import {
       <!-- Stats strip -->
       @if (!service.globalLoading() && service.allComponents().length > 0) {
         <div class="grid grid-cols-3 gap-3">
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 text-center"
-          >
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Healthy</p>
-            <p class="text-2xl font-bold text-green-600 dark:text-green-400">
+          <div class="bg-white border border-gray-200 rounded-lg px-4 py-3 text-center">
+            <p class="text-xs text-gray-500 mb-0.5">Healthy</p>
+            <p class="text-2xl font-bold text-green-600">
               {{ service.healthyCount() }}
             </p>
           </div>
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 text-center"
-          >
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Degraded</p>
+          <div class="bg-white border border-gray-200 rounded-lg px-4 py-3 text-center">
+            <p class="text-xs text-gray-500 mb-0.5">Degraded</p>
             <p
               class="text-2xl font-bold"
-              [class]="
-                service.degradedCount() > 0
-                  ? 'text-yellow-600 dark:text-yellow-400'
-                  : 'text-gray-400'
-              "
+              [class]="service.degradedCount() > 0 ? 'text-yellow-600' : 'text-gray-400'"
             >
               {{ service.degradedCount() }}
             </p>
           </div>
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 text-center"
-          >
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Missing</p>
+          <div class="bg-white border border-gray-200 rounded-lg px-4 py-3 text-center">
+            <p class="text-xs text-gray-500 mb-0.5">Missing</p>
             <p
               class="text-2xl font-bold"
-              [class]="
-                service.missingCount() > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'
-              "
+              [class]="service.missingCount() > 0 ? 'text-red-600' : 'text-gray-400'"
             >
               {{ service.missingCount() }}
             </p>
@@ -124,9 +112,7 @@ import {
       }
 
       <!-- Filters -->
-      <div
-        class="bg-gray-50/70 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-      >
+      <div class="bg-gray-50/70 border border-gray-200 rounded-lg p-3">
         <div class="flex flex-wrap items-center gap-3">
           <!-- Search -->
           <div class="relative flex-1 min-w-40">
@@ -138,13 +124,13 @@ import {
               type="text"
               placeholder="Search components..."
               [(ngModel)]="searchQuery"
-              class="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              class="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
           <!-- Status filter -->
           <select
             [(ngModel)]="statusFilter"
-            class="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="px-2 py-1.5 text-sm border border-gray-200 rounded bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="">All statuses</option>
             <option value="healthy">Healthy</option>
@@ -155,7 +141,7 @@ import {
           @if (availableClusters().length > 1) {
             <select
               [(ngModel)]="clusterFilter"
-              class="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              class="px-2 py-1.5 text-sm border border-gray-200 rounded bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               <option value="">All clusters</option>
               @for (c of availableClusters(); track c.id) {
@@ -164,10 +150,7 @@ import {
             </select>
           }
           @if (searchQuery || statusFilter || clusterFilter) {
-            <button
-              class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-              (click)="clearFilters()"
-            >
+            <button class="text-xs text-blue-600 hover:underline" (click)="clearFilters()">
               Clear
             </button>
           }
@@ -179,58 +162,36 @@ import {
         <!-- Stats skeleton -->
         <div class="grid grid-cols-3 gap-3">
           @for (i of [0, 1, 2]; track i) {
-            <div
-              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 text-center space-y-2"
-            >
-              <div
-                class="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto"
-              ></div>
-              <div
-                class="h-7 w-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto"
-              ></div>
+            <div class="bg-white border border-gray-200 rounded-lg px-4 py-3 text-center space-y-2">
+              <div class="h-3 w-16 bg-gray-200 rounded animate-pulse mx-auto"></div>
+              <div class="h-7 w-10 bg-gray-200 rounded animate-pulse mx-auto"></div>
             </div>
           }
         </div>
 
         <!-- Cluster group skeleton -->
         @for (g of [5, 4, 6]; track g) {
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
-          >
+          <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <!-- Cluster header skeleton -->
-            <div
-              class="px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700"
-            >
-              <div class="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            <div class="px-4 py-2.5 bg-gray-50 border-b border-gray-200">
+              <div class="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
             </div>
 
             <!-- Row skeletons -->
             @for (r of skeletonRows(g); track r) {
-              <div
-                class="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-700/50 last:border-0"
-              >
-                <div
-                  class="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse flex-shrink-0"
-                ></div>
+              <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0">
+                <div class="h-4 w-4 bg-gray-200 rounded animate-pulse flex-shrink-0"></div>
                 <div class="flex-1 grid grid-cols-4 gap-3 items-center">
                   <div class="space-y-1.5">
-                    <div
-                      class="h-3.5 w-28 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
-                    ></div>
-                    <div
-                      class="h-3 w-20 bg-gray-100 dark:bg-gray-700/60 rounded animate-pulse"
-                    ></div>
+                    <div class="h-3.5 w-28 bg-gray-200 rounded animate-pulse"></div>
+                    <div class="h-3 w-20 bg-gray-100 rounded animate-pulse"></div>
                   </div>
                   <div class="col-span-2 flex items-center gap-2">
-                    <div class="h-5 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                    <div
-                      class="h-5 w-12 bg-gray-100 dark:bg-gray-700/60 rounded animate-pulse"
-                    ></div>
+                    <div class="h-5 w-16 bg-gray-200 rounded animate-pulse"></div>
+                    <div class="h-5 w-12 bg-gray-100 rounded animate-pulse"></div>
                   </div>
                   <div class="flex justify-end">
-                    <div
-                      class="h-3 w-16 bg-gray-100 dark:bg-gray-700/60 rounded animate-pulse"
-                    ></div>
+                    <div class="h-3 w-16 bg-gray-100 rounded animate-pulse"></div>
                   </div>
                 </div>
               </div>
@@ -245,7 +206,7 @@ import {
         filteredComponents().length === 0 &&
         service.allComponents().length > 0
       ) {
-        <div class="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+        <div class="py-12 text-center text-sm text-gray-500">
           No components match the current filters.
         </div>
       }
@@ -256,11 +217,8 @@ import {
         service.allComponents().length === 0 &&
         service.entries().length === 0
       ) {
-        <div class="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-          <ng-icon
-            name="lucidePackage"
-            class="h-10 w-10 mx-auto mb-3 text-gray-300 dark:text-gray-600"
-          />
+        <div class="py-12 text-center text-sm text-gray-500">
+          <ng-icon name="lucidePackage" class="h-10 w-10 mx-auto mb-3 text-gray-300" />
           No clusters available.
         </div>
       }
@@ -268,17 +226,13 @@ import {
       <!-- Cluster groups -->
       @for (entry of visibleEntries(); track entry.clusterId) {
         @if (clusterFilter === '' || clusterFilter === entry.clusterId) {
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
-          >
+          <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <!-- Cluster header -->
             <div
-              class="px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between"
+              class="px-4 py-2.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between"
             >
               <div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-gray-800 dark:text-gray-100">{{
-                  entry.clusterName
-                }}</span>
+                <span class="text-sm font-medium text-gray-800">{{ entry.clusterName }}</span>
                 @if (entry.loading) {
                   <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin text-blue-500" />
                 }
@@ -287,9 +241,7 @@ import {
                 <span
                   class="text-xs flex items-center gap-1"
                   [class.text-red-600]="!entry.refused"
-                  [class.dark:text-red-400]="!entry.refused"
                   [class.text-gray-500]="entry.refused"
-                  [class.dark:text-gray-400]="entry.refused"
                 >
                   <ng-icon
                     [name]="entry.refused ? 'lucideInfo' : 'lucideAlertCircle'"
@@ -305,7 +257,7 @@ import {
               <div>
                 <!-- Row -->
                 <button
-                  class="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors border-b border-gray-100 dark:border-gray-700/50"
+                  class="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100"
                   (click)="toggleExpand(entry.clusterId, comp.key)"
                 >
                   <ng-icon
@@ -320,27 +272,25 @@ import {
                     class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-4 gap-1 sm:gap-3 items-center"
                   >
                     <div class="sm:col-span-1">
-                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <p class="text-sm font-medium text-gray-900 truncate">
                         {{ comp.name }}
                       </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">{{ comp.category }}</p>
+                      <p class="text-xs text-gray-500">{{ comp.category }}</p>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap sm:col-span-2">
                       <app-platform-component-status-badge [status]="comp.status" />
                       <span
-                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600"
                       >
                         {{ comp.managedBy }}
                       </span>
                       @if (comp.errorCount > 0) {
-                        <span class="text-xs text-red-600 dark:text-red-400"
+                        <span class="text-xs text-red-600"
                           >{{ comp.errorCount }} error{{ comp.errorCount > 1 ? 's' : '' }}</span
                         >
                       }
                     </div>
-                    <div
-                      class="text-xs text-gray-400 dark:text-gray-500 text-right hidden sm:block"
-                    >
+                    <div class="text-xs text-gray-400 text-right hidden sm:block">
                       {{ formatDate(getCreatedAt(comp)) }}
                     </div>
                   </div>
@@ -362,9 +312,7 @@ import {
             }
 
             @if (entryFilteredComponents(entry.clusterId).length === 0 && !entry.loading) {
-              <p class="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
-                No components match filters.
-              </p>
+              <p class="px-4 py-3 text-xs text-gray-400">No components match filters.</p>
             }
           </div>
         }
@@ -373,18 +321,16 @@ import {
       <!-- Confirmation modal -->
       @if (confirmModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-gray-800 rounded-lg max-w-sm w-full p-5 shadow-xl">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2">
-              Confirm Redeploy
-            </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          <div class="bg-white rounded-lg max-w-sm w-full p-5 shadow-xl">
+            <h3 class="text-base font-semibold text-gray-900 mb-2">Confirm Redeploy</h3>
+            <p class="text-sm text-gray-600 mb-4">
               This will trigger a rolling restart for all workload resources of
               <span class="font-medium">{{ confirmModal()!.componentKey }}</span>. The process is
               non-destructive and does not change config or images.
             </p>
             <div class="flex gap-3 justify-end">
               <button
-                class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                class="px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded hover:bg-gray-50"
                 (click)="cancelRedeploy()"
               >
                 Cancel

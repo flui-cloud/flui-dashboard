@@ -44,9 +44,7 @@ import { placementOf, replicaPodsOf } from './replica-pods';
                   }}</span>
                   <span class="shrink-0 text-muted-foreground">{{ placement(pod) }}</span>
                 } @else {
-                  <span class="text-amber-700 dark:text-amber-400" [title]="pod.name"
-                    >waiting for a node</span
-                  >
+                  <span class="text-amber-700" [title]="pod.name">waiting for a node</span>
                 }
               </li>
             }
@@ -135,9 +133,9 @@ import { placementOf, replicaPodsOf } from './replica-pods';
             }
             @if (e.count > 0) {
               <p class="text-xs text-muted-foreground">
-                <span class="text-green-700 dark:text-green-400">{{ e.synced }} in sync</span>
+                <span class="text-green-700">{{ e.synced }} in sync</span>
                 @if (e.drift > 0) {
-                  · <span class="text-amber-700 dark:text-amber-400">{{ e.drift }} drift</span>
+                  · <span class="text-amber-700">{{ e.drift }} drift</span>
                 }
               </p>
             }

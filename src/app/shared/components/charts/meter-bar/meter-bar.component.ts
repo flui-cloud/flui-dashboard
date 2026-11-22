@@ -43,14 +43,14 @@ import { MeterBarConfig } from '../chart.models';
         ></div>
         @if (warning(); as w) {
           <span
-            class="absolute -top-0.5 -bottom-0.5 w-px bg-amber-600/70 dark:bg-amber-400/70"
+            class="absolute -top-0.5 -bottom-0.5 w-px bg-amber-600/70"
             [style.left.%]="w"
             [attr.title]="'Warning threshold ' + w + '%'"
           ></span>
         }
         @if (danger(); as d) {
           <span
-            class="absolute -top-0.5 -bottom-0.5 w-px bg-red-600/70 dark:bg-red-400/70"
+            class="absolute -top-0.5 -bottom-0.5 w-px bg-red-600/70"
             [style.left.%]="d"
             [attr.title]="'Critical threshold ' + d + '%'"
           ></span>

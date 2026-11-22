@@ -62,15 +62,10 @@ import { ToastService } from '../../../shared/services/toast.service';
   template: `
     <div class="space-y-6">
       @if (isInternalApp()) {
-        <div
-          class="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
-        >
-          <ng-icon
-            name="lucideGlobe"
-            class="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5"
-          />
-          <p class="text-sm text-blue-700 dark:text-blue-300">
-            <span class="font-medium text-blue-900 dark:text-blue-100">Internal app.</span>
+        <div class="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
+          <p class="text-sm text-blue-700">
+            <span class="font-medium text-blue-900">Internal app.</span>
             Endpoints use the
             <span class="font-mono text-xs">.internal.&lt;zone&gt;</span> subdomain convention and
             are reachable only from the Flui dashboard via an authenticated proxy. DNS records and
@@ -82,13 +77,13 @@ import { ToastService } from '../../../shared/services/toast.service';
       @if (isLoading()) {
         <div class="flex items-center justify-center py-8">
           <ng-icon name="lucideLoader" class="h-6 w-6 animate-spin text-blue-600" />
-          <p class="ml-2 text-sm text-gray-600 dark:text-gray-400">Loading DNS configuration...</p>
+          <p class="ml-2 text-sm text-gray-600">Loading DNS configuration...</p>
         </div>
       } @else {
         <!-- Error banners -->
         @if (clusterDnsZoneService.error()) {
           <div
-            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ clusterDnsZoneService.error() }}</span>
@@ -96,7 +91,7 @@ import { ToastService } from '../../../shared/services/toast.service';
         }
         @if (appEndpointsService.error()) {
           <div
-            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ appEndpointsService.error() }}</span>
@@ -104,36 +99,27 @@ import { ToastService } from '../../../shared/services/toast.service';
         }
 
         <!-- DNS Zone info (read-only) -->
-        <div
-          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-2"
-        >
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <div class="bg-white border border-gray-200 rounded-lg p-4 space-y-2">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
             <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-600" />
             DNS Zone
           </h3>
           @if (clusterDnsZoneService.hasAssignment()) {
             @for (zone of clusterDnsZoneService.assignments(); track zone.id) {
               <div class="flex items-center gap-2">
-                <ng-icon
-                  name="lucideCheckCircle"
-                  class="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0"
-                />
-                <span class="text-sm text-gray-700 dark:text-gray-300 font-mono">{{
-                  zone.dnsZone.zoneName
-                }}</span>
-                <span
-                  class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                >
+                <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-green-600 flex-shrink-0" />
+                <span class="text-sm text-gray-700 font-mono">{{ zone.dnsZone.zoneName }}</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                   {{ zone.dnsZone.dnsProvider }}
                 </span>
               </div>
             }
           } @else {
-            <p class="text-sm text-gray-500 dark:text-gray-400">
+            <p class="text-sm text-gray-500">
               No DNS zone assigned to this cluster.
               <a
                 [routerLink]="['/cluster', clusterId(), 'dns']"
-                class="ml-1 text-blue-600 dark:text-blue-400 hover:underline"
+                class="ml-1 text-blue-600 hover:underline"
                 >Configure in cluster DNS settings →</a
               >
             </p>
@@ -141,11 +127,9 @@ import { ToastService } from '../../../shared/services/toast.service';
         </div>
 
         <!-- App Endpoints -->
-        <div
-          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3"
-        >
+        <div class="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">App Endpoints</h3>
+            <h3 class="text-sm font-semibold text-gray-900">App Endpoints</h3>
             <div class="flex items-center gap-3">
               @if (!readOnly()) {
                 <button
@@ -159,7 +143,7 @@ import { ToastService } from '../../../shared/services/toast.service';
               <button
                 (click)="refreshEndpoints()"
                 [disabled]="refreshingEndpoints()"
-                class="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-50 transition-colors"
+                class="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-colors"
                 title="Refresh endpoints"
               >
                 <ng-icon
@@ -194,7 +178,7 @@ import { ToastService } from '../../../shared/services/toast.service';
       >
         <div class="min-h-full flex items-center justify-center p-4 py-10">
           <div
-            class="w-full max-w-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl pb-4"
+            class="w-full max-w-2xl bg-white border border-gray-200 rounded-lg shadow-xl pb-4"
             (click)="$event.stopPropagation()"
           >
             <app-cluster-endpoint-form

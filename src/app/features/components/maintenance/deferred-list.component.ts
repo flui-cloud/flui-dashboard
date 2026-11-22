@@ -13,9 +13,7 @@ import { DeferredAction, openingLabel } from '../../service/maintenance.service'
           <li class="flex flex-wrap items-baseline gap-x-2">
             <span class="text-foreground">{{ row.says }}</span>
             @if (row.status === 'pending') {
-              <span class="text-amber-600 dark:text-amber-400"
-                >waits for {{ label(row.runAt) }}</span
-              >
+              <span class="text-amber-600">waits for {{ label(row.runAt) }}</span>
               @if (cancellable()) {
                 <button
                   type="button"

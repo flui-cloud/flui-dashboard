@@ -204,14 +204,14 @@ export function outcomeBadgeClass(outcome: ScalingDecision['outcome']): string {
     case 'node-ordered':
     case 'node-drained':
     case 'node-removed':
-      return 'badge bg-sky-500/15 text-sky-700 dark:text-sky-300';
+      return 'badge bg-sky-500/15 text-sky-700';
     case 'removed':
       return 'badge badge-in-progress';
     case 'alerted':
       return 'badge badge-error';
     case 'changed':
-      return 'badge bg-violet-500/15 text-violet-700 dark:text-violet-300';
+      return 'badge bg-violet-500/15 text-violet-700';
     default:
-      return 'badge bg-amber-500/15 text-amber-600 dark:text-amber-400';
+      return 'badge bg-amber-500/15 text-amber-600';
   }
 }

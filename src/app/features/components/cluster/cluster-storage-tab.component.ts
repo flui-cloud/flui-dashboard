@@ -51,32 +51,32 @@ interface StatusBadgeConfig {
 const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
   READY: {
     label: 'Ready',
-    classes: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    classes: 'bg-green-100 text-green-800',
     summary: 'Shared storage is healthy and serving PVCs.',
   },
   DEGRADED: {
     label: 'Degraded',
-    classes: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    classes: 'bg-amber-100 text-amber-800',
     summary: 'Configuration is in place, but live PVC status could not be fetched.',
   },
   PROVISIONING: {
     label: 'Provisioning',
-    classes: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    classes: 'bg-blue-100 text-blue-800',
     summary: 'Cluster is still being created. Storage is not observable yet.',
   },
   DISABLED: {
     label: 'Disabled',
-    classes: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    classes: 'bg-gray-100 text-gray-700',
     summary: 'Shared storage is disabled — cluster is using flui-local fallback.',
   },
   ERROR: {
     label: 'Error',
-    classes: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    classes: 'bg-red-100 text-red-800',
     summary: 'Shared storage is in an error state.',
   },
   UNKNOWN: {
     label: 'Unknown',
-    classes: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    classes: 'bg-gray-100 text-gray-700',
     summary: 'Storage status could not be determined.',
   },
 };
@@ -113,7 +113,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-lg font-semibold flex items-center gap-2">
-            <ng-icon name="lucideHardDrive" class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <ng-icon name="lucideHardDrive" class="h-5 w-5 text-blue-600" />
             Cluster storage
           </h2>
           <p class="text-sm text-muted-foreground mt-0.5">
@@ -144,19 +144,12 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
 
       <!-- Error (transport-level) -->
       @if (errorMessage() && !isLoading()) {
-        <div
-          class="card-surface p-4 border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10"
-        >
+        <div class="card-surface p-4 border border-red-200 bg-red-50">
           <div class="flex items-start gap-3">
-            <ng-icon
-              name="lucideCircleAlert"
-              class="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5"
-            />
+            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 mt-0.5" />
             <div>
-              <p class="text-sm font-medium text-red-900 dark:text-red-200">
-                Failed to load storage status
-              </p>
-              <p class="text-sm text-red-700 dark:text-red-300 mt-1">{{ errorMessage() }}</p>
+              <p class="text-sm font-medium text-red-900">Failed to load storage status</p>
+              <p class="text-sm text-red-700 mt-1">{{ errorMessage() }}</p>
             </div>
           </div>
         </div>
@@ -191,10 +184,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
             @if (s.volume; as vol) {
               <div class="card-inner p-4">
                 <div class="flex items-center gap-2 mb-3">
-                  <ng-icon
-                    name="lucideHardDrive"
-                    class="h-4 w-4 text-blue-600 dark:text-blue-400"
-                  />
+                  <ng-icon name="lucideHardDrive" class="h-4 w-4 text-blue-600" />
                   <span class="text-label">Backing volume</span>
                   <span class="ml-auto text-xs uppercase tracking-wide text-muted-foreground">
                     {{ vol.provider }}
@@ -242,10 +232,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
             <!-- PVC summary card -->
             <div class="card-inner p-4">
               <div class="flex items-center gap-2 mb-3">
-                <ng-icon
-                  name="lucideDatabase"
-                  class="h-4 w-4 text-purple-600 dark:text-purple-400"
-                />
+                <ng-icon name="lucideDatabase" class="h-4 w-4 text-purple-600" />
                 <span class="text-label">PVC usage</span>
               </div>
 
@@ -318,10 +305,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                 class="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
               >
                 <span class="flex items-center gap-2">
-                  <ng-icon
-                    name="lucideShare2"
-                    class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
-                  />
+                  <ng-icon name="lucideShare2" class="h-4 w-4 text-emerald-600" />
                   <span class="text-label">NFS configuration</span>
                 </span>
                 <ng-icon
@@ -330,9 +314,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                 />
               </button>
               @if (nfs.confirmsBeforeDisk) {
-                <p
-                  class="px-4 pb-3 -mt-1 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400"
-                >
+                <p class="px-4 pb-3 -mt-1 flex items-start gap-2 text-xs text-amber-700">
                   <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
                   <span>{{ nfs.durability }}</span>
                 </p>
@@ -364,10 +346,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
               class="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
             >
               <span class="flex items-center gap-2">
-                <ng-icon
-                  name="lucideDatabase"
-                  class="h-4 w-4 text-indigo-600 dark:text-indigo-400"
-                />
+                <ng-icon name="lucideDatabase" class="h-4 w-4 text-indigo-600" />
                 <span class="text-label">Application snapshots in this cluster</span>
                 <span class="text-xs text-muted-foreground">({{ snapshots().length }})</span>
               </span>
@@ -405,7 +384,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                           <td class="py-2">
                             <a
                               [routerLink]="['/apps/applications', snap.appId]"
-                              class="text-blue-600 dark:text-blue-400 hover:underline"
+                              class="text-blue-600 hover:underline"
                             >
                               {{ snap.appId }}
                             </a>
@@ -587,13 +566,13 @@ export class ClusterStorageTabComponent implements OnInit {
   snapshotStatusClass(status: SnapshotStatus): string {
     switch (status) {
       case 'READY':
-        return 'text-green-600 dark:text-green-400 font-medium';
+        return 'text-green-600 font-medium';
       case 'PENDING':
-        return 'text-blue-600 dark:text-blue-400';
+        return 'text-blue-600';
       case 'FAILED':
-        return 'text-red-600 dark:text-red-400 font-medium';
+        return 'text-red-600 font-medium';
       case 'DELETING':
-        return 'text-amber-600 dark:text-amber-400';
+        return 'text-amber-600';
       default:
         return 'text-muted-foreground';
     }
@@ -608,9 +587,9 @@ export class ClusterStorageTabComponent implements OnInit {
   stateClass(state: 'active' | 'fallback'): string {
     switch (state) {
       case 'active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+        return 'bg-green-100 text-green-800';
       case 'fallback':
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+        return 'bg-gray-100 text-gray-700';
     }
   }
 

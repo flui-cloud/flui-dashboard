@@ -25,31 +25,27 @@ import { ClusterIssuerSetupComponent } from '../cluster/cluster-issuer-setup.com
         <div class="animate-pulse space-y-4">
           <!-- Cluster selector skeleton -->
           <div class="flex items-center gap-3">
-            <div class="h-4 w-4 rounded bg-gray-200 dark:bg-gray-700 flex-shrink-0"></div>
-            <div class="h-8 w-64 rounded-md bg-gray-200 dark:bg-gray-700"></div>
+            <div class="h-4 w-4 rounded bg-gray-200 flex-shrink-0"></div>
+            <div class="h-8 w-64 rounded-md bg-gray-200"></div>
           </div>
           <!-- Content card skeleton -->
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-4"
-          >
-            <div class="h-5 w-40 rounded bg-gray-200 dark:bg-gray-700"></div>
+          <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
+            <div class="h-5 w-40 rounded bg-gray-200"></div>
             <div class="space-y-3">
               @for (i of [1, 2, 3]; track i) {
                 <div class="flex items-center gap-3">
-                  <div class="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700"></div>
-                  <div class="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700"></div>
-                  <div class="h-5 w-16 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                  <div class="h-4 w-32 rounded bg-gray-200"></div>
+                  <div class="h-4 w-24 rounded bg-gray-200"></div>
+                  <div class="h-5 w-16 rounded-full bg-gray-200"></div>
                 </div>
               }
             </div>
           </div>
         </div>
       } @else if (clusters().length === 0) {
-        <div
-          class="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg"
-        >
+        <div class="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <ng-icon name="lucideInfo" class="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <p class="text-sm text-gray-600">
             No clusters available. Create a cluster to configure certificate issuers.
           </p>
         </div>
@@ -60,7 +56,7 @@ import { ClusterIssuerSetupComponent } from '../cluster/cluster-issuer-setup.com
             <ng-icon name="lucideServer" class="h-4 w-4 text-gray-400 flex-shrink-0" />
             <select
               [(ngModel)]="selectedClusterId"
-              class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select a cluster...</option>
               @for (cluster of clusters(); track cluster.id) {
@@ -70,7 +66,7 @@ import { ClusterIssuerSetupComponent } from '../cluster/cluster-issuer-setup.com
           </div>
           <button
             (click)="refresh()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" />
             Refresh
@@ -79,17 +75,13 @@ import { ClusterIssuerSetupComponent } from '../cluster/cluster-issuer-setup.com
 
         @if (selectedClusterId) {
           <div class="space-y-4">
-            <div
-              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5"
-            >
+            <div class="bg-white border border-gray-200 rounded-lg p-5">
               <app-cluster-certificate-issuers
                 [clusterId]="selectedClusterId"
                 [refreshTrigger]="issuersRefreshTrigger()"
               />
             </div>
-            <div
-              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5"
-            >
+            <div class="bg-white border border-gray-200 rounded-lg p-5">
               <app-cluster-issuer-setup
                 [clusterId]="selectedClusterId"
                 [refreshTrigger]="issuersRefreshTrigger()"
@@ -97,7 +89,7 @@ import { ClusterIssuerSetupComponent } from '../cluster/cluster-issuer-setup.com
             </div>
           </div>
         } @else {
-          <p class="text-sm text-gray-500 dark:text-gray-400">
+          <p class="text-sm text-gray-500">
             Select a cluster to view and configure its certificate issuers.
           </p>
         }

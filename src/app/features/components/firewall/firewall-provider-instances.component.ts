@@ -102,16 +102,11 @@ import {
       </div>
 
       <!-- Warning Message -->
-      <div
-        class="rounded-lg bg-yellow-50 dark:bg-gray-800/60 border-2 border-yellow-300 dark:border-gray-700/50 p-4 flex items-start gap-3"
-      >
-        <ng-icon
-          name="lucideTriangleAlert"
-          class="h-5 w-5 text-yellow-700 dark:text-yellow-400 mt-0.5"
-        />
+      <div class="rounded-lg bg-yellow-50 border-2 border-yellow-300 p-4 flex items-start gap-3">
+        <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-yellow-700 mt-0.5" />
         <div class="flex-1">
-          <h3 class="font-semibold text-yellow-800 dark:text-yellow-300">⚠️ Emergency Use Only</h3>
-          <p class="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
+          <h3 class="font-semibold text-yellow-800">⚠️ Emergency Use Only</h3>
+          <p class="text-sm text-yellow-700 mt-1">
             Direct provider firewall management should only be used for emergency situations. For
             normal firewall operations, please use the <strong>Cluster Firewalls</strong> section
             which provides desired-state management with drift detection and reconciliation.
@@ -149,7 +144,7 @@ import {
             <h3 hlmCardTitle class="text-sm font-medium">In Use</h3>
           </div>
           <div hlmCardContent>
-            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+            <div class="text-2xl font-bold text-green-600">
               {{ stats().inUse }}
             </div>
             <p class="text-xs text-muted-foreground">Attached to clusters</p>
@@ -161,7 +156,7 @@ import {
             <h3 hlmCardTitle class="text-sm font-medium">Unused</h3>
           </div>
           <div hlmCardContent>
-            <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
+            <div class="text-2xl font-bold text-orange-600">
               {{ stats().unused }}
             </div>
             <p class="text-xs text-muted-foreground">Available for deletion</p>
@@ -305,7 +300,7 @@ import {
                             <span
                               hlmBadge
                               variant="outline"
-                              class="text-xs bg-purple-50 dark:bg-gray-700/50 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-gray-600/50"
+                              class="text-xs bg-purple-50 text-purple-700 border-purple-200"
                             >
                               Control
                             </span>

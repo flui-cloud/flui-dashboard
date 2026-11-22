@@ -36,7 +36,7 @@ import { RepositoryService } from '../../service/repository.service';
     <div class="space-y-4">
       <!-- Security notice -->
       <div
-        class="flex items-start gap-2 p-3 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 text-sm text-blue-800 dark:text-blue-300"
+        class="flex items-start gap-2 p-3 rounded-md border border-blue-200 bg-blue-50 text-sm text-blue-800"
       >
         <ng-icon name="lucideInfo" class="h-4 w-4 shrink-0 mt-0.5" />
         <span
@@ -56,7 +56,7 @@ import { RepositoryService } from '../../service/repository.service';
       <!-- Error -->
       @if (!isLoading() && error()) {
         <div
-          class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300"
+          class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 bg-yellow-50 text-sm text-yellow-800"
         >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
           <span>{{ error() }}. Add variables manually below.</span>
@@ -261,7 +261,7 @@ export class ExtractEnvStepComponent implements OnInit {
   getTypeButtonClass(isSecret: boolean): string {
     const base = 'inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded transition-colors';
     return isSecret
-      ? `${base} bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400`
+      ? `${base} bg-orange-100 text-orange-700`
       : `${base} bg-muted text-muted-foreground hover:bg-accent`;
   }
 }

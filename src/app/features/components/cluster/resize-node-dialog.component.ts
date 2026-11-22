@@ -86,7 +86,7 @@ import { NodeDisksService } from '../../service/node-disks.service';
           }
 
           @if (p.affectedDedicatedApps.length) {
-            <p class="m-0 mt-3 text-xs text-amber-700 dark:text-amber-400">
+            <p class="m-0 mt-3 text-xs text-amber-700">
               Stops while the node is off:
               {{ slugs(p) }}
             </p>

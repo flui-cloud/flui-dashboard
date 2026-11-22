@@ -61,7 +61,7 @@ import { DependencyChoiceDto } from '../../../../core/api/model/dependencyChoice
               </span>
               @if (dep.required) {
                 <span
-                  class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                  class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800"
                 >
                   required
                 </span>
@@ -203,11 +203,11 @@ export class CatalogDependenciesStepComponent {
       'inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium capitalize';
     switch (status) {
       case CatalogReusableInstanceDto.StatusEnum.Running:
-        return `${base} bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400`;
+        return `${base} bg-emerald-100 text-emerald-700`;
       case CatalogReusableInstanceDto.StatusEnum.Degraded:
-        return `${base} bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400`;
+        return `${base} bg-amber-100 text-amber-700`;
       case CatalogReusableInstanceDto.StatusEnum.Failed:
-        return `${base} bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400`;
+        return `${base} bg-rose-100 text-rose-700`;
       default:
         return `${base} bg-muted text-muted-foreground`;
     }

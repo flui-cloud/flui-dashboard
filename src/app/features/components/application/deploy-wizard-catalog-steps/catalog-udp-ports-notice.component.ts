@@ -17,10 +17,10 @@ import { UDP_STATE_TEXT, udpPortsAdvice } from '../../../service/app-udp-ports.s
         class="mt-3 flex items-start gap-3 rounded-lg border px-4 py-3"
         [class]="
           taken()
-            ? 'border-red-200 bg-red-50/70 dark:border-red-900 dark:bg-red-950/30'
+            ? 'border-red-200 bg-red-50/70'
             : allOpen()
               ? 'border-border bg-muted/30'
-              : 'border-amber-200 bg-amber-50/70 dark:border-amber-900 dark:bg-amber-950/30'
+              : 'border-amber-200 bg-amber-50/70'
         "
         data-testid="catalog-udp-ports"
       >
@@ -33,9 +33,7 @@ import { UDP_STATE_TEXT, udpPortsAdvice } from '../../../service/app-udp-ports.s
                 <span class="font-mono">{{ p.port }}</span>
                 <span class="text-muted-foreground"> {{ p.name }} · </span>
                 @if (p.takenBy) {
-                  <span class="text-red-700 dark:text-red-300"
-                    >Already used by {{ p.takenBy }} on this cluster</span
-                  >
+                  <span class="text-red-700">Already used by {{ p.takenBy }} on this cluster</span>
                 } @else {
                   <span>{{ stateText[p.state] }}</span>
                 }

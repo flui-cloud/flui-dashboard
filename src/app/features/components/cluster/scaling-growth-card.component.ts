@@ -18,11 +18,7 @@ import { ClusterScalingRow } from '../../model/scaling-section.models';
         @if (row()?.mode; as mode) {
           <span
             class="rounded-md px-2 py-0.5 text-xs font-semibold"
-            [class]="
-              mode.attention
-                ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200'
-                : 'bg-primary/10 text-primary'
-            "
+            [class]="mode.attention ? 'bg-amber-100 text-amber-900' : 'bg-primary/10 text-primary'"
             data-testid="growth-mode"
             >{{ mode.label }}</span
           >

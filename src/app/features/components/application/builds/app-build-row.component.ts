@@ -29,7 +29,7 @@ import { formatDuration, formatRelativeDate, truncateImageRef } from './build-fo
           <app-build-provider-badge [provider]="build().provider" />
           @if (isReadyToRelease()) {
             <span
-              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
             >
               Ready to release
             </span>

@@ -193,10 +193,8 @@ import {
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Git Repositories</h1>
-          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Connect and manage your Git repositories
-          </p>
+          <h1 class="text-3xl font-bold text-gray-900">Git Repositories</h1>
+          <p class="mt-2 text-sm text-gray-600">Connect and manage your Git repositories</p>
         </div>
         <div class="flex gap-3">
           @if (isGitHubConnected()) {
@@ -211,7 +209,7 @@ import {
           <button
             (click)="refreshRepos()"
             [disabled]="isLoading()"
-            class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+            class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
             <span class="text-sm font-medium">Refresh</span>
@@ -228,18 +226,14 @@ import {
         }
 
         @case ('refused') {
-          <div
-            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-12 text-center"
-          >
+          <div class="bg-white border border-slate-200 rounded-xl p-12 text-center">
             <div
-              class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4"
+              class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4"
             >
-              <ng-icon name="lucideGithub" class="h-8 w-8 text-slate-500 dark:text-slate-400" />
+              <ng-icon name="lucideGithub" class="h-8 w-8 text-slate-500" />
             </div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              Not part of the trial
-            </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+            <h3 class="text-lg font-semibold text-slate-900 mb-2">Not part of the trial</h3>
+            <p class="text-sm text-slate-600 max-w-md mx-auto">
               Connecting a source repository belongs to the instance, not to a tenancy. Deploy from
               a container image here — your own applications are real and yours to change.
             </p>
@@ -247,18 +241,16 @@ import {
         }
 
         @case ('not-configured-admin') {
-          <div
-            class="bg-white dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-12 text-center"
-          >
+          <div class="bg-white border-2 border-dashed border-slate-300 rounded-xl p-12 text-center">
             <div
-              class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-4"
+              class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
             >
-              <ng-icon name="lucideGithub" class="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              <ng-icon name="lucideGithub" class="h-8 w-8 text-blue-600" />
             </div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            <h3 class="text-lg font-semibold text-slate-900 mb-2">
               GitHub Integration Not Configured
             </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 max-w-sm mx-auto">
+            <p class="text-sm text-slate-600 mb-6 max-w-sm mx-auto">
               As an admin, you need to set up the GitHub integration before users can connect their
               accounts.
             </p>
@@ -274,21 +266,14 @@ import {
         }
 
         @case ('not-configured-user') {
-          <div
-            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-12 text-center"
-          >
+          <div class="bg-white border border-slate-200 rounded-xl p-12 text-center">
             <div
-              class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4"
+              class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4"
             >
-              <ng-icon
-                name="lucideShieldAlert"
-                class="h-8 w-8 text-slate-500 dark:text-slate-400"
-              />
+              <ng-icon name="lucideShieldAlert" class="h-8 w-8 text-slate-500" />
             </div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              GitHub Not Yet Configured
-            </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
+            <h3 class="text-lg font-semibold text-slate-900 mb-2">GitHub Not Yet Configured</h3>
+            <p class="text-sm text-slate-600 max-w-sm mx-auto">
               GitHub integration hasn't been set up yet. Please contact your administrator to
               configure it.
             </p>
@@ -296,25 +281,20 @@ import {
         }
 
         @case ('misconfigured-admin') {
-          <div
-            class="bg-white dark:bg-slate-800 border-2 border-dashed border-amber-300 dark:border-amber-700 rounded-xl p-12 text-center"
-          >
+          <div class="bg-white border-2 border-dashed border-amber-300 rounded-xl p-12 text-center">
             <div
-              class="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4"
+              class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4"
             >
-              <ng-icon
-                name="lucideTriangleAlert"
-                class="h-8 w-8 text-amber-600 dark:text-amber-400"
-              />
+              <ng-icon name="lucideTriangleAlert" class="h-8 w-8 text-amber-600" />
             </div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            <h3 class="text-lg font-semibold text-slate-900 mb-2">
               GitHub Integration Misconfigured
             </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 mb-2 max-w-md mx-auto">
+            <p class="text-sm text-slate-600 mb-2 max-w-md mx-auto">
               Flui has stored GitHub App credentials but a live check against GitHub failed — the
               App may have been deleted or its private key revoked.
             </p>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 font-mono">
+            <p class="text-xs text-slate-500 mb-6 font-mono">
               {{ setupHealthError() }}
             </p>
             <button
@@ -329,21 +309,14 @@ import {
         }
 
         @case ('misconfigured-user') {
-          <div
-            class="bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 rounded-xl p-12 text-center"
-          >
+          <div class="bg-white border border-amber-200 rounded-xl p-12 text-center">
             <div
-              class="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4"
+              class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4"
             >
-              <ng-icon
-                name="lucideTriangleAlert"
-                class="h-8 w-8 text-amber-600 dark:text-amber-400"
-              />
+              <ng-icon name="lucideTriangleAlert" class="h-8 w-8 text-amber-600" />
             </div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              GitHub Integration Broken
-            </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
+            <h3 class="text-lg font-semibold text-slate-900 mb-2">GitHub Integration Broken</h3>
+            <p class="text-sm text-slate-600 max-w-sm mx-auto">
               Connecting to GitHub is currently failing. Please contact your administrator to
               reconfigure the integration.
             </p>
@@ -351,9 +324,7 @@ import {
         }
 
         @case ('not-connected') {
-          <div
-            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden"
-          >
+          <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
             <app-github-connect
               [authMethod]="setupStatus()!.authMethod!"
               [appSlug]="$safeNavigationMigration(setupStatus()?.appSlug)"
@@ -387,7 +358,7 @@ import {
                 [href]="githubAppConfigUrl()"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
               >
                 Manage permissions
                 <ng-icon name="lucideExternalLink" class="h-3 w-3" />
@@ -395,7 +366,7 @@ import {
             } @else {
               <button
                 (click)="disconnectOAuth('github')"
-                class="text-xs text-red-600 dark:text-red-400 hover:underline"
+                class="text-xs text-red-600 hover:underline"
               >
                 Disconnect
               </button>
@@ -406,17 +377,15 @@ import {
             setupStatus()?.authMethod === 'github_app' && setupStatus()?.imageRegistry !== 'flui'
           ) {
             <div
-              class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 flex items-center justify-between gap-4 flex-wrap"
+              class="bg-white border border-slate-200 rounded-lg px-4 py-3 flex items-center justify-between gap-4 flex-wrap"
             >
               <div class="flex items-center gap-3 min-w-0">
-                <ng-icon name="lucideKey" class="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                <ng-icon name="lucideKey" class="h-5 w-5 text-slate-500" />
                 <div class="min-w-0">
-                  <div class="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <div class="text-sm font-medium text-slate-900">
                     GHCR Container Registry token
                   </div>
-                  <div
-                    class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap"
-                  >
+                  <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
                     @if (patStatus(); as p) {
                       @if (!p.configured) {
                         <span>Not configured — required to pull container images.</span>
@@ -439,7 +408,7 @@ import {
                 @if (patStatus()?.configured) {
                   <button
                     (click)="openPatModal('update-expiry')"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50"
                   >
                     Update expiry
                   </button>
@@ -452,7 +421,7 @@ import {
                   </button>
                   <button
                     (click)="confirmRemovePat()"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-red-300 text-red-600 hover:bg-red-50"
                   >
                     Remove
                   </button>
@@ -513,12 +482,10 @@ import {
 
         <!-- Error State -->
         @if (errorMessage() && !isLoading()) {
-          <div
-            class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4"
-          >
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
             <div class="flex items-center gap-3">
-              <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400" />
-              <p class="text-sm text-red-900 dark:text-red-200">{{ errorMessage() }}</p>
+              <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600" />
+              <p class="text-sm text-red-900">{{ errorMessage() }}</p>
             </div>
           </div>
         }
@@ -527,20 +494,18 @@ import {
         @if (!isLoading()) {
           <div class="space-y-4">
             <div class="flex items-center justify-between">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-                Imported Repositories
-              </h2>
+              <h2 class="text-xl font-semibold text-gray-900">Imported Repositories</h2>
             </div>
 
             @if (allRepos().length === 0) {
               <div
-                class="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-12 text-center"
+                class="bg-white border-2 border-dashed border-gray-300 rounded-lg p-12 text-center"
               >
                 <ng-icon name="lucideGitBranch" class="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">
                   No repositories imported yet
                 </h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                <p class="text-sm text-gray-600 mb-6">
                   @if (isGitHubConnected()) {
                     Import repositories from GitHub to get started
                   } @else {
@@ -562,7 +527,7 @@ import {
             <div class="grid grid-cols-1 gap-4">
               @for (repo of allRepos(); track repo.id) {
                 <div
-                  class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow"
+                  class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow"
                 >
                   <div class="flex items-start justify-between">
                     <div class="flex-1">
@@ -571,27 +536,23 @@ import {
                         <ng-icon
                           [name]="repo.provider === 'github' ? 'lucideGithub' : 'lucideGitlab'"
                           class="h-5 w-5"
-                          [class]="
-                            repo.provider === 'github'
-                              ? 'text-gray-900 dark:text-white'
-                              : 'text-orange-600'
-                          "
+                          [class]="repo.provider === 'github' ? 'text-gray-900' : 'text-orange-600'"
                         />
                         <div class="flex-1">
                           <div class="flex items-center gap-2">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <h3 class="text-lg font-semibold text-gray-900">
                               {{ repo.fullName }}
                             </h3>
                             @if (repo.private) {
                               <span
-                                class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
+                                class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800"
                               >
                                 Private
                               </span>
                             }
                           </div>
                           @if (repo.description) {
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <p class="text-sm text-gray-600 mt-1">
                               {{ repo.description }}
                             </p>
                           }
@@ -599,9 +560,7 @@ import {
                       </div>
 
                       <!-- Metadata -->
-                      <div
-                        class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4"
-                      >
+                      <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
                         @if (repo.language) {
                           <span class="flex items-center gap-1">
                             <ng-icon name="lucideCode" class="h-4 w-4" />
@@ -628,16 +587,12 @@ import {
                           </span>
                         }
                         @if (repo.webhookEnabled) {
-                          <span
-                            class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800 dark:bg-slate-700 dark:text-sky-400"
-                          >
+                          <span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
                             Webhook Active
                           </span>
                         }
                         @if (repo.autoDeployEnabled) {
-                          <span
-                            class="text-xs px-2 py-1 rounded bg-purple-100 text-purple-800 dark:bg-slate-700 dark:text-violet-400"
-                          >
+                          <span class="text-xs px-2 py-1 rounded bg-purple-100 text-purple-800">
                             Auto-deploy
                           </span>
                         }
@@ -645,9 +600,7 @@ import {
 
                       <!-- Last imported -->
                       @if (repo.connectedAt) {
-                        <div
-                          class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
-                        >
+                        <div class="flex items-center gap-1 text-xs text-gray-500">
                           Imported {{ formatDate(repo.connectedAt) }}
                         </div>
                       }
@@ -658,7 +611,7 @@ import {
                       <a
                         [href]="repo.url"
                         target="_blank"
-                        class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         <ng-icon name="lucideExternalLink" class="h-4 w-4" />
                         View
@@ -677,14 +630,14 @@ import {
                       </button>
                       <a
                         [routerLink]="['/apps/repositories', repo.id, 'map']"
-                        class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         <ng-icon name="lucideLayers" class="h-4 w-4" />
                         Readiness map
                       </a>
                       <button
                         (click)="confirmDelete(repo)"
-                        class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                        class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                       >
                         <ng-icon name="lucideTrash" class="h-4 w-4" />
                         Remove
@@ -703,20 +656,11 @@ import {
     <!-- Import Repositories Modal -->
     @if (showImportModalFlag()) {
       <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div
-          class="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full max-h-[80vh] overflow-hidden shadow-xl"
-        >
+        <div class="bg-white rounded-lg max-w-3xl w-full max-h-[80vh] overflow-hidden shadow-xl">
           <!-- Modal Header -->
-          <div
-            class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700"
-          >
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-              Import Repositories from GitHub
-            </h3>
-            <button
-              (click)="closeImportModal()"
-              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
+          <div class="flex items-center justify-between p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-900">Import Repositories from GitHub</h3>
+            <button (click)="closeImportModal()" class="text-gray-400 hover:text-gray-600">
               <ng-icon name="lucideX" class="h-5 w-5" />
             </button>
           </div>
@@ -731,17 +675,14 @@ import {
                 type="text"
                 [(ngModel)]="searchQuery"
                 placeholder="Search repositories by name, description, or language..."
-                class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               @if (searchQuery()) {
                 <button
                   (click)="searchQuery.set('')"
                   class="absolute inset-y-0 right-0 flex items-center pr-3"
                 >
-                  <ng-icon
-                    name="lucideX"
-                    class="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  />
+                  <ng-icon name="lucideX" class="h-4 w-4 text-gray-400 hover:text-gray-600" />
                 </button>
               }
             </div>
@@ -752,35 +693,29 @@ import {
             @if (isLoadingAvailable()) {
               <div class="flex items-center justify-center py-12">
                 <ng-icon name="lucideLoader" class="h-8 w-8 animate-spin text-blue-600" />
-                <span class="ml-3 text-sm text-gray-600 dark:text-gray-400"
-                  >Loading repositories...</span
-                >
+                <span class="ml-3 text-sm text-gray-600">Loading repositories...</span>
               </div>
             } @else if (availableRepos().length === 0) {
               <div class="text-center py-12 space-y-3">
                 <ng-icon name="lucideGitBranch" class="h-12 w-12 text-gray-400 mx-auto" />
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  No repositories found
-                </p>
+                <p class="text-sm font-medium text-gray-700">No repositories found</p>
                 @if (!hideRepoHint()) {
                   @if (setupStatus()?.authMethod === 'github_app') {
                     <div
-                      class="relative inline-flex flex-col items-start gap-1.5 text-left bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 mx-auto max-w-sm"
+                      class="relative inline-flex flex-col items-start gap-1.5 text-left bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mx-auto max-w-sm"
                     >
                       <button
                         (click)="hideRepoHint.set(true)"
-                        class="absolute top-2 right-2 text-blue-400 hover:text-blue-600 dark:hover:text-blue-200"
+                        class="absolute top-2 right-2 text-blue-400 hover:text-blue-600"
                         aria-label="Dismiss"
                       >
                         <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                       </button>
-                      <div
-                        class="flex items-center gap-1.5 text-xs font-medium text-blue-800 dark:text-blue-300 pr-4"
-                      >
+                      <div class="flex items-center gap-1.5 text-xs font-medium text-blue-800 pr-4">
                         <ng-icon name="lucideGithub" class="h-3.5 w-3.5" />
                         Manage repository access
                       </div>
-                      <p class="text-xs text-blue-700 dark:text-blue-400">
+                      <p class="text-xs text-blue-700">
                         The Flui GitHub App can only see repositories you've granted access to
                         during installation. To add more repositories, update the app's permissions
                         on GitHub.
@@ -790,16 +725,16 @@ import {
                           [href]="githubAppConfigUrl()"
                           target="_blank"
                           rel="noopener noreferrer"
-                          class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                          class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
                         >
                           Configure repository access
                           <ng-icon name="lucideExternalLink" class="h-3 w-3" />
                         </a>
-                        <span class="text-blue-300 dark:text-blue-700">·</span>
+                        <span class="text-blue-300">·</span>
                         <button
                           (click)="refreshAvailableRepos()"
                           [disabled]="isLoadingAvailable()"
-                          class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+                          class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline disabled:opacity-50"
                         >
                           <ng-icon
                             [name]="isLoadingAvailable() ? 'lucideLoader' : 'lucideRefreshCw'"
@@ -812,26 +747,24 @@ import {
                     </div>
                   } @else if (setupStatus()?.authMethod === 'pat') {
                     <div
-                      class="relative inline-flex flex-col items-start gap-1.5 text-left bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 mx-auto max-w-sm"
+                      class="relative inline-flex flex-col items-start gap-1.5 text-left bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mx-auto max-w-sm"
                     >
                       <button
                         (click)="hideRepoHint.set(true)"
-                        class="absolute top-2 right-2 text-amber-500 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-200"
+                        class="absolute top-2 right-2 text-amber-500 hover:text-amber-700"
                         aria-label="Dismiss"
                       >
                         <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                       </button>
                       <div
-                        class="flex items-center gap-1.5 text-xs font-medium text-amber-800 dark:text-amber-300 pr-4"
+                        class="flex items-center gap-1.5 text-xs font-medium text-amber-800 pr-4"
                       >
                         <ng-icon name="lucideKey" class="h-3.5 w-3.5" />
                         Check your token permissions
                       </div>
-                      <p class="text-xs text-amber-700 dark:text-amber-400">
+                      <p class="text-xs text-amber-700">
                         Make sure your Personal Access Token has the
-                        <code class="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 rounded"
-                          >repo</code
-                        >
+                        <code class="font-mono bg-amber-100 px-1 rounded">repo</code>
                         scope to access your repositories.
                       </p>
                       <div class="flex items-center gap-3 mt-0.5">
@@ -839,16 +772,16 @@ import {
                           href="https://github.com/settings/tokens"
                           target="_blank"
                           rel="noopener noreferrer"
-                          class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:underline"
+                          class="inline-flex items-center gap-1 text-xs text-amber-700 hover:underline"
                         >
                           Manage tokens on GitHub
                           <ng-icon name="lucideExternalLink" class="h-3 w-3" />
                         </a>
-                        <span class="text-amber-300 dark:text-amber-700">·</span>
+                        <span class="text-amber-300">·</span>
                         <button
                           (click)="refreshAvailableRepos()"
                           [disabled]="isLoadingAvailable()"
-                          class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:underline disabled:opacity-50"
+                          class="inline-flex items-center gap-1 text-xs text-amber-700 hover:underline disabled:opacity-50"
                         >
                           <ng-icon
                             [name]="isLoadingAvailable() ? 'lucideLoader' : 'lucideRefreshCw'"
@@ -861,16 +794,16 @@ import {
                     </div>
                   } @else {
                     <div
-                      class="relative inline-flex flex-col items-start gap-1.5 text-left bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 mx-auto max-w-sm"
+                      class="relative inline-flex flex-col items-start gap-1.5 text-left bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 mx-auto max-w-sm"
                     >
                       <button
                         (click)="hideRepoHint.set(true)"
-                        class="absolute top-2 right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        class="absolute top-2 right-2 text-slate-400 hover:text-slate-600"
                         aria-label="Dismiss"
                       >
                         <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                       </button>
-                      <p class="text-xs text-gray-500 dark:text-gray-400 pr-4">
+                      <p class="text-xs text-gray-500 pr-4">
                         No repositories accessible via your connected GitHub account. Try
                         disconnecting and reconnecting, or check that your OAuth App has the correct
                         permissions.
@@ -882,23 +815,21 @@ import {
             } @else if (filteredAvailableRepos().length === 0) {
               <div class="text-center py-12 space-y-3">
                 <ng-icon name="lucideSearch" class="h-12 w-12 text-gray-400 mx-auto" />
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                  No repositories match your search
-                </p>
+                <p class="text-sm text-gray-600">No repositories match your search</p>
                 <button
                   (click)="searchQuery.set('')"
-                  class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  class="text-sm text-blue-600 hover:text-blue-700"
                 >
                   Clear search
                 </button>
                 @if (setupStatus()?.authMethod === 'github_app') {
-                  <p class="text-xs text-gray-500 dark:text-gray-400 pt-2">
+                  <p class="text-xs text-gray-500 pt-2">
                     Can't find a repository?
                     <a
                       [href]="githubAppConfigUrl()"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="inline-flex items-center gap-0.5 text-blue-600 dark:text-blue-400 hover:underline"
+                      class="inline-flex items-center gap-0.5 text-blue-600 hover:underline"
                     >
                       Update repository access on GitHub
                       <ng-icon name="lucideExternalLink" class="h-3 w-3" />
@@ -910,7 +841,7 @@ import {
               <div class="space-y-3">
                 @for (repo of filteredAvailableRepos(); track repo.id) {
                   <div
-                    class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
                   >
                     <div class="flex items-start justify-between">
                       <div class="flex items-start gap-3 flex-1">
@@ -923,12 +854,12 @@ import {
                         />
                         <div class="flex-1">
                           <div class="flex items-center gap-2">
-                            <h4 class="font-medium text-gray-900 dark:text-white">
+                            <h4 class="font-medium text-gray-900">
                               {{ repo.fullName }}
                             </h4>
                             @if (repo.private) {
                               <span
-                                class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
+                                class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800"
                               >
                                 Private
                               </span>
@@ -942,13 +873,11 @@ import {
                             }
                           </div>
                           @if (repo.description) {
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <p class="text-sm text-gray-600 mt-1">
                               {{ repo.description }}
                             </p>
                           }
-                          <div
-                            class="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400"
-                          >
+                          <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
                             @if (repo.language) {
                               <span>{{ repo.language }}</span>
                             }
@@ -965,10 +894,8 @@ import {
           </div>
 
           <!-- Modal Footer - Fixed at bottom, always visible -->
-          <div
-            class="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/20"
-          >
-            <div class="text-sm text-gray-600 dark:text-gray-400">
+          <div class="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
+            <div class="text-sm text-gray-600">
               {{ selectedReposForImport().length }} repository(ies) selected
               @if (searchQuery()) {
                 <span class="ml-2 text-gray-500">
@@ -979,7 +906,7 @@ import {
             <div class="flex gap-3">
               <button
                 (click)="closeImportModal()"
-                class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
               >
                 Cancel
               </button>
@@ -1005,20 +932,16 @@ import {
     <!-- Delete Confirmation Modal -->
     @if (showDeleteModalFlag()) {
       <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
+        <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0">
-              <div
-                class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center"
-              >
+              <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
                 <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-destructive" />
               </div>
             </div>
             <div class="flex-1">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Remove Repository
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">Remove Repository</h3>
+              <p class="text-sm text-gray-600 mb-4">
                 Are you sure you want to remove <strong>{{ repoToDelete()?.fullName }}</strong>?
                 This will disconnect the repository from Flui.cloud but won't delete it from GitHub.
               </p>
@@ -1026,7 +949,7 @@ import {
                 <button
                   (click)="cancelDelete()"
                   [disabled]="isDeleting()"
-                  class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 text-sm font-medium"
+                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 text-sm font-medium"
                 >
                   Cancel
                 </button>
@@ -1247,12 +1170,12 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
         return 'text-[hsl(var(--ok))] font-medium';
       case 'EXPIRING_SOON':
       case 'UNKNOWN_EXPIRY':
-        return 'text-amber-600 dark:text-amber-400 font-medium';
+        return 'text-amber-600 font-medium';
       case 'EXPIRED':
       case 'INVALID':
-        return 'text-red-600 dark:text-red-400 font-medium';
+        return 'text-red-600 font-medium';
       default:
-        return 'text-slate-500 dark:text-slate-400';
+        return 'text-slate-500';
     }
   });
 

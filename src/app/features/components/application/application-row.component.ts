@@ -38,7 +38,7 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div
-      class="flex items-center gap-4 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer group"
+      class="flex items-center gap-4 px-4 py-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
       [class.animate-pulse]="refreshing()"
       (click)="view.emit(app().id)"
     >
@@ -47,12 +47,8 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
 
       <!-- Name + slug -->
       <div class="min-w-0 flex-1">
-        <span class="text-sm font-medium text-gray-900 dark:text-white truncate block">{{
-          app().name
-        }}</span>
-        <span class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate block">{{
-          app().slug
-        }}</span>
+        <span class="text-sm font-medium text-gray-900 truncate block">{{ app().name }}</span>
+        <span class="text-xs text-gray-400 font-mono truncate block">{{ app().slug }}</span>
       </div>
 
       @if (showProject() && project()) {
@@ -84,24 +80,18 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
       </span>
 
       <!-- Replicas -->
-      <span
-        class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 hidden lg:flex items-center gap-1 w-16"
-      >
-        <span class="inline-flex h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500"></span>
+      <span class="text-xs text-gray-500 flex-shrink-0 hidden lg:flex items-center gap-1 w-16">
+        <span class="inline-flex h-1.5 w-1.5 rounded-full bg-gray-400"></span>
         {{ app().replicas }}x
       </span>
 
       <!-- Namespace -->
-      <span
-        class="text-xs text-gray-500 dark:text-gray-400 font-mono flex-shrink-0 hidden lg:block w-32 truncate"
-      >
+      <span class="text-xs text-gray-500 font-mono flex-shrink-0 hidden lg:block w-32 truncate">
         {{ app().k8sNamespace }}
       </span>
 
       <!-- Created at -->
-      <span
-        class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 hidden md:block w-20 text-right"
-      >
+      <span class="text-xs text-gray-400 flex-shrink-0 hidden md:block w-20 text-right">
         {{ formatDate(app().createdAt) }}
       </span>
 
@@ -114,7 +104,7 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
         } @else {
           <button
             (click)="onDelete($event)"
-            class="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+            class="p-1.5 text-gray-400 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
             title="Delete"
           >
             <ng-icon name="lucideTrash2" class="h-4 w-4" />
@@ -183,33 +173,33 @@ export class ApplicationRowComponent {
     const base = 'text-xs px-2 py-0.5 rounded font-medium';
     switch (status) {
       case ApplicationStatusEnum.Running:
-        return `${base} bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400`;
+        return `${base} bg-green-100 text-green-800`;
       case ApplicationStatusEnum.AwaitingBuild:
       case ApplicationStatusEnum.Provisioning:
       case ApplicationStatusEnum.Updating:
-        return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400`;
+        return `${base} bg-blue-100 text-blue-800`;
       case ApplicationStatusEnum.Failed:
-        return `${base} bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400`;
+        return `${base} bg-red-100 text-red-800`;
       case ApplicationStatusEnum.Degraded:
       case ApplicationStatusEnum.RollingBack:
-        return `${base} bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400`;
+        return `${base} bg-orange-100 text-orange-800`;
       case ApplicationStatusEnum.WaitingForRoom:
-        return `${base} bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300`;
+        return `${base} bg-amber-100 text-amber-800`;
       case ApplicationStatusEnum.Stopped:
       case ApplicationStatusEnum.Deleting:
       case ApplicationStatusEnum.Deleted:
-        return `${base} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
+        return `${base} bg-gray-100 text-gray-800`;
       default:
-        return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400`;
+        return `${base} bg-yellow-100 text-yellow-800`;
     }
   }
 
   getCategoryBadgeClass(category: string): string {
     const base = 'text-xs px-1.5 py-0.5 rounded font-medium';
     if (category === 'system') {
-      return `${base} bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400`;
+      return `${base} bg-purple-100 text-purple-800`;
     }
-    return `${base} bg-sky-100 text-sky-800 dark:bg-sky-900/20 dark:text-sky-400`;
+    return `${base} bg-sky-100 text-sky-800`;
   }
 
   getStatusIcon(status: ApplicationStatus): string {
@@ -249,10 +239,8 @@ export class ApplicationRowComponent {
 
   getBuildPathBadgeClass(): string {
     const bp = this.getBuildPath();
-    if (bp === 'github-actions')
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-    if (bp === 'railpack')
-      return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    if (bp === 'github-actions') return 'bg-blue-100 text-blue-700';
+    if (bp === 'railpack') return 'bg-green-100 text-green-700';
     return 'bg-muted text-muted-foreground';
   }
 

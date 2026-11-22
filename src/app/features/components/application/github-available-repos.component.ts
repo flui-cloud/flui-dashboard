@@ -45,15 +45,15 @@ import { firstValueFrom } from 'rxjs';
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Your GitHub Repositories</h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <h3 class="text-sm font-semibold text-slate-900">Your GitHub Repositories</h3>
+          <p class="text-xs text-slate-500 mt-0.5">
             Select repositories to import into the platform
           </p>
         </div>
         <button
           (click)="loadRepos()"
           [disabled]="isLoading()"
-          class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-60 transition-colors"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-60 transition-colors"
         >
           <ng-icon [name]="isLoading() ? 'lucideLoader' : 'lucideRefreshCw'" size="14"
             [class.animate-spin]="isLoading()" />
@@ -69,7 +69,7 @@ import { firstValueFrom } from 'rxjs';
           type="text"
           [(ngModel)]="searchQuery"
           placeholder="Search repositories..."
-          class="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -83,11 +83,11 @@ import { firstValueFrom } from 'rxjs';
 
       <!-- Error state -->
       @if (error()) {
-        <div class="flex items-start gap-2 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-          <ng-icon name="lucideAlertCircle" size="16" class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+        <div class="flex items-start gap-2 p-4 bg-red-50 rounded-lg border border-red-200">
+          <ng-icon name="lucideAlertCircle" size="16" class="text-red-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p class="text-sm font-medium text-red-800 dark:text-red-300">Failed to load repositories</p>
-            <p class="text-xs text-red-600 dark:text-red-400 mt-0.5">{{ error() }}</p>
+            <p class="text-sm font-medium text-red-800">Failed to load repositories</p>
+            <p class="text-xs text-red-600 mt-0.5">{{ error() }}</p>
           </div>
         </div>
       }
@@ -96,43 +96,43 @@ import { firstValueFrom } from 'rxjs';
       @if (!isLoading() || repos().length > 0) {
         @if (filteredRepos().length === 0 && !isLoading()) {
           <div class="text-center py-10 space-y-3">
-            <ng-icon name="lucideGitBranch" size="32" class="mx-auto text-slate-300 dark:text-slate-600" />
+            <ng-icon name="lucideGitBranch" size="32" class="mx-auto text-slate-300" />
             @if (searchQuery) {
-              <p class="text-sm text-slate-500 dark:text-slate-400">
+              <p class="text-sm text-slate-500">
                 No repositories match "{{ searchQuery }}"
               </p>
             } @else if (authMethod() === 'pat') {
-              <p class="text-sm font-medium text-slate-700 dark:text-slate-300">No repositories found</p>
+              <p class="text-sm font-medium text-slate-700">No repositories found</p>
               @if (!hideHint()) {
-                <div class="relative inline-flex flex-col items-start gap-1.5 text-left bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 mx-auto max-w-xs">
+                <div class="relative inline-flex flex-col items-start gap-1.5 text-left bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mx-auto max-w-xs">
                   <button
                     (click)="hideHint.set(true)"
-                    class="absolute top-2 right-2 text-amber-500 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-200"
+                    class="absolute top-2 right-2 text-amber-500 hover:text-amber-700"
                     aria-label="Dismiss"
                   >
                     <ng-icon name="lucideX" size="13" />
                   </button>
-                  <div class="flex items-center gap-1.5 text-xs font-medium text-amber-800 dark:text-amber-300 pr-4">
+                  <div class="flex items-center gap-1.5 text-xs font-medium text-amber-800 pr-4">
                     <ng-icon name="lucideKey" size="13" />
                     Check your token permissions
                   </div>
-                  <p class="text-xs text-amber-700 dark:text-amber-400">
-                    Make sure the token has the <code class="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 rounded">repo</code> scope to access your repositories.
+                  <p class="text-xs text-amber-700">
+                    Make sure the token has the <code class="font-mono bg-amber-100 px-1 rounded">repo</code> scope to access your repositories.
                   </p>
                   <a
                     href="https://github.com/settings/tokens"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:underline mt-0.5"
+                    class="inline-flex items-center gap-1 text-xs text-amber-700 hover:underline mt-0.5"
                   >
                     Manage tokens on GitHub
                     <ng-icon name="lucideExternalLink" size="11" />
                   </a>
-                  <span class="text-amber-300 dark:text-amber-700">·</span>
+                  <span class="text-amber-300">·</span>
                   <button
                     (click)="loadRepos()"
                     [disabled]="isLoading()"
-                    class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:underline disabled:opacity-50"
+                    class="inline-flex items-center gap-1 text-xs text-amber-700 hover:underline disabled:opacity-50"
                   >
                     <ng-icon [name]="isLoading() ? 'lucideLoader' : 'lucideRefreshCw'" size="11" [class.animate-spin]="isLoading()" />
                     Retry
@@ -142,17 +142,17 @@ import { firstValueFrom } from 'rxjs';
             } @else {
               }
             } @else {
-              <p class="text-sm font-medium text-slate-700 dark:text-slate-300">No repositories found</p>
+              <p class="text-sm font-medium text-slate-700">No repositories found</p>
               @if (!hideHint()) {
-                <div class="relative inline-flex flex-col items-start gap-1.5 text-left bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 mx-auto max-w-xs">
+                <div class="relative inline-flex flex-col items-start gap-1.5 text-left bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 mx-auto max-w-xs">
                   <button
                     (click)="hideHint.set(true)"
-                    class="absolute top-2 right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    class="absolute top-2 right-2 text-slate-400 hover:text-slate-600"
                     aria-label="Dismiss"
                   >
                     <ng-icon name="lucideX" size="13" />
                   </button>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 pr-4">
+                  <p class="text-xs text-slate-500 pr-4">
                     Make sure the GitHub OAuth App has been authorized to access your repositories. Try disconnecting and reconnecting.
                   </p>
                 </div>
@@ -176,11 +176,11 @@ import { firstValueFrom } from 'rxjs';
 
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium text-slate-900 dark:text-white truncate">
+                    <span class="text-sm font-medium text-slate-900 truncate">
                       {{ repo.fullName }}
                     </span>
                     @if (repo.isImported) {
-                      <span class="flex-shrink-0 px-1.5 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full font-medium">
+                      <span class="flex-shrink-0 px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded-full font-medium">
                         Imported
                       </span>
                     }
@@ -189,7 +189,7 @@ import { firstValueFrom } from 'rxjs';
                     }
                   </div>
                   @if (repo.description) {
-                    <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{{ repo.description }}</p>
+                    <p class="text-xs text-slate-500 truncate mt-0.5">{{ repo.description }}</p>
                   }
                   <div class="flex items-center gap-3 mt-1">
                     @if (repo.language) {
@@ -204,14 +204,14 @@ import { firstValueFrom } from 'rxjs';
 
           <!-- Import actions -->
           @if (selectedIds().length > 0) {
-            <div class="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
-              <span class="text-xs text-slate-500 dark:text-slate-400">
+            <div class="flex items-center justify-between pt-2 border-t border-slate-200">
+              <span class="text-xs text-slate-500">
                 {{ selectedIds().length }} selected
               </span>
               <button
                 (click)="importSelected()"
                 [disabled]="isImporting()"
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
               >
                 @if (isImporting()) {
                   <ng-icon name="lucideLoader" size="14" class="animate-spin" />
@@ -228,18 +228,18 @@ import { firstValueFrom } from 'rxjs';
           @if (importResult()) {
             <div class="p-3 rounded-lg border"
               [class]="importResult()!.failed > 0
-                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
-                : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'"
+                ? 'bg-amber-50 border-amber-200'
+                : 'bg-green-50 border-green-200'"
             >
               <div class="flex items-center gap-2">
                 <ng-icon name="lucideCheckCircle" size="16"
                   [class]="importResult()!.failed > 0
-                    ? 'text-amber-600 dark:text-amber-400'
-                    : 'text-green-600 dark:text-green-400'" />
+                    ? 'text-amber-600'
+                    : 'text-green-600'" />
                 <p class="text-xs font-medium"
                   [class]="importResult()!.failed > 0
-                    ? 'text-amber-800 dark:text-amber-300'
-                    : 'text-green-800 dark:text-green-300'"
+                    ? 'text-amber-800'
+                    : 'text-green-800'"
                 >
                   {{ importResult()!.imported }} imported
                   @if (importResult()!.failed > 0) {
@@ -315,12 +315,12 @@ export class GithubAvailableReposComponent implements OnInit {
 
   getRepoRowClass(repo: AvailableRepositoryDto): string {
     if (repo.isImported) {
-      return 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 opacity-70 cursor-default';
+      return 'border-slate-200 bg-slate-50 opacity-70 cursor-default';
     }
     if (this.isSelected(repo)) {
-      return 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20';
+      return 'border-blue-400 bg-blue-50';
     }
-    return 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50';
+    return 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50';
   }
 
   async importSelected(): Promise<void> {

@@ -98,11 +98,7 @@ const HUB_MARK: Record<PeerStatus, string> = { active: '✓', pending: '…', st
             <div class="flex items-center gap-2">
               <span
                 class="rounded-md px-2 py-0.5 text-xs font-semibold"
-                [class]="
-                  n.enabled
-                    ? 'bg-primary/10 text-primary'
-                    : 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200'
-                "
+                [class]="n.enabled ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-900'"
                 data-testid="flui-network-state"
               >
                 {{ n.enabled ? 'On' : 'Off' }}
@@ -153,10 +149,7 @@ const HUB_MARK: Record<PeerStatus, string> = { active: '✓', pending: '…', st
           <p class="m-0 text-sm text-sub">{{ failed() }}</p>
         } @else if (network(); as n) {
           @if (n.unavailable) {
-            <p
-              class="m-0 text-sm text-amber-700 dark:text-amber-300"
-              data-testid="flui-network-unavailable"
-            >
+            <p class="m-0 text-sm text-amber-700" data-testid="flui-network-unavailable">
               {{ n.unavailable }}
             </p>
           }
@@ -165,9 +158,7 @@ const HUB_MARK: Record<PeerStatus, string> = { active: '✓', pending: '…', st
               Control ends:
               @for (h of n.hubs; track h.address; let last = $last) {
                 <span
-                  [class]="
-                    h.status === 'stale' ? 'text-red-600 dark:text-red-400' : 'text-foreground'
-                  "
+                  [class]="h.status === 'stale' ? 'text-red-600' : 'text-foreground'"
                   [title]="hubTitle(h)"
                   >{{ hubLabel(h) }}</span
                 >
@@ -185,10 +176,7 @@ const HUB_MARK: Record<PeerStatus, string> = { active: '✓', pending: '…', st
             </p>
           }
           @if (n.hubProblem) {
-            <p
-              class="m-0 text-sm text-red-600 dark:text-red-400"
-              data-testid="flui-network-hub-problem"
-            >
+            <p class="m-0 text-sm text-red-600" data-testid="flui-network-hub-problem">
               The control's end is not set up, so members stay pending: {{ n.hubProblem }}
             </p>
           }
@@ -201,7 +189,7 @@ const HUB_MARK: Record<PeerStatus, string> = { active: '✓', pending: '…', st
                       <span class="font-medium text-foreground">{{ c.clusterName }}</span>
                       @if (c.held) {
                         <span
-                          class="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-900/40 dark:text-amber-200"
+                          class="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900"
                           data-testid="flui-network-held"
                           >held on its public address</span
                         >
@@ -237,9 +225,7 @@ const HUB_MARK: Record<PeerStatus, string> = { active: '✓', pending: '…', st
                       <span class="font-mono">{{ m.address }}</span>
                       <span [class.text-red-600]="m.status === 'stale'">{{ handshake(m) }}</span>
                       @if (m.unreachedFrom?.length) {
-                        <span
-                          class="text-amber-700 dark:text-amber-300"
-                          data-testid="flui-network-unreached"
+                        <span class="text-amber-700" data-testid="flui-network-unreached"
                           >not reached from {{ m.unreachedFrom!.join(', ') }}</span
                         >
                       }

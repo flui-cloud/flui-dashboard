@@ -100,11 +100,9 @@ import { TABLE } from './scaling-tabs-format';
           data-testid="bound-min-input"
         />
         @if (d().boundProblems().min; as problem) {
-          <span
-            class="mt-1 block text-[12px] text-red-600 dark:text-red-400"
-            data-testid="bound-min-error"
-            >{{ problem }}</span
-          >
+          <span class="mt-1 block text-[12px] text-red-600" data-testid="bound-min-error">{{
+            problem
+          }}</span>
         }
       </td>
       <td [class]="t.tdMuted">Never fewer nodes than this. Held now, always.</td>
@@ -135,11 +133,9 @@ import { TABLE } from './scaling-tabs-format';
           data-testid="bound-desired-input"
         />
         @if (d().boundProblems().desired; as problem) {
-          <span
-            class="mt-1 block text-[12px] text-red-600 dark:text-red-400"
-            data-testid="bound-desired-error"
-            >{{ problem }}</span
-          >
+          <span class="mt-1 block text-[12px] text-red-600" data-testid="bound-desired-error">{{
+            problem
+          }}</span>
         }
       </td>
       <td [class]="t.tdMuted">Where the fleet would like to sit.</td>
@@ -177,11 +173,9 @@ import { TABLE } from './scaling-tabs-format';
           data-testid="bound-max-input"
         />
         @if (d().boundProblems().max; as problem) {
-          <span
-            class="mt-1 block text-[12px] text-red-600 dark:text-red-400"
-            data-testid="bound-max-error"
-            >{{ problem }}</span
-          >
+          <span class="mt-1 block text-[12px] text-red-600" data-testid="bound-max-error">{{
+            problem
+          }}</span>
         }
       </td>
       <td [class]="t.tdMuted">

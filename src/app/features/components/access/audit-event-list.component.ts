@@ -6,7 +6,7 @@ import { formatWhen } from '../../model/iam.model';
 const OUTCOME_CLASS: Record<AuditOutcome, string> = {
   ok: 'border-border text-muted-foreground',
   refused: 'border-destructive/40 bg-destructive/10 text-destructive',
-  failed: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  failed: 'border-amber-500/40 bg-amber-500/10 text-amber-600',
 };
 
 @Component({

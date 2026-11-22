@@ -98,11 +98,7 @@ import {
                   <ng-icon
                     [name]="icon"
                     class="h-3.5 w-3.5 align-middle"
-                    [class]="
-                      run.encrypted
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-muted-foreground'
-                    "
+                    [class]="run.encrypted ? 'text-emerald-600' : 'text-muted-foreground'"
                     role="img"
                     [attr.aria-label]="lock(run.encrypted).label"
                   />
@@ -132,7 +128,7 @@ import {
               <tr class="border-b border-border/60">
                 <td [attr.colspan]="7" class="px-2 pb-2">
                   <div
-                    class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-400 break-words"
+                    class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 break-words"
                   >
                     {{ run.errorMessage }}
                   </div>

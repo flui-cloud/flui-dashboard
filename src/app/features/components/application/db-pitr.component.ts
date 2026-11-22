@@ -28,10 +28,7 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
       @if (s.continuousBackupEnabled || s.backupCount > 0) {
         <div class="rounded-lg border border-border bg-card p-4">
           <div class="flex items-start gap-2">
-            <ng-icon
-              name="lucideHistory"
-              class="mt-0.5 h-5 w-5 text-indigo-600 dark:text-indigo-400"
-            />
+            <ng-icon name="lucideHistory" class="mt-0.5 h-5 w-5 text-indigo-600" />
             <div class="min-w-0 flex-1">
               <h3 class="text-base font-semibold">
                 {{ s.pointInTime === false ? 'Scheduled dumps' : 'Point-in-time recovery' }}
@@ -149,7 +146,7 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
               }
 
               @if (ok(); as m) {
-                <p class="mt-2 text-xs text-emerald-600 dark:text-emerald-400">
+                <p class="mt-2 text-xs text-emerald-600">
                   {{ m }}
                 </p>
               }

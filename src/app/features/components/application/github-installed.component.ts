@@ -28,10 +28,10 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
-      <div class="max-w-md w-full bg-white dark:bg-slate-800 rounded-lg shadow-md p-8">
+    <div class="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <div
-          class="w-16 h-16 mx-auto rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center mb-6"
+          class="w-16 h-16 mx-auto rounded-full bg-slate-900 flex items-center justify-center mb-6"
         >
           <ng-icon name="lucideGithub" size="32" class="text-white" />
         </div>
@@ -39,24 +39,18 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
         @if (state() === 'error') {
           <div class="text-center">
             <div class="flex items-center justify-center gap-2 mb-3">
-              <ng-icon
-                name="lucideTriangleAlert"
-                size="20"
-                class="text-amber-600 dark:text-amber-400"
-              />
-              <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
-                Connection incomplete
-              </h1>
+              <ng-icon name="lucideTriangleAlert" size="20" class="text-amber-600" />
+              <h1 class="text-lg font-semibold text-slate-900">Connection incomplete</h1>
             </div>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mb-1">{{ errorLabel() }}</p>
+            <p class="text-sm text-slate-500 mb-1">{{ errorLabel() }}</p>
             @if (errorDetails()) {
-              <p class="text-xs text-slate-400 dark:text-slate-500 mb-6 font-mono">
+              <p class="text-xs text-slate-400 mb-6 font-mono">
                 {{ errorDetails() }}
               </p>
             }
             <button
               (click)="goToRepositories()"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 dark:bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
             >
               Return to dashboard
             </button>
@@ -64,8 +58,8 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
         } @else if (state() === 'pat-needed') {
           <div>
             <div class="flex items-center justify-center gap-2 mb-3">
-              <ng-icon name="lucideCheck" size="20" class="text-green-600 dark:text-green-400" />
-              <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
+              <ng-icon name="lucideCheck" size="20" class="text-green-600" />
+              <h1 class="text-lg font-semibold text-slate-900">
                 @if (login()) {
                   Connected as &#64;{{ login() }}
                 } @else {
@@ -73,7 +67,7 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
                 }
               </h1>
             </div>
-            <p class="text-sm text-slate-500 dark:text-slate-400 text-center mb-6">
+            <p class="text-sm text-slate-500 text-center mb-6">
               One more step: provide a classic Personal Access Token so Flui can pull the container
               images from your GHCR registry.
             </p>
@@ -86,7 +80,7 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
             </button>
             <button
               (click)="goToRepositories()"
-              class="w-full mt-3 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+              class="w-full mt-3 text-xs text-slate-500 hover:text-slate-700"
             >
               Skip for now (deploys won't be able to pull images)
             </button>
@@ -94,26 +88,21 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
         } @else if (state() === 'success') {
           <div class="text-center">
             <div class="flex items-center justify-center gap-2 mb-3">
-              <ng-icon name="lucideCheck" size="20" class="text-green-600 dark:text-green-400" />
-              <h1 class="text-lg font-semibold text-slate-900 dark:text-white">All set!</h1>
+              <ng-icon name="lucideCheck" size="20" class="text-green-600" />
+              <h1 class="text-lg font-semibold text-slate-900">All set!</h1>
             </div>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
+            <p class="text-sm text-slate-500 mb-6">
               @if (login()) {
                 Connected as
-                <span class="font-medium text-slate-700 dark:text-slate-200"
-                  >&#64;{{ login() }}</span
+                <span class="font-medium text-slate-700">&#64;{{ login() }}</span
                 >.
               }
               Redirecting you back to the dashboard…
             </p>
-            <ng-icon
-              name="lucideLoader"
-              size="24"
-              class="animate-spin text-slate-400 dark:text-slate-500 mx-auto"
-            />
+            <ng-icon name="lucideLoader" size="24" class="animate-spin text-slate-400 mx-auto" />
           </div>
         } @else {
-          <p class="text-sm text-slate-500 dark:text-slate-400 text-center">Finishing up…</p>
+          <p class="text-sm text-slate-500 text-center">Finishing up…</p>
         }
       </div>
     </div>

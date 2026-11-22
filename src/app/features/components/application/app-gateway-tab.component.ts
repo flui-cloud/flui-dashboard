@@ -75,7 +75,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
 
       @if (error()) {
         <div
-          class="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-300"
+          class="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700"
         >
           <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
           <span>{{ error() }}</span>
@@ -134,7 +134,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                       class="text-xs px-2 py-0.5 rounded-full"
                       [class]="
                         route.tlsEnabled
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                          ? 'bg-green-100 text-green-700'
                           : 'bg-muted text-muted-foreground'
                       "
                     >
@@ -145,7 +145,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                     <div class="flex items-center gap-1 flex-wrap">
                       @if (route.auth?.sso) {
                         <span
-                          class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                          class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700"
                         >
                           <ng-icon name="lucideLock" class="h-3 w-3" />
                           SSO{{ route.auth?.minRole ? ' · ' + route.auth?.minRole : '' }}
@@ -153,15 +153,13 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                       }
                       @if (route.rateLimit?.average) {
                         <span
-                          class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
+                          class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700"
                         >
                           {{ route.rateLimit?.average }} req/{{ route.rateLimit?.period || '1s' }}
                         </span>
                       }
                       @if (route.allowIps?.length) {
-                        <span
-                          class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                        >
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                           {{ route.allowIps?.length }} IP range(s)
                         </span>
                       }
@@ -206,7 +204,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                     <td colspan="7" class="p-4">
                       @if (route.errorMessage) {
                         <div
-                          class="mb-3 rounded-md border border-red-300 bg-red-50 dark:bg-red-950/30 p-2 text-xs text-red-700 dark:text-red-300"
+                          class="mb-3 rounded-md border border-red-300 bg-red-50 p-2 text-xs text-red-700"
                         >
                           {{ route.errorMessage }}
                         </div>
@@ -581,11 +579,11 @@ export class AppGatewayTabComponent implements OnInit, OnDestroy {
   statusClass(route: GatewayRoute): string {
     const status = (route.reconciliationStatus || '').toLowerCase();
     if (status === 'in_sync') {
-      return 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300';
+      return 'bg-green-100 text-green-700';
     }
     if (status === 'error') {
-      return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
+      return 'bg-red-100 text-red-700';
     }
-    return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+    return 'bg-amber-100 text-amber-700';
   }
 }

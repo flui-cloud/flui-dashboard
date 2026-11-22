@@ -46,15 +46,15 @@ function getJobStatusClass(status: BuildJobInfoDto['status']): string {
   const base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
   switch (status) {
     case 'Running':
-      return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
+      return `${base} bg-blue-100 text-blue-800`;
     case 'Pending':
-      return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
+      return `${base} bg-yellow-100 text-yellow-800`;
     case 'Succeeded':
-      return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
+      return `${base} bg-green-100 text-green-800`;
     case 'Failed':
     case 'Unknown':
     default:
-      return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
+      return `${base} bg-red-100 text-red-800`;
   }
 }
 
@@ -62,14 +62,14 @@ function getQueuedStatusClass(status: QueuedBuildInfoDto['status']): string {
   const base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
   switch (status) {
     case 'PENDING':
-      return `${base} bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300`;
+      return `${base} bg-gray-100 text-gray-700`;
     case 'CLONING':
     case 'ANALYZING':
     case 'BUILDING':
     case 'PUSHING':
-      return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
+      return `${base} bg-blue-100 text-blue-800`;
     default:
-      return `${base} bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400`;
+      return `${base} bg-gray-100 text-gray-600`;
   }
 }
 
@@ -94,13 +94,13 @@ function getPodPhaseClass(phase: string): string {
   const base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
   switch (phase) {
     case 'Running':
-      return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
+      return `${base} bg-blue-100 text-blue-800`;
     case 'Pending':
-      return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
+      return `${base} bg-yellow-100 text-yellow-800`;
     case 'Succeeded':
-      return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
+      return `${base} bg-green-100 text-green-800`;
     default:
-      return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
+      return `${base} bg-red-100 text-red-800`;
   }
 }
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
@@ -214,7 +214,7 @@ import {
       @if (error()) {
         <div
           data-testid="build-namespace-error"
-          class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300"
+          class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
         >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
           {{ error() }}

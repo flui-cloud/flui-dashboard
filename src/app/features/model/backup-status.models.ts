@@ -97,10 +97,10 @@ export const STATUS_BANNER_TONE: Record<BackupOverallStatus, string> = {
 };
 
 export const STATUS_TEXT_TONE: Record<BackupOverallStatus, string> = {
-  ok: 'text-green-700 dark:text-green-400',
+  ok: 'text-green-700',
   info: 'text-muted-foreground',
-  warning: 'text-amber-700 dark:text-amber-400',
-  critical: 'text-red-700 dark:text-red-400',
+  warning: 'text-amber-700',
+  critical: 'text-red-700',
 };
 
 export function centsToEur(cents: number | null | undefined): string {

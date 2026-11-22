@@ -69,7 +69,7 @@ import { AppBuildRowComponent } from './app-build-row.component';
       <!-- Error -->
       @if (error()) {
         <div
-          class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300"
+          class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
         >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
           {{ error() }}

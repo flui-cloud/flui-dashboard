@@ -113,8 +113,8 @@ export function validatePrefix(value: string): string | null {
                     class="text-[10px] px-1.5 py-0.5 rounded font-medium"
                     [class]="
                       row.draftHostnameMode === 'ip'
-                        ? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        ? 'bg-gray-100 text-gray-700'
+                        : 'bg-blue-100 text-blue-700'
                     "
                   >
                     {{ row.draftHostnameMode === 'ip' ? 'Test' : 'Domain' }}
@@ -269,12 +269,10 @@ export function validatePrefix(value: string): string | null {
                     <span class="text-muted-foreground">Checking…</span>
                   } @else if (f.dnsOk === true) {
                     <ng-icon name="lucideCheckCircle" class="h-3 w-3 text-emerald-500" />
-                    <span class="text-emerald-600 dark:text-emerald-400"
-                      >Points to your cluster</span
-                    >
+                    <span class="text-emerald-600">Points to your cluster</span>
                   } @else if (f.dnsOk === false) {
                     <ng-icon name="lucideAlertCircle" class="h-3 w-3 text-amber-500" />
-                    <span class="text-amber-600 dark:text-amber-400">
+                    <span class="text-amber-600">
                       Doesn't point to {{ wiz.masterIp() }} yet
                       @if (f.dnsResolved.length) {
                         — currently {{ f.dnsResolved.join(', ') }}
@@ -323,10 +321,10 @@ export function validatePrefix(value: string): string | null {
 
     @if (allConfigured()) {
       <div
-        class="mt-3 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2 flex items-center gap-2"
+        class="mt-3 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center gap-2"
       >
         <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
-        <p class="text-xs text-emerald-700 dark:text-emerald-300">
+        <p class="text-xs text-emerald-700">
           All set. Click Next to publish the addresses and issue the certificate.
         </p>
       </div>

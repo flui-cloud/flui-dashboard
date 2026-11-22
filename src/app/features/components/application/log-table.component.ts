@@ -40,33 +40,20 @@ const PAGE_SIZE = 50;
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div
-      class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900"
-    >
+    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white">
       <!-- Header -->
       <div
-        class="grid grid-cols-[130px_64px_1fr_90px_80px] border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2"
+        class="grid grid-cols-[130px_64px_1fr_90px_80px] border-b border-gray-200 bg-gray-50 px-3 py-2"
       >
-        <span
-          class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider"
           >Timestamp</span
         >
-        <span
-          class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >Level</span
-        >
-        <span
-          class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Level</span>
+        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider"
           >Message</span
         >
-        <span
-          class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >Pod</span
-        >
-        <span
-          class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >Stream</span
-        >
+        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Pod</span>
+        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Stream</span>
       </div>
 
       <!-- Loading state -->
@@ -84,9 +71,7 @@ const PAGE_SIZE = 50;
 
         <!-- Empty state -->
       } @else if (pagedEntries().length === 0) {
-        <div
-          class="flex flex-col items-center justify-center py-14 gap-2 text-gray-400 dark:text-gray-500"
-        >
+        <div class="flex flex-col items-center justify-center py-14 gap-2 text-gray-400">
           <ng-icon name="lucideActivity" class="h-7 w-7" />
           <span class="text-sm">No log entries</span>
         </div>
@@ -95,7 +80,7 @@ const PAGE_SIZE = 50;
       } @else {
         @for (entry of pagedEntries(); track entry.timestamp + entry.message) {
           <div
-            class="group border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors"
+            class="group border-b border-gray-100 last:border-0 hover:bg-gray-50/60 transition-colors"
           >
             <!-- Main row -->
             <div
@@ -103,7 +88,7 @@ const PAGE_SIZE = 50;
               (click)="toggleExpand(entry)"
             >
               <span
-                class="text-[11px] font-mono text-gray-500 dark:text-gray-400 leading-5 truncate"
+                class="text-[11px] font-mono text-gray-500 leading-5 truncate"
                 [title]="entry.timestamp"
               >
                 {{ formatTimestamp(entry.timestamp) }}
@@ -117,7 +102,7 @@ const PAGE_SIZE = 50;
                 </span>
               </span>
               <span
-                class="text-[11px] text-gray-800 dark:text-gray-200 font-mono leading-5 flex items-start gap-1.5 min-w-0"
+                class="text-[11px] text-gray-800 font-mono leading-5 flex items-start gap-1.5 min-w-0"
               >
                 <ng-icon
                   [name]="isExpanded(entry) ? 'lucideChevronDown' : 'lucideChevronRight'"
@@ -125,7 +110,7 @@ const PAGE_SIZE = 50;
                 />
                 <span class="truncate flex-1 min-w-0">{{ entry.message }}</span>
                 <button
-                  class="flex-shrink-0 ml-1 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                  class="flex-shrink-0 ml-1 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all"
                   [title]="isCopied(entry) ? 'Copied!' : 'Copy message'"
                   (click)="copyMessage($event, entry)"
                 >
@@ -135,14 +120,10 @@ const PAGE_SIZE = 50;
                   />
                 </button>
               </span>
-              <span
-                class="text-[11px] font-mono text-gray-500 dark:text-gray-400 truncate leading-5 pl-2"
-              >
+              <span class="text-[11px] font-mono text-gray-500 truncate leading-5 pl-2">
                 {{ shortPodName(entry.pod) }}
               </span>
-              <span
-                class="text-[11px] font-mono text-gray-500 dark:text-gray-400 truncate leading-5 pl-2"
-              >
+              <span class="text-[11px] font-mono text-gray-500 truncate leading-5 pl-2">
                 {{ entry.stream ?? '-' }}
               </span>
             </div>
@@ -150,23 +131,22 @@ const PAGE_SIZE = 50;
             <!-- Expanded detail -->
             @if (isExpanded(entry)) {
               <div
-                class="mx-3 mb-2 rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 text-xs font-mono select-text cursor-text"
+                class="mx-3 mb-2 rounded bg-gray-50 border border-gray-200 p-3 text-xs font-mono select-text cursor-text"
               >
                 <div class="grid grid-cols-[140px_1fr] gap-y-1.5 gap-x-3">
-                  <span class="text-gray-400 dark:text-gray-500">timestamp</span>
-                  <span class="text-gray-800 dark:text-gray-200">{{ entry.timestamp }}</span>
+                  <span class="text-gray-400">timestamp</span>
+                  <span class="text-gray-800">{{ entry.timestamp }}</span>
 
-                  <span class="text-gray-400 dark:text-gray-500">level</span>
+                  <span class="text-gray-400">level</span>
                   <span [class]="getLevelText(entry.level)">{{ entry.level ?? 'unknown' }}</span>
 
-                  <span class="text-gray-400 dark:text-gray-500">message</span>
+                  <span class="text-gray-400">message</span>
                   <span class="flex items-start gap-1.5 group/msg">
-                    <span
-                      class="text-gray-800 dark:text-gray-200 break-all whitespace-pre-wrap flex-1"
-                      >{{ entry.message }}</span
-                    >
+                    <span class="text-gray-800 break-all whitespace-pre-wrap flex-1">{{
+                      entry.message
+                    }}</span>
                     <button
-                      class="flex-shrink-0 mt-0.5 p-0.5 rounded opacity-0 group-hover/msg:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                      class="flex-shrink-0 mt-0.5 p-0.5 rounded opacity-0 group-hover/msg:opacity-100 hover:bg-gray-200 transition-all"
                       [title]="isCopied(entry) ? 'Copied!' : 'Copy message'"
                       (click)="copyMessage($event, entry)"
                     >
@@ -180,42 +160,41 @@ const PAGE_SIZE = 50;
                   </span>
 
                   @if (entry.namespace) {
-                    <span class="text-gray-400 dark:text-gray-500">namespace</span>
-                    <span class="text-gray-800 dark:text-gray-200">{{ entry.namespace }}</span>
+                    <span class="text-gray-400">namespace</span>
+                    <span class="text-gray-800">{{ entry.namespace }}</span>
                   }
                   @if (entry.pod) {
-                    <span class="text-gray-400 dark:text-gray-500">pod</span>
-                    <span class="text-gray-800 dark:text-gray-200">{{ entry.pod }}</span>
+                    <span class="text-gray-400">pod</span>
+                    <span class="text-gray-800">{{ entry.pod }}</span>
                   }
                   @if (entry.container) {
-                    <span class="text-gray-400 dark:text-gray-500">container</span>
-                    <span class="text-gray-800 dark:text-gray-200">{{ entry.container }}</span>
+                    <span class="text-gray-400">container</span>
+                    <span class="text-gray-800">{{ entry.container }}</span>
                   }
                   @if (entry.hostname) {
-                    <span class="text-gray-400 dark:text-gray-500">hostname</span>
-                    <span class="text-gray-800 dark:text-gray-200">{{ entry.hostname }}</span>
+                    <span class="text-gray-400">hostname</span>
+                    <span class="text-gray-800">{{ entry.hostname }}</span>
                   }
                   @if (entry.server_type) {
-                    <span class="text-gray-400 dark:text-gray-500">server_type</span>
-                    <span class="text-gray-800 dark:text-gray-200">{{ entry.server_type }}</span>
+                    <span class="text-gray-400">server_type</span>
+                    <span class="text-gray-800">{{ entry.server_type }}</span>
                   }
                   @if (entry.server_id) {
-                    <span class="text-gray-400 dark:text-gray-500">server_id</span>
-                    <span class="text-blue-600 dark:text-blue-400">{{ entry.server_id }}</span>
+                    <span class="text-gray-400">server_id</span>
+                    <span class="text-blue-600">{{ entry.server_id }}</span>
                   }
                   @if (entry.stream) {
-                    <span class="text-gray-400 dark:text-gray-500">stream</span>
-                    <span class="text-gray-800 dark:text-gray-200">{{ entry.stream }}</span>
+                    <span class="text-gray-400">stream</span>
+                    <span class="text-gray-800">{{ entry.stream }}</span>
                   }
                   @if (entry.metadata) {
-                    <span
-                      class="text-gray-400 dark:text-gray-500 col-span-2 mt-1 border-t border-gray-200 dark:border-gray-700 pt-1.5"
+                    <span class="text-gray-400 col-span-2 mt-1 border-t border-gray-200 pt-1.5"
                       >metadata</span
                     >
                     @for (kv of metaEntries(entry.metadata); track kv[0]) {
                       @if (kv[1] !== null && kv[1] !== '') {
-                        <span class="text-gray-400 dark:text-gray-500 pl-2">{{ kv[0] }}</span>
-                        <span class="text-gray-700 dark:text-gray-300">{{ kv[1] }}</span>
+                        <span class="text-gray-400 pl-2">{{ kv[0] }}</span>
+                        <span class="text-gray-700">{{ kv[1] }}</span>
                       }
                     }
                   }
@@ -229,9 +208,9 @@ const PAGE_SIZE = 50;
       <!-- Pagination -->
       @if (totalPages() > 1) {
         <div
-          class="flex items-center justify-between px-4 py-2.5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+          class="flex items-center justify-between px-4 py-2.5 border-t border-gray-200 bg-gray-50"
         >
-          <span class="text-xs text-gray-500 dark:text-gray-400">
+          <span class="text-xs text-gray-500">
             Page {{ currentPage() }} of {{ totalPages() }} &nbsp;·&nbsp;
             {{ entries().length }} entries
           </span>
@@ -239,7 +218,7 @@ const PAGE_SIZE = 50;
             <button
               (click)="goToPage(currentPage() - 1)"
               [disabled]="currentPage() === 1"
-              class="px-2.5 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              class="px-2.5 py-1 text-xs rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-100 transition-colors"
             >
               Previous
             </button>
@@ -250,7 +229,7 @@ const PAGE_SIZE = 50;
                 [class]="
                   p === currentPage()
                     ? 'border-blue-500 bg-blue-500 text-white'
-                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
+                    : 'border-gray-200 hover:bg-gray-100 text-gray-700'
                 "
               >
                 {{ p }}
@@ -259,7 +238,7 @@ const PAGE_SIZE = 50;
             <button
               (click)="goToPage(currentPage() + 1)"
               [disabled]="currentPage() === totalPages()"
-              class="px-2.5 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              class="px-2.5 py-1 text-xs rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-100 transition-colors"
             >
               Next
             </button>
@@ -377,34 +356,34 @@ export class LogTableComponent {
   getLevelBadge(level: string | undefined): string {
     switch ((level ?? '').toLowerCase()) {
       case 'error':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400';
+        return 'bg-red-100 text-red-700';
       case 'warn':
-        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400';
+        return 'bg-amber-100 text-amber-700';
       case 'info':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400';
+        return 'bg-blue-100 text-blue-700';
       case 'debug':
-        return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400';
+        return 'bg-gray-100 text-gray-600';
       case 'trace':
-        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400';
+        return 'bg-purple-100 text-purple-700';
       default:
-        return 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400';
+        return 'bg-gray-100 text-gray-500';
     }
   }
 
   getLevelText(level: string | undefined): string {
     switch ((level ?? '').toLowerCase()) {
       case 'error':
-        return 'text-red-600 dark:text-red-400';
+        return 'text-red-600';
       case 'warn':
-        return 'text-amber-600 dark:text-amber-400';
+        return 'text-amber-600';
       case 'info':
-        return 'text-blue-600 dark:text-blue-400';
+        return 'text-blue-600';
       case 'debug':
-        return 'text-gray-600 dark:text-gray-400';
+        return 'text-gray-600';
       case 'trace':
-        return 'text-purple-600 dark:text-purple-400';
+        return 'text-purple-600';
       default:
-        return 'text-gray-600 dark:text-gray-400';
+        return 'text-gray-600';
     }
   }
 }

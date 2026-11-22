@@ -91,7 +91,7 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
         <!-- Error banner -->
         @if (variablesService.error()) {
           <div
-            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ variablesService.error() }}</span>
@@ -122,11 +122,7 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
                         {{ set.keys.length }} {{ set.keys.length === 1 ? 'key' : 'keys' }} &middot;
                         <span class="uppercase">{{ set.scope }}</span> &middot;
                         <span
-                          [class]="
-                            set.type === 'sensitive'
-                              ? 'text-amber-600 dark:text-amber-400'
-                              : 'text-blue-600 dark:text-blue-400'
-                          "
+                          [class]="set.type === 'sensitive' ? 'text-amber-600' : 'text-blue-600'"
                         >
                           {{ set.type }}
                         </span>

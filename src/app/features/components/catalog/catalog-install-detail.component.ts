@@ -173,13 +173,11 @@ import {
               </div>
             } @else if (dnsAppId()) {
               <div
-                class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-4"
+                class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4"
               >
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
-                    No endpoint configured
-                  </p>
-                  <p class="mt-0.5 text-xs text-amber-700 dark:text-amber-300">
+                  <p class="text-sm font-medium text-amber-800">No endpoint configured</p>
+                  <p class="mt-0.5 text-xs text-amber-700">
                     @if (inst.skipEndpoint) {
                       Endpoint provisioning was skipped at install time.
                     } @else {

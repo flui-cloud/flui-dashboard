@@ -36,9 +36,7 @@ type AgentHookState = 'working' | 'idle' | 'none';
                 <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
               </span>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                  An agent is working
-                </p>
+                <p class="text-sm font-medium text-emerald-700">An agent is working</p>
                 <p class="text-xs text-muted-foreground truncate">
                   {{ identityLabel(working()!) }}
                   @if (working()!.lastTool) {

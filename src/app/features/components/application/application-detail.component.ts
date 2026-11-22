@@ -123,24 +123,19 @@ interface TabItem {
     <!-- Error Toast -->
     @if (showErrorToast()) {
       <div
-        class="fixed top-4 right-4 z-50 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md"
+        class="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md"
       >
         <div class="flex items-start gap-3">
-          <ng-icon
-            name="lucideCircleX"
-            class="h-6 w-6 flex-shrink-0 text-red-600 dark:text-red-400"
-          />
+          <ng-icon name="lucideCircleX" class="h-6 w-6 flex-shrink-0 text-red-600" />
           <div class="flex-1">
-            <h3 class="text-sm font-semibold text-red-900 dark:text-red-100">
-              Application not found
-            </h3>
-            <p class="text-sm text-red-700 dark:text-red-300 mt-1">
+            <h3 class="text-sm font-semibold text-red-900">Application not found</h3>
+            <p class="text-sm text-red-700 mt-1">
               {{ errorToastMessage() }}
             </p>
           </div>
           <button
             (click)="showErrorToast.set(false)"
-            class="flex-shrink-0 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+            class="flex-shrink-0 text-red-600 hover:text-red-800"
           >
             <ng-icon name="lucideX" class="h-5 w-5" />
           </button>
@@ -154,42 +149,42 @@ interface TabItem {
         <div class="animate-pulse space-y-6">
           <!-- Header skeleton -->
           <div class="flex items-start gap-4">
-            <div class="mt-1 h-9 w-9 rounded-lg bg-gray-200 dark:bg-gray-700"></div>
+            <div class="mt-1 h-9 w-9 rounded-lg bg-gray-200"></div>
             <div class="space-y-2">
               <div class="flex items-center gap-3">
-                <div class="h-8 w-48 rounded bg-gray-200 dark:bg-gray-700"></div>
-                <div class="h-5 w-16 rounded bg-gray-200 dark:bg-gray-700"></div>
+                <div class="h-8 w-48 rounded bg-gray-200"></div>
+                <div class="h-5 w-16 rounded bg-gray-200"></div>
               </div>
-              <div class="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700"></div>
+              <div class="h-4 w-32 rounded bg-gray-200"></div>
               <div class="flex gap-2">
-                <div class="h-6 w-20 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                <div class="h-6 w-20 rounded-full bg-gray-200"></div>
               </div>
             </div>
           </div>
           <!-- Stats skeleton -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             @for (i of [1, 2, 3, 4]; track i) {
-              <div class="bg-white dark:bg-gray-800 border rounded-lg p-4 space-y-2">
-                <div class="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700"></div>
-                <div class="h-6 w-24 rounded bg-gray-200 dark:bg-gray-700"></div>
+              <div class="bg-white border rounded-lg p-4 space-y-2">
+                <div class="h-3 w-16 rounded bg-gray-200"></div>
+                <div class="h-6 w-24 rounded bg-gray-200"></div>
               </div>
             }
           </div>
           <!-- Tab skeleton -->
-          <div class="bg-white dark:bg-gray-800 border rounded-lg">
-            <div class="border-b border-gray-200 dark:border-gray-700 flex gap-1 px-2">
+          <div class="bg-white border rounded-lg">
+            <div class="border-b border-gray-200 flex gap-1 px-2">
               @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-                <div class="h-10 w-24 my-2 rounded bg-gray-200 dark:bg-gray-700"></div>
+                <div class="h-10 w-24 my-2 rounded bg-gray-200"></div>
               }
             </div>
             <div class="p-6 space-y-3">
-              <div class="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700"></div>
-              <div class="h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-700"></div>
-              <div class="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700"></div>
+              <div class="h-4 w-3/4 rounded bg-gray-200"></div>
+              <div class="h-4 w-1/2 rounded bg-gray-200"></div>
+              <div class="h-4 w-2/3 rounded bg-gray-200"></div>
               <div class="h-64">
-                <div class="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700"></div>
-                <div class="h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-700"></div>
-                <div class="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700"></div>
+                <div class="h-4 w-3/4 rounded bg-gray-200"></div>
+                <div class="h-4 w-1/2 rounded bg-gray-200"></div>
+                <div class="h-4 w-2/3 rounded bg-gray-200"></div>
               </div>
             </div>
           </div>
@@ -202,13 +197,13 @@ interface TabItem {
           <div class="flex items-start gap-4">
             <button
               (click)="backToList()"
-              class="mt-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              class="mt-1 p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <ng-icon name="lucideArrowLeft" class="h-5 w-5" />
             </button>
             <div>
               <div class="flex items-center gap-3">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                <h1 class="text-3xl font-bold text-gray-900">
                   {{ title() ?? app.name }}
                 </h1>
                 @if (!access()?.showcase) {
@@ -223,21 +218,16 @@ interface TabItem {
                 </span>
                 @if (app.id) {
                   <div class="flex items-center gap-1">
-                    <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{
-                      app.id | maskId
-                    }}</span>
+                    <span class="font-mono text-xs text-gray-400">{{ app.id | maskId }}</span>
                     <button
                       (click)="copyId(app.id)"
-                      class="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      class="p-0.5 rounded hover:bg-gray-100 transition-colors"
                       [title]="copiedId() ? 'Copied!' : 'Copy ID'"
                     >
                       @if (copiedId()) {
                         <ng-icon name="lucideCheck" class="h-3 w-3 text-green-500" />
                       } @else {
-                        <ng-icon
-                          name="lucideCopy"
-                          class="h-3 w-3 text-gray-400 dark:text-gray-500"
-                        />
+                        <ng-icon name="lucideCopy" class="h-3 w-3 text-gray-400" />
                       }
                     </button>
                   </div>
@@ -258,7 +248,7 @@ interface TabItem {
                 [class]="
                   pending
                     ? 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
-                    : 'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+                    : 'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
                 "
                 [title]="
                   restartOff() ??
@@ -293,7 +283,7 @@ interface TabItem {
         <!-- Deleted notice -->
         @if (app.status === 'deleted') {
           <div
-            class="flex items-center gap-3 px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-500 dark:text-gray-400"
+            class="flex items-center gap-3 px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500"
           >
             <ng-icon name="lucideCircleX" class="h-4 w-4 flex-shrink-0" />
             This application has been deleted and is no longer active.
@@ -303,7 +293,7 @@ interface TabItem {
         <!-- Reconciliation error (build/deploy failures) -->
         @if (app.status === 'failed' && app.reconciliationError) {
           <div
-            class="flex items-start gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
           >
             <ng-icon name="lucideCircleAlert" class="h-4 w-4 flex-shrink-0 mt-0.5" />
             <div class="space-y-0.5 min-w-0">
@@ -315,18 +305,18 @@ interface TabItem {
 
         <!-- Stats -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="bg-white dark:bg-gray-800 border rounded-lg p-4">
-            <p class="text-sm text-gray-600 dark:text-gray-400">Replicas</p>
+          <div class="bg-white border rounded-lg p-4">
+            <p class="text-sm text-gray-600">Replicas</p>
             <p class="text-lg font-bold tabular-nums">
               {{ replicaCounts().ready
-              }}<span class="text-sm font-normal text-gray-400 dark:text-gray-500">
+              }}<span class="text-sm font-normal text-gray-400">
                 / {{ replicaCounts().desired }}</span
               >
             </p>
             @if (runtimeService.runtime()?.waitingForRoom; as wait) {
               <a
                 routerLink="/scaling"
-                class="mt-1 block text-xs text-amber-700 hover:underline dark:text-amber-400"
+                class="mt-1 block text-xs text-amber-700 hover:underline"
                 [title]="wait.says"
                 data-testid="replicas-waiting"
                 >{{ wait.replicas }} waiting for a node with room →</a
@@ -335,9 +325,9 @@ interface TabItem {
           </div>
           <a
             [routerLink]="['images']"
-            class="bg-white dark:bg-gray-800 border rounded-lg p-4 min-w-0 block hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+            class="bg-white border rounded-lg p-4 min-w-0 block hover:border-blue-300 transition-colors"
           >
-            <p class="text-sm text-gray-600 dark:text-gray-400">Image</p>
+            <p class="text-sm text-gray-600">Image</p>
             @if (runtime()?.containers?.[0]?.image; as img) {
               <p class="text-sm font-mono font-medium truncate" [title]="img">{{ img }}</p>
             } @else if (app.imageRef) {
@@ -345,30 +335,30 @@ interface TabItem {
                 {{ app.imageRef }}
               </p>
             } @else {
-              <p class="text-sm text-gray-400 dark:text-gray-500">—</p>
+              <p class="text-sm text-gray-400">—</p>
             }
           </a>
-          <div class="bg-white dark:bg-gray-800 border rounded-lg p-4 min-w-0">
-            <p class="text-sm text-gray-600 dark:text-gray-400">CPU / Memory</p>
+          <div class="bg-white border rounded-lg p-4 min-w-0">
+            <p class="text-sm text-gray-600">CPU / Memory</p>
             @if (runtime()?.containers?.[0]; as c) {
               <p class="text-sm font-mono font-medium">
                 {{ c.requests.cpu ?? '—' }} · {{ c.requests.memory ?? '—' }}
               </p>
-              <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              <p class="text-xs text-gray-400 mt-0.5">
                 limits: {{ c.limits.cpu ?? '—' }} · {{ c.limits.memory ?? '—' }}
               </p>
             } @else {
-              <p class="text-sm text-gray-400 dark:text-gray-500">—</p>
+              <p class="text-sm text-gray-400">—</p>
             }
           </div>
-          <div class="bg-white dark:bg-gray-800 border rounded-lg p-4">
-            <p class="text-sm text-gray-600 dark:text-gray-400">Last Deploy</p>
+          <div class="bg-white border rounded-lg p-4">
+            <p class="text-sm text-gray-600">Last Deploy</p>
             @if (app.lastDeployedAt) {
               <p class="text-sm font-medium">
                 {{ formatDate(app.lastDeployedAt) }}
               </p>
             } @else {
-              <p class="text-sm text-gray-400 dark:text-gray-500">—</p>
+              <p class="text-sm text-gray-400">—</p>
             }
           </div>
         </div>
@@ -400,8 +390,8 @@ interface TabItem {
         }
 
         <!-- Tab Navigation -->
-        <div class="bg-white dark:bg-gray-800 border rounded-lg">
-          <div class="border-b border-gray-200 dark:border-gray-700 relative flex items-stretch">
+        <div class="bg-white border rounded-lg">
+          <div class="border-b border-gray-200 relative flex items-stretch">
             <nav
               class="flex -mb-px gap-1 overflow-x-auto scrollbar-none flex-1 min-w-0 items-stretch"
             >
@@ -411,7 +401,7 @@ interface TabItem {
                     [title]="reason"
                     [attr.aria-disabled]="true"
                     [attr.data-testid]="'tab-off-' + tab.route"
-                    class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 border-transparent whitespace-nowrap flex-shrink-0 text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                    class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 border-transparent whitespace-nowrap flex-shrink-0 text-gray-300 cursor-not-allowed"
                   >
                     <ng-icon [name]="tab.icon" class="h-4 w-4 flex-shrink-0" />
                     <span class="hidden md:inline">{{ tab.label }}</span>
@@ -426,8 +416,8 @@ interface TabItem {
                     class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0"
                     [class]="
                       rla.isActive
-                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                        : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
                     "
                   >
                     <ng-icon [name]="tab.icon" class="h-4 w-4 flex-shrink-0" />
@@ -437,20 +427,18 @@ interface TabItem {
               }
             </nav>
             <!-- Advanced dropdown (outside nav scroll so the menu isn't clipped) -->
-            <div
-              class="relative flex items-stretch border-l border-gray-200 dark:border-gray-700 -mb-px"
-            >
+            <div class="relative flex items-stretch border-l border-gray-200 -mb-px">
               <button
                 type="button"
                 (click)="toggleAdvanced(); $event.stopPropagation()"
                 title="Advanced"
-                class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 border-transparent transition-colors whitespace-nowrap flex-shrink-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600"
+                class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 border-transparent transition-colors whitespace-nowrap flex-shrink-0 text-gray-600 hover:text-gray-900 hover:border-gray-300"
               >
                 <ng-icon name="lucideSettings" class="h-4 w-4 flex-shrink-0" />
                 <span class="hidden md:inline">Advanced</span>
                 @if (diagnosesCount() > 0) {
                   <span
-                    class="ml-0.5 text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 font-semibold tabular-nums"
+                    class="ml-0.5 text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 font-semibold tabular-nums"
                   >
                     {{ diagnosesCount() }}
                   </span>
@@ -460,21 +448,21 @@ interface TabItem {
               @if (advancedOpen()) {
                 <div class="fixed inset-0 z-40" (click)="advancedOpen.set(false)"></div>
                 <div
-                  class="absolute right-0 top-full mt-1 w-52 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1"
+                  class="absolute right-0 top-full mt-1 w-52 z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1"
                   (click)="advancedOpen.set(false)"
                 >
                   @for (item of advancedTabs; track item.route) {
                     <a
                       [routerLink]="[item.route]"
-                      routerLinkActive="bg-gray-100 dark:bg-gray-700/60 text-blue-600 dark:text-blue-400"
+                      routerLinkActive="bg-gray-100 text-blue-600"
                       [routerLinkActiveOptions]="{ exact: true }"
-                      class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/40"
+                      class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <ng-icon [name]="item.icon" class="h-4 w-4" />
                       <span class="flex-1">{{ item.label }}</span>
                       @if (item.route === 'diagnoses' && diagnosesCount() > 0) {
                         <span
-                          class="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 font-semibold tabular-nums"
+                          class="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 font-semibold tabular-nums"
                         >
                           {{ diagnosesCount() }}
                         </span>

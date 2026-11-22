@@ -129,7 +129,7 @@ import { GroupCostComponent } from '../scaling-section/group-cost.component';
           />
 
           @if (problem(); as message) {
-            <p class="m-0 text-sm text-red-600 dark:text-red-400" data-testid="form-error">
+            <p class="m-0 text-sm text-red-600" data-testid="form-error">
               {{ message }}
             </p>
           }

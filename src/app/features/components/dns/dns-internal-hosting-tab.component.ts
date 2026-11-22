@@ -44,29 +44,22 @@ import {
   template: `
     <div class="space-y-4">
       <!-- Explanatory badge -->
-      <div
-        class="flex items-start gap-3 p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-900/10"
-      >
-        <ng-icon
-          name="lucideLock"
-          class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
-        />
-        <div class="text-sm text-blue-900 dark:text-blue-200 space-y-1.5">
-          <div class="font-semibold text-blue-950 dark:text-blue-100">
-            What is internal hosting?
-          </div>
+      <div class="flex items-start gap-3 p-4 rounded-lg border border-blue-200 bg-blue-50/60">
+        <ng-icon name="lucideLock" class="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+        <div class="text-sm text-blue-900 space-y-1.5">
+          <div class="font-semibold text-blue-950">What is internal hosting?</div>
           <p>
             Internal apps run inside a cluster without a public URL. They're reachable only from
             your Flui dashboard through an authenticated proxy, at
-            <span class="font-mono text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40"
+            <span class="font-mono text-xs px-1.5 py-0.5 rounded bg-blue-100"
               >&#123;slug&#125;.internal.&lt;zone&gt;</span
             >.
           </p>
-          <p class="text-blue-800 dark:text-blue-300">
+          <p class="text-blue-800">
             Useful for admin-only tools (database UIs like pgweb, monitoring dashboards) and
             internal services that shouldn't be exposed to the public internet.
           </p>
-          <p class="text-blue-800 dark:text-blue-300 text-xs">
+          <p class="text-blue-800 text-xs">
             Internal hosting becomes available automatically once the cluster has a DNS zone and a
             wildcard TLS issuer configured — no separate toggle needed.
           </p>
@@ -76,21 +69,15 @@ import {
       @if (clustersLoading()) {
         <div class="animate-pulse space-y-4">
           <div class="flex items-center gap-3">
-            <div class="h-4 w-4 rounded bg-gray-200 dark:bg-gray-700 flex-shrink-0"></div>
-            <div class="h-8 w-64 rounded-md bg-gray-200 dark:bg-gray-700"></div>
+            <div class="h-4 w-4 rounded bg-gray-200 flex-shrink-0"></div>
+            <div class="h-8 w-64 rounded-md bg-gray-200"></div>
           </div>
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 h-40"
-          ></div>
+          <div class="bg-white border border-gray-200 rounded-lg p-5 h-40"></div>
         </div>
       } @else if (clusters().length === 0) {
-        <div
-          class="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg"
-        >
+        <div class="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <ng-icon name="lucideInfo" class="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            No clusters available. Create a cluster first.
-          </p>
+          <p class="text-sm text-gray-600">No clusters available. Create a cluster first.</p>
         </div>
       } @else {
         <!-- Cluster picker -->
@@ -100,7 +87,7 @@ import {
             <select
               [ngModel]="selectedClusterId()"
               (ngModelChange)="onClusterChange($event)"
-              class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select a cluster...</option>
               @for (cluster of clusters(); track cluster.id) {
@@ -113,7 +100,7 @@ import {
               type="button"
               (click)="refresh()"
               [disabled]="statusLoading()"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors disabled:opacity-50"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50 text-gray-700 transition-colors disabled:opacity-50"
             >
               <ng-icon
                 name="lucideRefreshCw"
@@ -126,14 +113,10 @@ import {
         </div>
 
         @if (!selectedClusterId()) {
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            Select a cluster to view its internal hosting status.
-          </p>
+          <p class="text-sm text-gray-500">Select a cluster to view its internal hosting status.</p>
         } @else if (statusLoading() && !status()) {
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5"
-          >
-            <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <div class="bg-white border border-gray-200 rounded-lg p-5">
+            <div class="flex items-center gap-2 text-sm text-gray-500">
               <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
               Loading status...
             </div>
@@ -142,30 +125,27 @@ import {
           @let s = status()!;
 
           <!-- Status card (read-only) -->
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-4"
-          >
+          <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
             <!-- Header: status line -->
             <div class="flex items-center gap-2">
               <span
                 class="h-2.5 w-2.5 rounded-full"
                 [class]="s.enabled ? 'bg-green-500' : 'bg-gray-400'"
               ></span>
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+              <h3 class="text-base font-semibold text-gray-900">
                 {{ s.enabled ? 'Available' : 'Not available' }}
               </h3>
             </div>
 
             @if (s.enabled && s.internalHostTemplate) {
-              <p class="text-xs text-gray-500 dark:text-gray-400">
+              <p class="text-xs text-gray-500">
                 Internal apps reachable at
-                <span
-                  class="font-mono text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                  >{{ s.internalHostTemplate }}</span
-                >
+                <span class="font-mono text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">{{
+                  s.internalHostTemplate
+                }}</span>
               </p>
             } @else {
-              <p class="text-xs text-gray-500 dark:text-gray-400">
+              <p class="text-xs text-gray-500">
                 Internal apps require the same DNS setup as public hosting — once configured, you
                 can deploy apps with <span class="font-mono">exposure: internal</span> from the
                 install wizard.
@@ -173,10 +153,8 @@ import {
             }
 
             <!-- Requirements checklist -->
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <h4
-                class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2"
-              >
+            <div class="border-t border-gray-200 pt-4">
+              <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
                 Requirements
               </h4>
               <ul class="space-y-1.5 text-sm">
@@ -185,19 +163,16 @@ import {
                     @if (req.met) {
                       <ng-icon
                         name="lucideCircleCheck"
-                        class="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0"
+                        class="h-4 w-4 text-green-600 flex-shrink-0"
                       />
-                      <span class="text-gray-700 dark:text-gray-300">{{ req.label }}</span>
+                      <span class="text-gray-700">{{ req.label }}</span>
                     } @else {
-                      <ng-icon
-                        name="lucideCircleX"
-                        class="h-4 w-4 text-red-500 dark:text-red-400 flex-shrink-0"
-                      />
-                      <span class="text-gray-700 dark:text-gray-300">{{ req.label }}</span>
+                      <ng-icon name="lucideCircleX" class="h-4 w-4 text-red-500 flex-shrink-0" />
+                      <span class="text-gray-700">{{ req.label }}</span>
                       @if (req.hint; as hint) {
                         <a
                           [routerLink]="hint.route"
-                          class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                          class="text-xs text-blue-600 hover:underline"
                           >{{ hint.label }}</a
                         >
                       }

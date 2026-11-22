@@ -22,7 +22,7 @@ import { InstanceOwnership } from '../../model/instance.models';
         <span
           hlmBadge
           variant="default"
-          class="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700"
+          class="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-green-100 text-green-700 border-green-300"
         >
           <ng-icon name="lucideShieldCheck" class="h-3 w-3" />
           Managed by Flui
@@ -32,7 +32,7 @@ import { InstanceOwnership } from '../../model/instance.models';
         <span
           hlmBadge
           variant="default"
-          class="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+          class="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 border-amber-300"
           title="Provisioned by another Flui installation sharing this cloud provider account"
         >
           <ng-icon name="lucideServerOff" class="h-3 w-3" />

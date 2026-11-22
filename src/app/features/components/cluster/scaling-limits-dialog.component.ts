@@ -70,7 +70,7 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
         </div>
 
         @if (problem(); as message) {
-          <p class="m-0 text-sm text-red-600 dark:text-red-400" data-testid="limits-error">
+          <p class="m-0 text-sm text-red-600" data-testid="limits-error">
             {{ message }}
           </p>
         }

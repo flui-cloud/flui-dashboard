@@ -125,7 +125,7 @@ import { SchemaTree } from '../../model/db-console.models';
                         }
                         @if (c.references; as r) {
                           <span
-                            class="truncate text-sky-600 dark:text-sky-400"
+                            class="truncate text-sky-600"
                             [title]="'→ ' + r.schema + '.' + r.table + '.' + r.column"
                             >→ {{ r.table }}</span
                           >

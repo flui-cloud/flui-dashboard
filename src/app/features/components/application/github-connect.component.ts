@@ -49,25 +49,19 @@ interface ScopeCheckResult {
   template: `
     <div class="flex flex-col items-center py-10 px-4 text-center">
       <!-- GitHub logo -->
-      <div
-        class="w-16 h-16 rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center mb-6"
-      >
+      <div class="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center mb-6">
         <ng-icon name="lucideGithub" size="32" class="text-white" />
       </div>
 
       @if (authMethod() === 'github_app') {
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">
-          Install Flui on GitHub
-        </h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-8">
+        <h2 class="text-lg font-semibold text-slate-900 mb-1">Install Flui on GitHub</h2>
+        <p class="text-sm text-slate-500 max-w-sm mb-8">
           Install the Flui GitHub App to automate builds and deployments directly from your
           repositories.
         </p>
       } @else {
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">
-          Connect your GitHub account
-        </h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-8">
+        <h2 class="text-lg font-semibold text-slate-900 mb-1">Connect your GitHub account</h2>
+        <p class="text-sm text-slate-500 max-w-sm mb-8">
           Paste a Personal Access Token to give Flui access to your GitHub repositories.
         </p>
       }
@@ -77,7 +71,7 @@ interface ScopeCheckResult {
         <button
           (click)="installGithubApp()"
           [disabled]="isLoading()"
-          class="flex items-center gap-2 px-6 py-3 bg-slate-900 dark:bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          class="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           @if (isLoading()) {
             <ng-icon name="lucideLoader" size="16" class="animate-spin" />
@@ -87,20 +81,16 @@ interface ScopeCheckResult {
             <span>Install & Authorize Flui App</span>
           }
         </button>
-        <p class="text-xs text-slate-400 dark:text-slate-500 mt-4 max-w-sm">
+        <p class="text-xs text-slate-400 mt-4 max-w-sm">
           You'll install the app and authorize access in one step. After you return, your
           repositories and packages will be available automatically.
         </p>
         @if (error()) {
           <div
-            class="mt-4 flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 max-w-sm w-full text-left"
+            class="mt-4 flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200 max-w-sm w-full text-left"
           >
-            <ng-icon
-              name="lucideAlertCircle"
-              size="16"
-              class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
-            />
-            <p class="text-xs text-red-700 dark:text-red-400">{{ error() }}</p>
+            <ng-icon name="lucideAlertCircle" size="16" class="text-red-600 flex-shrink-0 mt-0.5" />
+            <p class="text-xs text-red-700">{{ error() }}</p>
           </div>
         }
       } @else {
@@ -111,24 +101,16 @@ interface ScopeCheckResult {
             @let check = scopeCheck()!;
             @if (check.missingScopes.length === 0) {
               <div
-                class="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
+                class="flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200"
               >
-                <ng-icon
-                  name="lucideCheck"
-                  size="16"
-                  class="text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5"
-                />
-                <p class="text-xs text-green-700 dark:text-green-400 font-medium">
+                <ng-icon name="lucideCheck" size="16" class="text-green-600 flex-shrink-0 mt-0.5" />
+                <p class="text-xs text-green-700 font-medium">
                   All required scopes are present. You're good to go!
                 </p>
               </div>
             } @else {
-              <div
-                class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 space-y-2"
-              >
-                <div
-                  class="flex items-center gap-1.5 text-xs font-medium text-amber-800 dark:text-amber-300"
-                >
+              <div class="p-3 bg-amber-50 rounded-lg border border-amber-200 space-y-2">
+                <div class="flex items-center gap-1.5 text-xs font-medium text-amber-800">
                   <ng-icon name="lucideTriangleAlert" size="14" class="flex-shrink-0" />
                   Missing scopes — some features may not work
                 </div>
@@ -145,7 +127,7 @@ interface ScopeCheckResult {
                   }
                 </div>
                 @if (check.missingScopes.includes('workflow')) {
-                  <p class="text-xs text-amber-700 dark:text-amber-400">
+                  <p class="text-xs text-amber-700">
                     The <span class="font-mono">workflow</span> scope is required to commit GitHub
                     Actions workflows to your repository.
                   </p>
@@ -154,7 +136,7 @@ interface ScopeCheckResult {
                   [href]="patCreateUrl"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
                 >
                   Regenerate token with all scopes
                   <ng-icon name="lucideExternalLink" size="11" />
@@ -162,7 +144,7 @@ interface ScopeCheckResult {
                 <button
                   type="button"
                   (click)="confirmConnected()"
-                  class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                  class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors"
                 >
                   Continue anyway
                   <ng-icon name="lucideArrowRight" size="14" />
@@ -172,32 +154,28 @@ interface ScopeCheckResult {
           }
 
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label class="block text-sm font-medium text-slate-700 mb-1">
               Personal Access Token
             </label>
             <input
               type="password"
               [(ngModel)]="patToken"
               placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg space-y-2">
-            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Required scopes (classic token):
-            </p>
+          <div class="p-3 bg-slate-50 rounded-lg space-y-2">
+            <p class="text-xs text-slate-500 font-medium">Required scopes (classic token):</p>
             <div class="flex flex-wrap gap-1">
               @for (scope of requiredScopes; track scope) {
-                <span
-                  class="px-2 py-0.5 text-xs font-mono bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded"
-                >
+                <span class="px-2 py-0.5 text-xs font-mono bg-slate-200 text-slate-700 rounded">
                   {{ scope }}
                 </span>
               }
             </div>
             <!-- GHA hint -->
-            <div class="flex items-start gap-1.5 pt-1 text-xs text-slate-500 dark:text-slate-400">
+            <div class="flex items-start gap-1.5 pt-1 text-xs text-slate-500">
               <ng-icon name="lucideGithub" size="12" class="flex-shrink-0 mt-0.5" />
               <span
                 >The <span class="font-mono">workflow</span> scope is needed to commit GitHub
@@ -208,33 +186,31 @@ interface ScopeCheckResult {
               [href]="patCreateUrl"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
             >
               Create classic token with all scopes
               <ng-icon name="lucideExternalLink" size="12" />
             </a>
             @if (sandbox.inSandbox() && sandbox.whyFor('repositories'); as trialNote) {
-              <p class="text-xs text-slate-500 dark:text-slate-400">{{ trialNote }}</p>
+              <p class="text-xs text-slate-500">{{ trialNote }}</p>
             }
           </div>
 
           @if (error()) {
-            <div
-              class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800"
-            >
+            <div class="flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
               <ng-icon
                 name="lucideAlertCircle"
                 size="16"
-                class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+                class="text-red-600 flex-shrink-0 mt-0.5"
               />
-              <p class="text-xs text-red-700 dark:text-red-400">{{ error() }}</p>
+              <p class="text-xs text-red-700">{{ error() }}</p>
             </div>
           }
 
           <button
             (click)="connectPat()"
             [disabled]="isLoading() || !patToken.trim()"
-            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             @if (isLoading()) {
               <ng-icon name="lucideLoader" size="16" class="animate-spin" />
@@ -351,8 +327,6 @@ export class GithubConnectComponent {
   getScopeBadgeClass(scope: string, grantedScopes: string[]): string {
     const has = grantedScopes.includes(scope);
     const base = 'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono rounded';
-    return has
-      ? `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400`
-      : `${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`;
+    return has ? `${base} bg-green-100 text-green-800` : `${base} bg-red-100 text-red-700`;
   }
 }

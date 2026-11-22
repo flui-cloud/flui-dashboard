@@ -38,36 +38,29 @@ import { ApplicationRowComponent } from './application-row.component';
   template: `
     @if (isComposed()) {
       <div
-        class="flex items-center gap-4 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer group"
+        class="flex items-center gap-4 px-4 py-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
         [class.animate-pulse]="refreshing()"
         (click)="open.emit(group().id)"
       >
         <span [class]="dotClass(group().status, '2.5')" class="flex-shrink-0"></span>
 
         <div class="min-w-0 flex-1">
-          <span
-            class="text-sm font-medium text-gray-900 dark:text-white truncate flex items-center gap-2"
-          >
+          <span class="text-sm font-medium text-gray-900 truncate flex items-center gap-2">
             {{ group().name }}
             <span
-              class="text-[10px] font-normal uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+              class="text-[10px] font-normal uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 text-gray-500"
               >bundle</span
             >
             @if (version()) {
-              <span
-                class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-500"
                 >v{{ version() }}</span
               >
             }
           </span>
           @if (host()) {
-            <span class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate block">{{
-              host()
-            }}</span>
+            <span class="text-xs text-gray-400 font-mono truncate block">{{ host() }}</span>
           } @else {
-            <span class="text-xs text-gray-400 dark:text-gray-500 truncate block">{{
-              group().catalogSlug
-            }}</span>
+            <span class="text-xs text-gray-400 truncate block">{{ group().catalogSlug }}</span>
           }
         </div>
 
@@ -95,30 +88,24 @@ import { ApplicationRowComponent } from './application-row.component';
             <span [class]="dotClass(component.status, '2')"></span>
           }
           @if (replicas() !== null) {
-            <span
-              class="ml-1 text-xs text-gray-500 dark:text-gray-400 tabular-nums"
-              data-testid="group-replicas"
+            <span class="ml-1 text-xs text-gray-500 tabular-nums" data-testid="group-replicas"
               >{{ replicas() }}x</span
             >
           }
         </span>
 
-        <span
-          class="text-xs text-gray-500 dark:text-gray-400 font-mono flex-shrink-0 hidden lg:block w-32 truncate"
-        >
+        <span class="text-xs text-gray-500 font-mono flex-shrink-0 hidden lg:block w-32 truncate">
           {{ namespace() }}
         </span>
 
-        <span
-          class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 hidden md:block w-20 text-right"
-        >
+        <span class="text-xs text-gray-400 flex-shrink-0 hidden md:block w-20 text-right">
           {{ formatDate(group().createdAt) }}
         </span>
 
         @if (group().url) {
           <button
             (click)="openUrl($event)"
-            class="p-1.5 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+            class="p-1.5 text-gray-400 hover:text-blue-500 rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
             title="Open"
           >
             <ng-icon name="lucideExternalLink" class="h-4 w-4" />
@@ -243,33 +230,33 @@ export class ApplicationGroupRowComponent {
     const base = 'text-xs px-2 py-0.5 rounded font-medium';
     switch (status) {
       case ApplicationStatusEnum.Running:
-        return `${base} bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400`;
+        return `${base} bg-green-100 text-green-800`;
       case ApplicationStatusEnum.AwaitingBuild:
       case ApplicationStatusEnum.Provisioning:
       case ApplicationStatusEnum.Updating:
-        return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400`;
+        return `${base} bg-blue-100 text-blue-800`;
       case ApplicationStatusEnum.Failed:
-        return `${base} bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400`;
+        return `${base} bg-red-100 text-red-800`;
       case ApplicationStatusEnum.Degraded:
       case ApplicationStatusEnum.RollingBack:
-        return `${base} bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400`;
+        return `${base} bg-orange-100 text-orange-800`;
       case ApplicationStatusEnum.WaitingForRoom:
-        return `${base} bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300`;
+        return `${base} bg-amber-100 text-amber-800`;
       case ApplicationStatusEnum.Stopped:
       case ApplicationStatusEnum.Deleting:
       case ApplicationStatusEnum.Deleted:
-        return `${base} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
+        return `${base} bg-gray-100 text-gray-800`;
       default:
-        return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400`;
+        return `${base} bg-yellow-100 text-yellow-800`;
     }
   }
 
   getCategoryBadgeClass(category: string): string {
     const base = 'text-xs px-1.5 py-0.5 rounded font-medium';
     if (category === 'system') {
-      return `${base} bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400`;
+      return `${base} bg-purple-100 text-purple-800`;
     }
-    return `${base} bg-sky-100 text-sky-800 dark:bg-sky-900/20 dark:text-sky-400`;
+    return `${base} bg-sky-100 text-sky-800`;
   }
 
   getStatusIcon(status: ApplicationStatus): string {

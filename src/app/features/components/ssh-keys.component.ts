@@ -348,7 +348,7 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
                               <button
                                 (click)="syncKeyToProvider(key, p.id)"
                                 [disabled]="isSyncing(key.id, p.id)"
-                                class="inline-flex items-center gap-1 px-2 py-1 rounded border border-orange-400/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="inline-flex items-center gap-1 px-2 py-1 rounded border border-orange-400/50 bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 [title]="p.error"
                               >
                                 <app-provider-mark [name]="p.displayName" [size]="16" />
@@ -382,7 +382,7 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
                                 <button
                                   (click)="unsyncKeyFromProvider(key, p.id)"
                                   [disabled]="isUnsyncing(key.id, p.id) || isSyncing(key.id, p.id)"
-                                  class="px-1 py-1 hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors border-l border-border disabled:opacity-50 disabled:cursor-not-allowed"
+                                  class="px-1 py-1 hover:bg-red-500/20 hover:text-red-600 transition-colors border-l border-border disabled:opacity-50 disabled:cursor-not-allowed"
                                   [title]="'Remove from ' + p.displayName"
                                 >
                                   @if (isUnsyncing(key.id, p.id)) {

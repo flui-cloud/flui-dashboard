@@ -74,7 +74,7 @@ const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH'];
           [ngClass]="
             readOnly()
               ? 'border-border text-muted-foreground'
-              : 'border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+              : 'border-amber-500/50 bg-amber-500/10 text-amber-700'
           "
           [title]="
             readOnly()
@@ -114,7 +114,7 @@ const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH'];
             >
               {{ ex.label }}
               @if (ex.write) {
-                <span class="ml-1 text-amber-600 dark:text-amber-400">✎</span>
+                <span class="ml-1 text-amber-600">✎</span>
               }
             </button>
           }
@@ -150,9 +150,7 @@ const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH'];
             <span
               class="rounded px-1.5 py-0.5 font-mono font-semibold"
               [ngClass]="
-                r.status >= 400
-                  ? 'bg-red-500/15 text-red-700 dark:text-red-400'
-                  : 'bg-green-500/15 text-green-700 dark:text-green-400'
+                r.status >= 400 ? 'bg-red-500/15 text-red-700' : 'bg-green-500/15 text-green-700'
               "
             >
               {{ r.status }}

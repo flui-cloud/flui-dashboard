@@ -94,7 +94,7 @@ export function requirementMet(rule: string, password: string, minLength: number
     </ng-template>
 
     @if (notice()) {
-      <p class="text-sm text-green-600 dark:text-green-400" data-testid="notice">{{ notice() }}</p>
+      <p class="text-sm text-green-600" data-testid="notice">{{ notice() }}</p>
     }
     @if (error()) {
       <p class="text-sm text-destructive" data-testid="error">{{ error() }}</p>

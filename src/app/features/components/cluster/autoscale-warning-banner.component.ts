@@ -85,32 +85,26 @@ export class AutoscaleWarningBannerComponent {
 
   readonly containerClass = computed(() =>
     this.status()?.warning === 'DANGER_NEEDS_SCALE'
-      ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
-      : 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20',
+      ? 'border-red-200 bg-red-50'
+      : 'border-yellow-200 bg-yellow-50',
   );
 
   readonly iconClass = computed(() =>
-    this.status()?.warning === 'DANGER_NEEDS_SCALE'
-      ? 'text-red-600 dark:text-red-400'
-      : 'text-yellow-600 dark:text-yellow-400',
+    this.status()?.warning === 'DANGER_NEEDS_SCALE' ? 'text-red-600' : 'text-yellow-600',
   );
 
   readonly titleClass = computed(() =>
-    this.status()?.warning === 'DANGER_NEEDS_SCALE'
-      ? 'text-red-900 dark:text-red-200'
-      : 'text-yellow-900 dark:text-yellow-200',
+    this.status()?.warning === 'DANGER_NEEDS_SCALE' ? 'text-red-900' : 'text-yellow-900',
   );
 
   readonly messageClass = computed(() =>
-    this.status()?.warning === 'DANGER_NEEDS_SCALE'
-      ? 'text-red-800 dark:text-red-300'
-      : 'text-yellow-800 dark:text-yellow-300',
+    this.status()?.warning === 'DANGER_NEEDS_SCALE' ? 'text-red-800' : 'text-yellow-800',
   );
 
   readonly actionBorderClass = computed(() =>
     this.status()?.warning === 'DANGER_NEEDS_SCALE'
-      ? 'border-red-300 dark:border-red-700 text-red-700 dark:text-red-300'
-      : 'border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300',
+      ? 'border-red-300 text-red-700'
+      : 'border-yellow-300 text-yellow-800',
   );
 
   readonly showConfigure = computed(() => true);

@@ -185,7 +185,7 @@ export class ScalingNowFleetComponent {
             ? `Added in a hurry. A standing order waits on ${claim.shape} in ${claim.region} to swap it out.`
             : 'Added in a hurry. No standing order claims it.',
           icon: null,
-          pill: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+          pill: 'bg-amber-500/15 text-amber-600',
         });
       }
 

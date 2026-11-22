@@ -67,10 +67,10 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
     <div class="space-y-4">
       <!-- Description -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
           Virtual Network {{ required() ? '' : '(Optional)' }}
         </label>
-        <p class="text-sm text-slate-500 dark:text-slate-400">
+        <p class="text-sm text-slate-500">
           {{ description() || 'Select a VNet to attach all cluster nodes to a private network.' }}
         </p>
       </div>
@@ -86,14 +86,14 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
               [(ngModel)]="searchQuery"
               (ngModelChange)="onSearchChange()"
               placeholder="Search VNets by name..."
-              class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           @if (canCreate()) {
             <button
               type="button"
               (click)="openCreateForm()"
-              class="inline-flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors whitespace-nowrap"
+              class="inline-flex items-center gap-1.5 px-3 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap"
             >
               <ng-icon name="lucidePlus" size="16"></ng-icon>
               New VNet
@@ -111,9 +111,7 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
 
       <!-- Error State -->
       @if (error() && !isLoading() && !showCreateForm()) {
-        <div
-          class="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg"
-        >
+        <div class="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
           <ng-icon name="lucideCircleAlert" size="20"></ng-icon>
           <span>{{ error() }}</span>
         </div>
@@ -131,26 +129,16 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                    <ng-icon
-                      name="lucideX"
-                      size="20"
-                      class="text-slate-500 dark:text-slate-400"
-                    ></ng-icon>
+                  <div class="p-2 bg-slate-100 rounded-lg">
+                    <ng-icon name="lucideX" size="20" class="text-slate-500"></ng-icon>
                   </div>
                   <div>
-                    <h3 class="font-semibold text-slate-900 dark:text-white">No VNet</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                      Skip VNet configuration
-                    </p>
+                    <h3 class="font-semibold text-slate-900">No VNet</h3>
+                    <p class="text-sm text-slate-500">Skip VNet configuration</p>
                   </div>
                 </div>
                 @if (!selectedVNet()) {
-                  <ng-icon
-                    name="lucideCheck"
-                    size="24"
-                    class="text-blue-600 dark:text-blue-400"
-                  ></ng-icon>
+                  <ng-icon name="lucideCheck" size="24" class="text-blue-600"></ng-icon>
                 }
               </div>
             </div>
@@ -171,17 +159,13 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                   <!-- VNet Icon -->
-                  <div class="flex-shrink-0 p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <ng-icon
-                      name="lucideNetwork"
-                      size="24"
-                      class="text-blue-600 dark:text-blue-400"
-                    ></ng-icon>
+                  <div class="flex-shrink-0 p-2 bg-blue-100 rounded-lg">
+                    <ng-icon name="lucideNetwork" size="24" class="text-blue-600"></ng-icon>
                   </div>
                   <!-- VNet Info -->
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
-                      <h3 class="font-semibold text-slate-900 dark:text-white truncate">
+                      <h3 class="font-semibold text-slate-900 truncate">
                         {{ vnet.name }}
                       </h3>
                       <span
@@ -191,18 +175,13 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
                         {{ vnet.status }}
                       </span>
                     </div>
-                    <div
-                      class="flex items-center gap-4 mt-1 text-sm text-slate-500 dark:text-slate-400"
-                    >
+                    <div class="flex items-center gap-4 mt-1 text-sm text-slate-500">
                       <span class="font-mono">{{ vnet.ipRange }}</span>
                       <span>{{ vnet.subnets.length }} subnet(s)</span>
                       <span class="capitalize">{{ vnet.provider }}</span>
                     </div>
                     @if (!isUsable(vnet)) {
-                      <p
-                        class="mt-1 text-xs text-slate-500 dark:text-slate-400"
-                        data-testid="vnet-other-region"
-                      >
+                      <p class="mt-1 text-xs text-slate-500" data-testid="vnet-other-region">
                         Not reachable from {{ region() }}: only from
                         {{ servedRegions(vnet).join(', ') }}
                       </p>
@@ -214,28 +193,20 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
                   <ng-icon
                     name="lucideCheck"
                     size="24"
-                    class="flex-shrink-0 text-blue-600 dark:text-blue-400 ml-2"
+                    class="flex-shrink-0 text-blue-600 ml-2"
                   ></ng-icon>
                 }
               </div>
               <!-- Subnet Info (expanded when selected) -->
               @if (isSelected(vnet) && vnet.subnets.length > 0) {
-                <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600">
-                  <div class="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Available Subnets
-                  </div>
+                <div class="mt-3 pt-3 border-t border-slate-200">
+                  <div class="text-xs font-medium text-slate-700 mb-2">Available Subnets</div>
                   <div class="grid grid-cols-1 gap-2">
                     @for (subnet of vnet.subnets; track subnet) {
-                      <div
-                        class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded text-xs"
-                      >
-                        <span class="font-mono text-slate-900 dark:text-white">{{
-                          subnet.ipRange
-                        }}</span>
-                        <span class="text-slate-500 dark:text-slate-400">•</span>
-                        <span class="text-slate-600 dark:text-slate-400">{{
-                          subnet.networkZone
-                        }}</span>
+                      <div class="flex items-center gap-2 p-2 bg-slate-50 rounded text-xs">
+                        <span class="font-mono text-slate-900">{{ subnet.ipRange }}</span>
+                        <span class="text-slate-500">•</span>
+                        <span class="text-slate-600">{{ subnet.networkZone }}</span>
                       </div>
                     }
                   </div>
@@ -245,7 +216,7 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
           }
           <!-- Empty State -->
           @if (filteredVNets().length === 0) {
-            <div class="text-center py-12 text-slate-500 dark:text-slate-400">
+            <div class="text-center py-12 text-slate-500">
               <ng-icon name="lucideNetwork" size="48" class="mx-auto mb-3 opacity-30"></ng-icon>
               @if (searchQuery()) {
                 <p>No VNets found matching "{{ searchQuery() }}"</p>
@@ -272,80 +243,72 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
       }
 
       @if (showCreateForm()) {
-        <div
-          class="border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50/40 dark:bg-blue-900/10 space-y-4"
-        >
+        <div class="border-2 border-blue-200 rounded-lg p-4 bg-blue-50/40 space-y-4">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <ng-icon
-                name="lucideNetwork"
-                size="20"
-                class="text-blue-600 dark:text-blue-400"
-              ></ng-icon>
-              <h3 class="font-semibold text-slate-900 dark:text-white">
+              <ng-icon name="lucideNetwork" size="20" class="text-blue-600"></ng-icon>
+              <h3 class="font-semibold text-slate-900">
                 New VNet on <span class="capitalize">{{ provider() }}</span>
               </h3>
             </div>
             <button
               type="button"
               (click)="closeCreateForm()"
-              class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              class="p-1 text-slate-400 hover:text-slate-600"
             >
               <ng-icon name="lucideX" size="18"></ng-icon>
             </button>
           </div>
 
           @if (createError()) {
-            <div
-              class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm"
-            >
+            <div class="flex items-start gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
               <ng-icon name="lucideCircleAlert" size="18" class="flex-shrink-0 mt-0.5"></ng-icon>
               <span>{{ createError() }}</span>
             </div>
           }
 
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label class="block text-sm font-medium text-slate-700 mb-1">
               VNet Name <span class="text-red-500">*</span>
             </label>
             <input
               type="text"
               [(ngModel)]="newVnetName"
               placeholder="e.g., hetzner-vnet"
-              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label class="block text-sm font-medium text-slate-700 mb-1">
               IP Range (CIDR) <span class="text-red-500">*</span>
             </label>
             <input
               type="text"
               [(ngModel)]="newIpRange"
               [placeholder]="'e.g., 10.0.0.0/' + suggestedVnetPrefix()"
-              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               [class.border-red-500]="newIpRange && !isValidVnetCidr()"
             />
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p class="text-xs text-slate-500 mt-1">
               {{ vnetCidrHint() }} —
               <button
                 type="button"
                 (click)="newIpRange = '10.0.0.0/' + suggestedVnetPrefix()"
-                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 underline"
+                class="text-blue-600 hover:text-blue-700 underline"
               >
                 Use /{{ suggestedVnetPrefix() }}
               </button>
             </p>
             @if (newIpRange && !isValidVnetCidr()) {
-              <p class="text-xs text-red-600 dark:text-red-400 mt-1">{{ vnetCidrError() }}</p>
+              <p class="text-xs text-red-600 mt-1">{{ vnetCidrError() }}</p>
             } @else if (newIpRange && cidrOccupied(newIpRange)) {
-              <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+              <p class="text-xs text-red-600 mt-1">
                 This range is already in use on {{ provider() }}.
                 <button
                   type="button"
                   (click)="useFreeVnetCidr()"
-                  class="text-blue-600 hover:text-blue-700 dark:text-blue-400 underline"
+                  class="text-blue-600 hover:text-blue-700 underline"
                 >
                   Use a free range
                 </button>
@@ -354,21 +317,18 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
           </div>
 
           @if (regionForNew()) {
-            <p
-              class="m-0 text-xs text-slate-600 dark:text-slate-400"
-              data-testid="vnet-region-for-new"
-            >
+            <p class="m-0 text-xs text-slate-600" data-testid="vnet-region-for-new">
               Created in {{ regionForNew() }}, where this cluster runs: a network here is regional.
             </p>
           }
           @if (vnetZones().length > 0) {
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label class="block text-sm font-medium text-slate-700 mb-1">
                 Network Zone <span class="text-red-500">*</span>
               </label>
               <select
                 [(ngModel)]="newSubnetZone"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 @for (zone of vnetZones(); track zone.id) {
                   <option [value]="zone.id" [disabled]="!zoneServesRegion(zone)">
@@ -380,9 +340,7 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
 
             @if (supportsSubnets()) {
               <div>
-                <label
-                  class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300"
-                >
+                <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
                   <input
                     type="checkbox"
                     [(ngModel)]="newCreateSubnet"
@@ -396,14 +354,14 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
                       type="text"
                       [(ngModel)]="newSubnetIpRange"
                       placeholder="e.g., 10.0.0.0/24"
-                      class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       [class.border-red-500]="newSubnetIpRange && !isValidSubnetCidr()"
                     />
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p class="text-xs text-slate-500 mt-1">
                       Subnet CIDR within the VNet range (required for this provider).
                     </p>
                     @if (newSubnetIpRange && !isValidSubnetCidr()) {
-                      <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+                      <p class="text-xs text-red-600 mt-1">
                         Enter a valid CIDR (e.g., 10.0.1.0/24)
                       </p>
                     }
@@ -426,7 +384,7 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
               type="button"
               (click)="closeCreateForm()"
               [disabled]="isCreating()"
-              class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
+              class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
             >
               Cancel
             </button>
@@ -435,15 +393,13 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
       }
 
       @if (selectedVNet() && selectedVNet()!.subnets.length === 0) {
-        <div
-          class="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
-        >
+        <div class="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <ng-icon
             name="lucideInfo"
             size="18"
-            class="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5"
+            class="text-yellow-600 flex-shrink-0 mt-0.5"
           ></ng-icon>
-          <div class="text-sm text-yellow-800 dark:text-yellow-200">
+          <div class="text-sm text-yellow-800">
             <strong>Note:</strong> This VNet has no subnets. You'll need to add subnets before
             attaching servers.
           </div>
@@ -782,23 +738,21 @@ export class VNetSelectorComponent implements OnInit {
 
   getVNetCardClass(vnet: VNetInfo | null): string {
     const isSelected = vnet ? this.isSelected(vnet) : !this.selectedVNet();
-    return isSelected
-      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-      : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600';
+    return isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300';
   }
 
   getStatusBadgeClass(status: VNetStatus): string {
     switch (status) {
       case VNetStatus.ACTIVE:
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-green-100 text-green-800';
       case VNetStatus.PENDING:
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+        return 'bg-yellow-100 text-yellow-800';
       case VNetStatus.FAILED:
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-red-100 text-red-800';
       case VNetStatus.DELETING:
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+        return 'bg-orange-100 text-orange-800';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+        return 'bg-gray-100 text-gray-800';
     }
   }
 }

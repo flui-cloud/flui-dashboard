@@ -70,9 +70,7 @@ import { AgentConcession, ConcessionOperation } from '../../model/agent-cycle.mo
               <div
                 class="rounded-md border px-3.5 py-3"
                 [class]="
-                  running().length
-                    ? 'border-orange-300 bg-orange-50 dark:border-orange-500/50 dark:bg-orange-500/10'
-                    : 'border-border bg-muted/40'
+                  running().length ? 'border-orange-300 bg-orange-50' : 'border-border bg-muted/40'
                 "
                 data-testid="what-continues"
               >

@@ -184,7 +184,7 @@ export type WorkflowGenerationState =
               The first build starts when you merge. Close the pull request and nothing happens.
             </p>
           } @else {
-            <div class="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+            <div class="flex items-center gap-2 text-sm text-green-600">
               <ng-icon name="lucideCheck" class="h-4 w-4" />
               Workflow committed
             </div>

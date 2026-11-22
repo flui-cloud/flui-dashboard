@@ -44,13 +44,11 @@ export interface TrafficRange {
     <div class="space-y-4">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h3
-            class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"
-          >
+          <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <ng-icon name="lucideGlobe" class="text-sub" size="20" />
             Traffic
           </h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
+          <p class="text-sm text-gray-500">
             HTTP requests measured at the ingress — no instrumentation required
           </p>
         </div>
@@ -65,20 +63,14 @@ export interface TrafficRange {
       </div>
 
       @if (traffic.error(); as err) {
-        <div
-          class="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-4 text-sm text-red-700 dark:text-red-300"
-        >
+        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {{ err }}
         </div>
       } @else if (current() && !current()!.is_routable) {
-        <div
-          class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-6 text-center"
-        >
+        <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
           <ng-icon name="lucideActivity" class="text-gray-400 mx-auto mb-2" size="24" />
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Not exposed through the ingress
-          </p>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p class="text-sm font-medium text-gray-700">Not exposed through the ingress</p>
+          <p class="text-sm text-gray-500 mt-1">
             This application has no public HTTP route, so there is no edge traffic to measure.
           </p>
         </div>

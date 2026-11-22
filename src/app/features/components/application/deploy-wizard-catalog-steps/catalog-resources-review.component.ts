@@ -99,13 +99,10 @@ import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quanti
       } @else if (av) {
         @if (canDeploy && !av.reason) {
           <div
-            class="flex items-start gap-2 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 text-sm"
+            class="flex items-start gap-2 p-3 rounded-md border border-green-200 bg-green-50 text-sm"
           >
-            <ng-icon
-              name="lucideCircleCheck"
-              class="h-4 w-4 mt-0.5 text-green-600 dark:text-green-400"
-            />
-            <div class="flex-1 text-green-700 dark:text-green-300">
+            <ng-icon name="lucideCircleCheck" class="h-4 w-4 mt-0.5 text-green-600" />
+            <div class="flex-1 text-green-700">
               Cluster has enough free capacity.
               <div class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4">
                 <span>Required:</span
@@ -121,14 +118,11 @@ import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quanti
           </div>
         } @else if (av.reason === 'autoscaling_pending') {
           <div
-            class="flex items-start gap-2 p-3 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 text-sm"
+            class="flex items-start gap-2 p-3 rounded-md border border-blue-200 bg-blue-50 text-sm"
           >
-            <ng-icon
-              name="lucideCircleAlert"
-              class="h-4 w-4 mt-0.5 text-blue-600 dark:text-blue-400"
-            />
+            <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5 text-blue-600" />
             <div class="flex-1">
-              <p class="font-medium text-blue-800 dark:text-blue-200">
+              <p class="font-medium text-blue-800">
                 @if (av.placement?.verdict === 'buys') {
                   Flui will add a {{ av.placement?.shape }} in {{ av.placement?.region }} to fit
                   this
@@ -136,13 +130,13 @@ import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quanti
                   A node will be added to fit this
                 }
               </p>
-              <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+              <p class="text-xs text-blue-700 mt-0.5">
                 {{ av.reasonMessage }} The app waits for room until the new node joins.
               </p>
               @if (av.placement?.groupId; as groupId) {
                 <a
                   [routerLink]="['/scaling', groupId]"
-                  class="inline-block mt-1 text-xs font-medium text-blue-700 dark:text-blue-300 underline underline-offset-2"
+                  class="inline-block mt-1 text-xs font-medium text-blue-700 underline underline-offset-2"
                   >Open scaling</a
                 >
               }
@@ -150,11 +144,11 @@ import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quanti
           </div>
         } @else {
           <div
-            class="flex items-start gap-2 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm"
+            class="flex items-start gap-2 p-3 rounded-md border border-red-200 bg-red-50 text-sm"
           >
-            <ng-icon name="lucideCircleX" class="h-4 w-4 mt-0.5 text-red-600 dark:text-red-400" />
+            <ng-icon name="lucideCircleX" class="h-4 w-4 mt-0.5 text-red-600" />
             <div class="flex-1">
-              <p class="font-medium text-red-700 dark:text-red-300">
+              <p class="font-medium text-red-700">
                 @switch (av.placement?.verdict) {
                   @case ('nothing-hosts') {
                     No machine can take this yet — it would wait for room
@@ -168,7 +162,7 @@ import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quanti
                 }
               </p>
               @if (av.reasonMessage) {
-                <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">
+                <p class="text-xs text-red-700 mt-0.5">
                   {{ av.reasonMessage }}
                   @if (av.placement?.why) {
                     <button
@@ -181,7 +175,7 @@ import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quanti
                   }
                 </p>
                 @if (whyOpen() && av.placement?.why) {
-                  <p class="text-xs text-red-700/80 dark:text-red-300/80 mt-1">
+                  <p class="text-xs text-red-700/80 mt-1">
                     {{ av.placement?.why }}
                   </p>
                 }
@@ -189,7 +183,7 @@ import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quanti
               @if (av.placement?.groupId; as groupId) {
                 <a
                   [routerLink]="['/scaling', groupId]"
-                  class="inline-block mt-1 text-xs font-medium text-red-700 dark:text-red-300 underline underline-offset-2"
+                  class="inline-block mt-1 text-xs font-medium text-red-700 underline underline-offset-2"
                   >Open scaling</a
                 >
               }
@@ -209,7 +203,7 @@ import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quanti
                   >{{ av.total.cpu }} · {{ av.total.memory }}</span
                 >
               </div>
-              <p class="text-xs text-red-700 dark:text-red-300 mt-2">
+              <p class="text-xs text-red-700 mt-2">
                 @if (detail?.resourceOverridesSupported) {
                   Shrink the override below, pick another cluster, or check "Install anyway".
                 } @else {
@@ -364,7 +358,7 @@ import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quanti
 
       @if (av && !canDeploy) {
         <label
-          class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 cursor-pointer"
+          class="flex items-start gap-2 p-3 rounded-md border border-amber-200 bg-amber-50/50 cursor-pointer"
         >
           <input
             type="checkbox"
@@ -372,7 +366,7 @@ import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quanti
             (change)="onForceToggle($event)"
             class="mt-0.5"
           />
-          <span class="text-xs text-amber-800 dark:text-amber-200">
+          <span class="text-xs text-amber-800">
             <strong>Install anyway</strong> — if what it reserves does not fit, it waits for room;
             if only its limit does not, it runs and the node can run short of memory at peak.
           </span>

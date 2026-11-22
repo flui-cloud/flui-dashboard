@@ -142,9 +142,9 @@ import { ClusterListComponent } from './cluster-list.component';
           <!-- No Provider Configured -->
           <div class="rounded-lg border border-border bg-card p-8 text-center">
             <div
-              class="mx-auto mb-4 h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center"
+              class="mx-auto mb-4 h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center"
             >
-              <ng-icon name="lucideSettings" class="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              <ng-icon name="lucideSettings" class="h-6 w-6 text-orange-600" />
             </div>
             <h2 class="text-xl font-semibold mb-2">No Cloud Provider Configured</h2>
             <p class="text-muted-foreground mb-6 max-w-md mx-auto">
@@ -178,9 +178,9 @@ import { ClusterListComponent } from './cluster-list.component';
           <!-- No Cluster Created -->
           <div class="rounded-lg border border-border bg-card p-8 text-center">
             <div
-              class="mx-auto mb-4 h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center"
+              class="mx-auto mb-4 h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center"
             >
-              <ng-icon name="lucideCloud" class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <ng-icon name="lucideCloud" class="h-6 w-6 text-blue-600" />
             </div>
             <h2 class="text-xl font-semibold mb-2">Ready to Create Your Cluster</h2>
             <p class="text-muted-foreground mb-6 max-w-md mx-auto">

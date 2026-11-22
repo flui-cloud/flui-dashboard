@@ -113,30 +113,26 @@ interface NeededThing {
         <div>
           <a
             routerLink="/apps/repositories"
-            class="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 mb-1"
+            class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 mb-1"
           >
             <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
             Repositories
           </a>
-          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 class="text-2xl font-bold text-slate-900">
             {{ repo()?.fullName ?? 'Deploy readiness' }}
           </h1>
         </div>
         @if (result()?.read?.commitSha) {
-          <span class="text-xs font-mono text-slate-400 dark:text-slate-500">
+          <span class="text-xs font-mono text-slate-400">
             commit {{ shortSha(result()!.read.commitSha!) }}
           </span>
         }
       </div>
 
       <!-- Controls -->
-      <div
-        class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 flex flex-wrap items-end gap-3"
-      >
+      <div class="bg-white border border-slate-200 rounded-lg p-4 flex flex-wrap items-end gap-3">
         <div>
-          <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
-            >Branch</label
-          >
+          <label class="block text-xs font-medium text-slate-500 mb-1">Branch</label>
           <div class="relative">
             <ng-icon
               name="lucideGitBranch"
@@ -146,7 +142,7 @@ interface NeededThing {
               <select
                 [value]="branchInput()"
                 (change)="branchInput.set($any($event.target).value)"
-                class="pl-7 pr-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-w-[10rem] max-w-[16rem]"
+                class="pl-7 pr-2 py-1.5 text-sm border border-slate-300 rounded-md bg-white text-slate-900 min-w-[10rem] max-w-[16rem]"
               >
                 @for (b of branches(); track b.name) {
                   <option [value]="b.name" [selected]="b.name === branchInput()">
@@ -160,25 +156,23 @@ interface NeededThing {
                 [value]="branchInput()"
                 (input)="branchInput.set($any($event.target).value)"
                 [placeholder]="repo()?.branch || 'default branch'"
-                class="pl-7 pr-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white w-40"
+                class="pl-7 pr-3 py-1.5 text-sm border border-slate-300 rounded-md bg-white text-slate-900 w-40"
               />
             }
           </div>
           @if (branchesError()) {
-            <p class="mt-1 text-xs text-amber-700 dark:text-amber-400 max-w-[16rem]">
+            <p class="mt-1 text-xs text-amber-700 max-w-[16rem]">
               Branches could not be listed — type one, or leave it empty for the repository's
               default.
             </p>
           }
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
-            >Cluster</label
-          >
+          <label class="block text-xs font-medium text-slate-500 mb-1">Cluster</label>
           <select
             [value]="clusterIdInput()"
             (change)="clusterIdInput.set($any($event.target).value)"
-            class="py-1.5 px-2 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-w-[12rem]"
+            class="py-1.5 px-2 text-sm border border-slate-300 rounded-md bg-white text-slate-900 min-w-[12rem]"
           >
             <!-- Binding value on the select alone does not hold: the options arrive after it is
                  applied, so the control showed one branch and one cluster while the button acted
@@ -207,14 +201,9 @@ interface NeededThing {
       </div>
 
       @if (error()) {
-        <div
-          class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3"
-        >
-          <ng-icon
-            name="lucideCircleAlert"
-            class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0"
-          />
-          <p class="text-sm text-red-900 dark:text-red-200">{{ error() }}</p>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 flex-shrink-0" />
+          <p class="text-sm text-red-900">{{ error() }}</p>
         </div>
       }
 
@@ -226,16 +215,14 @@ interface NeededThing {
 
       @if (result(); as r) {
         @if (!r.read.ok) {
-          <div
-            class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-5"
-          >
+          <div class="bg-red-50 border border-red-200 rounded-lg p-5">
             <div class="flex items-center gap-2">
-              <ng-icon name="lucideCircleX" class="h-5 w-5 text-red-600 dark:text-red-400" />
-              <h2 class="text-base font-semibold text-red-900 dark:text-red-200">
+              <ng-icon name="lucideCircleX" class="h-5 w-5 text-red-600" />
+              <h2 class="text-base font-semibold text-red-900">
                 This repository could not be read
               </h2>
             </div>
-            <p class="mt-1 text-sm text-red-800 dark:text-red-300">
+            <p class="mt-1 text-sm text-red-800">
               <span class="font-mono">{{ r.read.reason || 'unknown' }}</span> — branch
               <span class="font-mono">{{ r.branch }}</span>
             </p>
@@ -254,32 +241,26 @@ interface NeededThing {
           </section>
 
           <!-- 2. What is needed from the user -->
-          <section
-            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5"
-          >
-            <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <section class="bg-white border border-slate-200 rounded-xl p-5">
+            <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
               <ng-icon name="lucideKey" class="h-5 w-5 text-slate-400" />
               What you need to provide
             </h2>
             @if (needed(); as list) {
               @if (list.length === 0) {
-                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  No environment values or keys are needed.
-                </p>
+                <p class="mt-2 text-sm text-slate-500">No environment values or keys are needed.</p>
               } @else {
                 <ul class="mt-3 space-y-2">
                   @for (n of list; track n.name) {
                     <li class="flex flex-wrap items-center gap-2 text-sm">
-                      <span class="font-mono text-slate-900 dark:text-white">{{ n.name }}</span>
+                      <span class="font-mono text-slate-900">{{ n.name }}</span>
                       @for (t of n.tags; track t) {
                         <span class="text-xs px-1.5 py-0.5 rounded" [class]="tagClasses(t)">{{
                           t
                         }}</span>
                       }
                       @if (n.detail) {
-                        <span class="text-xs font-mono text-slate-500 dark:text-slate-400">{{
-                          n.detail
-                        }}</span>
+                        <span class="text-xs font-mono text-slate-500">{{ n.detail }}</span>
                       }
                     </li>
                   }
@@ -290,28 +271,22 @@ interface NeededThing {
 
           <!-- 3. What is in the way -->
           @if (obstacles().length > 0) {
-            <section
-              class="rounded-xl border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-5"
-            >
-              <h2
-                class="text-base font-bold text-red-900 dark:text-red-200 flex items-center gap-2"
-              >
+            <section class="rounded-xl border border-red-300 bg-red-50 p-5">
+              <h2 class="text-base font-bold text-red-900 flex items-center gap-2">
                 <ng-icon name="lucideTriangleAlert" class="h-5 w-5" />
                 In the way
               </h2>
               <ul class="mt-3 space-y-3">
                 @for (o of obstacles(); track $index) {
                   <li>
-                    <p class="text-sm text-slate-900 dark:text-slate-100">
+                    <p class="text-sm text-slate-900">
                       {{ o.summary }}
                       @if (o.unit) {
-                        <span class="font-mono text-xs text-slate-500 dark:text-slate-400"
-                          >({{ o.unit }})</span
-                        >
+                        <span class="font-mono text-xs text-slate-500">({{ o.unit }})</span>
                       }
                     </p>
                     @if (o.remedy) {
-                      <p class="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
+                      <p class="mt-0.5 text-sm text-slate-600">
                         <span class="font-medium">Fix:</span> {{ o.remedy }}
                       </p>
                     }
@@ -324,29 +299,25 @@ interface NeededThing {
           <!-- Uncertainty stays a question — never a blank field, never a green tick -->
           @if (questions(); as qs) {
             @if (qs.length > 0) {
-              <section
-                class="rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/10 p-5"
-              >
-                <h2
-                  class="text-base font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2"
-                >
+              <section class="rounded-xl border border-amber-200 bg-amber-50 p-5">
+                <h2 class="text-base font-bold text-amber-900 flex items-center gap-2">
                   <ng-icon name="lucideCircleHelp" class="h-5 w-5" />
                   We could not tell
                 </h2>
                 <ul class="mt-3 space-y-2">
                   @for (q of qs; track q.id) {
-                    <li class="text-sm text-slate-900 dark:text-slate-100">
+                    <li class="text-sm text-slate-900">
                       {{ q.question }}
                       @if (q.options.length > 0) {
                         <span class="ml-1 inline-flex flex-wrap gap-1 align-middle">
                           @for (opt of shortOptions(q.options); track opt) {
                             <span
-                              class="text-xs font-mono px-1.5 py-0.5 rounded bg-white/70 dark:bg-black/20 text-slate-600 dark:text-slate-300"
+                              class="text-xs font-mono px-1.5 py-0.5 rounded bg-white/70 text-slate-600"
                               >{{ opt }}</span
                             >
                           }
                           @if (longOptionCount(q.options) > 0) {
-                            <span class="text-xs text-slate-500 dark:text-slate-400">
+                            <span class="text-xs text-slate-500">
                               {{ longOptionCount(q.options) }} more in the raw map
                             </span>
                           }
@@ -360,21 +331,15 @@ interface NeededThing {
           }
 
           <!-- What would run -->
-          <section
-            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5"
-          >
-            <h2 class="text-base font-bold text-slate-900 dark:text-white">What would run</h2>
+          <section class="bg-white border border-slate-200 rounded-xl p-5">
+            <h2 class="text-base font-bold text-slate-900">What would run</h2>
             <ul class="mt-3 space-y-1.5 text-sm">
               @for (u of r.map!.units; track u.id) {
                 <li class="flex flex-wrap items-center gap-2">
-                  <span class="font-mono text-slate-900 dark:text-white">{{ unitName(u.id) }}</span>
-                  <span class="text-xs text-slate-500 dark:text-slate-400">{{
-                    u.build.strategy
-                  }}</span>
+                  <span class="font-mono text-slate-900">{{ unitName(u.id) }}</span>
+                  <span class="text-xs text-slate-500">{{ u.build.strategy }}</span>
                   @if (u.port) {
-                    <span class="text-xs font-mono text-slate-500 dark:text-slate-400"
-                      >:{{ u.port.value }}</span
-                    >
+                    <span class="text-xs font-mono text-slate-500">:{{ u.port.value }}</span>
                   }
                   <span
                     class="text-xs px-1.5 py-0.5 rounded"
@@ -383,19 +348,17 @@ interface NeededThing {
                     {{ readinessLabel(readinessOf(r.verdict, u.id)) }}
                   </span>
                   @if (skippedUnitIds().has(u.id)) {
-                    <span class="text-xs text-amber-700 dark:text-amber-400"
-                      >not in the flui.yaml</span
-                    >
+                    <span class="text-xs text-amber-700">not in the flui.yaml</span>
                   }
                 </li>
               }
               @for (s of r.map!.services; track $index) {
                 <li class="flex flex-wrap items-center gap-2">
-                  <span class="font-mono text-slate-700 dark:text-slate-300">{{ s.name }}</span>
+                  <span class="font-mono text-slate-700">{{ s.name }}</span>
                   @if (s.block) {
-                    <span class="text-xs text-slate-500 dark:text-slate-400">{{ s.block }}</span>
+                    <span class="text-xs text-slate-500">{{ s.block }}</span>
                   } @else {
-                    <span class="text-xs text-red-700 dark:text-red-400">no block</span>
+                    <span class="text-xs text-red-700">no block</span>
                   }
                 </li>
               }
@@ -403,21 +366,15 @@ interface NeededThing {
           </section>
 
           <!-- 4. The next step -->
-          <section
-            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5"
-          >
+          <section class="bg-white border border-slate-200 rounded-xl p-5">
             @if (applied(); as done) {
               <div class="flex items-center gap-2">
                 <ng-icon
                   [name]="done.partial ? 'lucideTriangleAlert' : 'lucideCircleCheck'"
                   class="h-5 w-5"
-                  [class]="
-                    done.partial
-                      ? 'text-amber-600 dark:text-amber-400'
-                      : 'text-emerald-600 dark:text-emerald-400'
-                  "
+                  [class]="done.partial ? 'text-amber-600' : 'text-emerald-600'"
                 />
-                <h2 class="text-base font-bold text-slate-900 dark:text-white">
+                <h2 class="text-base font-bold text-slate-900">
                   {{ done.partial ? 'Applied, but not everything was armed' : 'Applied' }}
                 </h2>
               </div>
@@ -426,14 +383,12 @@ interface NeededThing {
                    that costs money if it is missed: the next apply creates a second one beside it. -->
               @if (unmarkedUnits(); as unmarked) {
                 @if (unmarked.length > 0) {
-                  <div
-                    class="mt-3 rounded-lg border-2 border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-900/20 p-4"
-                  >
-                    <p class="text-sm font-bold text-red-900 dark:text-red-200">
+                  <div class="mt-3 rounded-lg border-2 border-red-500 bg-red-50 p-4">
+                    <p class="text-sm font-bold text-red-900">
                       {{ unmarked.length }} application{{ unmarked.length === 1 ? '' : 's' }} could
                       not be marked for reuse.
                     </p>
-                    <p class="mt-1 text-sm text-red-800 dark:text-red-300">
+                    <p class="mt-1 text-sm text-red-800">
                       The next apply of this repository will not recognise
                       {{ unmarked.length === 1 ? 'it' : 'them' }} and will create a second
                       application beside {{ unmarked.length === 1 ? 'it' : 'each of them' }} — with
@@ -445,12 +400,10 @@ interface NeededThing {
                         <li class="text-sm">
                           <a
                             [routerLink]="['/apps/applications', u.applicationId]"
-                            class="font-medium text-red-900 dark:text-red-200 underline"
+                            class="font-medium text-red-900 underline"
                             >{{ u.name }}</a
                           >
-                          <span class="ml-2 text-xs font-mono text-red-700 dark:text-red-400">{{
-                            u.slug
-                          }}</span>
+                          <span class="ml-2 text-xs font-mono text-red-700">{{ u.slug }}</span>
                         </li>
                       }
                     </ul>
@@ -458,7 +411,7 @@ interface NeededThing {
                 }
               }
 
-              <p class="mt-3 text-sm text-slate-700 dark:text-slate-300">
+              <p class="mt-3 text-sm text-slate-700">
                 <ng-icon
                   name="lucideGitBranch"
                   class="h-3.5 w-3.5 inline-block align-middle text-slate-400"
@@ -467,7 +420,7 @@ interface NeededThing {
                   [href]="done.branchUrl"
                   target="_blank"
                   rel="noopener"
-                  class="font-mono text-blue-700 dark:text-blue-400 hover:underline"
+                  class="font-mono text-blue-700 hover:underline"
                   >{{ done.branch }}</a
                 >
                 <ng-icon
@@ -478,10 +431,10 @@ interface NeededThing {
                   [href]="done.commitUrl"
                   target="_blank"
                   rel="noopener"
-                  class="font-mono text-blue-700 dark:text-blue-400 hover:underline"
+                  class="font-mono text-blue-700 hover:underline"
                   >{{ shortSha(done.commitSha) }}</a
                 >
-                <span class="ml-2 text-slate-500 dark:text-slate-400">
+                <span class="ml-2 text-slate-500">
                   cut from {{ done.baseBranch }}, which was not written to.
                 </span>
               </p>
@@ -492,18 +445,16 @@ interface NeededThing {
                     <div class="flex flex-wrap items-center gap-2 text-sm">
                       <a
                         [routerLink]="['/apps/applications', u.applicationId]"
-                        class="font-medium text-blue-700 dark:text-blue-400 hover:underline"
+                        class="font-medium text-blue-700 hover:underline"
                         >{{ u.name }}</a
                       >
-                      <span class="text-xs font-mono text-slate-500 dark:text-slate-400">{{
-                        u.slug
-                      }}</span>
+                      <span class="text-xs font-mono text-slate-500">{{ u.slug }}</span>
                       <span
                         class="text-xs px-1.5 py-0.5 rounded"
                         [class]="
                           u.armed
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-amber-100 text-amber-800'
                         "
                         >{{ u.armed ? 'building' : 'not armed' }}</span
                       >
@@ -512,13 +463,13 @@ interface NeededThing {
                           [href]="u.workflowRunUrl"
                           target="_blank"
                           rel="noopener"
-                          class="text-xs text-slate-500 dark:text-slate-400 hover:underline"
+                          class="text-xs text-slate-500 hover:underline"
                           >build run</a
                         >
                       }
                     </div>
                     @if (!u.armed && u.reason) {
-                      <p class="mt-0.5 text-sm text-amber-800 dark:text-amber-300">
+                      <p class="mt-0.5 text-sm text-amber-800">
                         {{ u.reason }}
                       </p>
                     }
@@ -527,7 +478,7 @@ interface NeededThing {
               </ul>
 
               @if (done.skipped.length > 0) {
-                <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                <p class="mt-3 text-sm text-slate-500">
                   Nothing was committed for
                   @for (s of done.skipped; track s.unitId) {
                     <span class="font-mono">{{ unitName(s.unitId) }}</span>{{ $last ? '' : ', ' }}
@@ -539,7 +490,7 @@ interface NeededThing {
               <div class="mt-3 flex flex-wrap items-center gap-4 text-xs">
                 <button
                   (click)="toggle('files')"
-                  class="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:underline"
+                  class="inline-flex items-center gap-1 text-slate-500 hover:underline"
                 >
                   <ng-icon
                     [name]="isExpanded('files') ? 'lucideChevronDown' : 'lucideChevronRight'"
@@ -551,18 +502,18 @@ interface NeededThing {
               @if (isExpanded('files')) {
                 <ul class="mt-2 space-y-0.5">
                   @for (f of done.files; track f) {
-                    <li class="text-xs font-mono text-slate-600 dark:text-slate-400">{{ f }}</li>
+                    <li class="text-xs font-mono text-slate-600">{{ f }}</li>
                   }
                 </ul>
               }
             } @else {
-              <p class="text-sm text-slate-700 dark:text-slate-300">
+              <p class="text-sm text-slate-700">
                 This writes a branch and a commit to your repository, and builds on your Actions
                 minutes.
               </p>
               <button
                 (click)="toggle('apply-detail')"
-                class="mt-1 inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                class="mt-1 inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900"
               >
                 <ng-icon
                   [name]="isExpanded('apply-detail') ? 'lucideChevronDown' : 'lucideChevronRight'"
@@ -572,7 +523,7 @@ interface NeededThing {
               </button>
               @if (isExpanded('apply-detail')) {
                 <div
-                  class="mt-1.5 space-y-1.5 border-l-2 border-slate-200 dark:border-slate-700 pl-2.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed"
+                  class="mt-1.5 space-y-1.5 border-l-2 border-slate-200 pl-2.5 text-xs text-slate-600 leading-relaxed"
                 >
                   <p>
                     Flui cuts
@@ -622,7 +573,7 @@ interface NeededThing {
                   [attr.aria-label]="applyBlockedReason() || null"
                   [class]="
                     applyDisabled()
-                      ? 'inline-flex items-center gap-2 px-4 py-2 rounded-md bg-slate-200 dark:bg-slate-700/60 text-slate-500 dark:text-slate-500 text-sm font-semibold cursor-not-allowed'
+                      ? 'inline-flex items-center gap-2 px-4 py-2 rounded-md bg-slate-200 text-slate-500 text-sm font-semibold cursor-not-allowed'
                       : 'inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold'
                   "
                 >
@@ -641,13 +592,13 @@ interface NeededThing {
                    unchosen, and a disabled button receives no pointer events, so the title never
                    came. -->
               @if (!applying() && applyBlockedReason(); as why) {
-                <p class="mt-1.5 text-sm text-amber-700 dark:text-amber-400 max-w-prose">
+                <p class="mt-1.5 text-sm text-amber-700 max-w-prose">
                   {{ why }}
                 </p>
               }
 
               @if (applying()) {
-                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                <p class="mt-2 text-sm text-slate-600">
                   Cutting the branch, committing the manifests, and installing the services they
                   declare. This can take a few minutes — leave the page open.
                 </p>
@@ -658,19 +609,14 @@ interface NeededThing {
               @if (refusal.stranded; as left) {
                 <!-- Not a red row like any other: something exists on the cluster, and only this
                      message says what. -->
-                <div
-                  class="mt-4 rounded-xl border-2 border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-900/20 p-4"
-                >
+                <div class="mt-4 rounded-xl border-2 border-red-500 bg-red-50 p-4">
                   <div class="flex items-center gap-2">
-                    <ng-icon
-                      name="lucideTriangleAlert"
-                      class="h-5 w-5 text-red-600 dark:text-red-400"
-                    />
-                    <h3 class="text-base font-bold text-red-900 dark:text-red-200">
+                    <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-red-600" />
+                    <h3 class="text-base font-bold text-red-900">
                       The apply failed and left something behind
                     </h3>
                   </div>
-                  <p class="mt-2 text-sm text-red-900 dark:text-red-200 whitespace-pre-wrap">
+                  <p class="mt-2 text-sm text-red-900 whitespace-pre-wrap">
                     {{ refusal.message }}
                   </p>
                   @if (left.applications.length > 0) {
@@ -679,14 +625,12 @@ interface NeededThing {
                         <li class="text-sm">
                           <a
                             [routerLink]="['/apps/applications', a.applicationId]"
-                            class="font-medium text-red-900 dark:text-red-200 underline"
+                            class="font-medium text-red-900 underline"
                             >{{ a.name }}</a
                           >
-                          <span class="ml-2 text-xs font-mono text-red-700 dark:text-red-400">{{
-                            a.slug
-                          }}</span>
+                          <span class="ml-2 text-xs font-mono text-red-700">{{ a.slug }}</span>
                           @if (a.attachedServices.length > 0) {
-                            <span class="ml-2 text-xs text-red-700 dark:text-red-400">
+                            <span class="ml-2 text-xs text-red-700">
                               with {{ a.attachedServices.join(', ') }}
                             </span>
                           }
@@ -696,10 +640,8 @@ interface NeededThing {
                   }
                 </div>
               } @else {
-                <div
-                  class="mt-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-4"
-                >
-                  <p class="text-sm text-red-900 dark:text-red-200 whitespace-pre-wrap">
+                <div class="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+                  <p class="text-sm text-red-900 whitespace-pre-wrap">
                     {{ refusal.message }}
                   </p>
                 </div>
@@ -710,7 +652,7 @@ interface NeededThing {
               @if (renderedUnits().length > 0) {
                 <button
                   (click)="toggle('yaml')"
-                  class="inline-flex items-center gap-1 font-medium text-blue-700 dark:text-blue-400 hover:underline"
+                  class="inline-flex items-center gap-1 font-medium text-blue-700 hover:underline"
                 >
                   <ng-icon
                     [name]="isExpanded('yaml') ? 'lucideChevronDown' : 'lucideChevronRight'"
@@ -721,7 +663,7 @@ interface NeededThing {
               }
               <button
                 (click)="toggle('raw')"
-                class="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:underline"
+                class="inline-flex items-center gap-1 text-slate-500 hover:underline"
               >
                 <ng-icon
                   [name]="isExpanded('raw') ? 'lucideChevronDown' : 'lucideChevronRight'"
@@ -730,7 +672,7 @@ interface NeededThing {
                 raw map
               </button>
               @if (r.map!.caveats.length > 0) {
-                <span class="text-slate-400 dark:text-slate-500">
+                <span class="text-slate-400">
                   {{ r.map!.caveats.length }} note{{ r.map!.caveats.length === 1 ? '' : 's' }} in
                   the raw map
                 </span>
@@ -741,7 +683,7 @@ interface NeededThing {
               <div class="mt-3 space-y-3">
                 @for (ru of renderedUnits(); track ru.unitId) {
                   <div>
-                    <p class="text-xs font-mono text-slate-500 dark:text-slate-400 mb-1">
+                    <p class="text-xs font-mono text-slate-500 mb-1">
                       {{ unitName(ru.unitId) }}
                     </p>
                     <pre
@@ -837,16 +779,16 @@ export class RepoMapComponent implements OnInit, OnDestroy {
   readonly outcomeCardClasses = computed(() => {
     switch (this.result()?.verdict.outcome) {
       case VerdictDto.OutcomeEnum.Deployable:
-        return 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100';
+        return 'bg-emerald-50 border-emerald-300 text-emerald-900';
       case VerdictDto.OutcomeEnum.DeployablePendingInputs:
-        return 'bg-sky-50 dark:bg-sky-900/10 border-sky-300 dark:border-sky-800 text-sky-900 dark:text-sky-100';
+        return 'bg-sky-50 border-sky-300 text-sky-900';
       case VerdictDto.OutcomeEnum.Partial:
-        return 'bg-amber-50 dark:bg-amber-900/10 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-100';
+        return 'bg-amber-50 border-amber-300 text-amber-900';
       case VerdictDto.OutcomeEnum.Blocked:
       case VerdictDto.OutcomeEnum.InsufficientCapacity:
-        return 'bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800 text-red-900 dark:text-red-100';
+        return 'bg-red-50 border-red-300 text-red-900';
       default:
-        return 'bg-slate-50 dark:bg-slate-900/10 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100';
+        return 'bg-slate-50 border-slate-300 text-slate-900';
     }
   });
 
@@ -1231,20 +1173,18 @@ export class RepoMapComponent implements OnInit, OnDestroy {
   readinessClasses(readiness: string): string {
     switch (readiness) {
       case 'deployable':
-        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
+        return 'bg-emerald-100 text-emerald-800';
       case 'deployable_pending_inputs':
-        return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400';
+        return 'bg-sky-100 text-sky-800';
       case 'blocked':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-red-100 text-red-800';
       default:
-        return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+        return 'bg-slate-100 text-slate-700';
     }
   }
 
   tagClasses(tag: string): string {
-    return tag === 'needed to start'
-      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-      : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+    return tag === 'needed to start' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-700';
   }
 
   shortSha(sha: string): string {

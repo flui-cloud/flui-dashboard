@@ -19,7 +19,7 @@ import { AssistantDataTableComponent, DataTableConfig } from './assistant-data-t
             <button
               type="button"
               (click)="sendMessage.emit('Show recent logs for ' + app)"
-              class="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors"
+              class="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600 hover:bg-blue-500/20 transition-colors"
             >
               {{ app }}
             </button>

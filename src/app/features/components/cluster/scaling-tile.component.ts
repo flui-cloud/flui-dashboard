@@ -22,7 +22,7 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
       <div class="flex items-baseline gap-1.5">
         <span
           class="text-2xl font-semibold tracking-tight"
-          [class]="attention() ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'"
+          [class]="attention() ? 'text-amber-600' : 'text-foreground'"
           [attr.data-testid]="'tile-value-' + testid()"
         >
           {{ value() }}

@@ -144,13 +144,10 @@ import {
             <a
               [routerLink]="route(alarm.path).path"
               [queryParams]="route(alarm.path).query"
-              class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 hover:bg-amber-100/70 dark:border-amber-900/50 dark:bg-amber-950/30 dark:hover:bg-amber-950/50"
+              class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 hover:bg-amber-100/70"
               data-testid="recap-backup-alarm"
             >
-              <ng-icon
-                name="lucideShieldAlert"
-                class="h-5 w-5 text-amber-700 dark:text-amber-400"
-              />
+              <ng-icon name="lucideShieldAlert" class="h-5 w-5 text-amber-700" />
               <span class="text-sm font-semibold text-foreground">{{ alarm.title }}</span>
               <span class="flex-1 text-sm text-muted-foreground">{{ alarm.detail }}</span>
               <span class="text-sm font-semibold text-primary">Protect it</span>

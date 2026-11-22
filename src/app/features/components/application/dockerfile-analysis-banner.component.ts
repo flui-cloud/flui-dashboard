@@ -26,13 +26,13 @@ const RUNTIME_ICONS: Record<string, string> = {
         <div class="flex items-center gap-2 flex-wrap">
           @if (da.isFluiManaged) {
             <span
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
             >
               <ng-icon name="lucideCircleCheck" class="h-3 w-3" /> Flui Ready
             </span>
           } @else {
             <span
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800"
             >
               <ng-icon name="lucideTriangleAlert" class="h-3 w-3" /> Custom Dockerfile
             </span>
@@ -52,7 +52,7 @@ const RUNTIME_ICONS: Record<string, string> = {
           }
         </div>
         @if (!da.isFluiManaged) {
-          <p class="text-xs text-amber-700 dark:text-amber-400">
+          <p class="text-xs text-amber-700">
             Add <code class="font-mono bg-muted px-1 rounded">#flui-managed</code> to your
             Dockerfile to indicate it's managed with Flui.
           </p>

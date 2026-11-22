@@ -106,7 +106,7 @@ const AUTO_REFRESH_MS = 5000;
 
         @if (error()) {
           <div
-            class="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-300"
+            class="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700"
             data-testid="sessions-error"
           >
             <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5 shrink-0" />
@@ -114,7 +114,7 @@ const AUTO_REFRESH_MS = 5000;
           </div>
         }
         @if (notice()) {
-          <p class="text-sm text-emerald-700 dark:text-emerald-400" data-testid="sessions-notice">
+          <p class="text-sm text-emerald-700" data-testid="sessions-notice">
             {{ notice() }}
           </p>
         }
@@ -154,7 +154,7 @@ const AUTO_REFRESH_MS = 5000;
                         {{ who(s) }}
                         @if (s.blocks) {
                           <span
-                            class="ml-2 text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                            class="ml-2 text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800"
                             [attr.data-testid]="'session-blocking-' + s.pid"
                           >
                             blocking {{ s.blocks }}
@@ -195,7 +195,7 @@ const AUTO_REFRESH_MS = 5000;
                         </button>
                         <button
                           type="button"
-                          class="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors disabled:opacity-40"
+                          class="p-1.5 rounded hover:bg-red-50 text-red-600 transition-colors disabled:opacity-40"
                           [disabled]="!s.actions.terminate || busy() === s.pid"
                           [title]="
                             s.actions.terminate
@@ -311,7 +311,7 @@ const AUTO_REFRESH_MS = 5000;
                         <td class="py-1 text-right">
                           <button
                             type="button"
-                            class="px-2 py-0.5 rounded text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-40"
+                            class="px-2 py-0.5 rounded text-red-600 hover:bg-red-50 disabled:opacity-40"
                             [disabled]="!c.canClose || busyClient() === c.pod + ':' + c.id"
                             [attr.data-testid]="'pooled-client-close-' + c.id"
                             (click)="askClient(c)"
@@ -477,11 +477,11 @@ export class AppSessionsTabComponent {
   toneClass(s: DbSession): string {
     switch (stateTone(s)) {
       case 'running':
-        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300';
+        return 'bg-emerald-100 text-emerald-800';
       case 'waiting':
-        return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+        return 'bg-amber-100 text-amber-800';
       case 'held':
-        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300';
+        return 'bg-indigo-100 text-indigo-800';
       default:
         return 'bg-muted text-muted-foreground';
     }

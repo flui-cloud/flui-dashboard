@@ -21,10 +21,10 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
 import { NeedsDecisionListComponent } from './needs-decision-list.component';
 
 const OUTCOME_TONE: Record<string, string> = {
-  protected: 'text-green-700 dark:text-green-400',
-  already_protected: 'text-green-700 dark:text-green-400',
+  protected: 'text-green-700',
+  already_protected: 'text-green-700',
   waiting: 'text-muted-foreground',
-  needs_decision: 'text-amber-700 dark:text-amber-400',
+  needs_decision: 'text-amber-700',
   failed: 'text-red-600',
   skipped: 'text-muted-foreground',
 };
@@ -57,7 +57,7 @@ const OUTCOME_TONE: Record<string, string> = {
                 class="rounded-full border px-2 py-0.5 text-[11px]"
                 [class]="
                   v.protected
-                    ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+                    ? 'border-green-500/30 bg-green-500/10 text-green-700'
                     : 'border-border bg-muted text-muted-foreground'
                 "
               >

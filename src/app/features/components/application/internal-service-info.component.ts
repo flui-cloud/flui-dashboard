@@ -47,9 +47,7 @@ export type InternalServiceMode = 'building-block' | 'internal-app';
       </dl>
 
       @if (lastCopied()) {
-        <p
-          class="mt-3 inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"
-        >
+        <p class="mt-3 inline-flex items-center gap-1 text-xs text-emerald-600">
           <ng-icon name="lucideCircleCheck" class="h-3.5 w-3.5" />
           Copied to clipboard
         </p>

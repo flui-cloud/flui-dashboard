@@ -54,7 +54,7 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
     <!-- Error state -->
     @if (!loading() && error()) {
       <div
-        class="flex items-start justify-between gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300"
+        class="flex items-start justify-between gap-2 p-3 rounded-md border border-yellow-200 bg-yellow-50 text-sm text-yellow-800"
       >
         <div class="flex items-start gap-2">
           <ng-icon name="lucideInfo" class="h-4 w-4 shrink-0 mt-0.5" />
@@ -90,7 +90,7 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
       <!-- Fallback warning -->
       @if (r.isFallback) {
         <div
-          class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300"
+          class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 bg-yellow-50 text-sm text-yellow-800"
         >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
           <span
@@ -126,9 +126,7 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
                   <span class="ml-1.5 text-xs opacity-60">(recommended)</span>
                 }
                 @if (candidate.sourceFrameworkHint) {
-                  <span
-                    class="ml-1.5 px-1 py-0.5 rounded text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                  >
+                  <span class="ml-1.5 px-1 py-0.5 rounded text-xs bg-amber-100 text-amber-700">
                     {{ candidate.sourceFrameworkHint }}
                   </span>
                 }
@@ -153,9 +151,7 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
             }
           </span>
           @if (c.sourceFrameworkHint) {
-            <span
-              class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-mono"
-            >
+            <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-mono">
               {{ c.sourceFrameworkHint }}
             </span>
           }

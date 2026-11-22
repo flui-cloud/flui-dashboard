@@ -24,9 +24,7 @@ import { accessOf } from '../../model/app-access';
           data-testid="home-status-line"
         >
           @if (pulse().backendOnline) {
-            <span
-              class="inline-flex items-center gap-1.5 font-semibold text-green-700 dark:text-green-400"
-            >
+            <span class="inline-flex items-center gap-1.5 font-semibold text-green-700">
               <span class="h-2 w-2 rounded-full bg-green-500"></span>Online
             </span>
           } @else {

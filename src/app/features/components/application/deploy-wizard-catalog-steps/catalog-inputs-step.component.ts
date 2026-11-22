@@ -25,7 +25,7 @@ import { CatalogUserInputPromptDto } from '../../../../core/api/model/catalogUse
       @if (defaultCredentials(); as creds) {
         <div class="space-y-3 rounded-md border border-input bg-muted/40 p-4">
           <div class="flex items-center gap-2">
-            <ng-icon name="lucideKey" class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <ng-icon name="lucideKey" class="h-4 w-4 text-amber-600" />
             <span class="text-sm font-medium">Default login</span>
           </div>
           <p class="text-xs text-muted-foreground">
@@ -45,7 +45,7 @@ import { CatalogUserInputPromptDto } from '../../../../core/api/model/catalogUse
             </div>
           }
           @if (creds.changeNote) {
-            <p class="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+            <p class="flex items-start gap-1.5 text-xs text-amber-600">
               <ng-icon name="lucideCircleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {{ creds.changeNote }}
             </p>
@@ -65,7 +65,7 @@ import { CatalogUserInputPromptDto } from '../../../../core/api/model/catalogUse
             <span>{{ prompt.label ?? prompt.name }}</span>
             @if (prompt.sensitive) {
               <span
-                class="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400"
+                class="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600"
               >
                 <ng-icon name="lucideKey" class="mr-1 inline-block h-2.5 w-2.5" />
                 Secret

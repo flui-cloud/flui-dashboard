@@ -293,12 +293,9 @@ interface WizardStep {
                 } @else if (validationStatus() === 'success') {
                   <div class="space-y-4">
                     <div
-                      class="h-12 w-12 mx-auto bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center"
+                      class="h-12 w-12 mx-auto bg-green-100 rounded-full flex items-center justify-center"
                     >
-                      <ng-icon
-                        name="lucideCheck"
-                        class="h-6 w-6 text-green-600 dark:text-green-400"
-                      />
+                      <ng-icon name="lucideCheck" class="h-6 w-6 text-green-600" />
                     </div>
                     <h3 class="text-lg font-semibold text-foreground">Connection successful</h3>
                     <p class="text-muted-foreground">
@@ -322,9 +319,9 @@ interface WizardStep {
                 } @else if (validationStatus() === 'error') {
                   <div class="space-y-4">
                     <div
-                      class="h-12 w-12 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center"
+                      class="h-12 w-12 mx-auto bg-red-100 rounded-full flex items-center justify-center"
                     >
-                      <ng-icon name="lucideX" class="h-6 w-6 text-red-600 dark:text-red-400" />
+                      <ng-icon name="lucideX" class="h-6 w-6 text-red-600" />
                     </div>
                     <h3 class="text-lg font-semibold text-foreground">Validation failed</h3>
                     <p class="text-muted-foreground">

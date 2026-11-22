@@ -71,8 +71,8 @@ import {
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Virtual Networks</h1>
-          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <h1 class="text-3xl font-bold text-gray-900">Virtual Networks</h1>
+          <p class="mt-2 text-sm text-gray-600">
             Manage isolated private networks across cloud providers
           </p>
         </div>
@@ -80,7 +80,7 @@ import {
           <button
             (click)="refreshVNets()"
             [disabled]="isLoading()"
-            class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
             Refresh
@@ -101,42 +101,32 @@ import {
       <!-- Statistics Cards -->
       @if (statistics()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-          >
-            <div class="text-sm text-gray-600 dark:text-gray-400">Total VNets</div>
-            <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="text-sm text-gray-600">Total VNets</div>
+            <div class="text-2xl font-bold text-gray-900 mt-1">
               {{ statistics().total }}
             </div>
           </div>
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-          >
-            <div class="text-sm text-gray-600 dark:text-gray-400">Active</div>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="text-sm text-gray-600">Active</div>
             <div class="text-2xl font-bold text-green-600 mt-1">
               {{ statistics().active }}
             </div>
           </div>
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-          >
-            <div class="text-sm text-gray-600 dark:text-gray-400">Pending</div>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="text-sm text-gray-600">Pending</div>
             <div class="text-2xl font-bold text-yellow-600 mt-1">
               {{ statistics().pending }}
             </div>
           </div>
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-          >
-            <div class="text-sm text-gray-600 dark:text-gray-400">Total Subnets</div>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="text-sm text-gray-600">Total Subnets</div>
             <div class="text-2xl font-bold text-blue-600 mt-1">
               {{ statistics().totalSubnets }}
             </div>
           </div>
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-          >
-            <div class="text-sm text-gray-600 dark:text-gray-400">Attached Servers</div>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="text-sm text-gray-600">Attached Servers</div>
             <div class="text-2xl font-bold text-purple-600 mt-1">
               {{ statistics().totalAttachedServers }}
             </div>
@@ -145,12 +135,10 @@ import {
       }
 
       <!-- Filters -->
-      <div
-        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-      >
+      <div class="bg-white border border-gray-200 rounded-lg p-4">
         <div class="flex items-center gap-2 mb-4">
           <ng-icon name="lucideFilter" class="h-4 w-4 text-gray-500" />
-          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filters</span>
+          <span class="text-sm font-medium text-gray-700">Filters</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <!-- Search -->
@@ -164,7 +152,7 @@ import {
               [ngModel]="filtersState().search"
               (ngModelChange)="updateFilter('search', $event)"
               placeholder="Search VNets..."
-              class="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -172,7 +160,7 @@ import {
           <select
             [ngModel]="filtersState().provider"
             (ngModelChange)="updateFilter('provider', $event)"
-            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Providers</option>
             @for (p of availableProviders(); track p.id) {
@@ -184,7 +172,7 @@ import {
           <select
             [ngModel]="filtersState().status"
             (ngModelChange)="updateFilter('status', $event)"
-            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Statuses</option>
             <option value="ACTIVE">Active</option>
@@ -196,7 +184,7 @@ import {
           <!-- Clear Filters -->
           <button
             (click)="clearAllFilters()"
-            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Clear Filters
           </button>
@@ -205,11 +193,9 @@ import {
 
       <!-- Error Message -->
       @if (errorMessage()) {
-        <div
-          class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
-        >
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
           <div class="flex items-start">
-            <div class="text-sm text-red-800 dark:text-red-200">
+            <div class="text-sm text-red-800">
               {{ errorMessage() }}
             </div>
           </div>
@@ -219,11 +205,11 @@ import {
       <!-- Loading State -->
       @if (isLoading() && !filteredVNets().length) {
         <div
-          class="flex items-center justify-center py-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          class="flex items-center justify-center py-12 bg-white border border-gray-200 rounded-lg"
         >
           <div class="text-center">
             <ng-icon name="lucideRefreshCw" class="h-8 w-8 animate-spin mx-auto text-blue-600" />
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading VNets...</p>
+            <p class="mt-2 text-sm text-gray-600">Loading VNets...</p>
           </div>
         </div>
       }
@@ -231,11 +217,11 @@ import {
       <!-- Empty State -->
       @else if (!filteredVNets().length && !isLoading()) {
         <div
-          class="flex flex-col items-center justify-center py-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          class="flex flex-col items-center justify-center py-12 bg-white border border-gray-200 rounded-lg"
         >
           <ng-icon name="lucideNetwork" class="h-16 w-16 text-gray-400 mb-4" />
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No VNets found</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 text-center max-w-md">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">No VNets found</h3>
+          <p class="text-sm text-gray-600 mb-4 text-center max-w-md">
             @if (hasActiveFilters()) {
               No VNets match your current filters. Try adjusting your search criteria.
             } @else {
@@ -254,7 +240,7 @@ import {
           } @else {
             <button
               (click)="clearAllFilters()"
-              class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Clear Filters
             </button>
@@ -268,13 +254,13 @@ import {
           @for (vnet of filteredVNets(); track vnet.id) {
             <div
               (click)="selectVNet(vnet.id)"
-              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700 cursor-pointer transition-all"
+              class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg hover:border-blue-300 cursor-pointer transition-all"
             >
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <div class="flex items-center gap-3 mb-2">
                     <ng-icon name="lucideNetwork" class="h-5 w-5 text-blue-600" />
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 class="text-lg font-semibold text-gray-900">
                       {{ vnet.name }}
                     </h3>
                     <span
@@ -287,26 +273,24 @@ import {
 
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     <div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">Provider</div>
-                      <div
-                        class="text-sm font-medium text-gray-900 dark:text-white mt-1 capitalize"
-                      >
+                      <div class="text-xs text-gray-500">Provider</div>
+                      <div class="text-sm font-medium text-gray-900 mt-1 capitalize">
                         @if (vnet.implementation === 'wireguard') {
-                          <span class="text-blue-600 dark:text-blue-400">Built by Flui</span>
+                          <span class="text-blue-600">Built by Flui</span>
                         } @else {
                           {{ vnet.provider }}
                         }
                       </div>
                     </div>
                     <div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">IP Range</div>
-                      <div class="text-sm font-mono text-gray-900 dark:text-white mt-1">
+                      <div class="text-xs text-gray-500">IP Range</div>
+                      <div class="text-sm font-mono text-gray-900 mt-1">
                         {{ vnet.ipRange }}
                       </div>
                     </div>
                     <div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">Subnets</div>
-                      <div class="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                      <div class="text-xs text-gray-500">Subnets</div>
+                      <div class="text-sm font-medium text-gray-900 mt-1">
                         {{ vnet.subnets.length }}
                       </div>
                     </div>
@@ -315,7 +299,7 @@ import {
                   @if (getTotalAttachedServers(vnet) > 0) {
                     <div class="mt-4 flex items-center gap-2">
                       <ng-icon name="lucideServer" class="h-4 w-4 text-gray-400" />
-                      <span class="text-xs text-gray-600 dark:text-gray-400">
+                      <span class="text-xs text-gray-600">
                         {{ getTotalAttachedServers(vnet) }} server(s) attached
                       </span>
                     </div>
@@ -324,16 +308,12 @@ import {
                   @if (vnet.labels.length > 0) {
                     <div class="mt-3 flex flex-wrap gap-2">
                       @for (label of vnet.labels.slice(0, 3); track label.key) {
-                        <span
-                          class="px-2 py-1 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                        >
+                        <span class="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-700">
                           {{ label.key }}: {{ label.value }}
                         </span>
                       }
                       @if (vnet.labels.length > 3) {
-                        <span
-                          class="px-2 py-1 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
-                        >
+                        <span class="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-500">
                           +{{ vnet.labels.length - 3 }} more
                         </span>
                       }
@@ -348,7 +328,7 @@ import {
 
       <!-- Results Count -->
       @if (filteredVNets().length > 0) {
-        <div class="text-sm text-gray-600 dark:text-gray-400 text-center">
+        <div class="text-sm text-gray-600 text-center">
           Showing {{ filteredVNets().length }} of {{ vnets().length }} VNet(s)
         </div>
       }
@@ -484,17 +464,17 @@ export class VNetListComponent implements OnInit, OnDestroy {
   getStatusBadgeClass(status: VNetStatus): string {
     switch (status) {
       case VNetStatus.ACTIVE:
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-green-100 text-green-800';
       case VNetStatus.PENDING:
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+        return 'bg-yellow-100 text-yellow-800';
       case VNetStatus.FAILED:
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-red-100 text-red-800';
       case VNetStatus.DELETING:
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+        return 'bg-orange-100 text-orange-800';
       case VNetStatus.DELETED:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+        return 'bg-gray-100 text-gray-800';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+        return 'bg-gray-100 text-gray-800';
     }
   }
 }

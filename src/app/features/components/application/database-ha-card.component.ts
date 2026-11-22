@@ -27,7 +27,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
         class="flex items-start justify-between gap-3 rounded-lg border px-4 py-2.5"
         [class]="
           v.state?.state === 'active'
-            ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-900 dark:bg-emerald-950/30'
+            ? 'border-emerald-200 bg-emerald-50/70'
             : 'border-border bg-muted/30'
         "
       >
@@ -66,7 +66,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
         }
       </div>
       @if (error()) {
-        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ error() }}</p>
+        <p class="mt-1 text-xs text-red-600">{{ error() }}</p>
       }
       <app-confirmation-dialog
         title="Make this database highly available"

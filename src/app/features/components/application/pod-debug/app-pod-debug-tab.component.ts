@@ -28,18 +28,18 @@ import { CrashDiagnosis } from '../../../model/crash-diagnosis.models';
       <!-- Header -->
       <div class="flex items-start justify-between gap-3 flex-wrap">
         <div class="space-y-1">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
             <ng-icon name="lucideBug" class="h-4 w-4" />
             Debug pods
           </h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xl">
+          <p class="text-xs text-gray-500 max-w-xl">
             On-demand snapshot of the application pods. Rate limit: 10 req/min. No automatic
             polling.
           </p>
         </div>
         <div class="flex items-center gap-3">
           @if (service.lastFetchedAt()) {
-            <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <span class="text-xs text-gray-500 flex items-center gap-1">
               <ng-icon name="lucideClock" class="h-3.5 w-3.5" />
               {{ formatFetched(service.lastFetchedAt()!) }}
             </span>
@@ -68,7 +68,7 @@ import { CrashDiagnosis } from '../../../model/crash-diagnosis.models';
       <!-- Error -->
       @if (service.error()) {
         <div
-          class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm"
+          class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
         >
           <ng-icon name="lucideCircleAlert" class="h-4 w-4 shrink-0" />
           {{ service.error() }}
@@ -77,20 +77,16 @@ import { CrashDiagnosis } from '../../../model/crash-diagnosis.models';
 
       <!-- Pods -->
       @if (service.loading() && service.pods().length === 0) {
-        <div
-          class="flex items-center justify-center py-12 text-sm text-gray-500 dark:text-gray-400"
-        >
+        <div class="flex items-center justify-center py-12 text-sm text-gray-500">
           Loading pods…
         </div>
       } @else if (service.pods().length === 0) {
         <div
-          class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg"
+          class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 rounded-lg"
         >
-          <ng-icon name="lucideBug" class="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No pod debug info</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Press refresh to load the pod state.
-          </p>
+          <ng-icon name="lucideBug" class="h-10 w-10 text-gray-300 mb-3" />
+          <p class="text-sm font-medium text-gray-700">No pod debug info</p>
+          <p class="text-xs text-gray-500 mt-1">Press refresh to load the pod state.</p>
         </div>
       } @else {
         <div class="space-y-2">

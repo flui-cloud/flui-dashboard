@@ -200,7 +200,7 @@ import { CreateBackupDestinationDto } from '../../../../core/api/model/createBac
 
         @if (errorMsg()) {
           <div
-            class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+            class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700"
           >
             {{ errorMsg() }}
           </div>
@@ -210,8 +210,8 @@ import { CreateBackupDestinationDto } from '../../../../core/api/model/createBac
             class="rounded border px-3 py-2 text-sm"
             [class]="
               r.healthy
-                ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
-                : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400'
+                ? 'border-green-500/30 bg-green-500/10 text-green-700'
+                : 'border-red-500/30 bg-red-500/10 text-red-700'
             "
           >
             @if (r.healthy) {

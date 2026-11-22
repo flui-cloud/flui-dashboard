@@ -73,7 +73,7 @@ import {
 
       @if (error()) {
         <div
-          class="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-300"
+          class="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700"
         >
           <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
           <span>{{ error() }}</span>
@@ -127,10 +127,10 @@ import {
                       class="text-xs px-2 py-0.5 rounded-full"
                       [class]="
                         job.failing
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                          ? 'bg-red-100 text-red-700'
                           : job.enabled
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-amber-100 text-amber-700'
                       "
                       [title]="
                         job.failing ? 'The last ' + job.consecutiveFailures + ' runs failed' : ''
@@ -384,7 +384,7 @@ import {
                           >{{ r.status }}</span
                         >
                         @if (r.reason) {
-                          <div class="mt-1 text-xs text-red-600 dark:text-red-400">
+                          <div class="mt-1 text-xs text-red-600">
                             {{ r.reason }}
                           </div>
                         }
@@ -429,9 +429,7 @@ import {
                 <div class="skeleton h-24 w-full"></div>
               } @else {
                 @if (runLogs()?.reason) {
-                  <p class="text-xs text-red-600 dark:text-red-400">
-                    Failed: {{ runLogs()?.reason }}
-                  </p>
+                  <p class="text-xs text-red-600">Failed: {{ runLogs()?.reason }}</p>
                 }
                 <pre
                   class="max-h-64 overflow-auto rounded-md bg-muted/50 p-3 text-xs whitespace-pre-wrap"
@@ -609,11 +607,11 @@ export class AppSchedulesTabComponent implements OnInit, OnDestroy {
   runStatusClass(run: ScheduledJobRun): string {
     switch (run.status) {
       case 'Succeeded':
-        return 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300';
+        return 'bg-green-100 text-green-700';
       case 'Failed':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
+        return 'bg-red-100 text-red-700';
       case 'Running':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
+        return 'bg-blue-100 text-blue-700';
       default:
         return 'bg-muted text-muted-foreground';
     }

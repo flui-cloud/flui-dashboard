@@ -17,7 +17,7 @@ import { lucideTriangleAlert } from '@ng-icons/lucide';
   providers: [provideIcons({ lucideTriangleAlert })],
   template: `
     <div
-      class="flex items-start gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5 text-[11px] leading-snug text-amber-700 dark:text-amber-400"
+      class="flex items-start gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5 text-[11px] leading-snug text-amber-700"
       [title]="tooltip()"
     >
       <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0" />

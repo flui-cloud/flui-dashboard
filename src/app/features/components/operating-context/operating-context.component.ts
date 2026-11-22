@@ -264,7 +264,7 @@ type ContextTab = 'attention' | 'holding' | 'archive';
                     class="rounded-full px-1.5 py-0.5 text-[11px] tabular-nums"
                     [class]="
                       t.id === 'attention'
-                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                        ? 'bg-amber-500/15 text-amber-600'
                         : 'bg-muted text-muted-foreground'
                     "
                     [attr.data-testid]="'tab-count-' + t.id"

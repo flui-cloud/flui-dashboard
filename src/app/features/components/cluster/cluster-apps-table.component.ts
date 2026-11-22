@@ -70,21 +70,13 @@ import { formatBytes } from '../../../shared/utils/metric-format';
                   </td>
                   <td
                     class="px-3 py-3 font-mono text-xs"
-                    [class]="
-                      app.replicasDegraded
-                        ? 'text-amber-600 dark:text-amber-400'
-                        : 'text-muted-foreground'
-                    "
+                    [class]="app.replicasDegraded ? 'text-amber-600' : 'text-muted-foreground'"
                   >
                     {{ app.replicas }}
                   </td>
                   <td
                     class="px-5 py-3 font-mono text-xs"
-                    [class]="
-                      app.restarts > 2
-                        ? 'text-amber-600 dark:text-amber-400'
-                        : 'text-muted-foreground'
-                    "
+                    [class]="app.restarts > 2 ? 'text-amber-600' : 'text-muted-foreground'"
                   >
                     {{ app.restarts }}
                   </td>

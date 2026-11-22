@@ -21,46 +21,40 @@ function todayLocal(): string {
     <div class="flex flex-col gap-4 p-4 w-full">
       <!-- Start -->
       <div class="flex flex-col gap-1.5">
-        <span
-          class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >Start</span
-        >
+        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Start</span>
         <div class="flex gap-2">
           <input
             type="date"
             [ngModel]="startDate()"
             (ngModelChange)="startDate.set($event)"
-            class="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="flex-1 px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <input
             type="time"
             step="1"
             [ngModel]="startTime()"
             (ngModelChange)="startTime.set($event)"
-            class="w-28 px-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="w-28 px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
       </div>
 
       <!-- End -->
       <div class="flex flex-col gap-1.5">
-        <span
-          class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >End</span
-        >
+        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">End</span>
         <div class="flex gap-2">
           <input
             type="date"
             [ngModel]="endDate()"
             (ngModelChange)="endDate.set($event)"
-            class="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="flex-1 px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <input
             type="time"
             step="1"
             [ngModel]="endTime()"
             (ngModelChange)="endTime.set($event)"
-            class="w-28 px-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="w-28 px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
       </div>
@@ -71,11 +65,11 @@ function todayLocal(): string {
       }
 
       <!-- Actions -->
-      <div class="flex justify-end gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
+      <div class="flex justify-end gap-2 pt-1 border-t border-gray-100">
         <button
           type="button"
           (click)="cancelled.emit()"
-          class="px-3 py-1.5 text-xs rounded border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          class="px-3 py-1.5 text-xs rounded border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
         >
           Cancel
         </button>

@@ -95,7 +95,7 @@ type PickerPhase = 'search' | 'tags' | 'verify';
                       <span class="text-sm font-medium">{{ result.name }}</span>
                       @if (result.isOfficial) {
                         <span
-                          class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
+                          class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium"
                           >Official</span
                         >
                       }
@@ -267,10 +267,8 @@ type PickerPhase = 'search' | 'tags' | 'verify';
 
           @if (!verifying() && verifyResult()) {
             @if (verifyResult()!.exists) {
-              <div
-                class="flex flex-col gap-3 p-4 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10"
-              >
-                <div class="flex items-center gap-2 text-green-700 dark:text-green-400">
+              <div class="flex flex-col gap-3 p-4 rounded-md border border-green-200 bg-green-50">
+                <div class="flex items-center gap-2 text-green-700">
                   <ng-icon name="lucideCheck" class="w-5 h-5" />
                   <span class="font-medium text-sm">Image verified</span>
                 </div>
@@ -494,8 +492,8 @@ export class DockerImagePickerComponent {
 
   getDeployHintBadgeClass(hint: DockerHubTagDto['deployHint']): string {
     if (hint === 'needs-sidecar') {
-      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+      return 'bg-amber-100 text-amber-700';
     }
-    return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+    return 'bg-red-100 text-red-700';
   }
 }

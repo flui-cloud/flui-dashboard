@@ -37,28 +37,23 @@ export interface RepoDeployChoiceRepo {
       (click)="closed.emit()"
     >
       <div
-        class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-xl"
+        class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-xl"
         (click)="$event.stopPropagation()"
       >
-        <div
-          class="flex items-start justify-between p-6 border-b border-gray-200 dark:border-gray-700"
-        >
+        <div class="flex items-start justify-between p-6 border-b border-gray-200">
           <div class="min-w-0 pr-4">
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+            <h3 class="text-xl font-semibold text-gray-900">
               This repository already has an application
             </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">
+            <p class="text-sm text-gray-600 mt-1 truncate">
               {{ repo()?.fullName }}
             </p>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+            <p class="text-sm text-gray-600 mt-2">
               We recommend triggering a new build on the existing application instead of deploying a
               new one.
             </p>
           </div>
-          <button
-            (click)="closed.emit()"
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
-          >
+          <button (click)="closed.emit()" class="text-gray-400 hover:text-gray-600 flex-shrink-0">
             <ng-icon name="lucideX" class="h-5 w-5" />
           </button>
         </div>
@@ -66,26 +61,24 @@ export interface RepoDeployChoiceRepo {
         <div class="p-6 overflow-y-auto max-h-[50vh] space-y-3">
           @for (app of matchedApps(); track app.id) {
             <div
-              class="flex items-center justify-between gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-400 dark:hover:border-blue-600 transition-colors"
+              class="flex items-center justify-between gap-4 p-4 border border-gray-200 rounded-lg hover:border-blue-400 transition-colors"
             >
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
-                  <span class="font-medium text-gray-900 dark:text-white truncate">{{
-                    app.name
-                  }}</span>
+                  <span class="font-medium text-gray-900 truncate">{{ app.name }}</span>
                   <span
                     class="text-xs px-2 py-0.5 rounded-full"
                     [ngClass]="
                       app.status === 'running'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-700'
                     "
                   >
                     {{ app.status }}
                   </span>
                 </div>
                 @if (app.lastDeployedAt) {
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p class="text-xs text-gray-500 mt-1">
                     Last deployed {{ formatDate(app.lastDeployedAt) }}
                   </p>
                 }
@@ -102,14 +95,12 @@ export interface RepoDeployChoiceRepo {
         </div>
 
         <div
-          class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-4 bg-gray-50 dark:bg-gray-900/40"
+          class="px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-4 bg-gray-50"
         >
-          <p class="text-xs text-gray-500 dark:text-gray-400">
-            Need a separate environment from the same repo?
-          </p>
+          <p class="text-xs text-gray-500">Need a separate environment from the same repo?</p>
           <button
             (click)="createNewApp.emit()"
-            class="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 underline underline-offset-2"
+            class="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 underline underline-offset-2"
           >
             Deploy as a new application
             <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5" />

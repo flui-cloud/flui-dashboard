@@ -164,7 +164,7 @@ interface PlanAnswer {
                       data-testid="ha-plan-later"
                     >
                       <span class="font-mono">{{ zone }}</span>
-                      <span class="col-span-2 text-amber-600 dark:text-amber-400">added later</span>
+                      <span class="col-span-2 text-amber-600">added later</span>
                     </li>
                   }
                 </ul>
@@ -180,11 +180,7 @@ interface PlanAnswer {
                   </p>
                 }
               } @else {
-                <p
-                  class="text-sm text-red-600 dark:text-red-400"
-                  role="alert"
-                  data-testid="ha-refusal"
-                >
+                <p class="text-sm text-red-600" role="alert" data-testid="ha-refusal">
                   {{ p.refusal }}
                 </p>
               }
@@ -206,7 +202,7 @@ interface PlanAnswer {
               <button
                 type="button"
                 (click)="showWhy.set(!showWhy())"
-                class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                class="text-xs text-blue-600 hover:underline"
               >
                 {{ showWhy() ? 'Hide details' : 'Why three locations?' }}
               </button>

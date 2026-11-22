@@ -98,10 +98,7 @@ interface IssuedToken {
                   <div
                     class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border bg-muted/40"
                   >
-                    <ng-icon
-                      name="lucideShieldCheck"
-                      class="h-4 w-4 text-blue-600 dark:text-blue-400"
-                    />
+                    <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-blue-600" />
                     <span class="font-mono text-foreground">{{ registeredNetwork() }}</span>
                     <span class="text-xs text-muted-foreground">registered</span>
                   </div>

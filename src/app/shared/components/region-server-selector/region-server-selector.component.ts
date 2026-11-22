@@ -65,9 +65,7 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
         }
 
         @if (wizardService.serverTypeError() && !wizardService.isServerTypeLoading()) {
-          <div
-            class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm mb-3"
-          >
+          <div class="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm mb-3">
             <ng-icon name="lucideCircleAlert" class="h-4 w-4" />
             <span>{{ wizardService.serverTypeError() }}</span>
           </div>
@@ -94,10 +92,7 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
                 }
               </div>
               @if (selectedRegion() === region.id) {
-                <ng-icon
-                  name="lucideCheck"
-                  class="h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400"
-                />
+                <ng-icon name="lucideCheck" class="h-4 w-4 flex-shrink-0 text-blue-600" />
               }
             </button>
           }
@@ -193,13 +188,11 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
                     </p>
                   </div>
                   @if (selectedServerTypeId() === serverType.id) {
-                    <ng-icon name="lucideCheck" class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <ng-icon name="lucideCheck" class="h-5 w-5 text-blue-600" />
                   }
                 </div>
                 @if (!serverType.managedFirewall) {
-                  <div
-                    class="mt-2 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"
-                  >
+                  <div class="mt-2 flex items-center gap-1 text-xs text-amber-600">
                     <ng-icon name="lucideShieldOff" class="h-3 w-3" />
                     No managed firewall
                   </div>
@@ -214,10 +207,7 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
           </div>
 
           @if (selectedArchitectureWarning(); as warning) {
-            <p
-              class="mt-3 text-xs text-amber-600 dark:text-amber-400"
-              data-testid="architecture-warning"
-            >
+            <p class="mt-3 text-xs text-amber-600" data-testid="architecture-warning">
               {{ warning }}
             </p>
           }
@@ -226,7 +216,7 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
             <button
               type="button"
               (click)="showAllSizes.set(true)"
-              class="mt-3 flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              class="mt-3 flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
             >
               <span>Show all {{ filteredServerTypes().length }} sizes</span>
               <ng-icon name="lucideChevronDown" class="h-3.5 w-3.5" />
@@ -443,8 +433,8 @@ export class RegionServerSelectorComponent {
       return 'border-border bg-muted/30';
     }
     return this.selectedRegion() === region.id
-      ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20 cursor-pointer'
-      : 'border-border hover:border-blue-300 dark:hover:border-blue-600 hover:bg-muted/40 cursor-pointer';
+      ? 'border-blue-500 bg-blue-50 cursor-pointer'
+      : 'border-border hover:border-blue-300 hover:bg-muted/40 cursor-pointer';
   }
 
   serverCardClass(serverType: ServerTypeOption): string {
@@ -452,13 +442,11 @@ export class RegionServerSelectorComponent {
       return 'border-border bg-muted/30 opacity-70 cursor-not-allowed';
     }
     return this.selectedServerTypeId() === serverType.id
-      ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20 cursor-pointer'
-      : 'border-border hover:border-blue-300 dark:hover:border-blue-600 hover:bg-muted/40 cursor-pointer';
+      ? 'border-blue-500 bg-blue-50 cursor-pointer'
+      : 'border-border hover:border-blue-300 hover:bg-muted/40 cursor-pointer';
   }
 
   cpuBadgeClass(cpuType: 'shared' | 'dedicated'): string {
-    return cpuType === 'dedicated'
-      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
-      : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+    return cpuType === 'dedicated' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
   }
 }

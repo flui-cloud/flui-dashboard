@@ -26,19 +26,19 @@ import { ReconciliationStatus, getDriftIndicator } from '../../model/firewall-v2
       }
 
       .in-sync {
-        @apply text-green-700 dark:text-green-400;
+        @apply text-green-700;
       }
 
       .drift {
-        @apply text-yellow-700 dark:text-yellow-400;
+        @apply text-yellow-700;
       }
 
       .pending {
-        @apply text-gray-600 dark:text-gray-400;
+        @apply text-gray-600;
       }
 
       .error {
-        @apply text-red-700 dark:text-red-400;
+        @apply text-red-700;
       }
     `,
   ],

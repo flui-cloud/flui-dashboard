@@ -18,7 +18,7 @@ import { NodeInstallLogComponent } from '../node-install-log/node-install-log.co
     </button>
     @if (open()) {
       <div
-        class="mt-2 w-full basis-full rounded-md bg-gray-900 p-3 dark:bg-black"
+        class="mt-2 w-full basis-full rounded-md bg-gray-900 p-3"
         data-testid="purchase-log-panel"
       >
         <app-node-install-log [operationId]="operationId()" />

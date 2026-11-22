@@ -44,11 +44,11 @@ export class FirmnessBadgeComponent {
   readonly classes = computed(() => {
     switch (this.level()) {
       case 'declared':
-        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
+        return 'bg-emerald-100 text-emerald-800';
       case 'derived':
-        return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400';
+        return 'bg-sky-100 text-sky-800';
       default:
-        return 'bg-amber-50 text-amber-800 border border-dashed border-amber-400 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700';
+        return 'bg-amber-50 text-amber-800 border border-dashed border-amber-400';
     }
   });
 }

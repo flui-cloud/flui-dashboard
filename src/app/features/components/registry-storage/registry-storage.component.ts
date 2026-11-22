@@ -121,7 +121,7 @@ const INPUT_CLASS = 'mt-1 w-full rounded-md border border-border bg-background p
         @if (m.mode === 'flui' && !m.ready && registry.stillNotReady()) {
           <div
             data-testid="registry-not-ready"
-            class="flex flex-wrap items-start justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+            class="flex flex-wrap items-start justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
           >
             <span>
               The Flui registry is still not ready after five minutes. New builds push to it and
@@ -172,10 +172,7 @@ const INPUT_CLASS = 'mt-1 w-full rounded-md border border-border bg-background p
                 </div>
               </div>
               @if (u.alerting) {
-                <span
-                  class="badge bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                  data-testid="registry-alerting"
-                >
+                <span class="badge bg-amber-500/10 text-amber-600" data-testid="registry-alerting">
                   Space alert
                 </span>
               }

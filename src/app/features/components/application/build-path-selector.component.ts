@@ -45,7 +45,7 @@ const SUPPORTED_FRAMEWORKS = [
         <!-- Unsupported warning -->
         @if (!analysis.supported) {
           <div
-            class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300"
+            class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 bg-yellow-50 text-sm text-yellow-800"
           >
             <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
             <span
@@ -231,11 +231,9 @@ export class BuildPathSelectorComponent implements OnInit {
 
   getScoreBadgeClass(score: number): string {
     const base = 'text-xs font-medium px-1.5 py-0.5 rounded';
-    if (score >= 80)
-      return `${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`;
-    if (score >= 50)
-      return `${base} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400`;
-    return `${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`;
+    if (score >= 80) return `${base} bg-green-100 text-green-700`;
+    if (score >= 50) return `${base} bg-yellow-100 text-yellow-700`;
+    return `${base} bg-red-100 text-red-700`;
   }
 
   getCardClass(path: 'github-actions' | 'railpack'): string {

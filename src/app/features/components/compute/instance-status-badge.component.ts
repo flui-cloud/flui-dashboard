@@ -73,19 +73,19 @@ export class InstanceStatusBadgeComponent {
   getStatusIconClass(): string {
     switch (this.status()) {
       case 'running':
-        return 'text-green-600 dark:text-green-400';
+        return 'text-green-600';
       case 'stopped':
-        return 'text-gray-500 dark:text-gray-400';
+        return 'text-gray-500';
       case 'starting':
       case 'stopping':
       case 'provisioning':
       case 'rebuilding':
       case 'migrating':
-        return 'text-blue-600 dark:text-blue-400 animate-spin';
+        return 'text-blue-600 animate-spin';
       case 'error':
-        return 'text-red-600 dark:text-red-400';
+        return 'text-red-600';
       case 'deleting':
-        return 'text-orange-600 dark:text-orange-400';
+        return 'text-orange-600';
       case 'unknown':
       default:
         return 'text-muted-foreground';

@@ -144,14 +144,14 @@ export function phaseBadgeClass(phase: string): string {
   const base = 'text-xs px-2 py-0.5 rounded font-medium';
   switch (phase) {
     case 'Running':
-      return `${base} bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400`;
+      return `${base} bg-green-100 text-green-800`;
     case 'Pending':
-      return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400`;
+      return `${base} bg-yellow-100 text-yellow-800`;
     case 'Succeeded':
-      return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400`;
+      return `${base} bg-blue-100 text-blue-800`;
     case 'Failed':
-      return `${base} bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400`;
+      return `${base} bg-red-100 text-red-800`;
     default:
-      return `${base} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
+      return `${base} bg-gray-100 text-gray-800`;
   }
 }

@@ -44,9 +44,7 @@ import {
 
         @if (config().showUptimePercentage && data().uptimePercentage !== undefined) {
           <div class="text-right">
-            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-              {{ data().uptimePercentage }}%
-            </div>
+            <div class="text-2xl font-bold text-green-600">{{ data().uptimePercentage }}%</div>
             <div class="text-xs text-muted-foreground">Uptime</div>
           </div>
         }

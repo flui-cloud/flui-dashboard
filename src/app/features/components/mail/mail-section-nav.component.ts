@@ -74,7 +74,7 @@ const TABS: MailTab[] = [
             {{ tab.label }}
             @if (tab.route.endsWith('setup') && toFix() > 0) {
               <span
-                class="ml-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-amber-800 dark:bg-amber-500/15 dark:text-amber-400"
+                class="ml-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-amber-800"
               >
                 {{ toFix() }}
               </span>

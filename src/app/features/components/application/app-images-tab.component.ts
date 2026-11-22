@@ -94,14 +94,14 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
             }
             @if (versioning.hasUpdate()) {
               <span
-                class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
               >
                 Update available
               </span>
             }
             @if (autoDeployOnPush()) {
               <span
-                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800"
               >
                 <ng-icon name="lucideRefreshCw" class="h-3 w-3" /> Auto-deploy on push
               </span>
@@ -128,10 +128,8 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
       </div>
 
       @if (autoDeployOnPush()) {
-        <div
-          class="p-3 rounded-md border border-violet-300 bg-violet-50 dark:border-violet-700/60 dark:bg-violet-950/40 space-y-2"
-        >
-          <p class="text-sm text-violet-900 dark:text-violet-100">
+        <div class="p-3 rounded-md border border-violet-300 bg-violet-50 space-y-2">
+          <p class="text-sm text-violet-900">
             This application follows
             @if (deployBranch(); as b) {
               <span class="font-mono">{{ b }}</span>
@@ -146,12 +144,12 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
             variant="ghost"
             size="sm"
             (click)="showPinHelp.set(!showPinHelp())"
-            class="text-violet-800 dark:text-violet-200 -ml-2"
+            class="text-violet-800 -ml-2"
           >
             {{ showPinHelp() ? 'Hide' : 'How do I change what runs?' }}
           </button>
           @if (showPinHelp()) {
-            <div class="text-sm text-violet-800/90 dark:text-violet-200/80 space-y-1.5">
+            <div class="text-sm text-violet-800/90 space-y-1.5">
               <p>
                 Push to the branch. The build that succeeds is what runs — that is the whole update
                 path.
@@ -169,21 +167,17 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
       }
 
       @if (githubAppMissing()) {
-        <div
-          class="p-4 rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700/60 dark:bg-amber-950/40"
-        >
+        <div class="p-4 rounded-md border border-amber-300 bg-amber-50">
           <div class="flex items-start gap-3">
             <div
-              class="flex h-9 w-9 items-center justify-center rounded-full bg-amber-200/70 dark:bg-amber-900/60 shrink-0"
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-amber-200/70 shrink-0"
             >
-              <ng-icon name="lucideGithub" class="h-5 w-5 text-amber-700 dark:text-amber-300" />
+              <ng-icon name="lucideGithub" class="h-5 w-5 text-amber-700" />
             </div>
             <div class="flex-1 min-w-0 space-y-2">
               <div>
-                <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                  GitHub integration required
-                </p>
-                <p class="text-sm text-amber-800/90 dark:text-amber-200/80 mt-0.5">
+                <p class="text-sm font-semibold text-amber-900">GitHub integration required</p>
+                <p class="text-sm text-amber-800/90 mt-0.5">
                   Connect your GitHub account from the Repositories page to list available versions
                   for <span class="font-mono">ghcr.io</span> images.
                 </p>
@@ -202,7 +196,7 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
         </div>
       } @else if (versioning.error()) {
         <div
-          class="p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive-foreground dark:text-destructive"
+          class="p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive-foreground"
         >
           {{ versioning.error() }}
         </div>
@@ -266,7 +260,7 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                 </p>
 
                 @if (!isReleasable(v) && v.notReleasableReason) {
-                  <p class="text-xs text-amber-700 dark:text-amber-300">
+                  <p class="text-xs text-amber-700">
                     {{ v.notReleasableReason }}
                   </p>
                 }
@@ -274,9 +268,7 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                 <!-- Failure reason for the latest release on this image -->
                 @if (lastReleaseFor(v); as lr) {
                   @if (lr.status === 'FAILED' && lr.failureReason) {
-                    <p
-                      class="text-xs text-red-700 dark:text-red-300 whitespace-pre-wrap break-words"
-                    >
+                    <p class="text-xs text-red-700 whitespace-pre-wrap break-words">
                       {{ lr.failureReason }}
                     </p>
                   }
@@ -322,9 +314,7 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                 } @else if (!isReleasable(v)) {
                   <!-- No action: offering it would deploy something this app cannot run. -->
                 } @else if (isReleasing(v)) {
-                  <span
-                    class="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400"
-                  >
+                  <span class="inline-flex items-center gap-1.5 text-xs text-blue-600">
                     <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                     Releasing
                     @if (deployState.progress(); as p) {
@@ -360,7 +350,7 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                       [disabled]="
                         busy() || !!deployState.deployInFlight() || deletingVersionId() !== null
                       "
-                      class="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      class="text-red-600 hover:text-red-700 hover:bg-red-50"
                       title="Delete image version from GHCR"
                     >
                       <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
@@ -430,15 +420,15 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
             class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
           >
             <div
-              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
+              class="bg-white border border-gray-200 rounded-lg shadow-xl"
               (click)="$event.stopPropagation()"
             >
               <div class="flex items-start justify-between p-6 pb-4 gap-4">
                 <div class="flex items-start gap-4 flex-1 min-w-0">
                   <div
-                    class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20 shrink-0"
+                    class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 shrink-0"
                   >
-                    <ng-icon name="lucideTrash2" class="h-6 w-6 text-red-600 dark:text-red-400" />
+                    <ng-icon name="lucideTrash2" class="h-6 w-6 text-red-600" />
                   </div>
                   <div class="flex-1 min-w-0 space-y-3">
                     <div>
@@ -471,21 +461,19 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                       </div>
                     </div>
                     @if (dt.isLatestRelease) {
-                      <div
-                        class="rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700/60 dark:bg-amber-950/40 p-3 space-y-2"
-                      >
+                      <div class="rounded-md border border-amber-300 bg-amber-50 p-3 space-y-2">
                         <div class="flex items-start gap-2">
                           <ng-icon
                             name="lucideTriangleAlert"
-                            class="h-4 w-4 text-amber-700 dark:text-amber-300 mt-0.5 shrink-0"
+                            class="h-4 w-4 text-amber-700 mt-0.5 shrink-0"
                           />
-                          <p class="text-xs text-amber-900 dark:text-amber-100">
+                          <p class="text-xs text-amber-900">
                             This is the latest release of the app (even if no longer deployed).
                             Deleting it makes a fast rollback to this version impossible.
                           </p>
                         </div>
                         <label
-                          class="flex items-center gap-2 text-xs text-amber-900 dark:text-amber-100 cursor-pointer"
+                          class="flex items-center gap-2 text-xs text-amber-900 cursor-pointer"
                         >
                           <input
                             type="checkbox"
@@ -545,15 +533,15 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
             class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
           >
             <div
-              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
+              class="bg-white border border-gray-200 rounded-lg shadow-xl"
               (click)="$event.stopPropagation()"
             >
               <div class="flex items-start justify-between p-6 pb-4 gap-4">
                 <div class="flex items-start gap-4 flex-1 min-w-0">
                   <div
-                    class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20 shrink-0"
+                    class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 shrink-0"
                   >
-                    <ng-icon name="lucideRocket" class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    <ng-icon name="lucideRocket" class="h-6 w-6 text-blue-600" />
                   </div>
                   <div class="flex-1 min-w-0 space-y-3">
                     <div>
@@ -692,7 +680,7 @@ export class AppImagesTabComponent implements OnInit {
         kind: 'current',
         label: 'Currently deployed',
         icon: 'lucideCircleCheck',
-        class: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+        class: 'bg-green-100 text-green-800',
       };
     }
     if (lr?.status === 'IN_PROGRESS') {
@@ -700,7 +688,7 @@ export class AppImagesTabComponent implements OnInit {
         kind: 'releasing',
         label: 'Releasing',
         icon: 'lucideLoader',
-        class: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+        class: 'bg-blue-100 text-blue-800',
       };
     }
     if (lr?.status === 'FAILED') {
@@ -708,7 +696,7 @@ export class AppImagesTabComponent implements OnInit {
         kind: 'failed',
         label: v.isLatestRelease ? 'Last release failed' : 'Release failed',
         icon: 'lucideTriangleAlert',
-        class: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
+        class: 'bg-red-100 text-red-800',
       };
     }
     if (lr?.status === 'ROLLED_BACK') {
@@ -716,7 +704,7 @@ export class AppImagesTabComponent implements OnInit {
         kind: 'rolled-back',
         label: 'Rolled back',
         icon: 'lucideRotateCcw',
-        class: 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400',
+        class: 'bg-amber-100 text-amber-800',
       };
     }
     if (lr?.status === 'SUCCEEDED') {
@@ -738,13 +726,13 @@ export class AppImagesTabComponent implements OnInit {
   rowClass(v: AvailableVersionDto): string {
     const base = 'flex items-start gap-3 p-3 rounded-lg border transition-colors';
     if (this.deployState.isReleasing(v)) {
-      return `${base} border-blue-300 dark:border-blue-700`;
+      return `${base} border-blue-300`;
     }
     if (v.lastRelease?.status === 'FAILED' && v.isLatestRelease) {
-      return `${base} border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-900/5`;
+      return `${base} border-red-200 bg-red-50/60`;
     }
     if (v.isCurrentlyDeployed) {
-      return `${base} border-green-200 dark:border-green-900/40 bg-green-50 dark:bg-green-900/5`;
+      return `${base} border-green-200 bg-green-50`;
     }
     return `${base} border-border`;
   }
@@ -831,13 +819,13 @@ export class AppImagesTabComponent implements OnInit {
   deployHintClass(hint: string): string {
     switch (hint) {
       case 'deployable':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+        return 'bg-green-100 text-green-800';
       case 'needs-sidecar':
       case 'cli-tool':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+        return 'bg-yellow-100 text-yellow-800';
       case 'build-image':
       case 'base-os':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-muted text-muted-foreground';
     }

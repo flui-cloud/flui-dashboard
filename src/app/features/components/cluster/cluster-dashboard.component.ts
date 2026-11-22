@@ -138,16 +138,12 @@ const LOOK_ONLY_TABS = new Set(['storage', 'scaling', 'firewall', 'dns', 'variab
 
       <!-- Error State -->
       @if (errorMessage() && !isLoading() && !refusedBySandbox()) {
-        <div
-          class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4"
-        >
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
           <div class="flex items-center gap-3">
-            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400" />
+            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600" />
             <div class="flex-1">
-              <p class="text-sm font-medium text-red-900 dark:text-red-200">
-                Failed to load cluster
-              </p>
-              <p class="text-sm text-red-700 dark:text-red-300 mt-1">{{ errorMessage() }}</p>
+              <p class="text-sm font-medium text-red-900">Failed to load cluster</p>
+              <p class="text-sm text-red-700 mt-1">{{ errorMessage() }}</p>
             </div>
           </div>
         </div>
@@ -256,7 +252,7 @@ const LOOK_ONLY_TABS = new Set(['storage', 'scaling', 'firewall', 'dns', 'variab
                   clusterData.status === ClusterStatus.DELETING ||
                   isControlCluster(clusterData.clusterType)
                 "
-                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 [title]="
                   isControlCluster(clusterData.clusterType)
                     ? 'Control cluster can only be managed via CLI'
@@ -276,10 +272,10 @@ const LOOK_ONLY_TABS = new Set(['storage', 'scaling', 'firewall', 'dns', 'variab
             class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs"
             [class]="
               powerAlert()!.type === 'error'
-                ? 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'
+                ? 'bg-red-50 text-red-700'
                 : powerAlert()!.type === 'success'
-                  ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300'
-                  : 'bg-yellow-50 dark:bg-yellow-900/10 text-yellow-700 dark:text-yellow-300'
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-yellow-50 text-yellow-700'
             "
           >
             <ng-icon
@@ -287,10 +283,7 @@ const LOOK_ONLY_TABS = new Set(['storage', 'scaling', 'firewall', 'dns', 'variab
               class="h-3.5 w-3.5 flex-shrink-0"
             />
             <span class="flex-1">{{ powerAlert()!.message }}</span>
-            <button
-              (click)="dismissPowerAlert()"
-              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-            >
+            <button (click)="dismissPowerAlert()" class="text-gray-400 hover:text-gray-600">
               <ng-icon name="lucideX" class="h-3 w-3" />
             </button>
           </div>
@@ -309,7 +302,7 @@ const LOOK_ONLY_TABS = new Set(['storage', 'scaling', 'firewall', 'dns', 'variab
                 class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0"
                 [class]="
                   rla.isActive
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 "
               >
@@ -336,10 +329,8 @@ const LOOK_ONLY_TABS = new Set(['storage', 'scaling', 'firewall', 'dns', 'variab
         <div class="card-surface rounded-lg max-w-md w-full p-6 shadow-xl">
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0">
-              <div
-                class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center"
-              >
-                <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400" />
+              <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600" />
               </div>
             </div>
             <div class="flex-1">

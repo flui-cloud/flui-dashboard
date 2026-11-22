@@ -13,7 +13,7 @@ import { DiskSpace, NodeDisksService, NodeDisksView } from '../../service/node-d
     @if (view(); as v) {
       <div class="card-inner p-4" data-testid="node-disks-card">
         <span class="flex items-center gap-2">
-          <ng-icon name="lucideHardDrive" class="h-4 w-4 text-slate-600 dark:text-slate-400" />
+          <ng-icon name="lucideHardDrive" class="h-4 w-4 text-slate-600" />
           <span class="text-label">Space on the nodes</span>
         </span>
         <div class="mt-3 overflow-x-auto">
@@ -45,7 +45,7 @@ import { DiskSpace, NodeDisksService, NodeDisksView } from '../../service/node-d
           </table>
         </div>
         @for (w of v.warnings; track w) {
-          <p class="m-0 mt-2 text-xs text-amber-700 dark:text-amber-400">
+          <p class="m-0 mt-2 text-xs text-amber-700">
             {{ w }}
           </p>
         }
@@ -66,9 +66,7 @@ export class ClusterNodeDisksCardComponent {
   /** The same threshold the API warns at: under 15% or a few GiB free. */
   tone(s: DiskSpace | null, floorGiB: number): string {
     if (!s) return 'text-muted-foreground';
-    return s.freeGiB < floorGiB || s.freeGiB < s.totalGiB * 0.15
-      ? 'text-amber-700 dark:text-amber-400'
-      : '';
+    return s.freeGiB < floorGiB || s.freeGiB < s.totalGiB * 0.15 ? 'text-amber-700' : '';
   }
 
   constructor() {

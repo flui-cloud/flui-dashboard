@@ -157,7 +157,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                           class="rounded-md px-1.5 py-0.5 text-[11px]"
                           [class]="
                             row.isActive
-                              ? 'bg-emerald-50 font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+                              ? 'bg-emerald-50 font-medium text-emerald-700'
                               : 'bg-muted text-muted-foreground'
                           "
                         >
@@ -177,7 +177,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                         }
                         @if (blindSpotOf(row.provider); as blind) {
                           <span
-                            class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
+                            class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-800"
                             [title]="blind"
                           >
                             <ng-icon name="lucideEyeOff" class="h-3 w-3" /> limited reporting
@@ -215,12 +215,12 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                       }
 
                       @if (!row.webhookRegistered && pushes(row.provider)) {
-                        <div class="mt-2 rounded-md bg-amber-50 p-2 dark:bg-amber-500/10">
-                          <p class="text-xs font-medium text-amber-900 dark:text-amber-300">
+                        <div class="mt-2 rounded-md bg-amber-50 p-2">
+                          <p class="text-xs font-medium text-amber-900">
                             Delivered, bounced and marked-as-spam are not being reported.
                           </p>
                           @if (row.webhookNote) {
-                            <p class="mt-0.5 text-[11px] text-amber-800 dark:text-amber-400">
+                            <p class="mt-0.5 text-[11px] text-amber-800">
                               {{ row.webhookNote }}
                             </p>
                           }
@@ -229,7 +229,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                             type="button"
                             (click)="retryWebhook(row)"
                             [disabled]="retrying() === row.id"
-                            class="mt-1.5 inline-flex h-7 items-center gap-1.5 rounded-md border border-amber-300 px-2 text-[11px] font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-500/40 dark:text-amber-300 dark:hover:bg-amber-500/20"
+                            class="mt-1.5 inline-flex h-7 items-center gap-1.5 rounded-md border border-amber-300 px-2 text-[11px] font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-60"
                           >
                             @if (retrying() === row.id) {
                               <ng-icon name="lucideRotateCcw" class="h-3 w-3 animate-spin" />
@@ -319,7 +319,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                         <p class="mt-2 text-xs text-destructive">{{ failed }}</p>
                       }
                       @if (added(); as done) {
-                        <p class="mt-2 text-xs text-emerald-700 dark:text-emerald-400">
+                        <p class="mt-2 text-xs text-emerald-700">
                           {{ done }}
                         </p>
                       }
@@ -415,13 +415,13 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                             [href]="help.href"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:underline dark:text-blue-400"
+                            class="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:underline"
                           >
                             {{ help.linkText }}
                             <ng-icon name="lucideExternalLink" class="h-3 w-3" />
                           </a>
                           @if (help.caveat) {
-                            <span class="mt-1 block text-[11px] text-amber-700 dark:text-amber-400">
+                            <span class="mt-1 block text-[11px] text-amber-700">
                               {{ help.caveat }}
                             </span>
                           }
@@ -519,7 +519,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
 
                   @if (p.blindSpot) {
                     <p
-                      class="mt-3 flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
+                      class="mt-3 flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900"
                     >
                       <ng-icon name="lucideEyeOff" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       <span>{{ p.blindSpot }}</span>

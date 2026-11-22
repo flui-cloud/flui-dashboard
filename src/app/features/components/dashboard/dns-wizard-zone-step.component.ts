@@ -82,10 +82,10 @@ import { DnsSetupWizardService } from './dns-setup-wizard.service';
           </div>
         } @else {
           <div
-            class="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5"
+            class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5"
             data-testid="zone-none-found"
           >
-            <p class="text-xs font-medium text-amber-800 dark:text-amber-300">
+            <p class="text-xs font-medium text-amber-800">
               No domains found in {{ wiz.configuredDnsProviders().join(', ') }}
             </p>
           </div>
@@ -133,14 +133,12 @@ import { DnsSetupWizardService } from './dns-setup-wizard.service';
         }
 
         <div
-          class="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5 space-y-1"
+          class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 space-y-1"
           data-testid="zone-hint"
         >
-          <p class="text-xs font-medium text-amber-800 dark:text-amber-300">
-            Don't see your domain?
-          </p>
+          <p class="text-xs font-medium text-amber-800">Don't see your domain?</p>
           @if (wiz.configuredDnsProviders().length > 0) {
-            <p class="text-xs text-amber-700 dark:text-amber-400">
+            <p class="text-xs text-amber-700">
               Buy it on <span class="font-semibold">{{ wiz.configuredDnsProviders()[0] }}</span>, or
               point its nameservers there from your registrar. It then shows up here.
             </p>
@@ -149,14 +147,14 @@ import { DnsSetupWizardService } from './dns-setup-wizard.service';
                 [href]="delegation.delegationGuideUrl"
                 target="_blank"
                 rel="noopener"
-                class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 underline"
+                class="inline-flex items-center gap-1 text-xs text-amber-700 hover:text-amber-900 underline"
               >
                 How to point the nameservers
                 <ng-icon name="lucideExternalLink" class="h-3 w-3" />
               </a>
             }
           } @else {
-            <p class="text-xs text-amber-700 dark:text-amber-400">
+            <p class="text-xs text-amber-700">
               No DNS provider is configured yet.
               <a routerLink="/infrastructure/domains" class="underline">Set one up</a>.
             </p>

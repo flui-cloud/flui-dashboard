@@ -75,23 +75,16 @@ import { InstanceWithLabels, getClusterInfo } from '../../model/instance.models'
               </div>
 
               @if (clusterInfo()) {
-                <div
-                  class="rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-4"
-                >
+                <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
                   <div class="flex items-start gap-3">
-                    <ng-icon
-                      name="lucideTriangleAlert"
-                      class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5"
-                    />
+                    <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-yellow-600 mt-0.5" />
                     <div class="flex-1 space-y-2">
-                      <p class="font-medium text-yellow-800 dark:text-yellow-200">
-                        This server is part of a cluster
-                      </p>
-                      <div class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                      <p class="font-medium text-yellow-800">This server is part of a cluster</p>
+                      <div class="text-sm text-yellow-700 space-y-1">
                         <p><strong>Cluster:</strong> {{ clusterInfo()?.clusterName }}</p>
                         <p><strong>Node Type:</strong> {{ clusterInfo()?.nodeType }}</p>
                       </div>
-                      <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                      <p class="text-sm text-yellow-700">
                         The recommended approach is to manage this server through the cluster.
                       </p>
                       <a
@@ -99,7 +92,7 @@ import { InstanceWithLabels, getClusterInfo } from '../../model/instance.models'
                           '/cluster',
                           $safeNavigationMigration(clusterInfo()?.clusterId),
                         ]"
-                        class="inline-flex items-center gap-1 text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:underline"
+                        class="inline-flex items-center gap-1 text-sm font-medium text-yellow-800 hover:underline"
                       >
                         Go to cluster dashboard
                         <ng-icon name="lucideExternalLink" class="h-3 w-3" />

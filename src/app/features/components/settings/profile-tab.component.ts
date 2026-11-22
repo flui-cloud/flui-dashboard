@@ -88,7 +88,7 @@ import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
 
             @if (saved()) {
               <div
-                class="flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600 dark:text-green-400"
+                class="flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600"
               >
                 <ng-icon name="lucideCheck" class="h-4 w-4 shrink-0" />
                 Profile updated successfully.

@@ -20,7 +20,7 @@ import { EvidenceDto } from '../../../core/api/model/evidenceDto';
       <button
         type="button"
         (click)="expanded.set(!expanded())"
-        class="inline-flex items-center gap-1 font-mono text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:underline"
+        class="inline-flex items-center gap-1 font-mono text-[11px] text-slate-500 hover:text-slate-800 hover:underline"
       >
         <ng-icon name="lucideFileText" class="h-3 w-3" />
         {{ citeText() }}
@@ -28,21 +28,17 @@ import { EvidenceDto } from '../../../core/api/model/evidenceDto';
       @if (expanded()) {
         <div class="mt-1 space-y-1">
           @for (e of evidence(); track $index) {
-            <div
-              class="rounded bg-slate-100 dark:bg-slate-900 px-2 py-1 font-mono text-[11px] text-slate-700 dark:text-slate-300"
-            >
+            <div class="rounded bg-slate-100 px-2 py-1 font-mono text-[11px] text-slate-700">
               {{ e.file }}{{ e.line ? ':' + e.line : '' }}
               @if (e.excerpt) {
-                <span class="text-slate-500 dark:text-slate-500"> — {{ e.excerpt }}</span>
+                <span class="text-slate-500"> — {{ e.excerpt }}</span>
               }
             </div>
           }
         </div>
       }
     } @else if (fallback()) {
-      <span
-        class="inline-flex items-center gap-1 font-mono text-[11px] text-slate-500 dark:text-slate-400"
-      >
+      <span class="inline-flex items-center gap-1 font-mono text-[11px] text-slate-500">
         <ng-icon name="lucideFileText" class="h-3 w-3" />
         {{ fallback() }}
       </span>

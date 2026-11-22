@@ -29,19 +29,19 @@ const and = (names: string[]) =>
       <div class="card-inner p-4" data-testid="replicated-volumes-card">
         <div class="flex items-center justify-between gap-4">
           <span class="flex items-center gap-2">
-            <ng-icon name="lucideCopy" class="h-4 w-4 text-sky-600 dark:text-sky-400" />
+            <ng-icon name="lucideCopy" class="h-4 w-4 text-sky-600" />
             <span class="text-label">Replicated volumes</span>
           </span>
           <span
             class="text-xs font-medium"
-            [class]="v.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'"
+            [class]="v.enabled ? 'text-emerald-600' : 'text-muted-foreground'"
           >
             {{ v.operation ? 'Being enabled' : v.enabled ? 'On' : 'Off' }}
           </span>
         </div>
         <p class="m-0 mt-2 text-sm">{{ headline() }}</p>
         @for (w of v.warnings; track w) {
-          <p class="m-0 mt-1 text-xs text-amber-700 dark:text-amber-400">
+          <p class="m-0 mt-1 text-xs text-amber-700">
             {{ w }}
           </p>
         }

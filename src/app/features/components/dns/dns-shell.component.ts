@@ -19,14 +19,14 @@ interface TabItem {
     <div class="p-6 space-y-6">
       <!-- Header -->
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">DNS Zones</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <h1 class="text-2xl font-bold text-gray-900">DNS Zones</h1>
+        <p class="mt-1 text-sm text-gray-500">
           Register and manage DNS zones from your provider account.
         </p>
       </div>
 
       <!-- Tabs -->
-      <div class="border-b border-gray-200 dark:border-gray-700">
+      <div class="border-b border-gray-200">
         <nav class="flex -mb-px gap-1">
           @for (tab of tabs; track tab.route) {
             <a
@@ -37,8 +37,8 @@ interface TabItem {
               class="inline-flex items-center gap-1.5 px-5 py-3 text-sm font-medium border-b-2 transition-colors"
               [class]="
                 rla.isActive
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
               "
             >
               <ng-icon [name]="tab.icon" class="h-4 w-4" />

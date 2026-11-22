@@ -65,7 +65,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
           type="button"
           (click)="onRefresh()"
           [disabled]="savingReplicas() || savingResources() || savingRestart()"
-          class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors disabled:opacity-50"
+          class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50"
         >
           <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" />
           Refresh runtime data
@@ -74,53 +74,44 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
 
       @if (restartRollout) {
         <div
-          class="bg-white dark:bg-gray-800 rounded-xl border border-blue-300 dark:border-blue-700 overflow-hidden"
+          class="bg-white rounded-xl border border-blue-300 overflow-hidden"
           data-testid="restart-progress"
         >
-          <p class="px-5 py-3 text-xs text-blue-600 dark:text-blue-400 font-mono">
+          <p class="px-5 py-3 text-xs text-blue-600 font-mono">
             Restarting — {{ restartRollout.message }} — {{ restartRollout.readyReplicas }}/{{
               restartRollout.desiredReplicas
             }}
             ready
           </p>
-          <div class="h-1 w-full bg-blue-100 dark:bg-blue-900/40 overflow-hidden">
-            <div class="h-1 w-1/3 bg-blue-500 dark:bg-blue-400 animate-indeterminate"></div>
+          <div class="h-1 w-full bg-blue-100 overflow-hidden">
+            <div class="h-1 w-1/3 bg-blue-500 animate-indeterminate"></div>
           </div>
         </div>
       }
 
       <!-- ── Replicas card ── -->
-      <div
-        class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-      >
-        <div
-          class="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-700"
-        >
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
           <div class="flex items-center gap-3">
-            <span
-              class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
               >Replicas</span
             >
             @if (runtime) {
               <div class="flex items-center gap-2 text-xs">
                 <span class="flex items-center gap-1">
-                  <span class="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                  <span class="text-gray-500 dark:text-gray-400">desired</span>
-                  <strong class="text-gray-900 dark:text-white">{{
-                    runtime.replicas.desired ?? '—'
-                  }}</strong>
+                  <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                  <span class="text-gray-500">desired</span>
+                  <strong class="text-gray-900">{{ runtime.replicas.desired ?? '—' }}</strong>
                 </span>
                 <span class="flex items-center gap-1">
                   <span class="w-1.5 h-1.5 rounded-full" [class]="readyDot()"></span>
-                  <span class="text-gray-500 dark:text-gray-400">ready</span>
+                  <span class="text-gray-500">ready</span>
                   <strong [class]="readyColor()">{{ runtime.replicas.ready ?? '—' }}</strong>
                 </span>
                 <span class="flex items-center gap-1">
                   <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                  <span class="text-gray-500 dark:text-gray-400">available</span>
-                  <strong class="text-gray-900 dark:text-white">{{
-                    runtime.replicas.available ?? '—'
-                  }}</strong>
+                  <span class="text-gray-500">available</span>
+                  <strong class="text-gray-900">{{ runtime.replicas.available ?? '—' }}</strong>
                 </span>
               </div>
             }
@@ -131,7 +122,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
               type="button"
               (click)="startReplicaEdit()"
               [disabled]="savingReplicas() || !runtime"
-              class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-40"
+              class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-40"
             >
               <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
               Edit
@@ -141,7 +132,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
               <button
                 type="button"
                 (click)="cancelReplicaEdit()"
-                class="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg transition-colors"
+                class="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
               >
                 <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                 Cancel
@@ -169,45 +160,42 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
               type="button"
               (click)="decReplicas()"
               [disabled]="!replicaEditing() || replicaValue() <= 0 || savingReplicas()"
-              class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <ng-icon name="lucideMinus" class="h-4 w-4" />
             </button>
-            <span
-              class="text-2xl font-bold text-gray-900 dark:text-white w-8 text-center select-none"
-              >{{ replicaValue() }}</span
-            >
+            <span class="text-2xl font-bold text-gray-900 w-8 text-center select-none">{{
+              replicaValue()
+            }}</span>
             <button
               type="button"
               (click)="incReplicas()"
               [disabled]="!replicaEditing() || replicaValue() >= 20 || savingReplicas()"
-              class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <ng-icon name="lucidePlus" class="h-4 w-4" />
             </button>
-            <span class="text-sm text-gray-400 dark:text-gray-500"
-              >replica{{ replicaValue() !== 1 ? 's' : '' }}</span
-            >
+            <span class="text-sm text-gray-400">replica{{ replicaValue() !== 1 ? 's' : '' }}</span>
             @if (rollout?.operation === 'scale') {
-              <span class="ml-auto text-xs text-blue-600 dark:text-blue-400 font-mono">
+              <span class="ml-auto text-xs text-blue-600 font-mono">
                 {{ rollout!.readyReplicas }}/{{ rollout!.desiredReplicas }} ready
               </span>
             }
           </div>
           @if (runtime?.replicasRefusal; as refusal) {
-            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="replicas-refusal">
+            <p class="mt-2 text-xs text-gray-500" data-testid="replicas-refusal">
               {{ refusal }}
             </p>
           }
           @if (replicaEditing() && replicaValue() === 0) {
-            <div class="flex items-center gap-1.5 mt-2 text-xs text-amber-600 dark:text-amber-400">
+            <div class="flex items-center gap-1.5 mt-2 text-xs text-amber-600">
               <ng-icon name="lucideAlertTriangle" class="h-3.5 w-3.5 flex-shrink-0" />
               Setting replicas to 0 stops the application without deleting it
             </div>
           }
           @if (roomWait(); as wait) {
             <div
-              class="mt-3 flex flex-wrap items-start gap-x-2 gap-y-1 rounded-lg px-3 py-2 text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300"
+              class="mt-3 flex flex-wrap items-start gap-x-2 gap-y-1 rounded-lg px-3 py-2 text-xs bg-amber-50 text-amber-800"
               data-testid="replicas-waiting-for-room"
             >
               <ng-icon name="lucideLoader" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 animate-spin" />
@@ -222,12 +210,8 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
             </div>
           }
           @if (rollout?.operation === 'scale' && !roomWait()) {
-            <div
-              class="mt-3 h-1 w-full bg-blue-100 dark:bg-blue-900/40 rounded-full overflow-hidden"
-            >
-              <div
-                class="h-1 w-1/3 bg-blue-500 dark:bg-blue-400 rounded-full animate-indeterminate"
-              ></div>
+            <div class="mt-3 h-1 w-full bg-blue-100 rounded-full overflow-hidden">
+              <div class="h-1 w-1/3 bg-blue-500 rounded-full animate-indeterminate"></div>
             </div>
           }
         </div>
@@ -236,21 +220,16 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
       <!-- ── Container Resources cards ── -->
       @if (runtime && runtime.containers.length > 0) {
         @for (container of runtime.containers; track container.name; let i = $index) {
-          <div
-            class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-          >
-            <div
-              class="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-700"
-            >
+          <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
               <div class="flex items-center gap-2 min-w-0">
                 <ng-icon name="lucideCpu" class="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                <span class="text-xs font-semibold text-gray-900 dark:text-white font-mono">{{
+                <span class="text-xs font-semibold text-gray-900 font-mono">{{
                   container.name
                 }}</span>
-                <span
-                  class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate max-w-48"
-                  >{{ container.image }}</span
-                >
+                <span class="text-xs text-gray-400 font-mono truncate max-w-48">{{
+                  container.image
+                }}</span>
               </div>
 
               @if (editingContainerIndex() !== i) {
@@ -258,7 +237,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
                   type="button"
                   (click)="startResourceEdit(i)"
                   [disabled]="savingResources()"
-                  class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-40"
+                  class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-40"
                 >
                   <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
                   Edit
@@ -268,7 +247,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
                   <button
                     type="button"
                     (click)="cancelResourceEdit()"
-                    class="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg transition-colors"
+                    class="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
                   >
                     <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                     Cancel
@@ -294,9 +273,9 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
                 <div class="space-y-3">
                   <div class="flex items-center justify-between text-xs">
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">CPU</span>
+                    <span class="font-semibold text-gray-700">CPU</span>
                     @if (monitoringService.metrics(); as m) {
-                      <span class="text-gray-400 dark:text-gray-500"
+                      <span class="text-gray-400"
                         >in use
                         <span
                           class="font-mono font-semibold"
@@ -337,9 +316,9 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
 
                 <div class="space-y-3">
                   <div class="flex items-center justify-between text-xs">
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">Memory</span>
+                    <span class="font-semibold text-gray-700">Memory</span>
                     @if (monitoringService.metrics(); as m) {
-                      <span class="text-gray-400 dark:text-gray-500"
+                      <span class="text-gray-400"
                         >in use
                         <span
                           class="font-mono font-semibold"
@@ -382,14 +361,14 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
               @if (editingContainerIndex() === i) {
                 @if (fieldProblem(); as problem) {
                   <p
-                    class="flex items-start gap-1.5 text-xs rounded-lg px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                    class="flex items-start gap-1.5 text-xs rounded-lg px-3 py-2 bg-red-50 text-red-700"
                   >
                     <ng-icon name="lucideAlertTriangle" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                     {{ problem }}
                   </p>
                 } @else if (resourcesDirty()) {
                   @if (checking()) {
-                    <p class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+                    <p class="flex items-center gap-1.5 text-xs text-gray-400">
                       <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                       Checking where it would run…
                     </p>
@@ -428,7 +407,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
                       </p>
                     </div>
                   } @else if (consequenceError(); as err) {
-                    <p class="text-xs text-red-600 dark:text-red-400">{{ err }}</p>
+                    <p class="text-xs text-red-600">{{ err }}</p>
                   }
                 }
               }
@@ -436,24 +415,22 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
 
             @if (resourcesRollout) {
               <div class="px-5 pb-3">
-                <p class="text-xs text-blue-600 dark:text-blue-400 font-mono mb-2">
+                <p class="text-xs text-blue-600 font-mono mb-2">
                   {{ resourcesRollout.message }} — {{ resourcesRollout.readyReplicas }}/{{
                     resourcesRollout.desiredReplicas
                   }}
                   ready
                 </p>
               </div>
-              <div class="h-1 w-full bg-blue-100 dark:bg-blue-900/40 overflow-hidden">
-                <div class="h-1 w-1/3 bg-blue-500 dark:bg-blue-400 animate-indeterminate"></div>
+              <div class="h-1 w-full bg-blue-100 overflow-hidden">
+                <div class="h-1 w-1/3 bg-blue-500 animate-indeterminate"></div>
               </div>
             }
           </div>
         }
       } @else if (!runtime) {
-        <div
-          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-5 py-8 text-center"
-        >
-          <p class="text-sm text-gray-400 dark:text-gray-500">Runtime data not available</p>
+        <div class="bg-white rounded-xl border border-gray-200 px-5 py-8 text-center">
+          <p class="text-sm text-gray-400">Runtime data not available</p>
         </div>
       }
     </div>
@@ -543,9 +520,9 @@ export class AppResourcesEditorComponent implements OnChanges {
   protected readyColor = computed(() => {
     const desired = this.runtime?.replicas?.desired ?? 0;
     const ready = this.runtime?.replicas?.ready ?? 0;
-    if (ready === 0) return 'font-semibold text-red-500 dark:text-red-400';
-    if (ready < desired) return 'font-semibold text-amber-500 dark:text-amber-400';
-    return 'font-semibold text-green-600 dark:text-green-400';
+    if (ready === 0) return 'font-semibold text-red-500';
+    if (ready < desired) return 'font-semibold text-amber-500';
+    return 'font-semibold text-green-600';
   });
 
   protected readyDot = computed(() => {
@@ -629,11 +606,9 @@ export class AppResourcesEditorComponent implements OnChanges {
   }
 
   protected verdictClass(verdict: PlacementVerdict): string {
-    if (verdict === 'fits')
-      return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400';
-    if (verdict === 'buys' || verdict === 'proposes')
-      return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300';
-    return 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400';
+    if (verdict === 'fits') return 'bg-green-50 text-green-700';
+    if (verdict === 'buys' || verdict === 'proposes') return 'bg-blue-50 text-blue-700';
+    return 'bg-amber-50 text-amber-700';
   }
 
   private dtoFor(containerIndex: number): UpdateResourcesDto {
@@ -724,9 +699,9 @@ export class AppResourcesEditorComponent implements OnChanges {
   }
 
   protected usageColor(pct: number): string {
-    if (pct >= 90) return 'text-red-600 dark:text-red-400';
-    if (pct >= 70) return 'text-orange-500 dark:text-orange-400';
-    return 'text-green-600 dark:text-green-400';
+    if (pct >= 90) return 'text-red-600';
+    if (pct >= 70) return 'text-orange-500';
+    return 'text-green-600';
   }
 
   protected resourceHint(
@@ -753,10 +728,9 @@ export class AppResourcesEditorComponent implements OnChanges {
   }
 
   protected hintClass(level: 'low' | 'warn' | 'critical'): string {
-    if (level === 'critical') return 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400';
-    if (level === 'warn')
-      return 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400';
-    return 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400';
+    if (level === 'critical') return 'bg-red-50 text-red-600';
+    if (level === 'warn') return 'bg-orange-50 text-orange-600';
+    return 'bg-blue-50 text-blue-600';
   }
 
   protected formatCpuCores(cores: number | null): string {

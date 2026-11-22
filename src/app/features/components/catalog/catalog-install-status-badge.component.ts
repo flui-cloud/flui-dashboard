@@ -11,27 +11,27 @@ interface StatusMeta {
 const META: Record<InstallStatus, StatusMeta> = {
   PENDING: {
     label: 'Pending',
-    classes: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    classes: 'bg-amber-100 text-amber-800',
   },
   INSTALLING: {
     label: 'Installing',
-    classes: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    classes: 'bg-amber-100 text-amber-800',
   },
   RUNNING: {
     label: 'Running',
-    classes: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    classes: 'bg-green-100 text-green-800',
   },
   FAILED: {
     label: 'Failed',
-    classes: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    classes: 'bg-red-100 text-red-800',
   },
   UNINSTALLING: {
     label: 'Uninstalling',
-    classes: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
+    classes: 'bg-slate-200 text-slate-700',
   },
   UNINSTALLED: {
     label: 'Uninstalled',
-    classes: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
+    classes: 'bg-slate-200 text-slate-700',
   },
 };
 

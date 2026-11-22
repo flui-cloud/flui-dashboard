@@ -14,7 +14,7 @@ import { RemovalPreview } from '../../model/scaling-section.models';
     @if (preview(); as p) {
       <div class="flex flex-col gap-1.5 text-[12px] leading-relaxed" data-testid="removal-preview">
         <span
-          [class]="p.proceeds ? 'text-foreground' : 'text-amber-700 dark:text-amber-400'"
+          [class]="p.proceeds ? 'text-foreground' : 'text-amber-700'"
           data-testid="removal-preview-sentence"
         >
           {{ p.proceeds && p.moves.length ? p.headline : p.sentence }}

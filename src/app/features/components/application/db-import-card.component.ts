@@ -59,9 +59,7 @@ const POLL_MS = 10_000;
           @if (v.detail) {
             <p
               class="mt-2 text-xs"
-              [class]="
-                v.status === 'failed' ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'
-              "
+              [class]="v.status === 'failed' ? 'text-red-600' : 'text-muted-foreground'"
             >
               {{ v.detail }}
             </p>
@@ -170,7 +168,7 @@ const POLL_MS = 10_000;
           </form>
         }
         @if (error()) {
-          <p class="mt-2 text-xs text-red-600 dark:text-red-400">{{ error() }}</p>
+          <p class="mt-2 text-xs text-red-600">{{ error() }}</p>
         }
       </div>
     }

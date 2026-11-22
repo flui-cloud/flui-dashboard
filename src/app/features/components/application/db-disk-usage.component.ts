@@ -30,9 +30,9 @@ import { DbDiskInfo, DbDiskService } from '../../service/db-disk.service';
           class="rounded-lg border p-4"
           [class]="
             d.alert_level === 'critical'
-              ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/10'
+              ? 'border-red-300 bg-red-50'
               : d.alert_level === 'warning'
-                ? 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/10'
+                ? 'border-amber-300 bg-amber-50'
                 : 'border-border bg-card'
           "
         >
@@ -66,11 +66,7 @@ import { DbDiskInfo, DbDiskService } from '../../service/db-disk.service';
           @if (d.alert_level !== 'none') {
             <div
               class="mt-3 flex items-start gap-2 text-sm"
-              [class]="
-                d.alert_level === 'critical'
-                  ? 'text-red-700 dark:text-red-300'
-                  : 'text-amber-700 dark:text-amber-300'
-              "
+              [class]="d.alert_level === 'critical' ? 'text-red-700' : 'text-amber-700'"
             >
               <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
               <span>
@@ -93,8 +89,8 @@ export class DbDiskUsageComponent {
 
   readonly pctClass = computed(() => {
     const a = this.info()?.alert_level;
-    if (a === 'critical') return 'text-red-600 dark:text-red-400';
-    if (a === 'warning') return 'text-amber-600 dark:text-amber-400';
+    if (a === 'critical') return 'text-red-600';
+    if (a === 'warning') return 'text-amber-600';
     return 'text-foreground';
   });
 

@@ -61,7 +61,7 @@ import { ScalingCostDraft, WriteScalingGroup } from '../../model/scaling-group.m
 
           <div class="flex shrink-0 items-center gap-2">
             @if (problem(d); as message) {
-              <span class="text-xs text-red-600 dark:text-red-400" data-testid="group-save-error">
+              <span class="text-xs text-red-600" data-testid="group-save-error">
                 {{ message }}
               </span>
             }

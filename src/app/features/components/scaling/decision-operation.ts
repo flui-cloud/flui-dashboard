@@ -23,7 +23,7 @@ export function operationDetail(op: DecisionOperation): string | null {
 }
 
 export function operationTone(state: DecisionOperation['state']): string {
-  if (state === 'failed') return 'font-medium text-red-600 dark:text-red-400';
+  if (state === 'failed') return 'font-medium text-red-600';
   if (state === 'completed') return 'font-medium status-healthy';
-  return 'font-medium text-sky-600 dark:text-sky-400';
+  return 'font-medium text-sky-600';
 }

@@ -78,9 +78,7 @@ import { AccountProfile, AccountService, accountErrorMessage } from '../../servi
           <p class="text-sm text-destructive" data-testid="profile-error">{{ error() }}</p>
         }
         @if (saved()) {
-          <p class="text-sm text-green-600 dark:text-green-400" data-testid="profile-saved">
-            Saved.
-          </p>
+          <p class="text-sm text-green-600" data-testid="profile-saved">Saved.</p>
         }
         <button hlmBtn type="submit" [disabled]="saving() || !firstName.trim() || !lastName.trim()">
           {{ saving() ? 'Saving...' : 'Save' }}

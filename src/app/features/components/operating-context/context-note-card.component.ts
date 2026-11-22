@@ -269,19 +269,17 @@ export class ContextNoteCardComponent {
 
   protected readonly railClass = computed(() => {
     if (isSuspect(this.entry().confidence)) {
-      return 'bg-amber-500 dark:bg-amber-400';
+      return 'bg-amber-500';
     }
-    return this.entry().confidence === 'checked'
-      ? 'bg-emerald-500/70 dark:bg-emerald-400/70'
-      : 'bg-border';
+    return this.entry().confidence === 'checked' ? 'bg-emerald-500/70' : 'bg-border';
   });
 
   protected readonly verdictClass = computed(() => {
     switch (this.entry().confidence) {
       case 'broken':
-        return 'bg-amber-500/15 text-amber-700 dark:text-amber-300';
+        return 'bg-amber-500/15 text-amber-700';
       case 'checked':
-        return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
+        return 'bg-emerald-500/15 text-emerald-700';
       case 'stale':
         return 'bg-muted text-muted-foreground';
       default:

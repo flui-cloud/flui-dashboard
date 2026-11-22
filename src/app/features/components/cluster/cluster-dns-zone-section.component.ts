@@ -153,13 +153,11 @@ export class ClusterDnsZoneSectionComponent {
   }
 
   protected cardClass(a: ClusterDnsZoneResponseDto): string {
-    return this.isBusy(a)
-      ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
-      : 'border-border';
+    return this.isBusy(a) ? 'bg-blue-50 border-blue-200' : 'border-border';
   }
 
   protected badgeClass(a: ClusterDnsZoneResponseDto): string {
-    if (this.isBusy(a)) return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+    if (this.isBusy(a)) return 'bg-blue-100 text-blue-700';
     return this.getStatusClass(a.reconciliationStatus);
   }
 
@@ -189,10 +187,10 @@ export class ClusterDnsZoneSectionComponent {
   protected getStatusClass(status: string): string {
     const color = getReconciliationBadgeColor(status);
     const map: Record<string, string> = {
-      green: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-      yellow: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-      blue: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      red: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+      green: 'bg-green-100 text-green-700',
+      yellow: 'bg-yellow-100 text-yellow-700',
+      blue: 'bg-blue-100 text-blue-700',
+      red: 'bg-red-100 text-red-700',
       gray: 'bg-muted text-muted-foreground',
     };
     return map[color] ?? map['gray'];

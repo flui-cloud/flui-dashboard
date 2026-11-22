@@ -41,11 +41,7 @@ const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
           </div>
           <span
             class="text-xs font-medium"
-            [class]="
-              v.level === 'standard'
-                ? 'text-muted-foreground'
-                : 'text-emerald-600 dark:text-emerald-400'
-            "
+            [class]="v.level === 'standard' ? 'text-muted-foreground' : 'text-emerald-600'"
           >
             {{ levelLabel() }}
           </span>
@@ -57,7 +53,7 @@ const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
           </p>
         }
         @for (w of v.warnings; track w) {
-          <p class="m-0 mt-1 text-xs text-amber-700 dark:text-amber-400">
+          <p class="m-0 mt-1 text-xs text-amber-700">
             {{ w }}
           </p>
         }
@@ -79,7 +75,7 @@ const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
         @if (open()) {
           <ul class="mt-2 space-y-1 text-xs" data-testid="cluster-ha-details">
             @for (s of v.survives; track s) {
-              <li class="text-emerald-700 dark:text-emerald-400">Survives {{ s }}</li>
+              <li class="text-emerald-700">Survives {{ s }}</li>
             }
             @for (s of v.doesNotSurvive; track s) {
               <li class="text-muted-foreground">Does not survive {{ s }}</li>

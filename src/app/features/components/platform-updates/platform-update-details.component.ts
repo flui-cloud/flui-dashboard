@@ -48,9 +48,7 @@ import {
               component.targetVersion ?? component.installedVersion ?? '—'
             }}</span>
             @if (!component.installedIsRelease && !component.changed) {
-              <span class="ml-1.5 font-sans text-[11px] text-amber-600 dark:text-amber-400"
-                >build</span
-              >
+              <span class="ml-1.5 font-sans text-[11px] text-amber-600">build</span>
             }
             @if (!component.observed) {
               <span class="ml-1.5 font-sans text-[11px] text-muted-foreground"
@@ -77,11 +75,7 @@ import {
             <ng-icon
               [name]="advisory.level === 'info' ? 'lucideInfo' : 'lucideTriangleAlert'"
               class="mt-0.5 h-4 w-4 shrink-0"
-              [class]="
-                advisory.level === 'blocker'
-                  ? 'text-destructive'
-                  : 'text-amber-600 dark:text-amber-400'
-              "
+              [class]="advisory.level === 'blocker' ? 'text-destructive' : 'text-amber-600'"
             />
             <div>
               <p class="text-sm">{{ advisory.title }}</p>

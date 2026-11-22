@@ -142,7 +142,7 @@ interface CredentialField {
               </button>
             </div>
             @if (expiryError()) {
-              <p class="text-xs text-red-600 dark:text-red-400 mt-2">{{ expiryError() }}</p>
+              <p class="text-xs text-red-600 mt-2">{{ expiryError() }}</p>
             }
           }
         </div>
@@ -218,7 +218,7 @@ interface CredentialField {
               }
 
               @if (rotateError()) {
-                <p class="text-sm text-red-600 dark:text-red-400">{{ rotateError() }}</p>
+                <p class="text-sm text-red-600">{{ rotateError() }}</p>
               }
 
               <div class="flex items-center gap-2 pt-1">
@@ -315,15 +315,15 @@ export class ProviderCredentialsPanelComponent implements OnInit {
 
   protected expiryIconClass = computed(() => {
     const d = this.expiryDaysLeft();
-    if (d !== null && d < 0) return 'text-red-600 dark:text-red-400';
-    if (d !== null && d <= 14) return 'text-yellow-600 dark:text-yellow-400';
+    if (d !== null && d < 0) return 'text-red-600';
+    if (d !== null && d <= 14) return 'text-yellow-600';
     return 'text-muted-foreground';
   });
 
   protected expiryTextClass = computed(() => {
     const d = this.expiryDaysLeft();
-    if (d !== null && d < 0) return 'text-red-600 dark:text-red-400';
-    if (d !== null && d <= 14) return 'text-yellow-700 dark:text-yellow-300';
+    if (d !== null && d < 0) return 'text-red-600';
+    if (d !== null && d <= 14) return 'text-yellow-700';
     return '';
   });
 

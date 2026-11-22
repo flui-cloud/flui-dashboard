@@ -148,9 +148,7 @@ const REASON_LABEL: Record<string, string> = {
                     <span
                       class="rounded-md px-1.5 py-0.5 text-[11px] font-medium"
                       [class]="
-                        s.scope === 'all'
-                          ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400'
-                          : 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400'
+                        s.scope === 'all' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-800'
                       "
                     >
                       {{ s.scope === 'all' ? 'Everything' : 'Bulk only' }}

@@ -73,9 +73,9 @@
         class="mt-0.5 h-4 w-4 shrink-0"
         [class]="
           advice.tone === 'ok'
-            ? 'text-green-600 dark:text-green-400'
+            ? 'text-green-600'
             : advice.tone === 'act'
-              ? 'text-amber-600 dark:text-amber-400'
+              ? 'text-amber-600'
               : 'text-sub'
         "
       />
@@ -125,10 +125,8 @@
 
   <!-- Error message -->
   @if (error()) {
-    <div
-      class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
-    >
-      <p class="text-red-700 dark:text-red-400">{{ error() }}</p>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <p class="text-red-700">{{ error() }}</p>
     </div>
   }
 
@@ -136,11 +134,9 @@
   @if (metrics(); as m) {
     <!-- Pod / Replica selector: shown only with 2+ replicas -->
     @if (availableReplicas().length > 1) {
-      <div
-        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3"
-      >
+      <div class="bg-white border border-gray-200 rounded-lg px-4 py-3">
         <div class="flex items-center gap-3 min-w-0">
-          <span class="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">View:</span>
+          <span class="text-xs font-medium text-gray-500 shrink-0">View:</span>
           <div class="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
             <!-- All replicas chip -->
             <button
@@ -179,7 +175,7 @@
 
     <!-- Single replica: show pod name as non-interactive label -->
     @if (availableReplicas().length === 1) {
-      <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+      <div class="flex items-center gap-2 text-xs text-gray-500">
         <span
           class="inline-flex h-1.5 w-1.5 rounded-full"
           [class.bg-green-400]="availableReplicas()[0].status.ready === 1"
@@ -278,22 +274,16 @@
 
     <!-- Per-replica breakdown: shown only with 2+ replicas -->
     @if (availableReplicas().length > 1) {
-      <div
-        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-      >
-        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-          Replicas breakdown
-        </h3>
+      <div class="bg-white border border-gray-200 rounded-lg p-4">
+        <h3 class="text-sm font-semibold text-gray-900 mb-3">Replicas breakdown</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           @for (replica of availableReplicas(); track replica.pod) {
             <button
               type="button"
               (click)="selectPod(replica.pod)"
-              class="text-left bg-gray-50 dark:bg-gray-900/40 border rounded-lg p-3 transition-colors hover:bg-gray-100 dark:hover:bg-gray-900/70"
+              class="text-left bg-gray-50 border rounded-lg p-3 transition-colors hover:bg-gray-100"
               [class.border-blue-500]="selectedPod() === replica.pod"
-              [class.dark:border-blue-400]="selectedPod() === replica.pod"
               [class.border-gray-200]="selectedPod() !== replica.pod"
-              [class.dark:border-gray-700]="selectedPod() !== replica.pod"
             >
               <!-- Pod header -->
               <div class="flex items-center gap-2 mb-3 min-w-0">
@@ -302,13 +292,10 @@
                   [class.bg-green-400]="replica.status.ready === 1"
                   [class.bg-red-400]="replica.status.ready !== 1"
                 ></span>
-                <span
-                  class="font-mono text-xs text-gray-700 dark:text-gray-300 truncate"
-                  [title]="replica.pod"
-                >
+                <span class="font-mono text-xs text-gray-700 truncate" [title]="replica.pod">
                   {{ replica.pod }}
                 </span>
-                <span class="ml-auto text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                <span class="ml-auto text-xs text-gray-500 shrink-0">
                   {{ replica.status.phase }}
                 </span>
               </div>
@@ -316,20 +303,18 @@
               <!-- CPU -->
               <div class="mb-3">
                 <div class="flex items-center justify-between text-xs mb-1">
-                  <span class="text-gray-500 dark:text-gray-400">CPU</span>
-                  <span class="font-medium text-gray-900 dark:text-gray-100">
+                  <span class="text-gray-500">CPU</span>
+                  <span class="font-medium text-gray-900">
                     {{ (replica.cpu.utilization_percent ?? 0).toFixed(1) }}%
                   </span>
                 </div>
-                <div class="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <div class="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
                   <div
                     class="h-full bg-blue-500"
                     [style.width.%]="replica.cpu.utilization_percent ?? 0"
                   ></div>
                 </div>
-                <div
-                  class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1"
-                >
+                <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
                   <span>{{ formatCpu(replica.cpu.usage_cores ?? 0) }}</span>
                   <span>limit {{ formatCpu(replica.cpu.limits_cores ?? 0) }}</span>
                 </div>
@@ -338,49 +323,45 @@
               <!-- Memory -->
               <div class="mb-3">
                 <div class="flex items-center justify-between text-xs mb-1">
-                  <span class="text-gray-500 dark:text-gray-400">Memory</span>
-                  <span class="font-medium text-gray-900 dark:text-gray-100">
+                  <span class="text-gray-500">Memory</span>
+                  <span class="font-medium text-gray-900">
                     {{ (replica.memory.utilization_percent ?? 0).toFixed(1) }}%
                   </span>
                 </div>
-                <div class="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <div class="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
                   <div
                     class="h-full bg-purple-500"
                     [style.width.%]="replica.memory.utilization_percent ?? 0"
                   ></div>
                 </div>
-                <div
-                  class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1"
-                >
+                <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
                   <span>{{ formatBytes(replica.memory.usage_bytes ?? 0) }}</span>
                   <span>limit {{ formatBytes(replica.memory.limits_bytes ?? 0) }}</span>
                 </div>
               </div>
 
               <!-- Network + restarts -->
-              <div
-                class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-gray-200 dark:border-gray-700"
-              >
+              <div class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-gray-200">
                 <div>
-                  <p class="text-gray-500 dark:text-gray-400">Net In</p>
-                  <p class="font-medium text-gray-900 dark:text-gray-100">
+                  <p class="text-gray-500">Net In</p>
+                  <p class="font-medium text-gray-900">
                     {{ formatBytes(replica.network.receive_bytes_rate ?? 0) }}/s
                   </p>
                 </div>
                 <div>
-                  <p class="text-gray-500 dark:text-gray-400">Net Out</p>
-                  <p class="font-medium text-gray-900 dark:text-gray-100">
+                  <p class="text-gray-500">Net Out</p>
+                  <p class="font-medium text-gray-900">
                     {{ formatBytes(replica.network.transmit_bytes_rate ?? 0) }}/s
                   </p>
                 </div>
                 <div>
-                  <p class="text-gray-500 dark:text-gray-400">Restarts</p>
+                  <p class="text-gray-500">Restarts</p>
                   <p class="font-medium text-foreground">
                     {{ replica.status.restart_total ?? 0 }}
                   </p>
                 </div>
                 <div>
-                  <p class="text-gray-500 dark:text-gray-400">Last Hour</p>
+                  <p class="text-gray-500">Last Hour</p>
                   <p class="font-medium text-foreground">
                     {{ (replica.status.restart_rate_1h ?? 0).toFixed(1) }}
                   </p>
@@ -394,15 +375,11 @@
 
     <!-- Pod Phases -->
     @if (monitoring.podPhases().length > 0) {
-      <div
-        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-      >
-        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Pod Phases</h3>
+      <div class="bg-white border border-gray-200 rounded-lg p-4">
+        <h3 class="text-sm font-semibold text-gray-900 mb-3">Pod Phases</h3>
         <div class="flex gap-3 flex-wrap">
           @for (pod of monitoring.podPhases(); track pod.phase) {
-            <div
-              class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"
-            >
+            <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
               <span
                 class="inline-flex h-2 w-2 rounded-full"
                 [class.bg-green-500]="pod.phase === 'Running'"
@@ -412,10 +389,8 @@
                   pod.phase !== 'Running' && pod.phase !== 'Pending' && pod.phase !== 'Failed'
                 "
               ></span>
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{ pod.phase }}</span>
-              <span class="text-sm font-bold text-gray-900 dark:text-gray-100">{{
-                pod.count
-              }}</span>
+              <span class="text-sm text-gray-700">{{ pod.phase }}</span>
+              <span class="text-sm font-bold text-gray-900">{{ pod.count }}</span>
             </div>
           }
         </div>
@@ -424,35 +399,31 @@
   }
 
   <!-- Traffic -->
-  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+  <div class="bg-white border border-gray-200 rounded-lg p-6">
     <app-traffic-section [appId]="appId()" [range]="trafficRange()" />
   </div>
 
   <!-- Alerts -->
-  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+  <div class="bg-white border border-gray-200 rounded-lg p-6">
     <app-alerts-section [appId]="appId()" [refreshKey]="alertsRefreshKey()" />
   </div>
 
   <!-- Empty state -->
   @if (!metrics() && !isLoading() && !error()) {
-    <div
-      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12"
-    >
+    <div class="bg-white border border-gray-200 rounded-lg p-12">
       <div class="text-center">
         <ng-icon name="lucideActivity" class="h-12 w-12 text-gray-400 mx-auto mb-3" />
-        <p class="text-gray-600 dark:text-gray-400">No metrics available. Waiting for data...</p>
+        <p class="text-gray-600">No metrics available. Waiting for data...</p>
       </div>
     </div>
   }
 
   <!-- Loading skeleton -->
   @if (isLoading() && !metrics()) {
-    <div
-      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12"
-    >
+    <div class="bg-white border border-gray-200 rounded-lg p-12">
       <div class="text-center">
         <ng-icon name="lucideRefreshCw" class="h-12 w-12 text-gray-400 mx-auto mb-3 animate-spin" />
-        <p class="text-gray-600 dark:text-gray-400">Loading metrics...</p>
+        <p class="text-gray-600">Loading metrics...</p>
       </div>
     </div>
   }

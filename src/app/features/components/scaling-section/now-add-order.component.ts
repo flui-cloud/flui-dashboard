@@ -135,9 +135,7 @@ function regionAvailability(up: string[] | null, region: string): string {
         </div>
         <p
           class="m-0 text-[13px]"
-          [class]="
-            refused() || failure() ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'
-          "
+          [class]="refused() || failure() ? 'text-red-600' : 'text-muted-foreground'"
           data-testid="add-order-says"
         >
           {{ failure() ?? refused() ?? says() }}

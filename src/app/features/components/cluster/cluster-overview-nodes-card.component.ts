@@ -111,7 +111,7 @@ import {
         </div>
         <div
           class="text-right truncate capitalize"
-          [class]="row.failed ? 'text-red-600 dark:text-red-400' : 'text-sub'"
+          [class]="row.failed ? 'text-red-600' : 'text-sub'"
         >
           {{ row.statusLabel ?? '—' }}
         </div>

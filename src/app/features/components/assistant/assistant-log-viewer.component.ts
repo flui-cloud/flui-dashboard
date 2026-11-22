@@ -62,7 +62,7 @@ const TIME_WINDOWS = ['15m', '1h', '6h', '24h'] as const;
               <button
                 type="button"
                 (click)="sendMessage.emit('Show recent logs for ' + app)"
-                class="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors"
+                class="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600 hover:bg-blue-500/20 transition-colors"
               >
                 {{ app }}
               </button>
@@ -380,9 +380,9 @@ export class AssistantLogViewerComponent {
         return 'bg-destructive/15 text-destructive';
       case 'warn':
       case 'warning':
-        return 'bg-amber-500/15 text-amber-700 dark:text-amber-400';
+        return 'bg-amber-500/15 text-amber-700';
       case 'info':
-        return 'bg-blue-500/15 text-blue-600 dark:text-blue-400';
+        return 'bg-blue-500/15 text-blue-600';
       default:
         return 'bg-muted text-muted-foreground';
     }

@@ -44,18 +44,18 @@ type Step = 1 | 2 | 3;
         <div class="flex items-start gap-4 mb-6">
           <a
             routerLink="/infrastructure/domains"
-            class="mt-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
+            class="mt-1 p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700"
             title="Back"
           >
             <ng-icon name="lucideArrowLeft" class="h-5 w-5" />
           </a>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Register DNS Zone</h1>
+          <h1 class="text-3xl font-bold text-gray-900">Register DNS Zone</h1>
         </div>
 
         <!-- Error banner -->
         @if (dnsZonesService.error()) {
           <div
-            class="flex items-start gap-2 p-3 mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-2 p-3 mb-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ dnsZonesService.error() }}</span>
@@ -68,38 +68,29 @@ type Step = 1 | 2 | 3;
             <div class="flex items-center gap-2">
               <div
                 class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                [class]="
-                  step() >= s
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                "
+                [class]="step() >= s ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'"
               >
                 {{ s }}
               </div>
               @if (s < 3) {
-                <div
-                  class="w-8 h-0.5"
-                  [class]="step() > s ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'"
-                ></div>
+                <div class="w-8 h-0.5" [class]="step() > s ? 'bg-blue-600' : 'bg-gray-200'"></div>
               }
             </div>
           }
-          <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">{{ stepLabel() }}</span>
+          <span class="ml-2 text-sm text-gray-500">{{ stepLabel() }}</span>
         </div>
 
         <!-- Step 1: Select Provider -->
         @if (step() === 1) {
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                DNS Provider
-              </label>
+              <label class="block text-sm font-medium text-gray-700 mb-1"> DNS Provider </label>
               @if (loadingProviders()) {
-                <div class="h-10 bg-gray-100 dark:bg-gray-700 rounded-md animate-pulse"></div>
+                <div class="h-10 bg-gray-100 rounded-md animate-pulse"></div>
               } @else {
                 <select
                   [(ngModel)]="selectedProvider"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select a provider...</option>
                   @for (p of dnsZonesService.dnsCapableProviders(); track p.id) {
@@ -107,7 +98,7 @@ type Step = 1 | 2 | 3;
                   }
                 </select>
                 @if (!loadingProviders() && dnsZonesService.dnsCapableProviders().length === 0) {
-                  <p class="mt-2 text-sm text-amber-700 dark:text-amber-400">
+                  <p class="mt-2 text-sm text-amber-700">
                     No active providers with DNS zone support found. Configure a provider with DNS
                     capabilities first.
                   </p>
@@ -130,30 +121,23 @@ type Step = 1 | 2 | 3;
         @if (step() === 2) {
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-700 mb-1">
                 Zone from <span class="font-semibold">{{ selectedProvider }}</span>
               </label>
               @if (dnsZonesService.providerZones().length === 0) {
-                <div
-                  class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-5 space-y-3"
-                >
+                <div class="rounded-lg border border-amber-200 bg-amber-50 p-5 space-y-3">
                   <div class="flex items-center gap-2">
-                    <ng-icon
-                      name="lucideGlobe"
-                      class="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0"
-                    />
-                    <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                    <ng-icon name="lucideGlobe" class="h-5 w-5 text-amber-600 flex-shrink-0" />
+                    <p class="text-sm font-semibold text-amber-800">
                       No DNS zones found in your {{ selectedProvider }} account
                     </p>
                   </div>
-                  <p class="text-sm text-amber-700 dark:text-amber-400">
+                  <p class="text-sm text-amber-700">
                     These zones are read directly from your
                     <span class="font-semibold">{{ selectedProvider }}</span> account via API. To
                     add a domain, you have two options:
                   </p>
-                  <ul
-                    class="text-sm text-amber-700 dark:text-amber-400 space-y-1 list-disc list-inside"
-                  >
+                  <ul class="text-sm text-amber-700 space-y-1 list-disc list-inside">
                     <li>
                       <span class="font-medium">Purchase a domain</span> directly on
                       <span class="font-semibold">{{ selectedProvider }}</span> — it will appear
@@ -165,17 +149,17 @@ type Step = 1 | 2 | 3;
                       <span class="font-semibold">{{ selectedProvider }}</span>'s nameservers.
                     </li>
                   </ul>
-                  <p class="text-xs text-amber-600 dark:text-amber-500">
+                  <p class="text-xs text-amber-600">
                     Once the zone is active in
                     <span class="font-semibold">{{ selectedProvider }}</span>, come back and refresh
                     this step.
                   </p>
                   @if (selectedProviderInfo?.dnsZoneDelegation; as delegation) {
-                    <div class="pt-1 border-t border-amber-200 dark:border-amber-700">
+                    <div class="pt-1 border-t border-amber-200">
                       <a
                         [href]="delegation.delegationGuideUrl"
                         target="_blank"
-                        class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 underline"
+                        class="inline-flex items-center gap-1 text-xs text-amber-700 hover:text-amber-900 underline"
                       >
                         View official delegation guide
                         <ng-icon name="lucideExternalLink" class="h-3 w-3" />
@@ -185,7 +169,7 @@ type Step = 1 | 2 | 3;
                 </div>
               } @else {
                 <div
-                  class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md p-2"
+                  class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2"
                 >
                   @for (zone of dnsZonesService.providerZones(); track zone.zoneId) {
                     @let alreadyRegistered = registeredZoneIds().has(zone.zoneId);
@@ -193,8 +177,8 @@ type Step = 1 | 2 | 3;
                       class="flex items-center gap-3 p-2 rounded-md transition-colors"
                       [class]="
                         alreadyRegistered
-                          ? 'opacity-60 cursor-not-allowed bg-gray-50 dark:bg-gray-800/50'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer'
+                          ? 'opacity-60 cursor-not-allowed bg-gray-50'
+                          : 'hover:bg-gray-50 cursor-pointer'
                       "
                     >
                       <input
@@ -209,18 +193,14 @@ type Step = 1 | 2 | 3;
                         <div class="min-w-0">
                           <span
                             class="text-sm font-medium font-mono"
-                            [class]="
-                              alreadyRegistered
-                                ? 'text-gray-400 dark:text-gray-500'
-                                : 'text-gray-900 dark:text-white'
-                            "
+                            [class]="alreadyRegistered ? 'text-gray-400' : 'text-gray-900'"
                             >{{ zone.name }}</span
                           >
                           <span class="ml-2 text-xs text-gray-400">{{ zone.zoneId }}</span>
                         </div>
                         @if (alreadyRegistered) {
                           <span
-                            class="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                            class="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700"
                           >
                             Already registered
                           </span>
@@ -230,13 +210,9 @@ type Step = 1 | 2 | 3;
                   }
                 </div>
                 <!-- Origin info -->
-                <div
-                  class="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5 space-y-1.5"
-                >
-                  <p class="text-xs font-medium text-amber-800 dark:text-amber-300">
-                    Don't see your domain?
-                  </p>
-                  <p class="text-xs text-amber-700 dark:text-amber-400">
+                <div class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 space-y-1.5">
+                  <p class="text-xs font-medium text-amber-800">Don't see your domain?</p>
+                  <p class="text-xs text-amber-700">
                     These zones are read directly from your
                     <span class="font-semibold">{{ selectedProvider }}</span> account. To add a
                     missing domain, update its NS records at your registrar to point to
@@ -244,11 +220,11 @@ type Step = 1 | 2 | 3;
                     come back and refresh.
                   </p>
                   @if (selectedProviderInfo?.dnsZoneDelegation; as delegation) {
-                    <div class="pt-1 border-t border-amber-200 dark:border-amber-700">
+                    <div class="pt-1 border-t border-amber-200">
                       <a
                         [href]="delegation.delegationGuideUrl"
                         target="_blank"
-                        class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 underline"
+                        class="inline-flex items-center gap-1 text-xs text-amber-700 hover:text-amber-900 underline"
                       >
                         View official delegation guide
                         <ng-icon name="lucideExternalLink" class="h-3 w-3" />
@@ -261,7 +237,7 @@ type Step = 1 | 2 | 3;
             <div class="flex justify-between">
               <button
                 (click)="step.set(1)"
-                class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                class="px-4 py-2 border border-gray-300 text-sm rounded-md hover:bg-gray-50 text-gray-700 transition-colors"
               >
                 Back
               </button>
@@ -279,37 +255,31 @@ type Step = 1 | 2 | 3;
         <!-- Step 3: Confirm -->
         @if (step() === 3) {
           <div class="space-y-4">
-            <div
-              class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-2 text-sm"
-            >
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-2 text-sm">
               <div class="flex justify-between">
-                <span class="text-gray-500 dark:text-gray-400">Provider</span>
-                <span class="font-medium text-gray-900 dark:text-white">{{
-                  selectedProvider
-                }}</span>
+                <span class="text-gray-500">Provider</span>
+                <span class="font-medium text-gray-900">{{ selectedProvider }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500 dark:text-gray-400">Zone</span>
-                <span class="font-medium text-gray-900 dark:text-white font-mono">{{
-                  selectedZoneName()
-                }}</span>
+                <span class="text-gray-500">Zone</span>
+                <span class="font-medium text-gray-900 font-mono">{{ selectedZoneName() }}</span>
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-700 mb-1">
                 Description <span class="text-gray-400">(optional)</span>
               </label>
               <input
                 type="text"
                 [(ngModel)]="description"
                 placeholder="e.g. Production zone for flui.cloud"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div class="flex justify-between">
               <button
                 (click)="step.set(2)"
-                class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                class="px-4 py-2 border border-gray-300 text-sm rounded-md hover:bg-gray-50 text-gray-700 transition-colors"
               >
                 Back
               </button>

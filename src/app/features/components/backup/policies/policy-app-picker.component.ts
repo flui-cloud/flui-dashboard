@@ -61,9 +61,7 @@ export function matchesApp(app: AppOption, query: string): boolean {
       } @else if (loading()) {
         <p class="mt-1 text-xs text-muted-foreground">Loading applications…</p>
       } @else if (failed()) {
-        <p class="mt-1 text-xs text-red-600 dark:text-red-400">
-          Could not load the applications of this cluster.
-        </p>
+        <p class="mt-1 text-xs text-red-600">Could not load the applications of this cluster.</p>
       } @else if (options().length === 0) {
         <p class="mt-1 text-xs text-muted-foreground">No applications on this cluster.</p>
       } @else {
@@ -101,9 +99,7 @@ export function matchesApp(app: AppOption, query: string): boolean {
           }
         </ul>
         @if (missing().length) {
-          <p class="mt-1 text-xs text-amber-700 dark:text-amber-400">
-            The chosen application is not on this cluster.
-          </p>
+          <p class="mt-1 text-xs text-amber-700">The chosen application is not on this cluster.</p>
         }
       }
     </div>

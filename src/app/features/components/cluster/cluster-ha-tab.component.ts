@@ -48,11 +48,7 @@ interface ZoneCard extends ClusterHaZone {
             <ng-icon
               [name]="v.level === 'three-locations' ? 'lucideShieldCheck' : 'lucideShieldAlert'"
               class="h-4 w-4"
-              [class]="
-                v.level === 'three-locations'
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-muted-foreground'
-              "
+              [class]="v.level === 'three-locations' ? 'text-emerald-600' : 'text-muted-foreground'"
             />
             <span class="text-sm font-medium">{{ headline() }}</span>
           </div>
@@ -67,7 +63,7 @@ interface ZoneCard extends ClusterHaZone {
             </p>
           }
           @for (w of v.warnings; track w) {
-            <p class="m-0 mt-1 text-xs text-amber-700 dark:text-amber-400">
+            <p class="m-0 mt-1 text-xs text-amber-700">
               {{ w }}
             </p>
           }
@@ -81,7 +77,7 @@ interface ZoneCard extends ClusterHaZone {
           @if (open()) {
             <ul class="m-0 mt-2 list-none space-y-1 p-0 text-xs" data-testid="ha-survives">
               @for (s of v.survives; track s) {
-                <li class="text-emerald-700 dark:text-emerald-400">Survives {{ s }}</li>
+                <li class="text-emerald-700">Survives {{ s }}</li>
               }
               @for (s of v.doesNotSurvive; track s) {
                 <li class="text-muted-foreground">Does not survive {{ s }}</li>
@@ -105,7 +101,7 @@ interface ZoneCard extends ClusterHaZone {
                     class="rounded px-1.5 py-0.5 text-[11px] font-medium"
                     [class]="
                       z.role === 'data'
-                        ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300'
+                        ? 'bg-sky-100 text-sky-800'
                         : 'bg-muted text-muted-foreground'
                     "
                   >
@@ -118,7 +114,7 @@ interface ZoneCard extends ClusterHaZone {
                       <span>{{ s }}</span>
                       @if (s === leader()) {
                         <span
-                          class="inline-flex items-center gap-0.5 text-amber-700 dark:text-amber-400"
+                          class="inline-flex items-center gap-0.5 text-amber-700"
                           title="Leads the cluster"
                         >
                           <ng-icon name="lucideCrown" class="h-3 w-3" /> leads
@@ -141,9 +137,7 @@ interface ZoneCard extends ClusterHaZone {
                     </li>
                   }
                   @for (m of z.missing; track m.role) {
-                    <li
-                      class="flex items-center justify-between gap-2 text-amber-700 dark:text-amber-400"
-                    >
+                    <li class="flex items-center justify-between gap-2 text-amber-700">
                       <span>Needs {{ m.label }}</span>
                       <button
                         type="button"

@@ -95,7 +95,7 @@ import { ToastService } from '../../../shared/services/toast.service';
         <!-- Error banners -->
         @if (clusterDnsZoneService.error()) {
           <div
-            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ clusterDnsZoneService.error() }}</span>
@@ -103,7 +103,7 @@ import { ToastService } from '../../../shared/services/toast.service';
         }
         @if (appEndpointsService.error()) {
           <div
-            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ appEndpointsService.error() }}</span>
@@ -147,7 +147,7 @@ import { ToastService } from '../../../shared/services/toast.service';
             <div class="flex items-center gap-2">
               <button
                 (click)="toggleAddForm()"
-                class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
               >
                 <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
                 Add Endpoint
@@ -155,7 +155,7 @@ import { ToastService } from '../../../shared/services/toast.service';
               <button
                 (click)="refreshEndpoints()"
                 [disabled]="refreshingEndpoints()"
-                class="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-50 transition-colors"
+                class="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-colors"
                 title="Refresh endpoints"
               >
                 <ng-icon

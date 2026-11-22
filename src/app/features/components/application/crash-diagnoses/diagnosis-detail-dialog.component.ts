@@ -60,31 +60,25 @@ import {
       >
         <div class="flex min-h-screen items-start justify-center p-4">
           <div
-            class="relative w-full max-w-3xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl my-8"
+            class="relative w-full max-w-3xl bg-white border border-gray-200 rounded-lg shadow-xl my-8"
             (click)="$event.stopPropagation()"
           >
             <!-- Header -->
-            <div
-              class="flex items-start justify-between gap-4 p-6 border-b border-gray-200 dark:border-gray-700"
-            >
+            <div class="flex items-start justify-between gap-4 p-6 border-b border-gray-200">
               <div class="flex-1 space-y-2 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span [class]="severityClass()">{{ diagnosis.severity }}</span>
-                  <span
-                    class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-900/40 text-gray-600 dark:text-gray-300"
-                  >
+                  <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                     {{ category() }}
                   </span>
                   @if (diagnosis.patternMatchedKey) {
-                    <span
-                      class="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 font-mono"
-                    >
+                    <span class="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono">
                       {{ diagnosis.patternMatchedKey }}
                     </span>
                   }
                   @if (autoRemediated()) {
                     <span
-                      class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 font-medium"
+                      class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-medium"
                     >
                       <ng-icon name="lucideWand" class="h-3 w-3" />
                       Auto-remediated
@@ -92,24 +86,24 @@ import {
                   }
                   @if (autoFix(); as af) {
                     <span
-                      class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 font-mono"
+                      class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono"
                     >
                       Memory {{ af.previousMemoryLimit }} → {{ af.newMemoryLimit }}
                     </span>
                   }
                   @if (diagnosis.resolvedAt) {
                     <span
-                      class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                      class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-50 text-green-700"
                     >
                       <ng-icon name="lucideCircleCheck" class="h-3 w-3" />
                       resolved
                     </span>
                   }
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white break-words">
+                <h3 class="text-lg font-semibold text-gray-900 break-words">
                   {{ diagnosis.title }}
                 </h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
+                <p class="text-xs text-gray-500">
                   Pod: <span class="font-mono">{{ diagnosis.podName }}</span>
                   @if (diagnosis.containerName) {
                     · <span class="font-mono">{{ diagnosis.containerName }}</span>
@@ -132,38 +126,32 @@ import {
             <!-- Body -->
             <div class="p-6 space-y-6">
               <!-- Explanation -->
-              <p
-                class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap"
-              >
+              <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {{ diagnosis.explanation }}
               </p>
 
               <!-- Suggested action -->
               @if (diagnosis.suggestedAction) {
                 @if (autoRemediated()) {
-                  <div
-                    class="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10 p-4 space-y-3"
-                  >
+                  <div class="rounded-lg border border-purple-200 bg-purple-50 p-4 space-y-3">
                     <div class="flex items-start gap-2">
                       <ng-icon
                         name="lucideWand"
-                        class="h-4 w-4 text-purple-700 dark:text-purple-300 mt-0.5 flex-shrink-0"
+                        class="h-4 w-4 text-purple-700 mt-0.5 flex-shrink-0"
                       />
-                      <p class="text-sm text-purple-900 dark:text-purple-200 whitespace-pre-wrap">
+                      <p class="text-sm text-purple-900 whitespace-pre-wrap">
                         {{ diagnosis.suggestedAction.message }}
                       </p>
                     </div>
                   </div>
                 } @else {
-                  <div
-                    class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 p-4 space-y-3"
-                  >
+                  <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
                     <div class="flex items-start gap-2">
                       <ng-icon
                         name="lucideInfo"
-                        class="h-4 w-4 text-blue-700 dark:text-blue-400 mt-0.5 flex-shrink-0"
+                        class="h-4 w-4 text-blue-700 mt-0.5 flex-shrink-0"
                       />
-                      <p class="text-sm text-blue-900 dark:text-blue-200 whitespace-pre-wrap">
+                      <p class="text-sm text-blue-900 whitespace-pre-wrap">
                         {{ diagnosis.suggestedAction.message }}
                       </p>
                     </div>
@@ -178,7 +166,7 @@ import {
                         }
                       </button>
                       @if (applyError()) {
-                        <p class="text-xs text-red-700 dark:text-red-400">{{ applyError() }}</p>
+                        <p class="text-xs text-red-700">{{ applyError() }}</p>
                       }
                     } @else if (showUserInputCta()) {
                       <button hlmBtn size="sm" (click)="gotoConfiguration()">
@@ -207,20 +195,14 @@ import {
               ) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   @if (diagnosis.evidence.exitCode != null) {
-                    <div
-                      class="bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-                    >
-                      <p class="text-xs text-gray-500 dark:text-gray-400">Exit code</p>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      <p class="text-xs text-gray-500">Exit code</p>
                       <p class="text-sm font-mono font-medium">{{ diagnosis.evidence.exitCode }}</p>
                     </div>
                   }
                   @if (diagnosis.evidence.lastTerminationReason) {
-                    <div
-                      class="bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-                    >
-                      <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Last termination reason
-                      </p>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      <p class="text-xs text-gray-500">Last termination reason</p>
                       <p class="text-sm font-mono font-medium">
                         {{ diagnosis.evidence.lastTerminationReason }}
                       </p>
@@ -231,9 +213,7 @@ import {
 
               <!-- Missing resource -->
               @if (diagnosis.evidence.missingResource) {
-                <div
-                  class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-4 text-sm text-red-800 dark:text-red-300"
-                >
+                <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
                   <div class="flex items-start gap-2">
                     <ng-icon name="lucideTriangleAlert" class="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <div>
@@ -251,7 +231,7 @@ import {
               @if (diagnosis.evidence.logsSnippet) {
                 <details class="group" open>
                   <summary
-                    class="cursor-pointer text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2 select-none"
+                    class="cursor-pointer text-sm font-medium text-gray-900 flex items-center gap-2 select-none"
                   >
                     <ng-icon name="lucideTerminal" class="h-4 w-4 text-gray-500" />
                     Log snippet
@@ -266,14 +246,14 @@ import {
               @if (diagnosis.evidence.events?.length) {
                 <details class="group">
                   <summary
-                    class="cursor-pointer text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2 select-none"
+                    class="cursor-pointer text-sm font-medium text-gray-900 flex items-center gap-2 select-none"
                   >
                     <ng-icon name="lucideActivity" class="h-4 w-4 text-gray-500" />
                     Kubernetes events ({{ diagnosis.evidence.events!.length }})
                   </summary>
                   <div class="mt-2 overflow-x-auto">
                     <table class="w-full text-xs">
-                      <thead class="text-left text-gray-500 dark:text-gray-400">
+                      <thead class="text-left text-gray-500">
                         <tr>
                           <th class="py-2 pr-3 font-medium">Type</th>
                           <th class="py-2 pr-3 font-medium">Reason</th>
@@ -284,14 +264,14 @@ import {
                       </thead>
                       <tbody>
                         @for (ev of diagnosis.evidence!.events; track $index) {
-                          <tr class="border-t border-gray-100 dark:border-gray-700/50 align-top">
+                          <tr class="border-t border-gray-100 align-top">
                             <td class="py-2 pr-3">
                               <span
                                 class="px-1.5 py-0.5 rounded font-medium"
                                 [ngClass]="
                                   ev.type === 'Warning'
-                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-900/40 dark:text-gray-300'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-700'
                                 "
                               >
                                 {{ ev.type }}
@@ -303,12 +283,12 @@ import {
                               {{ ev.count }}
                               @if (ev.count > 10) {
                                 <span
-                                  class="ml-1 text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                                  class="ml-1 text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-700"
                                   >repeated</span
                                 >
                               }
                             </td>
-                            <td class="py-2 text-gray-500 dark:text-gray-400">
+                            <td class="py-2 text-gray-500">
                               {{ ev.lastTimestamp ? formatDate(ev.lastTimestamp) : '—' }}
                             </td>
                           </tr>
@@ -321,9 +301,7 @@ import {
             </div>
 
             <!-- Footer -->
-            <div
-              class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700"
-            >
+            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200">
               <button hlmBtn variant="outline" (click)="close()">Close</button>
               @if (!diagnosis.resolvedAt) {
                 <button hlmBtn (click)="onDismiss()" [disabled]="dismissing()">

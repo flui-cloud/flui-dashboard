@@ -34,7 +34,7 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
       class="grid grid-cols-[3px_1fr] overflow-hidden rounded-lg border border-border bg-card"
       data-testid="request"
     >
-      <div class="bg-orange-400 dark:bg-orange-500"></div>
+      <div class="bg-orange-400"></div>
 
       <div class="flex flex-col gap-4 px-5 py-4">
         <div class="flex flex-wrap items-center gap-2.5">
@@ -100,11 +100,7 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
               </dt>
               <dd
                 class="m-0 break-all font-mono text-sm font-medium tabular-nums"
-                [class]="
-                  fact.money
-                    ? 'text-orange-700 dark:text-orange-400 font-semibold'
-                    : 'text-foreground'
-                "
+                [class]="fact.money ? 'text-orange-700 font-semibold' : 'text-foreground'"
               >
                 {{ fact.value }}
               </dd>
@@ -125,7 +121,7 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
 
         @if (offersAlways()) {
           <p
-            class="m-0 rounded-md border border-dashed border-orange-400 bg-orange-50 px-3 py-2.5 text-[13px] text-foreground dark:border-orange-500/60 dark:bg-orange-500/10"
+            class="m-0 rounded-md border border-dashed border-orange-400 bg-orange-50 px-3 py-2.5 text-[13px] text-foreground"
             data-testid="grants-line"
           >
             Allow always grants exactly this:
@@ -164,7 +160,7 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
               variant="outline"
               [disabled]="busy()"
               (click)="answer(DECISION.ALWAYS)"
-              class="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/20"
+              class="border-green-300 text-green-700 hover:bg-green-50"
               data-testid="allow-always"
             >
               Allow always
@@ -178,7 +174,7 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
             variant="outline"
             [disabled]="busy()"
             (click)="answer(DECISION.DENY)"
-            class="border-red-300 text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20"
+            class="border-red-300 text-red-700 hover:bg-red-50"
             data-testid="deny"
           >
             Deny

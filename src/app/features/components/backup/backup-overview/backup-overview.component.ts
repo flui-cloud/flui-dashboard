@@ -66,7 +66,7 @@ interface OverviewCard {
           role="alert"
           class="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm"
         >
-          <div class="font-medium text-red-700 dark:text-red-400">
+          <div class="font-medium text-red-700">
             {{
               attention().length === 1
                 ? '1 backup needs attention'
@@ -187,9 +187,7 @@ interface OverviewCard {
             <div class="text-xs text-muted-foreground">Policies</div>
             <div class="text-2xl font-semibold mt-1">{{ policiesCount() }}</div>
             @if (degradedCount() > 0) {
-              <div class="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                {{ degradedCount() }} degraded
-              </div>
+              <div class="text-xs text-amber-600 mt-1">{{ degradedCount() }} degraded</div>
             }
           </div>
           <div class="rounded-lg border border-border bg-card p-4">
@@ -223,9 +221,7 @@ interface OverviewCard {
       </div>
 
       @if (error()) {
-        <div
-          class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
-        >
+        <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700">
           {{ error() }}
         </div>
       }

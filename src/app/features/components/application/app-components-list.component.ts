@@ -29,7 +29,7 @@ import { ApplicationResponseDto } from '../../../core/api/model/models';
                   {{ role(c) }}
                   @if (c.id === primaryComponentId()) {
                     <span
-                      class="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:bg-sky-900/20 dark:text-sky-400"
+                      class="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800"
                       >primary</span
                     >
                   }

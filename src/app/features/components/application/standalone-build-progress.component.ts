@@ -158,7 +158,7 @@ interface WizardState {
       <!-- Connection lost banner -->
       @if (connectionLost() && phase() === 'building') {
         <div
-          class="mb-6 flex items-center gap-3 px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg text-sm text-yellow-800 dark:text-yellow-300"
+          class="mb-6 flex items-center gap-3 px-4 py-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-800"
         >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
           <span>Connection lost — the build is still running. Reconnecting...</span>
@@ -196,7 +196,7 @@ interface WizardState {
                       </span>
                       @if (ph.id === 'ANALYZING' && detectedFramework()) {
                         <span
-                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
                         >
                           <ng-icon name="lucidePackage" class="h-3 w-3 mr-1" />
                           {{ detectedFramework() }}
@@ -301,7 +301,7 @@ interface WizardState {
                       >auto-detected</span
                     >
                   } @else {
-                    <span class="ml-1.5 text-xs font-normal text-amber-600 dark:text-amber-400"
+                    <span class="ml-1.5 text-xs font-normal text-amber-600"
                       >not detected — required</span
                     >
                   }
@@ -316,7 +316,7 @@ interface WizardState {
                   placeholder="e.g. 3000"
                 />
                 @if (!effectivePort()) {
-                  <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  <p class="text-xs text-amber-600 mt-1">
                     Port is required to expose the application.
                   </p>
                 }
@@ -403,8 +403,7 @@ interface WizardState {
                           {{ startCommandIsAutoCorrected() ? 'Auto-corrected' : 'Auto' }}
                         </span>
                       } @else {
-                        <span
-                          class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        <span class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700"
                           >Custom</span
                         >
                       }
@@ -534,7 +533,7 @@ interface WizardState {
                 <div class="flex justify-between items-center">
                   <span class="text-muted-foreground">Runtime:</span>
                   <span
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
                   >
                     {{ detectedFramework() }}
                   </span>
@@ -549,8 +548,7 @@ interface WizardState {
                   <div class="flex items-center gap-1.5 mb-1">
                     <span class="text-muted-foreground text-xs">Start command</span>
                     @if (startCommandIsAutoCorrected()) {
-                      <span
-                        class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700"
                         >Auto-corrected</span
                       >
                     } @else {
@@ -1119,7 +1117,7 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
       case 'failed':
         return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive';
       default:
-        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
     }
   }
 

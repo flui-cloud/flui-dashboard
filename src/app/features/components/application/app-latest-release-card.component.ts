@@ -67,9 +67,7 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
                 {{ statusLabel(r.status) }}
               </span>
               @if (r.startedAt) {
-                <span class="text-xs text-gray-500 dark:text-gray-400">
-                  · {{ formatDate(r.startedAt) }}
-                </span>
+                <span class="text-xs text-gray-500"> · {{ formatDate(r.startedAt) }} </span>
               }
             </div>
 
@@ -77,10 +75,7 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
             @if (r.imageRef || r.previousImageRef) {
               <div class="mt-2 flex items-center gap-2 text-xs font-mono flex-wrap min-w-0">
                 @if (r.previousImageRef && r.previousImageRef !== r.imageRef) {
-                  <span
-                    class="text-gray-500 dark:text-gray-400 truncate"
-                    [title]="r.previousImageRef"
-                  >
+                  <span class="text-gray-500 truncate" [title]="r.previousImageRef">
                     {{ shortImage(r.previousImageRef) }}
                   </span>
                   <ng-icon name="lucideArrowRight" class="h-3 w-3 text-gray-400 flex-shrink-0" />
@@ -95,9 +90,7 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
 
             <!-- Failure reason -->
             @if (r.status === 'FAILED' && r.failureReason) {
-              <p
-                class="mt-2 text-xs whitespace-pre-wrap break-words text-red-700 dark:text-red-300"
-              >
+              <p class="mt-2 text-xs whitespace-pre-wrap break-words text-red-700">
                 {{ r.failureReason }}
               </p>
             }
@@ -109,7 +102,7 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
                   [href]="url"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                  class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
                 >
                   <ng-icon name="lucideExternalLink" class="h-3 w-3" />
                   View build on GitHub
@@ -117,14 +110,14 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
               }
               <a
                 [routerLink]="['/apps/applications', r.applicationId, 'releases']"
-                class="inline-flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                class="inline-flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900"
               >
                 Release history
               </a>
               @if (r.status === 'FAILED' && canRollback()) {
                 <a
                   [routerLink]="['/apps/applications', r.applicationId, 'revisions']"
-                  class="inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-400 hover:underline"
+                  class="inline-flex items-center gap-1 text-xs font-medium text-red-700 hover:underline"
                 >
                   <ng-icon name="lucideRotateCcw" class="h-3 w-3" />
                   Rollback
@@ -184,28 +177,28 @@ export class AppLatestReleaseCardComponent implements OnChanges {
   containerClass(status: ReleaseStatus): string {
     switch (status) {
       case 'FAILED':
-        return 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800';
+        return 'bg-red-50 border-red-200';
       case 'IN_PROGRESS':
-        return 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800';
+        return 'bg-blue-50 border-blue-200';
       case 'ROLLED_BACK':
-        return 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800';
+        return 'bg-amber-50 border-amber-200';
       case 'SUCCEEDED':
       default:
-        return 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+        return 'bg-white border-gray-200';
     }
   }
 
   iconClass(status: ReleaseStatus): string {
     switch (status) {
       case 'FAILED':
-        return 'text-red-600 dark:text-red-400';
+        return 'text-red-600';
       case 'IN_PROGRESS':
-        return 'text-blue-600 dark:text-blue-400';
+        return 'text-blue-600';
       case 'ROLLED_BACK':
-        return 'text-amber-600 dark:text-amber-400';
+        return 'text-amber-600';
       case 'SUCCEEDED':
       default:
-        return 'text-green-600 dark:text-green-400';
+        return 'text-green-600';
     }
   }
 
@@ -255,14 +248,14 @@ export class AppLatestReleaseCardComponent implements OnChanges {
   badgeClass(status: ReleaseStatus): string {
     switch (status) {
       case 'FAILED':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+        return 'bg-red-100 text-red-800';
       case 'IN_PROGRESS':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+        return 'bg-blue-100 text-blue-800';
       case 'ROLLED_BACK':
-        return 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400';
+        return 'bg-amber-100 text-amber-800';
       case 'SUCCEEDED':
       default:
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+        return 'bg-green-100 text-green-800';
     }
   }
 

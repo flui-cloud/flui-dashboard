@@ -77,9 +77,7 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
           <!-- Header -->
           <div class="flex items-center justify-between px-6 py-4 border-b border-border">
             <div class="flex items-center gap-2.5">
-              <div
-                class="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center"
-              >
+              <div class="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
                 <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-emerald-500" />
               </div>
               <div>
@@ -104,7 +102,7 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
             <!-- Success header -->
             <div class="flex items-center gap-3">
               <div
-                class="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0"
+                class="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0"
               >
                 <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-emerald-500" />
               </div>
@@ -279,12 +277,8 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
                   @let msg =
                     wiz.activeAppError()!.certMessage || wiz.activeAppError()!.errorMessage;
                   @if (msg) {
-                    <div
-                      class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/15 px-3 py-2"
-                    >
-                      <p
-                        class="text-xs text-red-700 dark:text-red-300 font-mono leading-relaxed break-all"
-                      >
+                    <div class="rounded-md border border-red-200 bg-red-50 px-3 py-2">
+                      <p class="text-xs text-red-700 font-mono leading-relaxed break-all">
                         {{ msg }}
                       </p>
                     </div>

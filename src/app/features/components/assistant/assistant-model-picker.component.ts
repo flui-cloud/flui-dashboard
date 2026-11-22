@@ -79,7 +79,7 @@ import {
                     @if (opt.note) {
                       <div class="mt-1">
                         <span
-                          class="inline-block rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400"
+                          class="inline-block rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-600"
                           >{{ opt.note }}</span
                         >
                       </div>

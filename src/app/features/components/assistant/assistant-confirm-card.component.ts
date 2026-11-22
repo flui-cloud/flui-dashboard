@@ -44,11 +44,11 @@ interface ActionGroup {
         <ng-icon
           name="lucideAlertTriangle"
           class="h-3.5 w-3.5 shrink-0"
-          [class]="isDestructive() ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'"
+          [class]="isDestructive() ? 'text-destructive' : 'text-amber-600'"
         />
         <p
           class="text-xs font-semibold"
-          [class]="isDestructive() ? 'text-destructive' : 'text-amber-700 dark:text-amber-400'"
+          [class]="isDestructive() ? 'text-destructive' : 'text-amber-700'"
         >
           {{ isDestructive() ? 'Destructive action — confirm carefully' : 'Confirm action' }}
         </p>
@@ -63,7 +63,7 @@ interface ActionGroup {
                 [class]="
                   group.tier === 'destructive'
                     ? 'bg-destructive/15 text-destructive'
-                    : 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                    : 'bg-amber-500/15 text-amber-700'
                 "
               >
                 {{ group.tier }}
@@ -100,7 +100,7 @@ interface ActionGroup {
                 </p>
                 @if (request.estimateNote) {
                   <p
-                    class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400"
+                    class="text-[11px] leading-relaxed text-amber-700"
                     data-testid="cycle-estimate"
                   >
                     {{ request.estimateNote }}
@@ -111,7 +111,7 @@ interface ActionGroup {
                     [href]="request.decideUrl"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:underline dark:text-blue-400"
+                    class="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:underline"
                     data-testid="cycle-decide-url"
                   >
                     <ng-icon name="lucideExternalLink" class="h-3 w-3" />

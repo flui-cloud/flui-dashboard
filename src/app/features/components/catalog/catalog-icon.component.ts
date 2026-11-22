@@ -17,7 +17,7 @@ const PALETTE = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (iconUrl() && !imageFailed()) {
-      <div [class]="containerClass() + ' bg-white dark:bg-white/90 ring-1 ring-border'">
+      <div [class]="containerClass() + ' bg-white ring-1 ring-border'">
         <img
           [src]="iconUrl()"
           [alt]="name() + ' icon'"

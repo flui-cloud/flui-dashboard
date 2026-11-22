@@ -100,10 +100,10 @@ export class SandboxBannerComponent {
 
   protected readonly tone = computed(() => {
     if (this.sandbox.expired()) {
-      return 'bg-red-50 text-red-900 border-red-200 dark:bg-red-950/40 dark:text-red-200 dark:border-red-900/50';
+      return 'bg-red-50 text-red-900 border-red-200';
     }
     if (this.sandbox.urgent()) {
-      return 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-900/50';
+      return 'bg-amber-50 text-amber-900 border-amber-200';
     }
     return 'bg-muted/50 text-foreground/80 border-border';
   });

@@ -26,7 +26,7 @@ import {
       <div class="flex items-start justify-between gap-4">
         <div>
           <span class="text-label flex items-center gap-2">
-            <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-amber-600" />
             Volumes with no application
           </span>
           <p class="text-xs text-muted-foreground mt-1 max-w-2xl">
@@ -51,11 +51,11 @@ import {
           Looking for volumes with no application…
         </div>
       } @else if (error()) {
-        <p class="text-sm text-red-700 dark:text-red-300 mt-3" data-testid="orphaned-error">
+        <p class="text-sm text-red-700 mt-3" data-testid="orphaned-error">
           {{ error() }}
         </p>
       } @else if (note()) {
-        <p class="text-sm text-amber-700 dark:text-amber-300 mt-3" data-testid="orphaned-note">
+        <p class="text-sm text-amber-700 mt-3" data-testid="orphaned-note">
           {{ note() }}
         </p>
       } @else if (claims().length === 0) {
@@ -115,10 +115,10 @@ import {
                   <tr class="border-b border-border/50">
                     <td colspan="4" class="py-3">
                       <div
-                        class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-3"
+                        class="rounded-md border border-red-200 bg-red-50 p-3"
                         [attr.data-testid]="'orphaned-confirm-' + ref(claim)"
                       >
-                        <p class="text-sm text-red-900 dark:text-red-200">
+                        <p class="text-sm text-red-900">
                           Delete <span class="font-mono">{{ ref(claim) }}</span> ({{
                             claim.sizeLabel
                           }}) for good? Whatever is inside it goes with it, and nothing brings it

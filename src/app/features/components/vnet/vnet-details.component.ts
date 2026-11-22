@@ -81,29 +81,27 @@ import {
         <div class="flex items-center gap-4">
           <button
             (click)="goBack()"
-            class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
             Back
           </button>
           <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 class="text-3xl font-bold text-gray-900">
               @if (vnet()) {
                 {{ vnet()!.name }}
               } @else {
                 VNet Details
               }
             </h1>
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Virtual Network details and subnet management
-            </p>
+            <p class="mt-2 text-sm text-gray-600">Virtual Network details and subnet management</p>
           </div>
         </div>
         <div class="flex gap-3">
           <button
             (click)="syncVNet()"
             [disabled]="isLoading()"
-            class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
             Sync
@@ -122,21 +120,19 @@ import {
       <!-- Loading State -->
       @if (isLoading() && !vnet()) {
         <div
-          class="flex items-center justify-center py-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          class="flex items-center justify-center py-12 bg-white border border-gray-200 rounded-lg"
         >
           <div class="text-center">
             <ng-icon name="lucideRefreshCw" class="h-8 w-8 animate-spin mx-auto text-blue-600" />
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading VNet details...</p>
+            <p class="mt-2 text-sm text-gray-600">Loading VNet details...</p>
           </div>
         </div>
       }
 
       <!-- Error Message -->
       @if (errorMessage()) {
-        <div
-          class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
-        >
-          <div class="text-sm text-red-800 dark:text-red-200">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div class="text-sm text-red-800">
             {{ errorMessage() }}
           </div>
         </div>
@@ -146,10 +142,8 @@ import {
       @if (vnet()) {
         <!-- Overview Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-          >
-            <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
               <ng-icon name="lucideActivity" class="h-4 w-4" />
               Status
             </div>
@@ -161,77 +155,69 @@ import {
             </span>
           </div>
 
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-          >
-            <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
               <ng-icon name="lucideMapPin" class="h-4 w-4" />
               Provider
             </div>
-            <div class="text-xl font-bold text-gray-900 dark:text-white capitalize">
+            <div class="text-xl font-bold text-gray-900 capitalize">
               {{ vnet()!.provider }}
             </div>
           </div>
 
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-          >
-            <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
               <ng-icon name="lucideNetwork" class="h-4 w-4" />
               Subnets
             </div>
-            <div class="text-xl font-bold text-gray-900 dark:text-white">
+            <div class="text-xl font-bold text-gray-900">
               {{ vnet()!.subnets.length }}
             </div>
           </div>
 
-          <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-          >
-            <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
               <ng-icon name="lucideServer" class="h-4 w-4" />
               Attached Servers
             </div>
-            <div class="text-xl font-bold text-gray-900 dark:text-white">
+            <div class="text-xl font-bold text-gray-900">
               {{ getAllAttachedServers() }}
             </div>
           </div>
         </div>
 
         <!-- VNet Information -->
-        <div
-          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6"
-        >
+        <div class="bg-white border border-gray-200 rounded-lg p-6">
           <div class="flex items-center gap-2 mb-4">
             <ng-icon name="lucideInfo" class="h-5 w-5 text-gray-500" />
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Network Information</h2>
+            <h2 class="text-lg font-semibold text-gray-900">Network Information</h2>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">VNet ID</div>
-              <div class="text-sm font-mono text-gray-900 dark:text-white">
+              <div class="text-sm text-gray-500 mb-1">VNet ID</div>
+              <div class="text-sm font-mono text-gray-900">
                 {{ vnet()!.id }}
               </div>
             </div>
 
             <div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Provider Resource ID</div>
-              <div class="text-sm font-mono text-gray-900 dark:text-white">
+              <div class="text-sm text-gray-500 mb-1">Provider Resource ID</div>
+              <div class="text-sm font-mono text-gray-900">
                 {{ vnet()!.providerResourceId }}
               </div>
             </div>
 
             <div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">IP Range</div>
-              <div class="text-sm font-mono text-gray-900 dark:text-white">
+              <div class="text-sm text-gray-500 mb-1">IP Range</div>
+              <div class="text-sm font-mono text-gray-900">
                 {{ vnet()!.ipRange }}
               </div>
             </div>
 
             <div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Created At</div>
-              <div class="text-sm text-gray-900 dark:text-white">
+              <div class="text-sm text-gray-500 mb-1">Created At</div>
+              <div class="text-sm text-gray-900">
                 {{ vnet()!.createdAt | date: 'medium' }}
               </div>
             </div>
@@ -241,13 +227,11 @@ import {
             <div class="mt-6">
               <div class="flex items-center gap-2 mb-3">
                 <ng-icon name="lucideTag" class="h-4 w-4 text-gray-500" />
-                <div class="text-sm font-medium text-gray-700 dark:text-gray-300">Labels</div>
+                <div class="text-sm font-medium text-gray-700">Labels</div>
               </div>
               <div class="flex flex-wrap gap-2">
                 @for (label of vnet()!.labels; track label.key) {
-                  <span
-                    class="px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                  >
+                  <span class="px-3 py-1.5 text-sm rounded-md bg-gray-100 text-gray-700">
                     <span class="font-medium">{{ label.key }}:</span> {{ label.value }}
                   </span>
                 }
@@ -257,13 +241,11 @@ import {
         </div>
 
         <!-- Subnets Section -->
-        <div
-          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6"
-        >
+        <div class="bg-white border border-gray-200 rounded-lg p-6">
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-2">
               <ng-icon name="lucideNetwork" class="h-5 w-5 text-gray-500" />
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Subnets</h2>
+              <h2 class="text-lg font-semibold text-gray-900">Subnets</h2>
             </div>
             @if (supportsSubnets()) {
               <button
@@ -280,41 +262,37 @@ import {
           @if (vnet()!.subnets.length === 0) {
             <div class="text-center py-8">
               <ng-icon name="lucideNetwork" class="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p class="text-sm text-gray-600 dark:text-gray-400">No subnets configured yet</p>
+              <p class="text-sm text-gray-600">No subnets configured yet</p>
             </div>
           } @else {
             <div class="space-y-3">
               @for (subnet of vnet()!.subnets; track subnet.id) {
                 <div
-                  class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+                  class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
                 >
                   <div class="flex items-start justify-between">
                     <div class="flex-1">
                       <div class="flex items-center gap-3 mb-2">
-                        <span
-                          class="text-base font-mono font-semibold text-gray-900 dark:text-white"
-                        >
+                        <span class="text-base font-mono font-semibold text-gray-900">
                           {{ subnet.ipRange }}
                         </span>
-                        <span
-                          class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                        >
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800">
                           {{ subnet.attachedServerIds.length }} server(s)
                         </span>
                       </div>
 
                       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                         <div>
-                          <div class="text-xs text-gray-500 dark:text-gray-400">Network Zone</div>
-                          <div class="text-sm text-gray-900 dark:text-white mt-1">
+                          <div class="text-xs text-gray-500">Network Zone</div>
+                          <div class="text-sm text-gray-900 mt-1">
                             {{ subnet.networkZone }}
                           </div>
                         </div>
 
                         @if (subnet.gateway) {
                           <div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">Gateway</div>
-                            <div class="text-sm font-mono text-gray-900 dark:text-white mt-1">
+                            <div class="text-xs text-gray-500">Gateway</div>
+                            <div class="text-sm font-mono text-gray-900 mt-1">
                               {{ subnet.gateway }}
                             </div>
                           </div>
@@ -322,10 +300,8 @@ import {
 
                         @if (subnet.providerSubnetId) {
                           <div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                              Provider Subnet ID
-                            </div>
-                            <div class="text-sm font-mono text-gray-900 dark:text-white mt-1">
+                            <div class="text-xs text-gray-500">Provider Subnet ID</div>
+                            <div class="text-sm font-mono text-gray-900 mt-1">
                               {{ subnet.providerSubnetId }}
                             </div>
                           </div>
@@ -334,18 +310,16 @@ import {
 
                       <!-- Attached Servers Section -->
                       @if (subnet.attachedServerIds.length > 0) {
-                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                          <div class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Attached Servers
-                          </div>
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                          <div class="text-xs font-medium text-gray-700 mb-2">Attached Servers</div>
                           <div class="space-y-2">
                             @for (serverId of subnet.attachedServerIds; track serverId) {
                               <div
-                                class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                class="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
                               >
                                 <div class="flex items-center gap-2">
                                   <ng-icon name="lucideServer" size="16" class="text-gray-500" />
-                                  <span class="text-sm font-mono text-gray-900 dark:text-white">
+                                  <span class="text-sm font-mono text-gray-900">
                                     {{ getServerName(serverId) || serverId }}
                                   </span>
                                   @if (getServer(serverId)) {
@@ -357,7 +331,7 @@ import {
                                 <button
                                   (click)="detachServer(subnet, serverId)"
                                   [disabled]="isLoading()"
-                                  class="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                  class="p-1 text-red-600 hover:bg-red-50 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                   title="Detach server"
                                 >
                                   <ng-icon name="lucideX" size="16" />
@@ -370,14 +344,14 @@ import {
 
                       <!-- Attach Server Form -->
                       @if (showAttachServerForm() === subnet.id) {
-                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div class="mt-4 pt-4 border-t border-gray-200">
                           <div class="flex items-center justify-between mb-3">
-                            <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                            <h4 class="text-sm font-medium text-gray-900">
                               Attach Server to Subnet
                             </h4>
                             <button
                               (click)="cancelAttachServer()"
-                              class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                              class="text-sm text-gray-600 hover:text-gray-900"
                             >
                               Cancel
                             </button>
@@ -390,11 +364,11 @@ import {
                           />
                         </div>
                       } @else {
-                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div class="mt-4 pt-4 border-t border-gray-200">
                           <button
                             (click)="showAttachServerToSubnet(subnet)"
                             [disabled]="isLoading()"
-                            class="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            class="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
                             <ng-icon name="lucidePlus" size="16" />
                             Attach Server
@@ -406,7 +380,7 @@ import {
                     <button
                       (click)="confirmDeleteSubnet(subnet)"
                       [disabled]="isLoading()"
-                      class="ml-4 p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      class="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       title="Delete subnet"
                     >
                       <ng-icon name="lucideTrash2" class="h-4 w-4" />
@@ -425,14 +399,14 @@ import {
             (click)="cancelAddSubnet()"
           >
             <div
-              class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl"
+              class="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl"
               (click)="$event.stopPropagation()"
             >
               <div class="flex items-center justify-between mb-5">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Add Subnet</h3>
+                <h3 class="text-lg font-semibold text-gray-900">Add Subnet</h3>
                 <button
                   (click)="cancelAddSubnet()"
-                  class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors"
+                  class="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
                 >
                   <ng-icon name="lucideX" class="h-5 w-5" />
                 </button>
@@ -440,13 +414,11 @@ import {
 
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Region
-                  </label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1"> Region </label>
                   @if (vnetTopologyZones().length > 0) {
                     <select
                       [(ngModel)]="newSubnetZone"
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       @for (zone of vnetTopologyZones(); track zone.id) {
                         <option [value]="zone.id">{{ zone.displayName || zone.id }}</option>
@@ -457,40 +429,36 @@ import {
                       type="text"
                       [(ngModel)]="newSubnetZone"
                       placeholder="e.g., eu-central"
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   }
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    IP Range
-                  </label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1"> IP Range </label>
                   <input
                     type="text"
                     [ngModel]="newSubnetIpRange()"
                     (ngModelChange)="newSubnetIpRange.set($event)"
                     [placeholder]="'e.g., 10.0.1.0/' + suggestedSubnetPrefix()"
                     [class.border-red-500]="newSubnetIpRange() && !isSubnetCidrValid()"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p class="text-xs text-gray-500 mt-1">
                     {{ subnetCidrHint() }} —
                     <button
                       type="button"
                       (click)="newSubnetIpRange.set('10.0.1.0/' + suggestedSubnetPrefix())"
-                      class="text-blue-600 hover:text-blue-700 dark:text-blue-400 underline"
+                      class="text-blue-600 hover:text-blue-700 underline"
                     >
                       Use /{{ suggestedSubnetPrefix() }}
                     </button>
                     @if (subnetIpAddressLabel()) {
-                      <span class="ml-2 text-gray-400 dark:text-gray-500"
-                        >· {{ subnetIpAddressLabel() }}</span
-                      >
+                      <span class="ml-2 text-gray-400">· {{ subnetIpAddressLabel() }}</span>
                     }
                   </p>
                   @if (subnetCidrError()) {
-                    <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+                    <p class="text-xs text-red-600 mt-1">
                       {{ subnetCidrError() }}
                     </p>
                   }
@@ -501,7 +469,7 @@ import {
                 <button
                   (click)="cancelAddSubnet()"
                   [disabled]="isLoading()"
-                  class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                  class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -528,19 +496,17 @@ import {
             (click)="cancelDelete()"
           >
             <div
-              class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
+              class="bg-white rounded-lg p-6 max-w-md w-full mx-4"
               (click)="$event.stopPropagation()"
             >
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Confirm Deletion
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Confirm Deletion</h3>
+              <p class="text-sm text-gray-600 mb-6">
                 {{ deleteConfirmMessage() }}
               </p>
               <div class="flex gap-3 justify-end">
                 <button
                   (click)="cancelDelete()"
-                  class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -916,17 +882,17 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
   getStatusBadgeClass(status: VNetStatus): string {
     switch (status) {
       case VNetStatus.ACTIVE:
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-green-100 text-green-800';
       case VNetStatus.PENDING:
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+        return 'bg-yellow-100 text-yellow-800';
       case VNetStatus.FAILED:
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-red-100 text-red-800';
       case VNetStatus.DELETING:
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+        return 'bg-orange-100 text-orange-800';
       case VNetStatus.DELETED:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+        return 'bg-gray-100 text-gray-800';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+        return 'bg-gray-100 text-gray-800';
     }
   }
 }

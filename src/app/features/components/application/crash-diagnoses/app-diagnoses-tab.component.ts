@@ -57,7 +57,7 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
       <!-- Filters -->
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+          <span class="text-xs text-gray-500 font-medium">
             <ng-icon name="lucideFilter" class="h-3.5 w-3.5 inline mr-1" />
             Severity:
           </span>
@@ -66,8 +66,8 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
             class="text-xs px-2 py-0.5 rounded border"
             [ngClass]="
               severityFilter() === null
-                ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400'
-                : 'border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                ? 'bg-blue-50 border-blue-300 text-blue-700'
+                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
             "
             (click)="severityFilter.set(null)"
           >
@@ -79,8 +79,8 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
               class="text-xs px-2 py-0.5 rounded border capitalize"
               [ngClass]="
                 severityFilter() === s
-                  ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400'
-                  : 'border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  ? 'bg-blue-50 border-blue-300 text-blue-700'
+                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
               "
               (click)="severityFilter.set(s)"
             >
@@ -89,9 +89,9 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
           }
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Category:</span>
+          <span class="text-xs text-gray-500 font-medium">Category:</span>
           <select
-            class="text-xs border border-gray-200 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+            class="text-xs border border-gray-200 rounded px-2 py-1 bg-white text-gray-700"
             [value]="categoryFilter() ?? ''"
             (change)="onCategoryChange($event)"
           >
@@ -120,7 +120,7 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
       <!-- Error -->
       @if (service.error()) {
         <div
-          class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm"
+          class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
         >
           <ng-icon name="lucideCircleAlert" class="h-4 w-4 shrink-0" />
           {{ service.error() }}
@@ -129,21 +129,16 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
 
       <!-- List -->
       @if (service.loading() && filtered().length === 0) {
-        <div
-          class="flex items-center justify-center py-12 text-sm text-gray-500 dark:text-gray-400"
-        >
+        <div class="flex items-center justify-center py-12 text-sm text-gray-500">
           Loading diagnoses…
         </div>
       } @else if (filtered().length === 0) {
         <div
-          class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg"
+          class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 rounded-lg"
         >
-          <ng-icon
-            name="lucideShieldAlert"
-            class="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3"
-          />
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No diagnoses</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <ng-icon name="lucideShieldAlert" class="h-10 w-10 text-gray-300 mb-3" />
+          <p class="text-sm font-medium text-gray-700">No diagnoses</p>
+          <p class="text-xs text-gray-500 mt-1">
             All clear — no crashes detected for the current filters.
           </p>
         </div>

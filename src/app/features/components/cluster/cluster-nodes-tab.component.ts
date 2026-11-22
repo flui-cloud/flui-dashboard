@@ -121,16 +121,12 @@ interface NodeRowMeta {
         }
 
         @if (nodesError() && !nodesIsLoading() && clusterNodes().length === 0) {
-          <div
-            class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4"
-          >
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
             <div class="flex items-center gap-3">
               <ng-icon name="lucideCircleAlert" class="h-5 w-5 status-error" />
               <div class="flex-1">
-                <p class="text-sm font-medium text-red-900 dark:text-red-200">
-                  Failed to load nodes
-                </p>
-                <p class="text-sm text-red-700 dark:text-red-300 mt-1">{{ nodesError() }}</p>
+                <p class="text-sm font-medium text-red-900">Failed to load nodes</p>
+                <p class="text-sm text-red-700 mt-1">{{ nodesError() }}</p>
               </div>
             </div>
           </div>

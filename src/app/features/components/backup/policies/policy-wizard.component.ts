@@ -324,7 +324,7 @@ interface WizardDestination {
           @if (validationError(); as v) {
             @if (!noDestinations()) {
               <div
-                class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400"
+                class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700"
               >
                 {{ v }}
               </div>
@@ -377,7 +377,7 @@ interface WizardDestination {
           </div>
           @if (submitError()) {
             <div
-              class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+              class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700"
             >
               {{ submitError() }}
             </div>

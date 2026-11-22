@@ -66,7 +66,7 @@ import { ProviderMarkComponent } from '../provider-mark.component';
           [(ngModel)]="searchQuery"
           (ngModelChange)="onSearchChange()"
           placeholder="Search servers by name..."
-          class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 
@@ -79,9 +79,7 @@ import { ProviderMarkComponent } from '../provider-mark.component';
 
       <!-- Error State -->
       @if (error() && !isLoading()) {
-        <div
-          class="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg"
-        >
+        <div class="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
           <ng-icon name="lucideCircleAlert" size="20"></ng-icon>
           <span>{{ error() }}</span>
         </div>
@@ -104,14 +102,12 @@ import { ProviderMarkComponent } from '../provider-mark.component';
                   <!-- Server Info -->
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
-                      <h3 class="font-semibold text-slate-900 dark:text-white truncate">
+                      <h3 class="font-semibold text-slate-900 truncate">
                         {{ server.displayName || server.name }}
                       </h3>
                       <app-instance-status-badge [status]="server.status || 'unknown'" />
                     </div>
-                    <div
-                      class="flex items-center gap-4 mt-1 text-sm text-slate-500 dark:text-slate-400"
-                    >
+                    <div class="flex items-center gap-4 mt-1 text-sm text-slate-500">
                       @if (server.ipConfig?.v4?.ip) {
                         <span class="font-mono">{{ server.ipConfig?.v4?.ip }}</span>
                       }
@@ -132,7 +128,7 @@ import { ProviderMarkComponent } from '../provider-mark.component';
                   <ng-icon
                     name="lucideCheck"
                     size="24"
-                    class="flex-shrink-0 text-blue-600 dark:text-blue-400 ml-2"
+                    class="flex-shrink-0 text-blue-600 ml-2"
                   ></ng-icon>
                 }
               </div>
@@ -140,7 +136,7 @@ import { ProviderMarkComponent } from '../provider-mark.component';
           }
           <!-- Empty State -->
           @if (filteredServers().length === 0) {
-            <div class="text-center py-12 text-slate-500 dark:text-slate-400">
+            <div class="text-center py-12 text-slate-500">
               <ng-icon name="lucideServer" size="48" class="mx-auto mb-3 opacity-30"></ng-icon>
               @if (searchQuery()) {
                 <p>No servers found matching "{{ searchQuery() }}"</p>
@@ -155,15 +151,13 @@ import { ProviderMarkComponent } from '../provider-mark.component';
 
       <!-- Selected Count (Multi-select mode) -->
       @if (multiSelect() && selectedServers().length > 0) {
-        <div
-          class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
-        >
-          <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
+        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+          <span class="text-sm font-medium text-blue-700">
             {{ selectedServers().length }} server(s) selected
           </span>
           <button
             (click)="clearSelection()"
-            class="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+            class="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
           >
             <ng-icon name="lucideX" size="16"></ng-icon>
             Clear
@@ -313,9 +307,7 @@ export class ServerSelectorComponent implements OnInit {
 
   getServerCardClass(server: InstanceWithLabels): string {
     const isSelected = this.isSelected(server);
-    return isSelected
-      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-      : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600';
+    return isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300';
   }
 
   formatMemory(mb: number | undefined): string {

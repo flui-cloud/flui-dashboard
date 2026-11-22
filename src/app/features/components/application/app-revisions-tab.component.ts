@@ -24,7 +24,7 @@ import { AppActivityFeedComponent } from './app-activity-feed.component';
     <div class="space-y-3">
       @if (service.rollbackError()) {
         <div
-          class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm"
+          class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
         >
           <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
           {{ service.rollbackError() }}

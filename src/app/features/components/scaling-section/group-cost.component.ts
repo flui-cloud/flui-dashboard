@@ -68,11 +68,7 @@ type Reading =
             @if (c.ceiling.says) {
               <p
                 class="m-0 text-[12px]"
-                [class]="
-                  c.ceiling.stopsBeforeMax
-                    ? 'text-amber-700 dark:text-amber-300'
-                    : 'text-muted-foreground'
-                "
+                [class]="c.ceiling.stopsBeforeMax ? 'text-amber-700' : 'text-muted-foreground'"
                 data-testid="group-cost-ceiling"
               >
                 {{ c.ceiling.says }}

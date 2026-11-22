@@ -448,9 +448,9 @@ export class ScalingHistoryTabComponent {
       case 'alerted':
         return 'badge-error';
       case 'declined':
-        return 'bg-amber-500/15 text-amber-600 dark:text-amber-400';
+        return 'bg-amber-500/15 text-amber-600';
       case 'changed':
-        return 'bg-violet-500/15 text-violet-700 dark:text-violet-300';
+        return 'bg-violet-500/15 text-violet-700';
       case 'node-joined':
         return 'badge-success';
       case 'purchase-failed':
@@ -458,7 +458,7 @@ export class ScalingHistoryTabComponent {
       case 'node-ordered':
       case 'node-drained':
       case 'node-removed':
-        return 'bg-sky-500/15 text-sky-700 dark:text-sky-300';
+        return 'bg-sky-500/15 text-sky-700';
     }
   }
 }

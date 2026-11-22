@@ -27,9 +27,7 @@ import { AlertEvent } from '../../model/alert.models';
     <div class="space-y-4">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h3
-            class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"
-          >
+          <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <ng-icon name="lucideBell" class="text-sub" size="20" />
             Alerts
             @if (firing() > 0) {
@@ -41,31 +39,27 @@ import { AlertEvent } from '../../model/alert.models';
               </span>
             }
           </h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
+          <p class="text-sm text-gray-500">
             One row per episode — repeats update the row, they do not stack
           </p>
         </div>
       </div>
 
       @if (alerts.error(); as err) {
-        <div
-          class="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-4 text-sm text-red-700 dark:text-red-300"
-        >
+        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {{ err }}
         </div>
       } @else if (alerts.loading() && rows().length === 0) {
         <div
-          class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+          class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500"
         >
           Loading alerts…
         </div>
       } @else if (rows().length === 0) {
-        <div
-          class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-6 text-center"
-        >
+        <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
           <ng-icon name="lucideCircleCheck" class="text-sub mx-auto mb-2" size="24" />
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No alerts on record</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p class="text-sm font-medium text-gray-700">No alerts on record</p>
+          <p class="text-sm text-gray-500 mt-1">
             Nothing has fired for this application. Absence of alerts is not the same as a health
             check — see Traffic for a live read.
           </p>
@@ -82,16 +76,16 @@ import { AlertEvent } from '../../model/alert.models';
               />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  <span class="text-sm font-semibold text-gray-900">
                     {{ alert.alertname }}
                   </span>
                   <span [class]="badgeClass(alert)">{{ statusLabel(alert) }}</span>
                   <span [class]="severityClass(alert)">{{ alert.severity }}</span>
                 </div>
-                <p class="text-sm text-gray-600 dark:text-gray-300 mt-0.5">
+                <p class="text-sm text-gray-600 mt-0.5">
                   {{ alert.summary }}
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p class="text-xs text-gray-500 mt-1">
                   {{ timing(alert) }}
                 </p>
               </div>

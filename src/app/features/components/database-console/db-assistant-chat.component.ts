@@ -217,9 +217,7 @@ interface StoredChat {
                     class="overflow-auto rounded-md border border-border bg-muted/40 p-2 text-xs"
                   ><code>{{ m.code }}</code></pre>
                   @if (m.mutation) {
-                    <div
-                      class="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400"
-                    >
+                    <div class="flex items-center gap-1 text-[11px] text-amber-600">
                       <ng-icon name="lucideTriangleAlert" class="h-3 w-3" /> Changes data — runs as
                       a write after confirmation.
                     </div>
@@ -253,13 +251,8 @@ interface StoredChat {
               <div
                 class="flex items-center gap-2 border-b border-amber-500/20 bg-amber-500/10 px-3 py-2"
               >
-                <ng-icon
-                  name="lucideTriangleAlert"
-                  class="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400"
-                />
-                <p class="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                  Confirm write
-                </p>
+                <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                <p class="text-xs font-semibold text-amber-700">Confirm write</p>
               </div>
               <div class="space-y-2 p-3">
                 <p class="text-xs text-muted-foreground">
@@ -295,7 +288,7 @@ interface StoredChat {
           }
           @if (error(); as e) {
             <div
-              class="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+              class="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700"
             >
               <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span class="whitespace-pre-wrap">{{ e }}</span>

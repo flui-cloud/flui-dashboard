@@ -80,16 +80,14 @@ export interface DeleteConfirmationData {
               </div>
 
               @if (data()?.warningMessage) {
-                <div
-                  class="rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-4"
-                >
+                <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
                   <div class="flex items-start gap-3">
                     <ng-icon
                       name="lucideTriangleAlert"
-                      class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0"
+                      class="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0"
                     />
                     <div class="flex-1">
-                      <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                      <p class="text-sm text-yellow-700">
                         {{ data()?.warningMessage }}
                       </p>
                     </div>

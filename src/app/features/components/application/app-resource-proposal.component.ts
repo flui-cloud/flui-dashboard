@@ -27,14 +27,14 @@ import { ToastService } from '../../../shared/services/toast.service';
   template: `
     @if (proposal(); as p) {
       <section
-        class="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+        class="rounded-lg border border-amber-200 bg-amber-50 p-4"
         data-testid="resource-proposal"
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="min-w-0 space-y-1">
             <app-explain
               label="Flui proposes more memory"
-              labelClass="text-sm font-semibold text-amber-900 dark:text-amber-200"
+              labelClass="text-sm font-semibold text-amber-900"
               testid="proposal-why"
             >
               @for (r of p.reasons; track r.kind) {
@@ -45,10 +45,7 @@ import { ToastService } from '../../../shared/services/toast.service';
                 <span class="mt-1 block">{{ p.configurationNote }}</span>
               }
             </app-explain>
-            <p
-              class="m-0 font-mono text-[13px] text-gray-800 dark:text-gray-200"
-              data-testid="proposal-values"
-            >
+            <p class="m-0 font-mono text-[13px] text-gray-800" data-testid="proposal-values">
               memory
               @if (p.consequence.requests.memory !== p.currentRequests.memory) {
                 {{ p.currentRequests.memory ?? '—' }} →
@@ -64,7 +61,7 @@ import { ToastService } from '../../../shared/services/toast.service';
                 {{ p.currentLimits.memory ?? '—' }} at most
               }
             </p>
-            <p class="m-0 text-[12px] text-gray-600 dark:text-gray-400">
+            <p class="m-0 text-[12px] text-gray-600">
               {{ p.consequence.placement.sentence }}
             </p>
           </div>
@@ -72,7 +69,7 @@ import { ToastService } from '../../../shared/services/toast.service';
             @if (confirming()) {
               <button
                 type="button"
-                class="rounded-md px-3 py-1.5 text-sm text-gray-700 hover:bg-amber-100 dark:text-gray-300 dark:hover:bg-amber-900/40"
+                class="rounded-md px-3 py-1.5 text-sm text-gray-700 hover:bg-amber-100"
                 (click)="confirming.set(false)"
               >
                 Cancel
@@ -88,7 +85,7 @@ import { ToastService } from '../../../shared/services/toast.service';
               </button>
               <button
                 type="button"
-                class="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-700 dark:bg-transparent dark:text-amber-200"
+                class="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50"
                 [disabled]="
                   applying() ||
                   !!p.consequence.problem ||
@@ -108,7 +105,7 @@ import { ToastService } from '../../../shared/services/toast.service';
             } @else {
               <button
                 type="button"
-                class="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-transparent dark:text-amber-200"
+                class="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100"
                 (click)="confirming.set(true)"
                 data-testid="proposal-apply"
               >

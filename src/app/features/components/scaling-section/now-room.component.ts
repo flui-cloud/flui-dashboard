@@ -60,7 +60,7 @@ import { TIGHT_PERCENT, cores, gib, nodeUsageLine, roomLine, share } from './roo
                       >
                         <span
                           class="block h-full rounded-full"
-                          [class]="bar.tight ? 'bg-amber-500' : 'bg-sky-600 dark:bg-sky-400'"
+                          [class]="bar.tight ? 'bg-amber-500' : 'bg-sky-600'"
                           [style.width.%]="bar.percent"
                         ></span>
                       </span>
@@ -70,11 +70,7 @@ import { TIGHT_PERCENT, cores, gib, nodeUsageLine, roomLine, share } from './roo
                   @if (usage(node); as u) {
                     <span
                       class="text-[12px]"
-                      [class]="
-                        u.overcommitted
-                          ? 'text-amber-700 dark:text-amber-400'
-                          : 'text-muted-foreground'
-                      "
+                      [class]="u.overcommitted ? 'text-amber-700' : 'text-muted-foreground'"
                       [attr.data-testid]="'room-usage-' + node.name"
                       >{{ u.text }}</span
                     >

@@ -181,14 +181,9 @@ import { k3sNodeRows } from './platform-upgrade-plan';
     </div>
 
     @if (isRunning()) {
-      <div
-        class="flex items-start gap-2.5 rounded-lg bg-amber-100/70 dark:bg-amber-950/40 px-4 py-3"
-      >
-        <ng-icon
-          name="lucideTriangleAlert"
-          class="h-4 w-4 mt-0.5 shrink-0 text-amber-700 dark:text-amber-400"
-        />
-        <p class="text-xs text-amber-900 dark:text-amber-200">
+      <div class="flex items-start gap-2.5 rounded-lg bg-amber-100/70 px-4 py-3">
+        <ng-icon name="lucideTriangleAlert" class="h-4 w-4 mt-0.5 shrink-0 text-amber-700" />
+        <p class="text-xs text-amber-900">
           <span class="font-semibold">The API restarts during this update.</span>
           The dashboard loses its connection for about 90 seconds and reconnects on its own — keep
           this tab open. Your applications keep serving traffic throughout.

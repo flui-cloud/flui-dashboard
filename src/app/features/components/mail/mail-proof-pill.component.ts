@@ -39,13 +39,13 @@ export class MailProofPillComponent {
   protected readonly classes = computed(() => {
     switch (this.tone()) {
       case 'ok':
-        return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-400';
+        return 'border-emerald-200 bg-emerald-50 text-emerald-700';
       case 'warn':
-        return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-400';
+        return 'border-amber-200 bg-amber-50 text-amber-800';
       case 'none':
         return 'border-border bg-muted text-muted-foreground';
       default:
-        return 'border-red-200 bg-red-50 text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-400';
+        return 'border-red-200 bg-red-50 text-red-700';
     }
   });
 

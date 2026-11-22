@@ -72,12 +72,7 @@ const B = 100;
             stroke-width="1"
           />
           <path [attr.d]="s.reservedArea" class="fill-sky-500/25" />
-          <path
-            [attr.d]="s.reservedLine"
-            fill="none"
-            class="stroke-sky-600 dark:stroke-sky-400"
-            stroke-width="1.5"
-          />
+          <path [attr.d]="s.reservedLine" fill="none" class="stroke-sky-600" stroke-width="1.5" />
           <path
             [attr.d]="s.capacityLine"
             fill="none"

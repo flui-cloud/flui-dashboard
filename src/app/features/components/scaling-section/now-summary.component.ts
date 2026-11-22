@@ -162,7 +162,7 @@ interface StatCard {
                 </p>
               }
               @if (retryError()) {
-                <p class="m-0 text-[13px] text-red-600 dark:text-red-400">
+                <p class="m-0 text-[13px] text-red-600">
                   {{ retryError() }}
                 </p>
               }

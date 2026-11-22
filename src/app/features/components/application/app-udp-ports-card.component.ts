@@ -30,11 +30,7 @@ import {
       @if (v.ports.length) {
         <div
           class="flex items-start gap-3 rounded-lg border px-4 py-2.5"
-          [class]="
-            allOpen()
-              ? 'border-border bg-muted/30'
-              : 'border-amber-200 bg-amber-50/70 dark:border-amber-900 dark:bg-amber-950/30'
-          "
+          [class]="allOpen() ? 'border-border bg-muted/30' : 'border-amber-200 bg-amber-50/70'"
           data-testid="app-udp-ports"
         >
           <ng-icon name="lucideRadio" class="mt-0.5 h-4 w-4 flex-shrink-0" />
@@ -45,7 +41,7 @@ import {
                 <li>
                   <span class="font-mono">{{ p.port }}</span>
                   <span class="text-muted-foreground"> {{ p.name }} · </span>
-                  <span [class]="p.state === 'open' ? '' : 'text-amber-700 dark:text-amber-300'">{{
+                  <span [class]="p.state === 'open' ? '' : 'text-amber-700'">{{
                     stateText[p.state]
                   }}</span>
                 </li>

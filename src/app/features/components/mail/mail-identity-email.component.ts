@@ -16,8 +16,8 @@ import { consoleError } from './mail-format';
 import { mailIdentityView } from './mail-identity-email-view';
 
 const TONE: Record<string, string> = {
-  ok: 'bg-emerald-50 font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
-  warn: 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400',
+  ok: 'bg-emerald-50 font-medium text-emerald-700',
+  warn: 'bg-amber-50 text-amber-800',
   error: 'bg-destructive/10 text-destructive',
   idle: 'bg-muted text-muted-foreground',
 };
@@ -50,7 +50,7 @@ const TONE: Record<string, string> = {
             }
           </p>
           @if (view()?.note; as note) {
-            <p class="mt-1 text-xs text-amber-700 dark:text-amber-400">{{ note }}</p>
+            <p class="mt-1 text-xs text-amber-700">{{ note }}</p>
           }
           @if (status()?.lastDeliveryAt; as at) {
             <p class="mt-1 text-xs text-muted-foreground">Last sent {{ at | date: 'medium' }}</p>

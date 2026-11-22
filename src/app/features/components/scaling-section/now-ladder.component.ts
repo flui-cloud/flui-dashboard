@@ -125,9 +125,7 @@ const EMPTY_PREVIEW: ScalingPreview = {
           class="card-surface flex flex-wrap items-center gap-x-4 gap-y-3 p-4"
           data-testid="ladder-unsearchable"
         >
-          <span
-            class="inline-flex items-center gap-1.5 text-[13px] font-medium text-amber-600 dark:text-amber-400"
-          >
+          <span class="inline-flex items-center gap-1.5 text-[13px] font-medium text-amber-600">
             <ng-icon name="lucideSettings" class="h-4 w-4 shrink-0" />
             Not set up
           </span>

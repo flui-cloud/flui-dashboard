@@ -60,7 +60,7 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
               @case ('connect_primary') {
                 <div class="space-y-4">
                   <div
-                    class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-400"
+                    class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700"
                   >
                     <p class="font-medium mb-1">Storage provider required</p>
                     <p class="text-xs">
@@ -79,7 +79,7 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
                   <div class="space-y-4">
                     @if (!opts.primary.ready) {
                       <div
-                        class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-400 space-y-1"
+                        class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 space-y-1"
                       >
                         <p class="font-medium">Storage provider not ready</p>
                         <p class="text-xs">{{ readinessMessage() }}</p>
@@ -213,7 +213,7 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
                     </p>
                     @if (errorMsg()) {
                       <div
-                        class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+                        class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700"
                       >
                         {{ errorMsg() }}
                       </div>
@@ -248,7 +248,7 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
               <!-- Error -->
               @case ('error') {
                 <div
-                  class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+                  class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700"
                 >
                   {{ errorMsg() || 'Setup failed.' }}
                 </div>

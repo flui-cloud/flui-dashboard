@@ -311,13 +311,10 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
               <!-- Docker image: what happens during deploy -->
               @if (flowSubtype() === 'image') {
                 <div
-                  class="flex items-start gap-3 p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10"
+                  class="flex items-start gap-3 p-4 rounded-lg border border-blue-200 bg-blue-50"
                 >
-                  <ng-icon
-                    name="lucideInfo"
-                    class="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"
-                  />
-                  <div class="text-xs text-blue-900 dark:text-blue-100 space-y-2">
+                  <ng-icon name="lucideInfo" class="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                  <div class="text-xs text-blue-900 space-y-2">
                     <p class="font-medium">What happens next</p>
                     <p>
                       Flui treats your image as an opaque artefact — it won't rebuild it or patch
@@ -333,7 +330,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       <button
                         type="button"
                         (click)="navigateToTemplates()"
-                        class="inline-flex items-center gap-1 text-blue-700 dark:text-blue-300 hover:underline font-medium"
+                        class="inline-flex items-center gap-1 text-blue-700 hover:underline font-medium"
                       >
                         a Flui template
                         <ng-icon name="lucideArrowRight" class="h-3 w-3" />
@@ -466,13 +463,13 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
 
               @if (!repoService.hasRepoScope()) {
                 <div
-                  class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-sm"
+                  class="flex items-start gap-2 p-3 rounded-md border border-amber-200 bg-amber-50 text-sm"
                 >
                   <ng-icon
                     name="lucideTriangleAlert"
                     class="h-4 w-4 text-amber-600 shrink-0 mt-0.5"
                   />
-                  <div class="text-xs text-amber-900 dark:text-amber-100">
+                  <div class="text-xs text-amber-900">
                     <p class="font-medium">GitHub connection required</p>
                     <p>
                       Connect GitHub with the <code class="font-mono">repo</code> scope to create a
@@ -481,7 +478,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     <button
                       type="button"
                       (click)="navigateToRepositories()"
-                      class="mt-1 text-amber-700 dark:text-amber-300 hover:underline font-medium"
+                      class="mt-1 text-amber-700 hover:underline font-medium"
                     >
                       Connect GitHub →
                     </button>
@@ -669,7 +666,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                                 <h4 class="font-medium">{{ repo.name }}</h4>
                                 @if (repo.private) {
                                   <span
-                                    class="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 px-2 py-1 rounded"
+                                    class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded"
                                   >
                                     Private
                                   </span>
@@ -832,7 +829,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     </div>
 
                     @if (invalidManifests().length > 0) {
-                      <p class="text-[11px] text-amber-700 dark:text-amber-400">
+                      <p class="text-[11px] text-amber-700">
                         Skipped (not valid kind: Application):
                         @for (bad of invalidManifests(); track bad.path) {
                           <span class="font-mono">{{ bad.path }}</span>{{ !$last ? ', ' : '' }}
@@ -843,19 +840,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 }
 
                 @case ('manifest-invalid') {
-                  <div
-                    class="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 space-y-3"
-                  >
+                  <div class="p-4 rounded-lg border border-red-200 bg-red-50 space-y-3">
                     <div class="flex items-start gap-3">
                       <ng-icon
                         name="lucideAlertCircle"
-                        class="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5"
+                        class="h-5 w-5 text-red-600 shrink-0 mt-0.5"
                       />
                       <div>
-                        <p class="text-sm font-semibold text-red-800 dark:text-red-300">
-                          Invalid flui.yaml
-                        </p>
-                        <p class="text-xs text-red-700 dark:text-red-400 mt-1">
+                        <p class="text-sm font-semibold text-red-800">Invalid flui.yaml</p>
+                        <p class="text-xs text-red-700 mt-1">
                           Branch <span class="font-mono">{{ selectedBranch() }}</span> has
                           {{
                             invalidManifests().length === 1
@@ -866,14 +859,12 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           {{ invalidManifests().length === 1 ? 'manifest' : 'manifests' }}:
                         </p>
                         @for (bad of invalidManifests(); track bad.path) {
-                          <p
-                            class="text-xs font-mono mt-2 p-2 rounded bg-red-100/60 dark:bg-red-900/20 text-red-800 dark:text-red-300"
-                          >
+                          <p class="text-xs font-mono mt-2 p-2 rounded bg-red-100/60 text-red-800">
                             <span class="font-semibold">{{ bad.path }}</span> —
                             {{ bad.validationError }}
                           </p>
                         }
-                        <p class="text-xs text-red-700 dark:text-red-400 mt-2">
+                        <p class="text-xs text-red-700 mt-2">
                           Fix the manifest, push it, then retry. See the
                           <a
                             href="https://docs.flui.cloud/cli/deploy/"
@@ -898,19 +889,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 }
 
                 @case ('no-manifest') {
-                  <div
-                    class="p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 space-y-3"
-                  >
+                  <div class="p-4 rounded-lg border border-amber-200 bg-amber-50 space-y-3">
                     <div class="flex items-start gap-3">
                       <ng-icon
                         name="lucideTriangleAlert"
-                        class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                        class="h-5 w-5 text-amber-600 shrink-0 mt-0.5"
                       />
                       <div class="space-y-3">
-                        <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                          No flui.yaml found
-                        </p>
-                        <p class="text-xs text-amber-700 dark:text-amber-300">
+                        <p class="text-sm font-semibold text-amber-900">No flui.yaml found</p>
+                        <p class="text-xs text-amber-700">
                           Flui deploys repositories from a
                           <span class="font-mono">flui.yaml</span> manifest, and branch
                           <span class="font-mono">{{ selectedBranch() }}</span> doesn't have one —
@@ -918,15 +905,13 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         </p>
 
                         <div
-                          class="p-3 rounded-md border border-amber-300 dark:border-amber-700 bg-amber-100/50 dark:bg-amber-900/20 space-y-2"
+                          class="p-3 rounded-md border border-amber-300 bg-amber-100/50 space-y-2"
                         >
-                          <p
-                            class="text-xs font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-1.5"
-                          >
+                          <p class="text-xs font-semibold text-amber-900 flex items-center gap-1.5">
                             <ng-icon name="lucideLayers" class="h-3.5 w-3.5" />
                             Let Flui read the repository
                           </p>
-                          <p class="text-xs text-amber-700 dark:text-amber-300">
+                          <p class="text-xs text-amber-700">
                             Flui reads branch
                             <span class="font-mono">{{ selectedBranch() }}</span> and proposes a
                             <span class="font-mono">flui.yaml</span> — with what it found, what it's
@@ -937,7 +922,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           <a
                             [routerLink]="['/apps/repositories', selectedRepo()!.id, 'map']"
                             [queryParams]="{ branch: selectedBranch() }"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-600 dark:bg-amber-700 text-white text-[11px] font-medium hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-600 text-white text-[11px] font-medium hover:bg-amber-700 transition-colors"
                           >
                             <ng-icon name="lucideLayers" class="h-3.5 w-3.5" />
                             View readiness map
@@ -945,20 +930,20 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         </div>
 
                         <div class="space-y-1.5">
-                          <p class="text-xs font-semibold text-amber-900 dark:text-amber-100">
+                          <p class="text-xs font-semibold text-amber-900">
                             Or, let your coding agent write it
                           </p>
-                          <p class="text-xs text-amber-700 dark:text-amber-300">
+                          <p class="text-xs text-amber-700">
                             Nothing to install and nothing to log into. Paste this into the agent in
                             your editor:
                           </p>
                           <pre
-                            class="text-[11px] leading-relaxed font-mono whitespace-pre-wrap p-2.5 rounded bg-amber-100/70 dark:bg-amber-900/30 text-amber-900 dark:text-amber-200"
+                            class="text-[11px] leading-relaxed font-mono whitespace-pre-wrap p-2.5 rounded bg-amber-100/70 text-amber-900"
                             >{{ manifestAgentPrompt() }}</pre>
                           <button
                             type="button"
                             (click)="copyManifestPrompt()"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-amber-300 dark:border-amber-700 text-[11px] font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 transition-colors"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-amber-300 text-[11px] font-medium text-amber-900 hover:bg-amber-100/70 transition-colors"
                           >
                             <ng-icon
                               [name]="manifestPromptCopied() ? 'lucideCheck' : 'lucideCopy'"
@@ -968,33 +953,29 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           </button>
                         </div>
 
-                        <p class="text-xs text-amber-700 dark:text-amber-300">
-                          <span class="font-semibold text-amber-900 dark:text-amber-100"
+                        <p class="text-xs text-amber-700">
+                          <span class="font-semibold text-amber-900"
                             >Or scaffold it with the CLI.</span
                           >
-                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded"
+                          <code class="font-mono bg-amber-100/70 px-1 rounded"
                             >flui app init &lt;framework&gt;</code
                           >
                           adds a <span class="font-mono">flui.yaml</span> and a production-ready
                           Dockerfile —
-                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded"
-                            >--list</code
-                          >
+                          <code class="font-mono bg-amber-100/70 px-1 rounded">--list</code>
                           shows the frameworks, and in a monorepo
-                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded"
+                          <code class="font-mono bg-amber-100/70 px-1 rounded"
                             >--target ./&lt;dir&gt;</code
                           >
                           runs it once per app. It needs the CLI signed in: run
-                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded"
+                          <code class="font-mono bg-amber-100/70 px-1 rounded"
                             >flui auth login</code
                           >
                           first.
                         </p>
 
-                        <p class="text-xs text-amber-700 dark:text-amber-300">
-                          <span class="font-semibold text-amber-900 dark:text-amber-100"
-                            >Or write it yourself</span
-                          >
+                        <p class="text-xs text-amber-700">
+                          <span class="font-semibold text-amber-900">Or write it yourself</span>
                           — see the
                           <a
                             href="https://docs.flui.cloud/cli/deploy/"
@@ -1005,7 +986,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           >.
                         </p>
 
-                        <p class="text-xs text-amber-700 dark:text-amber-300">
+                        <p class="text-xs text-amber-700">
                           Then commit, push to
                           <span class="font-mono">{{ selectedBranch() }}</span>, and retry here.
                         </p>
@@ -1032,19 +1013,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 }
 
                 @case ('check-failed') {
-                  <div
-                    class="p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 space-y-3"
-                  >
+                  <div class="p-4 rounded-lg border border-amber-200 bg-amber-50 space-y-3">
                     <div class="flex items-start gap-3">
                       <ng-icon
                         name="lucideTriangleAlert"
-                        class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                        class="h-5 w-5 text-amber-600 shrink-0 mt-0.5"
                       />
                       <div>
-                        <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                          Could not read flui.yaml
-                        </p>
-                        <p class="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                        <p class="text-sm font-semibold text-amber-900">Could not read flui.yaml</p>
+                        <p class="text-xs text-amber-700 mt-1">
                           {{ manifestFetchError() }}
                         </p>
                       </div>
@@ -1077,14 +1054,10 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     </p>
                   </div>
                 } @else if (iPhase === 'failed') {
-                  <div
-                    class="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 space-y-2"
-                  >
+                  <div class="p-4 rounded-lg border border-red-200 bg-red-50 space-y-2">
                     @if (state.currentInstall()) {
-                      <p class="text-sm font-medium text-red-800 dark:text-red-300">
-                        Connect failed
-                      </p>
-                      <p class="text-xs text-red-700 dark:text-red-400">
+                      <p class="text-sm font-medium text-red-800">Connect failed</p>
+                      <p class="text-xs text-red-700">
                         {{ state.installError() }}
                       </p>
                       <p class="text-xs text-muted-foreground">
@@ -1099,10 +1072,8 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         Retry connect
                       </button>
                     } @else {
-                      <p class="text-sm font-medium text-red-800 dark:text-red-300">
-                        Install failed
-                      </p>
-                      <p class="text-xs text-red-700 dark:text-red-400">
+                      <p class="text-sm font-medium text-red-800">Install failed</p>
+                      <p class="text-xs text-red-700">
                         {{ state.installError() }}
                       </p>
                       <button
@@ -1149,13 +1120,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     </p>
                   </div>
                 } @else if (phase === 'error') {
-                  <div
-                    class="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 space-y-2"
-                  >
-                    <p class="text-sm font-medium text-red-800 dark:text-red-300">
-                      Deployment failed
-                    </p>
-                    <p class="text-xs text-red-700 dark:text-red-400">
+                  <div class="p-4 rounded-lg border border-red-200 bg-red-50 space-y-2">
+                    <p class="text-sm font-medium text-red-800">Deployment failed</p>
+                    <p class="text-xs text-red-700">
                       {{ state.orchestrationError() }}
                     </p>
                     <button
@@ -1247,7 +1214,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     />
                     @if (branchesFailed()) {
-                      <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                      <p class="text-xs text-amber-600 mt-1">
                         Branches could not be listed — type the one you want to deploy.
                       </p>
                     }
@@ -1403,7 +1370,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         replicas
                       </label>
                       @if (appAutoscale() && appMaxReplicas() <= appReplicas()) {
-                        <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+                        <p class="text-xs text-red-600 mt-1">
                           The most has to be above the fewest.
                         </p>
                       }
@@ -1635,7 +1602,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
               <!-- Warning: auto-filled values not yet reviewed -->
               @if (hasUnreviewedDefaults()) {
                 <div
-                  class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-sm text-amber-800 dark:text-amber-300"
+                  class="flex items-start gap-2 p-3 rounded-md border border-amber-200 bg-amber-50 text-sm text-amber-800"
                 >
                   <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                   <span
@@ -1692,20 +1659,20 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                             [title]="meta?.description ?? ''"
                             [class]="
                               isDefaultValue(envVar)
-                                ? 'flex h-10 w-full rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 px-3 py-2 text-sm'
+                                ? 'flex h-10 w-full rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm'
                                 : 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
                             "
                           />
                         </div>
                         @if (isDefaultValue(envVar)) {
                           <span
-                            class="shrink-0 self-center text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium"
+                            class="shrink-0 self-center text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium"
                             >Default</span
                           >
                         } @else if (meta) {
                           @if (meta.optional === false) {
                             <span
-                              class="shrink-0 self-center text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 font-medium"
+                              class="shrink-0 self-center text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-medium"
                               >Required</span
                             >
                           } @else if (meta.optional === true) {
@@ -1858,17 +1825,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       @let av = resourceAvailability()!;
                       @if (!av.canDeploy) {
                         <div
-                          class="flex items-start gap-3 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10"
+                          class="flex items-start gap-3 p-3 rounded-md border border-red-200 bg-red-50"
                         >
                           <ng-icon
                             name="lucideCircleX"
-                            class="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5"
+                            class="h-5 w-5 text-red-600 shrink-0 mt-0.5"
                           />
                           <div class="flex-1 text-sm">
-                            <p class="font-medium text-red-700 dark:text-red-300">
-                              Insufficient resources
-                            </p>
-                            <p class="text-red-600 dark:text-red-400 mt-0.5">
+                            <p class="font-medium text-red-700">Insufficient resources</p>
+                            <p class="text-red-600 mt-0.5">
                               {{ getAvailabilityMessage() }}
                             </p>
                             <div
@@ -1902,17 +1867,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         </div>
                       } @else if (av.reason) {
                         <div
-                          class="flex items-start gap-3 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10"
+                          class="flex items-start gap-3 p-3 rounded-md border border-amber-200 bg-amber-50"
                         >
                           <ng-icon
                             name="lucideTriangleAlert"
-                            class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                            class="h-5 w-5 text-amber-600 shrink-0 mt-0.5"
                           />
                           <div class="text-sm flex-1">
-                            <p class="font-medium text-amber-700 dark:text-amber-300">
-                              Resources tight
-                            </p>
-                            <p class="text-amber-600 dark:text-amber-400 mt-0.5">
+                            <p class="font-medium text-amber-700">Resources tight</p>
+                            <p class="text-amber-600 mt-0.5">
                               {{ getAvailabilityMessage() }}
                             </p>
                             <div
@@ -2044,7 +2007,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           </label>
                         } @else {
                           <div
-                            class="flex items-start gap-3 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-sm text-amber-800 dark:text-amber-300"
+                            class="flex items-start gap-3 p-3 rounded-md border border-amber-200 bg-amber-50 text-sm text-amber-800"
                           >
                             <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                             <div class="flex-1 space-y-2">
@@ -2091,7 +2054,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                             class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-mono"
                           />
                           @if (installNameChanged()) {
-                            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            <p class="text-xs text-blue-600 mt-1">
                               A different name installs this repository a second time, next to
                               <span class="font-mono">{{
                                 state.manifestResult()!.manifest!.metadata.name
@@ -2163,7 +2126,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
             <div class="space-y-6">
               @if (canDeployReason(); as reason) {
                 <div
-                  class="flex items-start gap-3 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm text-red-800 dark:text-red-300"
+                  class="flex items-start gap-3 p-3 rounded-md border border-red-200 bg-red-50 text-sm text-red-800"
                 >
                   <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                   <div class="flex-1 space-y-2">
@@ -2183,7 +2146,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
               }
               @if (authzNotReady()) {
                 <div
-                  class="flex items-start gap-3 p-3 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 text-sm text-amber-800 dark:text-amber-300"
+                  class="flex items-start gap-3 p-3 rounded-md border border-amber-200 bg-amber-50 text-sm text-amber-800"
                 >
                   <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                   <div class="flex-1 space-y-2">
@@ -2211,13 +2174,13 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       <button
                         type="button"
                         (click)="navigateToAuthProxy()"
-                        class="text-xs text-amber-700 dark:text-amber-400 hover:underline"
+                        class="text-xs text-amber-700 hover:underline"
                       >
                         Auth Proxy settings →
                       </button>
                     </div>
                     @if (authzInstall.error()) {
-                      <div class="text-xs text-red-600 dark:text-red-400">
+                      <div class="text-xs text-red-600">
                         {{ authzInstall.error() }}
                       </div>
                     }
@@ -2226,7 +2189,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
               }
               @if (deployError() || state.orchestrationError(); as err) {
                 <div
-                  class="flex items-start gap-3 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm text-red-800 dark:text-red-300"
+                  class="flex items-start gap-3 p-3 rounded-md border border-red-200 bg-red-50 text-sm text-red-800"
                 >
                   <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                   <div class="flex-1">{{ err }}</div>
@@ -2337,7 +2300,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     }
                     @if (state.linkedBbRefs().length > 0) {
                       <div
-                        class="mt-2 rounded-md border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/10 p-3 text-xs text-sky-900 dark:text-sky-200"
+                        class="mt-2 rounded-md border border-sky-200 bg-sky-50 p-3 text-xs text-sky-900"
                       >
                         <div class="font-medium">
                           @if (state.selectedReusableInstance(); as sel) {
@@ -2414,18 +2377,16 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   </div>
                   @if (state.allowMasterPlacementRelevant()) {
                     <div
-                      class="mt-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-3 text-xs space-y-2"
+                      class="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs space-y-2"
                     >
                       <div class="flex items-start gap-2">
                         <ng-icon
                           name="lucideTriangleAlert"
-                          class="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400"
+                          class="h-4 w-4 shrink-0 mt-0.5 text-amber-600"
                         />
                         <div class="space-y-1">
-                          <p class="font-medium text-amber-900 dark:text-amber-200">
-                            This cluster has no worker node
-                          </p>
-                          <p class="text-amber-800/90 dark:text-amber-300/90">
+                          <p class="font-medium text-amber-900">This cluster has no worker node</p>
+                          <p class="text-amber-800/90">
                             {{ state.catalogDetail()?.name }} uses dedicated (node-local) storage,
                             which normally runs on a worker node. Allow it to run on the
                             control-plane node instead, or add a worker with
@@ -2439,12 +2400,12 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           [checked]="state.allowMasterPlacement()"
                           (change)="state.allowMasterPlacement.set($any($event.target).checked)"
                         />
-                        <span class="font-medium text-amber-900 dark:text-amber-200"
+                        <span class="font-medium text-amber-900"
                           >Run on the control-plane node</span
                         >
                       </label>
                       @if (!state.allowMasterPlacement()) {
-                        <p class="pl-6 text-amber-700 dark:text-amber-300/90">
+                        <p class="pl-6 text-amber-700">
                           Required to continue — without a worker node the install would fail.
                           Untick only if you plan to add a worker first.
                         </p>
@@ -2611,7 +2572,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       Running checks...
                     </div>
                   } @else if (manifestChecksError()) {
-                    <p class="text-xs text-amber-700 dark:text-amber-400">
+                    <p class="text-xs text-amber-700">
                       {{ manifestChecksError() }}
                     </p>
                   } @else if (manifestChecks(); as checks) {
@@ -2729,17 +2690,14 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 @let av = resourceAvailability()!;
                 @if (!av.canDeploy) {
                   <div
-                    class="flex items-start gap-3 p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10"
+                    class="flex items-start gap-3 p-4 rounded-lg border border-red-200 bg-red-50"
                   >
-                    <ng-icon
-                      name="lucideCircleX"
-                      class="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5"
-                    />
+                    <ng-icon name="lucideCircleX" class="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
                     <div class="text-sm flex-1">
-                      <p class="font-semibold text-red-700 dark:text-red-300">
+                      <p class="font-semibold text-red-700">
                         Deploy blocked — insufficient resources
                       </p>
-                      <p class="text-red-600 dark:text-red-400 mt-1">
+                      <p class="text-red-600 mt-1">
                         {{ getAvailabilityMessage() }}
                       </p>
                       <div
@@ -2773,17 +2731,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   </div>
                 } @else if (av.reason) {
                   <div
-                    class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10"
+                    class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50"
                   >
                     <ng-icon
                       name="lucideTriangleAlert"
-                      class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                      class="h-5 w-5 text-amber-600 shrink-0 mt-0.5"
                     />
                     <div class="text-sm flex-1">
-                      <p class="font-semibold text-amber-700 dark:text-amber-300">
-                        Resource notice
-                      </p>
-                      <p class="text-amber-600 dark:text-amber-400 mt-1">
+                      <p class="font-semibold text-amber-700">Resource notice</p>
+                      <p class="text-amber-600 mt-1">
                         {{ getAvailabilityMessage() }}
                       </p>
                       <div
@@ -2839,9 +2795,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
               }
 
               <!-- Deployment Info -->
-              <div class="border border-border rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20">
-                <h4 class="font-medium mb-3 text-blue-900 dark:text-blue-100">Deployment Info</h4>
-                <div class="space-y-2 text-sm text-blue-700 dark:text-blue-300">
+              <div class="border border-border rounded-lg p-4 bg-blue-50">
+                <h4 class="font-medium mb-3 text-blue-900">Deployment Info</h4>
+                <div class="space-y-2 text-sm text-blue-700">
                   <div class="flex justify-between">
                     <span>Application name:</span>
                     <span class="font-medium">{{ getApplicationName() }}</span>
@@ -2849,7 +2805,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <div class="flex justify-between">
                     <span>Estimated time:</span>
                     @if (roomWaitAhead()) {
-                      <span class="font-medium text-amber-700 dark:text-amber-400"
+                      <span class="font-medium text-amber-700"
                         >starts when a node with room joins</span
                       >
                     } @else {
@@ -2857,9 +2813,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     }
                   </div>
                 </div>
-                <p
-                  class="text-xs text-blue-600 dark:text-blue-400 mt-3 pt-3 border-t border-blue-200 dark:border-blue-800"
-                >
+                <p class="text-xs text-blue-600 mt-3 pt-3 border-t border-blue-200">
                   💡 Deployment will start immediately and can be monitored in real-time
                 </p>
               </div>
@@ -4168,9 +4122,9 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
       case ManifestCheckDto.StatusEnum.Pass:
         return 'text-[hsl(var(--ok))]';
       case ManifestCheckDto.StatusEnum.Warn:
-        return 'text-amber-600 dark:text-amber-400';
+        return 'text-amber-600';
       case ManifestCheckDto.StatusEnum.Fail:
-        return 'text-red-600 dark:text-red-400';
+        return 'text-red-600';
       default:
         return 'text-muted-foreground';
     }
@@ -4534,11 +4488,11 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
       case 'active':
         return `${baseClass} bg-[hsl(var(--ok)/0.12)] text-[hsl(var(--ok))]`;
       case 'creating':
-        return `${baseClass} bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400`;
+        return `${baseClass} bg-blue-100 text-blue-800`;
       case 'error':
-        return `${baseClass} bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400`;
+        return `${baseClass} bg-red-100 text-red-800`;
       default:
-        return `${baseClass} bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300`;
+        return `${baseClass} bg-gray-100 text-gray-800`;
     }
   }
 

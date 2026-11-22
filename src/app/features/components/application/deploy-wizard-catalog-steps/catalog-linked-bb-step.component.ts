@@ -80,18 +80,13 @@ import { CatalogReusableInstanceDto } from '../../../../core/api/model/catalogRe
           <div>{{ state.reusableInstancesError() }}</div>
         </div>
       } @else if (instances().length === 0) {
-        <div
-          class="flex items-start gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-4"
-        >
-          <ng-icon
-            name="lucideTriangleAlert"
-            class="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
-          />
+        <div class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <ng-icon name="lucideTriangleAlert" class="h-5 w-5 shrink-0 text-amber-600" />
           <div class="flex-1 text-sm">
-            <p class="font-medium text-amber-800 dark:text-amber-200">
+            <p class="font-medium text-amber-800">
               No running {{ bbLabel() }} found on this cluster
             </p>
-            <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">
+            <p class="mt-1 text-xs text-amber-700">
               @if (bbRefs().length > 1) {
                 Install one of {{ slugList() }} first, then come back to this wizard to link it.
               } @else {
@@ -126,7 +121,7 @@ import { CatalogReusableInstanceDto } from '../../../../core/api/model/catalogRe
                       </span>
                       @if (bbRefs().length > 1 && instance.catalogSlug) {
                         <span
-                          class="rounded-full border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-300"
+                          class="rounded-full border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800"
                         >
                           {{ instance.catalogSlug }}
                         </span>
@@ -136,7 +131,7 @@ import { CatalogReusableInstanceDto } from '../../../../core/api/model/catalogRe
                       {{ instance.applicationName }}
                     </div>
                     @if (!instance.catalogInstallId) {
-                      <div class="mt-1 text-[11px] text-amber-700 dark:text-amber-300">
+                      <div class="mt-1 text-[11px] text-amber-700">
                         This instance was not created via catalog install — it can't be linked.
                       </div>
                     }
@@ -206,11 +201,11 @@ export class CatalogLinkedBbStepComponent {
       'inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium capitalize';
     switch (status) {
       case CatalogReusableInstanceDto.StatusEnum.Running:
-        return `${base} bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400`;
+        return `${base} bg-emerald-100 text-emerald-700`;
       case CatalogReusableInstanceDto.StatusEnum.Degraded:
-        return `${base} bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400`;
+        return `${base} bg-amber-100 text-amber-700`;
       case CatalogReusableInstanceDto.StatusEnum.Failed:
-        return `${base} bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400`;
+        return `${base} bg-rose-100 text-rose-700`;
       default:
         return `${base} bg-muted text-muted-foreground`;
     }

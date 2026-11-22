@@ -54,18 +54,10 @@ const TODAY_PLUS_DAYS = (days: number): string => {
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       (click)="onBackdrop($event)"
     >
-      <div
-        class="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full shadow-xl"
-        (click)="$event.stopPropagation()"
-      >
-        <div
-          class="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700"
-        >
-          <h3 class="text-base font-semibold text-slate-900 dark:text-white">{{ title() }}</h3>
-          <button
-            (click)="cancelled.emit()"
-            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-          >
+      <div class="bg-white rounded-lg max-w-md w-full shadow-xl" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between p-5 border-b border-slate-200">
+          <h3 class="text-base font-semibold text-slate-900">{{ title() }}</h3>
+          <button (click)="cancelled.emit()" class="text-slate-400 hover:text-slate-600">
             <ng-icon name="lucideX" class="h-5 w-5" />
           </button>
         </div>
@@ -76,14 +68,14 @@ const TODAY_PLUS_DAYS = (days: number): string => {
               [href]="patCreateUrl"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
             >
               Create a classic token with read:packages and delete:packages
               <ng-icon name="lucideExternalLink" class="h-3 w-3" />
             </a>
 
             <div>
-              <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label class="block text-xs font-medium text-slate-700 mb-1">
                 Personal Access Token
               </label>
               <input
@@ -91,13 +83,13 @@ const TODAY_PLUS_DAYS = (days: number): string => {
                 [(ngModel)]="token"
                 placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                 [disabled]="busy()"
-                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               />
             </div>
           }
 
           <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label class="block text-xs font-medium text-slate-700 mb-1">
               Token expiration date
             </label>
             <input
@@ -105,21 +97,21 @@ const TODAY_PLUS_DAYS = (days: number): string => {
               [(ngModel)]="expiresAt"
               [min]="minDate"
               [disabled]="busy()"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+              class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
             />
-            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            <p class="text-xs text-slate-400 mt-1">
               Match the expiration you set on GitHub. We'll warn you 14 days before.
             </p>
           </div>
 
           @if (mode() !== 'update-expiry') {
-            <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-              <p class="text-xs text-slate-500 dark:text-slate-400">
+            <div class="p-3 bg-slate-50 rounded-lg">
+              <p class="text-xs text-slate-500">
                 Required scopes: <span class="font-mono">read:packages</span> (or
                 <span class="font-mono">write:packages</span>) and
                 <span class="font-mono">delete:packages</span>.
               </p>
-              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
+              <p class="text-xs text-slate-400 mt-1">
                 Needed because GitHub App tokens can't pull or delete private container packages
                 outside of GitHub Actions.
               </p>
@@ -127,25 +119,18 @@ const TODAY_PLUS_DAYS = (days: number): string => {
           }
 
           @if (errorMsg()) {
-            <div
-              class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800"
-            >
-              <ng-icon
-                name="lucideAlertCircle"
-                class="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
-              />
-              <p class="text-xs text-red-700 dark:text-red-400">{{ errorMsg() }}</p>
+            <div class="flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
+              <ng-icon name="lucideAlertCircle" class="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+              <p class="text-xs text-red-700">{{ errorMsg() }}</p>
             </div>
           }
         </div>
 
-        <div
-          class="flex items-center justify-end gap-2 p-5 border-t border-slate-200 dark:border-slate-700"
-        >
+        <div class="flex items-center justify-end gap-2 p-5 border-t border-slate-200">
           <button
             (click)="cancelled.emit()"
             [disabled]="busy()"
-            class="px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-60"
+            class="px-3 py-2 text-sm rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-60"
           >
             Cancel
           </button>

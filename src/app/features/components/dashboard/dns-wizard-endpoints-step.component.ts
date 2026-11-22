@@ -150,10 +150,10 @@ const PHASE_LABELS: Record<AppEndpointPhase, string> = {
 
     @if (wiz.endpointPhase() !== 'done') {
       <div
-        class="mt-2 rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-3 py-2 flex items-start gap-2"
+        class="mt-2 rounded-md bg-blue-50 border border-blue-200 px-3 py-2 flex items-start gap-2"
       >
         <ng-icon name="lucideInfo" class="h-3.5 w-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
-        <p class="text-xs text-blue-700 dark:text-blue-300">
+        <p class="text-xs text-blue-700">
           The first run can take a few minutes — DNS propagation and certificate issuance are
           slowest the first time. Subsequent runs are much faster.
         </p>
@@ -168,12 +168,10 @@ const PHASE_LABELS: Record<AppEndpointPhase, string> = {
 
     @if (wiz.endpointPhase() === 'done' && !wiz.hasFailedEndpoint()) {
       <div
-        class="mt-2 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2 flex items-center gap-2"
+        class="mt-2 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center gap-2"
       >
         <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
-        <p class="text-xs text-emerald-700 dark:text-emerald-300">
-          All endpoints configured and certificates are valid.
-        </p>
+        <p class="text-xs text-emerald-700">All endpoints configured and certificates are valid.</p>
       </div>
     }
   `,
@@ -200,14 +198,14 @@ export class DnsWizardEndpointsStepComponent {
   protected certBadgeClass(status: AppEndpointStatus['certStatus']): string {
     switch (status) {
       case 'valid':
-        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+        return 'bg-emerald-100 text-emerald-700';
       case 'issuing':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+        return 'bg-blue-100 text-blue-700';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+        return 'bg-yellow-100 text-yellow-700';
       case 'expired':
       case 'failed':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-red-100 text-red-700';
       default:
         return 'bg-muted text-muted-foreground';
     }

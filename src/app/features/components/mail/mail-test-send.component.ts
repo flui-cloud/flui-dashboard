@@ -144,7 +144,7 @@ type Kind = 'delivery' | 'bounce';
 
       @if (result(); as r) {
         <div
-          class="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-900 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-200"
+          class="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-900"
         >
           <div class="flex items-start gap-2">
             <ng-icon name="lucideCircleCheck" class="mt-0.5 h-3.5 w-3.5 shrink-0" />

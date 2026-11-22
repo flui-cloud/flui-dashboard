@@ -105,7 +105,7 @@ import { consoleError } from './mail-format';
         @let r = readiness()!;
         @if (r.ready) {
           <div
-            class="mb-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300"
+            class="mb-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
           >
             <ng-icon name="lucideCircleCheck" class="h-4 w-4 shrink-0" />
             Ready to send{{ domain.trim() ? ' from ' + domain.trim() : '' }}.
@@ -217,9 +217,9 @@ export class MailSetupComponent implements OnInit {
   protected badgeClass(step: MailReadinessStep): string {
     switch (step.status) {
       case 'satisfied':
-        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400';
+        return 'bg-emerald-100 text-emerald-700';
       case 'manual':
-        return 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400';
+        return 'bg-amber-100 text-amber-800';
       default:
         return 'bg-muted text-muted-foreground';
     }

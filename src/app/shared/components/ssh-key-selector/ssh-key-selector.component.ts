@@ -45,10 +45,8 @@ import { SSHKeyDto } from '../../../core/api/model/models';
     <div class="space-y-6">
       <!-- Description -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          SSH Key (Optional)
-        </label>
-        <p class="text-sm text-slate-500 dark:text-slate-400">
+        <label class="block text-sm font-medium text-slate-700 mb-2"> SSH Key (Optional) </label>
+        <p class="text-sm text-slate-500">
           Choose an SSH key for secure access to your resources. You can skip this step and add it
           later.
         </p>
@@ -63,9 +61,7 @@ import { SSHKeyDto } from '../../../core/api/model/models';
 
       <!-- Error State -->
       @if (wizardService.sshKeyError() && !wizardService.isSshKeyLoading()) {
-        <div
-          class="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg"
-        >
+        <div class="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
           <ng-icon name="lucideCircleAlert" size="20"></ng-icon>
           <span>{{ wizardService.sshKeyError() }}</span>
         </div>
@@ -81,16 +77,12 @@ import { SSHKeyDto } from '../../../core/api/model/models';
             class="p-4 mb-3 border-2 rounded-lg cursor-pointer transition-all"
           >
             <div class="flex items-center gap-3">
-              <div class="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                <ng-icon
-                  name="lucideKey"
-                  size="20"
-                  class="text-slate-500 dark:text-slate-400"
-                ></ng-icon>
+              <div class="p-2 bg-slate-100 rounded-lg">
+                <ng-icon name="lucideKey" size="20" class="text-slate-500"></ng-icon>
               </div>
               <div>
-                <h3 class="font-semibold text-slate-900 dark:text-white">No SSH Key</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400">Skip SSH key configuration</p>
+                <h3 class="font-semibold text-slate-900">No SSH Key</h3>
+                <p class="text-sm text-slate-500">Skip SSH key configuration</p>
               </div>
             </div>
           </div>
@@ -103,16 +95,12 @@ import { SSHKeyDto } from '../../../core/api/model/models';
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
-                  <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
-                    <ng-icon
-                      name="lucideKey"
-                      size="20"
-                      class="text-green-600 dark:text-green-400"
-                    ></ng-icon>
+                  <div class="p-2 bg-green-100 rounded-lg flex-shrink-0">
+                    <ng-icon name="lucideKey" size="20" class="text-green-600"></ng-icon>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-slate-900 dark:text-white">{{ key.name }}</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                    <h3 class="font-semibold text-slate-900">{{ key.name }}</h3>
+                    <p class="text-sm text-slate-500">
                       {{ key.type }} · {{ formatDate(key.createdAt) }}
                     </p>
                     <!-- Provider availability badges -->
@@ -121,8 +109,8 @@ import { SSHKeyDto } from '../../../core/api/model/models';
                         <span
                           [class]="
                             p.available
-                              ? 'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                              : 'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                              ? 'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800'
+                              : 'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500'
                           "
                         >
                           {{ p.label }}
@@ -135,7 +123,7 @@ import { SSHKeyDto } from '../../../core/api/model/models';
                   <ng-icon
                     name="lucideCheck"
                     size="24"
-                    class="text-blue-600 dark:text-blue-400 flex-shrink-0 ml-2"
+                    class="text-blue-600 flex-shrink-0 ml-2"
                   ></ng-icon>
                 }
               </div>
@@ -143,17 +131,17 @@ import { SSHKeyDto } from '../../../core/api/model/models';
           }
           <!-- Empty State -->
           @if (wizardService.sshKeysData().length === 0) {
-            <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+            <div class="text-center py-8 text-slate-500">
               <ng-icon name="lucideKey" size="48" class="mx-auto mb-3 opacity-30"></ng-icon>
               <p>No SSH keys found. Create your first key below.</p>
             </div>
           }
           <!-- Create New SSH Key -->
-          <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+          <div class="mt-6 pt-6 border-t border-slate-200">
             @if (!showCreateForm()) {
               <button
                 (click)="showCreateForm.set(true)"
-                class="flex items-center gap-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                class="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 <ng-icon name="lucidePlus" size="20"></ng-icon>
                 <span>Create New SSH Key</span>
@@ -162,33 +150,33 @@ import { SSHKeyDto } from '../../../core/api/model/models';
             <!-- Create Form -->
             @if (showCreateForm()) {
               <div class="space-y-4">
-                <h3 class="font-semibold text-slate-900 dark:text-white">Create New SSH Key</h3>
+                <h3 class="font-semibold text-slate-900">Create New SSH Key</h3>
                 <div>
-                  <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label class="block text-sm font-medium text-slate-700 mb-1">
                     Key Name <span class="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     [(ngModel)]="newKeyName"
                     placeholder="e.g., production-key"
-                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label class="block text-sm font-medium text-slate-700 mb-1">
                     User Name <span class="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     [(ngModel)]="newKeyUserName"
                     placeholder="e.g., admin"
-                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <!-- Create Error -->
                 @if (createError()) {
                   <div
-                    class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm"
+                    class="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm"
                   >
                     <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
                     <span>{{ createError() }}</span>
@@ -212,7 +200,7 @@ import { SSHKeyDto } from '../../../core/api/model/models';
                   <button
                     (click)="cancelCreate()"
                     [disabled]="isCreating()"
-                    class="px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
@@ -327,17 +315,17 @@ export class SshKeySelectorComponent implements OnInit {
     const isSelected = this.selectedKeyId() === keyId;
 
     if (isSelected) {
-      return 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20';
+      return 'border-blue-500 bg-blue-50';
     }
 
-    return 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800/50';
+    return 'border-slate-200 hover:border-blue-300 hover:bg-slate-50';
   }
 
   getCreateButtonClass(): string {
     if (!this.canCreateKey() || this.isCreating()) {
-      return 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed';
+      return 'bg-slate-300 text-slate-500 cursor-not-allowed';
     }
 
-    return 'bg-green-600 dark:bg-green-500 text-white hover:bg-green-700 dark:hover:bg-green-600';
+    return 'bg-green-600 text-white hover:bg-green-700';
   }
 }

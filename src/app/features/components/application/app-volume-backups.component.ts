@@ -58,7 +58,7 @@ interface RunningOperation extends VolumeRestoreStarted {
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="text-lg font-semibold flex items-center gap-2">
-              <ng-icon name="lucideArchive" class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <ng-icon name="lucideArchive" class="h-5 w-5 text-indigo-600" />
               Volume backups
             </h2>
             <p class="text-sm text-muted-foreground mt-0.5">

@@ -41,7 +41,7 @@ const JSON_SNIFF_SAMPLE = 50;
           }
           <span>{{ r.durationMs }} ms</span>
           @if (r.truncated) {
-            <span class="text-amber-600 dark:text-amber-400">truncated to {{ r.rows.length }}</span>
+            <span class="text-amber-600">truncated to {{ r.rows.length }}</span>
           }
           <div class="ml-auto flex items-center gap-2">
             <button

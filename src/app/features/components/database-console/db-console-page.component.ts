@@ -86,7 +86,7 @@ type ConnState = 'connecting' | 'connected' | 'error';
             }
             @case ('connected') {
               <span
-                class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700"
               >
                 Connected
               </span>
@@ -106,7 +106,7 @@ type ConnState = 'connecting' | 'connected' | 'error';
 
       @if (conn() === 'error' && connError(); as e) {
         <div
-          class="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+          class="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
         >
           <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
           <div>
@@ -188,7 +188,7 @@ type ConnState = 'connecting' | 'connected' | 'error';
 
           @if (queryError(); as e) {
             <div
-              class="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+              class="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
             >
               <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
               <span class="whitespace-pre-wrap">{{ e }}</span>

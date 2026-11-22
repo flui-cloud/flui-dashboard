@@ -47,19 +47,15 @@ const GRID_BOTTOM = 28;
     <div class="relative w-full select-none" [style.height]="mergedConfig().height">
       <!-- Loading overlay -->
       @if (loading()) {
-        <div
-          class="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded z-20"
-        >
-          <span class="text-xs text-gray-400 dark:text-gray-500 animate-pulse"
-            >Loading volume…</span
-          >
+        <div class="absolute inset-0 flex items-center justify-center bg-white/60 rounded z-20">
+          <span class="text-xs text-gray-400 animate-pulse">Loading volume…</span>
         </div>
       }
 
       <!-- Empty state -->
       @if (!loading() && isEmpty()) {
         <div class="absolute inset-0 flex items-center justify-center z-10">
-          <span class="text-xs text-gray-400 dark:text-gray-500 italic">No volume data</span>
+          <span class="text-xs text-gray-400 italic">No volume data</span>
         </div>
       }
 
@@ -95,9 +91,7 @@ const GRID_BOTTOM = 28;
           }
 
           <!-- Hint label -->
-          <div
-            class="absolute top-0.5 right-1 text-[9px] text-gray-300 dark:text-gray-600 pointer-events-none"
-          >
+          <div class="absolute top-0.5 right-1 text-[9px] text-gray-300 pointer-events-none">
             drag to filter
           </div>
         </div>

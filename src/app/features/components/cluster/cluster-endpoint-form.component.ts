@@ -163,7 +163,7 @@ export interface AppOption {
 
         @if (endpointType() === 'internal' && !internalHostingAvailable()) {
           <div
-            class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300"
+            class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 bg-amber-50 text-xs text-amber-800"
           >
             <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <div class="flex-1 space-y-1">
@@ -182,7 +182,7 @@ export interface AppOption {
 
         @if (endpointType() === 'internal' && internalHostingAvailable() && !authzReady()) {
           <div
-            class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300"
+            class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 bg-amber-50 text-xs text-amber-800"
           >
             <ng-icon name="lucideShieldAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <div class="flex-1 space-y-1">
@@ -267,7 +267,7 @@ export interface AppOption {
                     [class]="
                       'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent ' +
                       (ipSlugError()
-                        ? 'border-red-400 dark:border-red-500 focus:ring-red-500'
+                        ? 'border-red-400 focus:ring-red-500'
                         : 'border-border focus:ring-blue-500')
                     "
                   />
@@ -278,7 +278,7 @@ export interface AppOption {
                   </span>
                 </div>
                 @if (ipSlugError()) {
-                  <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ ipSlugError() }}</p>
+                  <p class="mt-1 text-xs text-red-600">{{ ipSlugError() }}</p>
                 } @else {
                   <p class="mt-1 text-xs text-muted-foreground">
                     Edit only the app name. Leave empty to use the default ({{
@@ -307,10 +307,8 @@ export interface AppOption {
                 </p>
               }
             } @else {
-              <div
-                class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg"
-              >
-                <p class="text-xs text-amber-800 dark:text-amber-300">
+              <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p class="text-xs text-amber-800">
                   Cluster IP not ready yet. Wait until the cluster finishes setting up, then come
                   back here.
                 </p>
@@ -337,7 +335,7 @@ export interface AppOption {
                   [class]="
                     'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent ' +
                     (subdomainError()
-                      ? 'border-red-400 dark:border-red-500 focus:ring-red-500'
+                      ? 'border-red-400 focus:ring-red-500'
                       : 'border-border focus:ring-blue-500')
                   "
                 />
@@ -370,7 +368,7 @@ export interface AppOption {
                 }
               </div>
               @if (subdomainError()) {
-                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ subdomainError() }}</p>
+                <p class="mt-1 text-xs text-red-600">{{ subdomainError() }}</p>
               } @else if (!form.subdomainPrefix.trim()) {
                 <p class="mt-1 text-xs text-muted-foreground">
                   Required — or click <ng-icon name="lucideWand2" class="h-3 w-3 inline" /> to
@@ -388,7 +386,7 @@ export interface AppOption {
                   [class]="
                     'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent font-mono ' +
                     (fqdnError()
-                      ? 'border-red-400 dark:border-red-500 focus:ring-red-500'
+                      ? 'border-red-400 focus:ring-red-500'
                       : 'border-border focus:ring-blue-500')
                   "
                 />
@@ -403,7 +401,7 @@ export interface AppOption {
                 </button>
               </div>
               @if (fqdnError()) {
-                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ fqdnError() }}</p>
+                <p class="mt-1 text-xs text-red-600">{{ fqdnError() }}</p>
               }
               @if (masterIp() && form.fqdn.trim() && !fqdnError()) {
                 <div class="mt-1.5 flex items-center gap-1.5 text-xs">
@@ -420,11 +418,8 @@ export interface AppOption {
                         >Resolves correctly to {{ masterIp() }}</span
                       >
                     } @else {
-                      <ng-icon
-                        name="lucideCircleX"
-                        class="h-3 w-3 text-red-500 dark:text-red-400"
-                      />
-                      <span class="text-red-700 dark:text-red-400">
+                      <ng-icon name="lucideCircleX" class="h-3 w-3 text-red-500" />
+                      <span class="text-red-700">
                         Does not point to {{ masterIp() }}
                         @if (dnsResult()!.resolvedAddresses.length > 0) {
                           — found: {{ dnsResult()!.resolvedAddresses.join(', ') }}
@@ -441,7 +436,7 @@ export interface AppOption {
               <button
                 type="button"
                 (click)="toggleByodOverride()"
-                class="mt-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                class="mt-1.5 text-xs text-blue-600 hover:underline"
               >
                 @if (byodOverride()) {
                   @if (assignments().length > 1) {
@@ -458,35 +453,31 @@ export interface AppOption {
 
           <!-- BYOD instructions (no zone assigned, or zone assigned + user opted out via byodOverride) -->
           @if (!effectiveAssignment()) {
-            <div
-              class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-2"
-            >
-              <p class="text-xs text-amber-800 dark:text-amber-300 font-medium">
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+              <p class="text-xs text-amber-800 font-medium">
                 No DNS zone — manual configuration required
               </p>
-              <p class="text-xs text-amber-700 dark:text-amber-400">
+              <p class="text-xs text-amber-700">
                 Create an <strong>A record</strong> on your DNS provider pointing the FQDN above to
                 the cluster master IP:
               </p>
               @if (masterIp()) {
                 <div class="inline-flex items-center gap-1.5">
                   <code
-                    class="px-2 py-0.5 bg-background border border-amber-200 dark:border-amber-700 rounded text-xs font-mono text-foreground select-all"
+                    class="px-2 py-0.5 bg-background border border-amber-200 rounded text-xs font-mono text-foreground select-all"
                     >{{ masterIp() }}</code
                   >
                   <button
                     type="button"
                     (click)="copyIp()"
-                    class="p-1 rounded text-amber-500 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                    class="p-1 rounded text-amber-500 hover:text-amber-700 transition-colors"
                     [title]="copied() ? 'Copied!' : 'Copy IP'"
                   >
                     <ng-icon [name]="copied() ? 'lucideCheck' : 'lucideCopy'" class="h-3 w-3" />
                   </button>
                 </div>
               } @else {
-                <p class="text-xs text-amber-600 dark:text-amber-500 italic">
-                  Master IP not yet available.
-                </p>
+                <p class="text-xs text-amber-600 italic">Master IP not yet available.</p>
               }
             </div>
           }
@@ -523,7 +514,7 @@ export interface AppOption {
             </div>
             @if (wildcardIssuersMissing()) {
               <div
-                class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300"
+                class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 bg-amber-50 text-xs text-amber-800"
               >
                 <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
                 <div class="flex-1 space-y-1">
@@ -555,13 +546,13 @@ export interface AppOption {
           </label>
 
           @if (!effectiveAssignment() && form.certificateRequired) {
-            <p class="ml-6 text-xs text-amber-600 dark:text-amber-400">
+            <p class="ml-6 text-xs text-amber-600">
               Single-domain certificate only — wildcard requires a managed DNS zone.
             </p>
           }
 
           @if (form.certificateRequired && !issuersReady()) {
-            <div class="ml-6 flex items-start gap-1.5 text-xs text-red-700 dark:text-red-400">
+            <div class="ml-6 flex items-start gap-1.5 text-xs text-red-700">
               <ng-icon name="lucideShieldAlert" class="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
               <span>
                 No certificate issuer ready — TLS provisioning will fail.
@@ -583,11 +574,11 @@ export interface AppOption {
                 @switch (certificateMode) {
                   @case ('staging') {
                     <div
-                      class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-xs text-blue-800 dark:text-blue-300"
+                      class="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800"
                     >
                       <ng-icon
                         name="lucideShieldCheck"
-                        class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-400"
+                        class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-blue-600"
                       />
                       <span>
                         A <strong>staging</strong> certificate will be issued (Let's Encrypt Staging
@@ -597,11 +588,11 @@ export interface AppOption {
                   }
                   @case ('preflight') {
                     <div
-                      class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-xs text-blue-800 dark:text-blue-300"
+                      class="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800"
                     >
                       <ng-icon
                         name="lucideShieldCheck"
-                        class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-400"
+                        class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-blue-600"
                       />
                       <span>
                         Configured for <strong>preflight</strong>: a staging certificate will be
@@ -631,7 +622,7 @@ export interface AppOption {
                 <!-- Staging not yet valid -->
                 @if (!stagingCertValid()) {
                   <div
-                    class="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg text-xs text-yellow-800 dark:text-yellow-300"
+                    class="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800"
                   >
                     <ng-icon name="lucideShieldAlert" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                     <span
@@ -698,7 +689,7 @@ export interface AppOption {
                 [class]="
                   'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground font-mono disabled:bg-muted disabled:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent ' +
                   (subdomainError()
-                    ? 'border-red-400 dark:border-red-500 focus:ring-red-500'
+                    ? 'border-red-400 focus:ring-red-500'
                     : 'border-border focus:ring-blue-500')
                 "
               />
@@ -718,7 +709,7 @@ export interface AppOption {
               </span>
             </div>
             @if (subdomainError()) {
-              <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ subdomainError() }}</p>
+              <p class="mt-1 text-xs text-red-600">{{ subdomainError() }}</p>
             } @else {
               <p class="mt-1 text-xs text-muted-foreground">
                 Reachable only through the Flui Auth Proxy. The TLS certificate is provisioned by
@@ -726,10 +717,8 @@ export interface AppOption {
               </p>
             }
           } @else {
-            <div
-              class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg"
-            >
-              <p class="text-xs text-amber-800 dark:text-amber-300">
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p class="text-xs text-amber-800">
                 No DNS zone assigned. Internal endpoints require a managed DNS zone with a wildcard
                 certificate on the cluster.
               </p>

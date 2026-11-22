@@ -101,7 +101,7 @@ const PURPOSE_LABEL: Record<string, string> = {
 
       @if (caution(); as note) {
         <p
-          class="mt-2 flex items-start gap-1.5 rounded border border-amber-200 bg-amber-50 p-1.5 text-[11px] text-amber-900 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300"
+          class="mt-2 flex items-start gap-1.5 rounded border border-amber-200 bg-amber-50 p-1.5 text-[11px] text-amber-900"
         >
           <ng-icon name="lucideTriangleAlert" class="mt-px h-3 w-3 shrink-0" />
           <span>{{ note }}</span>

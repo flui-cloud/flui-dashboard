@@ -28,11 +28,11 @@ const STATE_LABEL: Record<HostFirewallLayerState, string> = {
 const STATE_TONE: Record<HostFirewallLayerState, string> = {
   'not-applicable': 'bg-muted text-sub',
   off: 'bg-muted text-sub',
-  pending: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  applied: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  blocked: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  removing: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  pending: 'bg-blue-100 text-blue-800',
+  applied: 'bg-green-100 text-green-800',
+  blocked: 'bg-amber-100 text-amber-800',
+  failed: 'bg-red-100 text-red-800',
+  removing: 'bg-blue-100 text-blue-800',
 };
 
 @Component({
@@ -44,7 +44,7 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
   template: `
     <div class="card-inner p-4 space-y-2" data-testid="host-layer">
       <div class="flex items-center gap-2">
-        <ng-icon name="lucideServer" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        <ng-icon name="lucideServer" class="h-4 w-4 text-blue-600" />
         <span class="text-label">Firewall on each node</span>
         <span class="text-xs px-2 py-0.5 rounded-full {{ tone() }}" data-testid="host-layer-state">
           {{ stateLabel() }}
@@ -84,11 +84,7 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
 
       @if (showReason()) {
         <p
-          class="text-sm {{
-            layer().state === 'failed'
-              ? 'text-red-600 dark:text-red-400'
-              : 'text-amber-700 dark:text-amber-300'
-          }}"
+          class="text-sm {{ layer().state === 'failed' ? 'text-red-600' : 'text-amber-700' }}"
           data-testid="host-layer-reason"
         >
           {{ reasonText() }}
@@ -96,7 +92,7 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
       }
 
       @if (error()) {
-        <p class="text-sm text-red-600 dark:text-red-400" data-testid="host-layer-error">
+        <p class="text-sm text-red-600" data-testid="host-layer-error">
           {{ error() }}
         </p>
       }
@@ -107,7 +103,7 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
 
       <button
         type="button"
-        class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+        class="text-xs text-blue-600 hover:underline"
         data-testid="host-layer-more"
         (click)="showMore.set(!showMore())"
       >

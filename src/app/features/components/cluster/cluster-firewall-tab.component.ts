@@ -94,9 +94,9 @@ import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.compon
               (click)="showSshSettings.set(!showSshSettings())"
               class="flex items-center gap-2 w-full text-left"
             >
-              <ng-icon name="lucideSettings" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <ng-icon name="lucideSettings" class="h-4 w-4 text-blue-600" />
               <span class="text-label">SSH connection</span>
-              <span class="ml-auto text-xs text-blue-600 dark:text-blue-400 hover:underline">
+              <span class="ml-auto text-xs text-blue-600 hover:underline">
                 {{ showSshSettings() ? 'Hide' : 'Configure' }}
               </span>
             </button>
@@ -149,14 +149,12 @@ import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.compon
                     }
                   </button>
                   @if (sshSaved()) {
-                    <span
-                      class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400"
-                    >
+                    <span class="inline-flex items-center gap-1 text-xs text-green-600">
                       <ng-icon name="lucideCheck" class="h-3.5 w-3.5" /> Saved
                     </span>
                   }
                   @if (sshError()) {
-                    <span class="text-xs text-red-600 dark:text-red-400">{{ sshError() }}</span>
+                    <span class="text-xs text-red-600">{{ sshError() }}</span>
                   }
                 </div>
               </div>
@@ -201,7 +199,7 @@ import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.compon
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="card-inner p-4">
                 <div class="flex items-center gap-2 mb-2">
-                  <ng-icon name="lucideShield" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <ng-icon name="lucideShield" class="h-4 w-4 text-blue-600" />
                   <span class="text-label">Status</span>
                 </div>
                 <div class="flex items-center gap-2">
@@ -216,7 +214,7 @@ import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.compon
                     <button
                       (click)="reconcileFirewall()"
                       [disabled]="reconciling()"
-                      class="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+                      class="text-xs text-blue-600 hover:underline disabled:opacity-50"
                     >
                       {{ reconciling() ? 'Reconciling…' : 'Reconcile' }}
                     </button>
@@ -226,10 +224,7 @@ import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.compon
 
               <div class="card-inner p-4">
                 <div class="flex items-center gap-2 mb-2">
-                  <ng-icon
-                    name="lucideCalendar"
-                    class="h-4 w-4 text-purple-600 dark:text-purple-400"
-                  />
+                  <ng-icon name="lucideCalendar" class="h-4 w-4 text-purple-600" />
                   <span class="text-label">Last Reconciled</span>
                 </div>
                 <p class="text-lg font-bold text-value">
@@ -283,8 +278,8 @@ import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.compon
                             <span
                               class="text-xs px-2 py-1 rounded-full {{
                                 $any(rule).direction === 'in'
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-blue-100 text-blue-800'
                               }}"
                             >
                               {{ $any(rule).direction === 'in' ? '→ In' : '← Out' }}
@@ -326,7 +321,7 @@ import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.compon
         } @else if (isHostFirewall()) {
           <div class="card-inner p-4 space-y-2">
             <div class="flex items-center gap-2">
-              <ng-icon name="lucideShield" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <ng-icon name="lucideShield" class="h-4 w-4 text-blue-600" />
               <span class="text-label">Host firewall (nftables)</span>
             </div>
             <p class="text-sm text-sub">
@@ -346,7 +341,7 @@ import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.compon
               removed — only IP-allowlisted. The machines' outbound traffic is not restricted.
             </p>
             @if (enableError()) {
-              <p class="text-sm text-red-600 dark:text-red-400">{{ enableError() }}</p>
+              <p class="text-sm text-red-600">{{ enableError() }}</p>
             }
           </div>
         } @else {

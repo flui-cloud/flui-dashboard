@@ -34,9 +34,9 @@ const DOT: Record<Tone, string> = {
 };
 
 const TEXT: Record<Tone, string> = {
-  ok: 'text-green-700 dark:text-green-400',
+  ok: 'text-green-700',
   info: 'text-primary',
-  warn: 'text-amber-700 dark:text-amber-400',
+  warn: 'text-amber-700',
   danger: 'text-destructive',
   muted: 'text-muted-foreground',
 };
@@ -120,7 +120,7 @@ const TEXT: Record<Tone, string> = {
                   [class]="
                     level === 'DANGER_NEEDS_SCALE'
                       ? 'bg-destructive/10 text-destructive'
-                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                      : 'bg-amber-100 text-amber-700'
                   "
                   [title]="
                     level === 'DANGER_NEEDS_SCALE'

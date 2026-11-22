@@ -26,7 +26,7 @@ import { AppGroupView, Application } from '../../model/application.models';
   template: `
     @if (canDelete() && compact()) {
       <div
-        class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-red-300 px-4 py-3 dark:border-red-900/50"
+        class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-red-300 px-4 py-3"
         data-testid="danger-line"
       >
         <div class="min-w-0 text-xs text-muted-foreground">
@@ -35,17 +35,15 @@ import { AppGroupView, Application } from '../../model/application.models';
         <button
           type="button"
           (click)="openDelete()"
-          class="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium text-red-700 hover:bg-red-50"
         >
           <ng-icon name="lucideTrash2" class="h-4 w-4" />
           {{ deleteButtonText() }}
         </button>
       </div>
     } @else if (canDelete()) {
-      <section class="rounded-2xl border border-red-200 dark:border-red-900/40 bg-card p-6">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-500">
-          Danger zone
-        </h2>
+      <section class="rounded-2xl border border-red-200 bg-card p-6">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-red-600">Danger zone</h2>
         <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div class="min-w-0">
             <p class="text-sm font-medium text-foreground">
@@ -57,7 +55,7 @@ import { AppGroupView, Application } from '../../model/application.models';
             type="button"
             (click)="openDelete()"
             class="inline-flex shrink-0 items-center gap-2 rounded-md border border-red-300 px-3 py-1.5 text-sm
-                   font-medium text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                   font-medium text-red-700 hover:bg-red-50"
           >
             <ng-icon name="lucideTrash2" class="h-4 w-4" />
             Delete
@@ -118,26 +116,19 @@ import { AppGroupView, Application } from '../../model/application.models';
               @if (!p || !p.volumesKnown) {
                 <p
                   class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800
-                          dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
+"
                 >
                   The volumes this would delete could not be read from the cluster. Assume data will
                   be lost — it is not known to be none.
                 </p>
               } @else if (p.volumes.length) {
-                <div
-                  class="rounded-md border border-red-300 bg-red-50 px-3 py-2 dark:border-red-900/50 dark:bg-red-950/30"
-                >
-                  <p
-                    class="text-xs font-semibold text-red-700 dark:text-red-400"
-                    data-testid="data-warning"
-                  >
+                <div class="rounded-md border border-red-300 bg-red-50 px-3 py-2">
+                  <p class="text-xs font-semibold text-red-700" data-testid="data-warning">
                     {{ p.dataWarning }}
                   </p>
                   <ul class="mt-1.5 space-y-0.5">
                     @for (v of p.volumes; track v.namespace + '/' + v.name) {
-                      <li
-                        class="flex items-center justify-between gap-2 text-xs text-red-700/90 dark:text-red-400/90"
-                      >
+                      <li class="flex items-center justify-between gap-2 text-xs text-red-700/90">
                         <span class="truncate font-mono">{{ v.name }}</span>
                         <span class="shrink-0 font-semibold">{{ v.sizeLabel }}</span>
                       </li>

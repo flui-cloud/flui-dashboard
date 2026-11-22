@@ -20,10 +20,10 @@ const KIND_CLASS: Record<string, string> = {
   delivered: 'bg-muted text-foreground',
   sent: 'bg-muted text-muted-foreground',
   queued: 'bg-muted text-muted-foreground',
-  deferred: 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400',
-  bounced: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
-  complained: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
-  unsubscribed: 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400',
+  deferred: 'bg-amber-50 text-amber-800',
+  bounced: 'bg-red-50 text-red-700',
+  complained: 'bg-red-50 text-red-700',
+  unsubscribed: 'bg-amber-50 text-amber-800',
   canceled: 'bg-muted text-muted-foreground',
 };
 
@@ -139,7 +139,7 @@ const KIND_CLASS: Record<string, string> = {
                     <div class="max-w-md truncate text-foreground">{{ e.subject ?? '—' }}</div>
                     @if (e.reason) {
                       <div
-                        class="max-w-md truncate font-mono text-[11px] text-red-600 dark:text-red-400"
+                        class="max-w-md truncate font-mono text-[11px] text-red-600"
                         [title]="e.reason"
                       >
                         {{ e.code ? e.code + ' ' : '' }}{{ e.reason }}

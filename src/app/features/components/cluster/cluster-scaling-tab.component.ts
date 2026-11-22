@@ -60,21 +60,13 @@ import { ScalingGroupFormComponent } from './scaling-group-form.component';
 
         <div
           class="flex items-start gap-2.5 rounded-lg border px-3.5 py-3"
-          [class]="
-            row.needsPerson
-              ? 'border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-900/20'
-              : 'border-border bg-card'
-          "
+          [class]="row.needsPerson ? 'border-amber-200 bg-amber-50' : 'border-border bg-card'"
           data-testid="state-line"
         >
           <ng-icon
             [name]="row.needsPerson ? 'lucideCircleAlert' : 'lucideCircleCheck'"
             class="h-4 w-4 shrink-0 translate-y-0.5"
-            [class]="
-              row.needsPerson
-                ? 'text-amber-600 dark:text-amber-400'
-                : 'text-green-600 dark:text-green-500'
-            "
+            [class]="row.needsPerson ? 'text-amber-600' : 'text-green-600'"
           />
           <span class="text-[13px] leading-relaxed text-foreground">{{ stateLine() }}</span>
         </div>

@@ -49,15 +49,12 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
 
       @if (isByos() && clusterVNet()) {
         <div
-          class="card-inner border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3 mb-4 flex items-start gap-2.5"
+          class="card-inner border border-blue-200 bg-blue-50 rounded-lg p-3 mb-4 flex items-start gap-2.5"
         >
-          <ng-icon
-            name="lucideShieldCheck"
-            class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
-          />
+          <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div>
             <span
-              class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+              class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700"
             >
               Registered (self-hosted)
             </span>
@@ -95,7 +92,7 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="card-inner p-4">
               <div class="flex items-center gap-2 mb-2">
-                <ng-icon name="lucideNetwork" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <ng-icon name="lucideNetwork" class="h-4 w-4 text-blue-600" />
                 <span class="text-label">VNet Name</span>
               </div>
               <p class="text-lg font-bold text-value">{{ clusterVNet()!.name }}</p>
@@ -103,7 +100,7 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
 
             <div class="card-inner p-4">
               <div class="flex items-center gap-2 mb-2">
-                <ng-icon name="lucideGlobe" class="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <ng-icon name="lucideGlobe" class="h-4 w-4 text-purple-600" />
                 <span class="text-label">IP Range</span>
               </div>
               <p class="text-lg font-mono font-bold text-value">{{ clusterVNet()!.ipRange }}</p>

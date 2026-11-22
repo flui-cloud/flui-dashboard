@@ -156,7 +156,7 @@ function icon(ctx: LadderContext, outcome: LadderRung['outcome']): string {
 }
 
 function tone(ctx: LadderContext, rung: LadderRung, chosen: boolean): string {
-  if (rung.outcome === 'alert') return 'text-amber-600 dark:text-amber-400';
+  if (rung.outcome === 'alert') return 'text-amber-600';
   if (chosen && withheld(ctx)) return 'text-foreground';
   return chosen ? 'status-healthy' : 'text-muted-foreground';
 }

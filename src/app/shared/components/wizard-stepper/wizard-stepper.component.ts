@@ -127,14 +127,14 @@ export class WizardStepperComponent {
     const isActive = index === this.currentStepIndex();
 
     if (step.isCompleted) {
-      return 'bg-green-500 dark:bg-green-600';
+      return 'bg-green-500';
     }
 
     if (isActive) {
-      return 'bg-blue-600 dark:bg-blue-500 ring-4 ring-blue-200 dark:ring-blue-900';
+      return 'bg-blue-600 ring-4 ring-blue-200';
     }
 
-    return 'bg-slate-200 dark:bg-slate-700';
+    return 'bg-slate-200';
   }
 
   /**
@@ -147,7 +147,7 @@ export class WizardStepperComponent {
       return 'text-white';
     }
 
-    return 'text-slate-500 dark:text-slate-400';
+    return 'text-slate-500';
   }
 
   /**
@@ -157,10 +157,10 @@ export class WizardStepperComponent {
     const isActive = index === this.currentStepIndex();
 
     if (isActive) {
-      return 'text-blue-600 dark:text-blue-400';
+      return 'text-blue-600';
     }
 
-    return 'text-slate-600 dark:text-slate-400';
+    return 'text-slate-600';
   }
 
   /**
@@ -168,9 +168,9 @@ export class WizardStepperComponent {
    */
   getConnectorClass(step: WizardStepperStep): string {
     if (step.isCompleted) {
-      return 'bg-green-500 dark:bg-green-600';
+      return 'bg-green-500';
     }
 
-    return 'bg-slate-200 dark:bg-slate-700';
+    return 'bg-slate-200';
   }
 }

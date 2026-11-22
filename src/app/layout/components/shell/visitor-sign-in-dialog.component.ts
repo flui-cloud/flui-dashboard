@@ -35,20 +35,15 @@ import {
             aria-modal="true"
             aria-labelledby="visitor-sign-in-title"
             tabindex="-1"
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-6 outline-none"
+            class="bg-white border border-gray-200 rounded-lg shadow-xl p-6 outline-none"
             (click)="$event.stopPropagation()"
           >
             <div class="flex items-start justify-between gap-4">
               <div>
-                <h3
-                  id="visitor-sign-in-title"
-                  class="text-lg font-semibold text-gray-900 dark:text-white"
-                >
+                <h3 id="visitor-sign-in-title" class="text-lg font-semibold text-gray-900">
                   Sign in to deploy
                 </h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Your visit, keys and agent come with you.
-                </p>
+                <p class="text-sm text-gray-600 mt-1">Your visit, keys and agent come with you.</p>
               </div>
               <button
                 hlmBtn

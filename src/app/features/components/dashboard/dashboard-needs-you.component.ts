@@ -35,7 +35,7 @@ const APPS_LISTED = 4;
 
 const TONE: Record<NeedsYouLevel, { box: string; icon: string }> = {
   critical: { box: 'bg-destructive/10', icon: 'text-destructive' },
-  warning: { box: 'bg-amber-50 dark:bg-amber-900/15', icon: 'text-amber-600 dark:text-amber-400' },
+  warning: { box: 'bg-amber-50', icon: 'text-amber-600' },
   info: { box: 'brand-soft', icon: '' },
 };
 
@@ -105,10 +105,7 @@ function iconOf(item: NeedsYouItem): { icon: string; spin: boolean } {
           </div>
         } @else if (rows().length === 0) {
           <div class="flex items-center gap-2.5 py-1" data-testid="needs-you-empty">
-            <ng-icon
-              name="lucideCircleCheckBig"
-              class="h-4 w-4 text-green-600 dark:text-green-400"
-            />
+            <ng-icon name="lucideCircleCheckBig" class="h-4 w-4 text-green-600" />
             <span class="text-sm text-muted-foreground">Nothing needs you right now</span>
           </div>
         } @else {

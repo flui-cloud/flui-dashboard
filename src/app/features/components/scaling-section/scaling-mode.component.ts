@@ -109,7 +109,7 @@ export class ScalingModeComponent {
 
   protected readonly labelClass = computed(() =>
     this.attention()
-      ? 'rounded-md bg-amber-100 px-2 py-0.5 text-sm font-semibold text-amber-900 dark:bg-amber-900/40 dark:text-amber-200'
+      ? 'rounded-md bg-amber-100 px-2 py-0.5 text-sm font-semibold text-amber-900'
       : 'rounded-md bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary',
   );
 

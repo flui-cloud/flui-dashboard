@@ -39,7 +39,7 @@ import { ConfigureSystemIngressDto } from '../../../core/api/model/configureSyst
         </div>
         <button
           (click)="toggleForm()"
-          class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+          class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
         >
           <ng-icon name="lucideSettings2" class="h-3.5 w-3.5" />
           {{ showForm() ? 'Hide' : 'Configure' }}
@@ -87,7 +87,7 @@ import { ConfigureSystemIngressDto } from '../../../core/api/model/configureSyst
 
           @if (error()) {
             <div
-              class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400"
+              class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
             >
               <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
               {{ error() }}
@@ -96,7 +96,7 @@ import { ConfigureSystemIngressDto } from '../../../core/api/model/configureSyst
 
           @if (success()) {
             <div
-              class="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-xs text-green-700 dark:text-green-400"
+              class="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700"
             >
               <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5 flex-shrink-0" />
               System ingress configured successfully.

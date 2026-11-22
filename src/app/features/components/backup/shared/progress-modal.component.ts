@@ -46,14 +46,14 @@ import { ActiveOperation } from '../../../model/backup.models';
             }
             @if (o.status === 'failed') {
               <div
-                class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+                class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700"
                 data-testid="progress-failed"
               >
                 {{ o.error || 'It failed.' }}
               </div>
             } @else if (o.status === 'completed' && o.partial) {
               <div
-                class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400"
+                class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700"
                 data-testid="progress-partial"
               >
                 Finished, but not everything was backed up.
@@ -63,7 +63,7 @@ import { ActiveOperation } from '../../../model/backup.models';
               </div>
             } @else if (o.status === 'completed') {
               <div
-                class="rounded border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-700 dark:text-green-400"
+                class="rounded border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-700"
                 data-testid="progress-completed"
               >
                 Completed successfully.

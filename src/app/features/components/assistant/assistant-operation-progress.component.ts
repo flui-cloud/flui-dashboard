@@ -45,10 +45,7 @@ const TERMINAL = new Set<OperationState>(['COMPLETED', 'FAILED', 'CANCELLED']);
     >
       <div class="flex items-center gap-2">
         @if (succeeded()) {
-          <ng-icon
-            name="lucideCircleCheck"
-            class="h-4 w-4 shrink-0 text-green-600 dark:text-green-400"
-          />
+          <ng-icon name="lucideCircleCheck" class="h-4 w-4 shrink-0 text-green-600" />
         } @else if (failed()) {
           <ng-icon name="lucideCircleX" class="h-4 w-4 shrink-0 text-destructive" />
         } @else {

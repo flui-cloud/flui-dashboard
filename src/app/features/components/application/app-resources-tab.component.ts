@@ -41,13 +41,13 @@ import { accessOf } from '../../model/app-access';
         @if (runtimeService.loading()) {
           <div class="flex items-center gap-2 py-4">
             <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin text-blue-600" />
-            <span class="text-sm text-gray-600 dark:text-gray-400">Loading runtime status...</span>
+            <span class="text-sm text-gray-600">Loading runtime status...</span>
           </div>
         }
 
         @if (runtimeService.error()) {
           <div
-            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ runtimeService.error() }}</span>

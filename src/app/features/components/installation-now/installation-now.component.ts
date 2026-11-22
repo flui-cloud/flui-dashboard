@@ -113,7 +113,7 @@ const MIB = 1024 * 1024;
         >
           @if (d.alerts.firing === 0) {
             <span class="h-2 w-2 rounded-full bg-green-500"></span>
-            <span class="font-medium text-green-700 dark:text-green-400">No alert firing</span>
+            <span class="font-medium text-green-700">No alert firing</span>
           } @else {
             <span
               class="h-2 w-2 rounded-full"
@@ -204,7 +204,7 @@ const MIB = 1024 * 1024;
                         <span class="text-muted-foreground"> · {{ rate(e.rpsBefore) }}</span>
                         @if (surge(e)) {
                           <span
-                            class="badge ml-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                            class="badge ml-1.5 bg-amber-500/10 text-amber-600"
                             data-testid="now-surge"
                             >Surge</span
                           >
@@ -538,7 +538,7 @@ export class InstallationNowComponent implements OnInit, OnDestroy {
 
   protected textClass(level: Level): string {
     if (level === 'bad') return 'text-destructive font-medium';
-    if (level === 'warn') return 'text-amber-600 dark:text-amber-400 font-medium';
+    if (level === 'warn') return 'text-amber-600 font-medium';
     return '';
   }
 

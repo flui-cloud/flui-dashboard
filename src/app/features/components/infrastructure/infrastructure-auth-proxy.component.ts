@@ -48,10 +48,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
   template: `
     <div class="space-y-4">
       <div class="flex items-start gap-2 text-sm text-muted-foreground">
-        <ng-icon
-          name="lucideInfo"
-          class="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-500 dark:text-blue-400"
-        />
+        <ng-icon name="lucideInfo" class="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-500" />
         <p>
           Auth Proxy checks the Flui sign-in for internal apps and routes that require one, so only
           team members with access reach them. Install it once on each cluster other than the
@@ -117,10 +114,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             <!-- Header row: title + status + actions -->
             <div class="flex flex-wrap items-center gap-3">
               <div class="flex items-center gap-2 min-w-0">
-                <ng-icon
-                  name="lucideShieldPlus"
-                  class="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0"
-                />
+                <ng-icon name="lucideShieldPlus" class="h-4 w-4 text-blue-600 flex-shrink-0" />
                 <span class="text-sm font-semibold text-foreground truncate"
                   >Internal app protection</span
                 >
@@ -166,7 +160,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                   <button
                     (click)="uninstallDialog.open()"
                     [disabled]="authzService.installing()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-red-300 dark:border-red-700/60 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Uninstall
                   </button>
@@ -199,7 +193,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             <!-- Errors -->
             @if (authzService.error()) {
               <div
-                class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/60 rounded text-sm text-red-700 dark:text-red-400"
+                class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700"
               >
                 <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
                 {{ authzService.error() }}
@@ -209,7 +203,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               authzService.install()?.status === 'FAILED' && authzService.install()?.errorMessage
             ) {
               <div
-                class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/60 rounded text-sm text-red-700 dark:text-red-400"
+                class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700"
               >
                 <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
                 {{ authzService.install()!.errorMessage }}
@@ -254,13 +248,11 @@ export class InfrastructureAuthProxyComponent implements OnInit {
 
   protected statusBadgeClass = computed(() => {
     const s = this.authzService.install()?.status;
-    if (s === this.Status.Running)
-      return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
-    if (s === this.Status.Failed)
-      return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+    if (s === this.Status.Running) return 'bg-green-100 text-green-700';
+    if (s === this.Status.Failed) return 'bg-red-100 text-red-700';
     if (s === this.Status.Pending || s === this.Status.Installing)
-      return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
-    return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+      return 'bg-amber-100 text-amber-700';
+    return 'bg-gray-100 text-gray-600';
   });
 
   protected statusDotClass = computed(() => {

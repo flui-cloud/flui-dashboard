@@ -29,7 +29,7 @@ import {
       <div class="space-y-6">
         @if (focusVar() || missingName()) {
           <div
-            class="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-300"
+            class="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800"
           >
             <ng-icon name="lucideInfo" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <div class="flex-1 space-y-1 min-w-0">
@@ -65,13 +65,13 @@ import {
         @if (variablesService.loading()) {
           <div class="flex items-center gap-2 py-4">
             <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin text-blue-600" />
-            <span class="text-sm text-gray-600 dark:text-gray-400">Loading variables...</span>
+            <span class="text-sm text-gray-600">Loading variables...</span>
           </div>
         }
 
         @if (variablesService.error()) {
           <div
-            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ variablesService.error() }}</span>

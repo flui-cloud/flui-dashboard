@@ -128,12 +128,12 @@ import {
               </thead>
               <tbody class="divide-y divide-border">
                 @for (img of filteredImages(); track img.id) {
-                  <tr [class]="img.isCurrentlyDeployed ? 'bg-green-50/50 dark:bg-green-900/5' : ''">
+                  <tr [class]="img.isCurrentlyDeployed ? 'bg-green-50/50' : ''">
                     <td class="px-4 py-3">
                       <div class="flex items-center gap-2">
                         @if (img.isCurrentlyDeployed) {
                           <span
-                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
                           >
                             <ng-icon name="lucideCircleCheck" class="h-3 w-3" /> Live
                           </span>

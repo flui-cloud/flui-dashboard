@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, input, signal } f
 
 type JsonKind = 'object' | 'array' | 'primitive' | 'bson';
 
-const BSON_CLS = 'text-amber-600 dark:text-amber-400';
-const NUM_CLS = 'text-sky-600 dark:text-sky-400';
+const BSON_CLS = 'text-amber-600';
+const NUM_CLS = 'text-sky-600';
 
 /** EJSON leaf values are strings/numbers; stringify only those (never objects). */
 function leaf(v: unknown): string {
@@ -63,7 +63,7 @@ function detectBsonToken(v: unknown): { text: string; cls: string } | null {
       case '$undefined':
         return { text: 'undefined', cls: 'text-muted-foreground italic' };
       case '$symbol':
-        return { text: `'${leaf(val)}'`, cls: 'text-emerald-600 dark:text-emerald-400' };
+        return { text: `'${leaf(val)}'`, cls: 'text-emerald-600' };
     }
   }
   if (Object.hasOwn(o, '$code')) {
@@ -188,11 +188,11 @@ export class JsonViewerComponent implements OnInit {
     if (v === null) return 'text-muted-foreground italic';
     switch (typeof v) {
       case 'string':
-        return 'text-emerald-600 dark:text-emerald-400';
+        return 'text-emerald-600';
       case 'number':
-        return 'text-sky-600 dark:text-sky-400';
+        return 'text-sky-600';
       case 'boolean':
-        return 'text-violet-600 dark:text-violet-400';
+        return 'text-violet-600';
       default:
         return '';
     }

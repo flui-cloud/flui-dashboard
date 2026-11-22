@@ -63,7 +63,7 @@ import { exampleSubject } from './messaging-format';
           Publish
         </button>
         @if (s.publishResult(); as r) {
-          <span class="text-xs text-emerald-600 dark:text-emerald-400"
+          <span class="text-xs text-emerald-600"
             >Routed to {{ r.stream }}
             @if (r.seq != null) {
               · seq {{ r.seq }}

@@ -179,14 +179,14 @@ interface FirewallRuleDto {
     >
       @if (createError(); as message) {
         <div
-          class="flex items-start gap-2 mb-6 p-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm"
+          class="flex items-start gap-2 mb-6 p-3 rounded-lg border border-red-200 bg-red-50 text-sm"
           role="alert"
           data-testid="create-cluster-error"
         >
-          <ng-icon name="lucideX" class="h-4 w-4 mt-0.5 text-red-600 dark:text-red-400" />
+          <ng-icon name="lucideX" class="h-4 w-4 mt-0.5 text-red-600" />
           <div class="flex-1">
-            <p class="font-medium text-red-700 dark:text-red-300">The cluster was not created</p>
-            <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">{{ message }}</p>
+            <p class="font-medium text-red-700">The cluster was not created</p>
+            <p class="text-xs text-red-700 mt-0.5">{{ message }}</p>
           </div>
         </div>
       }
@@ -318,16 +318,16 @@ interface FirewallRuleDto {
               </p>
               @if (providerRefusal(); as refusal) {
                 <div
-                  class="mt-3 max-w-4xl flex items-start gap-2 p-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm"
+                  class="mt-3 max-w-4xl flex items-start gap-2 p-3 rounded-lg border border-red-200 bg-red-50 text-sm"
                   role="alert"
                   data-testid="provider-refused"
                 >
-                  <ng-icon name="lucideX" class="h-4 w-4 mt-0.5 text-red-600 dark:text-red-400" />
+                  <ng-icon name="lucideX" class="h-4 w-4 mt-0.5 text-red-600" />
                   <div class="flex-1">
-                    <p class="font-medium text-red-700 dark:text-red-300">
+                    <p class="font-medium text-red-700">
                       This provider cannot host a workload cluster here yet
                     </p>
-                    <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">{{ refusal }}</p>
+                    <p class="text-xs text-red-700 mt-0.5">{{ refusal }}</p>
                   </div>
                 </div>
               }
@@ -526,13 +526,11 @@ interface FirewallRuleDto {
           <div class="space-y-6">
             @if (environmentNetwork(); as env) {
               <div
-                class="p-4 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
+                class="p-4 border border-blue-200 bg-blue-50 rounded-lg"
                 data-testid="joins-environment-network"
               >
-                <div class="font-medium text-slate-900 dark:text-white">
-                  Joins the environment network
-                </div>
-                <p class="m-0 mt-1 text-sm text-slate-600 dark:text-slate-400">
+                <div class="font-medium text-slate-900">Joins the environment network</div>
+                <p class="m-0 mt-1 text-sm text-slate-600">
                   On the control cluster's provider, every cluster shares its private network:
                   <span class="font-mono">{{ env.name }}</span> ({{ env.ipRange }}). Nothing to
                   choose here.
@@ -547,30 +545,24 @@ interface FirewallRuleDto {
                     (click)="fluiBuildsNetwork.set(false)"
                     [class]="
                       !fluiBuildsNetwork()
-                        ? 'p-4 border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-left'
-                        : 'p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-left hover:border-slate-300'
+                        ? 'p-4 border-2 border-blue-500 bg-blue-50 rounded-lg text-left'
+                        : 'p-4 border-2 border-slate-200 rounded-lg text-left hover:border-slate-300'
                     "
                   >
-                    <div class="font-medium text-slate-900 dark:text-white">
-                      Use an existing network
-                    </div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      The machines already share one
-                    </div>
+                    <div class="font-medium text-slate-900">Use an existing network</div>
+                    <div class="text-xs text-slate-500 mt-1">The machines already share one</div>
                   </button>
                   <button
                     type="button"
                     (click)="fluiBuildsNetwork.set(true)"
                     [class]="
                       fluiBuildsNetwork()
-                        ? 'p-4 border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-left'
-                        : 'p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-left hover:border-slate-300'
+                        ? 'p-4 border-2 border-blue-500 bg-blue-50 rounded-lg text-left'
+                        : 'p-4 border-2 border-slate-200 rounded-lg text-left hover:border-slate-300'
                     "
                   >
-                    <div class="font-medium text-slate-900 dark:text-white">Let Flui build one</div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      The machines share nothing
-                    </div>
+                    <div class="font-medium text-slate-900">Let Flui build one</div>
+                    <div class="text-xs text-slate-500 mt-1">The machines share nothing</div>
                   </button>
                 </div>
 
@@ -579,21 +571,19 @@ interface FirewallRuleDto {
                     <button
                       type="button"
                       (click)="showNetworkHelp.set(!showNetworkHelp())"
-                      class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      class="text-xs text-blue-600 hover:underline"
                     >
                       {{ showNetworkHelp() ? 'Hide details' : 'What does this do?' }}
                     </button>
                     @if (showNetworkHelp()) {
-                      <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      <p class="text-xs text-slate-600 leading-relaxed">
                         Every node gets an address on an encrypted network Flui builds between them,
                         and Kubernetes binds to it. Without one, traffic between your applications
                         crosses the public internet unencrypted.
                       </p>
                     }
                     <div>
-                      <label
-                        class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                      >
+                      <label class="block text-sm font-medium text-slate-700 mb-1">
                         Address range <span class="text-slate-400 font-normal">(optional)</span>
                       </label>
                       <input
@@ -601,7 +591,7 @@ interface FirewallRuleDto {
                         [value]="fluiNetworkCidr()"
                         (input)="fluiNetworkCidr.set($any($event.target).value)"
                         placeholder="10.201.0.0/24"
-                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-sm"
+                        class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm"
                       />
                     </div>
                   </div>
@@ -628,27 +618,23 @@ interface FirewallRuleDto {
                 @if (selectedVNetId() && selectedVNetData()) {
                   <div class="border-t pt-6">
                     <div class="mb-4">
-                      <label
-                        class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-                      >
+                      <label class="block text-sm font-medium text-slate-700 mb-2">
                         Select Subnet <span class="text-red-500">*</span>
                       </label>
-                      <p class="text-sm text-slate-500 dark:text-slate-400">
+                      <p class="text-sm text-slate-500">
                         Choose which subnet to attach all cluster nodes to.
                       </p>
                     </div>
 
                     @if (selectedVNetData()!.subnets.length === 0) {
-                      <div
-                        class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
-                      >
+                      <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <div class="flex items-start gap-2">
                           <ng-icon
                             name="lucideInfo"
                             size="18"
-                            class="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5"
+                            class="text-yellow-600 flex-shrink-0 mt-0.5"
                           ></ng-icon>
-                          <div class="text-sm text-yellow-800 dark:text-yellow-200">
+                          <div class="text-sm text-yellow-800">
                             <strong>Warning:</strong> This VNet has no subnets. Add one below before
                             proceeding, or select a different VNet.
                           </div>
@@ -678,18 +664,16 @@ interface FirewallRuleDto {
                           >
                             <div class="flex items-center justify-between">
                               <div class="flex items-center gap-3 flex-1">
-                                <div class="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                                <div class="p-2 bg-slate-100 rounded-lg">
                                   <ng-icon
                                     name="lucideNetwork"
                                     size="20"
-                                    class="text-slate-600 dark:text-slate-400"
+                                    class="text-slate-600"
                                   ></ng-icon>
                                 </div>
                                 <div class="flex-1">
                                   <div class="flex items-center gap-2 mb-1">
-                                    <span
-                                      class="font-mono font-semibold text-slate-900 dark:text-white"
-                                    >
+                                    <span class="font-mono font-semibold text-slate-900">
                                       {{ subnet.ipRange }}
                                     </span>
                                     @if (!isIpv4Subnet(subnet.ipRange)) {
@@ -702,9 +686,7 @@ interface FirewallRuleDto {
                                       >
                                     }
                                   </div>
-                                  <div
-                                    class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400"
-                                  >
+                                  <div class="flex items-center gap-3 text-xs text-slate-500">
                                     <span>{{ subnet.networkZone }}</span>
                                     @if (subnet.gateway) {
                                       <span>Gateway: {{ subnet.gateway }}</span>
@@ -720,7 +702,7 @@ interface FirewallRuleDto {
                                 <ng-icon
                                   name="lucideCheck"
                                   size="24"
-                                  class="text-blue-600 dark:text-blue-400 ml-2"
+                                  class="text-blue-600 ml-2"
                                 ></ng-icon>
                               }
                             </div>
@@ -731,7 +713,7 @@ interface FirewallRuleDto {
                         <button
                           type="button"
                           (click)="openAddSubnetForm()"
-                          class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                          class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
                         >
                           <ng-icon name="lucidePlus" size="14"></ng-icon>
                           Add another subnet
@@ -741,23 +723,19 @@ interface FirewallRuleDto {
 
                     @if (showAddSubnetForm()) {
                       <div
-                        class="mt-3 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50/40 dark:bg-blue-900/10 space-y-4"
+                        class="mt-3 border-2 border-blue-200 rounded-lg p-4 bg-blue-50/40 space-y-4"
                       >
                         <div class="flex items-center justify-between">
                           <div class="flex items-center gap-2">
-                            <ng-icon
-                              name="lucideNetwork"
-                              size="18"
-                              class="text-blue-600 dark:text-blue-400"
-                            ></ng-icon>
-                            <h4 class="font-semibold text-slate-900 dark:text-white">
+                            <ng-icon name="lucideNetwork" size="18" class="text-blue-600"></ng-icon>
+                            <h4 class="font-semibold text-slate-900">
                               Add subnet to {{ selectedVNetData()?.name }}
                             </h4>
                           </div>
                           <button
                             type="button"
                             (click)="closeAddSubnetForm()"
-                            class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            class="p-1 text-slate-400 hover:text-slate-600"
                           >
                             <ng-icon name="lucideX" size="18"></ng-icon>
                           </button>
@@ -765,7 +743,7 @@ interface FirewallRuleDto {
 
                         @if (addSubnetError()) {
                           <div
-                            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm"
+                            class="flex items-start gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm"
                           >
                             <ng-icon
                               name="lucideInfo"
@@ -778,14 +756,12 @@ interface FirewallRuleDto {
 
                         @if (addSubnetZones().length > 0) {
                           <div>
-                            <label
-                              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                            >
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
                               Network Zone <span class="text-red-500">*</span>
                             </label>
                             <select
                               [(ngModel)]="addSubnetZone"
-                              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                               @for (zone of addSubnetZones(); track zone.id) {
                                 <option [value]="zone.id">{{ zone.displayName }}</option>
@@ -795,19 +771,17 @@ interface FirewallRuleDto {
                         }
 
                         <div>
-                          <label
-                            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                          >
+                          <label class="block text-sm font-medium text-slate-700 mb-1">
                             Subnet IP Range (CIDR) <span class="text-red-500">*</span>
                           </label>
                           <input
                             type="text"
                             [(ngModel)]="addSubnetIpRange"
                             placeholder="e.g., 10.0.0.0/24"
-                            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             [class.border-red-500]="addSubnetIpRange && !isValidAddSubnetCidr()"
                           />
-                          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <p class="text-xs text-slate-500 mt-1">
                             Must fall within the VNet range {{ selectedVNetData()?.ipRange }}.
                           </p>
                         </div>
@@ -825,7 +799,7 @@ interface FirewallRuleDto {
                             type="button"
                             (click)="closeAddSubnetForm()"
                             [disabled]="addingSubnet()"
-                            class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                            class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
                           >
                             Cancel
                           </button>
@@ -834,16 +808,14 @@ interface FirewallRuleDto {
                     }
 
                     @if (selectedSubnetId()) {
-                      <div
-                        class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
-                      >
+                      <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         <div class="flex items-start gap-2">
                           <ng-icon
                             name="lucideInfo"
                             size="18"
-                            class="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
+                            class="text-blue-600 flex-shrink-0 mt-0.5"
                           ></ng-icon>
-                          <div class="text-sm text-blue-800 dark:text-blue-200">
+                          <div class="text-sm text-blue-800">
                             <strong>Note:</strong> All cluster nodes will be automatically attached
                             to this subnet during cluster creation.
                           </div>
@@ -913,15 +885,13 @@ interface FirewallRuleDto {
                     Loading your DNS zones…
                   </div>
                 } @else if (dnsZones().length === 0) {
-                  <div
-                    class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg"
-                  >
+                  <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <div class="flex items-start gap-2">
                       <ng-icon
                         name="lucideInfo"
-                        class="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                        class="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5"
                       />
-                      <p class="text-xs text-amber-800 dark:text-amber-300">
+                      <p class="text-xs text-amber-800">
                         No DNS zones registered yet. Register one under
                         <strong>Infrastructure → Domains</strong>, then create this cluster — or
                         pick <strong>Test addresses</strong> to get started now and attach a domain
@@ -1058,7 +1028,7 @@ interface FirewallRuleDto {
                         </div>
                         <div class="text-right">
                           <span
-                            class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                            class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700"
                           >
                             Locked
                           </span>
@@ -1081,7 +1051,7 @@ interface FirewallRuleDto {
                   class="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 mb-4"
                 >
                   <ng-icon name="lucideInfo" class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <p class="text-xs text-blue-700 dark:text-blue-300">
+                  <p class="text-xs text-blue-700">
                     <strong>Workload Cluster:</strong> Pre-configured with default firewall rules
                     for K3s.
                     @if (ipDetectionService.userPublicIP()) {
@@ -1395,8 +1365,8 @@ interface FirewallRuleDto {
                           <span
                             [class]="
                               serverType.cpuType === 'dedicated'
-                                ? 'text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400 px-2 py-1 rounded'
-                                : 'text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded'
+                                ? 'text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded'
+                                : 'text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded'
                             "
                           >
                             {{
@@ -1568,7 +1538,7 @@ interface FirewallRuleDto {
               </div>
 
               <!-- Cost Estimation -->
-              <div class="border border-border rounded-lg p-4 bg-green-50 dark:bg-green-900/10">
+              <div class="border border-border rounded-lg p-4 bg-green-50">
                 <h4 class="font-medium mb-3 flex items-center">
                   <ng-icon name="lucideEuro" class="h-4 w-4 mr-2 text-green-600" />
                   Cost Estimation
@@ -1580,14 +1550,12 @@ interface FirewallRuleDto {
                         costedNodes() > 1 ? 's' : ''
                       }}):</span
                     >
-                    <span class="font-medium text-green-700 dark:text-green-400"
+                    <span class="font-medium text-green-700"
                       >€{{ getEstimatedMonthlyCost() }}/month</span
                     >
                   </div>
                 </div>
-                <p
-                  class="text-xs text-green-600 dark:text-green-400 mt-3 pt-3 border-t border-green-200 dark:border-green-800"
-                >
+                <p class="text-xs text-green-600 mt-3 pt-3 border-t border-green-200">
                   * Estimates based on 24/7 usage. Actual costs may vary.
                 </p>
               </div>
@@ -2265,9 +2233,7 @@ export class ClusterCreationWizardComponent implements OnInit {
 
   getSubnetCardClass(subnetId: string): string {
     const isSelected = this.selectedSubnetId() === subnetId;
-    return isSelected
-      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-      : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600';
+    return isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300';
   }
 
   getSelectedSubnet() {

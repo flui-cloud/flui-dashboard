@@ -132,13 +132,13 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
             <!-- GitHub scope warning -->
             @if (!repositoryService.hasRepoScope()) {
               <div
-                class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10"
+                class="flex items-start gap-2 p-3 rounded-md border border-amber-200 bg-amber-50"
               >
                 <ng-icon
                   name="lucideTriangleAlert"
-                  class="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                  class="h-4 w-4 text-amber-600 shrink-0 mt-0.5"
                 />
-                <div class="text-xs text-amber-900 dark:text-amber-100 space-y-1">
+                <div class="text-xs text-amber-900 space-y-1">
                   <p class="font-medium">GitHub connection required</p>
                   <p>
                     Connect GitHub with the <code class="font-mono">repo</code> scope to create a
@@ -146,7 +146,7 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
                   </p>
                   <a
                     routerLink="/apps/repositories/github-setup"
-                    class="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 hover:underline font-medium"
+                    class="inline-flex items-center gap-1 text-amber-700 hover:underline font-medium"
                   >
                     Connect GitHub →
                   </a>
@@ -301,12 +301,9 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
             @if (currentStep() === 'done') {
               <div
-                class="flex items-start gap-2 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 text-xs text-green-900 dark:text-green-100"
+                class="flex items-start gap-2 p-3 rounded-md border border-green-200 bg-green-50 text-xs text-green-900"
               >
-                <ng-icon
-                  name="lucideCircleCheck"
-                  class="h-4 w-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5"
-                />
+                <ng-icon name="lucideCircleCheck" class="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
                 <span>
                   @if (reusedExisting()) {
                     Reused an existing repository from a previous attempt. Taking you to the build
@@ -328,11 +325,11 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
               @if (cleanupDone()) {
                 <div
-                  class="flex items-start gap-2 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 text-xs text-green-900 dark:text-green-100"
+                  class="flex items-start gap-2 p-3 rounded-md border border-green-200 bg-green-50 text-xs text-green-900"
                 >
                   <ng-icon
                     name="lucideCircleCheck"
-                    class="h-4 w-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5"
+                    class="h-4 w-4 text-green-600 shrink-0 mt-0.5"
                   />
                   <div class="space-y-1">
                     <p class="font-medium">Flui resources removed.</p>
@@ -354,11 +351,11 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
                 </div>
               } @else if (hasResourcesToCleanup()) {
                 <div
-                  class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-900 dark:text-amber-100"
+                  class="flex items-start gap-2 p-3 rounded-md border border-amber-200 bg-amber-50 text-xs text-amber-900"
                 >
                   <ng-icon
                     name="lucideTriangleAlert"
-                    class="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                    class="h-4 w-4 text-amber-600 shrink-0 mt-0.5"
                   />
                   <div class="space-y-2">
                     <p>
@@ -366,9 +363,7 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
                       <span class="font-medium">retry</span> (the steps that already succeeded will
                       be reused), or <span class="font-medium">clean them up</span> to start fresh.
                     </p>
-                    <ul
-                      class="list-disc list-inside space-y-0.5 text-amber-800 dark:text-amber-200/80"
-                    >
+                    <ul class="list-disc list-inside space-y-0.5 text-amber-800">
                       @if (createdAppId()) {
                         <li>
                           Flui application <span class="font-mono">{{ name() }}</span>
@@ -382,7 +377,7 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
                       }
                     </ul>
                     @if (createdGithubRepoFullName()) {
-                      <div class="mt-2 pt-2 border-t border-amber-200 dark:border-amber-800/60">
+                      <div class="mt-2 pt-2 border-t border-amber-200">
                         <p class="font-medium mb-1">⚠ The GitHub repository will not be deleted</p>
                         <p>
                           Flui won't touch
@@ -836,7 +831,7 @@ export class UseTemplateModalComponent implements OnInit {
   getPhaseIconClass(phaseId: OrchestrationPhase['id']): string {
     const base = 'w-6 h-6 rounded-full flex items-center justify-center shrink-0 border';
     if (this.isPhaseDone(phaseId)) {
-      return `${base} bg-green-100 dark:bg-green-900/30 border-green-500 text-green-700 dark:text-green-300`;
+      return `${base} bg-green-100 border-green-500 text-green-700`;
     }
     if (this.isPhaseActive(phaseId)) {
       return `${base} bg-primary/10 border-primary text-primary`;

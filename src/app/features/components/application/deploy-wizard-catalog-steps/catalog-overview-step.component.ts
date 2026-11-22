@@ -215,13 +215,10 @@ import { CatalogIconComponent } from '../../catalog/catalog-icon.component';
         <!-- Placement hint — shown when the manifest pins the app to a single node (databases & friends). -->
         @if (detail()!.persistenceScope === 'dedicated') {
           <div
-            class="flex items-start gap-2 rounded-md border border-indigo-200 dark:border-indigo-900 bg-indigo-50/50 dark:bg-indigo-950/20 px-3 py-2 text-xs"
+            class="flex items-start gap-2 rounded-md border border-indigo-200 bg-indigo-50/50 px-3 py-2 text-xs"
           >
-            <ng-icon
-              name="lucidePin"
-              class="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-600 dark:text-indigo-400"
-            />
-            <span class="text-indigo-900 dark:text-indigo-200">
+            <ng-icon name="lucidePin" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-600" />
+            <span class="text-indigo-900">
               <span class="font-medium">Pinned to one node</span> — this app keeps its data on a
               single node's disk (the master, by default). That gives databases the disk guarantees
               they need, but it means resizing that node will briefly stop the app.

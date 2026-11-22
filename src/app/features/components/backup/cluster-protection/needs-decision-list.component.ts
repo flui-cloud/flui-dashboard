@@ -19,7 +19,7 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
         data-testid="needs-decision"
       >
         <div class="flex items-center justify-between gap-2">
-          <span class="text-sm font-medium text-amber-800 dark:text-amber-300">
+          <span class="text-sm font-medium text-amber-800">
             {{
               items().length === 1
                 ? '1 volume needs a decision'

@@ -70,7 +70,7 @@ import { formatDate } from './snapshot-format';
                   [class]="
                     b.kept === 'retention'
                       ? 'bg-muted text-muted-foreground'
-                      : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300'
+                      : 'bg-indigo-100 text-indigo-800'
                   "
                   [title]="triggerTitle(b)"
                 >
@@ -98,7 +98,7 @@ import { formatDate } from './snapshot-format';
                   <button
                     (click)="restore.emit(b)"
                     [disabled]="!b.restorable || busyIds().has(b.id)"
-                    class="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors disabled:opacity-40"
+                    class="p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors disabled:opacity-40"
                     [title]="b.restorable ? 'Restore whole backup' : (b.reason ?? 'Not restorable')"
                   >
                     <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
@@ -106,7 +106,7 @@ import { formatDate } from './snapshot-format';
                   <button
                     (click)="remove.emit(b)"
                     [disabled]="busyIds().has(b.id)"
-                    class="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors disabled:opacity-40"
+                    class="p-1.5 rounded hover:bg-red-50 text-red-600 transition-colors disabled:opacity-40"
                     title="Delete backup"
                   >
                     @if (deletingIds().has(b.id)) {

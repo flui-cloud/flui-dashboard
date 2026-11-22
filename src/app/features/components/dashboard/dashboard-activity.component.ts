@@ -17,27 +17,27 @@ const STATUS_COLORS: Partial<Record<ClusterStatus, { dot: string; label: string;
     [ClusterStatus.ACTIVE]: {
       dot: 'bg-green-500',
       label: 'active',
-      text: 'text-green-600 dark:text-green-400',
+      text: 'text-green-600',
     },
     [ClusterStatus.ERROR]: {
       dot: 'bg-red-500',
       label: 'error',
-      text: 'text-red-600 dark:text-red-400',
+      text: 'text-red-600',
     },
     [ClusterStatus.CREATING]: {
       dot: 'bg-blue-500',
       label: 'creating',
-      text: 'text-blue-600 dark:text-blue-400',
+      text: 'text-blue-600',
     },
     [ClusterStatus.SCALING]: {
       dot: 'bg-purple-500',
       label: 'scaling',
-      text: 'text-purple-600 dark:text-purple-400',
+      text: 'text-purple-600',
     },
     [ClusterStatus.UPDATING]: {
       dot: 'bg-yellow-500',
       label: 'updating',
-      text: 'text-yellow-600 dark:text-yellow-400',
+      text: 'text-yellow-600',
     },
     [ClusterStatus.STOPPED]: {
       dot: 'bg-gray-400',
@@ -47,17 +47,17 @@ const STATUS_COLORS: Partial<Record<ClusterStatus, { dot: string; label: string;
     [ClusterStatus.STOPPING]: {
       dot: 'bg-orange-500',
       label: 'stopping',
-      text: 'text-orange-600 dark:text-orange-400',
+      text: 'text-orange-600',
     },
     [ClusterStatus.STARTING]: {
       dot: 'bg-green-400',
       label: 'starting',
-      text: 'text-green-600 dark:text-green-400',
+      text: 'text-green-600',
     },
     [ClusterStatus.DELETING]: {
       dot: 'bg-red-400',
       label: 'deleting',
-      text: 'text-red-600 dark:text-red-400',
+      text: 'text-red-600',
     },
   };
 
@@ -109,7 +109,7 @@ const STATUS_COLORS: Partial<Record<ClusterStatus, { dot: string; label: string;
                          border-2 border-card"
                   [class]="getDotBg(item.status)"
                 >
-                  <span class="h-2 w-2 rounded-full bg-white/90 dark:bg-black/40"></span>
+                  <span class="h-2 w-2 rounded-full bg-white/90"></span>
                 </div>
 
                 <!-- Content -->

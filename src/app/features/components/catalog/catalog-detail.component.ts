@@ -215,7 +215,7 @@ import {
               </div>
               @if (updateAvailable()) {
                 <span
-                  class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+                  class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800"
                   title="A newer catalog version is available"
                 >
                   Update available · v{{ app.version }}
@@ -329,7 +329,7 @@ import {
                             <span class="font-mono text-xs text-foreground">{{ prompt.name }}</span>
                             @if (prompt.sensitive) {
                               <span
-                                class="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400"
+                                class="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600"
                               >
                                 Secret
                               </span>
@@ -564,7 +564,7 @@ export class CatalogDetailComponent implements OnDestroy {
   statusClass(status: string): string {
     switch (status) {
       case 'running':
-        return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+        return 'bg-emerald-500/10 text-emerald-700';
       case 'failed':
       case 'degraded':
         return 'bg-destructive/10 text-destructive';
@@ -572,7 +572,7 @@ export class CatalogDetailComponent implements OnDestroy {
       case 'deleted':
         return 'bg-muted text-muted-foreground';
       default:
-        return 'bg-amber-500/10 text-amber-700 dark:text-amber-300';
+        return 'bg-amber-500/10 text-amber-700';
     }
   }
 

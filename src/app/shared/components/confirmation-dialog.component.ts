@@ -33,7 +33,7 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
           class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4"
         >
           <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
+            class="bg-white border border-gray-200 rounded-lg shadow-xl"
             (click)="$event.stopPropagation()"
           >
             <!-- Header -->
@@ -42,26 +42,26 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
                 <div
                   class="flex h-12 w-12 items-center justify-center rounded-full flex-shrink-0"
                   [ngClass]="{
-                    'bg-red-100 dark:bg-red-900/20': variant() === 'danger',
-                    'bg-yellow-100 dark:bg-yellow-900/20': variant() === 'warning',
-                    'bg-blue-100 dark:bg-blue-900/20': variant() === 'info',
+                    'bg-red-100': variant() === 'danger',
+                    'bg-yellow-100': variant() === 'warning',
+                    'bg-blue-100': variant() === 'info',
                   }"
                 >
                   <ng-icon
                     [name]="iconName"
                     class="h-6 w-6"
                     [ngClass]="{
-                      'text-red-600 dark:text-red-400': variant() === 'danger',
-                      'text-yellow-600 dark:text-yellow-400': variant() === 'warning',
-                      'text-blue-600 dark:text-blue-400': variant() === 'info',
+                      'text-red-600': variant() === 'danger',
+                      'text-yellow-600': variant() === 'warning',
+                      'text-blue-600': variant() === 'info',
                     }"
                   />
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 class="text-lg font-semibold text-gray-900">
                     {{ title() }}
                   </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  <p class="text-sm text-gray-600 mt-2">
                     {{ message() }}
                   </p>
 
@@ -69,16 +69,14 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
                     <button
                       type="button"
                       (click)="detailsOpen.set(!detailsOpen())"
-                      class="mt-2 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+                      class="mt-2 text-xs font-medium text-blue-600 hover:underline"
                     >
                       {{ detailsOpen() ? 'Hide details' : 'What exactly happens' }}
                     </button>
                     @if (detailsOpen()) {
-                      <ul
-                        class="mt-2 space-y-1.5 border-l-2 border-gray-200 pl-3 dark:border-gray-700"
-                      >
+                      <ul class="mt-2 space-y-1.5 border-l-2 border-gray-200 pl-3">
                         @for (line of details; track line) {
-                          <li class="text-xs text-gray-600 dark:text-gray-400">{{ line }}</li>
+                          <li class="text-xs text-gray-600">{{ line }}</li>
                         }
                       </ul>
                     }

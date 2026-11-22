@@ -297,7 +297,7 @@ export class ScalingNowOrdersComponent {
       case 'Blocked':
         return 'badge-error';
       case 'Waiting':
-        return 'bg-amber-500/15 text-amber-600 dark:text-amber-400';
+        return 'bg-amber-500/15 text-amber-600';
       case 'Ready':
         return 'badge-success';
     }

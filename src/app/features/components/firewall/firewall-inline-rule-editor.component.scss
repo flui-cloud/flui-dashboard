@@ -1,19 +1,19 @@
 .firewall-inline-editor {
   // Rule card base styles
   .rule-card {
-    @apply bg-gray-50 dark:bg-gray-700
-           border border-gray-200 dark:border-gray-600
+    @apply bg-gray-50
+           border border-gray-200
            rounded-lg
            transition-all duration-200;
 
     &:hover:not(.rule-card--editing) {
-      @apply border-blue-300 dark:border-blue-600 shadow-sm;
+      @apply border-blue-300 shadow-sm;
     }
 
     // Editing state
     &--editing {
-      @apply bg-blue-50 dark:bg-blue-900/10
-             border-2 border-blue-300 dark:border-blue-700
+      @apply bg-blue-50
+             border-2 border-blue-300
              shadow-md;
     }
 

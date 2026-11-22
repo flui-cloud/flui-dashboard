@@ -78,9 +78,7 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
           }
           <!-- Error State -->
           @if (wizardService.providerError() && !wizardService.isProviderLoading()) {
-            <div
-              class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm"
-            >
+            <div class="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
               <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
               <span>{{ wizardService.providerError() }}</span>
             </div>
@@ -88,7 +86,7 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
           <!-- Provider lock note -->
           @if (lockedProvider()) {
             <div
-              class="flex items-center gap-2 mb-3 p-3 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 rounded-lg text-sm"
+              class="flex items-center gap-2 mb-3 p-3 bg-slate-50 text-slate-600 rounded-lg text-sm"
             >
               <ng-icon name="lucideShield" size="16"></ng-icon>
               <span>Workloads must run on the same provider as the control cluster.</span>
@@ -101,7 +99,7 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
           ) {
             <div
               data-testid="no-provider-configured"
-              class="flex items-center gap-2 mb-3 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 rounded-lg text-sm"
+              class="flex items-center gap-2 mb-3 p-3 bg-amber-50 text-amber-800 rounded-lg text-sm"
             >
               <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
               <span>No provider is connected yet. Connect one to create a cluster.</span>
@@ -126,26 +124,24 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
                   <div class="flex flex-col items-center gap-2 text-center">
                     <app-provider-mark [name]="provider.name" [size]="40" />
                     <div>
-                      <p class="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
+                      <p class="text-sm font-semibold text-slate-900 leading-tight">
                         {{ provider.name }}
                       </p>
-                      <p class="text-xs text-slate-500 dark:text-slate-400">
-                        {{ provider.regions }} regions
-                      </p>
+                      <p class="text-xs text-slate-500">{{ provider.regions }} regions</p>
                     </div>
                     @if (provider.comingSoon) {
                       <span
-                        class="px-1.5 py-0.5 text-xs font-medium bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded"
+                        class="px-1.5 py-0.5 text-xs font-medium bg-slate-200 text-slate-600 rounded"
                       >
                         Soon
                       </span>
                     } @else if (!provider.configured) {
-                      <span class="text-xs text-slate-500 dark:text-slate-400">Not connected</span>
+                      <span class="text-xs text-slate-500">Not connected</span>
                       <a
                         [routerLink]="['/management/providers']"
                         [queryParams]="{ configure: provider.id }"
                         [attr.data-testid]="'connect-provider-' + provider.id"
-                        class="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        class="text-xs font-medium text-blue-600 hover:underline"
                       >
                         Connect {{ provider.name }}
                       </a>
@@ -169,9 +165,7 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
           }
           <!-- Error State -->
           @if (wizardService.regionError() && !wizardService.isRegionLoading()) {
-            <div
-              class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm"
-            >
+            <div class="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
               <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
               <span>{{ wizardService.regionError() }}</span>
             </div>
@@ -191,10 +185,10 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
                   <div class="flex items-center gap-2">
                     <span class="text-xl leading-none">{{ region.flagEmoji }}</span>
                     <div class="min-w-0">
-                      <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                      <p class="text-sm font-semibold text-slate-900 truncate">
                         {{ region.name }}
                       </p>
-                      <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                      <p class="text-xs text-slate-500 truncate">
                         {{ region.country }}
                       </p>
                     </div>
@@ -211,19 +205,17 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
         <div>
           <!-- CPU Type Filter -->
           <div class="mb-3 flex items-center gap-2">
-            <label class="text-xs font-medium text-slate-700 dark:text-slate-300">CPU:</label>
+            <label class="text-xs font-medium text-slate-700">CPU:</label>
             <select
               [value]="cpuTypeFilter()"
               (change)="setCpuTypeFilter($any($event.target).value)"
-              class="h-7 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-900 dark:text-white"
+              class="h-7 rounded-md border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-900"
             >
               <option value="all">All</option>
               <option value="shared">Shared (VPS)</option>
               <option value="dedicated">Dedicated</option>
             </select>
-            <span class="text-xs text-slate-500 dark:text-slate-400"
-              >({{ filteredServerTypes().length }})</span
-            >
+            <span class="text-xs text-slate-500">({{ filteredServerTypes().length }})</span>
           </div>
           <!-- Loading State -->
           @if (wizardService.isServerTypeLoading()) {
@@ -233,9 +225,7 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
           }
           <!-- Error State -->
           @if (wizardService.serverTypeError() && !wizardService.isServerTypeLoading()) {
-            <div
-              class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm"
-            >
+            <div class="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
               <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
               <span>{{ wizardService.serverTypeError() }}</span>
             </div>
@@ -256,9 +246,7 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
                   class="p-3 border-2 rounded-lg transition-all"
                 >
                   <div class="flex items-center justify-between mb-2">
-                    <p
-                      class="flex items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-white"
-                    >
+                    <p class="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
                       {{ serverType.name }}
                       <app-architecture-badge [architecture]="serverType.architecture" />
                     </p>
@@ -267,7 +255,7 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
                         <ng-icon
                           name="lucideShield"
                           size="12"
-                          class="text-green-600 dark:text-green-400"
+                          class="text-green-600"
                           title="Managed firewall supported"
                         ></ng-icon>
                       }
@@ -289,52 +277,43 @@ import { ArchitectureBadgeComponent, architectureWarning } from '../architecture
                   </div>
                   <div class="grid grid-cols-3 gap-1 text-xs mb-2">
                     <div class="text-center">
-                      <p class="text-slate-500 dark:text-slate-400">vCPU</p>
-                      <p class="font-medium text-slate-900 dark:text-white">
+                      <p class="text-slate-500">vCPU</p>
+                      <p class="font-medium text-slate-900">
                         {{ serverType.vcpu }}
                       </p>
                     </div>
                     <div class="text-center">
-                      <p class="text-slate-500 dark:text-slate-400">RAM</p>
-                      <p class="font-medium text-slate-900 dark:text-white">
-                        {{ serverType.ram }}GB
-                      </p>
+                      <p class="text-slate-500">RAM</p>
+                      <p class="font-medium text-slate-900">{{ serverType.ram }}GB</p>
                     </div>
                     <div class="text-center">
-                      <p class="text-slate-500 dark:text-slate-400">Disk</p>
-                      <p class="font-medium text-slate-900 dark:text-white">
+                      <p class="text-slate-500">Disk</p>
+                      <p class="font-medium text-slate-900">
                         {{ serverType.storageType === 'local' ? serverType.disk + 'G' : 'Net' }}
                       </p>
                     </div>
                   </div>
                   <div
-                    class="flex justify-between items-center text-xs pt-2 border-t border-slate-200 dark:border-slate-700"
+                    class="flex justify-between items-center text-xs pt-2 border-t border-slate-200"
                   >
-                    <span class="text-slate-500 dark:text-slate-400"
+                    <span class="text-slate-500"
                       >~€{{ pricingService.formatMonthlyPrice(serverType.pricePerHour) }}/mo</span
                     >
-                    <span class="text-slate-400 dark:text-slate-500"
-                      >€{{ serverType.pricePerHour.toFixed(4) }}/h</span
-                    >
+                    <span class="text-slate-400">€{{ serverType.pricePerHour.toFixed(4) }}/h</span>
                   </div>
                 </div>
               }
             </div>
           }
           @if (selectedArchitectureWarning(); as warning) {
-            <p
-              class="mt-2 text-xs text-amber-800 dark:text-amber-300"
-              data-testid="architecture-warning"
-            >
+            <p class="mt-2 text-xs text-amber-800" data-testid="architecture-warning">
               {{ warning }}
             </p>
           }
           <!-- Empty State -->
           @if (!wizardService.isServerTypeLoading() && filteredServerTypes().length === 0) {
             <div class="text-center py-8">
-              <p class="text-sm text-slate-500 dark:text-slate-400">
-                No server types match the selected filter.
-              </p>
+              <p class="text-sm text-slate-500">No server types match the selected filter.</p>
             </div>
           }
         </div>
@@ -462,33 +441,33 @@ export class ProviderRegionSelectorComponent implements OnInit {
 
   getProviderCardClass(provider: ProviderOption): string {
     if (!provider.comingSoon && !provider.configured) {
-      return 'border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50';
+      return 'border-dashed border-slate-300 bg-slate-50';
     }
     if (this.isProviderDisabled(provider)) {
-      return 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed opacity-60';
+      return 'border-slate-200 bg-slate-50 cursor-not-allowed opacity-60';
     }
 
     const isSelected = this.selectedProvider() === provider.id;
 
     if (isSelected) {
-      return 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20';
+      return 'border-blue-500 bg-blue-50';
     }
 
-    return 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800/50';
+    return 'border-slate-200 hover:border-blue-300 hover:bg-slate-50';
   }
 
   getRegionCardClass(region: ProviderRegion): string {
     if (!region.available) {
-      return 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50';
+      return 'border-slate-200 bg-slate-50';
     }
 
     const isSelected = this.selectedRegion() === region.id;
 
     if (isSelected) {
-      return 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20';
+      return 'border-blue-500 bg-blue-50';
     }
 
-    return 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800/50';
+    return 'border-slate-200 hover:border-blue-300 hover:bg-slate-50';
   }
 
   protected readonly architectureWarning = architectureWarning;
@@ -499,22 +478,22 @@ export class ProviderRegionSelectorComponent implements OnInit {
 
   getServerTypeCardClass(serverType: ServerTypeOption): string {
     if (!this.isSelectable(serverType)) {
-      return 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30';
+      return 'border-slate-200 bg-slate-50';
     }
 
     const isSelected = this.selectedServerTypeId() === serverType.id;
 
     if (isSelected) {
-      return 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20';
+      return 'border-blue-500 bg-blue-50';
     }
 
-    return 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800/50';
+    return 'border-slate-200 hover:border-blue-300 hover:bg-slate-50';
   }
 
   getCpuTypeBadgeClass(cpuType: 'shared' | 'dedicated'): string {
     if (cpuType === 'dedicated') {
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
+      return 'bg-purple-100 text-purple-800';
     }
-    return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+    return 'bg-blue-100 text-blue-800';
   }
 }

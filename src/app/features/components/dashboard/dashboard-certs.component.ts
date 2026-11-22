@@ -73,8 +73,7 @@ const ALL_APP_ROWS: AppRow[] = [
             <div class="icon-chip icon-chip-sm chip-warn">
               <ng-icon name="lucideShieldAlert" class="h-4 w-4" />
             </div>
-            <span
-              class="text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400"
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-700"
               >Certificates &amp; DNS · first step</span
             >
           </div>
@@ -168,9 +167,7 @@ const ALL_APP_ROWS: AppRow[] = [
           </div>
         } @else if (dnsService.needsSetup()) {
           <div class="flex flex-col items-center justify-center flex-1 gap-3 py-2">
-            <div
-              class="h-14 w-14 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center"
-            >
+            <div class="h-14 w-14 rounded-full bg-amber-100 flex items-center justify-center">
               <ng-icon name="lucideShieldAlert" class="h-7 w-7 text-amber-500" />
             </div>
             <div class="text-center">
@@ -227,7 +224,7 @@ const ALL_APP_ROWS: AppRow[] = [
             </a>
             <button
               (click)="showWizard.set(true)"
-              class="group flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+              class="group flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-700 transition-colors"
               title="Configure DNS & Certificates"
             >
               <ng-icon name="lucideSettings" class="h-3 w-3" />
@@ -343,10 +340,9 @@ export class DashboardCertsComponent implements OnInit, OnDestroy {
 
   protected certStatusClass(app: AppDnsInfo): string {
     if (!app.endpointId) return 'bg-muted text-muted-foreground';
-    if (app.isComplete)
-      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+    if (app.isComplete) return 'bg-emerald-100 text-emerald-700';
     if (app.certStatus === 'failed' || app.certStatus === 'expired')
-      return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-    return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+      return 'bg-red-100 text-red-700';
+    return 'bg-amber-100 text-amber-700';
   }
 }

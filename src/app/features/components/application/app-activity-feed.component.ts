@@ -52,7 +52,7 @@ import { appEventText } from './app-recap-view';
             [class]="
               activeFilter() === filter.value
                 ? 'bg-blue-600 text-white border-blue-600'
-                : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                : 'border-gray-300 text-gray-600 hover:bg-gray-50'
             "
           >
             {{ filter.label }}
@@ -66,71 +66,62 @@ import { appEventText } from './app-recap-view';
         </div>
       } @else if (service.eventsError()) {
         <div
-          class="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm"
+          class="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
         >
           <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
           {{ service.eventsError() }}
         </div>
       } @else if (service.events().length === 0) {
-        <p class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">
-          No activity events found.
-        </p>
+        <p class="text-sm text-gray-500 py-6 text-center">No activity events found.</p>
       } @else {
         <div class="relative">
-          <div class="absolute left-5 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
+          <div class="absolute left-5 top-0 bottom-0 w-px bg-gray-200"></div>
           <div class="space-y-3">
             @for (event of service.events(); track event.id) {
               <div class="flex items-start gap-4 pl-12 relative">
                 <div
-                  class="absolute left-3.5 top-2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800"
+                  class="absolute left-3.5 top-2 w-3 h-3 rounded-full border-2 border-white"
                   [class]="isAutoFix(event) ? 'bg-purple-500' : getEventDotColor(event.eventType)"
                 ></div>
-                <div
-                  class="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-                >
+                <div class="flex-1 bg-white border border-gray-200 rounded-lg p-3">
                   <div class="flex items-start justify-between gap-2">
                     <div class="flex items-center gap-2 flex-wrap">
                       <ng-icon
                         [name]="isAutoFix(event) ? 'lucideWand' : getEventIcon(event.eventType)"
                         class="h-4 w-4 shrink-0"
-                        [class]="
-                          isAutoFix(event)
-                            ? 'text-purple-600 dark:text-purple-400'
-                            : 'text-gray-500 dark:text-gray-400'
-                        "
+                        [class]="isAutoFix(event) ? 'text-purple-600' : 'text-gray-500'"
                       />
-                      <span class="text-sm font-medium text-gray-900 dark:text-white">{{
+                      <span class="text-sm font-medium text-gray-900">{{
                         formatChangeMetadata(event)
                       }}</span>
                       @if (isAutoFix(event)) {
                         <span
-                          class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 font-medium"
+                          class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-medium"
                         >
                           Flui automatic remediation
                         </span>
                       }
                       @if (event.revisionNumber) {
-                        <span
-                          class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                        <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500"
                           >#{{ event.revisionNumber }}</span
                         >
                       }
                       @if (isCurrentRevision(event)) {
                         <span
-                          class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
+                          class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-medium"
                           >current</span
                         >
                       }
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
-                      <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{{
+                      <span class="text-xs text-gray-400 whitespace-nowrap">{{
                         formatDate(event.createdAt)
                       }}</span>
                       @if (canRollback(event)) {
                         <button
                           (click)="rollback.emit(event)"
                           [disabled]="service.rollingBack()"
-                          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           @if (service.rollingBack()) {
                             <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
@@ -142,9 +133,7 @@ import { appEventText } from './app-recap-view';
                       }
                     </div>
                   </div>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    by {{ formatActor(event.actor) }}
-                  </p>
+                  <p class="text-xs text-gray-500 mt-1">by {{ formatActor(event.actor) }}</p>
                   @if (service.rollbackError() && service.rollingBack() === false) {
                     <!-- error shown at feed level -->
                   }
@@ -156,10 +145,7 @@ import { appEventText } from './app-recap-view';
 
         @if (service.eventsTotal() > service.events().length) {
           <div class="text-center pt-2">
-            <button
-              (click)="loadMore.emit()"
-              class="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-            >
+            <button (click)="loadMore.emit()" class="text-sm text-blue-600 hover:underline">
               Load more ({{ service.eventsTotal() - service.events().length }} remaining)
             </button>
           </div>

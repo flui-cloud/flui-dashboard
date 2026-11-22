@@ -86,12 +86,10 @@ import {
     }
 
     @if (error()) {
-      <div
-        class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
-      >
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4">
         <div class="flex items-center gap-2">
-          <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-red-600 dark:text-red-400" />
-          <p class="text-sm text-red-700 dark:text-red-400">{{ error() }}</p>
+          <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-red-600" />
+          <p class="text-sm text-red-700">{{ error() }}</p>
         </div>
       </div>
     }
@@ -130,7 +128,7 @@ import {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="card-surface p-5">
             <div class="flex items-center gap-2 mb-3">
-              <ng-icon name="lucideCreditCard" class="h-4 w-4 text-green-600 dark:text-green-400" />
+              <ng-icon name="lucideCreditCard" class="h-4 w-4 text-green-600" />
               <span class="text-label">Spent so far</span>
             </div>
             <p class="text-2xl font-bold text-value">
@@ -176,7 +174,7 @@ import {
           @if (b.forecast; as f) {
             <div class="card-surface p-5">
               <div class="flex items-center gap-2 mb-3">
-                <ng-icon name="lucideTrendingUp" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <ng-icon name="lucideTrendingUp" class="h-4 w-4 text-blue-600" />
                 <span class="text-label">Expected by month end</span>
               </div>
               <p class="text-2xl font-bold text-value">
@@ -214,7 +212,7 @@ import {
 
           <div class="card-surface p-5">
             <div class="flex items-center gap-2 mb-3">
-              <ng-icon name="lucideGauge" class="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <ng-icon name="lucideGauge" class="h-4 w-4 text-purple-600" />
               <span class="text-label">Monthly cost of this setup</span>
             </div>
             <p class="text-2xl font-bold text-value">
@@ -331,7 +329,7 @@ import {
                     class="text-xs px-1.5 py-0.5 rounded font-medium"
                     [class]="
                       node.nodeType === 'master'
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                        ? 'bg-blue-100 text-blue-700'
                         : 'bg-muted text-muted-foreground'
                     "
                   >
@@ -342,8 +340,8 @@ import {
                     class="text-xs px-1.5 py-0.5 rounded"
                     [class]="
                       node.status === 'active'
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600'
                     "
                   >
                     {{ node.status === 'active' ? 'running' : 'removed' }}

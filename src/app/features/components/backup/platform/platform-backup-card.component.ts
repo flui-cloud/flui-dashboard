@@ -106,10 +106,7 @@ const RECENT_RUNS = 5;
               <!-- Operator recipient -->
               @if (hasRecipient()) {
                 <div class="flex items-start gap-2 text-sm">
-                  <ng-icon
-                    name="lucideCircleCheck"
-                    class="mt-0.5 h-4 w-4 text-emerald-600 dark:text-emerald-400"
-                  />
+                  <ng-icon name="lucideCircleCheck" class="mt-0.5 h-4 w-4 text-emerald-600" />
                   <div>
                     <div class="font-medium">Operator recipient configured</div>
                     <div class="font-mono text-xs text-muted-foreground">
@@ -245,15 +242,12 @@ const RECENT_RUNS = 5;
               @if (zitadelKnown()) {
                 @if (zitadelCovered()) {
                   <div class="flex items-start gap-2 text-sm">
-                    <ng-icon
-                      name="lucideFingerprint"
-                      class="mt-0.5 h-4 w-4 text-emerald-600 dark:text-emerald-400"
-                    />
+                    <ng-icon name="lucideFingerprint" class="mt-0.5 h-4 w-4 text-emerald-600" />
                     <div>Identity data (Zitadel) covered</div>
                   </div>
                 } @else {
                   <div
-                    class="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400"
+                    class="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700"
                   >
                     <ng-icon name="lucideFingerprint" class="mt-0.5 h-4 w-4 shrink-0" />
                     <div>Identity data not covered — Zitadel reverts to fresh on rebuild.</div>
@@ -353,7 +347,7 @@ const RECENT_RUNS = 5;
 
         @if (error()) {
           <div
-            class="mt-3 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+            class="mt-3 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700"
           >
             {{ error() }}
           </div>

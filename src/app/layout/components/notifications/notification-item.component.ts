@@ -21,11 +21,7 @@ import { AppNotification } from '../../../core/services/notification.service';
   template: `
     <div
       class="group relative flex gap-2.5 p-3 cursor-pointer transition-colors"
-      [class]="
-        notification().read
-          ? 'hover:bg-muted/50'
-          : 'bg-blue-50/40 dark:bg-blue-950/20 hover:bg-blue-50/60 dark:hover:bg-blue-950/30'
-      "
+      [class]="notification().read ? 'hover:bg-muted/50' : 'bg-blue-50/40 hover:bg-blue-50/60'"
       (click)="clicked.emit()"
     >
       <!-- Left type bar -->

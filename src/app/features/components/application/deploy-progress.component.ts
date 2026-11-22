@@ -209,9 +209,7 @@ const DEPLOY_STEPS: Array<{
                       </p>
 
                       @if (step.status === 'error' && step.errorMessage) {
-                        <div
-                          class="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs text-red-700 dark:text-red-300"
-                        >
+                        <div class="mt-2 p-2 bg-red-50 rounded text-xs text-red-700">
                           {{ step.errorMessage }}
                         </div>
                       }
@@ -241,13 +239,13 @@ const DEPLOY_STEPS: Array<{
                   Copy Logs
                 </button>
               </div>
-              <div class="p-4 bg-gray-900 dark:bg-black">
+              <div class="p-4 bg-gray-900">
                 <div class="font-mono text-xs text-slate-200 space-y-1 max-h-96 overflow-y-auto">
                   @for (log of deployment.logs; track $index) {
                     <div class="whitespace-pre-wrap">{{ log }}</div>
                   }
                   @if (deployment.status === 'in_progress') {
-                    <div class="flex items-center gap-1.5 text-gray-600 dark:text-gray-500 text-xs">
+                    <div class="flex items-center gap-1.5 text-gray-600 text-xs">
                       <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
                       waiting...
                     </div>
@@ -266,10 +264,7 @@ const DEPLOY_STEPS: Array<{
                   <div
                     class="h-12 w-12 rounded-full bg-green-500/15 flex items-center justify-center mr-4"
                   >
-                    <ng-icon
-                      name="lucideCheck"
-                      class="h-6 w-6 text-green-600 dark:text-green-400"
-                    />
+                    <ng-icon name="lucideCheck" class="h-6 w-6 text-green-600" />
                   </div>
                   <div>
                     <h3 class="font-semibold text-foreground">Deployment Successful!</h3>
@@ -307,9 +302,7 @@ const DEPLOY_STEPS: Array<{
 
             <!-- Error State -->
             @if (deployment.status === 'failed') {
-              <div
-                class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6"
-              >
+              <div class="bg-red-50 border border-red-200 rounded-lg p-6">
                 <div class="flex items-center mb-4">
                   <div
                     class="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center mr-4"
@@ -317,15 +310,13 @@ const DEPLOY_STEPS: Array<{
                     <ng-icon name="lucideTriangleAlert" class="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 class="font-semibold text-red-900 dark:text-red-100">Deployment Failed</h3>
-                    <p class="text-sm text-red-700 dark:text-red-300">An error occurred</p>
+                    <h3 class="font-semibold text-red-900">Deployment Failed</h3>
+                    <p class="text-sm text-red-700">An error occurred</p>
                   </div>
                 </div>
 
                 @if (deployment.errorMessage) {
-                  <div
-                    class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 rounded text-sm text-red-800 dark:text-red-200"
-                  >
+                  <div class="mb-4 p-3 bg-red-100 rounded text-sm text-red-800">
                     {{ deployment.errorMessage }}
                   </div>
                 }
@@ -340,7 +331,7 @@ const DEPLOY_STEPS: Array<{
                   </button>
                   <button
                     (click)="editConfiguration()"
-                    class="inline-flex items-center justify-center w-full rounded-md border border-red-300 dark:border-red-700 bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                    class="inline-flex items-center justify-center w-full rounded-md border border-red-300 bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
                   >
                     Edit Configuration
                   </button>
@@ -744,7 +735,7 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
       case 'running':
         return `${baseClass} text-primary`;
       case 'error':
-        return `${baseClass} text-red-600 dark:text-red-400`;
+        return `${baseClass} text-red-600`;
       default:
         return `${baseClass} text-muted-foreground`;
     }

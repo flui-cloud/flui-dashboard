@@ -84,10 +84,10 @@ import { DashboardDnsService } from '../../service/dashboard-dns.service';
           }
 
           <div
-            class="rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-3 py-2 flex items-start gap-2"
+            class="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 flex items-start gap-2"
           >
             <ng-icon name="lucideInfo" class="h-3.5 w-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <p class="text-xs text-blue-700 dark:text-blue-300">
+            <p class="text-xs text-blue-700">
               Click Next to save the issuer configuration. You will then set up the app endpoints.
             </p>
           </div>
@@ -184,10 +184,10 @@ import { DashboardDnsService } from '../../service/dashboard-dns.service';
 
         @if (wiz.issuerPhase() === 'done') {
           <div
-            class="rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2 flex items-center gap-2"
+            class="rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center gap-2"
           >
             <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
-            <p class="text-xs text-emerald-700 dark:text-emerald-300">
+            <p class="text-xs text-emerald-700">
               Both issuers are ready. Certificates will be issued automatically.
             </p>
           </div>

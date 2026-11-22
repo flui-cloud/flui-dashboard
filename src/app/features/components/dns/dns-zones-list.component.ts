@@ -69,7 +69,7 @@ import {
         <button
           (click)="refresh()"
           [disabled]="dnsZonesService.loading()"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50 text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ng-icon
             name="lucideRefreshCw"
@@ -90,7 +90,7 @@ import {
 
       @if (dnsZonesService.error()) {
         <div
-          class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+          class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
         >
           <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
           <span>{{ dnsZonesService.error() }}</span>
@@ -98,59 +98,40 @@ import {
       }
 
       @if (dnsZonesService.loading()) {
-        <div
-          class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden animate-pulse"
-        >
-          <div
-            class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex gap-4"
-          >
-            <div class="h-3 w-32 rounded bg-gray-200 dark:bg-gray-700"></div>
-            <div class="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700"></div>
-            <div class="h-3 w-28 rounded bg-gray-200 dark:bg-gray-700"></div>
-            <div class="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700"></div>
+        <div class="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
+          <div class="bg-gray-50 border-b border-gray-200 px-4 py-3 flex gap-4">
+            <div class="h-3 w-32 rounded bg-gray-200"></div>
+            <div class="h-3 w-20 rounded bg-gray-200"></div>
+            <div class="h-3 w-28 rounded bg-gray-200"></div>
+            <div class="h-3 w-20 rounded bg-gray-200"></div>
           </div>
           @for (i of [1, 2, 3]; track i) {
-            <div
-              class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-4"
-            >
-              <div class="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700"></div>
-              <div class="h-5 w-20 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-              <div class="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700 flex-1"></div>
-              <div class="h-4 w-20 rounded bg-gray-200 dark:bg-gray-700"></div>
-              <div class="h-6 w-14 rounded bg-gray-200 dark:bg-gray-700"></div>
+            <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-4">
+              <div class="h-4 w-40 rounded bg-gray-200"></div>
+              <div class="h-5 w-20 rounded-full bg-gray-200"></div>
+              <div class="h-4 w-32 rounded bg-gray-200 flex-1"></div>
+              <div class="h-4 w-20 rounded bg-gray-200"></div>
+              <div class="h-6 w-14 rounded bg-gray-200"></div>
             </div>
           }
         </div>
       } @else if (dnsZonesService.zones().length === 0) {
         <div class="text-center py-16 px-4">
-          <ng-icon
-            name="lucideGlobe"
-            class="h-10 w-10 mx-auto text-gray-300 dark:text-gray-600 mb-3"
-          />
-          <p class="text-sm font-medium text-gray-900 dark:text-white">No DNS zones registered</p>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <ng-icon name="lucideGlobe" class="h-10 w-10 mx-auto text-gray-300 mb-3" />
+          <p class="text-sm font-medium text-gray-900">No DNS zones registered</p>
+          <p class="mt-1 text-sm text-gray-500">
             Register a DNS zone from your provider to assign it to clusters.
           </p>
         </div>
       } @else {
-        <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
           <table class="w-full text-sm">
             <thead>
-              <tr
-                class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700"
-              >
-                <th class="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">
-                  Zone Name
-                </th>
-                <th class="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">
-                  Provider
-                </th>
-                <th class="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">
-                  Description
-                </th>
-                <th class="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">
-                  Registered
-                </th>
+              <tr class="bg-gray-50 border-b border-gray-200">
+                <th class="text-left px-4 py-3 font-medium text-gray-600">Zone Name</th>
+                <th class="text-left px-4 py-3 font-medium text-gray-600">Provider</th>
+                <th class="text-left px-4 py-3 font-medium text-gray-600">Description</th>
+                <th class="text-left px-4 py-3 font-medium text-gray-600">Registered</th>
                 <th class="px-4 py-3"></th>
               </tr>
             </thead>
@@ -160,16 +141,14 @@ import {
                 @let isLoading = loadingAssignments();
 
                 <!-- Zone row -->
-                <tr
-                  class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
-                >
-                  <td class="px-4 py-3 font-medium text-gray-900 dark:text-white font-mono">
+                <tr class="bg-white border-t border-gray-200 hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 font-medium text-gray-900 font-mono">
                     {{ zone.zoneName }}
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex flex-wrap items-center gap-1.5">
                       <span
-                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700"
                       >
                         {{ zone.dnsProvider }}
                       </span>
@@ -177,8 +156,8 @@ import {
                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
                         [class]="
                           providerCountFor(zone.id) > 1
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-gray-100 text-gray-600'
                         "
                         [title]="
                           providerCountFor(zone.id) > 1
@@ -191,7 +170,7 @@ import {
                       </span>
                       @if (ttlFor(zone.id); as ttl) {
                         <span
-                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600"
                           title="Record TTL — a low value speeds up failover"
                         >
                           <ng-icon name="lucideClock" class="h-3 w-3" />
@@ -200,17 +179,17 @@ import {
                       }
                     </div>
                   </td>
-                  <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
+                  <td class="px-4 py-3 text-gray-500">
                     {{ zone.description || '—' }}
                   </td>
-                  <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
+                  <td class="px-4 py-3 text-gray-500 text-xs">
                     {{ formatDate(zone.createdAt) }}
                   </td>
                   <td class="px-4 py-3 text-right">
                     <div class="flex items-center justify-end gap-1">
                       <button
                         (click)="toggleReplicas(zone.id)"
-                        class="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors"
+                        class="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 rounded transition-colors"
                       >
                         <ng-icon
                           [name]="
@@ -231,7 +210,7 @@ import {
                             ? 'Remove cluster assignments before deleting'
                             : 'Delete zone'
                         "
-                        class="inline-flex items-center gap-1 px-2 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        class="inline-flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
                         Delete
@@ -242,16 +221,12 @@ import {
 
                 <!-- Replicas panel sub-row -->
                 @if (expandedZoneId() === zone.id) {
-                  <tr
-                    class="bg-gray-50/60 dark:bg-gray-900/20 border-t border-gray-200 dark:border-gray-700"
-                  >
+                  <tr class="bg-gray-50/60 border-t border-gray-200">
                     <td colspan="5" class="px-4 py-3">
                       @if (enrichedFor(zone.id); as enriched) {
                         <app-zone-replicas [zone]="enriched" (changed)="loadEnriched()" />
                       } @else {
-                        <div
-                          class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500"
-                        >
+                        <div class="flex items-center gap-2 text-xs text-gray-400">
                           <ng-icon name="lucideRefreshCw" class="h-3 w-3 animate-spin" />
                           Loading redundancy…
                         </div>
@@ -262,21 +237,17 @@ import {
 
                 <!-- Assignments sub-row -->
                 @if (isLoading || clusters.length > 0) {
-                  <tr
-                    class="bg-amber-50/60 dark:bg-amber-900/10 border-t border-amber-100 dark:border-amber-900/30"
-                  >
+                  <tr class="bg-amber-50/60 border-t border-amber-100">
                     <td colspan="5" class="px-4 py-2">
                       @if (isLoading) {
-                        <div
-                          class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500"
-                        >
+                        <div class="flex items-center gap-2 text-xs text-gray-400">
                           <ng-icon name="lucideRefreshCw" class="h-3 w-3 animate-spin" />
                           Loading cluster assignments…
                         </div>
                       } @else {
                         <div class="flex flex-wrap items-center gap-2">
                           <div
-                            class="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 font-medium shrink-0"
+                            class="flex items-center gap-1 text-xs text-amber-700 font-medium shrink-0"
                           >
                             <ng-icon name="lucideServer" class="h-3 w-3" />
                             Used by:
@@ -284,7 +255,7 @@ import {
                           @for (c of clusters; track c.clusterId) {
                             <a
                               [routerLink]="['/cluster', c.clusterId, 'dns']"
-                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/50 border border-amber-200 dark:border-amber-700 transition-colors"
+                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200 transition-colors"
                             >
                               {{ c.clusterName }}
                               <span class="opacity-50">→</span>

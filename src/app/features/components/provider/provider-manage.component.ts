@@ -140,14 +140,9 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
         </div>
 
         @if (errorMessage()) {
-          <div
-            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3 mb-6"
-          >
-            <ng-icon
-              name="lucideTriangleAlert"
-              class="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0"
-            />
-            <p class="text-sm text-red-800 dark:text-red-200">{{ errorMessage() }}</p>
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3 mb-6">
+            <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+            <p class="text-sm text-red-800">{{ errorMessage() }}</p>
           </div>
         }
 
@@ -216,7 +211,7 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
                           }
                         </p>
                         @if (h.errors?.length) {
-                          <p class="text-sm text-red-600 dark:text-red-400 mt-2">
+                          <p class="text-sm text-red-600 mt-2">
                             {{ h.errors![0] }}
                           </p>
                         }
@@ -257,9 +252,7 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
                         name="lucidePower"
                         [class]="
                           'h-4 w-4 mr-3 ' +
-                          (configuration()!.isActive
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-muted-foreground')
+                          (configuration()!.isActive ? 'text-green-600' : 'text-muted-foreground')
                         "
                       />
                     }
@@ -287,7 +280,7 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
                     appReadOnlySection="providers"
                     type="button"
                     (click)="confirmRemove.set(true)"
-                    class="w-full inline-flex items-center px-3 py-2.5 rounded-md text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    class="w-full inline-flex items-center px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                   >
                     <ng-icon name="lucideTrash2" class="h-4 w-4 mr-3" />
                     Remove configuration
@@ -345,12 +338,9 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
             >
               <div class="flex items-start gap-3">
                 <div
-                  class="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0"
+                  class="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0"
                 >
-                  <ng-icon
-                    name="lucideTriangleAlert"
-                    class="h-5 w-5 text-red-600 dark:text-red-400"
-                  />
+                  <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-red-600" />
                 </div>
                 <div>
                   <h3 class="text-lg font-semibold">Remove {{ provider()!.displayName }}?</h3>
@@ -438,16 +428,16 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
     const base = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize';
     switch (this.configuration()?.status) {
       case 'active':
-        return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
+        return `${base} bg-green-100 text-green-800`;
       case 'error':
-        return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
+        return `${base} bg-red-100 text-red-800`;
       case 'disabled':
-        return `${base} bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300`;
+        return `${base} bg-gray-100 text-gray-700`;
       case 'configuring':
       case 'validating':
-        return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
+        return `${base} bg-blue-100 text-blue-800`;
       default:
-        return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
+        return `${base} bg-yellow-100 text-yellow-800`;
     }
   });
 
@@ -557,11 +547,11 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
   protected healthTextClass(status: string): string {
     switch (status) {
       case 'healthy':
-        return 'text-green-600 dark:text-green-400';
+        return 'text-green-600';
       case 'degraded':
-        return 'text-yellow-600 dark:text-yellow-400';
+        return 'text-yellow-600';
       case 'unhealthy':
-        return 'text-red-600 dark:text-red-400';
+        return 'text-red-600';
       default:
         return '';
     }
@@ -571,11 +561,11 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
     const base = 'h-10 w-10 rounded-full flex items-center justify-center shrink-0';
     switch (status) {
       case 'healthy':
-        return `${base} bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400`;
+        return `${base} bg-green-100 text-green-600`;
       case 'degraded':
-        return `${base} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400`;
+        return `${base} bg-yellow-100 text-yellow-600`;
       case 'unhealthy':
-        return `${base} bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400`;
+        return `${base} bg-red-100 text-red-600`;
       default:
         return `${base} bg-muted text-muted-foreground`;
     }

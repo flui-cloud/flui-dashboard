@@ -166,10 +166,8 @@ const BUILD_WARNING_MS = 25 * 60 * 1000;
 
         <!-- Live state -->
         @if (phase() === 'live') {
-          <div
-            class="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 p-5"
-          >
-            <div class="flex items-center gap-2 text-green-700 dark:text-green-400">
+          <div class="rounded-lg border border-green-200 bg-green-50 p-5">
+            <div class="flex items-center gap-2 text-green-700">
               <ng-icon name="lucideCircleCheck" class="h-5 w-5" />
               <span class="font-medium">Application deployed successfully</span>
             </div>
@@ -221,7 +219,6 @@ const BUILD_WARNING_MS = 25 * 60 * 1000;
             class="flex items-center gap-2 text-xs"
             [class.text-muted-foreground]="!isBuildNearTimeout()"
             [class.text-orange-600]="isBuildNearTimeout()"
-            [class.dark:text-orange-400]="isBuildNearTimeout()"
           >
             @if (isBuildNearTimeout()) {
               <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 shrink-0" />

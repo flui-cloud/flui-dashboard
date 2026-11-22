@@ -50,7 +50,7 @@ interface Ratings {
           @if (installedCount() > 0) {
             <div class="mt-2 flex items-center gap-1.5">
               <span
-                class="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                class="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
                 [attr.title]="
                   installedCount() === 1
                     ? 'Installed once'
@@ -65,7 +65,7 @@ interface Ratings {
               </span>
               @if (updateAvailable()) {
                 <span
-                  class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+                  class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800"
                   title="A newer version of this app is available in the catalog"
                 >
                   Update available

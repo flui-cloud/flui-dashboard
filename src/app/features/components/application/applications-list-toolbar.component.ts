@@ -152,7 +152,7 @@ export class ApplicationsListToolbarComponent {
     if (view === 'attention' && this.counts().attention > 0)
       return 'text-destructive hover:text-foreground';
     if (view === 'no_backup' && this.counts().no_backup > 0)
-      return 'text-amber-700 dark:text-amber-400 hover:text-foreground';
+      return 'text-amber-700 hover:text-foreground';
     return 'text-muted-foreground hover:text-foreground';
   }
 }

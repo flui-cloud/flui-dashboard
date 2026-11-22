@@ -15,7 +15,7 @@ export const STATE_LABEL: Record<CatalogueState, string> = {
 export const STATE_PILL: Record<CatalogueState, string> = {
   'sold-out': 'badge-error',
   unknown: 'bg-muted text-muted-foreground',
-  limited: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+  limited: 'bg-amber-500/15 text-amber-600',
   recovered: 'bg-primary/15 text-primary',
   available: 'badge-success',
 };

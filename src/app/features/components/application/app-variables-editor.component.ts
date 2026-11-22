@@ -94,18 +94,18 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
+    <div class="bg-gray-50 rounded-lg p-4 space-y-3">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <ng-icon
             [name]="isSensitiveSection ? 'lucideLock' : 'lucideKey'"
-            class="h-4 w-4 text-gray-500 dark:text-gray-400"
+            class="h-4 w-4 text-gray-500"
           />
-          <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ title() }}</h4>
+          <h4 class="text-sm font-semibold text-gray-900">{{ title() }}</h4>
           @if (isSensitiveSection) {
             <span
-              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800"
             >
               Write-only
             </span>
@@ -122,8 +122,8 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
               class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors"
               [class]="
                 jsonMode()
-                  ? 'border-blue-400 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'
+                  ? 'border-blue-400 text-blue-600 bg-blue-50'
+                  : 'border-gray-300 text-gray-500 hover:border-gray-400'
               "
             >
               <ng-icon [name]="jsonMode() ? 'lucideList' : 'lucideCode'" class="h-3.5 w-3.5" />
@@ -152,18 +152,18 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
             (ngModelChange)="onJsonChange($event)"
             rows="12"
             spellcheck="false"
-            class="w-full font-mono text-xs px-3 py-2 bg-white dark:bg-gray-800 border rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none resize-y"
+            class="w-full font-mono text-xs px-3 py-2 bg-white border rounded text-gray-900 placeholder-gray-400 focus:outline-none resize-y"
             [class]="
               jsonError()
                 ? 'border-red-400 focus:border-red-500'
-                : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'
+                : 'border-gray-300 focus:border-blue-500'
             "
             placeholder='{ "KEY": "value" }'
           ></textarea>
           @if (jsonError()) {
-            <p class="text-xs text-red-600 dark:text-red-400">{{ jsonError() }}</p>
+            <p class="text-xs text-red-600">{{ jsonError() }}</p>
           }
-          <p class="text-xs text-gray-400 dark:text-gray-500">
+          <p class="text-xs text-gray-400">
             Edit as a flat JSON object. Keys already in the dataset will be overwritten; others will
             be added via upsert.
           </p>
@@ -171,39 +171,21 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
       } @else {
         <!-- ── ROW MODE ── -->
         @if (rows().length > 0) {
-          <div class="overflow-hidden rounded border border-gray-200 dark:border-gray-600">
+          <div class="overflow-hidden rounded border border-gray-200">
             <table class="w-full text-sm">
               <thead>
-                <tr
-                  class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600"
-                >
-                  <th
-                    class="text-left px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 w-2/5"
-                  >
-                    KEY
-                  </th>
-                  <th
-                    class="text-left px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400"
-                  >
-                    VALUE
-                  </th>
+                <tr class="bg-gray-100 border-b border-gray-200">
+                  <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 w-2/5">KEY</th>
+                  <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">VALUE</th>
                   <th class="px-3 py-2 w-20"></th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+              <tbody class="divide-y divide-gray-100">
                 @for (row of rows(); track row.key; let i = $index) {
-                  <tr
-                    [class]="
-                      isDirtyRow(row)
-                        ? 'bg-blue-50 dark:bg-blue-900/10'
-                        : 'bg-white dark:bg-gray-800/50'
-                    "
-                  >
+                  <tr [class]="isDirtyRow(row) ? 'bg-blue-50' : 'bg-white'">
                     <!-- KEY -->
                     <td class="px-3 py-1.5 align-top">
-                      <span class="font-mono text-xs text-gray-700 dark:text-gray-300">{{
-                        row.key
-                      }}</span>
+                      <span class="font-mono text-xs text-gray-700">{{ row.key }}</span>
                     </td>
 
                     <!-- VALUE -->
@@ -215,14 +197,14 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                               [type]="showValues() ? 'text' : 'password'"
                               [(ngModel)]="row.newSecretValue"
                               placeholder="new value"
-                              class="flex-1 font-mono text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-blue-400 rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                              class="flex-1 font-mono text-xs px-2 py-1 bg-white border border-blue-400 rounded text-gray-900 placeholder-gray-400 focus:outline-none"
                             />
                             <button
                               type="button"
                               (click)="toggleValues()"
                               [disabled]="maskMode.enabled()"
                               [title]="maskMode.enabled() ? 'Turn off mask mode to reveal' : ''"
-                              class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-gray-400"
+                              class="flex-shrink-0 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-gray-400"
                             >
                               <ng-icon
                                 [name]="showValues() ? 'lucideEyeOff' : 'lucideEye'"
@@ -232,7 +214,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                             <button
                               type="button"
                               (click)="openExpandModal(i, true)"
-                              class="flex-shrink-0 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400"
+                              class="flex-shrink-0 text-gray-400 hover:text-blue-500"
                               title="Expand editor"
                             >
                               <ng-icon name="lucideMaximize2" class="h-3.5 w-3.5" />
@@ -248,7 +230,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                             <button
                               type="button"
                               (click)="cancelSecretEdit(i)"
-                              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                              class="text-gray-400 hover:text-gray-600"
                             >
                               <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                             </button>
@@ -258,8 +240,8 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                             class="font-mono text-xs select-none"
                             [class]="
                               row.isPending && !isDirtyRow(row)
-                                ? 'italic text-amber-600 dark:text-amber-400'
-                                : 'text-gray-400 dark:text-gray-500'
+                                ? 'italic text-amber-600'
+                                : 'text-gray-400'
                             "
                           >
                             {{
@@ -277,12 +259,12 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                             type="text"
                             [(ngModel)]="row.newPlainValue"
                             placeholder="value"
-                            class="flex-1 font-mono text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-blue-400 rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                            class="flex-1 font-mono text-xs px-2 py-1 bg-white border border-blue-400 rounded text-gray-900 placeholder-gray-400 focus:outline-none"
                           />
                           <button
                             type="button"
                             (click)="openExpandModal(i, false)"
-                            class="flex-shrink-0 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 mt-0.5"
+                            class="flex-shrink-0 text-gray-400 hover:text-blue-500 mt-0.5"
                             title="Expand editor"
                           >
                             <ng-icon name="lucideMaximize2" class="h-3.5 w-3.5" />
@@ -297,7 +279,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                           <button
                             type="button"
                             (click)="cancelPlainEdit(i)"
-                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-0.5"
+                            class="text-gray-400 hover:text-gray-600 mt-0.5"
                           >
                             <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                           </button>
@@ -307,11 +289,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                         <div class="flex items-start gap-1.5 min-w-0">
                           <span
                             class="font-mono text-xs truncate max-w-xs"
-                            [class]="
-                              isDirtyRow(row)
-                                ? 'text-blue-700 dark:text-blue-300'
-                                : 'text-gray-600 dark:text-gray-400'
-                            "
+                            [class]="isDirtyRow(row) ? 'text-blue-700' : 'text-gray-600'"
                             [title]="row.value"
                           >
                             {{ row.value || '—' }}
@@ -336,7 +314,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                           <button
                             type="button"
                             (click)="row.isSensitive ? startSecretEdit(i) : startPlainEdit(i)"
-                            class="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                            class="text-gray-400 hover:text-blue-500 transition-colors"
                             title="Edit"
                           >
                             <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
@@ -345,7 +323,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                           <button
                             type="button"
                             (click)="openExpandModalFromReadOnly(i)"
-                            class="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                            class="text-gray-400 hover:text-blue-500 transition-colors"
                             title="Open in full editor"
                           >
                             <ng-icon name="lucideMaximize2" class="h-3.5 w-3.5" />
@@ -353,7 +331,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                           <button
                             type="button"
                             (click)="removeRow(i)"
-                            class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                            class="text-gray-400 hover:text-red-500 transition-colors"
                             title="Remove"
                           >
                             <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
@@ -367,27 +345,25 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
             </table>
           </div>
         } @else {
-          <p class="text-sm text-gray-500 dark:text-gray-400 italic">
+          <p class="text-sm text-gray-500 italic">
             {{ isSensitiveSection ? 'No secrets configured' : 'No variables configured' }}
           </p>
         }
 
         <!-- Add new variable form -->
         @if (showAddForm()) {
-          <div
-            class="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800"
-          >
+          <div class="flex items-center gap-2 p-2 bg-blue-50 rounded border border-blue-200">
             <input
               type="text"
               [(ngModel)]="newKey"
               placeholder="KEY"
-              class="flex-1 font-mono text-xs px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              class="flex-1 font-mono text-xs px-2 py-1.5 bg-white border border-gray-300 rounded text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
             <input
               [type]="isSensitiveSection ? 'password' : 'text'"
               [(ngModel)]="newValue"
               placeholder="value"
-              class="flex-1 font-mono text-xs px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              class="flex-1 font-mono text-xs px-2 py-1.5 bg-white border border-gray-300 rounded text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
             <button
               type="button"
@@ -400,7 +376,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
             <button
               type="button"
               (click)="cancelAddRow()"
-              class="px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              class="px-2 py-1.5 text-xs text-gray-600 hover:text-gray-900 transition-colors"
             >
               Cancel
             </button>
@@ -413,7 +389,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
             type="button"
             (click)="startAddRow()"
             [disabled]="showAddForm()"
-            class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50 disabled:no-underline"
+            class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline disabled:opacity-50 disabled:no-underline"
           >
             <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
             Add {{ isSensitiveSection ? 'secret' : 'variable' }}
@@ -429,19 +405,17 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
         (click)="closeExpandModal()"
       >
         <div
-          class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[80vh]"
+          class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[80vh]"
           (click)="$event.stopPropagation()"
         >
           <!-- Modal header -->
-          <div
-            class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700"
-          >
+          <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
             <div class="flex items-center gap-2">
               <ng-icon
                 [name]="expandModal()!.isSensitive ? 'lucideLock' : 'lucideCode'"
-                class="h-4 w-4 text-gray-500 dark:text-gray-400"
+                class="h-4 w-4 text-gray-500"
               />
-              <span class="text-sm font-semibold text-gray-900 dark:text-white font-mono">{{
+              <span class="text-sm font-semibold text-gray-900 font-mono">{{
                 expandModal()!.key
               }}</span>
               @if (expandModal()!.typeLabel) {
@@ -457,7 +431,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
             <button
               type="button"
               (click)="closeExpandModal()"
-              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              class="text-gray-400 hover:text-gray-600"
             >
               <ng-icon name="lucideX" class="h-5 w-5" />
             </button>
@@ -472,7 +446,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                   (click)="toggleValues()"
                   [disabled]="maskMode.enabled()"
                   [title]="maskMode.enabled() ? 'Turn off mask mode to reveal' : ''"
-                  class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-gray-500"
+                  class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-gray-500"
                 >
                   <ng-icon
                     [name]="showValues() ? 'lucideEyeOff' : 'lucideEye'"
@@ -486,7 +460,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                 rows="12"
                 spellcheck="false"
                 placeholder="Enter new secret value..."
-                class="w-full font-mono text-xs px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 resize-y"
+                class="w-full font-mono text-xs px-3 py-2 bg-gray-50 border border-gray-300 rounded text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 resize-y"
                 [class.blur-sm]="!showValues()"
               ></textarea>
             } @else {
@@ -495,10 +469,10 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                 rows="16"
                 spellcheck="false"
                 placeholder="Enter value..."
-                class="w-full font-mono text-xs px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 resize-y"
+                class="w-full font-mono text-xs px-3 py-2 bg-gray-50 border border-gray-300 rounded text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 resize-y"
               ></textarea>
             }
-            <p class="text-xs text-gray-400 dark:text-gray-500">
+            <p class="text-xs text-gray-400">
               {{
                 expandModal()!.isSensitive
                   ? 'Value will be stored as a Secret. It will never be readable back.'
@@ -508,13 +482,11 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
           </div>
 
           <!-- Modal footer -->
-          <div
-            class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-gray-700"
-          >
+          <div class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200">
             <button
               type="button"
               (click)="closeExpandModal()"
-              class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >
               Cancel
             </button>
@@ -638,17 +610,17 @@ export class AppVariablesEditorComponent implements OnChanges {
     if (t === 'json')
       return {
         label: 'JSON',
-        class: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+        class: 'bg-purple-100 text-purple-700',
       };
     if (t === 'yaml')
       return {
         label: 'YAML',
-        class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+        class: 'bg-green-100 text-green-700',
       };
     if (t === 'long')
       return {
         label: 'long',
-        class: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+        class: 'bg-gray-200 text-gray-600',
       };
     return null;
   }
@@ -660,7 +632,7 @@ export class AppVariablesEditorComponent implements OnChanges {
     if (isSensitive)
       return {
         typeLabel: 'secret',
-        typeBadgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+        typeBadgeClass: 'bg-amber-100 text-amber-800',
       };
     const badge = this.getValueTypeBadge(value);
     return { typeLabel: badge?.label ?? '', typeBadgeClass: badge?.class ?? '' };

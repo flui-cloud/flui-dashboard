@@ -103,7 +103,7 @@ import {
         <section class="mb-5 rounded-lg border border-border bg-card p-4">
           <h2 class="text-sm font-medium text-foreground">{{ r.domain }}</h2>
           @if (r.published.length) {
-            <p class="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
+            <p class="mt-1 text-xs text-emerald-700">
               Wrote {{ r.published.length }} record(s) into the zone Flui holds.
             </p>
           }
@@ -173,9 +173,7 @@ import {
                   <span
                     class="rounded px-1 py-0.5 font-medium"
                     [class]="
-                      d.active
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
-                        : 'bg-muted text-muted-foreground'
+                      d.active ? 'bg-emerald-50 text-emerald-700' : 'bg-muted text-muted-foreground'
                     "
                   >
                     {{ d.active ? 'Sending' : 'Standby' }}
@@ -185,13 +183,11 @@ import {
                 <app-mail-proof-pill purpose="dkim" [verdict]="d.dkim" />
                 <app-mail-proof-pill purpose="dmarc" [verdict]="d.dmarc" />
                 @if (d.verified) {
-                  <span
-                    class="inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400"
-                  >
+                  <span class="inline-flex items-center gap-1 text-xs text-emerald-700">
                     <ng-icon name="lucideCircleCheck" class="h-3.5 w-3.5" /> Verified
                   </span>
                 } @else {
-                  <span class="text-xs text-amber-700 dark:text-amber-400">Not verified yet</span>
+                  <span class="text-xs text-amber-700">Not verified yet</span>
                 }
                 <button
                   appReadOnlySection="mail"

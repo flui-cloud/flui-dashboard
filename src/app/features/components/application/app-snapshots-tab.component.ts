@@ -109,7 +109,7 @@ type StatusFilter = 'all' | SnapshotStatus;
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="text-lg font-semibold flex items-center gap-2">
-            <ng-icon name="lucideCamera" class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <ng-icon name="lucideCamera" class="h-5 w-5 text-indigo-600" />
             Volume copies
           </h2>
           <p class="text-sm text-muted-foreground mt-0.5">
@@ -156,15 +156,10 @@ type StatusFilter = 'all' | SnapshotStatus;
       </div>
 
       @if (refusal(); as r) {
-        <div
-          class="card-surface p-4 border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 space-y-3"
-        >
+        <div class="card-surface p-4 border border-amber-200 bg-amber-50 space-y-3">
           <div class="flex items-start gap-3">
-            <ng-icon
-              name="lucideCircleAlert"
-              class="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5"
-            />
-            <p class="text-sm text-amber-800 dark:text-amber-200">
+            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-amber-600 mt-0.5" />
+            <p class="text-sm text-amber-800">
               {{ r.message }}
             </p>
           </div>
@@ -199,37 +194,27 @@ type StatusFilter = 'all' | SnapshotStatus;
 
       <!-- Error -->
       @if (errorMessage()) {
-        <div
-          class="card-surface p-4 border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10"
-        >
+        <div class="card-surface p-4 border border-red-200 bg-red-50">
           <div class="flex items-start gap-3">
-            <ng-icon
-              name="lucideCircleAlert"
-              class="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5"
-            />
-            <p class="text-sm text-red-700 dark:text-red-300">
+            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 mt-0.5" />
+            <p class="text-sm text-red-700">
               {{ errorMessage() }}
             </p>
           </div>
         </div>
       } @else if (snapshotCapability()?.supported === false) {
-        <div
-          class="card-surface p-4 border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10"
-        >
+        <div class="card-surface p-4 border border-amber-200 bg-amber-50">
           <div class="flex items-start gap-3">
-            <ng-icon
-              name="lucideCircleAlert"
-              class="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5"
-            />
+            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-amber-600 mt-0.5" />
             <div>
-              <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
+              <p class="text-sm font-medium text-amber-800">
                 {{
                   noVolume()
                     ? 'This application has no volume to copy'
                     : 'Volume copies are not available on this cluster'
                 }}
               </p>
-              <p class="text-sm text-amber-700 dark:text-amber-300 mt-1">
+              <p class="text-sm text-amber-700 mt-1">
                 {{ snapshotCapability()?.reason }}
               </p>
             </div>
@@ -312,7 +297,7 @@ type StatusFilter = 'all' | SnapshotStatus;
                       <button
                         (click)="confirmRestore(snap)"
                         [disabled]="!snap.ready || st === 'DELETING' || isRestoring(snap.exportId)"
-                        class="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors disabled:opacity-50"
+                        class="p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors disabled:opacity-50"
                         title="Restore snapshot"
                       >
                         @if (isRestoring(snap.exportId)) {
@@ -324,7 +309,7 @@ type StatusFilter = 'all' | SnapshotStatus;
                       <button
                         (click)="confirmDelete(snap)"
                         [disabled]="st === 'DELETING' || isDeleting(snap.exportId)"
-                        class="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors disabled:opacity-50"
+                        class="p-1.5 rounded hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
                         title="Delete snapshot"
                       >
                         <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
@@ -369,7 +354,7 @@ type StatusFilter = 'all' | SnapshotStatus;
                   <button
                     (click)="deleteSpare(v.name)"
                     [disabled]="v.inUse"
-                    class="px-2.5 py-1 text-xs rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
+                    class="px-2.5 py-1 text-xs rounded-md text-red-600 hover:bg-red-50 disabled:opacity-50"
                   >
                     Delete
                   </button>

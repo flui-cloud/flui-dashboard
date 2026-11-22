@@ -313,8 +313,7 @@ import { joinPath, parseBulk, rowsToData, toEnv, toJson } from './secrets-format
                 <span class="text-xs text-muted-foreground">Turn off read-only to change.</span>
               }
               @if (s.saveOk()) {
-                <span
-                  class="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"
+                <span class="inline-flex items-center gap-1 text-xs text-emerald-600"
                   ><ng-icon name="lucideCheck" class="h-3.5 w-3.5" /> Saved</span
                 >
               }

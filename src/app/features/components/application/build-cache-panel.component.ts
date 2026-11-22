@@ -27,13 +27,13 @@ function getCachePhaseClass(phase: BuildCacheInfoResponseDto.PhaseEnum | null): 
   const base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
   switch (phase) {
     case 'Bound':
-      return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
+      return `${base} bg-green-100 text-green-800`;
     case 'Pending':
-      return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
+      return `${base} bg-yellow-100 text-yellow-800`;
     case 'Lost':
-      return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
+      return `${base} bg-red-100 text-red-800`;
     default:
-      return `${base} bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400`;
+      return `${base} bg-gray-100 text-gray-600`;
   }
 }
 
@@ -90,7 +90,7 @@ function getCachePhaseClass(phase: BuildCacheInfoResponseDto.PhaseEnum | null): 
 
       <!-- Status error -->
       @if (statusError()) {
-        <div class="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+        <div class="flex items-center gap-2 text-sm text-red-600">
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
           {{ statusError() }}
         </div>
@@ -149,26 +149,26 @@ function getCachePhaseClass(phase: BuildCacheInfoResponseDto.PhaseEnum | null): 
                 @switch (breakdown()!.scanStatus) {
                   @case ('ok') {
                     <span
-                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700"
                       >Scanned</span
                     >
                   }
                   @case ('in_progress') {
                     <span
-                      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-700"
                     >
                       <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />Scanning...
                     </span>
                   }
                   @case ('failed') {
                     <span
-                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-700"
                       >Scan failed</span
                     >
                   }
                   @case ('pending') {
                     <span
-                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600"
                       >Not scanned yet</span
                     >
                   }
@@ -194,14 +194,14 @@ function getCachePhaseClass(phase: BuildCacheInfoResponseDto.PhaseEnum | null): 
             </div>
 
             @if (refreshSkipped()) {
-              <p class="text-xs text-amber-600 dark:text-amber-400">
+              <p class="text-xs text-amber-600">
                 Scan skipped:
                 {{ refreshSkippedReason() ?? 'build in progress or scan already running' }}
               </p>
             }
 
             @if (breakdownError()) {
-              <p class="text-xs text-red-600 dark:text-red-400">{{ breakdownError() }}</p>
+              <p class="text-xs text-red-600">{{ breakdownError() }}</p>
             }
 
             @if (breakdown()!.scanStatus === 'ok' && breakdown()!.totalHumanSize) {
@@ -314,16 +314,13 @@ function getCachePhaseClass(phase: BuildCacheInfoResponseDto.PhaseEnum | null): 
       <!-- Success banner -->
       @if (clearResult() === 'success') {
         <div
-          class="flex items-center justify-between gap-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300"
+          class="flex items-center justify-between gap-3 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700"
         >
           <div class="flex items-center gap-2">
             <ng-icon name="lucideCheck" class="h-4 w-4 flex-shrink-0" />
             Cache cleared. It will be recreated automatically on the next build.
           </div>
-          <button
-            (click)="dismiss()"
-            class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200 flex-shrink-0"
-          >
+          <button (click)="dismiss()" class="text-green-600 hover:text-green-800 flex-shrink-0">
             <ng-icon name="lucideX" class="h-4 w-4" />
           </button>
         </div>
@@ -332,16 +329,13 @@ function getCachePhaseClass(phase: BuildCacheInfoResponseDto.PhaseEnum | null): 
       <!-- Error banner -->
       @if (clearResult() === 'failed') {
         <div
-          class="flex items-center justify-between gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300"
+          class="flex items-center justify-between gap-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
         >
           <div class="flex items-center gap-2">
             <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
             {{ clearError() ?? 'Cache clear failed.' }}
           </div>
-          <button
-            (click)="dismiss()"
-            class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 flex-shrink-0"
-          >
+          <button (click)="dismiss()" class="text-red-600 hover:text-red-800 flex-shrink-0">
             <ng-icon name="lucideX" class="h-4 w-4" />
           </button>
         </div>

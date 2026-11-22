@@ -30,18 +30,15 @@ import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
             aria-modal="true"
             aria-labelledby="install-flui-title"
             tabindex="-1"
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-6 outline-none"
+            class="bg-white border border-gray-200 rounded-lg shadow-xl p-6 outline-none"
             (click)="$event.stopPropagation()"
           >
             <div class="flex items-start justify-between gap-4">
               <div>
-                <h3
-                  id="install-flui-title"
-                  class="text-lg font-semibold text-gray-900 dark:text-white"
-                >
+                <h3 id="install-flui-title" class="text-lg font-semibold text-gray-900">
                   Want the full experience?
                 </h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p class="text-sm text-gray-600 mt-1">
                   This demo is read-only. Install Flui on your own server: it is free and open
                   source.
                 </p>

@@ -313,9 +313,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
                           @for (step of chatService.streamingSteps(); track step.toolCallId) {
                             <div
                               class="flex items-start gap-2"
-                              [class]="
-                                step.ok ? 'text-green-600 dark:text-green-400' : 'text-destructive'
-                              "
+                              [class]="step.ok ? 'text-green-600' : 'text-destructive'"
                             >
                               <span class="shrink-0">{{ step.ok ? '✓' : '✗' }}</span>
                               <span>{{ step.name }}</span>

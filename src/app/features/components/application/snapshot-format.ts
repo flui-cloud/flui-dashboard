@@ -24,8 +24,8 @@ export function kindTooltip(snap: ApplicationSnapshot): string {
 
 export function kindBadgeClass(snap: ApplicationSnapshot): string {
   return getSnapshotKind(snap) === 'native'
-    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-    : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+    ? 'bg-emerald-100 text-emerald-800'
+    : 'bg-amber-100 text-amber-800';
 }
 
 export function statusLabel(snap: ApplicationSnapshot): string {
@@ -49,13 +49,13 @@ export function sizeSubline(snap: ApplicationSnapshot): string | null {
 export function statusClass(status: SnapshotStatus): string {
   switch (status) {
     case 'READY':
-      return 'text-green-600 dark:text-green-400 font-medium';
+      return 'text-green-600 font-medium';
     case 'PENDING':
-      return 'text-blue-600 dark:text-blue-400';
+      return 'text-blue-600';
     case 'FAILED':
-      return 'text-red-600 dark:text-red-400 font-medium';
+      return 'text-red-600 font-medium';
     case 'DELETING':
-      return 'text-amber-600 dark:text-amber-400';
+      return 'text-amber-600';
     default:
       return 'text-muted-foreground';
   }

@@ -56,7 +56,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
       @if (maskMode.enabled()) {
         <div
           data-testid="mask-mode-log-banner"
-          class="flex items-center gap-2 rounded-t-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-2 text-xs font-medium text-amber-800 dark:text-amber-300"
+          class="flex items-center gap-2 rounded-t-lg border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800"
         >
           <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 shrink-0" />
           Mask mode cannot protect log content — do not share this screen.
@@ -64,18 +64,12 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
       }
 
       <!-- ── Log Volume Distribution ─────────────────────────────────────── -->
-      <div
-        class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-t-lg p-4"
-      >
+      <div class="bg-white border border-gray-200 rounded-t-lg p-4">
         <div class="flex items-center justify-between mb-3">
-          <span
-            class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
             Log Volume Distribution
           </span>
-          <span class="text-xs text-gray-400 dark:text-gray-500">{{
-            logs.selectedRangeLabel()
-          }}</span>
+          <span class="text-xs text-gray-400">{{ logs.selectedRangeLabel() }}</span>
         </div>
 
         <!-- Level summary pills -->
@@ -87,7 +81,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
               [class]="
                 logs.levelActive()[lvl]
                   ? getLevelPillActive(lvl)
-                  : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 bg-transparent opacity-40'
+                  : 'border-gray-200 text-gray-400 bg-transparent opacity-40'
               "
             >
               <span class="w-2 h-2 rounded-full" [class]="getLevelDot(lvl)"></span>
@@ -109,9 +103,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
       </div>
 
       <!-- ── Toolbar ──────────────────────────────────────────────────────── -->
-      <div
-        class="bg-white dark:bg-gray-900 border-x border-gray-200 dark:border-gray-700 px-4 py-2.5 flex items-center gap-3 flex-wrap"
-      >
+      <div class="bg-white border-x border-gray-200 px-4 py-2.5 flex items-center gap-3 flex-wrap">
         <!-- Search -->
         <div class="relative flex-[2] min-w-72 flex gap-1.5">
           <div class="relative flex-1">
@@ -125,7 +117,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
               (ngModelChange)="searchInput.set($event)"
               (keyup.enter)="onSearchSubmit()"
               placeholder="Search logs…"
-              class="w-full pl-8 pr-8 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              class="w-full pl-8 pr-8 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             @if (searchInput()) {
               <button (click)="clearSearch()" class="absolute right-2 top-1/2 -translate-y-1/2">
@@ -136,7 +128,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
           <button
             type="button"
             (click)="onSearchSubmit()"
-            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors whitespace-nowrap"
+            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap"
           >
             <ng-icon name="lucideSearch" class="h-3 w-3" />
             Search
@@ -166,8 +158,8 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
               class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition-colors"
               [class]="
                 logs.customRangeLabel()
-                  ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                  : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  ? 'border-blue-400 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
               "
             >
               <ng-icon name="lucideCalendar" class="h-3.5 w-3.5" />
@@ -176,7 +168,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
 
             @if (customRangeOpen()) {
               <div
-                class="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl w-80"
+                class="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl w-80"
               >
                 <app-log-date-range-picker
                   (rangeSelected)="onCustomRangeSelected($event)"
@@ -190,7 +182,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
         <div class="flex-1"></div>
 
         <!-- Count -->
-        <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+        <span class="text-xs text-gray-400 whitespace-nowrap">
           {{ logs.filteredLogs().length }} / {{ logs.logs().length }} entries
         </span>
 
@@ -198,7 +190,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
         <button
           (click)="logs.refresh()"
           title="Refresh"
-          class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          class="p-1.5 rounded hover:bg-gray-100 transition-colors"
         >
           <ng-icon
             name="lucideRefreshCw"
@@ -211,7 +203,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
         <button
           (click)="downloadLogs()"
           title="Download logs"
-          class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          class="p-1.5 rounded hover:bg-gray-100 transition-colors"
         >
           <ng-icon name="lucideDownload" class="h-3.5 w-3.5 text-gray-500" />
         </button>
@@ -313,17 +305,17 @@ export class AppLogsViewerComponent {
   getLevelPillActive(level: string): string {
     switch (level.toLowerCase()) {
       case 'error':
-        return 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400';
+        return 'border-red-200 bg-red-50 text-red-700';
       case 'warn':
-        return 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400';
+        return 'border-amber-200 bg-amber-50 text-amber-700';
       case 'info':
-        return 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400';
+        return 'border-blue-200 bg-blue-50 text-blue-700';
       case 'debug':
-        return 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
+        return 'border-gray-200 bg-gray-50 text-gray-600';
       case 'trace':
-        return 'border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400';
+        return 'border-purple-200 bg-purple-50 text-purple-700';
       default:
-        return 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500';
+        return 'border-gray-200 bg-gray-50 text-gray-500';
     }
   }
 }

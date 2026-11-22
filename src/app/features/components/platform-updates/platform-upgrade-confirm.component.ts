@@ -118,10 +118,7 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
           }
           @for (advisory of warnings(); track advisory.title) {
             <div class="flex items-start gap-2.5 rounded-md bg-muted p-3">
-              <ng-icon
-                name="lucideTriangleAlert"
-                class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
-              />
+              <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
               <div>
                 <p class="text-sm">{{ advisory.title }}</p>
                 <p class="text-xs text-muted-foreground mt-0.5">

@@ -156,7 +156,7 @@ function phaseIndex(status: BuildPhase): number {
       <!-- Connection lost banner -->
       @if (connectionLost() && (phase() === 'building' || phase() === 'deploying')) {
         <div
-          class="mb-6 flex items-center gap-3 px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg text-sm text-yellow-800 dark:text-yellow-300"
+          class="mb-6 flex items-center gap-3 px-4 py-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-800"
         >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
           <span>Connection lost — the build is still running. Reconnecting...</span>
@@ -194,7 +194,7 @@ function phaseIndex(status: BuildPhase): number {
                       </span>
                       @if (ph.id === 'ANALYZING' && detectedFramework()) {
                         <span
-                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
                         >
                           <ng-icon name="lucidePackage" class="h-3 w-3 mr-1" />
                           {{ detectedFramework() }}
@@ -202,7 +202,7 @@ function phaseIndex(status: BuildPhase): number {
                       }
                       @if (ph.id === 'ANALYZING' && detectedFrontendFramework()) {
                         <span
-                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
                         >
                           <ng-icon name="lucidePackage" class="h-3 w-3 mr-1" />
                           {{ detectedFrontendFramework() }}
@@ -461,7 +461,7 @@ function phaseIndex(status: BuildPhase): number {
                 <div class="flex justify-between items-center">
                   <span class="text-muted-foreground">Runtime:</span>
                   <span
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
                   >
                     {{ detectedFramework() }}
                   </span>
@@ -471,7 +471,7 @@ function phaseIndex(status: BuildPhase): number {
                 <div class="flex justify-between items-center">
                   <span class="text-muted-foreground">Frontend:</span>
                   <span
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
                   >
                     {{ detectedFrontendFramework() }}
                   </span>
@@ -947,7 +947,7 @@ export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewCh
       case 'failed':
         return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive';
       default:
-        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
     }
   }
 

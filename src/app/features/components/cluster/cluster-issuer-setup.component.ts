@@ -63,15 +63,11 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
           <p class="text-xs text-sub mt-0.5">Manage certificates for wildcard domains.</p>
         </div>
         @if (allDns01Ready()) {
-          <span
-            class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium"
-          >
+          <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
             DNS-01 Ready
           </span>
         } @else if (hasHttp01()) {
-          <span
-            class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-medium"
-          >
+          <span class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
             Action required
           </span>
         }
@@ -79,23 +75,18 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
 
       <!-- Warning: issuers are http01 and must be reconfigured for wildcard -->
       @if (hasHttp01() && !configuring() && !showForm()) {
-        <div
-          class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
-        >
-          <ng-icon
-            name="lucideAlertCircle"
-            class="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
-          />
+        <div class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <ng-icon name="lucideAlertCircle" class="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
           <div class="flex-1 min-w-0">
-            <p class="text-xs font-medium text-red-800 dark:text-red-300">
+            <p class="text-xs font-medium text-red-800">
               Current issuers do not support wildcard certificates
             </p>
-            <p class="text-xs text-red-700 dark:text-red-400 mt-0.5">
+            <p class="text-xs text-red-700 mt-0.5">
               Update issuer configuration to enable wildcard certificates for your domains.
             </p>
             <button
               (click)="openForm()"
-              class="mt-1.5 text-xs text-red-700 dark:text-red-300 font-medium hover:underline"
+              class="mt-1.5 text-xs text-red-700 font-medium hover:underline"
             >
               Reconfigure wildcard issuers ->
             </button>
@@ -123,8 +114,8 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
                       configuring()
                         ? 'animate-spin text-blue-500'
                         : issuer.ready
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-amber-500 dark:text-amber-400'
+                          ? 'text-green-600'
+                          : 'text-amber-500'
                     "
                   />
                   <div class="min-w-0">
@@ -146,8 +137,8 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
                       class="text-xs px-1.5 py-0.5 rounded font-mono font-medium"
                       [class]="
                         issuer.solverType === 'dns01'
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                          : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-orange-100 text-orange-700'
                       "
                     >
                       {{ issuer.solverType }}
@@ -163,10 +154,8 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
                 </div>
               </div>
               @if (configuring()) {
-                <div class="h-1 w-full bg-blue-100 dark:bg-blue-900/40 overflow-hidden">
-                  <div
-                    class="h-1 w-1/3 bg-blue-500 dark:bg-blue-400 rounded-full animate-indeterminate"
-                  ></div>
+                <div class="h-1 w-full bg-blue-100 overflow-hidden">
+                  <div class="h-1 w-1/3 bg-blue-500 rounded-full animate-indeterminate"></div>
                 </div>
               }
             </div>
@@ -174,14 +163,14 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
         </div>
 
         @if (configuring()) {
-          <p class="text-xs text-blue-600 dark:text-blue-400">
+          <p class="text-xs text-blue-600">
             Applying manifests - waiting for cert-manager to register with Let's Encrypt...
           </p>
         }
 
         @if (configureError()) {
           <div
-            class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400"
+            class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
             {{ configureError() }}
@@ -193,7 +182,7 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
             <button
               (click)="openForm()"
               [disabled]="deleting()"
-              class="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+              class="text-xs text-blue-600 hover:underline disabled:opacity-50"
             >
               Reconfigure wildcard issuers
             </button>
@@ -203,7 +192,7 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
                 data-testid="dns-issuers-delete"
                 (click)="deleteConfirm.set(true)"
                 [disabled]="deleting()"
-                class="text-xs text-red-600 dark:text-red-400 hover:underline disabled:opacity-50 inline-flex items-center gap-1"
+                class="text-xs text-red-600 hover:underline disabled:opacity-50 inline-flex items-center gap-1"
               >
                 <ng-icon name="lucideTrash2" class="h-3 w-3" />
                 Delete wildcard issuers
@@ -213,12 +202,8 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
         }
 
         @if (deleteConfirm()) {
-          <div
-            class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs"
-          >
-            <span class="text-red-700 dark:text-red-400 flex-1"
-              >Delete wildcard issuers (staging + production)?</span
-            >
+          <div class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
+            <span class="text-red-700 flex-1">Delete wildcard issuers (staging + production)?</span>
             <button
               (click)="deleteDnsIssuers()"
               [disabled]="deleting()"
@@ -242,7 +227,7 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
 
         @if (deleteError()) {
           <div
-            class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400"
+            class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
             {{ deleteError() }}
@@ -280,7 +265,7 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
 
           @if (formError()) {
             <div
-              class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400"
+              class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
             >
               <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
               {{ formError() }}
@@ -509,22 +494,16 @@ export class ClusterIssuerSetupComponent implements OnInit, OnDestroy {
   }
 
   protected cardClass(issuer: Issuer): string {
-    if (this.configuring())
-      return 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800';
-    if (!issuer.ready)
-      return 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800';
-    if (issuer.solverType === SolverType.Http01)
-      return 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-800';
-    return 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800';
+    if (this.configuring()) return 'bg-blue-50 border-blue-200';
+    if (!issuer.ready) return 'bg-amber-50 border-amber-200';
+    if (issuer.solverType === SolverType.Http01) return 'bg-orange-50 border-orange-200';
+    return 'bg-green-50 border-green-200';
   }
 
   protected badgeClass(issuer: Issuer): string {
-    if (this.configuring())
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-    if (!issuer.ready)
-      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
-    if (issuer.solverType === SolverType.Http01)
-      return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
-    return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    if (this.configuring()) return 'bg-blue-100 text-blue-700';
+    if (!issuer.ready) return 'bg-amber-100 text-amber-700';
+    if (issuer.solverType === SolverType.Http01) return 'bg-orange-100 text-orange-700';
+    return 'bg-green-100 text-green-700';
   }
 }

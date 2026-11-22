@@ -228,7 +228,7 @@ import { bytes, hitRatio, uptime } from './cache-format';
                 <span class="text-xs text-muted-foreground">Turn off read-only to write.</span>
               }
               @if (s.setOk()) {
-                <span class="text-xs text-emerald-600 dark:text-emerald-400">Stored.</span>
+                <span class="text-xs text-emerald-600">Stored.</span>
               }
               @if (s.setError()) {
                 <span class="text-xs text-destructive">{{ s.setError() }}</span>

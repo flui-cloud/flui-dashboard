@@ -137,7 +137,7 @@ interface ShellTab {
                   @if (tab.marker; as marker) {
                     @if (marker.count > 1) {
                       <span
-                        class="inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-amber-500/15 px-1 text-[11px] font-semibold tabular-nums text-amber-600 dark:text-amber-400"
+                        class="inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-amber-500/15 px-1 text-[11px] font-semibold tabular-nums text-amber-600"
                         [attr.data-testid]="'tab-marker-' + tab.path"
                         aria-hidden="true"
                       >

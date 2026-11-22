@@ -40,13 +40,11 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
   template: `
     <div class="space-y-6 max-w-2xl">
       <!-- Main panel -->
-      <div
-        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-4"
-      >
+      <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+            <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-blue-600" />
+            <h3 class="text-sm font-semibold text-gray-900">
               Internal app protection (flui-authz)
             </h3>
           </div>
@@ -62,14 +60,14 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           }
         </div>
 
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-sm text-gray-600">
           Checks the Flui sign-in on this cluster for internal apps and for routes that require one.
           The control cluster does not need it.
         </p>
 
         <!-- Installed date -->
         @if (authzService.install()?.installedAt) {
-          <p class="text-xs text-gray-500 dark:text-gray-400">
+          <p class="text-xs text-gray-500">
             Installed {{ formatDate(authzService.install()!.installedAt!) }}
           </p>
         }
@@ -77,11 +75,11 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
         <!-- Progress bar during install/uninstall -->
         @if (authzService.installing()) {
           <div class="space-y-1.5">
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+            <div class="flex justify-between text-xs text-gray-500">
               <span>{{ authzService.progressStep() || 'Working...' }}</span>
               <span>{{ authzService.progress() }}%</span>
             </div>
-            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+            <div class="w-full bg-gray-200 rounded-full h-1.5">
               <div
                 class="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
                 [style.width.%]="authzService.progress()"
@@ -93,7 +91,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
         <!-- Error message -->
         @if (authzService.error()) {
           <div
-            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ authzService.error() }}</span>
@@ -103,7 +101,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
         <!-- FAILED error message from DTO -->
         @if (authzService.install()?.status === 'FAILED' && authzService.install()?.errorMessage) {
           <div
-            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-400"
+            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700"
           >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ authzService.install()!.errorMessage }}</span>
@@ -144,7 +142,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             <button
               (click)="uninstallDialog.open()"
               [disabled]="authzService.installing()"
-              class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Uninstall
             </button>
@@ -185,13 +183,11 @@ export class ClusterSecurityTabComponent implements OnInit {
 
   protected statusBadgeClass = computed(() => {
     const s = this.authzService.install()?.status;
-    if (s === this.Status.Running)
-      return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
-    if (s === this.Status.Failed)
-      return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+    if (s === this.Status.Running) return 'bg-green-100 text-green-700';
+    if (s === this.Status.Failed) return 'bg-red-100 text-red-700';
     if (s === this.Status.Pending || s === this.Status.Installing)
-      return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
-    return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+      return 'bg-amber-100 text-amber-700';
+    return 'bg-gray-100 text-gray-600';
   });
 
   protected statusDotClass = computed(() => {

@@ -19,7 +19,7 @@ export const MODES: Record<ScalingMode, ModeCopy> = {
   'flui-decides': {
     id: 'flui-decides',
     label: 'Manual — Flui does not add nodes',
-    pill: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200',
+    pill: 'bg-amber-100 text-amber-900',
     how: 'Flui could add nodes here and is set not to. It names the machine and a person adds it, or switches the group to automatic.',
   },
   'you-buy': {

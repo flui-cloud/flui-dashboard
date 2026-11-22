@@ -73,7 +73,7 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
 
       @if (costs.error(); as error) {
         <div class="card-surface p-4 flex items-center gap-2 text-sm" data-testid="costs-error">
-          <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-red-600 dark:text-red-400" />
+          <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-red-600" />
           {{ error }}
         </div>
       }
@@ -102,10 +102,7 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div class="card-surface p-5">
                 <div class="flex items-center gap-2 mb-3">
-                  <ng-icon
-                    name="lucideCreditCard"
-                    class="h-4 w-4 text-green-600 dark:text-green-400"
-                  />
+                  <ng-icon name="lucideCreditCard" class="h-4 w-4 text-green-600" />
                   <span class="text-label">Spent this month</span>
                 </div>
                 <p class="text-2xl font-bold text-value">{{ money(h.spent) }}</p>
@@ -118,10 +115,7 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
               </div>
               <div class="card-surface p-5">
                 <div class="flex items-center gap-2 mb-3">
-                  <ng-icon
-                    name="lucideTrendingUp"
-                    class="h-4 w-4 text-blue-600 dark:text-blue-400"
-                  />
+                  <ng-icon name="lucideTrendingUp" class="h-4 w-4 text-blue-600" />
                   <span class="text-label">Expected by month end</span>
                 </div>
                 <p class="text-2xl font-bold text-value">{{ money(h.forecast) }}</p>
@@ -129,10 +123,7 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
               </div>
               <div class="card-surface p-5">
                 <div class="flex items-center gap-2 mb-3">
-                  <ng-icon
-                    name="lucideCalendar"
-                    class="h-4 w-4 text-purple-600 dark:text-purple-400"
-                  />
+                  <ng-icon name="lucideCalendar" class="h-4 w-4 text-purple-600" />
                   <span class="text-label">{{ h.lastMonthLabel ?? 'Last month' }}</span>
                 </div>
                 <p class="text-2xl font-bold text-value">{{ money(h.lastMonth) }}</p>

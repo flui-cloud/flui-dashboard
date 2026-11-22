@@ -65,9 +65,7 @@ import { ValidationResultDto } from '../../../core/api/model/validationResultDto
             <div
               class="flex items-center gap-2 rounded-md px-3 py-2 text-sm"
               [class]="
-                r.ok
-                  ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                  : 'bg-destructive/10 text-destructive'
+                r.ok ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'
               "
             >
               <ng-icon [name]="r.ok ? 'lucideCheck' : 'lucideCircleX'" class="h-4 w-4 shrink-0" />

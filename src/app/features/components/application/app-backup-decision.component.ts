@@ -26,9 +26,7 @@ import { DecisionSource, decisionPanel } from './app-backup-decision';
     @if (panel(); as p) {
       <section
         class="card-surface p-4 space-y-2 border"
-        [class]="
-          p.state === 'unprotected' ? 'border-amber-200 dark:border-amber-800' : 'border-border'
-        "
+        [class]="p.state === 'unprotected' ? 'border-amber-200' : 'border-border'"
         data-testid="backup-decision"
       >
         @if (p.state === 'unprotected') {

@@ -100,7 +100,7 @@ import { AssistantToolResultComponent } from './assistant-tool-result.component'
                   @for (step of stepList; track step.toolCallId) {
                     <div
                       class="flex items-start gap-2"
-                      [class]="step.ok ? 'text-green-600 dark:text-green-400' : 'text-destructive'"
+                      [class]="step.ok ? 'text-green-600' : 'text-destructive'"
                     >
                       <span class="shrink-0">{{ step.ok ? '✓' : '✗' }}</span>
                       <span>{{ step.name }}</span>
@@ -120,7 +120,7 @@ import { AssistantToolResultComponent } from './assistant-tool-result.component'
                   <button
                     type="button"
                     (click)="executeUiAction(action)"
-                    class="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors"
+                    class="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-500/20 transition-colors"
                   >
                     {{ action.label }}
                   </button>

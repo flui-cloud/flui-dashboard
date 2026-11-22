@@ -141,21 +141,16 @@ import {
         @let o = s.overview()!;
         <div class="transition-opacity duration-200" [class.opacity-50]="s.loading()">
           @if (o.incident; as incident) {
-            <div
-              class="mb-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-500/25 dark:bg-red-500/10"
-            >
-              <ng-icon
-                name="lucideTriangleAlert"
-                class="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
-              />
+            <div class="mb-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
+              <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
               <div class="min-w-0">
-                <p class="text-sm font-semibold text-red-900 dark:text-red-200">
+                <p class="text-sm font-semibold text-red-900">
                   {{ incident.title }}
                   @if (incident.since) {
                     <span class="font-normal">— since {{ when(incident.since) }}</span>
                   }
                 </p>
-                <p class="mt-1 font-mono text-xs text-red-800 dark:text-red-300">
+                <p class="mt-1 font-mono text-xs text-red-800">
                   {{ incident.detail }}
                 </p>
               </div>
@@ -227,12 +222,12 @@ import {
                       @if (d.verified) {
                         <ng-icon
                           name="lucideCircleCheck"
-                          class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                          class="h-4 w-4 text-emerald-600"
                           title="Verified by the provider"
                         />
                       } @else {
                         <span
-                          class="text-[11px] text-amber-700 dark:text-amber-400"
+                          class="text-[11px] text-amber-700"
                           title="Records may be right; the provider has not re-checked yet."
                           >unverified</span
                         >
@@ -246,9 +241,7 @@ import {
               }
 
               @if (o.unregisteredDomains.length) {
-                <p
-                  class="mt-3 rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
-                >
+                <p class="mt-3 rounded-md bg-amber-50 p-2 text-xs text-amber-800">
                   Mail is going out from
                   <span class="font-medium">{{ o.unregisteredDomains.join(', ') }}</span>, which is
                   not registered here — so nothing has checked its records.
@@ -286,7 +279,7 @@ import {
                             }
                             @if (row.lastError) {
                               <div
-                                class="truncate font-mono text-[11px] text-red-600 dark:text-red-400"
+                                class="truncate font-mono text-[11px] text-red-600"
                                 [title]="row.lastError"
                               >
                                 {{ row.lastError }}
@@ -390,8 +383,8 @@ export class MailOverviewComponent implements OnInit, OnDestroy {
   }
 
   protected tone(k: MailKpi): string {
-    if (k.tone === 'bad') return 'text-red-600 dark:text-red-400';
-    if (k.tone === 'warn') return 'text-amber-700 dark:text-amber-400';
+    if (k.tone === 'bad') return 'text-red-600';
+    if (k.tone === 'warn') return 'text-amber-700';
     return 'text-foreground';
   }
 
@@ -406,9 +399,9 @@ export class MailOverviewComponent implements OnInit, OnDestroy {
   protected statusClass(row: MailSenderSummary): string {
     switch (row.status) {
       case 'failing':
-        return 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400';
+        return 'bg-red-50 text-red-700';
       case 'degraded':
-        return 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400';
+        return 'bg-amber-50 text-amber-800';
       case 'silent':
         return 'bg-muted text-muted-foreground';
       default:

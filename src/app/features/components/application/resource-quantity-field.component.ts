@@ -23,14 +23,10 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <label class="block">
-      <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ label() }}</span>
+      <span class="text-xs font-medium text-gray-600">{{ label() }}</span>
       <div
-        class="mt-1 flex rounded-lg border bg-white dark:bg-gray-900 overflow-hidden transition-colors"
-        [class]="
-          invalid()
-            ? 'border-red-400 dark:border-red-500'
-            : 'border-gray-200 dark:border-gray-600 focus-within:border-blue-500'
-        "
+        class="mt-1 flex rounded-lg border bg-white overflow-hidden transition-colors"
+        [class]="invalid() ? 'border-red-400' : 'border-gray-200 focus-within:border-blue-500'"
       >
         <input
           type="number"
@@ -41,13 +37,13 @@ import {
           [disabled]="disabled()"
           [attr.aria-label]="label()"
           (input)="onAmount($event)"
-          class="w-full min-w-0 px-3 py-2 text-sm font-mono bg-transparent text-gray-900 dark:text-white outline-none disabled:text-gray-500 disabled:cursor-not-allowed"
+          class="w-full min-w-0 px-3 py-2 text-sm font-mono bg-transparent text-gray-900 outline-none disabled:text-gray-500 disabled:cursor-not-allowed"
         />
         <select
           [disabled]="disabled()"
           [attr.aria-label]="label() + ' unit'"
           (change)="onUnit($event)"
-          class="px-2 text-xs font-mono bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-l border-gray-200 dark:border-gray-600 outline-none disabled:cursor-not-allowed"
+          class="px-2 text-xs font-mono bg-gray-50 text-gray-600 border-l border-gray-200 outline-none disabled:cursor-not-allowed"
         >
           @for (u of units(); track u.value) {
             <option [value]="u.value" [selected]="u.value === unit()">{{ u.label }}</option>

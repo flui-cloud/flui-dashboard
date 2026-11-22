@@ -43,13 +43,10 @@ import { DnsZonesService } from '../../service/dns-zones.service';
 const ALL_PROVIDERS: ReplicaProvider[] = ['hetzner', 'scaleway'];
 
 const STATUS_BADGE: Record<ReplicaStatus, string> = {
-  active:
-    'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400',
+  active: 'border-emerald-200 bg-emerald-50 text-emerald-700',
   degraded: 'border-destructive/30 bg-destructive/10 text-destructive',
-  pending:
-    'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400',
-  populating:
-    'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400',
+  pending: 'border-amber-200 bg-amber-50 text-amber-700',
+  populating: 'border-amber-200 bg-amber-50 text-amber-700',
   disabled: 'border-border bg-muted text-muted-foreground',
 };
 
@@ -158,13 +155,9 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
             </button>
           </div>
 
-          <div
-            class="space-y-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-800 dark:bg-amber-900/20"
-          >
-            <p class="text-xs font-medium text-amber-800 dark:text-amber-300">
-              Don't see your domain?
-            </p>
-            <p class="text-xs text-amber-700 dark:text-amber-400">
+          <div class="space-y-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5">
+            <p class="text-xs font-medium text-amber-800">Don't see your domain?</p>
+            <p class="text-xs text-amber-700">
               The zone is discovered directly in your
               <span class="font-semibold">{{ secondaryLabel() }}</span> account —
               <span class="font-mono">{{ zone().zoneName }}</span> must already exist there. Once
@@ -172,11 +165,11 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
               <span class="font-semibold">{{ secondaryLabel() }}</span>'s nameservers.
             </p>
             @if (secondaryDelegation(); as delegation) {
-              <div class="border-t border-amber-200 pt-1 dark:border-amber-700">
+              <div class="border-t border-amber-200 pt-1">
                 <a
                   [href]="delegation.delegationGuideUrl"
                   target="_blank"
-                  class="inline-flex items-center gap-1 text-xs text-amber-700 underline hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-200"
+                  class="inline-flex items-center gap-1 text-xs text-amber-700 underline hover:text-amber-900"
                 >
                   View official delegation guide
                   <ng-icon name="lucideExternalLink" class="h-3 w-3" />
@@ -190,7 +183,7 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
       <!-- Registrar hint -->
       @if (hint()) {
         <div
-          class="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300"
+          class="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700"
         >
           <ng-icon name="lucideInfo" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>{{ hint() }}</span>
@@ -349,7 +342,7 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
                     </p>
                   }
                   @if (report.errors.length === 0 && report.mismatches.length === 0) {
-                    <p class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                    <p class="flex items-center gap-1 text-emerald-600">
                       <ng-icon name="lucideCircleCheck" class="h-3 w-3" /> In sync — no drift.
                     </p>
                   }

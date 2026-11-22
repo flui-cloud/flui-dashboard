@@ -43,10 +43,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
       @if (i.supported) {
         <div class="rounded-lg border border-border bg-card p-4">
           <div class="flex items-start gap-2">
-            <ng-icon
-              name="lucideDatabase"
-              class="mt-0.5 h-5 w-5 text-indigo-600 dark:text-indigo-400"
-            />
+            <ng-icon name="lucideDatabase" class="mt-0.5 h-5 w-5 text-indigo-600" />
             <div class="min-w-0 flex-1">
               <h3 class="text-base font-semibold">
                 Logical backup
@@ -98,7 +95,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               </div>
 
               @if (ok(); as m) {
-                <p class="mt-2 text-xs text-emerald-600 dark:text-emerald-400">{{ m }}</p>
+                <p class="mt-2 text-xs text-emerald-600">{{ m }}</p>
               }
               @if (error(); as e) {
                 <p class="mt-2 flex items-center gap-1.5 text-xs text-destructive">

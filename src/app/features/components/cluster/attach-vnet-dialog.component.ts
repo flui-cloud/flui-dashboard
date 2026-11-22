@@ -67,9 +67,7 @@ import { VNetInfo, VNetStatus } from '../../model/vnet.models';
               Loading VNets...
             </div>
           } @else if (availableVNets().length === 0) {
-            <div
-              class="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 p-3 text-sm text-amber-900 dark:text-amber-200"
-            >
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
               No VNets available for provider <strong>{{ provider() }}</strong>. Create a VNet
               first.
             </div>
@@ -140,14 +138,9 @@ import { VNetInfo, VNetStatus } from '../../model/vnet.models';
           }
 
           @if (errorMessage(); as err) {
-            <div
-              class="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 p-3 flex items-start gap-2"
-            >
-              <ng-icon
-                name="lucideCircleAlert"
-                class="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0"
-              />
-              <p class="text-xs text-red-900 dark:text-red-200">{{ err }}</p>
+            <div class="rounded-lg border border-red-200 bg-red-50 p-3 flex items-start gap-2">
+              <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+              <p class="text-xs text-red-900">{{ err }}</p>
             </div>
           }
         </div>

@@ -122,7 +122,7 @@ const HELP_TEXT = [
                 <span class="whitespace-pre-wrap break-all">{{ e.input }}</span>
               </div>
               @if (e.status === 'error') {
-                <div class="mt-0.5 flex gap-2 text-red-600 dark:text-red-400">
+                <div class="mt-0.5 flex gap-2 text-red-600">
                   <span class="shrink-0 select-none opacity-0">&gt;</span>
                   <span class="whitespace-pre-wrap break-all">{{ e.error }}</span>
                 </div>
@@ -141,7 +141,7 @@ const HELP_TEXT = [
                     </div>
                   }
                   @if (e.scalar !== undefined) {
-                    <span class="text-sky-600 dark:text-sky-400">{{ e.scalar }}</span>
+                    <span class="text-sky-600">{{ e.scalar }}</span>
                   } @else if (e.docs) {
                     @for (doc of e.docs; track $index) {
                       <div class="mb-1 rounded border border-border/60 bg-muted/20 p-1.5">

@@ -23,22 +23,22 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
           class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4"
         >
           <div
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
+            class="bg-white border border-gray-200 rounded-lg shadow-xl"
             (click)="$event.stopPropagation()"
           >
             <div class="flex items-start justify-between p-6 pb-4">
               <div class="flex items-start gap-4 flex-1">
                 <div
-                  class="flex h-12 w-12 items-center justify-center rounded-full flex-shrink-0 bg-blue-100 dark:bg-blue-900/20"
+                  class="flex h-12 w-12 items-center justify-center rounded-full flex-shrink-0 bg-blue-100"
                 >
-                  <ng-icon [name]="icon()" class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <ng-icon [name]="icon()" class="h-6 w-6 text-blue-600" />
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 class="text-lg font-semibold text-gray-900">
                     {{ title() }}
                   </h3>
                   @if (message) {
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    <p class="text-sm text-gray-600 mt-2">
                       {{ message }}
                     </p>
                   }
@@ -64,10 +64,10 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
                 [placeholder]="placeholder()"
                 [disabled]="isProcessing()"
                 (keydown.enter)="onConfirm()"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               @if (error()) {
-                <p class="mt-2 text-xs text-red-600 dark:text-red-400">
+                <p class="mt-2 text-xs text-red-600">
                   {{ error() }}
                 </p>
               }

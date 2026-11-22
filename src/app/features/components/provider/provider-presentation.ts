@@ -10,8 +10,8 @@ export const PROVIDER_DOT: Record<ProviderTone, string> = {
 };
 
 export const PROVIDER_TEXT: Record<ProviderTone, string> = {
-  ok: 'text-green-700 dark:text-green-400',
-  warn: 'text-amber-700 dark:text-amber-400',
+  ok: 'text-green-700',
+  warn: 'text-amber-700',
   danger: 'text-destructive',
   muted: 'text-muted-foreground',
 };

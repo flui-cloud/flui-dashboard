@@ -104,11 +104,7 @@ import { AppAutoscaling, AppRuntimeService } from '../../service/app-runtime.ser
 
         <div class="flex items-center gap-3">
           @if (problem(); as p) {
-            <span
-              class="text-xs text-red-600 dark:text-red-400"
-              data-testid="autoscaling-problem"
-              >{{ p }}</span
-            >
+            <span class="text-xs text-red-600" data-testid="autoscaling-problem">{{ p }}</span>
           }
           <button
             type="button"

@@ -50,10 +50,10 @@ export interface WizardStep {
       <div class="container mx-auto px-4 py-4">
         <!-- Wizard Header -->
         <div class="mb-4 flex items-baseline gap-3">
-          <h1 class="text-xl font-bold text-slate-900 dark:text-white">
+          <h1 class="text-xl font-bold text-slate-900">
             {{ wizardTitle() }}
           </h1>
-          <p class="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">
+          <p class="text-sm text-slate-500 hidden sm:block">
             {{ wizardDescription() }}
           </p>
         </div>
@@ -68,13 +68,13 @@ export interface WizardStep {
         </div>
 
         <!-- Step Content Card -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-5 mb-4">
+        <div class="bg-white rounded-lg shadow p-5 mb-4">
           <!-- Current Step Header -->
           <div class="mb-4">
-            <h2 class="text-base font-semibold text-slate-900 dark:text-white">
+            <h2 class="text-base font-semibold text-slate-900">
               {{ currentStep().title }}
             </h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p class="text-xs text-slate-500 mt-0.5">
               {{ currentStep().description }}
             </p>
           </div>
@@ -85,12 +85,12 @@ export interface WizardStep {
 
         <!-- Navigation Buttons -->
         <div
-          class="sticky bottom-0 z-10 flex items-center justify-between border-t border-slate-200 bg-background pt-3 pb-1 dark:border-slate-700"
+          class="sticky bottom-0 z-10 flex items-center justify-between border-t border-slate-200 bg-background pt-3 pb-1"
         >
           @if (currentStepIndex() > 0) {
             <button
               (click)="onPrevious()"
-              class="flex items-center gap-1.5 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              class="flex items-center gap-1.5 px-4 py-2 text-sm text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
             >
               <ng-icon name="lucideChevronLeft" size="16"></ng-icon>
               <span>Previous</span>
@@ -105,7 +105,7 @@ export interface WizardStep {
             @if (showCancelButton()) {
               <button
                 (click)="onCancel()"
-                class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                class="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
               >
                 Cancel
               </button>
@@ -201,14 +201,14 @@ export class WizardShellComponent {
     const isActive = index === this.currentStepIndex();
 
     if (step.isCompleted) {
-      return 'bg-green-500 dark:bg-green-600';
+      return 'bg-green-500';
     }
 
     if (isActive) {
-      return 'bg-blue-600 dark:bg-blue-500 ring-4 ring-blue-200 dark:ring-blue-900';
+      return 'bg-blue-600 ring-4 ring-blue-200';
     }
 
-    return 'bg-slate-200 dark:bg-slate-700';
+    return 'bg-slate-200';
   }
 
   /**
@@ -221,7 +221,7 @@ export class WizardShellComponent {
       return 'text-white';
     }
 
-    return 'text-slate-500 dark:text-slate-400';
+    return 'text-slate-500';
   }
 
   /**
@@ -231,10 +231,10 @@ export class WizardShellComponent {
     const isActive = index === this.currentStepIndex();
 
     if (isActive) {
-      return 'text-blue-600 dark:text-blue-400';
+      return 'text-blue-600';
     }
 
-    return 'text-slate-600 dark:text-slate-400';
+    return 'text-slate-600';
   }
 
   /**
@@ -242,10 +242,10 @@ export class WizardShellComponent {
    */
   getConnectorClass(step: WizardStep): string {
     if (step.isCompleted) {
-      return 'bg-green-500 dark:bg-green-600';
+      return 'bg-green-500';
     }
 
-    return 'bg-slate-200 dark:bg-slate-700';
+    return 'bg-slate-200';
   }
 
   /**
@@ -253,10 +253,10 @@ export class WizardShellComponent {
    */
   getNextButtonClass(): string {
     if (!this.currentStep().isValid) {
-      return 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed';
+      return 'bg-slate-300 text-slate-500 cursor-not-allowed';
     }
 
-    return 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600';
+    return 'bg-blue-600 text-white hover:bg-blue-700';
   }
 
   /**
@@ -264,9 +264,9 @@ export class WizardShellComponent {
    */
   getCreateButtonClass(): string {
     if (!this.canCreate()) {
-      return 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed';
+      return 'bg-slate-300 text-slate-500 cursor-not-allowed';
     }
 
-    return 'bg-green-600 dark:bg-green-500 text-white hover:bg-green-700 dark:hover:bg-green-600';
+    return 'bg-green-600 text-white hover:bg-green-700';
   }
 }

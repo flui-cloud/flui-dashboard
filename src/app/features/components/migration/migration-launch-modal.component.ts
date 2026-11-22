@@ -275,7 +275,7 @@ import {
                   </option>
                 </select>
                 @if (staging() === 'live-fenced') {
-                  <p class="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                  <p class="mt-2 text-xs text-amber-600">
                     live-fenced stages the app at full replicas against a READ-ONLY destination DB —
                     it must boot with no write-migrations-on-start and no background workers with
                     external side-effects until cutover.

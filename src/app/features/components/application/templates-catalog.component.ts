@@ -71,9 +71,9 @@ interface FrameworkMeta {
  * Add new entries here when the API exposes new templates.
  */
 const FRAMEWORK_META: Record<string, FrameworkMeta> = {
-  nextjs: { icon: siNextdotjs, colorClass: 'text-black dark:text-white' },
+  nextjs: { icon: siNextdotjs, colorClass: 'text-black' },
   nuxt: { icon: siNuxt, colorClass: 'text-[#00DC82]' },
-  angular: { icon: siAngular, colorClass: 'text-[#DD0031] dark:text-[#FF4081]' },
+  angular: { icon: siAngular, colorClass: 'text-[#DD0031]' },
   // SvelteKit — accept both kebab-case and one-word variants from the API
   'svelte-kit': { icon: siSvelte, colorClass: 'text-[#FF3E00]' },
   sveltekit: { icon: siSvelte, colorClass: 'text-[#FF3E00]' },
@@ -81,16 +81,16 @@ const FRAMEWORK_META: Record<string, FrameworkMeta> = {
   nestjs: { icon: siNestjs, colorClass: 'text-[#E0234E]' },
   'spring-boot': { icon: siSpringboot, colorClass: 'text-[#6DB33F]' },
   springboot: { icon: siSpringboot, colorClass: 'text-[#6DB33F]' },
-  django: { icon: siDjango, colorClass: 'text-[#092E20] dark:text-[#44B78B]' },
+  django: { icon: siDjango, colorClass: 'text-[#092E20]' },
   fastapi: { icon: siFastapi, colorClass: 'text-[#009688]' },
-  'aspnet-core': { icon: siDotnet, colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
-  aspnetcore: { icon: siDotnet, colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
-  dotnet: { icon: siDotnet, colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
-  astro: { icon: siAstro, colorClass: 'text-black dark:text-white' },
+  'aspnet-core': { icon: siDotnet, colorClass: 'text-[#512BD4]' },
+  aspnetcore: { icon: siDotnet, colorClass: 'text-[#512BD4]' },
+  dotnet: { icon: siDotnet, colorClass: 'text-[#512BD4]' },
+  astro: { icon: siAstro, colorClass: 'text-black' },
   'vue-vite': { icon: siVuedotjs, colorClass: 'text-[#4FC08D]' },
   vue: { icon: siVuedotjs, colorClass: 'text-[#4FC08D]' },
-  vitepress: { icon: siVitepress, colorClass: 'text-[#5072A7] dark:text-[#8AB4F8]' },
-  generic: { icon: null, colorClass: 'text-slate-600 dark:text-white' },
+  vitepress: { icon: siVitepress, colorClass: 'text-[#5072A7]' },
+  generic: { icon: null, colorClass: 'text-slate-600' },
 };
 
 /**
@@ -115,19 +115,19 @@ const CATEGORY_OVERRIDES: Record<string, Category> = {
 const CATEGORY_LABELS: Record<Category, { label: string; class: string }> = {
   frontend: {
     label: 'Frontend',
-    class: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    class: 'bg-blue-100 text-blue-800',
   },
   backend: {
     label: 'Backend',
-    class: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    class: 'bg-green-100 text-green-800',
   },
   fullstack: {
     label: 'Full-stack',
-    class: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+    class: 'bg-purple-100 text-purple-800',
   },
   generic: {
     label: 'Generic',
-    class: 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200',
+    class: 'bg-slate-200 text-slate-800',
   },
 };
 

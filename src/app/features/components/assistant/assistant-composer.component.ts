@@ -43,7 +43,7 @@ import { AssistantModelPickerComponent } from './assistant-model-picker.componen
         <div
           class="flex items-center justify-between gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5"
         >
-          <p class="text-[11px] text-amber-700 dark:text-amber-400 leading-tight">
+          <p class="text-[11px] text-amber-700 leading-tight">
             Long conversation — responses may degrade
           </p>
           <button

@@ -61,8 +61,8 @@ const STATUS_DOT = {
 } as const;
 
 const STATUS_TEXT = {
-  ok: 'text-green-700 dark:text-green-400',
-  warn: 'text-amber-700 dark:text-amber-400',
+  ok: 'text-green-700',
+  warn: 'text-amber-700',
   danger: 'text-destructive',
   muted: 'text-muted-foreground',
 } as const;
@@ -272,10 +272,7 @@ const OWNERSHIP_LABEL: Record<string, string> = {
 
             @if (isObservabilityInstance()) {
               <div class="card-surface px-4 py-3 flex items-start gap-3">
-                <ng-icon
-                  name="lucideCircleAlert"
-                  class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
-                />
+                <ng-icon name="lucideCircleAlert" class="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                 <div>
                   <p class="m-0 text-sm font-medium text-foreground">Observability Instance</p>
                   <p class="m-0 mt-0.5 text-sm text-muted-foreground">
@@ -330,7 +327,7 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                           </p>
                         } @else if (isTerminalVisible()) {
                           <p
-                            class="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 dark:text-green-400"
+                            class="inline-flex items-center gap-1.5 text-xs font-medium text-green-700"
                           >
                             <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>Connected
                           </p>
@@ -350,7 +347,7 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                             class="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors select-none"
                             [class]="
                               useBootstrapKey()
-                                ? 'border-amber-400/60 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                ? 'border-amber-400/60 bg-amber-500/10 text-amber-600'
                                 : 'border-border bg-transparent text-muted-foreground hover:text-foreground hover:border-border/80'
                             "
                           >
@@ -408,7 +405,7 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                   <div class="px-5 pb-5">
                     @if (useBootstrapKey()) {
                       <div
-                        class="flex items-center gap-1.5 mb-2 rounded-md border border-amber-400/40 bg-amber-500/8 px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400"
+                        class="flex items-center gap-1.5 mb-2 rounded-md border border-amber-400/40 bg-amber-500/8 px-3 py-1.5 text-xs text-amber-600"
                       >
                         <ng-icon name="lucideKey" class="h-3.5 w-3.5 shrink-0" />
                         <span>Using bootstrap key — ephemeral certificates bypassed</span>
