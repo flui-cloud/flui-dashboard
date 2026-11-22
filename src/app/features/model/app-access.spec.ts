@@ -39,6 +39,14 @@ describe('app access summary', () => {
     expect(allowsTab(access, 'clients')).toBe(false);
   });
 
+  it('keeps the sections the summary never lists reachable, the API guarding their reads', () => {
+    const access = accessOf({
+      access: { tabs: ['overview', 'logs'], readOnly: false, showcase: false },
+    });
+    expect(allowsTab(access, 'diagnoses')).toBe(true);
+    expect(allowsTab(access, 'debug-pods')).toBe(true);
+  });
+
   it('does not trust the flags to be booleans', () => {
     const access = accessOf({
       access: { tabs: [], readOnly: 'yes', showcase: 0 },

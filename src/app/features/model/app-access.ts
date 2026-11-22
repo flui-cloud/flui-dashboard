@@ -15,8 +15,10 @@ export function accessOf(app: unknown): AppAccess | null {
   return { tabs, readOnly: !!readOnly, showcase: !!showcase, dataAccess: dataAccess !== false };
 }
 
+const SECTIONS_THE_API_DOES_NOT_LIST: ReadonlySet<string> = new Set(['diagnoses', 'debug-pods']);
+
 // Older instances send no access summary: show everything, the API still guards each route.
 export function allowsTab(access: AppAccess | null, route: string): boolean {
-  if (!access?.tabs) return true;
+  if (!access?.tabs || SECTIONS_THE_API_DOES_NOT_LIST.has(route)) return true;
   return access.tabs.includes(route);
 }
