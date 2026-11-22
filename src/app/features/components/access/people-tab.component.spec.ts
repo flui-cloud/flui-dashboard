@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PeopleTabComponent } from './people-tab.component';
@@ -7,6 +8,7 @@ import { PermissionService } from '../../../core/services/permission.service';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { MaskModeService } from '../../../core/services/mask-mode.service';
+import { FlActionsMenu } from '../../../ui/overlays/actions-menu';
 
 const USERS = 'http://api/api/v1/auth/users';
 
@@ -53,6 +55,14 @@ describe('PeopleTabComponent visitors', () => {
 
   afterEach(() => http.verify());
 
+  const actionsOf = (row: Element): string[] => {
+    const de = fixture.debugElement
+      .queryAll(By.css('tbody tr'))
+      .find((d) => d.nativeElement === row);
+    const menu = de?.query(By.directive(FlActionsMenu));
+    return menu ? (menu.componentInstance as FlActionsMenu).items().map((i) => i.id) : [];
+  };
+
   it('marks visitor rows with a badge', () => {
     const badges = el().querySelectorAll('[data-testid="visitor-badge"]');
     expect(badges).toHaveSize(1);
@@ -61,12 +71,12 @@ describe('PeopleTabComponent visitors', () => {
 
   it('keeps the block action on a visitor row', () => {
     const row = el().querySelector('[data-testid="visitor-badge"]')!.closest('tr')!;
-    expect(row.querySelector('button[title^="Disable"]')).not.toBeNull();
+    expect(actionsOf(row)).toContain('disable');
   });
 
   it('offers neither an invite link nor a role on a visitor row', () => {
     const visitor = el().querySelector('[data-testid="visitor-badge"]')!.closest('tr')!;
-    expect(visitor.querySelector('button[title="Generate invite link"]')).toBeNull();
+    expect(actionsOf(visitor)).not.toContain('invite-link');
     expect(visitor.querySelector('select')).toBeNull();
     expect(visitor.querySelector('[data-testid="visitor-role"]')?.textContent).toContain(
       'Read-only',
@@ -75,7 +85,7 @@ describe('PeopleTabComponent visitors', () => {
     const person = Array.from(el().querySelectorAll('tbody tr')).find((r) =>
       r.textContent?.includes('mario@example.com'),
     )!;
-    expect(person.querySelector('button[title="Generate invite link"]')).not.toBeNull();
+    expect(actionsOf(person)).toContain('invite-link');
     expect(person.querySelector('select')).not.toBeNull();
   });
 

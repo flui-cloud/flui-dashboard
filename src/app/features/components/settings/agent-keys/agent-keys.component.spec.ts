@@ -6,6 +6,7 @@ import { AuthService as ApiAuthService } from '../../../../core/api/api/auth.ser
 import { AppConfigService } from '../../../../core/services/app-config.service';
 import { ApiKeyResponseDto } from '../../../../core/api/model/apiKeyResponseDto';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
+import { ConfirmService } from '../../../../ui/overlays/confirm';
 import { AgentKeysComponent } from './agent-keys.component';
 import { AgentSkill, AgentSkillService } from './agent-skill.service';
 
@@ -120,6 +121,7 @@ const SESSION_KEY: ApiKeyResponseDto = {
 describe('the agent keys screen', () => {
   let fixture: ComponentFixture<AgentKeysComponent>;
   let api: jasmine.SpyObj<ApiAuthService>;
+  let confirm: jasmine.Spy;
 
   const build = async (
     grants: string[],
@@ -148,6 +150,7 @@ describe('the agent keys screen', () => {
       }) as never,
     );
     api.apiKeysControllerRevokeApiKey.and.returnValue(of({}) as never);
+    confirm = jasmine.createSpy('confirm').and.resolveTo(false);
 
     await TestBed.configureTestingModule({
       imports: [AgentKeysComponent],
@@ -155,6 +158,7 @@ describe('the agent keys screen', () => {
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: ApiAuthService, useValue: api },
+        { provide: ConfirmService, useValue: { confirm } },
         {
           provide: AgentSkillService,
           useValue: {
@@ -276,15 +280,16 @@ describe('the agent keys screen', () => {
 
   it('revokes only after the question is answered', async () => {
     await build(GUEST_GRANTS, [OLD_KEY]);
+    let answer!: (ok: boolean) => void;
+    confirm.and.returnValue(new Promise<boolean>((resolve) => (answer = resolve)));
 
     (el('[data-testid="revoke-k-old"]') as HTMLButtonElement).click();
     fixture.detectChanges();
+    expect(confirm).toHaveBeenCalled();
     expect(api.apiKeysControllerRevokeApiKey).not.toHaveBeenCalled();
 
-    const confirm = all('button').find(
-      (b) => b.textContent?.trim() === 'Revoke' && b !== el('[data-testid="revoke-k-old"]'),
-    );
-    confirm!.click();
+    answer(true);
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(api.apiKeysControllerRevokeApiKey).toHaveBeenCalledWith('k-old');
@@ -314,7 +319,7 @@ describe('the agent keys screen', () => {
 
     (el('[data-testid="revoke-k-old"]') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('your own session is unaffected');
+    expect(confirm.calls.mostRecent().args[0].body).toContain('your own session is unaffected');
   });
 
   it('says when a key was last seen, and does not call silence "never"', async () => {
@@ -407,7 +412,7 @@ describe('the agent keys screen', () => {
       (el('[data-testid="revoke-k-old"]') as HTMLButtonElement).click();
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.textContent).toContain('never used');
+      expect(confirm.calls.mostRecent().args[0].body).toContain('never used');
     });
   });
 });

@@ -1,0 +1,166 @@
+<div class="fl-page">
+  <fl-page-header title="Backups">
+    <span headerMeta>Your data stays in the EU, on storage you own.</span>
+  </fl-page-header>
+
+  @if (error()) {
+    <fl-alert tone="error" title="Could not load backups">{{ error() }}</fl-alert>
+  }
+
+  @if (attention().length) {
+    <fl-alert
+      tone="error"
+      [title]="
+        attention().length === 1
+          ? '1 backup needs attention'
+          : attention().length + ' backups need attention'
+      "
+    >
+      <ul class="mt-1 flex flex-col gap-1">
+        @for (a of attention(); track a.policyId) {
+          <li class="flex flex-wrap items-center gap-2">
+            <app-backup-health-badge [state]="a.health.state" [detail]="a.health.detail" />
+            <a class="fl-link" [routerLink]="['/management/backup/policies', a.policyId]">{{
+              a.policyName
+            }}</a>
+            @if (a.health.detail) {
+              <span class="text-fl-ink-muted">{{ a.health.detail }}</span>
+            }
+          </li>
+        }
+      </ul>
+    </fl-alert>
+  }
+
+  <fl-metric-strip>
+    <fl-metric
+      label="Protected clusters"
+      [value]="protectedClusters() ?? '—'"
+      [caption]="'of ' + clusters().length + (clusters().length === 1 ? ' cluster' : ' clusters')"
+      [tone]="
+        protectedClusters() !== null &&
+        clusters().length > 0 &&
+        protectedClusters() === clusters().length
+          ? 'success'
+          : 'default'
+      "
+    />
+    <fl-metric
+      label="Apps needing a decision"
+      [value]="decisionApps() ?? '—'"
+      caption="Volumes no backup can copy safely yet"
+      [tone]="decisionApps() ? 'warning' : 'default'"
+    />
+    <fl-metric
+      label="Failed jobs"
+      [value]="failedJobs()"
+      caption="Policies whose last run failed"
+      [tone]="failedJobs() > 0 ? 'warning' : 'default'"
+    />
+    <a
+      fl-metric
+      routerLink="/management/backup/destinations"
+      aria-label="Destinations"
+      label="Destinations"
+      [value]="destinationsCount()"
+      [caption]="totalUsage() + ' stored'"
+    ></a>
+  </fl-metric-strip>
+
+  @if (!example()) {
+    <fl-panel title="Clusters" [count]="clusters().length" [flush]="true">
+      @if (clusters().length) {
+        <div panelActions class="fl-row" appReadOnlySection="backup">
+          <span class="fl-select-wrap">
+            <label class="fl-sr" for="backup-enable-cluster">Cluster to enable backups on</label>
+            <select
+              id="backup-enable-cluster"
+              class="fl-select fl-select--sm"
+              [ngModel]="selectedClusterId()"
+              (ngModelChange)="selectedClusterId.set($event)"
+            >
+              <option value="">Select a cluster</option>
+              @for (c of clusters(); track c.id) {
+                <option [value]="c.id">{{ c.name }} ({{ c.provider }})</option>
+              }
+            </select>
+          </span>
+          <button
+            flButton
+            size="sm"
+            type="button"
+            [disabled]="!selectedClusterId()"
+            (click)="openEnableModal()"
+          >
+            Enable backups
+          </button>
+        </div>
+      }
+      @if (clusters().length === 0) {
+        <fl-empty-state
+          title="No clusters yet"
+          body="Create a cluster first to enable backups."
+          [compact]="true"
+        />
+      } @else {
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Cluster</th>
+                <th scope="col">Protection</th>
+                <th scope="col">Destination</th>
+                <th scope="col">Schedule</th>
+                <th scope="col">Before deploy</th>
+                <th scope="col" class="is-num">Apps</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+              </tr>
+            </thead>
+            @for (c of clusters(); track c.id + ':' + cardsRevision()) {
+              @if (c.id) {
+                <tbody
+                  app-cluster-protection-card
+                  [clusterId]="c.id"
+                  [clusterName]="c.name ?? ''"
+                  (changed)="onProtectionChanged()"
+                  (loaded)="onProtectionLoaded($event)"
+                ></tbody>
+              }
+            }
+          </table>
+        </div>
+        <p class="border-t border-fl-border-subtle px-4 py-3 text-fl-body-sm text-fl-ink-muted">
+          No backup storage yet? Enable backups creates a bucket on another cloud and protects the
+          cluster in one step.
+          <a class="fl-link" routerLink="/management/providers">Manage providers</a>
+        </p>
+      }
+    </fl-panel>
+
+    <app-needs-decision-list
+      [items]="decisionItems()"
+      [destinationId]="fallbackDestinationId()"
+      [clusterDestinations]="clusterDestinations()"
+      [clusterNames]="clusterNames()"
+      (decided)="onDecided()"
+    />
+
+    <app-platform-backup-card />
+  }
+
+  <app-backup-overview-guide
+    [destinations]="destinationsCount()"
+    [policies]="policiesCount()"
+    [degraded]="degradedCount()"
+    [restores]="restoreCount()"
+    [totalUsage]="totalUsage()"
+  />
+
+  @if (showEnableModal() && selectedClusterId()) {
+    <app-enable-backups-modal
+      [clusterId]="selectedClusterId()"
+      [open]="true"
+      (closed)="onEnableModalClosed($event)"
+    />
+  }
+</div>

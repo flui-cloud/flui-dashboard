@@ -1,14 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideTriangleAlert, lucideX } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationKindEnum } from '../../model/application.models';
 import { ClusterService } from '../../service/cluster.service';
@@ -20,6 +13,18 @@ import {
   MigrationType,
   StagingMode,
 } from '../../service/migration.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { MigrationLaunchChoice } from './migration-launch-choice';
+import {
+  CUTOVER_OPTIONS,
+  MODE_OPTIONS,
+  STAGING_OPTIONS,
+  TYPE_OPTIONS,
+} from './migration-launch-options';
 
 /**
  * Launch modal for cross-cluster migrations (app / managed-DB / full-app).
@@ -28,291 +33,228 @@ import {
  */
 @Component({
   selector: 'app-migration-launch-modal',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon],
-  providers: [provideIcons({ lucideLoader, lucideTriangleAlert, lucideX })],
+  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner, MigrationLaunchChoice],
+  providers: [provideIcons({ lucideX })],
   template: `
     @if (open()) {
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
         (click)="close()"
       >
         <div
-          class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-card p-6"
+          class="fl-dialog fl-dialog--wide"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="m-launch-title"
           (click)="$event.stopPropagation()"
         >
-          <div class="mb-4 flex items-start justify-between">
-            <div>
-              <h3 class="text-lg font-semibold">New migration</h3>
-              <p class="mt-0.5 text-xs text-muted-foreground">
-                Move a workload, a managed database, or a full app to another cluster.
-              </p>
-            </div>
-            <button
-              type="button"
-              (click)="close()"
-              class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <ng-icon name="lucideX" class="h-4 w-4" />
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" id="m-launch-title">New migration</h2>
+            <button type="button" class="fl-dialog__close" aria-label="Close" (click)="close()">
+              <fl-icon name="lucideX" />
             </button>
-          </div>
+          </header>
 
-          <div class="space-y-4">
-            <!-- Type -->
-            <div>
-              <label class="mb-1 block text-xs font-medium text-muted-foreground">Type</label>
-              <div class="inline-flex rounded-md border border-border p-0.5">
-                @for (t of types; track t) {
-                  <button
-                    type="button"
-                    (click)="setType(t)"
-                    class="rounded px-3 py-1 text-sm font-medium"
-                    [class]="
-                      type() === t
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted'
-                    "
+          <div class="fl-dialog__body">
+            <p class="m-0 text-fl-ink-muted">
+              Move a workload, a managed database or a full app to another cluster.
+            </p>
+
+            <app-migration-launch-choice
+              legend="What moves"
+              name="m-type"
+              [options]="typeOptions"
+              [(value)]="type"
+            />
+
+            <div class="grid gap-3 sm:grid-cols-2">
+              <fl-field label="Source cluster" for="m-src">
+                <span class="fl-select-wrap">
+                  <select
+                    id="m-src"
+                    class="fl-select"
+                    [ngModel]="srcCluster()"
+                    (ngModelChange)="setSrcCluster($event)"
                   >
-                    {{ typeLabel(t) }}
-                  </button>
-                }
-              </div>
+                    <option value="">Select a cluster…</option>
+                    @for (c of clusters(); track c.id) {
+                      <option [value]="c.id">{{ c.name }}</option>
+                    }
+                  </select>
+                </span>
+              </fl-field>
+              <fl-field
+                label="Target cluster"
+                for="m-dst"
+                [error]="sameCluster() ? 'Target must differ from the source cluster.' : null"
+              >
+                <span class="fl-select-wrap">
+                  <select
+                    id="m-dst"
+                    class="fl-select"
+                    [ngModel]="targetCluster()"
+                    (ngModelChange)="targetCluster.set($event)"
+                  >
+                    <option value="">Select a cluster…</option>
+                    @for (c of clusters(); track c.id) {
+                      <option [value]="c.id">{{ c.name }}</option>
+                    }
+                  </select>
+                </span>
+              </fl-field>
             </div>
 
-            <!-- Clusters -->
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-src">
-                  Source cluster
-                </label>
-                <select
-                  id="m-src"
-                  [ngModel]="srcCluster()"
-                  (ngModelChange)="setSrcCluster($event)"
-                  class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-                >
-                  <option value="">Select cluster…</option>
-                  @for (c of clusters(); track c.id) {
-                    <option [value]="c.id">{{ c.name }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-dst">
-                  Target cluster
-                </label>
-                <select
-                  id="m-dst"
-                  [ngModel]="targetCluster()"
-                  (ngModelChange)="targetCluster.set($event)"
-                  class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-                >
-                  <option value="">Select cluster…</option>
-                  @for (c of clusters(); track c.id) {
-                    <option [value]="c.id">{{ c.name }}</option>
-                  }
-                </select>
-              </div>
-            </div>
-            @if (srcCluster() && targetCluster() && srcCluster() === targetCluster()) {
-              <p class="text-xs text-destructive">Target must differ from the source cluster.</p>
-            }
-
-            <!-- Consumer app (app + full) -->
             @if (type() === 'app' || type() === 'full') {
-              <div>
-                <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-app">
-                  {{ type() === 'app' ? 'App to move' : 'Consumer app' }}
-                </label>
-                <select
-                  id="m-app"
-                  [ngModel]="appId()"
-                  (ngModelChange)="appId.set($event)"
-                  [disabled]="!srcCluster()"
-                  class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm disabled:opacity-50"
-                >
-                  <option value="">
-                    {{ srcCluster() ? 'Select an app…' : 'Pick a source cluster first' }}
-                  </option>
-                  @for (a of srcApps(); track a.id) {
-                    <option [value]="a.id">{{ a.name }}</option>
-                  }
-                </select>
-              </div>
+              <fl-field [label]="type() === 'app' ? 'App to move' : 'Consumer app'" for="m-app">
+                <span class="fl-select-wrap">
+                  <select
+                    id="m-app"
+                    class="fl-select"
+                    [ngModel]="appId()"
+                    (ngModelChange)="appId.set($event)"
+                    [disabled]="!srcCluster()"
+                  >
+                    <option value="">
+                      {{ srcCluster() ? 'Select an app…' : 'Pick a source cluster first' }}
+                    </option>
+                    @for (a of srcApps(); track a.id) {
+                      <option [value]="a.id">{{ a.name }}</option>
+                    }
+                  </select>
+                </span>
+              </fl-field>
             }
 
-            <!-- Database app (db + full) -->
             @if (type() === 'db' || type() === 'full') {
-              <div>
-                <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-db">
-                  Database app
-                </label>
-                <select
-                  id="m-db"
-                  [ngModel]="dbAppId()"
-                  (ngModelChange)="dbAppId.set($event)"
-                  [disabled]="!srcCluster()"
-                  class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm disabled:opacity-50"
-                >
-                  <option value="">
-                    {{ srcCluster() ? 'Select a database…' : 'Pick a source cluster first' }}
-                  </option>
-                  @for (a of dbApps(); track a.id) {
-                    <option [value]="a.id">{{ a.name }}</option>
-                  }
-                </select>
-                @if (srcCluster() && dbApps().length === 0) {
-                  <p class="mt-1 text-xs text-muted-foreground">
-                    No database apps found on the source cluster.
-                  </p>
-                }
-              </div>
+              <fl-field
+                label="Database app"
+                for="m-db"
+                [hint]="
+                  srcCluster() && dbApps().length === 0
+                    ? 'No database apps found on the source cluster.'
+                    : undefined
+                "
+              >
+                <span class="fl-select-wrap">
+                  <select
+                    id="m-db"
+                    class="fl-select"
+                    [ngModel]="dbAppId()"
+                    (ngModelChange)="dbAppId.set($event)"
+                    [disabled]="!srcCluster()"
+                  >
+                    <option value="">
+                      {{ srcCluster() ? 'Select a database…' : 'Pick a source cluster first' }}
+                    </option>
+                    @for (a of dbApps(); track a.id) {
+                      <option [value]="a.id">{{ a.name }}</option>
+                    }
+                  </select>
+                </span>
+              </fl-field>
             }
 
             @if (type() === 'app') {
-              <p class="text-xs text-muted-foreground">
+              <fl-alert tone="warning" title="Downtime at cutover">
                 An app with volumes stops at cutover while they are copied, then starts on the
                 target. If the copy fails, it starts again where it was.
-              </p>
+              </fl-alert>
               @if (destinations().length > 1) {
-                <div>
-                  <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-dest">
-                    Volumes move through
-                  </label>
-                  <select
-                    id="m-dest"
-                    [ngModel]="destinationId()"
-                    (ngModelChange)="destinationId.set($event)"
-                    class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-                  >
-                    <option value="">The destination protecting the app</option>
-                    @for (d of destinations(); track d.id) {
-                      <option [value]="d.id">{{ d.name }}</option>
-                    }
-                  </select>
-                </div>
+                <fl-field label="Volumes move through" for="m-dest">
+                  <span class="fl-select-wrap">
+                    <select
+                      id="m-dest"
+                      class="fl-select"
+                      [ngModel]="destinationId()"
+                      (ngModelChange)="destinationId.set($event)"
+                    >
+                      <option value="">The destination protecting the app</option>
+                      @for (d of destinations(); track d.id) {
+                        <option [value]="d.id">{{ d.name }}</option>
+                      }
+                    </select>
+                  </span>
+                </fl-field>
               }
             }
 
-            <!-- Cutover -->
-            <div>
-              <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-cutover">
-                Cutover
-              </label>
-              <select
-                id="m-cutover"
-                [ngModel]="cutover()"
-                (ngModelChange)="cutover.set($event)"
-                class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-              >
-                <option value="auto">Automatic — cut over as soon as it's ready</option>
-                <option value="manual">Manual — park and cut over on your signal</option>
-              </select>
-            </div>
+            <app-migration-launch-choice
+              legend="Cutover"
+              name="m-cutover"
+              [options]="cutoverOptions"
+              [(value)]="cutover"
+            />
 
-            <!-- DB-only: mode + restore fields -->
             @if (type() === 'db') {
-              <div>
-                <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-mode">
-                  Mode
-                </label>
-                <select
-                  id="m-mode"
-                  [ngModel]="mode()"
-                  (ngModelChange)="mode.set($event)"
-                  class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-                >
-                  <option value="live">Live — stream from the running database</option>
-                  <option value="restore">Restore — rebuild from a backup / point in time</option>
-                </select>
-              </div>
+              <app-migration-launch-choice
+                legend="Mode"
+                name="m-mode"
+                [options]="modeOptions"
+                [(value)]="mode"
+              />
 
               @if (mode() === 'restore') {
-                <div>
-                  <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-name">
-                    Display name
-                  </label>
-                  <input
-                    id="m-name"
-                    type="text"
-                    [ngModel]="displayName()"
-                    (ngModelChange)="displayName.set($event)"
-                    placeholder="e.g. orders-db (restored)"
-                    class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-                  />
-                </div>
-                <div>
-                  <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-rtt">
-                    Recover to (leave empty for the latest recoverable point)
-                  </label>
-                  <input
-                    id="m-rtt"
-                    type="datetime-local"
-                    [ngModel]="recoverTo()"
-                    (ngModelChange)="recoverTo.set($event)"
-                    class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-                  />
-                </div>
+                <fl-field label="Display name" for="m-name">
+                  <div class="fl-input fl-input--lg">
+                    <input
+                      id="m-name"
+                      type="text"
+                      [ngModel]="displayName()"
+                      (ngModelChange)="displayName.set($event)"
+                      placeholder="orders-db-restored"
+                    />
+                  </div>
+                </fl-field>
+                <fl-field
+                  label="Recover to"
+                  for="m-rtt"
+                  hint="Leave empty for the latest recoverable point."
+                >
+                  <div class="fl-input fl-input--lg">
+                    <input
+                      id="m-rtt"
+                      type="datetime-local"
+                      [ngModel]="recoverTo()"
+                      (ngModelChange)="recoverTo.set($event)"
+                    />
+                  </div>
+                </fl-field>
               }
             }
 
-            <!-- Full-only: staging -->
             @if (type() === 'full') {
-              <div>
-                <label class="mb-1 block text-xs font-medium text-muted-foreground" for="m-staging">
-                  Staging
-                </label>
-                <select
-                  id="m-staging"
-                  [ngModel]="staging()"
-                  (ngModelChange)="staging.set($event)"
-                  class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-                >
-                  <option value="scaled-down">Scaled-down — stage the app at zero replicas</option>
-                  <option value="live-fenced">
-                    Live-fenced — stage at full replicas, read-only DB
-                  </option>
-                </select>
-                @if (staging() === 'live-fenced') {
-                  <p class="mt-2 text-xs text-amber-600">
-                    live-fenced stages the app at full replicas against a READ-ONLY destination DB —
-                    it must boot with no write-migrations-on-start and no background workers with
-                    external side-effects until cutover.
-                  </p>
-                }
-              </div>
+              <app-migration-launch-choice
+                legend="Staging"
+                name="m-staging"
+                [options]="stagingOptions"
+                [(value)]="staging"
+              />
+              @if (staging() === 'live-fenced') {
+                <fl-alert tone="warning" title="The app runs against a read-only database">
+                  Until cutover it must boot without running write migrations, and without
+                  background workers that have side effects outside the app.
+                </fl-alert>
+              }
             }
 
             @if (error(); as e) {
-              <p class="flex items-center gap-1.5 text-xs text-destructive">
-                <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5" /> {{ e }}
-              </p>
+              <fl-alert tone="error" title="Could not launch the migration">{{ e }}</fl-alert>
             }
           </div>
 
-          <div class="mt-6 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              (click)="close()"
-              [disabled]="submitting()"
-              class="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
-            >
+          <footer class="fl-dialog__footer">
+            <button flButton="ghost" type="button" [disabled]="submitting()" (click)="close()">
               Cancel
             </button>
-            <button
-              type="button"
-              (click)="submit()"
-              [disabled]="!canSubmit()"
-              class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
+            <button flButton="primary" type="button" [disabled]="!canSubmit()" (click)="submit()">
               @if (submitting()) {
-                <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" /> Launching…
+                <fl-spinner label="Launching" />
+                Launching…
               } @else {
                 Launch migration
               }
             </button>
-          </div>
+          </footer>
         </div>
       </div>
     }
@@ -326,7 +268,10 @@ export class MigrationLaunchModalComponent {
 
   readonly launched = output<void>();
 
-  readonly types: MigrationType[] = ['app', 'db', 'full'];
+  readonly typeOptions = TYPE_OPTIONS;
+  readonly cutoverOptions = CUTOVER_OPTIONS;
+  readonly modeOptions = MODE_OPTIONS;
+  readonly stagingOptions = STAGING_OPTIONS;
 
   readonly open = signal(false);
   readonly type = signal<MigrationType>('full');
@@ -351,6 +296,10 @@ export class MigrationLaunchModalComponent {
   );
   readonly dbApps = computed(() =>
     this.srcApps().filter((a) => a.kind === ApplicationKindEnum.Database),
+  );
+
+  readonly sameCluster = computed(
+    () => !!this.srcCluster() && this.srcCluster() === this.targetCluster(),
   );
 
   readonly canSubmit = computed(() => {
@@ -388,19 +337,10 @@ export class MigrationLaunchModalComponent {
     this.open.set(false);
   }
 
-  setType(t: MigrationType): void {
-    this.type.set(t);
-  }
-
   setSrcCluster(id: string): void {
     this.srcCluster.set(id);
-    // apps belong to a cluster — clear selections that no longer apply.
     this.appId.set('');
     this.dbAppId.set('');
-  }
-
-  typeLabel(t: MigrationType): string {
-    return { app: 'App', db: 'Database', full: 'Full app' }[t];
   }
 
   async submit(): Promise<void> {

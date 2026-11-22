@@ -1,471 +1,143 @@
-<div class="space-y-4">
-  <div class="flex flex-wrap items-center justify-between gap-2">
-    <div class="flex items-center gap-3">
-      <fieldset class="inline-flex rounded-md border border-border p-0.5 text-sm" aria-label="Show">
+@if (iam.lastInvite(); as inv) {
+  <app-people-invite-result [invite]="inv" (dismissed)="iam.clearInvite()" />
+}
+
+<fl-panel title="People" [count]="iam.users().length" [flush]="true">
+  @if (perms.can('iam:manage-users')) {
+    <button panelActions flButton="primary" size="sm" type="button" (click)="showInvite.set(true)">
+      <fl-icon name="lucideUserPlus" [size]="14" />
+      Invite user
+    </button>
+  }
+  <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+    <div class="fl-toolbar__group">
+      <fieldset class="fl-segmented">
+        <legend class="fl-sr">Show</legend>
         @for (f of kindFilters; track f.label) {
           <button
             type="button"
+            [attr.aria-pressed]="iam.userKind() === f.kind"
             (click)="showKind(f.kind)"
-            [class]="segClass(iam.userKind() === f.kind)"
             [attr.data-testid]="'kind-' + f.label"
           >
             {{ f.label }}
           </button>
         }
       </fieldset>
-      <p class="text-sm text-muted-foreground">{{ iam.users().length }} shown</p>
     </div>
-    @if (perms.can('iam:manage-users')) {
-      <button
-        type="button"
-        (click)="showInvite.set(!showInvite())"
-        class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-      >
-        <ng-icon name="lucideUserPlus" class="h-4 w-4" /> Invite user
-      </button>
-    }
+    <div class="fl-toolbar__group">
+      <span class="fl-toolbar__info">{{ iam.users().length }} shown</span>
+    </div>
   </div>
 
-  @if (showInvite()) {
-    <div hlmCard>
-      <div hlmCardContent class="pt-5 space-y-4">
-        <div class="grid gap-3 sm:grid-cols-3">
-          <div>
-            <label for="pt-email" class="block text-xs font-medium text-muted-foreground mb-1"
-              >Email</label
-            >
-            <input
-              id="pt-email"
-              [class]="fieldClass"
-              type="email"
-              placeholder="person@company.com"
-              [value]="email()"
-              (input)="email.set(value($event))"
-            />
-          </div>
-          <div>
-            <label for="pt-first" class="block text-xs font-medium text-muted-foreground mb-1"
-              >First name</label
-            >
-            <input
-              id="pt-first"
-              [class]="fieldClass"
-              [value]="firstName()"
-              (input)="firstName.set(value($event))"
-            />
-          </div>
-          <div>
-            <label for="pt-last" class="block text-xs font-medium text-muted-foreground mb-1"
-              >Last name</label
-            >
-            <input
-              id="pt-last"
-              [class]="fieldClass"
-              [value]="lastName()"
-              (input)="lastName.set(value($event))"
-            />
-          </div>
-        </div>
-
-        <div>
-          <span class="block text-xs font-medium text-muted-foreground mb-1.5">Account type</span>
-          <div class="inline-flex rounded-md border border-border p-0.5 text-sm">
-            <button
-              type="button"
-              (click)="isAdminAccount.set(false)"
-              [class]="segClass(!isAdminAccount())"
-            >
-              Member
-            </button>
-            <button
-              type="button"
-              (click)="isAdminAccount.set(true)"
-              [class]="segClass(isAdminAccount())"
-            >
-              Platform admin
-            </button>
-          </div>
-          <p class="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
-            <ng-icon name="lucideInfo" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            @if (isAdminAccount()) {
-              <span
-                >Platform admin sees and controls <span class="font-medium">everything</span> —
-                clusters, infrastructure, providers, backups, and other users — beyond any role. Use
-                sparingly.</span
-              >
-            } @else {
-              <span
-                >A member gets
-                <span class="font-medium">only the access you grant below</span> (deny-by-default).
-                The role is what they can do; the scope is where.</span
-              >
-            }
-          </p>
-        </div>
-
-        @if (!isAdminAccount()) {
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label for="pt-role" class="block text-xs font-medium text-muted-foreground mb-1"
-                >Role</label
-              >
-              <select id="pt-role" [class]="selectClass" (change)="onRoleSelect($event)">
-                @for (r of iam.grantableRoles(); track r.key) {
-                  <option [value]="r.key" [selected]="role() === r.key">{{ r.name }}</option>
-                }
-              </select>
-            </div>
-            <div>
-              <label for="pt-applies" class="block text-xs font-medium text-muted-foreground mb-1"
-                >Applies to</label
-              >
-              <select
-                id="pt-applies"
-                [class]="selectClass"
-                (change)="
-                  accessMode.set(
-                    value($event) === 'project'
-                      ? 'project'
-                      : value($event) === 'group'
-                        ? 'group'
-                        : 'global'
-                  )
-                "
-              >
-                <option value="project" [selected]="accessMode() === 'project'">A project</option>
-                <option value="group" [selected]="accessMode() === 'group'">A group</option>
-                <option value="global" [selected]="accessMode() === 'global'">
-                  Everything (global)
-                </option>
-              </select>
-            </div>
-          </div>
-
-          @if (accessMode() === 'project') {
-            <div>
-              <label for="pt-project" class="block text-xs font-medium text-muted-foreground mb-1"
-                >Project</label
-              >
-              @if (iam.projects().length) {
-                <select
-                  id="pt-project"
-                  [class]="selectClass"
-                  (change)="projectSlug.set(value($event))"
-                >
-                  <option value="" [selected]="!projectSlug()">Select a project…</option>
-                  @for (p of iam.projects(); track p.slug) {
-                    <option [value]="p.slug" [selected]="projectSlug() === p.slug">
-                      {{ p.name }}
-                    </option>
-                  }
-                </select>
-              } @else {
-                <p class="text-xs text-muted-foreground">
-                  No projects yet — create one, or grant a group / global access.
-                </p>
-              }
-            </div>
-          }
-
-          @if (accessMode() === 'group') {
-            <div>
-              <label for="pt-group" class="block text-xs font-medium text-muted-foreground mb-1"
-                >Group</label
-              >
-              @if (iam.groups().length) {
-                <select id="pt-group" [class]="selectClass" (change)="groupName.set(value($event))">
-                  <option value="" [selected]="!groupName()">Select a group…</option>
-                  @for (g of iam.groups(); track g.name) {
-                    <option [value]="g.name" [selected]="groupName() === g.name">
-                      {{ g.name }}
-                    </option>
-                  }
-                </select>
-              } @else {
-                <p class="text-xs text-muted-foreground">
-                  No groups yet — create one in the Groups tab, or grant a project / global access.
-                </p>
-              }
-            </div>
-          }
-        }
-
-        <div class="rounded-md border border-border bg-muted/30 p-3">
-          <p class="text-xs font-medium text-muted-foreground mb-2">
-            This user will see {{ previewSections().length }} section{{
-              previewSections().length === 1 ? '' : 's'
-            }}:
-          </p>
-          <div class="flex flex-wrap gap-1.5">
-            @for (s of previewSections(); track s) {
-              <span
-                class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-              >
-                {{ sectionLabel(s) }}
-              </span>
-            }
-          </div>
-        </div>
-
-        <label class="flex items-center gap-2 text-sm text-muted-foreground">
-          <input
-            type="checkbox"
-            [checked]="sendInvite()"
-            (change)="sendInvite.set(checked($event))"
-          />
-          Invite via link (otherwise set a temporary password)
-        </label>
-        <div class="flex justify-end gap-2">
-          <button
-            type="button"
-            (click)="showInvite.set(false)"
-            class="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            (click)="submitInvite()"
-            [disabled]="!canInvite()"
-            class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ sendInvite() ? 'Create & get link' : 'Create user' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  }
-
-  @if (iam.lastInvite(); as inv) {
-    <div hlmCard class="border-emerald-500/30">
-      <div hlmCardContent class="pt-5 space-y-3">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-sm font-medium">
-              {{ inv.inviteLink ? 'Invite link for ' : 'Temporary password for ' }}{{ inv.email }}
-            </p>
-            <p class="text-xs text-muted-foreground">
-              {{
-                inv.inviteLink
-                  ? 'Share this link — they open it to set up their account. No email is sent.'
-                  : 'Share this one-time password — shown once, not stored.'
-              }}
-            </p>
-          </div>
-          <button
-            type="button"
-            (click)="iam.clearInvite()"
-            class="text-muted-foreground hover:text-foreground"
-            title="Dismiss"
-          >
-            <ng-icon name="lucideX" class="h-4 w-4" />
-          </button>
-        </div>
-        <div class="flex items-center gap-2">
-          <input
-            readonly
-            [value]="inv.inviteLink || inv.tempPassword || ''"
-            [class]="fieldClass + ' font-mono text-xs'"
-            (focus)="selectAll($event)"
-          />
-          <button
-            type="button"
-            (click)="copy(inv.inviteLink || inv.tempPassword || '')"
-            class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
-          >
-            <ng-icon [name]="copied() ? 'lucideCheck' : 'lucideCopy'" class="h-4 w-4" />
-            {{ copied() ? 'Copied' : 'Copy' }}
-          </button>
-        </div>
-        @if (inv.inviteCode) {
-          <p class="text-[11px] text-muted-foreground">
-            Code: <span class="font-mono">{{ inv.inviteCode }}</span> — authoritative fallback if
-            the link path needs adjusting.
-          </p>
-        }
-      </div>
-    </div>
-  }
-
   @if (iam.usersError(); as err) {
-    <div hlmCard class="border-destructive/40">
-      <div hlmCardContent class="flex items-start gap-2 pt-5 text-sm text-destructive">
-        <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-        <span>Couldn’t load users — {{ err }}</span>
-      </div>
+    <div class="p-4">
+      <fl-alert tone="error" title="Could not load users">{{ err }}</fl-alert>
+    </div>
+  } @else if (iam.users().length) {
+    <div class="fl-table-wrap">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Global access</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of iam.users(); track u.id) {
+            <tr>
+              <td>
+                <div class="flex items-center gap-1.5">
+                  <span>{{ u.displayName }}</span>
+                  @if (u.kind === 'visitor') {
+                    <fl-tag data-testid="visitor-badge">Visitor</fl-tag>
+                  }
+                </div>
+              </td>
+              <td class="fl-mono text-fl-ink-secondary">{{ u.email }}</td>
+              <td>
+                @if (u.isAdmin) {
+                  <fl-tag>Platform admin</fl-tag>
+                } @else if (u.kind === 'visitor') {
+                  <fl-tag data-testid="visitor-role">Read-only</fl-tag>
+                } @else if (!canEditGlobal(u)) {
+                  <fl-tag>{{ globalRoleName(u) }} (global)</fl-tag>
+                } @else {
+                  <div class="flex items-center gap-2">
+                    <span class="fl-select-wrap" *fluiCan="'iam:assign-role'">
+                      <select
+                        class="fl-select fl-select--sm"
+                        [id]="'global-role-' + u.id"
+                        [attr.aria-label]="'Global role for ' + u.email"
+                        (change)="onRowGlobalChange(u.id, $event)"
+                      >
+                        <option value="none" [selected]="pendingGlobal(u) === 'none'">
+                          No global access
+                        </option>
+                        @for (r of iam.grantableRoles(); track r.key) {
+                          <option [value]="r.key" [selected]="pendingGlobal(u) === r.key">
+                            {{ r.name }} (global)
+                          </option>
+                        }
+                      </select>
+                    </span>
+                    @if (isDirty(u)) {
+                      <button
+                        *fluiCan="'iam:assign-role'"
+                        flButton
+                        size="sm"
+                        type="button"
+                        (click)="askSaveGlobal(u)"
+                      >
+                        Save
+                      </button>
+                    }
+                  </div>
+                }
+              </td>
+              <td>
+                <fl-status [tone]="statusTone(u.status)" [label]="statusLabel(u.status)" />
+              </td>
+              <td class="is-fit">
+                @let actions = rowActions().get(u.id) ?? [];
+                @if (actions.length) {
+                  <fl-actions-menu
+                    [compact]="true"
+                    [label]="'Actions for ' + u.email"
+                    [items]="actions"
+                    [attr.data-testid]="'user-actions-' + u.id"
+                    (action)="onRowAction(u, $event)"
+                  />
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   } @else {
-    <div hlmCard>
-      <div hlmCardContent class="pt-5">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-left text-xs text-muted-foreground border-b border-border">
-                <th class="py-2 pr-4 font-medium">Name</th>
-                <th class="py-2 pr-4 font-medium">Email</th>
-                <th class="py-2 pr-4 font-medium">Global access</th>
-                <th class="py-2 pr-4 font-medium">Status</th>
-                <th class="py-2 w-16"></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (u of iam.users(); track u.id) {
-                <tr class="border-b border-border/60 last:border-0">
-                  <td class="py-2.5 pr-4">
-                    {{ u.displayName }}
-                    @if (u.kind === 'visitor') {
-                      <span
-                        class="ml-1.5 inline-flex rounded-fl-sm bg-fl-surface px-2 py-0.5 text-xs font-medium text-sky-600 border"
-                        data-testid="visitor-badge"
-                        >Visitor</span
-                      >
-                    }
-                  </td>
-                  <td class="py-2.5 pr-4 text-muted-foreground">{{ u.email }}</td>
-                  <td class="py-2.5 pr-4">
-                    @if (u.isAdmin) {
-                      <span
-                        class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-                      >
-                        <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5" /> Platform admin
-                      </span>
-                    } @else if (u.kind === 'visitor') {
-                      <span class="text-xs text-muted-foreground" data-testid="visitor-role"
-                        >Read-only</span
-                      >
-                    } @else {
-                      @if (!canEditGlobal(u)) {
-                        <span
-                          class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                        >
-                          <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5" />
-                          {{ globalRoleName(u) }} (global)
-                        </span>
-                      } @else {
-                        <div class="flex items-center gap-2">
-                          <select
-                            *fluiCan="'iam:assign-role'"
-                            [id]="'global-role-' + u.id"
-                            [attr.aria-label]="'Global role for ' + u.email"
-                            [class]="rowSelectClass"
-                            (change)="onRowGlobalChange(u.id, $event)"
-                          >
-                            <option value="none" [selected]="pendingGlobal(u) === 'none'">
-                              No global access
-                            </option>
-                            @for (r of iam.grantableRoles(); track r.key) {
-                              <option [value]="r.key" [selected]="pendingGlobal(u) === r.key">
-                                {{ r.name }} (global)
-                              </option>
-                            }
-                          </select>
-                          @if (isDirty(u)) {
-                            <button
-                              *fluiCan="'iam:assign-role'"
-                              type="button"
-                              (click)="askSaveGlobal(u)"
-                              class="shrink-0 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-                            >
-                              Save
-                            </button>
-                          }
-                        </div>
-                      }
-                    }
-                  </td>
-                  <td class="py-2.5 pr-4">
-                    <span
-                      class="inline-flex rounded-full px-2 py-0.5 text-xs capitalize"
-                      [class]="
-                        u.status === 'active'
-                          ? 'bg-emerald-500/10 text-emerald-600'
-                          : u.status === 'invited'
-                            ? 'bg-amber-500/10 text-amber-600'
-                            : 'bg-destructive/10 text-destructive'
-                      "
-                      >{{ u.status }}</span
-                    >
-                  </td>
-                  <td class="py-2.5">
-                    <div class="flex items-center justify-end gap-1.5">
-                      @if (
-                        perms.can('iam:manage-users') && !u.isBootstrapAdmin && !u.isSystemUser
-                      ) {
-                        @if (u.isAdmin) {
-                          <button
-                            type="button"
-                            (click)="toggleAdmin(u)"
-                            class="text-muted-foreground hover:text-foreground"
-                            title="Revoke platform admin"
-                          >
-                            <ng-icon name="lucideShield" class="h-4 w-4" />
-                          </button>
-                        }
-                        @if (u.kind !== 'visitor') {
-                          <button
-                            type="button"
-                            (click)="iam.createInviteLink(u.id, u.email)"
-                            class="text-muted-foreground hover:text-foreground"
-                            title="Generate invite link"
-                          >
-                            <ng-icon name="lucideLink" class="h-4 w-4" />
-                          </button>
-                        }
-                      }
-                      @if (!u.isAdmin && !u.isBootstrapAdmin && !u.isSystemUser) {
-                        <button
-                          *fluiCan="'iam:manage-users'"
-                          type="button"
-                          (click)="toggleStatus(u.id, u.status)"
-                          class="text-muted-foreground hover:text-foreground"
-                          [title]="
-                            u.status === 'disabled'
-                              ? 'Enable: let them sign in again'
-                              : 'Disable: refuse every request and end their demo space'
-                          "
-                        >
-                          <ng-icon
-                            [name]="u.status === 'disabled' ? 'lucideRotateCcw' : 'lucideBan'"
-                            class="h-4 w-4"
-                          />
-                        </button>
-                      }
-                    </div>
-                  </td>
-                </tr>
-              }
-              @if (!iam.users().length) {
-                <tr>
-                  <td colspan="5" class="py-6 text-center text-sm text-muted-foreground">
-                    {{ iam.userKind() ? 'Nobody here.' : 'No users yet.' }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <fl-empty-state
+      [compact]="true"
+      [title]="iam.userKind() ? 'Nobody here' : 'No users yet'"
+      [body]="iam.userKind() ? 'Nobody matches this filter.' : 'Invite someone to get started.'"
+    />
   }
+</fl-panel>
 
-  <app-confirmation-dialog
-    #roleDialog
-    title="Change global access"
-    confirmText="Apply"
-    [variant]="roleDialogVariant()"
-    [message]="roleDialogMessage()"
-    [details]="roleDialogDetails()"
-    (confirmed)="onRoleChangeConfirmed()"
-    (cancelled)="onRoleChangeCancelled()"
-  />
+@if (showInvite()) {
+  <app-people-invite-dialog (closed)="showInvite.set(false)" />
+}
 
-  <app-confirmation-dialog
-    #adminDialog
-    [title]="adminDialogTitle()"
-    [message]="adminDialogMessage()"
-    [confirmText]="adminDialogCta()"
-    [variant]="pendingAdminUser()?.isAdmin ? 'warning' : 'danger'"
-    (confirmed)="onAdminConfirmed()"
-    (cancelled)="adminDialog.close()"
-  />
-</div>
+<app-access-preview-dialog
+  #roleDialog
+  title="Change global access"
+  confirmLabel="Apply"
+  [destructive]="roleDialogDestructive()"
+  [message]="roleDialogMessage()"
+  [details]="roleDialogDetails()"
+  (confirmed)="onRoleChangeConfirmed()"
+  (cancelled)="onRoleChangeCancelled()"
+/>

@@ -1,19 +1,10 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideLayers, lucideLoader, lucideUsers } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { provideIcons } from '@ng-icons/core';
+import { lucideUsers } from '@ng-icons/lucide';
 import { ClusterOption } from '../../model/iam.model';
 import {
   ABOUT_AXES,
@@ -27,8 +18,6 @@ import {
   EntryReach,
   LevelDraft,
   NATURE_COPY,
-  PREMISE_HINT,
-  PROBE_OPS,
   ProbeOp,
   TOPIC_HINT,
   answerTypeOf,
@@ -46,11 +35,14 @@ import {
 } from '../../model/operating-context.models';
 import { OperatingContextService } from '../../service/operating-context.service';
 import { ExplainComponent } from '../../../shared/components/explain.component';
-
-const FIELD =
-  'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
-
-const SELECT = `${FIELD} h-10 appearance-none pr-8`;
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { ContextNoteCheckComponent, ParamRow } from './context-note-check';
 
 interface ReachState {
   line: EntryReach | null;
@@ -64,538 +56,26 @@ const FAILED_REACH: ReachState = {
   line: null,
   loading: false,
   error:
-    'Who this note reaches could not be read. Nothing here is stopping the note being written — but it would be written without having seen its audience.',
+    'Who this note reaches could not be read. Nothing here is stopping the note being written, but it would be written without having seen its audience.',
 };
 
 @Component({
   selector: 'app-context-note-form',
-  standalone: true,
-  imports: [FormsModule, NgIcon, HlmButtonDirective, ExplainComponent],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideLayers,
-      lucideLoader,
-      lucideUsers,
-    }),
+  imports: [
+    FormsModule,
+    ExplainComponent,
+    ContextNoteCheckComponent,
+    FlAlert,
+    FlButton,
+    FlField,
+    FlIcon,
+    FlLoadingState,
+    FlPanel,
+    FlSpinner,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <form
-      class="space-y-6 rounded-lg border border-border bg-card p-5"
-      data-testid="note-form"
-      (submit)="submit($event)"
-    >
-      <!-- ── What kind of note ─────────────────────────────────── -->
-      <fieldset class="space-y-2 border-0 p-0">
-        <legend class="text-label mb-1 p-0">What kind of note is this</legend>
-        <div class="grid gap-2 sm:grid-cols-2">
-          @for (option of natures; track option) {
-            <button
-              type="button"
-              class="rounded-lg border p-3 text-left transition-colors"
-              [class]="
-                nature() === option
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:bg-muted/50'
-              "
-              [attr.aria-pressed]="nature() === option"
-              [attr.data-testid]="'nature-' + option"
-              (click)="nature.set(option)"
-            >
-              <span class="block text-sm font-semibold text-foreground">
-                {{ copyFor(option).label }}
-              </span>
-              <span class="mt-0.5 block text-[12px] text-muted-foreground">
-                {{ copyFor(option).means }}
-              </span>
-            </button>
-          }
-        </div>
-      </fieldset>
-
-      <!-- ── Where it applies: two axes ────────────────────────── -->
-      <fieldset class="space-y-3 border-0 p-0">
-        <legend class="text-label mb-1 flex items-center gap-2 p-0">
-          <span>Where it applies</span>
-          <ng-icon name="lucideLayers" class="h-3.5 w-3.5 text-muted-foreground" />
-          <app-explain
-            label="two axes"
-            labelClass="text-[12px] font-normal text-muted-foreground"
-            testid="axes-why"
-          >
-            An application belongs to a project and runs on a cluster. It receives every note whose
-            region contains it, down either axis — neither is nested inside the other.
-          </app-explain>
-        </legend>
-
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div class="space-y-2">
-            <label class="block text-[12px] font-medium text-foreground" for="about-axis">
-              What it is about
-            </label>
-            <select
-              id="about-axis"
-              [class]="selectClass"
-              [ngModel]="about()"
-              name="about"
-              (ngModelChange)="about.set($event)"
-              data-testid="about-axis"
-            >
-              @for (axis of aboutAxes; track axis) {
-                <option [value]="axis">{{ aboutLabel[axis] }}</option>
-              }
-            </select>
-
-            @switch (about()) {
-              @case ('apps') {
-                <input
-                  [class]="fieldClass"
-                  placeholder="slugs, comma separated"
-                  [ngModel]="slugs()"
-                  name="slugs"
-                  (ngModelChange)="slugs.set($event)"
-                  data-testid="about-slugs"
-                />
-              }
-              @case ('project') {
-                <input
-                  [class]="fieldClass"
-                  placeholder="project"
-                  [ngModel]="project()"
-                  name="project"
-                  (ngModelChange)="project.set($event)"
-                  data-testid="about-project"
-                />
-              }
-              @case ('kind') {
-                <input
-                  [class]="fieldClass"
-                  placeholder="kind, e.g. DATABASE"
-                  [ngModel]="kind()"
-                  name="kind"
-                  (ngModelChange)="kind.set($event)"
-                  data-testid="about-kind"
-                />
-              }
-              @case ('tag') {
-                <input
-                  [class]="fieldClass"
-                  placeholder="tags, comma separated"
-                  [ngModel]="tags()"
-                  name="tags"
-                  (ngModelChange)="tags.set($event)"
-                  data-testid="about-tags"
-                />
-              }
-            }
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-[12px] font-medium text-foreground" for="where-axis">
-              Where it runs
-            </label>
-            <select
-              id="where-axis"
-              [class]="selectClass"
-              [ngModel]="where()"
-              name="where"
-              (ngModelChange)="where.set($event)"
-              data-testid="where-axis"
-            >
-              @for (axis of whereAxes; track axis) {
-                <option [value]="axis">{{ whereLabel[axis] }}</option>
-              }
-            </select>
-
-            @switch (where()) {
-              @case ('cluster') {
-                <select
-                  [class]="selectClass"
-                  [ngModel]="clusterId()"
-                  name="clusterId"
-                  (ngModelChange)="clusterId.set($event)"
-                  data-testid="where-cluster"
-                >
-                  <option value="">Pick a cluster…</option>
-                  @for (cluster of clusters(); track cluster.id) {
-                    <option [value]="cluster.id">{{ cluster.name }}</option>
-                  }
-                </select>
-              }
-              @case ('provider') {
-                <input
-                  [class]="fieldClass"
-                  placeholder="provider, e.g. hetzner"
-                  [ngModel]="provider()"
-                  name="provider"
-                  (ngModelChange)="provider.set($event)"
-                  data-testid="where-provider"
-                />
-              }
-            }
-          </div>
-        </div>
-      </fieldset>
-
-      <!-- ── The words ─────────────────────────────────────────── -->
-      <fieldset class="space-y-3 border-0 p-0">
-        <legend class="text-label mb-1 p-0">The note</legend>
-
-        <div class="space-y-1">
-          <label class="block text-[12px] font-medium text-foreground" for="note-topic">
-            Subject
-          </label>
-          <input
-            id="note-topic"
-            [class]="fieldClass"
-            placeholder="master-node-scaling"
-            [ngModel]="topic()"
-            name="topic"
-            (ngModelChange)="topic.set($event)"
-            data-testid="topic"
-          />
-          <app-explain
-            label="A short lowercase handle"
-            labelClass="text-[11px] text-muted-foreground"
-            testid="topic-hint"
-          >
-            {{ topicHint }}
-          </app-explain>
-        </div>
-
-        <input
-          [class]="fieldClass"
-          placeholder="Title"
-          aria-label="Title"
-          [ngModel]="title()"
-          name="title"
-          (ngModelChange)="title.set($event)"
-          data-testid="title"
-        />
-
-        <textarea
-          rows="5"
-          [class]="fieldClass"
-          placeholder="What is done here, or why it was decided."
-          aria-label="Note"
-          [ngModel]="noteBody()"
-          name="body"
-          (ngModelChange)="noteBody.set($event)"
-          data-testid="body"
-        ></textarea>
-      </fieldset>
-
-      <!-- ── What keeps it honest ──────────────────────────────── -->
-      <fieldset class="space-y-3 border-0 p-0">
-        <legend class="text-label mb-1 flex items-center gap-2 p-0">
-          <span>What keeps it honest</span>
-          <app-explain
-            label="why this matters"
-            labelClass="text-[12px] font-normal text-muted-foreground"
-            testid="honest-why"
-          >
-            A note ages. Leaning it on a live fact, or on a signature with a shelf life, is what
-            lets it ask to be revisited instead of advising something that stopped being true.
-            <strong>Nothing</strong> means it is prose and says so;
-            <strong>a signature</strong> lapses after the days you give it;
-            <strong>a live fact</strong> is compared against the platform and falls on its own.
-          </app-explain>
-        </legend>
-
-        <select
-          [class]="selectClass"
-          [ngModel]="checkKind()"
-          name="checkKind"
-          (ngModelChange)="checkKind.set($event)"
-          aria-label="What keeps it honest"
-          data-testid="check-kind"
-        >
-          <option value="none">Nothing — it is prose</option>
-          <option value="attestation">A signature, with a shelf life</option>
-          @if (probeUsable()) {
-            <option value="probe">A live fact</option>
-          }
-        </select>
-
-        @if (!probeUsable()) {
-          <app-explain
-            label="No live fact at this level"
-            labelClass="text-[11px] text-muted-foreground"
-            testid="no-probe-here"
-          >
-            A note about the whole installation cannot be compared with anything: it is either an
-            intention, or it belongs at a narrower level.
-          </app-explain>
-        }
-
-        @if (checkKind() === 'attestation') {
-          <label class="block space-y-1 text-[12px] font-medium text-foreground">
-            <span>A confirmation is worth (days)</span>
-            <input
-              type="number"
-              min="1"
-              max="365"
-              [class]="fieldClass"
-              [ngModel]="validForDays()"
-              name="validForDays"
-              (ngModelChange)="validForDays.set(+$event)"
-              data-testid="valid-for-days"
-            />
-          </label>
-        }
-
-        @if (checkKind() === 'probe') {
-          <div class="space-y-2" data-testid="probe-editor">
-            <select
-              [class]="selectClass"
-              [ngModel]="probeId()"
-              name="probeId"
-              (ngModelChange)="pickProbe($event)"
-              aria-label="Which fact"
-              data-testid="probe-id"
-            >
-              <option value="">Pick a fact…</option>
-              @for (probe of probes(); track probe.id) {
-                <option [value]="probe.id">{{ probe.id }}</option>
-              }
-            </select>
-
-            @if (probeDescription(); as describes) {
-              <p class="m-0 text-[11px] text-muted-foreground" data-testid="probe-describes">
-                {{ describes }}
-              </p>
-            }
-
-            @if (declaredParams(); as declared) {
-              @for (param of declared; track param.name) {
-                <div class="space-y-1" data-testid="declared-param">
-                  <label
-                    class="block text-[12px] font-medium text-foreground"
-                    [attr.for]="'param-' + param.name"
-                  >
-                    {{ param.name }}
-                    @if (!param.required) {
-                      <span class="font-normal text-muted-foreground"> — optional </span>
-                    }
-                  </label>
-                  @if (param.oneOf; as choices) {
-                    <select
-                      [id]="'param-' + param.name"
-                      [class]="selectClass"
-                      [ngModel]="paramValue(param.name)"
-                      [name]="'param-' + param.name"
-                      (ngModelChange)="setParam(param.name, $event)"
-                      [attr.data-testid]="'param-' + param.name"
-                    >
-                      <option value="">Pick one…</option>
-                      @for (choice of choices; track choice) {
-                        <option [value]="choice">{{ choice }}</option>
-                      }
-                    </select>
-                  } @else {
-                    <input
-                      [id]="'param-' + param.name"
-                      [class]="fieldClass"
-                      [placeholder]="param.name"
-                      [ngModel]="paramValue(param.name)"
-                      [name]="'param-' + param.name"
-                      (ngModelChange)="setParam(param.name, $event)"
-                      [attr.data-testid]="'param-' + param.name"
-                    />
-                  }
-                </div>
-              }
-            } @else {
-              <app-explain
-                label="This fact did not say what it wants"
-                labelClass="text-[11px] text-muted-foreground"
-                testid="undeclared-params"
-              >
-                Name the parameters yourself — the API will say if one is missing.
-              </app-explain>
-              @for (row of paramRows(); track $index) {
-                <div class="flex gap-2">
-                  <input
-                    [class]="fieldClass"
-                    placeholder="parameter"
-                    aria-label="Parameter name"
-                    [ngModel]="row.name"
-                    [name]="'param-name-' + $index"
-                    (ngModelChange)="setRow($index, 'name', $event)"
-                    data-testid="param-name"
-                  />
-                  <input
-                    [class]="fieldClass"
-                    placeholder="value"
-                    aria-label="Parameter value"
-                    [ngModel]="row.value"
-                    [name]="'param-value-' + $index"
-                    (ngModelChange)="setRow($index, 'value', $event)"
-                    data-testid="param-value"
-                  />
-                </div>
-              }
-              <button
-                type="button"
-                hlmBtn
-                size="sm"
-                variant="ghost"
-                (click)="addParam()"
-                data-testid="add-param"
-              >
-                Another parameter
-              </button>
-            }
-
-            <div class="flex gap-2">
-              <select
-                [class]="selectClass"
-                [ngModel]="probeOp()"
-                name="probeOp"
-                (ngModelChange)="probeOp.set($event)"
-                aria-label="Comparison"
-                data-testid="probe-op"
-              >
-                @for (op of probeOps; track op) {
-                  <option [value]="op">{{ op }}</option>
-                }
-              </select>
-              @if (probeOp() !== 'exists') {
-                @switch (answerType()) {
-                  @case ('boolean') {
-                    <select
-                      [class]="selectClass"
-                      aria-label="Expected value"
-                      [ngModel]="probeExpected()"
-                      name="probeExpected"
-                      [ngModelOptions]="{ standalone: true }"
-                      (ngModelChange)="probeExpected.set($event)"
-                      data-testid="probe-expected"
-                    >
-                      <option value="">Pick one…</option>
-                      <option value="true">true</option>
-                      <option value="false">false</option>
-                    </select>
-                  }
-                  @case ('number') {
-                    <input
-                      type="number"
-                      [class]="fieldClass"
-                      placeholder="expected number"
-                      aria-label="Expected value"
-                      [ngModel]="probeExpected()"
-                      name="probeExpected"
-                      [ngModelOptions]="{ standalone: true }"
-                      (ngModelChange)="probeExpected.set($event)"
-                      data-testid="probe-expected"
-                    />
-                  }
-                  @default {
-                    <input
-                      [class]="fieldClass"
-                      placeholder="expected value"
-                      aria-label="Expected value"
-                      [ngModel]="probeExpected()"
-                      name="probeExpected"
-                      [ngModelOptions]="{ standalone: true }"
-                      (ngModelChange)="probeExpected.set($event)"
-                      data-testid="probe-expected"
-                    />
-                  }
-                }
-              }
-            </div>
-            <app-explain
-              label="How the value is read"
-              labelClass="text-[11px] text-muted-foreground"
-              testid="premise-hint"
-            >
-              {{ premiseHint }}
-            </app-explain>
-          </div>
-        }
-      </fieldset>
-
-      <!-- ── Who will read it ──────────────────────────────────── -->
-      <div
-        class="flex items-start gap-3 rounded-lg border px-4 py-3"
-        [class]="reachEmphasis()"
-        role="note"
-        data-testid="reach"
-      >
-        <ng-icon name="lucideUsers" class="mt-0.5 h-4 w-4 shrink-0" />
-        <div class="space-y-1">
-          <p class="m-0 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-            This note will be read by
-          </p>
-          @if (reachLoading()) {
-            <div class="space-y-2" data-testid="reach-loading" aria-busy="true">
-              <div class="skeleton h-4 w-full max-w-md"></div>
-              <div class="skeleton h-4 w-2/3"></div>
-            </div>
-          } @else {
-            @if (reach(); as line) {
-              <p class="m-0 text-sm text-foreground" data-testid="reach-sentence">
-                {{ line.sentence }}
-              </p>
-              @if (line.reachesGuests) {
-                <p class="m-0 text-[12px] text-muted-foreground" data-testid="reach-guests">
-                  Visitors trying this installation are among them.
-                </p>
-              }
-            } @else if (reachError()) {
-              <p class="m-0 text-sm text-muted-foreground" data-testid="reach-error">
-                {{ reachError() }}
-              </p>
-            } @else {
-              <p class="m-0 text-sm text-muted-foreground" data-testid="reach-pending">
-                Name the level to see who reads it.
-              </p>
-            }
-          }
-          <app-explain
-            label="what happens, not what is permitted"
-            labelClass="text-[11px] text-muted-foreground"
-            testid="advice-only"
-          >
-            A note advises; it never stops anyone doing anything.
-          </app-explain>
-        </div>
-      </div>
-
-      @if (error(); as message) {
-        <p class="m-0 flex items-start gap-2 text-sm text-destructive" data-testid="form-error">
-          <ng-icon name="lucideCircleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{ message }}</span>
-        </p>
-      }
-
-      @if (stillNeeded(); as missing) {
-        <p class="m-0 text-[12px] text-muted-foreground" data-testid="still-needed">
-          {{ missing }}
-        </p>
-      }
-
-      <div class="flex items-center gap-3">
-        <button hlmBtn type="submit" [disabled]="busy() || !ready()" data-testid="save">
-          @if (busy()) {
-            <ng-icon name="lucideLoader" class="mr-1.5 h-4 w-4 animate-spin" />
-          }
-          Write the note
-        </button>
-        <button
-          hlmBtn
-          type="button"
-          variant="ghost"
-          (click)="dismissed.emit()"
-          data-testid="cancel"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
-  `,
+  providers: [provideIcons({ lucideUsers })],
+  host: { class: 'block' },
+  templateUrl: './context-note-form.component.html',
 })
 export class ContextNoteFormComponent {
   private readonly api = inject(OperatingContextService);
@@ -613,11 +93,7 @@ export class ContextNoteFormComponent {
   protected readonly whereAxes = WHERE_AXES;
   protected readonly aboutLabel = ABOUT_LABEL;
   protected readonly whereLabel = WHERE_LABEL;
-  protected readonly probeOps = PROBE_OPS;
   protected readonly topicHint = TOPIC_HINT;
-  protected readonly premiseHint = PREMISE_HINT;
-  protected readonly fieldClass = FIELD;
-  protected readonly selectClass = SELECT;
 
   protected readonly nature = signal<EntryNature>('practice');
   protected readonly about = signal<AboutAxis>('everything');
@@ -636,9 +112,7 @@ export class ContextNoteFormComponent {
   protected readonly probeOp = signal<ProbeOp>('equals');
   protected readonly probeExpected = signal('');
   protected readonly validForDays = signal(90);
-  protected readonly paramRows = signal<Array<{ name: string; value: string }>>([
-    { name: '', value: '' },
-  ]);
+  protected readonly paramRows = signal<ParamRow[]>([{ name: '', value: '' }]);
 
   protected readonly paramAnswers = signal<Record<string, string>>({});
 
@@ -732,35 +206,12 @@ export class ContextNoteFormComponent {
   protected readonly reachEmphasis = computed(() => {
     const line = this.reach();
     return line && reachIsWiderThanOwners(line)
-      ? 'border-primary/30 bg-primary/[0.07]'
-      : 'border-border bg-muted/40';
+      ? 'border-fl-accent bg-fl-accent-soft'
+      : 'border-fl-border bg-fl-surface-subtle';
   });
 
   protected copyFor(nature: EntryNature): { label: string; means: string } {
     return NATURE_COPY[nature];
-  }
-
-  protected paramValue(name: string): string {
-    return this.paramAnswers()[name] ?? '';
-  }
-
-  protected setParam(name: string, value: string): void {
-    this.paramAnswers.update((answers) => ({ ...answers, [name]: value }));
-  }
-
-  protected pickProbe(id: string): void {
-    this.probeId.set(id);
-    this.paramAnswers.set({});
-  }
-
-  protected setRow(index: number, field: 'name' | 'value', value: string): void {
-    this.paramRows.update((rows) =>
-      rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
-    );
-  }
-
-  protected addParam(): void {
-    this.paramRows.update((rows) => [...rows, { name: '', value: '' }]);
   }
 
   protected submit(event: Event): void {

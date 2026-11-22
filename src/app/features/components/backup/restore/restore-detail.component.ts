@@ -1,81 +1,113 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
 import { RestoreJob } from '../../../model/backup.models';
+import { formatLocalDateTime, formatUtcDateTime } from '../../../model/backup-activity';
 import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
 import { BackupProgressModalComponent } from '../shared/progress-modal.component';
-import { BackupBackLinkComponent } from '../shared/back-link.component';
 import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
+import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
+import { Crumb } from '../../../../ui/patterns/breadcrumb';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlCopyId } from '../../../../ui/patterns/copy-id';
+import { FlKeyValue, FlKvItem } from '../../../../ui/patterns/key-value';
+import { FlPageHeader } from '../../../../ui/patterns/page-header';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../../ui/patterns/states';
+import { FlButton } from '../../../../ui/primitives/button';
+import { restoreTargetLabel } from './restore-status';
 import {
   RestoreDetailSurfaceInput,
   RestoreDetailSurfaceRevision,
   buildRestoreDetailSurface,
   presentedContent,
 } from './restore-detail-surface';
-import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
 
 @Component({
   selector: 'app-restore-detail',
-  standalone: true,
   imports: [
+    RouterLink,
     MaskIdPipe,
     BackupStatusBadgeComponent,
     BackupProgressModalComponent,
-    BackupBackLinkComponent,
+    FlAlert,
+    FlCopyId,
+    FlKeyValue,
+    FlKvItem,
+    FlPageHeader,
+    FlPanel,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="p-6 max-w-3xl space-y-4">
-      <app-backup-back-link link="/management/backup/restore" label="Back to restores" />
+    <div class="fl-page">
       @if (job(); as r) {
-        <header class="flex items-start justify-between">
-          <div>
-            <h1 class="text-2xl font-semibold">Restore job</h1>
-            <p class="text-xs text-muted-foreground font-mono">{{ r.id | maskId }}</p>
-          </div>
-          <app-backup-status-badge kind="restore" [value]="r.status" />
-        </header>
-
-        <div class="rounded-lg border border-border bg-card p-5 grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <div class="text-xs text-muted-foreground">Artifact</div>
-            <div class="font-mono text-xs">{{ r.artifactId }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-muted-foreground">Target</div>
-            <div class="capitalize">{{ r.targetKind }} → {{ r.targetClusterId }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-muted-foreground">Source destination</div>
-            <div class="font-mono text-xs">{{ r.sourceDestinationId }}</div>
-          </div>
-        </div>
+        <fl-page-header title="Restore job" [breadcrumb]="crumbs(r.id | maskId)">
+          <app-backup-status-badge headerStatus kind="restore" [value]="r.status" />
+          <fl-copy-id headerMeta [value]="r.id" [display]="r.id | maskId" label="restore ID" />
+          <span headerMeta>{{ target(r.targetKind) }} restore</span>
+        </fl-page-header>
 
         @if (r.errorMessage) {
-          <div
-            class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700"
-          >
-            {{ r.errorMessage }}
-          </div>
+          <fl-alert tone="error" title="Restore failed">
+            <pre class="fl-mono m-0 whitespace-pre-wrap break-words">{{ r.errorMessage }}</pre>
+          </fl-alert>
         }
+
+        <fl-panel title="Details">
+          <fl-key-value>
+            <fl-kv-item key="Target">{{ target(r.targetKind) }}</fl-kv-item>
+            <fl-kv-item key="Target cluster">
+              <fl-copy-id
+                [value]="r.targetClusterId"
+                [display]="r.targetClusterId | maskId"
+                label="cluster ID"
+              />
+            </fl-kv-item>
+            <fl-kv-item key="Created">
+              <span [attr.title]="utc(r.createdAt)">{{ local(r.createdAt) }}</span>
+            </fl-kv-item>
+            @if (r.strategy) {
+              <fl-kv-item key="Strategy" [mono]="true">{{ r.strategy }}</fl-kv-item>
+            }
+            <fl-kv-item key="Backup">
+              <fl-copy-id
+                [value]="r.artifactId"
+                [display]="r.artifactId | maskId"
+                label="backup ID"
+              />
+            </fl-kv-item>
+            <fl-kv-item key="Source destination">
+              <a
+                class="fl-link fl-mono"
+                [routerLink]="['/management/backup/destinations', r.sourceDestinationId]"
+                >{{ r.sourceDestinationId | maskId }}</a
+              >
+            </fl-kv-item>
+            @if (r.targetSelector?.namespaces?.length) {
+              <fl-kv-item key="Namespaces" [mono]="true">{{
+                r.targetSelector!.namespaces!.join(', ')
+              }}</fl-kv-item>
+            }
+          </fl-key-value>
+        </fl-panel>
 
         <app-backup-progress-modal
           [operationId]="opId()"
           title="Restore in progress"
           (closed)="opId.set(null)"
         />
+      } @else if (loaded()) {
+        <fl-page-header title="Restore job" [breadcrumb]="crumbs('Not found')" />
+        <fl-panel>
+          <fl-empty-state title="Restore job not found" body="It may have been removed.">
+            <a flButton size="sm" routerLink="/management/backup/restore">Back to restores</a>
+          </fl-empty-state>
+        </fl-panel>
       } @else {
-        <p class="text-sm text-muted-foreground">Loading…</p>
+        <fl-page-header title="Restore job" [breadcrumb]="crumbs('Loading')" />
+        <fl-panel><fl-loading-state [rows]="4" /></fl-panel>
       }
     </div>
   `,
@@ -86,7 +118,20 @@ export class RestoreDetailComponent implements OnInit, OnDestroy {
   private readonly currentSurface = inject(CurrentSurfaceService);
 
   protected readonly job = signal<RestoreJob | null>(null);
+  protected readonly loaded = signal(false);
   protected readonly opId = signal<string | null>(null);
+
+  protected readonly target = restoreTargetLabel;
+  protected readonly local = formatLocalDateTime;
+  protected readonly utc = formatUtcDateTime;
+
+  protected crumbs(last: string): readonly Crumb[] {
+    return [
+      { label: 'Backups', link: '/management/backup' },
+      { label: 'Restores', link: '/management/backup/restore' },
+      { label: last },
+    ];
+  }
 
   private readonly surfaceRevision = new RestoreDetailSurfaceRevision();
 
@@ -116,6 +161,7 @@ export class RestoreDetailComponent implements OnInit, OnDestroy {
       if (!id) return;
       const r = await this.backup.getRestoreJob(id);
       this.job.set(r);
+      this.loaded.set(true);
       if (
         r?.infrastructureOperationId &&
         this.backup.activeOperations()[r.infrastructureOperationId]

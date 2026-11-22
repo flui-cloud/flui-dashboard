@@ -1,118 +1,131 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import {
   AgentActivityEntry,
   AgentIdentityActivity,
   ActivityScope,
   actedOn,
-  actorRef,
   namedActor,
   operationNote,
   underLabel,
 } from '../../model/agent-activity.models';
 import { formatTimeSince } from '../../model/dns.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { AgentActorsTable } from './agent-actors-table';
+import { actorRow, underTone } from './agent-activity-format';
 
 @Component({
   selector: 'app-agent-activity-log',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, FlTable, FlEmptyState, FlStatus, FlButton, AgentActorsTable],
+  host: { class: 'fl-stack' },
   template: `
     @if (identities().length) {
-      <div class="flex flex-wrap gap-2" data-testid="activity-actors">
-        @for (actor of actors(); track actor.ref) {
-          <div
-            class="rounded-md border border-border bg-muted/30 px-3 py-2"
-            data-testid="activity-actor"
-          >
-            <p class="m-0 text-[13px] font-medium text-foreground">
-              {{ actor.name }}
-              @if (actor.revoked) {
-                <span class="ml-1.5 text-[11px] font-normal text-muted-foreground"> revoked </span>
-              }
-            </p>
-            <p class="m-0 text-[12px] text-muted-foreground">
-              {{ actor.summary }}
-            </p>
-          </div>
-        }
-      </div>
+      <app-agent-actors-table [actors]="actors()" />
     }
 
-    @if (rows().length === 0) {
-      <p class="m-0 text-sm text-muted-foreground" data-testid="no-activity">
-        Nothing has been done through an agent yet. This fills itself in as they work — it is
-        written by the act, not by anyone reporting one.
-      </p>
-    } @else {
-      <div class="flex flex-col" data-testid="activity-log">
-        @for (row of rows(); track row.id) {
-          <div
-            class="grid grid-cols-1 items-baseline gap-x-4 gap-y-1 border-b border-border/60 py-2.5 sm:grid-cols-[auto_1fr_auto]"
-            data-testid="activity-row"
-          >
-            <span
-              class="font-mono text-[12px] tabular-nums text-muted-foreground"
-              [title]="row.at"
-              >{{ row.when }}</span
-            >
+    <fl-panel title="Activity" [flush]="true">
+      @if (note() !== null) {
+        <span panelActions class="text-fl-caption text-fl-ink-muted" data-testid="activity-count">
+          {{ note() }}
+        </span>
+      }
 
-            <span class="text-sm text-muted-foreground" data-testid="activity-what">
-              <code class="font-mono text-[12.5px] text-foreground">{{ row.tool }}</code>
-              @if (row.on) {
-                on <b class="font-medium text-foreground">{{ row.on }}</b>
-              }
-              @if (row.note) {
-                — <span data-testid="activity-operation">{{ row.note }}</span>
-              }
-              @if (row.who) {
-                <span class="text-muted-foreground/80"> · {{ row.who }}</span>
-              }
-            </span>
-
-            <span
-              class="justify-self-start whitespace-nowrap text-[12px] sm:justify-self-end"
-              [class.text-destructive]="row.tone === 'refused'"
-              [class.text-muted-foreground]="row.tone !== 'refused'"
-              [title]="row.underDetail"
-              data-testid="activity-under"
-              >{{ row.under }}</span
-            >
-
-            @if (row.error) {
-              <div class="col-span-full">
-                <button
-                  type="button"
-                  class="text-[12px] text-muted-foreground underline underline-offset-2"
-                  (click)="toggleError(row.id)"
-                  data-testid="activity-error-toggle"
-                >
-                  {{ shown() === row.id ? 'Hide' : 'Show' }} the message it was refused with
-                </button>
-                @if (shown() === row.id) {
-                  <p
-                    class="m-0 mt-1 whitespace-pre-wrap break-words font-mono text-[12px] text-muted-foreground"
-                    data-testid="activity-error"
-                  >
-                    {{ row.error }}
-                  </p>
+      @if (rows().length === 0) {
+        <fl-empty-state
+          [compact]="true"
+          title="Nothing has been done through an agent yet"
+          body="This fills itself in as they work: it is written by the act, not by anyone reporting one."
+          data-testid="no-activity"
+        />
+      } @else {
+        <div class="fl-table-wrap" data-testid="activity-log">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                <th scope="col">What</th>
+                <th scope="col">Operation</th>
+                <th scope="col">Permission</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">Message</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.id) {
+                <tr data-testid="activity-row">
+                  <td class="fl-mono text-fl-ink-muted" [attr.title]="row.at">{{ row.when }}</td>
+                  <td class="is-wrap" data-testid="activity-what">
+                    <span class="fl-mono text-fl-ink">{{ row.tool }}</span>
+                    @if (row.on) {
+                      on <span class="font-medium">{{ row.on }}</span>
+                    }
+                    @if (row.who) {
+                      <div class="text-fl-caption text-fl-ink-muted">{{ row.who }}</div>
+                    }
+                  </td>
+                  <td class="is-wrap text-fl-ink-secondary">
+                    @if (row.note) {
+                      <span data-testid="activity-operation">{{ row.note }}</span>
+                    }
+                  </td>
+                  <td>
+                    <fl-status
+                      [tone]="row.tone"
+                      [label]="row.under"
+                      [attr.title]="row.underDetail"
+                      data-testid="activity-under"
+                    />
+                  </td>
+                  <td class="is-fit">
+                    @if (row.error) {
+                      <button
+                        flButton="ghost"
+                        size="sm"
+                        type="button"
+                        [attr.aria-expanded]="shown() === row.id"
+                        (click)="toggleError(row.id)"
+                        data-testid="activity-error-toggle"
+                      >
+                        {{ shown() === row.id ? 'Hide message' : 'Show message' }}
+                      </button>
+                    }
+                  </td>
+                </tr>
+                @if (row.error && shown() === row.id) {
+                  <tr>
+                    <td colspan="5" class="is-wrap">
+                      <pre
+                        class="fl-mono m-0 whitespace-pre-wrap break-words text-fl-ink-secondary"
+                        data-testid="activity-error"
+                        >{{ row.error }}</pre>
+                    </td>
+                  </tr>
                 }
-              </div>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (scope() === 'instance' || more() > 0) {
+          <div
+            class="flex flex-col gap-1 border-t border-fl-border-subtle px-4 py-2 text-fl-caption text-fl-ink-muted"
+          >
+            @if (scope() === 'instance') {
+              <p class="m-0" data-testid="activity-scope">
+                You administer access here, so this is every agent on the instance, not only yours.
+              </p>
+            }
+            @if (more() > 0) {
+              <p class="m-0" data-testid="activity-more">
+                Showing the {{ rows().length }} most recent of {{ total() }}.
+              </p>
             }
           </div>
         }
-      </div>
-
-      @if (scope() === 'instance') {
-        <p class="m-0 text-[12px] text-muted-foreground" data-testid="activity-scope">
-          You administer access here, so this is every agent on the instance, not only yours.
-        </p>
       }
-
-      @if (more() > 0) {
-        <p class="m-0 text-[12px] text-muted-foreground" data-testid="activity-more">
-          Showing the {{ rows().length }} most recent of {{ total() }}.
-        </p>
-      }
-    }
+    </fl-panel>
   `,
 })
 export class AgentActivityLogComponent {
@@ -122,6 +135,7 @@ export class AgentActivityLogComponent {
   readonly total = input(0);
   readonly keyNames = input<Record<string, string>>({});
   readonly identityNames = input<Record<string, string>>({});
+  readonly note = input<string | null>(null);
 
   protected readonly shown = signal<string | null>(null);
 
@@ -140,19 +154,14 @@ export class AgentActivityLogComponent {
         who: this.nameOf(entry),
         under: label.text,
         underDetail: label.detail,
-        tone: label.tone,
+        tone: underTone(label.tone),
         error: entry.allowed ? null : entry.error,
       };
     }),
   );
 
   protected readonly actors = computed(() =>
-    this.identities().map((identity) => ({
-      ref: actorRef(identity),
-      name: this.nameOf(identity) ?? 'An agent with no name left',
-      revoked: identity.actorKeyRevoked === true,
-      summary: summarise(identity),
-    })),
+    this.identities().map((identity) => actorRow(identity, this.nameOf(identity))),
   );
 
   protected toggleError(id: string): void {
@@ -166,10 +175,4 @@ export class AgentActivityLogComponent {
   }): string | null {
     return namedActor(entry, this.keyNames(), this.identityNames());
   }
-}
-
-function summarise(identity: AgentIdentityActivity): string {
-  const calls = identity.calls === 1 ? '1 call' : `${identity.calls} calls`;
-  const refused = identity.refused ? `, ${identity.refused} refused` : '';
-  return `${calls}${refused} · last acted ${formatTimeSince(identity.lastActivityAt)}`;
 }

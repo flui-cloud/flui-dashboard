@@ -102,6 +102,9 @@ describe('the Now page', () => {
   const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const q = (testid: string, root: ParentNode = el()): HTMLElement | null =>
     root.querySelector(`[data-testid="${testid}"]`);
+  const tone = (root: HTMLElement): string =>
+    root.matches('fl-status') ? root.className : (root.querySelector('fl-status')?.className ?? '');
+  const bar = (root: HTMLElement): string => root.querySelector('fl-usage-bar')?.className ?? '';
   const render = (value: InstallationNow | null): void => {
     service.now.set(value);
     fixture.detectChanges();
@@ -128,7 +131,7 @@ describe('the Now page', () => {
     expect(surface.set.calls.mostRecent().args[0]!.surface.route).toBe('management/now');
   });
 
-  it('shows the firing alerts with their names, or a green all-clear', () => {
+  it('shows the firing alerts with their names, or an all-clear', () => {
     render(now());
     expect(q('now-alerts')!.textContent).toContain('2 firing · 1 critical');
     expect(el().querySelectorAll('[data-testid="now-alert-name"]')).toHaveSize(2);
@@ -140,8 +143,8 @@ describe('the Now page', () => {
   it('shows the demo spaces, and waiting in amber', () => {
     render(now());
     expect(q('now-demo-live')!.textContent).toContain('18 / 24');
-    expect(q('now-demo-waiting')!.className).toContain('text-amber-600');
-    expect(q('now-demo-turned-away')!.className).not.toContain('text-amber-600');
+    expect(q('now-demo-waiting')!.className).toContain('fl-metric--warning');
+    expect(q('now-demo-turned-away')!.className).not.toContain('fl-metric--warning');
 
     render(now({ sandbox: null }));
     expect(q('now-demo')).toBeNull();
@@ -151,9 +154,9 @@ describe('the Now page', () => {
     render(now());
     const busy = q('now-edge-c-1')!;
     expect(q('now-surge', busy)).not.toBeNull();
-    expect(q('now-edge-limited', busy)!.className).toContain('text-amber-600');
+    expect(tone(q('now-edge-limited', busy)!)).toContain('fl-status--warning');
     expect(q('now-edge-errors', busy)!.textContent).toContain('8%');
-    expect(q('now-edge-errors', busy)!.className).toContain('text-destructive');
+    expect(tone(q('now-edge-errors', busy)!)).toContain('fl-status--error');
 
     const quiet = q('now-edge-c-2')!;
     expect(q('now-surge', quiet)).toBeNull();
@@ -163,26 +166,23 @@ describe('the Now page', () => {
   it('colours node CPU, memory, link and month against the thresholds', () => {
     render(now());
     const busy = q('now-node-busy')!;
-    expect(q('now-node-cpu', busy)!.querySelector('span')!.className).toContain('text-destructive');
-    expect(q('now-node-memory', busy)!.querySelector('span')!.className).toContain(
-      'text-amber-600',
-    );
-    expect(q('now-node-link', busy)!.className).toContain('text-amber-600');
+    expect(bar(q('now-node-cpu', busy)!)).toContain('fl-usage--critical');
+    expect(bar(q('now-node-memory', busy)!)).toContain('fl-usage--warning');
+    expect(tone(q('now-node-link', busy)!)).toContain('fl-status--warning');
     expect(q('now-node-month', busy)!.textContent).toContain('18.4 of 20 TB');
-    expect(q('now-node-month', busy)!.className).toContain('text-amber-600');
+    expect(tone(q('now-node-month', busy)!)).toContain('fl-status--warning');
 
     const calm = q('now-node-calm')!;
-    expect(q('now-node-cpu', calm)!.querySelector('span')!.className).not.toContain(
-      'text-amber-600',
-    );
+    expect(bar(q('now-node-cpu', calm)!)).not.toContain('fl-usage--warning');
+    expect(bar(q('now-node-cpu', calm)!)).not.toContain('fl-usage--critical');
     expect(q('now-node-month', calm)!.textContent).toContain('not metered');
   });
 
   it('shows platform components with a dash when unmeasured and restarts in amber', () => {
     render(now());
     const api = q('now-platform-API')!;
-    expect(q('now-platform-memory', api)!.className).toContain('text-amber-600');
-    expect(q('now-platform-restarts', api)!.className).toContain('text-amber-600');
+    expect(bar(q('now-platform-memory', api)!)).toContain('fl-usage--warning');
+    expect(tone(q('now-platform-restarts', api)!)).toContain('fl-status--warning');
     expect(q('now-platform-memory', q('now-platform-Dashboard')!)!.textContent).toContain('–');
   });
 
@@ -190,8 +190,8 @@ describe('the Now page', () => {
     render(now());
     expect(q('now-registry-out')!.textContent).toContain('200 MiB');
     expect(q('now-registry-peak')!.textContent).toContain('40.0 Mbit/s');
-    expect(q('now-registry-refused')!.className).toContain('text-amber-600');
-    expect(q('now-registry-failed')!.className).toContain('text-destructive');
+    expect(tone(q('now-registry-refused')!)).toContain('fl-status--warning');
+    expect(tone(q('now-registry-failed')!)).toContain('fl-status--error');
 
     render(now({ registry: null }));
     expect(q('now-registry')).toBeNull();

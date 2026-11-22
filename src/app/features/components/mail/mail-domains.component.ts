@@ -1,30 +1,17 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleCheck,
-  lucideLoader,
-  lucidePlus,
-  lucideRotateCcw,
-  lucideTrash2,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideGlobe, lucidePlus, lucideRefreshCw } from '@ng-icons/lucide';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 import { MailSectionNavComponent } from './mail-section-nav.component';
-import { MailProofPillComponent } from './mail-proof-pill.component';
-import { MailTestSendComponent } from './mail-test-send.component';
-import { MailRecordRowComponent } from './mail-record-row.component';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import { MailDomainsTable } from './mail-domains-table';
+import { MailRecordsTable } from './mail-records-table';
 import { MailConsoleService } from '../../service/mail-console.service';
 import {
   MailDomainProofs,
@@ -32,7 +19,6 @@ import {
   MailRemoveResult,
 } from '../../model/mail-console.models';
 import { consoleError } from './mail-format';
-import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
   MailDomainsSurfaceInput,
@@ -43,230 +29,143 @@ import {
 
 @Component({
   selector: 'app-mail-domains',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    ReadOnlySectionDirective,
-    FormsModule,
-    NgIcon,
-    MailSectionNavComponent,
-    MailProofPillComponent,
-    MailTestSendComponent,
-    MailRecordRowComponent,
     RouterLink,
-    ConfirmationDialogComponent,
+    FlAlert,
+    FlPanel,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    MailSectionNavComponent,
+    MailDomainsTable,
+    MailRecordsTable,
   ],
-  providers: [
-    provideIcons({
-      lucideCircleCheck,
-      lucideLoader,
-      lucidePlus,
-      lucideRotateCcw,
-      lucideTrash2,
-      lucideTriangleAlert,
-    }),
-  ],
+  providers: [provideIcons({ lucideGlobe, lucidePlus, lucideRefreshCw })],
   template: `
-    <div class="p-4 md:p-6">
+    <div class="fl-page">
       <app-mail-section-nav>
-        <button
-          slot="actions"
-          type="button"
-          (click)="load()"
-          [disabled]="loading()"
-          class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:opacity-60"
-        >
-          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
-          Refresh
-        </button>
+        <ng-container headerActions>
+          <button
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
+            [disabled]="loading()"
+            (click)="load()"
+          >
+            <fl-icon name="lucideRefreshCw" />
+          </button>
+          <a flButton="primary" routerLink="/management/mail/providers">
+            <fl-icon name="lucidePlus" />
+            Add a sending domain
+          </a>
+        </ng-container>
       </app-mail-section-nav>
 
-      <section
-        class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4"
-      >
-        <p class="text-xs text-muted-foreground">
-          Sending domains belong to a provider connection — that is where the credential and the
-          account are. Add one from the connection that will send from it.
-        </p>
-        <a
-          routerLink="/management/mail/providers"
-          class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-foreground hover:bg-muted"
-        >
-          <ng-icon name="lucidePlus" class="h-3.5 w-3.5" /> Add a sending domain
-        </a>
-      </section>
+      <p class="m-0 max-w-3xl text-fl-body-sm text-fl-ink-muted">
+        Sending domains belong to a provider connection, which holds the credential and the account.
+        Add one from the connection that will send from it.
+      </p>
+
       @if (publishError()) {
-        <p class="mb-3 text-xs text-destructive">{{ publishError() }}</p>
+        <fl-alert tone="error" title="Could not publish the records">{{ publishError() }}</fl-alert>
+      }
+      @if (error()) {
+        <fl-alert tone="error" title="Could not load the domains">{{ error() }}</fl-alert>
+      }
+
+      @if (removed(); as gone) {
+        <fl-alert
+          tone="info"
+          [title]="
+            gone.revoked
+              ? gone.domain + ' was revoked at the provider.'
+              : gone.domain + ' was not registered at the provider.'
+          "
+        >
+          @if (gone.dns; as dns) {
+            @if (dns.removed.length) {
+              Removed from the zone: {{ dns.removed.join(', ') }}.
+            }
+            @for (left of dns.kept; track left.name + left.kind) {
+              <span class="block"
+                ><span class="fl-mono">{{ left.kind }} {{ left.name }}</span> kept:
+                {{ left.reason }}</span
+              >
+            }
+          } @else {
+            The zone was left untouched.
+          }
+        </fl-alert>
       }
 
       @if (result(); as r) {
-        <section class="mb-5 rounded-lg border border-border bg-card p-4">
-          <h2 class="text-sm font-medium text-foreground">{{ r.domain }}</h2>
+        <fl-panel [title]="'Records for ' + r.domain" [count]="r.outstanding.length || null">
           @if (r.published.length) {
-            <p class="mt-1 text-xs text-emerald-700">
-              Wrote {{ r.published.length }} record(s) into the zone Flui holds.
-            </p>
+            <fl-status
+              panelActions
+              tone="success"
+              [label]="'Wrote ' + r.published.length + ' record(s) into the zone Flui holds'"
+            />
           }
-          @if (r.outstanding.length) {
-            <p class="mt-2 text-xs text-muted-foreground">
-              Flui does not hold this zone, so it cannot write these for you. Create them where the
-              zone actually lives, exactly as shown, then come back and press
-              <span class="font-medium text-foreground">Re-publish</span> — the provider re-checks
-              on its own schedule and verification lags DNS by minutes.
-            </p>
-            <p class="mt-1 text-xs text-muted-foreground">
-              Names are given in full, ending in a dot. Many DNS interfaces instead want the part
-              <em>before</em> your domain — <span class="font-mono">_dmarc</span> rather than
-              <span class="font-mono">_dmarc.{{ r.domain }}.</span> — and
-              <span class="font-mono">&#64;</span> for the domain itself.
-            </p>
-            <div class="mt-2 space-y-1.5">
-              @for (rec of r.outstanding; track rec.name + rec.kind) {
-                <app-mail-record-row [record]="rec" />
-              }
-            </div>
-          }
-          @if (r.error) {
-            <p class="mt-2 text-xs text-destructive">{{ r.error }}</p>
-          }
-        </section>
+          <div class="flex flex-col gap-3">
+            @if (r.outstanding.length) {
+              <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+                Flui does not hold this zone, so it cannot write these for you. Create them where
+                the zone actually lives, exactly as shown, then come back and choose Re-publish. The
+                provider re-checks on its own schedule and verification lags DNS by minutes.
+              </p>
+              <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+                Names are given in full, ending in a dot. Many DNS interfaces instead want the part
+                before your domain (<span class="fl-mono">_dmarc</span> rather than
+                <span class="fl-mono">_dmarc.{{ r.domain }}.</span>) and
+                <span class="fl-mono">&#64;</span> for the domain itself.
+              </p>
+              <app-mail-records-table [records]="r.outstanding" />
+            }
+            @if (r.error) {
+              <fl-alert tone="error" title="The provider reported an error">{{ r.error }}</fl-alert>
+            }
+          </div>
+        </fl-panel>
       }
 
-      @if (loading()) {
-        <div class="space-y-3">
-          @for (i of [1, 2]; track i) {
-            <div class="rounded-lg border border-border bg-card p-4">
-              <div class="flex flex-wrap items-center gap-3">
-                <div class="skeleton h-4 flex-1"></div>
-                <div class="skeleton h-5 w-12"></div>
-                <div class="skeleton h-5 w-14"></div>
-                <div class="skeleton h-5 w-16"></div>
-                <div class="skeleton h-5 w-20"></div>
-                <div class="skeleton h-7 w-24"></div>
-              </div>
-            </div>
-          }
-        </div>
-      } @else if (error()) {
-        <div
-          class="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{ error() }}</span>
-        </div>
-      } @else if (!domains().length) {
-        <p class="text-sm text-muted-foreground">
-          No sending domain is registered with the provider yet.
-        </p>
-      } @else {
-        <div class="space-y-3">
-          @for (d of domains(); track d.domain) {
-            <div class="rounded-lg border border-border bg-card p-4">
-              <div class="flex flex-wrap items-center gap-3">
-                <span class="min-w-0 truncate text-sm font-medium text-foreground">{{
-                  d.domain
-                }}</span>
-                <span
-                  class="inline-flex flex-1 items-center gap-1 text-[11px] text-muted-foreground"
-                >
-                  {{ providerLabel(d.provider) }} · {{ d.scope }}
-                  <span
-                    class="rounded px-1 py-0.5 font-medium"
-                    [class]="
-                      d.active ? 'bg-emerald-50 text-emerald-700' : 'bg-muted text-muted-foreground'
-                    "
-                  >
-                    {{ d.active ? 'Sending' : 'Standby' }}
-                  </span>
-                </span>
-                <app-mail-proof-pill purpose="spf" [verdict]="d.spf" />
-                <app-mail-proof-pill purpose="dkim" [verdict]="d.dkim" />
-                <app-mail-proof-pill purpose="dmarc" [verdict]="d.dmarc" />
-                @if (d.verified) {
-                  <span class="inline-flex items-center gap-1 text-xs text-emerald-700">
-                    <ng-icon name="lucideCircleCheck" class="h-3.5 w-3.5" /> Verified
-                  </span>
-                } @else {
-                  <span class="text-xs text-amber-700">Not verified yet</span>
-                }
-                <button
-                  appReadOnlySection="mail"
-                  type="button"
-                  (click)="publish(d.domain)"
-                  [disabled]="publishing()"
-                  class="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-xs text-muted-foreground hover:bg-muted disabled:opacity-50"
-                >
-                  Re-publish
-                </button>
-                <button
-                  appReadOnlySection="mail"
-                  type="button"
-                  (click)="askRemove(d.domain)"
-                  [disabled]="removing()"
-                  class="inline-flex h-7 items-center gap-1 rounded-md border border-destructive/40 px-2 text-xs text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                  title="Hand this domain back to the provider"
-                >
-                  <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" /> Remove
-                </button>
-              </div>
-              @if (!d.verified) {
-                <p class="mt-2 text-xs text-muted-foreground">
-                  Records can be correct and published while the provider has not re-checked them
-                  yet. Verification lags DNS by minutes.
-                </p>
-              }
-              <app-mail-test-send [domain]="d.domain" />
-
-              @if (removed(); as gone) {
-                @if (gone.domain === d.domain) {
-                  <div class="mt-3 rounded-md border border-border bg-muted/40 p-2.5 text-xs">
-                    <p class="font-medium text-foreground">
-                      {{
-                        gone.revoked
-                          ? gone.domain + ' was revoked at the provider.'
-                          : gone.domain + ' was not registered at the provider.'
-                      }}
-                    </p>
-                    @if (gone.dns; as dns) {
-                      @if (dns.removed.length) {
-                        <p class="mt-1 text-muted-foreground">
-                          Removed from the zone: {{ dns.removed.join(', ') }}.
-                        </p>
-                      }
-                      @for (left of dns.kept; track left.name + left.kind) {
-                        <p class="mt-1 text-muted-foreground">
-                          <span class="font-mono">{{ left.kind }} {{ left.name }}</span> —
-                          {{ left.reason }}
-                        </p>
-                      }
-                    } @else {
-                      <p class="mt-1 text-muted-foreground">The zone was left untouched.</p>
-                    }
-                  </div>
-                }
-              }
-            </div>
-          }
-        </div>
-      }
-
-      <app-confirmation-dialog
-        #removeDialog
-        [title]="removeTitle()"
-        [message]="removeMessage"
-        [details]="removeDetails"
-        confirmText="Remove permanently"
-        processingText="Removing…"
-        variant="danger"
-        (confirmed)="confirmRemove()"
-        (cancelled)="pendingRemove.set(null)"
-      />
+      <fl-panel
+        title="Sending domains"
+        [count]="loading() ? null : domains().length"
+        [flush]="true"
+      >
+        @if (loading()) {
+          <fl-loading-state [rows]="3" />
+        } @else if (error()) {
+          <fl-empty-state [compact]="true" title="Nothing to show" />
+        } @else if (!domains().length) {
+          <fl-empty-state
+            icon="lucideGlobe"
+            title="No sending domain yet"
+            body="No sending domain is registered with the provider yet."
+          />
+        } @else {
+          <app-mail-domains-table
+            [domains]="domains()"
+            [publishing]="publishing()"
+            [removing]="removing()"
+            [testing]="testing()"
+            (publish)="publish($event)"
+            (remove)="askRemove($event)"
+            (toggleTest)="toggleTest($event)"
+          />
+        }
+      </fl-panel>
     </div>
   `,
 })
 export class MailDomainsComponent implements OnInit, OnDestroy {
   private readonly api = inject(MailConsoleService);
   private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly domains = signal<MailDomainProofs[]>([]);
   protected readonly loading = signal(true);
@@ -275,23 +174,8 @@ export class MailDomainsComponent implements OnInit, OnDestroy {
   protected readonly publishError = signal<string | null>(null);
   protected readonly result = signal<MailPublishResult | null>(null);
   protected readonly removing = signal(false);
-  protected readonly pendingRemove = signal<string | null>(null);
   protected readonly removed = signal<MailRemoveResult | null>(null);
-
-  private readonly removeDialog = viewChild<ConfirmationDialogComponent>('removeDialog');
-
-  protected readonly removeTitle = computed(
-    () => `Remove ${this.pendingRemove() ?? 'this domain'}`,
-  );
-
-  protected readonly removeMessage = 'Deleted at the mail provider. This cannot be undone.';
-
-  protected readonly removeDetails = [
-    'The DKIM private key is destroyed. Registering this domain again issues a new key under a new selector.',
-    'In DNS: the DKIM record is deleted, and the Flui entry is taken back out of the SPF. The rest of that record is left alone.',
-    'The MX and DMARC records stay. Nothing recorded whether Flui created them, and deleting an MX it did not create stops inbound mail.',
-    'Delivery history and the suppression list are untouched.',
-  ];
+  protected readonly testing = signal<string | null>(null);
 
   private readonly surfaceRevision = new MailDomainsSurfaceRevision();
 
@@ -336,29 +220,38 @@ export class MailDomainsComponent implements OnInit, OnDestroy {
     });
   }
 
-  protected askRemove(domain: string): void {
-    this.pendingRemove.set(domain);
-    this.removeDialog()?.open();
+  protected toggleTest(domain: string): void {
+    this.testing.update((open) => (open === domain ? null : domain));
   }
 
-  protected confirmRemove(): void {
-    const domain = this.pendingRemove();
-    if (!domain) return;
-    this.removeDialog()?.setProcessing(true);
+  protected async askRemove(domain: string): Promise<void> {
+    const ok = await this.confirm.confirm({
+      title: `Remove ${domain}`,
+      body:
+        'Deleted at the mail provider. This cannot be undone. The DKIM private key is destroyed; ' +
+        'registering this domain again issues a new key under a new selector. In DNS, the DKIM ' +
+        'record is deleted and the Flui entry is taken back out of the SPF; the rest of that ' +
+        'record is left alone. The MX and DMARC records stay: nothing recorded whether Flui ' +
+        'created them, and deleting an MX it did not create stops inbound mail. Delivery history ' +
+        'and the suppression list are untouched.',
+      confirmLabel: 'Remove permanently',
+      destructive: true,
+      typeToConfirm: domain,
+    });
+    if (ok) this.confirmRemove(domain);
+  }
+
+  private confirmRemove(domain: string): void {
     this.removing.set(true);
     this.api.removeDomain(domain).subscribe({
       next: (result) => {
         this.removed.set(result);
         this.removing.set(false);
-        this.pendingRemove.set(null);
-        this.removeDialog()?.close();
         this.load();
       },
       error: (err) => {
         this.error.set(consoleError(err));
         this.removing.set(false);
-        this.removeDialog()?.setProcessing(false);
-        this.removeDialog()?.close();
       },
     });
   }
@@ -380,15 +273,4 @@ export class MailDomainsComponent implements OnInit, OnDestroy {
       },
     });
   }
-
-  protected providerLabel(id: string): string {
-    return PROVIDER_LABELS[id] ?? id;
-  }
 }
-
-const PROVIDER_LABELS: Record<string, string> = {
-  'scaleway-tem': 'Scaleway',
-  brevo: 'Brevo',
-  zeptomail: 'ZeptoMail',
-  smtp: 'SMTP relay',
-};

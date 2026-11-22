@@ -1,0 +1,318 @@
+<div class="fl-page">
+  <fl-page-header title="How this installation is run">
+    <span headerMeta data-testid="preamble">
+      <app-explain
+        label="Advice, not permissions"
+        labelClass="text-fl-ink-muted"
+        testid="preamble-why"
+      >
+        {{ preamble() }}
+      </app-explain>
+    </span>
+    <ng-container headerActions>
+      @if (!readOnlyHere() && !firstRun() && !writing()) {
+        <button
+          flButton="primary"
+          type="button"
+          (click)="writing.set(true)"
+          data-testid="start-writing"
+        >
+          <fl-icon name="lucidePlus" />
+          Write a note
+        </button>
+      }
+    </ng-container>
+  </fl-page-header>
+
+  <app-management-network-card [compact]="true" />
+
+  @if (!firstRun()) {
+    <fl-panel title="What reaches a given thing" data-testid="focus">
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-end gap-3">
+          <fl-field label="Application" for="focus-slug">
+            <div class="fl-input fl-input--lg">
+              <input
+                id="focus-slug"
+                aria-label="Application"
+                placeholder="slug"
+                [ngModel]="focusSlug()"
+                (ngModelChange)="focusSlug.set($event)"
+                data-testid="focus-slug"
+              />
+            </div>
+          </fl-field>
+          <fl-field label="Cluster" for="focus-cluster">
+            <span class="fl-select-wrap">
+              <select
+                id="focus-cluster"
+                aria-labelledby="focus-cluster-label"
+                class="fl-select"
+                [ngModel]="focusCluster()"
+                (ngModelChange)="focusCluster.set($event)"
+                data-testid="focus-cluster"
+              >
+                <option value="">Any cluster</option>
+                @for (cluster of clusters(); track cluster.id) {
+                  <option [value]="cluster.id">{{ cluster.name }}</option>
+                }
+              </select>
+            </span>
+          </fl-field>
+          <button flButton type="button" (click)="load()" data-testid="focus-apply">
+            Show what reaches it
+          </button>
+          @if (focused()) {
+            <button flButton="ghost" type="button" (click)="clearFocus()" data-testid="focus-clear">
+              <fl-icon name="lucideX" />
+              Everything again
+            </button>
+          }
+        </div>
+        <app-explain
+          label="Two axes, not a hierarchy"
+          labelClass="text-fl-body-sm text-fl-ink-muted"
+          testid="reach-why"
+        >
+          What a thing is, and where it runs. A resource receives every note whose region contains
+          it, down both at once, neither taking precedence.
+        </app-explain>
+      </div>
+    </fl-panel>
+  }
+
+  @if (loadError(); as message) {
+    <fl-alert tone="error" title="Could not load the notes" data-testid="load-error">
+      {{ message }}
+    </fl-alert>
+  }
+
+  @if (firstRun() && !writing()) {
+    <fl-panel data-testid="first-run">
+      <div class="mx-auto flex max-w-2xl flex-col items-center gap-4 py-4 text-center">
+        <h2 class="m-0 text-fl-section-title">Nothing has been written down yet</h2>
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+          The local conventions nobody can work out from the code: why the master is left alone,
+          when deploys happen, which cluster is not to be touched. Everybody here reads them, and so
+          does every agent before it changes anything.
+        </p>
+        <div
+          class="flex w-full flex-col gap-1 rounded-fl-md border border-fl-border bg-fl-surface-subtle p-4 text-left"
+        >
+          <span class="text-fl-caption text-fl-ink-muted">For example</span>
+          <span class="font-medium">The master is not resized</span>
+          <span class="text-fl-body-sm text-fl-ink-muted">
+            The API runs on it, so resizing takes the control plane down. Add a node from the
+            cluster's Scaling tab instead.
+          </span>
+        </div>
+        @if (readOnlyHere()) {
+          <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="first-run-read-only">
+            {{ readOnlyWhy() }}
+          </p>
+        } @else {
+          <button
+            flButton="primary"
+            type="button"
+            (click)="writing.set(true)"
+            data-testid="write-first"
+          >
+            <fl-icon name="lucidePlus" />
+            Write the first note
+          </button>
+        }
+      </div>
+    </fl-panel>
+  }
+
+  @if (readOnlyHere() && !firstRun()) {
+    <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="read-only-here">
+      {{ readOnlyWhy() }}
+    </p>
+  } @else if (writing()) {
+    <app-context-note-form
+      [clusters]="clusters()"
+      [probes]="probes()"
+      [busy]="saving()"
+      [error]="saveError()"
+      (save)="write($event)"
+      (dismissed)="writing.set(false)"
+    />
+  }
+
+  @if (loading()) {
+    <fl-panel data-testid="loading" aria-busy="true">
+      <fl-loading-state [rows]="6" />
+    </fl-panel>
+  }
+
+  @if (!loading() && !firstRun()) {
+    <div class="fl-tabs" role="tablist" aria-label="Notes" data-testid="tabs">
+      @for (t of tabs; track t.id) {
+        <button
+          type="button"
+          role="tab"
+          class="fl-tab inline-flex items-center gap-1.5"
+          [attr.aria-selected]="tab() === t.id"
+          [attr.data-testid]="'tab-' + t.id"
+          (click)="chooseTab(t.id)"
+        >
+          <span>{{ t.label }}</span>
+          @if (countFor(t.id); as n) {
+            <span class="fl-num text-fl-ink-muted" [attr.data-testid]="'tab-count-' + t.id">{{
+              n
+            }}</span>
+          }
+        </button>
+      }
+    </div>
+  }
+
+  @if (!loading() && !firstRun() && tab() === 'attention') {
+    <section class="flex flex-col gap-3" data-testid="group-review">
+      <div class="flex items-baseline justify-between gap-4">
+        <h2 class="m-0 text-fl-section-title">Asking to be re-read</h2>
+        <span class="text-fl-body-sm text-fl-ink-muted" data-testid="review-count">
+          {{ reviewNote() }}
+        </span>
+      </div>
+      @for (entry of review(); track entry.id) {
+        <app-context-note-card
+          [entry]="entry"
+          [clusterNames]="clusterNames()"
+          [busy]="acting() === entry.id"
+          [readOnly]="readOnlyHere()"
+          [error]="errorFor(entry.id)"
+          (confirm)="confirm($event)"
+          (archive)="archive($event)"
+          (reword)="reword($event)"
+        />
+      } @empty {
+        <app-explain
+          label="Nothing is asking to be revisited"
+          labelClass="text-fl-body-sm text-fl-ink-muted"
+          testid="nothing-to-review"
+        >
+          A note that leans on a live fact appears here the moment the platform stops agreeing with
+          it.
+        </app-explain>
+      }
+    </section>
+
+    <section class="flex flex-col gap-3" data-testid="group-conflicts">
+      <div class="flex items-baseline justify-between gap-4">
+        <h2 class="m-0 text-fl-section-title">Where two notes disagree</h2>
+        <span class="text-fl-body-sm text-fl-ink-muted" data-testid="conflict-count">
+          {{ conflictNote() }}
+        </span>
+      </div>
+      @for (group of conflicts(); track group.topic) {
+        <div
+          class="flex flex-col gap-3 rounded-fl-lg border border-fl-border bg-fl-surface-subtle p-3"
+          data-testid="conflict"
+        >
+          <p class="fl-row m-0 text-fl-body-sm text-fl-ink-muted">
+            <span class="fl-mono text-fl-ink">{{ group.topic }}</span>
+            <app-explain
+              label="neither wins"
+              labelClass="text-fl-body-sm text-fl-ink-muted"
+              [testid]="'conflict-why-' + group.topic"
+            >
+              Being written at a narrower level does not make a note more right, and one of the two
+              is very often simply older.
+            </app-explain>
+          </p>
+          @for (entry of group.entries; track entry.id) {
+            <app-context-note-card
+              [entry]="entry"
+              [clusterNames]="clusterNames()"
+              [busy]="acting() === entry.id"
+              [readOnly]="readOnlyHere()"
+              [error]="errorFor(entry.id)"
+              (confirm)="confirm($event)"
+              (archive)="archive($event)"
+              (reword)="reword($event)"
+            />
+          }
+        </div>
+      } @empty {
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="no-conflicts">
+          {{ noConflictNote() }}
+        </p>
+      }
+    </section>
+  }
+
+  @if (!loading() && !firstRun() && tab() === 'holding') {
+    <section class="flex flex-col gap-3" data-testid="group-holding">
+      <div class="flex items-baseline justify-between gap-4">
+        <h2 class="m-0 text-fl-section-title">What still holds</h2>
+        <span class="text-fl-body-sm text-fl-ink-muted" data-testid="holding-count">
+          {{ holdingNote() }}
+        </span>
+      </div>
+      @for (entry of holding(); track entry.id) {
+        <app-context-note-card
+          [entry]="entry"
+          [clusterNames]="clusterNames()"
+          [busy]="acting() === entry.id"
+          [readOnly]="readOnlyHere()"
+          [error]="errorFor(entry.id)"
+          (confirm)="confirm($event)"
+          (archive)="archive($event)"
+          (reword)="reword($event)"
+        />
+      } @empty {
+        <app-explain
+          label="Nothing written down yet"
+          labelClass="text-fl-body-sm text-fl-ink-muted"
+          testid="nothing-here"
+        >
+          The first note is usually the one somebody had to explain twice.
+        </app-explain>
+      }
+    </section>
+  }
+
+  @if (!loading() && !firstRun() && tab() === 'archive' && !readOnlyHere()) {
+    <section class="flex flex-col gap-3" data-testid="group-archive">
+      <div class="flex items-baseline justify-between gap-4">
+        <h2 class="m-0 text-fl-section-title">Why it used to be done this way</h2>
+        <app-explain
+          label="Archived, not deleted"
+          labelClass="text-fl-body-sm text-fl-ink-muted"
+          testid="archive-why"
+        >
+          A rule that was true once explains a decision that was made once. These are read here and
+          nowhere else: a withdrawn rule is never handed to an agent as advice, and its premise is
+          not asked again, so each one says what was believed on the day it was withdrawn.
+        </app-explain>
+      </div>
+      @if (archiveLoading()) {
+        <fl-panel data-testid="archive-loading" aria-busy="true">
+          <fl-loading-state [rows]="4" />
+        </fl-panel>
+      } @else if (archiveError()) {
+        <fl-alert tone="error" title="Could not load the retired notes" data-testid="archive-error">
+          {{ archiveError() }}
+        </fl-alert>
+      } @else {
+        @for (entry of archived(); track entry.id) {
+          <app-context-note-card
+            [entry]="entry"
+            [clusterNames]="clusterNames()"
+            [readOnly]="true"
+          />
+        } @empty {
+          <fl-panel>
+            <fl-empty-state
+              title="Nothing has been retired here yet"
+              [compact]="true"
+              data-testid="archive-empty"
+            />
+          </fl-panel>
+        }
+      }
+    </section>
+  }
+</div>

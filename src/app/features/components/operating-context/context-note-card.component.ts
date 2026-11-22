@@ -1,17 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArchive,
-  lucideCheck,
-  lucideCircleAlert,
-  lucideCircleCheck,
-  lucideClock,
-  lucidePencil,
-  lucideUsers,
-  lucideX,
-} from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { provideIcons } from '@ng-icons/core';
+import { lucideUsers } from '@ng-icons/lucide';
 import { formatTimeSince } from '../../model/dns.models';
 import {
   CHECK_COPY,
@@ -21,131 +11,100 @@ import {
   VALIDITY_COPY,
   describeHand,
   describeScope,
-  isSuspect,
 } from '../../model/operating-context.models';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+
+const VERDICT_TONE: Record<ContextEntry['confidence'], StatusTone> = {
+  broken: 'warning',
+  checked: 'success',
+  stale: 'neutral',
+  unverified: 'neutral',
+};
 
 @Component({
   selector: 'app-context-note-card',
-  standalone: true,
-  imports: [NgIcon, FormsModule, HlmButtonDirective],
-  providers: [
-    provideIcons({
-      lucideArchive,
-      lucideCheck,
-      lucideCircleAlert,
-      lucideCircleCheck,
-      lucideClock,
-      lucidePencil,
-      lucideUsers,
-      lucideX,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, FlAlert, FlButton, FlField, FlIcon, FlStatus, FlTag],
+  providers: [provideIcons({ lucideUsers })],
+  host: { class: 'block' },
   template: `
     <article
-      class="grid grid-cols-[3px_1fr] overflow-hidden rounded-lg border border-border bg-card"
+      class="fl-panel"
       [attr.data-testid]="'note'"
       [attr.data-confidence]="entry().confidence"
     >
-      <div [class]="railClass()"></div>
-
-      <div class="space-y-3 p-4">
-        <div class="flex flex-wrap items-center gap-2">
-          <span
-            class="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
-            [class]="verdictClass()"
+      <header class="fl-panel__header">
+        <h3 class="fl-panel__title" data-testid="title">{{ entry().title }}</h3>
+        <div class="fl-panel__actions">
+          <fl-status
+            [tone]="verdictTone()"
+            [label]="verdict().label"
+            [attr.title]="verdict().note"
             data-testid="verdict"
-            [title]="verdict().note"
-          >
-            <ng-icon [name]="verdictIcon()" class="h-3.5 w-3.5" />
-            {{ verdict().label }}
-          </span>
-
-          <span
-            class="rounded-md border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
-            data-testid="nature"
-          >
-            {{ natureCopy().label }}
-          </span>
-
-          <span
-            class="rounded-md border border-border px-2 py-0.5 font-mono text-[11px] text-muted-foreground"
-            data-testid="level"
-          >
-            {{ level() }}
-          </span>
-
-          @if (retired(); as when) {
-            <span
-              class="rounded-md border border-dashed border-border px-2 py-0.5 text-[11px] text-muted-foreground"
-              data-testid="retired"
-            >
-              retired {{ when }}
-            </span>
-          }
-
-          <span class="ml-auto text-[11px] text-muted-foreground">
-            {{ changed() }}
-          </span>
+          />
         </div>
+      </header>
 
-        <!-- The verdict's meaning is the same sentence on every card carrying
-             the same badge, so it rides on the badge rather than being printed
-             once per note. Reading a list of six was reading it six times. -->
-
+      <div class="fl-panel__body flex flex-col gap-3">
         @if (editing()) {
-          <div class="space-y-2" data-testid="reword">
-            <input
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              [(ngModel)]="draftTitle"
-              aria-label="Title"
-            />
-            <textarea
-              rows="5"
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              [(ngModel)]="draftBody"
-              aria-label="Note"
-            ></textarea>
-            <p class="m-0 text-[11px] text-muted-foreground">
-              Rewording never moves the level. Where a note applies is what the note is — to say it
-              somewhere else, write it there.
-            </p>
-            <div class="flex gap-2">
+          <div class="flex flex-col gap-3" data-testid="reword">
+            <fl-field label="Title" [for]="'reword-title-' + entry().id">
+              <div class="fl-input fl-input--lg">
+                <input [id]="'reword-title-' + entry().id" [(ngModel)]="draftTitle" />
+              </div>
+            </fl-field>
+            <fl-field
+              label="Note"
+              [for]="'reword-body-' + entry().id"
+              hint="Rewording never moves the level. Where a note applies is what the note is: to say it somewhere else, write it there."
+            >
+              <textarea
+                [id]="'reword-body-' + entry().id"
+                rows="5"
+                class="fl-textarea"
+                [(ngModel)]="draftBody"
+              ></textarea>
+            </fl-field>
+            <div class="fl-row">
               <button
-                hlmBtn
+                flButton="primary"
                 size="sm"
+                type="button"
                 [disabled]="busy()"
                 (click)="saveEdit()"
                 data-testid="reword-save"
               >
-                <ng-icon name="lucideCheck" class="mr-1.5 h-3.5 w-3.5" />
                 Save wording
               </button>
               <button
-                hlmBtn
+                flButton="ghost"
                 size="sm"
-                variant="ghost"
+                type="button"
                 (click)="cancelEdit()"
                 data-testid="reword-cancel"
               >
-                <ng-icon name="lucideX" class="mr-1.5 h-3.5 w-3.5" />
                 Cancel
               </button>
             </div>
           </div>
         } @else {
-          <div class="space-y-1">
-            <h3 class="m-0 text-base font-semibold text-foreground" data-testid="title">
-              {{ entry().title }}
-            </h3>
-            <p class="m-0 whitespace-pre-wrap text-sm text-foreground/90" data-testid="body">
-              {{ entry().body }}
-            </p>
-          </div>
+          <p class="m-0 whitespace-pre-wrap text-fl-body-sm" data-testid="body">
+            {{ entry().body }}
+          </p>
         }
 
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-          <span class="font-mono" data-testid="topic">{{ entry().topic }}</span>
+        <div class="fl-row text-fl-caption text-fl-ink-muted">
+          <fl-tag data-testid="nature">{{ natureCopy().label }}</fl-tag>
+          <fl-tag class="fl-mono" data-testid="level">{{ level() }}</fl-tag>
+          @if (retired(); as when) {
+            <fl-tag data-testid="retired">retired {{ when }}</fl-tag>
+          }
+          <span class="fl-mono" data-testid="topic">{{ entry().topic }}</span>
           <span>·</span>
           <span data-testid="checked-by">{{ checkCopy() }}</span>
           @if (writtenBy(); as who) {
@@ -160,66 +119,66 @@ import {
             <span>·</span>
             <span data-testid="retired-by">retired by {{ who }}</span>
           }
+          <span class="ml-auto">{{ changed() }}</span>
         </div>
 
         @if (entry().reaches; as reach) {
           <p
-            class="m-0 flex items-start gap-2 rounded-md bg-muted/50 px-3 py-2 text-[12px] text-muted-foreground"
+            class="m-0 flex items-start gap-2 text-fl-body-sm text-fl-ink-muted"
             data-testid="reaches"
           >
-            <ng-icon name="lucideUsers" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <fl-icon name="lucideUsers" [size]="14" />
             <span>{{ reachSentence() }}</span>
           </p>
         }
 
+        @if (error(); as message) {
+          <fl-alert tone="error" title="Not saved" data-testid="note-error">{{ message }}</fl-alert>
+        }
+
         @if (!readOnly() && !editing()) {
-          <div class="flex flex-wrap gap-2 pt-1">
+          <div class="fl-row">
             @if (offersConfirm()) {
               <button
-                hlmBtn
+                flButton
                 size="sm"
-                variant="outline"
+                type="button"
                 [disabled]="busy()"
                 (click)="confirm.emit(entry().id)"
                 data-testid="confirm"
               >
-                <ng-icon name="lucideCheck" class="mr-1.5 h-3.5 w-3.5" />
-                Still true — put my name to it
+                Still true, put my name to it
               </button>
             }
             <button
-              hlmBtn
+              flButton="ghost"
               size="sm"
-              variant="ghost"
+              type="button"
               [disabled]="busy()"
               (click)="startEdit()"
               data-testid="reword-start"
             >
-              <ng-icon name="lucidePencil" class="mr-1.5 h-3.5 w-3.5" />
               Reword
             </button>
             <button
-              hlmBtn
+              flButton="ghost"
               size="sm"
-              variant="ghost"
+              type="button"
               [disabled]="busy()"
-              (click)="archive.emit(entry().id)"
+              (click)="retire()"
               data-testid="archive"
             >
-              <ng-icon name="lucideArchive" class="mr-1.5 h-3.5 w-3.5" />
               Retire
             </button>
           </div>
-        }
-
-        @if (error(); as message) {
-          <p class="m-0 text-sm text-destructive" data-testid="note-error">{{ message }}</p>
         }
       </div>
     </article>
   `,
 })
 export class ContextNoteCardComponent {
+  private readonly confirmService = inject(ConfirmService);
+
   readonly entry = input.required<ContextEntry>();
   readonly clusterNames = input<Record<string, string>>({});
   readonly busy = input(false);
@@ -267,38 +226,19 @@ export class ContextNoteCardComponent {
 
   protected readonly retiredBy = computed(() => describeHand(this.entry().archivedBy));
 
-  protected readonly railClass = computed(() => {
-    if (isSuspect(this.entry().confidence)) {
-      return 'bg-amber-500';
-    }
-    return this.entry().confidence === 'checked' ? 'bg-emerald-500/70' : 'bg-border';
-  });
-
-  protected readonly verdictClass = computed(() => {
-    switch (this.entry().confidence) {
-      case 'broken':
-        return 'bg-amber-500/15 text-amber-700';
-      case 'checked':
-        return 'bg-emerald-500/15 text-emerald-700';
-      case 'stale':
-        return 'bg-muted text-muted-foreground';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  });
-
-  protected readonly verdictIcon = computed(() => {
-    switch (this.entry().confidence) {
-      case 'broken':
-        return 'lucideCircleAlert';
-      case 'checked':
-        return 'lucideCircleCheck';
-      default:
-        return 'lucideClock';
-    }
-  });
+  protected readonly verdictTone = computed(() => VERDICT_TONE[this.entry().confidence]);
 
   protected readonly offersConfirm = computed(() => this.entry().checkedBy === 'attestation');
+
+  protected async retire(): Promise<void> {
+    const ok = await this.confirmService.confirm({
+      title: 'Retire this note',
+      body: 'It stops being handed out as advice and moves to Retired, where it can still be read.',
+      confirmLabel: 'Retire note',
+      destructive: true,
+    });
+    if (ok) this.archive.emit(this.entry().id);
+  }
 
   protected startEdit(): void {
     this.draftTitle = this.entry().title;

@@ -1,22 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideInfo, lucideLoader, lucideTriangleAlert } from '@ng-icons/lucide';
-import {
-  HlmCardContentDirective,
-  HlmCardDescriptionDirective,
-  HlmCardDirective,
-  HlmCardHeaderDirective,
-  HlmCardTitleDirective,
-} from '@spartan-ng/ui-card-helm';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { AuthService as ApiAuthService } from '../../../../core/api/api/auth.service';
 import { ApiKeyResponseDto } from '../../../../core/api/model/apiKeyResponseDto';
 import { CreateApiKeyDto } from '../../../../core/api/model/createApiKeyDto';
@@ -25,6 +8,9 @@ import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDt
 import { AppConfigService } from '../../../../core/services/app-config.service';
 import { sandboxFailureMessage } from '../../../../core/services/sandbox.service';
 import { SandboxLevelNoticeComponent } from '../../../../shared/components/sandbox-level-notice.component';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../../ui/patterns/states';
 import { AgentKeyListComponent } from './agent-key-list.component';
 import { AgentKeyMintComponent, MintRequest } from './agent-key-mint.component';
 import { AgentSkill, AgentSkillService } from './agent-skill.service';
@@ -32,120 +18,95 @@ import { ConnectAgentComponent } from './connect-agent.component';
 
 @Component({
   selector: 'app-agent-keys',
-  standalone: true,
   imports: [
-    NgIcon,
-    HlmCardDirective,
-    HlmCardContentDirective,
-    HlmCardHeaderDirective,
-    HlmCardTitleDirective,
-    HlmCardDescriptionDirective,
+    FlAlert,
+    FlPanel,
+    FlEmptyState,
+    FlLoadingState,
     SandboxLevelNoticeComponent,
     AgentKeyMintComponent,
     AgentKeyListComponent,
     ConnectAgentComponent,
   ],
-  providers: [provideIcons({ lucideInfo, lucideLoader, lucideTriangleAlert })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-4">
-      <app-sandbox-level-notice area="agent-keys" />
+    <app-sandbox-level-notice area="agent-keys" />
 
-      <div
-        role="note"
-        class="flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3.5 py-2.5 text-sm text-muted-foreground"
-      >
-        <ng-icon name="lucideInfo" class="mt-0.5 h-4 w-4 shrink-0 opacity-70" />
-        <p class="leading-relaxed" data-testid="ceiling">
-          <span class="font-medium text-foreground">An agent can never do more than you can.</span>
-          {{ ceiling() }}
-        </p>
-      </div>
+    <fl-alert tone="info" title="An agent can never do more than you can." data-testid="ceiling">
+      {{ ceiling() }}
+    </fl-alert>
 
-      @if (loadError(); as e) {
-        <div
-          class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{ e }}</span>
-        </div>
+    @if (loadError(); as e) {
+      <fl-alert tone="error" title="Agent keys">{{ e }}</fl-alert>
+    }
+
+    @if (loading()) {
+      <fl-panel title="Agent keys">
+        <fl-loading-state />
+      </fl-panel>
+    } @else {
+      @if (!minted()) {
+        <app-connect-agent
+          [skill]="skill()"
+          [skillError]="skillError()"
+          data-testid="connect-agent-standalone"
+        />
       }
 
-      @if (loading()) {
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-          Reading what you may hand on…
-        </div>
-      } @else {
-        @if (!minted()) {
-          <app-connect-agent
-            [skill]="skill()"
-            [skillError]="skillError()"
-            data-testid="connect-agent-standalone"
-          />
-        }
-
-        <div hlmCard>
-          <div hlmCardHeader>
-            <h3 hlmCardTitle>Issue a new key</h3>
-            <p hlmCardDescription>
-              Switch on what the agent may do, name it, and copy the key it gives you back.
+      <fl-panel title="Issue a new key">
+        <div class="flex flex-col gap-4">
+          <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+            Switch on what the agent may do, name it, and copy the key it gives you back.
+          </p>
+          @if (!oidc()) {
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="local-mode">
+              This instance signs people in locally, and keys are issued in OIDC mode only. Existing
+              keys are still listed below and can still be revoked.
             </p>
-          </div>
-          <div hlmCardContent>
-            @if (!oidc()) {
-              <p class="text-sm text-muted-foreground" data-testid="local-mode">
-                This instance signs people in locally, and keys are issued in OIDC mode only.
-                Existing keys are still listed below and can still be revoked.
-              </p>
-            } @else if (catalogue().length === 0) {
-              <p class="text-sm text-muted-foreground">
-                No permission groups came back, so there is nothing to hand on from here.
-              </p>
-            } @else {
-              <app-agent-key-mint
-                #mint
-                [catalogue]="catalogue()"
-                [minted]="minted()"
-                [busy]="minting()"
-                [error]="mintError()"
-                [skill]="skill()"
-                [skillError]="skillError()"
-                (create)="mintKey($event)"
-                (dismiss)="clearMinted()"
-              />
-            }
-          </div>
-        </div>
-
-        <div hlmCard>
-          <div hlmCardHeader>
-            <h3 hlmCardTitle>Keys you have issued</h3>
-            <p hlmCardDescription>
-              Everything holding a credential of yours, and the gesture that takes it back.
-            </p>
-          </div>
-          <div hlmCardContent>
-            <app-agent-key-list
-              [keys]="keys()"
-              [catalogue]="catalogue()"
-              [revoking]="revoking()"
-              [currentSkillVersion]="skill()?.version ?? null"
-              [updatingApplications]="updatingApplications()"
-              [updateApplicationsError]="updateApplicationsError()"
-              [updatingProjects]="updatingProjects()"
-              [updateProjectsError]="updateProjectsError()"
-              [updatingScopes]="updatingScopes()"
-              [updateScopesError]="updateScopesError()"
-              (updateScopes)="updateScopes($event)"
-              (revoke)="revokeKey($event)"
-              (updateApplications)="updateApplications($event)"
-              (updateProjects)="updateProjects($event)"
+          } @else if (catalogue().length === 0) {
+            <fl-empty-state
+              [compact]="true"
+              title="Nothing to hand on"
+              body="No permission groups came back, so there is nothing to hand on from here."
             />
-          </div>
+          } @else {
+            <app-agent-key-mint
+              #mint
+              [catalogue]="catalogue()"
+              [minted]="minted()"
+              [busy]="minting()"
+              [error]="mintError()"
+              [skill]="skill()"
+              [skillError]="skillError()"
+              (create)="mintKey($event)"
+              (dismiss)="clearMinted()"
+            />
+          }
         </div>
-      }
-    </div>
+      </fl-panel>
+
+      <fl-panel title="Keys you have issued" [count]="keys().length" [flush]="true">
+        <p class="m-0 border-b border-fl-border-subtle px-4 py-3 text-fl-body-sm text-fl-ink-muted">
+          Everything holding a credential of yours, and the gesture that takes it back.
+        </p>
+        <app-agent-key-list
+          [keys]="keys()"
+          [catalogue]="catalogue()"
+          [revoking]="revoking()"
+          [currentSkillVersion]="skill()?.version ?? null"
+          [updatingApplications]="updatingApplications()"
+          [updateApplicationsError]="updateApplicationsError()"
+          [updatingProjects]="updatingProjects()"
+          [updateProjectsError]="updateProjectsError()"
+          [updatingScopes]="updatingScopes()"
+          [updateScopesError]="updateScopesError()"
+          (updateScopes)="updateScopes($event)"
+          (revoke)="revokeKey($event)"
+          (updateApplications)="updateApplications($event)"
+          (updateProjects)="updateProjects($event)"
+        />
+      </fl-panel>
+    }
   `,
 })
 export class AgentKeysComponent implements OnInit {
@@ -180,7 +141,7 @@ export class AgentKeysComponent implements OnInit {
     if (!all.length) return 'What you may hand on is decided by your own permissions.';
     const mine = all.filter((g) => g.grantable).length;
     if (mine === all.length) {
-      return `All ${all.length} permission groups on this instance are yours to hand on — the switches below choose how much of that you lend out.`;
+      return `All ${all.length} permission groups on this instance are yours to hand on. The switches below choose how much of that you lend out.`;
     }
     return `${mine} of the ${all.length} permission groups on this instance are yours to hand on. The rest carry a capability your own permissions do not cover, so they stay switched off.`;
   });

@@ -1,20 +1,16 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft } from '@ng-icons/lucide';
+import { FlIcon } from '../../../../ui/primitives/icon';
 
 @Component({
   selector: 'app-backup-back-link',
-  standalone: true,
-  imports: [RouterLink, NgIcon],
+  imports: [RouterLink, FlIcon],
   providers: [provideIcons({ lucideArrowLeft })],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <a
-      [routerLink]="link()"
-      class="inline-flex w-fit items-center gap-1 text-xs font-medium text-primary hover:text-primary/80"
-    >
-      <ng-icon name="lucideArrowLeft" class="h-3.5 w-3.5" />
+    <a [routerLink]="link()" class="fl-link inline-flex w-fit items-center gap-1 text-fl-body-sm">
+      <fl-icon name="lucideArrowLeft" [size]="14" />
       <span>{{ label() }}</span>
     </a>
   `,

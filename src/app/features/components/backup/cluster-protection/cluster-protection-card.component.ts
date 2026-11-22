@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   effect,
@@ -10,6 +9,16 @@ import {
   untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlField } from '../../../../ui/patterns/field';
+import { FlTable } from '../../../../ui/patterns/table';
+import { FlActionsMenu, MenuAction } from '../../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../../ui/overlays/confirm';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../../ui/primitives/status';
 import { BackupService } from '../../../service/backup.service';
 import {
   ClusterProtection,
@@ -18,212 +27,240 @@ import {
 } from '../../../model/backup-protection.models';
 import { AssistantOperationProgressComponent } from '../../assistant/assistant-operation-progress.component';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
-import { NeedsDecisionListComponent } from './needs-decision-list.component';
 
-const OUTCOME_TONE: Record<string, string> = {
-  protected: 'text-green-700',
-  already_protected: 'text-green-700',
-  waiting: 'text-muted-foreground',
-  needs_decision: 'text-amber-700',
-  failed: 'text-red-600',
-  skipped: 'text-muted-foreground',
+const OUTCOME_TONE: Record<string, StatusTone> = {
+  protected: 'success',
+  already_protected: 'success',
+  waiting: 'neutral',
+  needs_decision: 'warning',
+  failed: 'error',
+  skipped: 'neutral',
 };
+
+const COLUMNS = 7;
+
+const STOP_ACTIONS: readonly MenuAction[] = [
+  { id: 'stop', label: 'Stop protecting new apps', danger: true },
+];
 
 /**
  * "Protect this cluster": every application on it gets a backup policy of its
  * own, the ones installed later too.
  */
 @Component({
-  selector: 'app-cluster-protection-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'tbody[app-cluster-protection-card]',
   imports: [
     FormsModule,
     AssistantOperationProgressComponent,
-    NeedsDecisionListComponent,
     ReadOnlySectionDirective,
+    FlAlert,
+    FlField,
+    FlTable,
+    FlActionsMenu,
+    FlButton,
+    FlIcon,
+    FlStatus,
   ],
+  providers: [provideIcons({ lucideX })],
+  host: { 'data-testid': 'cluster-protection' },
   template: `
-    <div
-      class="rounded-lg border border-border bg-card p-4 space-y-3"
-      data-testid="cluster-protection"
-    >
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold">{{ clusterName() }}</span>
-            @if (view(); as v) {
-              <span
-                class="rounded-full border px-2 py-0.5 text-[11px]"
-                [class]="
-                  v.protected
-                    ? 'border-green-500/30 bg-green-500/10 text-green-700'
-                    : 'border-border bg-muted text-muted-foreground'
-                "
-              >
-                {{ v.protected ? 'Every app protected' : 'Not protected' }}
-              </span>
-            }
-          </div>
-          @if (view(); as v) {
-            @if (v.protected) {
-              <p class="text-xs text-muted-foreground mt-1">
-                To {{ destinationName(v.destinationId) }} ·
-                {{ v.cronSchedule ? 'at ' + v.cronSchedule + ' UTC' : 'default schedule' }} ·
-                {{ v.beforeDeploy ? 'backup before each deploy' : 'no backup before deploys' }}
-              </p>
-            } @else {
-              <p class="text-xs text-muted-foreground mt-1">
-                Each app gets its own backup, new apps included.
-              </p>
-            }
-          } @else if (loadError()) {
-            <p class="text-xs text-red-600 mt-1">{{ loadError() }}</p>
-          }
-        </div>
+    <tr>
+      <td class="fl-cell-name border-t border-fl-border-subtle font-medium">
+        {{ clusterName() || clusterId() }}
+      </td>
+      <td class="border-t border-fl-border-subtle">
         @if (view(); as v) {
-          <div class="flex gap-2" appReadOnlySection="backup">
+          <fl-status [tone]="state().tone" [label]="state().label" />
+        } @else if (loadError()) {
+          <fl-status tone="error" label="Could not load" />
+        } @else {
+          <span class="text-fl-ink-muted">Loading…</span>
+        }
+      </td>
+      <td class="border-t border-fl-border-subtle text-fl-ink-muted">
+        @if (view()?.protected) {
+          {{ destinationName(view()!.destinationId) }}
+        } @else {
+          —
+        }
+      </td>
+      <td class="border-t border-fl-border-subtle text-fl-ink-muted">
+        @if (view(); as v) {
+          @if (v.protected) {
+            @if (v.cronSchedule) {
+              <span class="fl-mono">{{ v.cronSchedule }}</span> UTC
+            } @else {
+              Default schedule
+            }
+          } @else {
+            —
+          }
+        }
+      </td>
+      <td class="border-t border-fl-border-subtle text-fl-ink-muted">
+        @if (view()?.protected) {
+          {{ view()!.beforeDeploy ? 'On' : 'Off' }}
+        } @else {
+          —
+        }
+      </td>
+      <td class="is-num border-t border-fl-border-subtle">
+        @if (view()?.applications?.length) {
+          <button
+            type="button"
+            class="fl-link"
+            [attr.aria-expanded]="showApps()"
+            [attr.aria-label]="(showApps() ? 'Hide' : 'Show') + ' what each app got'"
+            (click)="showApps.set(!showApps())"
+          >
+            {{ view()!.applications.length }}
+          </button>
+        } @else {
+          <span class="text-fl-ink-muted">0</span>
+        }
+      </td>
+      <td class="is-fit border-t border-fl-border-subtle">
+        @if (view(); as v) {
+          <div class="fl-row justify-end" appReadOnlySection="backup">
             @if (v.protected) {
-              <button
-                type="button"
-                class="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-muted disabled:opacity-50"
-                [disabled]="!!operationId() || working()"
-                (click)="confirmingStop.set(true)"
-              >
-                Stop protecting new apps
-              </button>
+              <fl-actions-menu
+                [compact]="true"
+                [label]="'Actions for ' + clusterName()"
+                [items]="stopActions()"
+                (action)="confirmStop()"
+              />
             } @else if (!choosing() && !operationId()) {
-              <button
-                type="button"
-                class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-                (click)="startChoosing()"
-              >
+              <button flButton size="sm" type="button" (click)="startChoosing()">
                 Protect this cluster
               </button>
             }
           </div>
         }
-      </div>
+      </td>
+    </tr>
 
-      @if (choosing()) {
-        <div class="flex flex-wrap items-end gap-3 rounded-md border border-border p-3">
-          <label class="block text-xs">
-            <span class="text-muted-foreground">Backup storage</span>
-            <select
-              [ngModel]="destinationId()"
-              (ngModelChange)="destinationId.set($event)"
-              class="mt-1 block h-9 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              @for (d of backup.destinations(); track d.id) {
-                <option [value]="d.id">{{ d.name }}</option>
-              }
-            </select>
-          </label>
-          <label class="flex h-9 items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              [ngModel]="beforeDeploy()"
-              (ngModelChange)="beforeDeploy.set($event)"
-            />
-            Back up before each deploy
-          </label>
-          <button
-            type="button"
-            class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            [disabled]="!destinationId() || working()"
-            (click)="protect()"
-          >
-            {{ working() ? 'Starting…' : 'Protect' }}
-          </button>
-          <button
-            type="button"
-            class="rounded-md px-3 py-1.5 text-sm hover:bg-muted"
-            (click)="choosing.set(false)"
-          >
-            Cancel
-          </button>
-          @if (!backup.destinations().length) {
-            <p class="w-full text-xs text-muted-foreground">
-              No backup storage yet: use "Enable backups" below, or add a destination.
-            </p>
-          }
-        </div>
-      }
+    @if (loadError(); as e) {
+      <tr>
+        <td [attr.colspan]="columns" class="whitespace-normal">
+          <fl-alert tone="error" title="Could not read how this cluster is protected">{{
+            e
+          }}</fl-alert>
+        </td>
+      </tr>
+    }
 
-      @if (operationId(); as op) {
-        <app-assistant-operation-progress
-          [operationId]="op"
-          label="Protecting every app on this cluster"
-          (settled)="onSettled()"
-        />
-      }
+    @if (operationId(); as op) {
+      <tr>
+        <td [attr.colspan]="columns" class="whitespace-normal">
+          <app-assistant-operation-progress
+            [operationId]="op"
+            label="Protecting every app on this cluster"
+            (settled)="onSettled()"
+          />
+        </td>
+      </tr>
+    }
 
-      @if (failure()) {
-        <p class="text-sm text-red-600">{{ failure() }}</p>
-      }
+    @if (failure()) {
+      <tr>
+        <td [attr.colspan]="columns" class="whitespace-normal">
+          <fl-alert tone="error" title="Change not saved">{{ failure() }}</fl-alert>
+        </td>
+      </tr>
+    }
 
-      @if (view(); as v) {
-        <app-needs-decision-list
-          [items]="v.needsDecision"
-          [destinationId]="v.destinationId ?? backup.destinations()[0]?.id ?? null"
-          (decided)="reload()"
-        />
-
-        @if (v.applications.length) {
-          <div>
-            <button
-              type="button"
-              class="text-xs text-muted-foreground hover:underline"
-              (click)="showApps.set(!showApps())"
-            >
-              {{ showApps() ? 'Hide' : 'Show' }} what each app got ({{ v.applications.length }})
-            </button>
-            @if (showApps()) {
-              <ul class="mt-2 divide-y divide-border/60 text-sm">
+    @if (showApps() && view()?.applications?.length) {
+      <tr>
+        <td [attr.colspan]="columns" class="whitespace-normal">
+          <div class="fl-table-wrap rounded-fl-md border border-fl-border">
+            <table flTable density="dense" [attr.aria-label]="'Apps on ' + clusterName()">
+              <thead>
+                <tr>
+                  <th scope="col">Application</th>
+                  <th scope="col">What it got</th>
+                </tr>
+              </thead>
+              <tbody>
                 @for (a of apps(); track a.applicationId) {
-                  <li class="flex flex-wrap items-center justify-between gap-2 py-1.5">
-                    <span>{{ a.name ?? a.applicationId }}</span>
-                    <span class="text-xs" [class]="tone(a)">{{ line(a) }}</span>
-                  </li>
+                  <tr>
+                    <td>{{ a.name ?? a.applicationId }}</td>
+                    <td><fl-status [tone]="tone(a)" [label]="line(a)" /></td>
+                  </tr>
                 }
-              </ul>
-            }
+              </tbody>
+            </table>
           </div>
-        }
-      }
-    </div>
+        </td>
+      </tr>
+    }
 
-    @if (confirmingStop()) {
+    @if (choosing()) {
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-        (click)="closeStop()"
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        (click)="choosing.set(false)"
       >
         <div
-          class="w-full max-w-md space-y-4 rounded-lg border border-border bg-background p-6"
+          class="fl-dialog"
+          role="dialog"
+          aria-modal="true"
+          [attr.aria-labelledby]="'protect-title-' + clusterId()"
           (click)="$event.stopPropagation()"
         >
-          <h3 class="text-lg font-semibold">Stop protecting new apps?</h3>
-          <p class="text-sm text-muted-foreground">
-            Apps installed on {{ clusterName() }} from now on get no backup unless someone adds one.
-            The backups already set up keep running.
-          </p>
-          <div class="flex gap-2">
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" [id]="'protect-title-' + clusterId()">
+              Protect {{ clusterName() }}
+            </h2>
             <button
               type="button"
-              class="flex-1 rounded-md border border-border px-4 py-2 text-sm hover:bg-muted"
-              (click)="closeStop()"
+              class="fl-dialog__close"
+              aria-label="Close"
+              (click)="choosing.set(false)"
             >
-              Cancel
+              <fl-icon name="lucideX" />
             </button>
-            <button
-              type="button"
-              class="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50"
-              [disabled]="working()"
-              (click)="stop()"
-            >
-              {{ working() ? 'Stopping…' : 'Stop' }}
-            </button>
+          </header>
+          <div class="fl-dialog__body">
+            <p>Each app gets its own backup, new apps included.</p>
+            @if (backup.destinations().length) {
+              <fl-field label="Backup storage" [for]="'protect-destination-' + clusterId()">
+                <span class="fl-select-wrap">
+                  <select
+                    class="fl-select"
+                    [id]="'protect-destination-' + clusterId()"
+                    [ngModel]="destinationId()"
+                    (ngModelChange)="destinationId.set($event)"
+                  >
+                    @for (d of backup.destinations(); track d.id) {
+                      <option [value]="d.id">{{ d.name }}</option>
+                    }
+                  </select>
+                </span>
+              </fl-field>
+            } @else {
+              <fl-alert tone="info" title="No backup storage yet">
+                Use Enable backups on this page, or add a destination.
+              </fl-alert>
+            }
+            <label class="fl-check">
+              <input
+                type="checkbox"
+                [ngModel]="beforeDeploy()"
+                (ngModelChange)="beforeDeploy.set($event)"
+              />
+              <span>Back up before each deploy</span>
+            </label>
           </div>
+          <footer class="fl-dialog__footer">
+            <button flButton="ghost" type="button" (click)="choosing.set(false)">Cancel</button>
+            <button
+              flButton="primary"
+              type="button"
+              [disabled]="!destinationId() || working()"
+              (click)="protect()"
+            >
+              {{ working() ? 'Starting…' : 'Protect' }}
+            </button>
+          </footer>
         </div>
       </div>
     }
@@ -235,13 +272,16 @@ export class ClusterProtectionCardComponent {
   readonly clusterId = input.required<string>();
   readonly clusterName = input<string>('');
   readonly changed = output<void>();
+  readonly loaded = output<ClusterProtection>();
+
+  private readonly confirm = inject(ConfirmService);
+  protected readonly columns = COLUMNS;
 
   protected readonly view = signal<ClusterProtection | null>(null);
   protected readonly loadError = signal<string | null>(null);
   protected readonly failure = signal<string | null>(null);
   protected readonly choosing = signal(false);
   protected readonly working = signal(false);
-  protected readonly confirmingStop = signal(false);
   protected readonly showApps = signal(false);
   protected readonly destinationId = signal('');
   protected readonly beforeDeploy = signal(false);
@@ -255,6 +295,17 @@ export class ClusterProtectionCardComponent {
 
   protected readonly line = protectedAppLine;
 
+  protected readonly state = computed<{ tone: StatusTone; label: string }>(() => {
+    const v = this.view();
+    if (!v?.protected) return { tone: 'neutral', label: 'Not configured' };
+    if (v.needsDecision.length) return { tone: 'warning', label: 'Needs a decision' };
+    return { tone: 'success', label: 'Protected' };
+  });
+
+  protected readonly stopActions = computed<readonly MenuAction[]>(() =>
+    STOP_ACTIONS.map((a) => ({ ...a, disabled: !!this.operationId() || this.working() })),
+  );
+
   constructor() {
     effect(() => {
       const id = this.clusterId();
@@ -267,8 +318,8 @@ export class ClusterProtectionCardComponent {
     });
   }
 
-  protected tone(app: ProtectedApp): string {
-    return OUTCOME_TONE[app.outcome] ?? 'text-muted-foreground';
+  protected tone(app: ProtectedApp): StatusTone {
+    return OUTCOME_TONE[app.outcome] ?? 'neutral';
   }
 
   protected destinationName(id: string | null): string {
@@ -295,6 +346,7 @@ export class ClusterProtectionCardComponent {
         runFirstBackup: true,
       });
       this.view.set(res.protection);
+      this.loaded.emit(res.protection);
       this.operationId.set(res.operationId);
       this.choosing.set(false);
     } catch (err: any) {
@@ -308,8 +360,14 @@ export class ClusterProtectionCardComponent {
     void this.reload();
   }
 
-  protected closeStop(): void {
-    if (!this.working()) this.confirmingStop.set(false);
+  protected async confirmStop(): Promise<void> {
+    const ok = await this.confirm.confirm({
+      title: 'Stop protecting new apps?',
+      body: `Apps installed on ${this.clusterName()} from now on get no backup unless someone adds one. The backups already set up keep running.`,
+      confirmLabel: 'Stop',
+      destructive: true,
+    });
+    if (ok) await this.stop();
   }
 
   protected async stop(): Promise<void> {
@@ -317,7 +375,6 @@ export class ClusterProtectionCardComponent {
     this.failure.set(null);
     try {
       await this.backup.stopClusterProtection(this.clusterId());
-      this.confirmingStop.set(false);
       await this.reload();
     } catch (err: any) {
       this.failure.set(err?.error?.message ?? 'Could not stop the protection');
@@ -334,7 +391,9 @@ export class ClusterProtectionCardComponent {
   private async load(id: string): Promise<void> {
     this.loadError.set(null);
     try {
-      this.view.set(await this.backup.getClusterProtection(id));
+      const protection = await this.backup.getClusterProtection(id);
+      this.view.set(protection);
+      this.loaded.emit(protection);
     } catch (err: any) {
       this.loadError.set(err?.error?.message ?? 'Could not read how this cluster is protected');
     }

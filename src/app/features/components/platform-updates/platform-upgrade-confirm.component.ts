@@ -1,95 +1,102 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  model,
-  output,
-  signal,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideTriangleAlert } from '@ng-icons/lucide';
+import { Component, computed, inject, model, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import {
   PlatformUpdateService,
   WITHOUT_BACKUP_ACKNOWLEDGEMENT,
 } from '../../service/platform-update.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
 
 @Component({
   selector: 'app-platform-upgrade-confirm',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideLoader, lucideTriangleAlert })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlAlert, FlButton, FlIcon, FlSpinner, FlStatus],
+  providers: [provideIcons({ lucideX })],
   template: `
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       (click)="closed.emit()"
     >
       <div
-        class="flex max-h-[90vh] w-full max-w-lg flex-col card-surface"
+        class="fl-dialog fl-dialog--wide"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="platform-upgrade-title"
         (click)="$event.stopPropagation()"
       >
-        <div class="shrink-0 border-b border-border p-5">
-          <h3 class="text-base font-semibold">Update to Flui {{ updates.availableVersion() }}</h3>
-          <p class="text-sub">
-            From
-            <span class="font-mono">{{ updates.status()?.installedVersion }}</span>. This runs on
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="platform-upgrade-title">
+            Update to Flui {{ updates.availableVersion() }}
+          </h2>
+          <button type="button" class="fl-dialog__close" aria-label="Close" (click)="closed.emit()">
+            <fl-icon name="lucideX" />
+          </button>
+        </header>
+
+        <div class="fl-dialog__body">
+          <p class="m-0 text-fl-ink-secondary">
+            From <span class="fl-mono">{{ updates.status()?.installedVersion }}</span>. This runs on
             the control cluster and cannot be paused once started.
           </p>
-        </div>
-        <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
+
           @if (updates.planning()) {
-            <div class="flex items-center gap-2 text-sm text-muted-foreground">
-              <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
+            <p class="fl-row m-0 text-fl-ink-muted">
+              <fl-spinner label="Planning" />
               Reading every cluster to plan the update…
-            </div>
+            </p>
           } @else if (updates.plan$(); as plan) {
-            <ol class="space-y-2">
+            <ol class="m-0 flex list-none flex-col gap-2 p-0">
               @for (phase of plan.phases; track phase.key; let i = $index) {
-                <li class="flex gap-2.5 text-sm" [class.opacity-60]="!phase.willRun">
-                  <span class="font-mono text-muted-foreground">{{ i + 1 }}.</span>
-                  <span>
+                <li class="flex gap-2.5" [class.text-fl-ink-muted]="!phase.willRun">
+                  <span class="fl-mono text-fl-ink-muted">{{ i + 1 }}.</span>
+                  <span class="flex flex-col">
                     <span class="font-semibold">{{ phase.title }}</span>
-                    <span class="block text-xs text-muted-foreground">{{ phase.summary }}</span>
+                    <span class="text-fl-caption text-fl-ink-muted">{{ phase.summary }}</span>
                   </span>
                 </li>
               }
             </ol>
             @for (blocker of hardBlockers(); track blocker.message) {
-              <p class="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                {{ blocker.message }}
-              </p>
+              <fl-alert tone="error" title="Blocked">{{ blocker.message }}</fl-alert>
             }
             @for (blocker of softBlockers(); track blocker.message) {
-              <p class="rounded-md bg-muted px-3 py-2 text-xs">
-                {{ blocker.message }}
-              </p>
+              <fl-alert tone="warning" title="Needs your acknowledgement">{{
+                blocker.message
+              }}</fl-alert>
             }
-            <label class="flex items-start gap-2.5 text-sm">
+            <label class="fl-check items-start">
               <input
                 type="checkbox"
-                class="mt-0.5 h-4 w-4 rounded border-border"
                 [checked]="withoutBackup()"
                 (change)="withoutBackup.set($any($event.target).checked)"
               />
-              <span class="text-muted-foreground">
+              <span class="text-fl-ink-secondary">
                 Update without a backup. {{ acknowledgement }}
               </span>
             </label>
-            <button
-              type="button"
-              (click)="planDetails.set(!planDetails())"
-              class="text-xs text-primary hover:underline"
-            >
-              {{ planDetails() ? 'Hide the plan details' : 'Show the plan details' }}
-            </button>
+            <div>
+              <button
+                flButton="ghost"
+                size="sm"
+                type="button"
+                [attr.aria-expanded]="planDetails()"
+                (click)="planDetails.set(!planDetails())"
+              >
+                {{ planDetails() ? 'Hide the plan details' : 'Show the plan details' }}
+              </button>
+            </div>
             @if (planDetails()) {
-              <div class="space-y-2 rounded-md bg-muted p-3 text-xs">
-                <p class="font-mono text-muted-foreground">plan {{ plan.planId }}</p>
+              <div
+                class="flex flex-col gap-2 rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3 text-fl-caption"
+              >
+                <p class="fl-mono m-0 text-fl-ink-muted">plan {{ plan.planId }}</p>
                 @for (phase of plan.phases; track phase.key) {
                   @for (cluster of phase.clusters ?? []; track cluster.clusterId) {
-                    <p>
+                    <p class="m-0">
                       <span class="font-semibold">{{ phase.title }}</span> ·
                       {{ cluster.clusterName }}:
                       @if (phase.key === 'k3s') {
@@ -108,7 +115,7 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
                         }}
                       }
                       @for (b of cluster.blockers; track b) {
-                        <span class="block text-destructive">{{ b }}</span>
+                        <span class="block"><fl-status tone="error" [label]="b" /></span>
                       }
                     </p>
                   }
@@ -117,55 +124,39 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
             }
           }
           @for (advisory of warnings(); track advisory.title) {
-            <div class="flex items-start gap-2.5 rounded-md bg-muted p-3">
-              <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-              <div>
-                <p class="text-sm">{{ advisory.title }}</p>
-                <p class="text-xs text-muted-foreground mt-0.5">
-                  {{ advisory.detail }}
-                </p>
-              </div>
-            </div>
+            <fl-alert
+              [tone]="advisory.level === 'blocker' ? 'error' : 'warning'"
+              [title]="advisory.title"
+            >
+              {{ advisory.detail }}
+            </fl-alert>
           }
           @if (migrations() > 0) {
-            <label class="flex items-start gap-2.5 text-sm">
+            <label class="fl-check items-start">
               <input
                 type="checkbox"
-                class="mt-0.5 h-4 w-4 rounded border-border"
                 [checked]="acknowledged()"
                 (change)="acknowledged.set($any($event.target).checked)"
               />
-              <span class="text-muted-foreground">
+              <span class="text-fl-ink-secondary">
                 I understand the database migrations in this release are not reverted by a rollback.
               </span>
             </label>
           }
           @if (updates.error(); as error) {
-            <p class="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {{ error }}
-            </p>
+            <fl-alert tone="error" title="Update not started">{{ error }}</fl-alert>
           }
         </div>
-        <div class="flex shrink-0 justify-end gap-2 border-t border-border bg-muted/50 p-4">
-          <button
-            type="button"
-            (click)="closed.emit()"
-            class="rounded-md border border-border px-3 py-1.5 text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            (click)="start()"
-            [disabled]="!canStart()"
-            class="flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-          >
+
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" (click)="closed.emit()">Cancel</button>
+          <button flButton="primary" type="button" (click)="start()" [disabled]="!canStart()">
             @if (updates.starting()) {
-              <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+              <fl-spinner label="Starting" />
             }
             Start update
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   `,
@@ -214,7 +205,7 @@ export class PlatformUpgradeConfirmComponent {
       });
       this.closed.emit();
     } catch {
-      // The dialog stays open and shows the refusal.
+      return;
     }
   }
 }

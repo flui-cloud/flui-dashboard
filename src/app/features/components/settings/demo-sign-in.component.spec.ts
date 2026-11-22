@@ -5,6 +5,7 @@ import {
   SignInProviderStatus,
   SignInProviders,
 } from '../../service/sandbox-sign-in.service';
+import { ConfirmService } from '../../../ui/overlays/confirm';
 import { DemoSignInComponent } from './demo-sign-in.component';
 
 const status = (over: Partial<SignInProviderStatus>): SignInProviderStatus => ({
@@ -43,6 +44,7 @@ describe('DemoSignInComponent', () => {
     connect: jasmine.Spy;
     disconnect: jasmine.Spy;
   };
+  let confirm: jasmine.Spy;
 
   const build = async (view: SignInProviders = VIEW): Promise<void> => {
     service = {
@@ -61,9 +63,13 @@ describe('DemoSignInComponent', () => {
         .createSpy('disconnect')
         .and.returnValue(of(status({ provider: 'google', name: 'Google' }))),
     };
+    confirm = jasmine.createSpy('confirm').and.resolveTo(false);
     await TestBed.configureTestingModule({
       imports: [DemoSignInComponent],
-      providers: [{ provide: SandboxSignInService, useValue: service }],
+      providers: [
+        { provide: SandboxSignInService, useValue: service },
+        { provide: ConfirmService, useValue: { confirm } },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(DemoSignInComponent);
     fixture.detectChanges();
@@ -151,12 +157,17 @@ describe('DemoSignInComponent', () => {
 
   it('asks before disconnecting, and only then calls the API', async () => {
     await build();
+    let answer!: (ok: boolean) => void;
+    confirm.and.returnValue(new Promise<boolean>((resolve) => (answer = resolve)));
     button('google', 'Disconnect').click();
     fixture.detectChanges();
     expect(service.disconnect).not.toHaveBeenCalled();
-    expect(text()).toContain('Guests who signed in with Google can no longer do so.');
+    expect(confirm.calls.mostRecent().args[0].body).toContain(
+      'Guests who signed in with Google can no longer do so.',
+    );
 
-    fixture.componentInstance.disconnect();
+    answer(true);
+    await fixture.whenStable();
     fixture.detectChanges();
     expect(service.disconnect).toHaveBeenCalledOnceWith('google');
     expect(button('google', 'Disconnect')).toBeUndefined();

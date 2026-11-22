@@ -8,19 +8,9 @@ import {
   inject,
   signal,
   untracked,
-  ChangeDetectionStrategy,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideUser,
-  lucideShield,
-  lucideShieldPlus,
-  lucideNetwork,
-  lucideBot,
-  lucideLogIn,
-} from '@ng-icons/lucide';
 import { AuthService } from '../../../core/services/auth.service';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
@@ -32,8 +22,6 @@ import {
   buildSettingsSurface,
   presentedContent,
 } from './settings-surface';
-import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { ProfileTabComponent } from './profile-tab.component';
 import { SecurityTabComponent } from './security-tab.component';
 import { InfrastructureAuthProxyComponent } from '../infrastructure/infrastructure-auth-proxy.component';
@@ -44,6 +32,8 @@ import { DemoVisitorsComponent } from './demo-visitors.component';
 import { InferenceUsageComponent } from './inference-usage.component';
 import { PermissionService } from '../../../core/services/permission.service';
 import { SandboxSignInService } from '../../service/sandbox-sign-in.service';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlTag } from '../../../ui/primitives/tag';
 
 type SectionId =
   'profile' | 'security' | 'agent-keys' | 'auth-proxy' | 'inference-connections' | 'demo-sign-in';
@@ -51,18 +41,15 @@ type SectionId =
 interface SectionDef {
   id: SectionId;
   label: string;
-  icon: string;
+  description: string;
   visible: () => boolean;
 }
 
 @Component({
   selector: 'app-settings',
-  standalone: true,
   imports: [
-    NgIcon,
-    HlmCardDirective,
-    HlmCardContentDirective,
-    HlmBadgeDirective,
+    FlPageHeader,
+    FlTag,
     ProfileTabComponent,
     SecurityTabComponent,
     InfrastructureAuthProxyComponent,
@@ -72,134 +59,67 @@ interface SectionDef {
     DemoVisitorsComponent,
     InferenceUsageComponent,
   ],
-  providers: [
-    provideIcons({
-      lucideUser,
-      lucideShield,
-      lucideShieldPlus,
-      lucideNetwork,
-      lucideBot,
-      lucideLogIn,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="p-6 max-w-6xl mx-auto space-y-6">
-      <!-- User header card -->
-      <div hlmCard>
-        <div hlmCardContent class="pt-6">
-          <div class="flex items-center gap-4">
-            <div
-              class="flex h-16 w-16 items-center justify-center rounded-fl-lg bg-muted border border-border text-xl font-bold text-muted-foreground select-none shrink-0"
-            >
-              {{ _initials() }}
-            </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h2 class="text-xl font-semibold text-foreground">{{ _displayName() }}</h2>
-                @if (_isAdmin()) {
-                  <span hlmBadge variant="default" class="text-xs">Admin</span>
-                }
-              </div>
-              <p class="text-sm text-muted-foreground mt-0.5">{{ _email() }}</p>
-              <p class="text-xs text-muted-foreground mt-1">
-                {{ _authMode() === 'oidc' ? 'Managed via OIDC provider' : 'Local account' }}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab navigation -->
-      <div class="border-b border-border relative">
-        <nav class="flex -mb-px gap-1 overflow-x-auto scrollbar-none pr-8">
+    <div class="fl-page">
+      <fl-page-header title="Settings">
+        <ng-container headerMeta>
+          <span>{{ _displayName() }}</span>
+          @if (_email()) {
+            <span class="fl-muted">{{ _email() }}</span>
+          }
+          <span class="fl-muted">{{
+            _authMode() === 'oidc' ? 'Managed by the OIDC provider' : 'Local account'
+          }}</span>
+          @if (_isAdmin()) {
+            <fl-tag>Admin</fl-tag>
+          }
+        </ng-container>
+        <nav ngProjectAs="fl-tabs" class="fl-tabs" role="tablist" aria-label="Settings sections">
           @for (s of visibleSections(); track s.id) {
             <button
               type="button"
+              role="tab"
+              class="fl-tab"
+              [id]="'settings-tab-' + s.id"
+              aria-controls="settings-section"
+              [attr.aria-selected]="activeSection() === s.id"
               (click)="select(s.id)"
-              [title]="s.label"
-              class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0"
-              [class]="
-                activeSection() === s.id
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              "
             >
-              <ng-icon [name]="s.icon" class="h-4 w-4 flex-shrink-0" />
-              <span>{{ s.label }}</span>
+              {{ s.label }}
             </button>
           }
         </nav>
-      </div>
+      </fl-page-header>
 
-      <!-- Active section -->
-      <div class="min-w-0">
+      <div
+        id="settings-section"
+        role="tabpanel"
+        class="fl-stack min-w-0"
+        [attr.aria-labelledby]="'settings-tab-' + activeSection()"
+      >
+        @if (activeDescription(); as description) {
+          <p class="m-0 text-fl-body-sm text-fl-ink-muted">{{ description }}</p>
+        }
         @switch (activeSection()) {
           @case ('profile') {
-            <section class="space-y-3">
-              <header>
-                <h3 class="text-lg font-semibold text-foreground">Profile</h3>
-                <p class="text-sm text-muted-foreground">Your account information.</p>
-              </header>
-              <app-profile-tab />
-            </section>
+            <app-profile-tab />
           }
           @case ('security') {
-            <section class="space-y-3">
-              <header>
-                <h3 class="text-lg font-semibold text-foreground">Security</h3>
-                <p class="text-sm text-muted-foreground">
-                  Manage your password and account security.
-                </p>
-              </header>
-              <app-security-tab />
-            </section>
+            <app-security-tab />
           }
           @case ('agent-keys') {
-            <section class="space-y-3">
-              <header>
-                <h3 class="text-lg font-semibold text-foreground">Agent keys</h3>
-                <p class="text-sm text-muted-foreground">
-                  Hand a coding agent a key of your own, see what each one can do, and take it back.
-                </p>
-              </header>
-              <app-agent-keys />
-            </section>
+            <app-agent-keys />
           }
           @case ('auth-proxy') {
-            <section class="space-y-3">
-              <header>
-                <h3 class="text-lg font-semibold text-foreground">Auth Proxy</h3>
-                <p class="text-sm text-muted-foreground">
-                  Protect internal apps with OIDC-based access per cluster.
-                </p>
-              </header>
-              <app-infrastructure-auth-proxy />
-            </section>
+            <app-infrastructure-auth-proxy />
           }
           @case ('inference-connections') {
-            <section class="space-y-3">
-              <header>
-                <h3 class="text-lg font-semibold text-foreground">LLM Connections</h3>
-                <p class="text-sm text-muted-foreground">
-                  Bring your own API key to connect any OpenAI-compatible language model.
-                </p>
-              </header>
-              <app-inference-connections />
-              <app-inference-usage />
-            </section>
+            <app-inference-connections />
+            <app-inference-usage />
           }
           @case ('demo-sign-in') {
-            <section class="space-y-3">
-              <header>
-                <h3 class="text-lg font-semibold text-foreground">Demo sign-in</h3>
-                <p class="text-sm text-muted-foreground">
-                  Let the demo's guests sign in with GitHub or Google.
-                </p>
-              </header>
-              <app-demo-sign-in />
-              <app-demo-visitors />
-            </section>
+            <app-demo-sign-in />
+            <app-demo-visitors />
           }
         }
       </div>
@@ -227,40 +147,50 @@ export class SettingsComponent implements OnInit, OnDestroy {
   protected readonly _isAdmin = computed(() => this.authService.currentUser()?.isAdmin ?? false);
 
   private readonly sections: SectionDef[] = [
-    { id: 'profile', label: 'Profile', icon: 'lucideUser', visible: () => true },
+    {
+      id: 'profile',
+      label: 'Profile',
+      description: 'Your account information.',
+      visible: () => true,
+    },
     {
       id: 'security',
       label: 'Security',
-      icon: 'lucideShield',
+      description: 'Manage your password and account security.',
       visible: () => this._authMode() === 'local',
     },
     {
       id: 'agent-keys',
       label: 'Agent keys',
-      icon: 'lucideBot',
+      description:
+        'Hand a coding agent a key of your own, see what each one can do, and take it back.',
       visible: () => true,
     },
     {
       id: 'auth-proxy',
-      label: 'Auth Proxy',
-      icon: 'lucideShieldPlus',
+      label: 'Auth proxy',
+      description: 'Protect internal apps with OIDC-based access per cluster.',
       visible: () => this._isAdmin(),
     },
     {
       id: 'inference-connections',
-      label: 'LLM Connections',
-      icon: 'lucideNetwork',
+      label: 'LLM connections',
+      description: 'Bring your own API key to connect any OpenAI-compatible language model.',
       visible: () => true,
     },
     {
       id: 'demo-sign-in',
       label: 'Demo sign-in',
-      icon: 'lucideLogIn',
+      description: "Let the demo's guests sign in with GitHub or Google.",
       visible: () => this.perms.can('sandbox:operate') && this.demoInstall(),
     },
   ];
 
   readonly visibleSections = computed(() => this.sections.filter((s) => s.visible()));
+
+  protected readonly activeDescription = computed(
+    () => this.sections.find((s) => s.id === this.activeSection())?.description ?? null,
+  );
 
   private readonly surfaceRevision = new SettingsSurfaceRevision();
 
@@ -319,8 +249,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Publish this page's own Semantic Surface snapshot into the shared registry
-    // whenever it changes — same pattern as ApplicationDetailComponent.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -336,17 +264,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
   });
 
   protected readonly _email = computed(() => this.authService.currentUser()?.email ?? '');
-
-  protected readonly _initials = computed(() => {
-    const u = this.authService.currentUser();
-    const src = u?.name || u?.email || '';
-    return src
-      .split(/[\s@]+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((w: string) => w[0].toUpperCase())
-      .join('');
-  });
 
   ngOnInit(): void {
     this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((fragment) => {

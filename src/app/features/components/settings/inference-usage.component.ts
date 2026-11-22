@@ -1,21 +1,13 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  computed,
-  effect,
-  inject,
-  signal,
-  untracked,
-} from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HlmCardContentDirective, HlmCardDirective } from '@spartan-ng/ui-card-helm';
 import { PermissionService } from '../../../core/services/permission.service';
 import {
   InferenceSettingsService,
   InferenceUsage,
   UsageKind,
 } from '../../service/inference-settings.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
 
 const KINDS: ReadonlyArray<{ kind: UsageKind; label: string }> = [
   { kind: 'visitor', label: 'Visitors' },
@@ -28,35 +20,32 @@ const COMPACT = new Intl.NumberFormat('en', { notation: 'compact', maximumFracti
 
 @Component({
   selector: 'app-inference-usage',
-  host: { class: 'block' },
-  standalone: true,
-  imports: [HlmCardDirective, HlmCardContentDirective],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'fl-stack' },
+  imports: [FlPanel, FlTable],
   template: `
     @if (rows(); as list) {
-      <div hlmCard data-testid="inference-usage">
-        <div hlmCardContent class="pt-5 space-y-3">
-          <h4 class="text-sm font-medium">Usage (last 7 days)</h4>
-          <table class="w-full text-sm">
+      <fl-panel title="Usage in the last 7 days" [flush]="true" data-testid="inference-usage">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
             <thead>
-              <tr class="text-left text-xs text-muted-foreground border-b border-border">
-                <th class="py-1.5 pr-4 font-medium">Who</th>
-                <th class="py-1.5 pr-4 font-medium text-right">Tokens</th>
-                <th class="py-1.5 font-medium text-right">Calls</th>
+              <tr>
+                <th scope="col">Who</th>
+                <th scope="col" class="is-num">Tokens</th>
+                <th scope="col" class="is-num">Calls</th>
               </tr>
             </thead>
             <tbody>
               @for (r of list; track r.kind) {
-                <tr class="border-b border-border/60 last:border-0" [attr.data-kind]="r.kind">
-                  <td class="py-1.5 pr-4">{{ r.label }}</td>
-                  <td class="py-1.5 pr-4 text-right tabular-nums">{{ r.tokens }}</td>
-                  <td class="py-1.5 text-right tabular-nums">{{ r.calls }}</td>
+                <tr [attr.data-kind]="r.kind">
+                  <td>{{ r.label }}</td>
+                  <td class="is-num">{{ r.tokens }}</td>
+                  <td class="is-num">{{ r.calls }}</td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
-      </div>
+      </fl-panel>
     }
   `,
 })

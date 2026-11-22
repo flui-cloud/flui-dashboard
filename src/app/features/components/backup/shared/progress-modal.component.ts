@@ -1,89 +1,70 @@
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  output,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, computed, effect, inject, input, output } from '@angular/core';
 
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlStatus } from '../../../../ui/primitives/status';
 import { BackupService } from '../../../service/backup.service';
 import { ActiveOperation } from '../../../model/backup.models';
 
+let nextId = 0;
+
 @Component({
   selector: 'app-backup-progress-modal',
-  standalone: true,
-  imports: [],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlAlert, FlButton, FlStatus],
   template: `
     @if (op(); as o) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div
-          class="w-full max-w-md rounded-lg border border-border bg-background p-6"
-          role="dialog"
-          aria-modal="true"
-        >
-          <h3 class="mb-4 text-lg font-semibold">{{ title() }}</h3>
-
-          <div class="space-y-3">
-            <div>
-              <div class="flex justify-between text-xs text-muted-foreground mb-1">
-                <span>{{ o.status === 'running' ? o.message || 'In progress…' : '' }}</span>
-                <span>{{ o.percentage }}%</span>
+      <div class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fl-dialog" role="dialog" aria-modal="true" [attr.aria-labelledby]="titleId">
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" [id]="titleId">{{ title() }}</h2>
+          </header>
+          <div class="fl-dialog__body">
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-fl-body-sm text-fl-ink-muted">{{
+                  o.status === 'running' ? o.message || 'In progress…' : ''
+                }}</span>
+                <span class="fl-num text-fl-body-sm text-fl-ink-muted">{{ o.percentage }}%</span>
               </div>
-              <div class="h-2 w-full rounded-full bg-muted overflow-hidden">
-                <div
-                  class="h-full transition-all"
-                  [class]="barClass()"
-                  [style.width.%]="o.percentage"
-                ></div>
-              </div>
+              <span
+                class="fl-bar"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                [attr.aria-valuenow]="o.percentage"
+                [attr.aria-label]="title()"
+                ><span [style.width.%]="o.percentage"></span
+              ></span>
             </div>
 
             @if (o.status === 'running' && o.currentStep) {
-              <p class="text-xs text-muted-foreground">Step {{ o.currentStep }}</p>
+              <p class="text-fl-body-sm text-fl-ink-muted">Step {{ o.currentStep }}</p>
             }
             @if (o.status === 'failed') {
-              <div
-                class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700"
-                data-testid="progress-failed"
-              >
-                {{ o.error || 'It failed.' }}
-              </div>
+              <fl-alert tone="error" title="Failed" data-testid="progress-failed">{{
+                o.error || 'It failed.'
+              }}</fl-alert>
             } @else if (o.status === 'completed' && o.partial) {
-              <div
-                class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700"
+              <fl-alert
+                tone="warning"
+                title="Finished, but not everything was backed up"
                 data-testid="progress-partial"
+                >{{ o.detail }}</fl-alert
               >
-                Finished, but not everything was backed up.
-                @if (o.detail) {
-                  <span class="block mt-1">{{ o.detail }}</span>
-                }
-              </div>
             } @else if (o.status === 'completed') {
-              <div
-                class="rounded border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-700"
-                data-testid="progress-completed"
-              >
-                Completed successfully.
+              <div class="flex flex-col gap-1" data-testid="progress-completed">
+                <fl-status tone="success" label="Completed successfully" />
                 @if (o.detail) {
-                  <span class="block mt-1 text-xs">{{ o.detail }}</span>
+                  <p class="text-fl-body-sm text-fl-ink-muted">{{ o.detail }}</p>
                 }
               </div>
             }
           </div>
-
-          <div class="mt-5 flex justify-end">
-            <button
-              type="button"
-              class="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
-              data-testid="progress-close"
-              (click)="onClose()"
-            >
+          <footer class="fl-dialog__footer">
+            <button flButton type="button" data-testid="progress-close" (click)="onClose()">
               {{ o.status === 'running' ? 'Keep running in background' : 'Close' }}
             </button>
-          </div>
+          </footer>
         </div>
       </div>
     }
@@ -97,20 +78,13 @@ export class BackupProgressModalComponent {
   readonly closed = output<void>();
   readonly settled = output<ActiveOperation>();
 
+  protected readonly titleId = `backup-progress-title-${nextId++}`;
   private announced: string | null = null;
 
   readonly op = computed(() => {
     const id = this.operationId();
     if (!id) return null;
     return this.backup.activeOperations()[id] ?? null;
-  });
-
-  readonly barClass = computed(() => {
-    const o = this.op();
-    if (!o) return 'bg-blue-500';
-    if (o.status === 'failed') return 'bg-red-500';
-    if (o.status === 'completed') return o.partial ? 'bg-amber-500' : 'bg-green-500';
-    return 'bg-blue-500';
   });
 
   constructor() {

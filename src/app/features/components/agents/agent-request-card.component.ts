@@ -1,16 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronDown, lucideLoader } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideChevronDown, lucideChevronUp } from '@ng-icons/lucide';
 import {
   AgentProposal,
   EstimateFact,
@@ -22,195 +12,150 @@ import {
 } from '../../model/agent-cycle.models';
 import { formatTimeSince } from '../../model/dns.models';
 import { AgentCycleService } from '../../service/agent-cycle.service';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { ConfirmOptions, ConfirmService } from '../../../ui/overlays/confirm';
+import { riskOf } from './agent-request-risk';
 
 @Component({
   selector: 'app-agent-request-card',
-  standalone: true,
-  imports: [NgIcon, HlmButtonDirective],
-  providers: [provideIcons({ lucideChevronDown, lucideLoader })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlKeyValue, FlKvItem, FlLoadingState, FlButton, FlIcon],
+  providers: [provideIcons({ lucideChevronDown, lucideChevronUp })],
+  host: { class: 'block' },
   template: `
-    <article
-      class="grid grid-cols-[3px_1fr] overflow-hidden rounded-lg border border-border bg-card"
-      data-testid="request"
-    >
-      <div class="bg-orange-400"></div>
-
-      <div class="flex flex-col gap-4 px-5 py-4">
-        <div class="flex flex-wrap items-center gap-2.5">
-          <h3
-            class="m-0 text-[17px] font-semibold tracking-tight text-foreground"
-            data-testid="request-sentence"
-          >
-            {{ headline() }}
-          </h3>
-          <span class="badge badge-pending" data-testid="request-asked"> Asked {{ asked() }} </span>
+    <article class="flex flex-col gap-3 px-4 py-3" data-testid="request">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="flex min-w-0 flex-1 flex-col gap-1">
+          <div class="fl-row">
+            <h3
+              class="m-0 text-fl-body-sm font-semibold text-fl-ink"
+              data-testid="request-sentence"
+            >
+              {{ headline() }}
+            </h3>
+            <span class="text-fl-caption text-fl-ink-muted" data-testid="request-asked">
+              Asked {{ asked() }}
+            </span>
+          </div>
+          @if (proposal().consequence) {
+            <p class="m-0 text-fl-body-sm text-fl-ink-secondary" data-testid="request-consequence">
+              <span class="font-medium text-fl-ink">If you allow it:</span>
+              {{ proposal().consequence }}
+            </p>
+          }
+          <p class="fl-mono m-0 text-fl-ink-muted" data-testid="request-who">
+            <span class="text-fl-ink">{{ agentLabel() }}</span>
+            @if (proposal().keyId) {
+              · key {{ proposal().keyId }}
+            }
+          </p>
         </div>
 
-        @if (proposal().consequence) {
-          <p
-            class="m-0 text-[13px] leading-relaxed text-foreground"
-            data-testid="request-consequence"
-          >
-            <span class="font-medium">If you allow it:</span>
-            {{ proposal().consequence }}
-          </p>
-        }
-
-        <p class="m-0 font-mono text-[13px] text-muted-foreground" data-testid="request-who">
-          <span class="font-medium text-foreground">{{ agentLabel() }}</span>
-          @if (proposal().keyId) {
-            · key {{ proposal().keyId }}
-          }
-        </p>
-
-        <dl
-          class="grid gap-px overflow-hidden rounded-md border border-border bg-border"
-          style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))"
-          data-testid="request-facts"
-        >
-          <div class="flex flex-col gap-0.5 bg-card px-3 py-2.5">
-            <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              Action
-            </dt>
-            <dd class="m-0 font-mono text-sm font-medium text-foreground">{{ verb() }}</dd>
-          </div>
-          <div class="flex flex-col gap-0.5 bg-card px-3 py-2.5">
-            <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              Route
-            </dt>
-            <dd class="m-0 break-all font-mono text-sm font-medium text-foreground">
-              {{ pattern() }}
-            </dd>
-          </div>
-          @for (bound of bindings(); track bound.label) {
-            <div class="flex flex-col gap-0.5 bg-card px-3 py-2.5">
-              <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                {{ bound.label }}
-              </dt>
-              <dd class="m-0 break-all font-mono text-sm font-medium text-foreground">
-                {{ bound.value }}
-              </dd>
-            </div>
-          }
-          @for (fact of facts(); track fact.label) {
-            <div class="flex flex-col gap-0.5 bg-card px-3 py-2.5" data-testid="estimate-fact">
-              <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                {{ fact.label }}
-              </dt>
-              <dd
-                class="m-0 break-all font-mono text-sm font-medium tabular-nums"
-                [class]="fact.money ? 'text-orange-700 font-semibold' : 'text-foreground'"
-              >
-                {{ fact.value }}
-              </dd>
-            </div>
-          }
-        </dl>
-
-        @if (pricing()) {
-          <div class="space-y-2" data-testid="estimate-loading" aria-busy="true">
-            <div class="skeleton h-3 w-28"></div>
-            <div class="skeleton h-3 w-40"></div>
-          </div>
-        } @else if (priceError()) {
-          <p class="m-0 text-xs text-muted-foreground" data-testid="estimate-error">
-            {{ priceError() }}
-          </p>
-        }
-
-        @if (offersAlways()) {
-          <p
-            class="m-0 rounded-md border border-dashed border-orange-400 bg-orange-50 px-3 py-2.5 text-[13px] text-foreground"
-            data-testid="grants-line"
-          >
-            Allow always grants exactly this:
-            <code class="font-mono text-[12.5px] font-medium">{{ proposal().sentence }}</code>. No
-            other action, no other resource.
-          </p>
-        } @else if (proposal().asksEveryTime) {
-          <p class="m-0 text-[13px] text-muted-foreground" data-testid="every-time-note">
-            Removing something, or widening what a key may do, is allowed one call at a time: there
-            is no "always" for it.
-          </p>
-        } @else {
-          <p class="m-0 text-[13px] text-muted-foreground" data-testid="no-always-note">
-            This request did not state its own boundary, so there is no standing permission it could
-            be turned into. It can be allowed this once.
-          </p>
-        }
-
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="fl-row">
           <button
-            hlmBtn
-            type="button"
+            flButton="primary"
             size="sm"
+            type="button"
             [disabled]="busy()"
             (click)="answer(DECISION.ONCE)"
             data-testid="allow-once"
           >
             Allow once
           </button>
-
           @if (offersAlways()) {
             <button
-              hlmBtn
-              type="button"
+              flButton
               size="sm"
-              variant="outline"
+              type="button"
               [disabled]="busy()"
               (click)="answer(DECISION.ALWAYS)"
-              class="border-green-300 text-green-700 hover:bg-green-50"
               data-testid="allow-always"
             >
               Allow always
             </button>
           }
-
           <button
-            hlmBtn
-            type="button"
+            flButton="ghost"
             size="sm"
-            variant="outline"
+            type="button"
             [disabled]="busy()"
             (click)="answer(DECISION.DENY)"
-            class="border-red-300 text-red-700 hover:bg-red-50"
             data-testid="deny"
           >
             Deny
           </button>
-
-          @if (estimateBody() !== null) {
-            <button
-              hlmBtn
-              type="button"
-              size="sm"
-              variant="ghost"
-              (click)="showEstimate.set(!showEstimate())"
-              data-testid="full-estimate"
-            >
-              <ng-icon
-                name="lucideChevronDown"
-                class="mr-1 h-3.5 w-3.5 transition-transform"
-                [class.rotate-180]="showEstimate()"
-              />
-              See full estimate
-            </button>
-          }
         </div>
-
-        @if (showEstimate() && estimateBody() !== null) {
-          <pre
-            class="m-0 max-h-72 overflow-auto rounded-md bg-muted/60 px-3 py-2.5 font-mono text-xs leading-relaxed text-muted-foreground"
-            data-testid="estimate-body"
-            >{{ estimateJson() }}</pre>
-        }
       </div>
+
+      <fl-key-value class="fl-kv--compact" data-testid="request-facts">
+        <fl-kv-item key="Action" [mono]="true">{{ verb() }}</fl-kv-item>
+        <fl-kv-item key="Route" [mono]="true">{{ pattern() }}</fl-kv-item>
+        @for (bound of bindings(); track bound.label) {
+          <fl-kv-item [key]="bound.label" [mono]="true">{{ bound.value }}</fl-kv-item>
+        }
+        @for (fact of facts(); track fact.label) {
+          <fl-kv-item [key]="fact.label" [mono]="true" data-testid="estimate-fact">
+            <span class="fl-num" [class.font-semibold]="fact.money">{{ fact.value }}</span>
+          </fl-kv-item>
+        }
+      </fl-key-value>
+
+      @if (pricing()) {
+        <fl-loading-state [rows]="2" data-testid="estimate-loading" />
+      } @else if (priceError()) {
+        <p class="m-0 text-fl-caption text-fl-ink-muted" data-testid="estimate-error">
+          {{ priceError() }}
+        </p>
+      }
+
+      @if (offersAlways()) {
+        <p class="m-0 text-fl-caption text-fl-ink-secondary" data-testid="grants-line">
+          Allow always grants exactly this:
+          <code class="fl-mono text-fl-ink">{{ proposal().sentence }}</code>. No other action, no
+          other resource.
+        </p>
+      } @else if (proposal().asksEveryTime) {
+        <p class="m-0 text-fl-caption text-fl-ink-muted" data-testid="every-time-note">
+          Removing something, or widening what a key may do, is allowed one call at a time: there is
+          no "always" for it.
+        </p>
+      } @else {
+        <p class="m-0 text-fl-caption text-fl-ink-muted" data-testid="no-always-note">
+          This request did not state its own boundary, so there is no standing permission it could
+          be turned into. It can be allowed this once.
+        </p>
+      }
+
+      @if (estimateBody() !== null) {
+        <div>
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [attr.aria-expanded]="showEstimate()"
+            (click)="showEstimate.set(!showEstimate())"
+            data-testid="full-estimate"
+          >
+            <fl-icon [name]="showEstimate() ? 'lucideChevronUp' : 'lucideChevronDown'" />
+            See full estimate
+          </button>
+        </div>
+      }
+
+      @if (showEstimate() && estimateBody() !== null) {
+        <pre
+          class="fl-mono m-0 max-h-72 overflow-auto whitespace-pre-wrap rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3 text-fl-ink-secondary"
+          data-testid="estimate-body"
+          >{{ estimateJson() }}</pre>
+      }
     </article>
   `,
 })
 export class AgentRequestCardComponent implements OnInit {
   private readonly cycle = inject(AgentCycleService);
+  private readonly confirmer = inject(ConfirmService);
 
   readonly proposal = input.required<AgentProposal>();
   readonly agentName = input<string | null>(null);
@@ -288,7 +233,10 @@ export class AgentRequestCardComponent implements OnInit {
     });
   }
 
-  protected answer(decision: ProposalDecision): void {
-    this.decide.emit({ id: this.proposal().id, decision });
+  protected async answer(decision: ProposalDecision): Promise<void> {
+    const proposal = this.proposal();
+    const risk: ConfirmOptions | null = riskOf(proposal, decision, this.facts());
+    if (risk && !(await this.confirmer.confirm(risk))) return;
+    this.decide.emit({ id: proposal.id, decision });
   }
 }

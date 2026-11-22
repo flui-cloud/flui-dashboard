@@ -1,23 +1,23 @@
 import {
   Component,
   OnDestroy,
+  OnInit,
   computed,
   effect,
   inject,
   signal,
   viewChild,
-  OnInit,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideSettings, lucideCheck } from '@ng-icons/lucide';
 import { ProvidersOverviewComponent } from './providers-overview.component';
-import { ProviderConfigurationWizardComponent } from './provider-configuration-wizard.component';
+import {
+  ConfigurationResult,
+  ProviderConfigurationWizardComponent,
+} from './provider-configuration-wizard.component';
 import { ProvidersService } from '../../service/providers.service';
 import { ProviderDefinitionDto } from '../../../core/api';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { FlToast } from '../../../ui/overlays/toast';
 import {
   ProvidersSurfaceInput,
   ProvidersSurfaceRevision,
@@ -30,35 +30,15 @@ type ViewMode = 'overview' | 'configure';
 
 @Component({
   selector: 'providers-management',
-  standalone: true,
-  imports: [NgIcon, ProvidersOverviewComponent, ProviderConfigurationWizardComponent],
-  providers: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideSettings,
-      lucideCheck,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [ProvidersOverviewComponent, ProviderConfigurationWizardComponent, FlToast],
   template: `
-    <div class="container mx-auto px-4 py-8">
+    <div class="fl-page">
       @switch (currentView()) {
         @case ('overview') {
           <providers-overview (startConfiguration)="startConfiguration($event)" />
         }
-
         @case ('configure') {
           @if (selectedProvider()) {
-            <div class="mb-6">
-              <button
-                (click)="backToOverview()"
-                class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ng-icon name="lucideArrowLeft" class="h-4 w-4 mr-2" />
-                Back to Providers
-              </button>
-            </div>
-
             <provider-configuration-wizard
               [provider]="selectedProvider()!"
               (completeOutput)="onConfigurationComplete($event)"
@@ -67,18 +47,12 @@ type ViewMode = 'overview' | 'configure';
           }
         }
       }
-
-      @if (showSuccessMessage()) {
-        <div
-          class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg transition-all"
-        >
-          <div class="flex items-center space-x-2">
-            <ng-icon name="lucideCheck" class="h-5 w-5" />
-            <span>{{ successMessage() }}</span>
-          </div>
-        </div>
-      }
     </div>
+    @if (showSuccessMessage()) {
+      <div class="fl-toasts" aria-live="polite">
+        <fl-toast tone="success" [title]="successMessage()" (dismiss)="dismissToast()" />
+      </div>
+    }
   `,
 })
 export class ProvidersManagementComponent implements OnInit, OnDestroy {
@@ -91,12 +65,8 @@ export class ProvidersManagementComponent implements OnInit, OnDestroy {
   protected selectedProviderId = signal<string>('');
   protected showSuccessMessage = signal<boolean>(false);
   protected successMessage = signal<string>('');
+  private toastTimer?: ReturnType<typeof setTimeout>;
 
-  // The overview grid owns its own search/status/credential-type filters and its own
-  // `filteredProviders` computed — the Semantic Surface reads those directly (via this
-  // view query) rather than re-deriving them, per the anti-drift rule (§3.4 of the
-  // producer playbook): it is undefined while the configure wizard is open, which is
-  // exactly when there is no filtered list on screen to describe.
   private readonly overview = viewChild(ProvidersOverviewComponent);
 
   readonly selectedProvider = computed((): ProviderDefinitionDto | null => {
@@ -146,8 +116,6 @@ export class ProvidersManagementComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // Publish this page's own Semantic Surface snapshot into the shared registry
-    // whenever it changes — same pattern as ApplicationDetailComponent.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -161,6 +129,7 @@ export class ProvidersManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    clearTimeout(this.toastTimer);
     this.currentSurface.set(null);
   }
 
@@ -177,9 +146,9 @@ export class ProvidersManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  onConfigurationComplete(event: { success: boolean; configuration?: any; error?: string }): void {
+  onConfigurationComplete(event: ConfigurationResult): void {
     if (event.success) {
-      this.showSuccess('Provider configured successfully!');
+      this.showSuccess('Provider connected');
       this.backToOverview();
       this.providersService.loadConfigurations();
     } else {
@@ -190,7 +159,13 @@ export class ProvidersManagementComponent implements OnInit, OnDestroy {
   private showSuccess(message: string): void {
     this.successMessage.set(message);
     this.showSuccessMessage.set(true);
-    setTimeout(() => this.showSuccessMessage.set(false), 3000);
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => this.showSuccessMessage.set(false), 3000);
+  }
+
+  protected dismissToast(): void {
+    clearTimeout(this.toastTimer);
+    this.showSuccessMessage.set(false);
   }
 
   private showError(message: string): void {

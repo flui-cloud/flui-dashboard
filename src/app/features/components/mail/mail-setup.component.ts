@@ -1,161 +1,141 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleCheck,
-  lucideExternalLink,
-  lucideRotateCcw,
-  lucideTriangleAlert,
-  lucideWrench,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink, lucideRefreshCw } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 import { MailSectionNavComponent } from './mail-section-nav.component';
 import { MailTestSendComponent } from './mail-test-send.component';
 import { MailConsoleService } from '../../service/mail-console.service';
-import {
-  MailReadiness,
-  MailReadinessStep,
-  READINESS_STEP_LABEL,
-} from '../../model/mail-console.models';
+import { MailReadiness, MailReadinessStep } from '../../model/mail-console.models';
 import { consoleError } from './mail-format';
+import { stepLabel, stepStatus, stepTone } from './mail-readiness';
 
 @Component({
   selector: 'app-mail-setup',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, NgIcon, MailSectionNavComponent, MailTestSendComponent],
-  providers: [
-    provideIcons({
-      lucideCircleCheck,
-      lucideExternalLink,
-      lucideRotateCcw,
-      lucideTriangleAlert,
-      lucideWrench,
-    }),
+  imports: [
+    FormsModule,
+    RouterLink,
+    FlAlert,
+    FlPanel,
+    FlLoadingState,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    MailSectionNavComponent,
+    MailTestSendComponent,
   ],
+  providers: [provideIcons({ lucideExternalLink, lucideRefreshCw })],
   template: `
-    <div class="p-4 md:p-6">
+    <div class="fl-page">
       <app-mail-section-nav [toFix]="toFix()">
         <button
-          slot="actions"
+          headerActions
+          flButton
           type="button"
-          (click)="load()"
+          [iconOnly]="true"
+          aria-label="Re-check"
           [disabled]="loading()"
-          class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:opacity-60"
+          (click)="load()"
         >
-          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
-          Re-check
+          <fl-icon name="lucideRefreshCw" />
         </button>
       </app-mail-section-nav>
 
-      <div class="mb-4 flex flex-wrap items-center gap-2">
-        <input
-          type="text"
-          [(ngModel)]="domain"
-          (keydown.enter)="load()"
-          placeholder="Check a specific domain (optional)"
-          class="h-9 w-72 rounded-md border border-border bg-background px-3 text-sm text-foreground"
-        />
-        <button
-          type="button"
-          (click)="load()"
-          [disabled]="loading()"
-          class="inline-flex h-9 items-center rounded-md border border-border px-3 text-sm text-foreground hover:bg-muted disabled:opacity-60"
-        >
-          Check
-        </button>
-        <p class="text-xs text-muted-foreground">
-          With no domain, this answers only whether the connected key covers Transactional Email at
-          all — which is the first thing that goes wrong.
-        </p>
-      </div>
+      <fl-panel title="Check readiness">
+        <form class="flex flex-wrap items-end gap-3" (ngSubmit)="load()">
+          <div class="fl-field min-w-72 flex-1">
+            <label class="fl-field__label" for="mail-setup-domain">Domain (optional)</label>
+            <div class="fl-input fl-input--lg">
+              <input
+                id="mail-setup-domain"
+                name="domain"
+                type="text"
+                class="fl-mono"
+                placeholder="mail.example.com"
+                [(ngModel)]="domain"
+              />
+            </div>
+            <span class="fl-field__hint">
+              With no domain, this answers only whether the connected key covers Transactional Email
+              at all, which is the first thing that goes wrong.
+            </span>
+          </div>
+          <button flButton="primary" type="submit" [disabled]="loading()">Check</button>
+        </form>
+      </fl-panel>
 
       @if (loading()) {
-        <div class="space-y-2">
-          @for (i of [1, 2, 3, 4]; track i) {
-            <div class="rounded-lg border border-border bg-card p-4">
-              <div class="flex items-start gap-3">
-                <div class="skeleton mt-0.5 h-5 w-5 rounded-full"></div>
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2">
-                    <div class="skeleton h-4 w-40"></div>
-                    <div class="skeleton h-3 w-20"></div>
-                  </div>
-                  <div class="skeleton mt-2 h-3 w-3/4"></div>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
+        <fl-panel title="Readiness">
+          <fl-loading-state [rows]="4" />
+        </fl-panel>
       } @else if (error()) {
-        <div
-          class="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{ error() }}</span>
-        </div>
+        <fl-alert tone="error" title="Could not check readiness">{{ error() }}</fl-alert>
       } @else if (readiness()) {
         @let r = readiness()!;
-        @if (r.ready) {
-          <div
-            class="mb-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
-          >
-            <ng-icon name="lucideCircleCheck" class="h-4 w-4 shrink-0" />
-            Ready to send{{ domain.trim() ? ' from ' + domain.trim() : '' }}.
+        <fl-panel title="Readiness" [count]="r.steps.length" [flush]="true">
+          <fl-status
+            panelActions
+            [tone]="r.ready ? 'success' : 'warning'"
+            [label]="r.ready ? readyLabel() : 'Not ready to send'"
+          />
+          <div class="fl-table-wrap">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">Step</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">What to do</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (step of r.steps; track step.id) {
+                  <tr>
+                    <td>{{ label(step) }}</td>
+                    <td><fl-status [tone]="tone(step)" [label]="status(step)" /></td>
+                    <td class="is-wrap">
+                      <div class="flex flex-col gap-1">
+                        @if (step.action) {
+                          <span>{{ step.action }}</span>
+                        } @else {
+                          <span class="text-fl-ink-muted">Nothing</span>
+                        }
+                        @if (step.consoleUrl) {
+                          <a
+                            class="fl-link inline-flex items-center gap-1"
+                            [href]="step.consoleUrl"
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            Open the provider console
+                            <fl-icon name="lucideExternalLink" [size]="13" />
+                          </a>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
-        }
-
-        <div class="space-y-2">
-          @for (step of r.steps; track step.id) {
-            <div class="rounded-lg border border-border bg-card p-4">
-              <div class="flex items-start gap-3">
-                <span
-                  class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
-                  [class]="badgeClass(step)"
-                  >{{ badgeGlyph(step) }}</span
-                >
-                <div class="min-w-0 flex-1">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-sm font-medium text-foreground">{{ label(step) }}</span>
-                    <span class="text-xs text-muted-foreground">{{ statusText(step) }}</span>
-                  </div>
-                  @if (step.action) {
-                    <p class="mt-1 text-sm text-muted-foreground">{{ step.action }}</p>
-                  }
-                  @if (step.consoleUrl) {
-                    <a
-                      [href]="step.consoleUrl"
-                      target="_blank"
-                      rel="noopener"
-                      class="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                    >
-                      Open the provider console
-                      <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-                    </a>
-                  }
-                </div>
-              </div>
-            </div>
-          }
-        </div>
+        </fl-panel>
 
         @if (r.ready && domain.trim()) {
-          <div class="mt-4 rounded-lg border border-border bg-card p-4">
-            <h2 class="text-sm font-medium text-foreground">Prove it end to end</h2>
+          <fl-panel title="Prove it end to end">
             <app-mail-test-send [domain]="domain.trim()" />
-          </div>
+          </fl-panel>
         }
 
-        <p class="mt-4 text-xs text-muted-foreground">
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted">
           Adding a sending domain and publishing its records happens on
-          <a routerLink="/management/mail/domains" class="text-primary hover:underline">Domains</a>.
+          <a class="fl-link" routerLink="/management/mail/domains">Domains</a>.
         </p>
       }
     </div>
@@ -192,36 +172,20 @@ export class MailSetupComponent implements OnInit {
     });
   }
 
+  protected readyLabel(): string {
+    const domain = this.domain.trim();
+    return domain ? `Ready to send from ${domain}` : 'Ready to send';
+  }
+
   protected label(step: MailReadinessStep): string {
-    return READINESS_STEP_LABEL[step.id] ?? step.id;
+    return stepLabel(step);
   }
 
-  protected statusText(step: MailReadinessStep): string {
-    switch (step.status) {
-      case 'satisfied':
-        return 'done';
-      case 'pending':
-        return 'the provider is still checking';
-      case 'automatable':
-        return 'Flui can do this';
-      default:
-        return 'needs you';
-    }
+  protected status(step: MailReadinessStep): string {
+    return stepStatus(step);
   }
 
-  protected badgeGlyph(step: MailReadinessStep): string {
-    if (step.status === 'satisfied') return '✓';
-    return step.status === 'manual' ? '!' : '…';
-  }
-
-  protected badgeClass(step: MailReadinessStep): string {
-    switch (step.status) {
-      case 'satisfied':
-        return 'bg-emerald-100 text-emerald-700';
-      case 'manual':
-        return 'bg-amber-100 text-amber-800';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
+  protected tone(step: MailReadinessStep): ReturnType<typeof stepTone> {
+    return stepTone(step);
   }
 }

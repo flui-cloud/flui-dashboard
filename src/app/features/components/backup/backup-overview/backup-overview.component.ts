@@ -1,4 +1,3 @@
-import { SandboxService } from '../../../../core/services/sandbox.service';
 import {
   Component,
   OnDestroy,
@@ -7,17 +6,26 @@ import {
   effect,
   inject,
   signal,
-  ChangeDetectionStrategy,
+  viewChildren,
 } from '@angular/core';
-
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlMetric, FlMetricStrip } from '../../../../ui/patterns/metric-strip';
+import { FlPageHeader } from '../../../../ui/patterns/page-header';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../../ui/patterns/states';
+import { FlTable } from '../../../../ui/patterns/table';
+import { FlButton } from '../../../../ui/primitives/button';
+import { SandboxService } from '../../../../core/services/sandbox.service';
 import { BackupService } from '../../../service/backup.service';
 import { ClusterService } from '../../../service/cluster.service';
 import { formatBytes } from '../../../model/backup.models';
+import { ClusterProtection } from '../../../model/backup-protection.models';
 import { EnableBackupsModalComponent } from '../enable-backups/enable-backups-modal.component';
 import { PlatformBackupCardComponent } from '../platform/platform-backup-card.component';
 import { ClusterProtectionCardComponent } from '../cluster-protection/cluster-protection-card.component';
+import { NeedsDecisionListComponent } from '../cluster-protection/needs-decision-list.component';
 import { BackupHealthBadgeComponent } from '../shared/health-badge.component';
 import { healthNeedsAttention } from '../../../model/backup-activity';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
@@ -28,213 +36,30 @@ import {
   buildBackupOverviewSurface,
   presentedContent,
 } from './backup-overview-surface';
-
-interface OverviewCard {
-  title: string;
-  description: string;
-  link: string;
-  cta: string;
-}
+import { BackupOverviewGuide } from './backup-overview-guide';
 
 @Component({
   selector: 'app-backup-overview',
-  standalone: true,
   imports: [
     ReadOnlySectionDirective,
     FormsModule,
     RouterLink,
+    FlPageHeader,
+    FlAlert,
+    FlMetricStrip,
+    FlMetric,
+    FlPanel,
+    FlEmptyState,
+    FlTable,
+    FlButton,
     EnableBackupsModalComponent,
     PlatformBackupCardComponent,
     ClusterProtectionCardComponent,
+    NeedsDecisionListComponent,
     BackupHealthBadgeComponent,
+    BackupOverviewGuide,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <div class="p-6 space-y-6">
-      <header class="flex items-start justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold">Backup &amp; Restore</h1>
-          <p class="text-sm text-muted-foreground mt-1">
-            Your data stays in the EU, on storage you own. What you protect it with depends on what
-            it is — the three below cover different things and do not replace each other.
-          </p>
-        </div>
-      </header>
-
-      @if (attention().length) {
-        <div
-          role="alert"
-          class="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm"
-        >
-          <div class="font-medium text-red-700">
-            {{
-              attention().length === 1
-                ? '1 backup needs attention'
-                : attention().length + ' backups need attention'
-            }}
-          </div>
-          <ul class="mt-2 space-y-1">
-            @for (a of attention(); track a.policyId) {
-              <li class="flex flex-wrap items-center gap-2">
-                <app-backup-health-badge [state]="a.health.state" [detail]="a.health.detail" />
-                <a
-                  [routerLink]="['/management/backup/policies', a.policyId]"
-                  class="font-medium hover:underline"
-                >
-                  {{ a.policyName }}
-                </a>
-                <span class="text-xs text-muted-foreground">{{ a.health.detail }}</span>
-              </li>
-            }
-          </ul>
-        </div>
-      }
-
-      <section class="space-y-2" appReadOnlySection="backup">
-        <h2 class="text-sm font-semibold">What do you want to protect?</h2>
-        <div class="grid gap-4 md:grid-cols-3">
-          <div class="rounded-lg border border-border bg-card p-4 flex flex-col">
-            <div class="text-sm font-semibold">A cluster</div>
-            <p class="text-xs text-muted-foreground mt-1 flex-1">
-              Every app on it, new ones included: databases with their own engine, other volumes as
-              encrypted daily snapshots.
-            </p>
-            <div class="text-xs text-muted-foreground mt-2">Below</div>
-          </div>
-          <div class="rounded-lg border border-border bg-card p-4 flex flex-col">
-            <div class="text-sm font-semibold">A database</div>
-            <p class="text-xs text-muted-foreground mt-1 flex-1">
-              Every change shipped off-cluster as it happens, so it can be restored to any moment in
-              the window. Images that cannot do that get nightly dumps.
-            </p>
-            <div class="text-xs text-muted-foreground mt-2">
-              Open the database → <span class="font-medium">Backup</span>
-            </div>
-          </div>
-          <div class="rounded-lg border border-border bg-card p-4 flex flex-col">
-            <div class="text-sm font-semibold">Flui itself</div>
-            <p class="text-xs text-muted-foreground mt-1 flex-1">
-              The control-plane database, sealed to a recipient you hold. This is what a rebuild
-              starts from when the cluster running Flui is gone.
-            </p>
-            <div class="text-xs text-muted-foreground mt-2">Set up below</div>
-          </div>
-        </div>
-
-        @if (!example()) {
-          <h2 class="text-sm font-semibold pt-2">Protect a cluster</h2>
-          @if (clusters().length === 0) {
-            <div class="rounded-lg border border-border bg-card p-5">
-              <p class="text-sm text-muted-foreground">Create a cluster first to enable backups.</p>
-            </div>
-          } @else {
-            <div class="space-y-3">
-              @for (c of clusters(); track c.id + ':' + cardsRevision()) {
-                @if (c.id) {
-                  <app-cluster-protection-card
-                    [clusterId]="c.id"
-                    [clusterName]="c.name ?? ''"
-                    (changed)="onProtectionChanged()"
-                  />
-                }
-              }
-            </div>
-            <div class="rounded-lg border border-border bg-card p-4">
-              <p class="text-sm text-muted-foreground mb-1">
-                No backup storage yet? Flui creates a bucket on another cloud and protects the
-                cluster in one step.
-              </p>
-              <p class="text-xs text-muted-foreground mb-3">
-                <a routerLink="/management/providers" class="text-primary hover:underline"
-                  >Manage providers</a
-                >
-              </p>
-              <div class="flex flex-col sm:flex-row gap-2">
-                <select
-                  [(ngModel)]="selectedClusterId"
-                  class="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">— Select a cluster —</option>
-                  @for (c of clusters(); track c.id) {
-                    <option [value]="c.id">{{ c.name }} ({{ c.provider }})</option>
-                  }
-                </select>
-                <button
-                  type="button"
-                  class="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
-                  [disabled]="!selectedClusterId"
-                  (click)="openEnableModal()"
-                >
-                  Enable backups
-                </button>
-              </div>
-            </div>
-          }
-        }
-      </section>
-
-      <!-- Stats -->
-      <section class="space-y-2">
-        <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Overview
-        </h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="rounded-lg border border-border bg-card p-4">
-            <div class="text-xs text-muted-foreground">Destinations</div>
-            <div class="text-2xl font-semibold mt-1">{{ destinationsCount() }}</div>
-          </div>
-          <div class="rounded-lg border border-border bg-card p-4">
-            <div class="text-xs text-muted-foreground">Policies</div>
-            <div class="text-2xl font-semibold mt-1">{{ policiesCount() }}</div>
-            @if (degradedCount() > 0) {
-              <div class="text-xs text-amber-600 mt-1">{{ degradedCount() }} degraded</div>
-            }
-          </div>
-          <div class="rounded-lg border border-border bg-card p-4">
-            <div class="text-xs text-muted-foreground">Total storage</div>
-            <div class="text-2xl font-semibold mt-1">{{ totalUsage() }}</div>
-          </div>
-          <div class="rounded-lg border border-border bg-card p-4">
-            <div class="text-xs text-muted-foreground">Restore jobs</div>
-            <div class="text-2xl font-semibold mt-1">{{ restoreCount() }}</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Platform resilience (control-plane DR) -->
-      @if (!example()) {
-        <app-platform-backup-card />
-      }
-
-      <!-- Section cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        @for (card of cards; track card.link) {
-          <a
-            [routerLink]="card.link"
-            class="rounded-lg border border-border bg-card p-5 hover:border-primary transition-colors"
-          >
-            <h3 class="text-base font-semibold">{{ card.title }}</h3>
-            <p class="text-sm text-muted-foreground mt-1">{{ card.description }}</p>
-            <span class="mt-3 inline-block text-sm text-primary">{{ card.cta }} →</span>
-          </a>
-        }
-      </div>
-
-      @if (error()) {
-        <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700">
-          {{ error() }}
-        </div>
-      }
-
-      @if (showEnableModal() && selectedClusterId) {
-        <app-enable-backups-modal
-          [clusterId]="selectedClusterId"
-          [open]="true"
-          (closed)="onEnableModalClosed($event)"
-        />
-      }
-    </div>
-  `,
+  templateUrl: './backup-overview.component.html',
 })
 export class BackupOverviewComponent implements OnInit, OnDestroy {
   private readonly backup = inject(BackupService);
@@ -246,7 +71,9 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
 
   protected readonly showEnableModal = signal(false);
   protected readonly cardsRevision = signal(0);
-  protected selectedClusterId = '';
+  protected readonly selectedClusterId = signal('');
+  private readonly cards = viewChildren(ClusterProtectionCardComponent);
+  private readonly protections = signal<Readonly<Record<string, ClusterProtection>>>({});
 
   readonly clusters = this.clusterService.clusters;
   readonly destinationsCount = computed(() => this.backup.destinations().length);
@@ -257,6 +84,44 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
   readonly error = this.backup.error;
   readonly attention = computed(() =>
     this.backup.activity().filter((a) => healthNeedsAttention(a.health.state)),
+  );
+
+  readonly failedJobs = computed(
+    () => this.backup.activity().filter((a) => a.health.state === 'failed').length,
+  );
+
+  private readonly knownProtections = computed(() => {
+    const byId = this.protections();
+    return this.clusters()
+      .map((c) => (c.id ? byId[c.id] : undefined))
+      .filter((p): p is ClusterProtection => !!p);
+  });
+
+  readonly protectedClusters = computed(() => {
+    const known = this.knownProtections();
+    return known.length ? known.filter((p) => p.protected).length : null;
+  });
+
+  readonly decisionItems = computed(() => this.knownProtections().flatMap((p) => p.needsDecision));
+
+  readonly decisionApps = computed(() => {
+    if (!this.knownProtections().length) return null;
+    return new Set(this.decisionItems().map((i) => i.applicationId)).size;
+  });
+
+  readonly fallbackDestinationId = computed(() => this.backup.destinations()[0]?.id ?? null);
+
+  readonly clusterDestinations = computed(() =>
+    Object.fromEntries(
+      this.knownProtections().map((p) => [
+        p.clusterId,
+        p.destinationId ?? this.fallbackDestinationId(),
+      ]),
+    ),
+  );
+
+  readonly clusterNames = computed(() =>
+    Object.fromEntries(this.clusters().map((c) => [c.id ?? '', c.name ?? c.id ?? ''])),
   );
 
   private readonly surfaceRevision = new BackupOverviewSurfaceRevision();
@@ -293,8 +158,16 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
   }
 
   openEnableModal(): void {
-    if (!this.selectedClusterId) return;
+    if (!this.selectedClusterId()) return;
     this.showEnableModal.set(true);
+  }
+
+  onProtectionLoaded(protection: ClusterProtection): void {
+    this.protections.update((all) => ({ ...all, [protection.clusterId]: protection }));
+  }
+
+  onDecided(): void {
+    for (const card of this.cards()) void card.reload();
   }
 
   onProtectionChanged(): void {
@@ -311,33 +184,6 @@ export class BackupOverviewComponent implements OnInit, OnDestroy {
       void this.backup.loadStatus();
     }
   }
-
-  readonly cards: OverviewCard[] = [
-    {
-      title: 'Destinations',
-      description: 'S3-compatible storage targets shared by your backup policies.',
-      link: '/management/backup/destinations',
-      cta: 'Manage destinations',
-    },
-    {
-      title: 'Policies',
-      description: 'One policy per app and engine, with its schedule and health.',
-      link: '/management/backup/policies',
-      cta: 'Manage policies',
-    },
-    {
-      title: 'Backup jobs',
-      description: 'On-demand and scheduled run history with per-destination artifact status.',
-      link: '/management/backup/jobs',
-      cta: 'View jobs',
-    },
-    {
-      title: 'Restore',
-      description: 'Database restores into a new database, and their history.',
-      link: '/management/backup/restore',
-      cta: 'View restores',
-    },
-  ];
 
   ngOnInit(): void {
     void (async () => {

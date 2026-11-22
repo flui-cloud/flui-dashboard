@@ -1,148 +1,90 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleCheck, lucideRotateCcw, lucideTriangleAlert } from '@ng-icons/lucide';
-import { MailRecordRowComponent } from './mail-record-row.component';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
+import { MailRecordsTable } from './mail-records-table';
 import { MailConsoleService } from '../../service/mail-console.service';
-import {
-  MailConnectionSetup,
-  MailReadinessStep,
-  READINESS_STEP_LABEL,
-} from '../../model/mail-console.models';
+import { MailConnectionSetup, MailReadinessStep } from '../../model/mail-console.models';
 import { consoleError } from './mail-format';
+import { stepLabel, stepStatus, stepTone } from './mail-readiness';
 
 @Component({
   selector: 'app-mail-connection-setup',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, MailRecordRowComponent],
-  providers: [provideIcons({ lucideCircleCheck, lucideRotateCcw, lucideTriangleAlert })],
+  imports: [FlAlert, FlLoadingState, FlButton, FlStatus, MailRecordsTable],
+  host: { class: 'flex flex-col gap-3' },
   template: `
     @if (loading() && !setup()) {
-      <div class="mt-2 skeleton h-4 w-52"></div>
+      <fl-loading-state [rows]="1" />
     } @else if (error()) {
-      <p class="mt-2 text-xs text-muted-foreground">{{ error() }}</p>
+      <fl-alert tone="error" title="Could not read the setup">{{ error() }}</fl-alert>
     } @else if (setup()) {
       @let s = setup()!;
       @if (s.verified) {
-        <p class="mt-1.5 flex items-center gap-1.5 text-xs text-emerald-700">
-          <ng-icon name="lucideCircleCheck" class="h-3.5 w-3.5" />
-          {{ providerName() }} authenticates mail from
-          <span class="font-mono">{{ s.domain }}</span>.
-        </p>
+        <fl-status
+          tone="success"
+          [label]="providerName() + ' authenticates mail from ' + s.domain"
+        />
       } @else {
-        <div class="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2.5">
-          <p class="text-xs font-medium text-amber-900">
-            {{ providerName() }} is refusing mail from this sender until it verifies
-            <span class="font-mono">{{ s.domain ?? 'the domain' }}</span>.
-          </p>
-
-          @if (steps().length) {
-            <ul class="mt-1.5 space-y-0.5">
-              @for (step of steps(); track step.id) {
-                <li class="flex items-start gap-1.5 text-[11px]">
-                  <span class="w-3 shrink-0 text-center" [class]="glyphClass(step)">
-                    {{ glyph(step) }}
-                  </span>
-                  <span class="text-amber-900">
-                    {{ label(step) }}<span class="text-amber-800/70"> — {{ detail(step) }}</span>
-                  </span>
-                </li>
-              }
-            </ul>
-          }
-
-          @if (s.records.length) {
-            <ul class="mt-1.5 space-y-0.5">
-              @for (record of s.records; track record.name + record.value) {
-                <li class="flex items-start gap-1.5 text-[11px]">
-                  <span
-                    class="w-3 shrink-0 text-center"
-                    [class]="record.live ? 'text-emerald-600' : 'text-amber-700'"
-                  >
-                    {{ record.live ? '✓' : '·' }}
-                  </span>
-                  <span class="min-w-0 text-amber-900">
-                    <span class="font-mono">{{ record.name }}</span>
-                    <span class="text-amber-800/70"> — {{ recordState(record) }}</span>
-                  </span>
-                </li>
-              }
-            </ul>
-          }
-
+        <fl-alert
+          tone="warning"
+          [title]="
+            providerName() +
+            ' is refusing mail from this sender until it verifies ' +
+            (s.domain ?? 'the domain')
+          "
+        >
           @if (s.published) {
-            <p class="mt-1.5 flex items-start gap-1.5 text-[11px] text-emerald-700">
-              <ng-icon name="lucideCircleCheck" class="mt-0.5 h-3 w-3 shrink-0" />
-              <span>
-                Every record it asked for is published and resolving. Nothing left on our side —
-                {{ providerName() }} re-reads DNS on its own schedule, which is what the wait is.
-              </span>
-            </p>
+            Every record it asked for is published and resolving. Nothing left on our side:
+            {{ providerName() }} re-reads DNS on its own schedule, which is what the wait is.
           } @else if (s.canWrite) {
-            <p class="mt-1.5 text-[11px] text-amber-800">
-              Flui manages <span class="font-mono">{{ zoneNote(s) }}</span>, so the records go in
-              for you. Nothing to copy anywhere.
-            </p>
-            @if (published(); as done) {
-              <p class="mt-1 text-[11px] text-emerald-700">{{ done }}</p>
-            }
+            Flui manages <span class="fl-mono">{{ zoneNote(s) }}</span>, so the records go in for
+            you. Nothing to copy anywhere.
           } @else if (s.records.length) {
-            <p class="mt-2 text-[11px] text-amber-800">
-              Flui does not hold this zone. Publish these wherever it lives:
-            </p>
-            <div class="mt-1.5 space-y-1.5">
-              @for (record of s.records; track record.name + record.value) {
-                <app-mail-record-row [record]="record" />
-              }
-            </div>
+            Flui does not hold this zone. Publish these wherever it lives.
           }
-
-          @if (asked(); as answer) {
-            <p class="mt-2 text-[11px]" [class]="answer.ok ? 'text-emerald-700' : 'text-red-700'">
-              {{ answer.text }}
-            </p>
-          }
-
-          <div class="mt-2 flex flex-wrap items-center gap-2">
+          <ng-container alertActions>
             @if (s.canWrite) {
-              <button
-                type="button"
-                (click)="publish()"
-                [disabled]="busy()"
-                class="inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[11px] font-medium disabled:opacity-60"
-                [class]="
-                  s.published
-                    ? 'border border-amber-300 text-amber-900 hover:bg-amber-100'
-                    : 'bg-amber-600 text-white hover:bg-amber-700'
-                "
-              >
-                @if (busy()) {
-                  <ng-icon name="lucideRotateCcw" class="h-3 w-3 animate-spin" />
-                }
+              <button flButton size="sm" type="button" [disabled]="busy()" (click)="publish()">
                 {{
                   s.published ? 'Ask ' + providerName() + ' to check now' : 'Publish the records'
                 }}
               </button>
             }
             <button
+              flButton="ghost"
+              size="sm"
               type="button"
-              (click)="load()"
               [disabled]="loading()"
-              class="inline-flex h-7 items-center gap-1.5 rounded-md border border-amber-300 px-2 text-[11px] font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-60"
+              (click)="load()"
             >
-              <ng-icon name="lucideRotateCcw" class="h-3 w-3" [class.animate-spin]="loading()" />
               Check again
             </button>
-          </div>
-        </div>
+          </ng-container>
+        </fl-alert>
+
+        @if (steps().length) {
+          <ul class="m-0 flex list-none flex-col gap-1 p-0 text-fl-body-sm">
+            @for (step of steps(); track step.id) {
+              <li class="fl-row">
+                <fl-status [tone]="tone(step)" [label]="label(step)" />
+                <span class="text-fl-ink-muted">{{ detail(step) }}</span>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (s.records.length) {
+          <app-mail-records-table [records]="s.records" [showValues]="!s.canWrite" />
+        }
+
+        @if (published(); as done) {
+          <fl-status tone="success" [label]="done" />
+        }
+
+        @if (asked(); as answer) {
+          <fl-alert [tone]="answer.ok ? 'info' : 'error'" [title]="answer.text" />
+        }
       }
     }
   `,
@@ -190,14 +132,6 @@ export class MailConnectionSetupComponent implements OnInit {
     return parts.length > 2 ? parts.slice(1).join('.') : (setup.domain ?? 'this zone');
   }
 
-  protected recordState(record: MailConnectionSetup['records'][number]): string {
-    if (!record.live) return 'not in DNS yet';
-    if (record.accepted === true) return 'published, and accepted by the provider';
-    return record.accepted === false
-      ? 'published — the provider has not read it yet'
-      : 'published and resolving';
-  }
-
   protected publish(): void {
     this.busy.set(true);
     this.error.set(null);
@@ -217,7 +151,7 @@ export class MailConnectionSetupComponent implements OnInit {
         this.published.set(
           result.published.length
             ? `Published ${result.published.length} record(s).`
-            : 'Nothing left to publish — the records were already in place.',
+            : 'Nothing left to publish, the records were already in place.',
         );
         this.load();
       },
@@ -229,29 +163,16 @@ export class MailConnectionSetupComponent implements OnInit {
   }
 
   protected label(step: MailReadinessStep): string {
-    return READINESS_STEP_LABEL[step.id] ?? step.id;
+    return stepLabel(step);
+  }
+
+  protected tone(step: MailReadinessStep): ReturnType<typeof stepTone> {
+    return stepTone(step);
   }
 
   protected detail(step: MailReadinessStep): string {
     if (step.action) return step.action;
-    switch (step.status) {
-      case 'satisfied':
-        return 'done';
-      case 'automatable':
-        return 'Flui can do this';
-      case 'pending':
-        return 'the provider is still checking';
-      default:
-        return step.reason ?? 'needs you';
-    }
-  }
-
-  protected glyph(step: MailReadinessStep): string {
-    if (step.status === 'satisfied') return '✓';
-    return step.status === 'pending' ? '⏳' : '→';
-  }
-
-  protected glyphClass(step: MailReadinessStep): string {
-    return step.status === 'satisfied' ? 'text-emerald-600' : 'text-amber-700';
+    if (step.status === 'manual' && step.reason) return step.reason;
+    return stepStatus(step);
   }
 }

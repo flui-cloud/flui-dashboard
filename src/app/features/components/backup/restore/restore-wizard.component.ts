@@ -1,114 +1,205 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
 import { ClusterService } from '../../../service/cluster.service';
-import { CreateRestoreJobDto } from '../../../../core/api/model/createRestoreJobDto';
+import { DeployReviewGroup } from '../../application/deploy-review-group';
+import { Crumb } from '../../../../ui/patterns/breadcrumb';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlField } from '../../../../ui/patterns/field';
+import { FlKeyValue, FlKvItem } from '../../../../ui/patterns/key-value';
+import { FlPageHeader } from '../../../../ui/patterns/page-header';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlWizardSteps, WizardStep } from '../../../../ui/patterns/wizard-steps';
+import { ConfirmService } from '../../../../ui/overlays/confirm';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlSpinner } from '../../../../ui/primitives/spinner';
+
+const STEP_TITLES = ['Backup', 'New database', 'Review'];
 
 @Component({
   selector: 'app-restore-wizard',
-  standalone: true,
-  imports: [FormsModule, RouterLink],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [
+    FormsModule,
+    RouterLink,
+    DeployReviewGroup,
+    FlAlert,
+    FlField,
+    FlKeyValue,
+    FlKvItem,
+    FlPageHeader,
+    FlPanel,
+    FlWizardSteps,
+    FlButton,
+    FlSpinner,
+  ],
   template: `
-    <div class="p-6 max-w-3xl space-y-5">
-      <header class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold">
-          {{ databaseMode() ? 'Restore into a new database' : 'Restore' }}
-        </h1>
-        <a
-          routerLink="/management/backup/restore"
-          class="text-sm text-muted-foreground hover:underline"
-        >
-          Cancel
-        </a>
-      </header>
-
+    <div class="fl-page">
       @if (databaseMode()) {
-        <section class="space-y-3">
-          <p class="text-sm text-muted-foreground">
-            Restores this database backup into a new database. Nothing existing is touched, and it
-            works even if the original database was deleted.
-          </p>
-          <label class="block">
-            <span class="text-sm font-medium">Backup</span>
-            <input
-              [(ngModel)]="form.artifactId"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-            />
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">New database name *</span>
-            <input
-              [(ngModel)]="dbName"
-              placeholder="pg-restored"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">Cluster</span>
-            <select
-              [(ngModel)]="form.targetClusterId"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            >
-              <option value="">The original cluster</option>
-              @for (c of clusters(); track c.id) {
-                <option [value]="c.id">{{ c.name }}</option>
+        <fl-page-header title="Restore into a new database" [breadcrumb]="breadcrumb">
+          <span headerMeta>
+            Nothing existing is touched, and it works even if the original database was deleted.
+          </span>
+        </fl-page-header>
+
+        <div class="fl-wizard">
+          <nav aria-label="Steps">
+            <fl-wizard-steps [steps]="steps()" [current]="step()" (stepSelect)="step.set($event)" />
+          </nav>
+
+          <fl-panel [title]="titles[step()]" [flush]="true">
+            <div class="fl-stack p-4">
+              @switch (step()) {
+                @case (0) {
+                  <fl-field
+                    label="Backup"
+                    for="restore-artifact"
+                    hint="The ID of the database backup to restore, filled in when you start from a backup job."
+                  >
+                    <div class="fl-input">
+                      <input
+                        id="restore-artifact"
+                        class="fl-mono"
+                        autocomplete="off"
+                        [ngModel]="artifactId()"
+                        (ngModelChange)="artifactId.set($event)"
+                      />
+                    </div>
+                  </fl-field>
+                }
+                @case (1) {
+                  <fl-field label="New database name" for="restore-db-name">
+                    <div class="fl-input">
+                      <input
+                        id="restore-db-name"
+                        placeholder="pg-restored"
+                        autocomplete="off"
+                        [ngModel]="dbName()"
+                        (ngModelChange)="dbName.set($event)"
+                      />
+                    </div>
+                  </fl-field>
+                  <fl-field label="Cluster" for="restore-cluster">
+                    <span class="fl-select-wrap">
+                      <select
+                        id="restore-cluster"
+                        class="fl-select"
+                        [ngModel]="clusterId()"
+                        (ngModelChange)="clusterId.set($event)"
+                      >
+                        <option value="">The original cluster</option>
+                        @for (c of clusters(); track c.id) {
+                          <option [value]="c.id">{{ c.name }}</option>
+                        }
+                      </select>
+                    </span>
+                  </fl-field>
+                  <fl-field
+                    label="Point in time"
+                    for="restore-at"
+                    hint="Empty: everything that reached the backup storage."
+                  >
+                    <div class="fl-input">
+                      <input
+                        id="restore-at"
+                        type="datetime-local"
+                        [ngModel]="dbAt()"
+                        (ngModelChange)="dbAt.set($event)"
+                      />
+                    </div>
+                  </fl-field>
+                }
+                @case (2) {
+                  <app-deploy-review-group
+                    title="Backup"
+                    step="0"
+                    [editable]="editable"
+                    (edit)="step.set(+$event)"
+                  >
+                    <fl-key-value>
+                      <fl-kv-item key="Backup ID" [mono]="true">{{ artifactId() }}</fl-kv-item>
+                    </fl-key-value>
+                  </app-deploy-review-group>
+                  <app-deploy-review-group
+                    title="New database"
+                    step="1"
+                    [editable]="editable"
+                    (edit)="step.set(+$event)"
+                  >
+                    <fl-key-value>
+                      <fl-kv-item key="Name" [mono]="true">{{ dbName().trim() }}</fl-kv-item>
+                      <fl-kv-item key="Cluster">{{ clusterName() }}</fl-kv-item>
+                      <fl-kv-item key="Point in time">{{
+                        dbAt() ? dbAt().replace('T', ' ') : 'Latest'
+                      }}</fl-kv-item>
+                    </fl-key-value>
+                  </app-deploy-review-group>
+                  @if (submitError(); as e) {
+                    <fl-alert tone="error" title="Restore did not start">{{ e }}</fl-alert>
+                  }
+                }
               }
-            </select>
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">Point in time</span>
-            <input
-              type="datetime-local"
-              [(ngModel)]="dbAt"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-            <span class="text-xs text-muted-foreground">
-              Empty: everything that reached the backup storage.
-            </span>
-          </label>
-        </section>
-      } @else {
-        <section class="rounded-lg border border-border bg-card p-4 space-y-2 text-sm">
-          <p>
-            <span class="font-medium">A database:</span>
-            <span class="text-muted-foreground">
-              open one of its backup runs under
-              <a routerLink="/management/backup/jobs" class="text-primary hover:underline"
-                >Backup jobs</a
+            </div>
+
+            <div class="fl-wizard__footer border-t border-fl-border px-4 py-3">
+              <a flButton="ghost" routerLink="/management/backup/restore">Cancel</a>
+              <button
+                flButton
+                type="button"
+                [disabled]="step() === 0"
+                (click)="step.set(step() - 1)"
               >
-              and choose "Restore into a new database".
-            </span>
-          </p>
-          <p>
-            <span class="font-medium">A volume:</span>
-            <span class="text-muted-foreground">
-              open the app, then Backup → Volume backups. Restore the whole backup or only the files
+                Previous
+              </button>
+              @if (step() < 2) {
+                <button
+                  flButton="primary"
+                  type="button"
+                  [disabled]="!canAdvance()"
+                  (click)="step.set(step() + 1)"
+                >
+                  Next
+                </button>
+              } @else {
+                <button
+                  flButton="primary"
+                  type="button"
+                  [disabled]="!artifactId() || !dbName().trim() || submitting()"
+                  (click)="onSubmitDatabase()"
+                >
+                  @if (submitting()) {
+                    <fl-spinner label="Starting" />
+                    Starting…
+                  } @else {
+                    Start restore
+                  }
+                </button>
+              }
+            </div>
+          </fl-panel>
+        </div>
+      } @else {
+        <fl-page-header title="Restore" [breadcrumb]="breadcrumb">
+          <span headerMeta>Restores start from the backup you want to bring back.</span>
+        </fl-page-header>
+
+        <fl-panel title="How to restore">
+          <fl-key-value>
+            <fl-kv-item key="A database">
+              Open one of its backup runs under
+              <a class="fl-link" routerLink="/management/backup/jobs">Backup jobs</a>
+              and choose Restore into a new database.
+            </fl-kv-item>
+            <fl-kv-item key="A volume">
+              Open the app, then Backup, Volume backups. Restore the whole backup or only the files
               you need.
-            </span>
-          </p>
-        </section>
-      }
+            </fl-kv-item>
+          </fl-key-value>
+        </fl-panel>
 
-      @if (submitError()) {
-        <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700">
-          {{ submitError() }}
-        </div>
-      }
-
-      @if (databaseMode()) {
-        <div class="flex justify-end">
-          <button
-            type="button"
-            class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            [disabled]="!form.artifactId || !dbName.trim() || submitting()"
-            (click)="onSubmitDatabase()"
-          >
-            {{ submitting() ? 'Starting…' : 'Start restore' }}
-          </button>
-        </div>
+        @if (submitError(); as e) {
+          <fl-alert tone="error" title="Restore did not start">{{ e }}</fl-alert>
+        }
       }
     </div>
   `,
@@ -116,28 +207,49 @@ import { CreateRestoreJobDto } from '../../../../core/api/model/createRestoreJob
 export class RestoreWizardComponent implements OnInit {
   protected readonly backup = inject(BackupService);
   private readonly clusterService = inject(ClusterService);
+  private readonly confirm = inject(ConfirmService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+
+  protected readonly breadcrumb: readonly Crumb[] = [
+    { label: 'Backups', link: '/management/backup' },
+    { label: 'Restores', link: '/management/backup/restore' },
+    { label: 'New restore' },
+  ];
+  protected readonly titles = STEP_TITLES;
+  protected readonly editable = ['0', '1'];
 
   readonly clusters = this.clusterService.clusters;
   readonly submitting = signal(false);
   readonly submitError = signal<string | null>(null);
 
-  form: CreateRestoreJobDto = {
-    artifactId: '',
-    sourceDestinationId: '',
-    targetClusterId: '',
-    targetKind: 'namespace' as CreateRestoreJobDto.TargetKindEnum,
-    placement: 'new' as CreateRestoreJobDto.PlacementEnum,
-  };
-
   readonly databaseMode = signal(false);
-  dbName = '';
-  dbAt = '';
+  protected readonly step = signal(0);
+  readonly artifactId = signal('');
+  readonly clusterId = signal('');
+  readonly dbName = signal('');
+  readonly dbAt = signal('');
+
+  protected readonly clusterName = computed(() => {
+    const id = this.clusterId();
+    if (!id) return 'The original cluster';
+    return this.clusters().find((c) => c.id === id)?.name ?? id;
+  });
+
+  protected readonly steps = computed<WizardStep[]>(() => [
+    { name: STEP_TITLES[0], summary: this.artifactId() ? 'Chosen' : undefined },
+    { name: STEP_TITLES[1], summary: this.dbName().trim() || undefined },
+    { name: STEP_TITLES[2] },
+  ]);
+
+  protected readonly canAdvance = computed(() => {
+    if (this.step() === 0) return !!this.artifactId().trim();
+    return !!this.dbName().trim();
+  });
 
   ngOnInit(): void {
     const query = this.route.snapshot.queryParamMap;
-    if (query.get('artifact')) this.form.artifactId = query.get('artifact') ?? '';
+    if (query.get('artifact')) this.artifactId.set(query.get('artifact') ?? '');
     this.databaseMode.set(query.get('kind') === 'database');
     void (async () => {
       await Promise.all([this.backup.loadDestinations(), this.clusterService.loadClusters()]);
@@ -145,12 +257,22 @@ export class RestoreWizardComponent implements OnInit {
   }
 
   async onSubmitDatabase(): Promise<void> {
+    const name = this.dbName().trim();
+    const where = this.clusterId() ? ` on ${this.clusterName()}` : '';
+    const ok = await this.confirm.confirm({
+      title: 'Restore into a new database',
+      body: `Flui creates ${name} from this backup${where}. Nothing existing is changed.`,
+      confirmLabel: 'Start restore',
+    });
+    if (!ok) return;
     this.submitting.set(true);
     this.submitError.set(null);
-    const result = await this.backup.restoreDatabase(this.form.artifactId.trim(), {
-      name: this.dbName.trim(),
-      ...(this.form.targetClusterId ? { clusterId: this.form.targetClusterId } : {}),
-      ...(this.dbAt ? { recoveryTargetTime: new Date(this.dbAt).toISOString() } : {}),
+    const clusterId = this.clusterId();
+    const at = this.dbAt();
+    const result = await this.backup.restoreDatabase(this.artifactId().trim(), {
+      name,
+      ...(clusterId ? { clusterId } : {}),
+      ...(at ? { recoveryTargetTime: new Date(at).toISOString() } : {}),
     });
     this.submitting.set(false);
     if (!result) {

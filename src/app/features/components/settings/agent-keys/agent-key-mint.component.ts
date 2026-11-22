@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -10,25 +9,19 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCheck,
-  lucideChevronDown,
-  lucideChevronRight,
-  lucideLoader,
-  lucideLock,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
-import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
-import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
 import { CreateApiKeyResultDto } from '../../../../core/api/model/createApiKeyResultDto';
 import { AgentSkill } from './agent-skill.service';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlField } from '../../../../ui/patterns/field';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlSpinner } from '../../../../ui/primitives/spinner';
+import { FlStatus } from '../../../../ui/primitives/status';
 import { AgentKeyApplicationPickerComponent } from './agent-key-application-picker.component';
 import { AgentKeyProjectPickerComponent } from './agent-key-project-picker.component';
 import { ConnectAgentComponent } from './connect-agent.component';
-import { AREA_LABEL, DEPTH_WORD } from './agent-key-scopes-edit';
+import { AgentKeyAreaRow } from './agent-key-area-row';
+import { AREA_LABEL } from './agent-key-scopes-edit';
 
 export interface MintRequest {
   name: string;
@@ -38,10 +31,6 @@ export interface MintRequest {
   projectIds?: string[];
 }
 
-// One entry per area the API publishes. A missing one is not a crash — the
-// section falls back to the raw key — but it puts a lower-case machine word
-// where a heading belongs, which is how `access` read until the switches for
-// who-can-reach-what arrived under it.
 const LIFETIMES: { id: string; label: string; days: number | null }[] = [
   { id: '1d', label: '24 hours', days: 1 },
   { id: '30d', label: '30 days', days: 30 },
@@ -51,35 +40,22 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
 
 @Component({
   selector: 'app-agent-key-mint',
-  standalone: true,
   imports: [
     FormsModule,
-    NgIcon,
-    HlmBadgeDirective,
-    HlmInputDirective,
-    HlmLabelDirective,
+    FlAlert,
+    FlField,
+    FlButton,
+    FlSpinner,
+    FlStatus,
     AgentKeyApplicationPickerComponent,
     AgentKeyProjectPickerComponent,
     ConnectAgentComponent,
+    AgentKeyAreaRow,
   ],
-  providers: [
-    provideIcons({
-      lucideCheck,
-      lucideChevronDown,
-      lucideChevronRight,
-      lucideLoader,
-      lucideLock,
-      lucideTriangleAlert,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (minted(); as key) {
-      <div class="space-y-3" #result>
-        <div class="flex items-start gap-2">
-          <ng-icon name="lucideCheck" class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <p class="text-sm font-medium text-foreground">{{ key.name }} is ready.</p>
-        </div>
+      <div class="flex flex-col gap-3" #result>
+        <fl-status tone="success" [label]="key.name + ' is ready'" />
         <app-connect-agent
           [apiKey]="key.key"
           [skill]="skill()"
@@ -88,168 +64,72 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
         />
       </div>
     } @else {
-      <div class="space-y-4">
-        <div class="grid gap-3 sm:grid-cols-2">
-          <div class="space-y-1.5">
-            <label hlmLabel for="key-name">Name</label>
-            <input
-              hlmInput
-              id="key-name"
-              data-testid="key-name"
-              type="text"
-              [ngModel]="name()"
-              (ngModelChange)="name.set($event)"
-              [disabled]="disabled()"
-              placeholder="Claude Code on my laptop"
-              class="w-full"
-            />
-            <p class="text-xs text-muted-foreground">
-              So you can tell this agent from the next one when you come to revoke it.
-            </p>
-          </div>
-          <div class="space-y-1.5">
-            <label hlmLabel for="key-life">Expires</label>
-            <select
-              hlmInput
-              id="key-life"
-              [(ngModel)]="lifetime"
-              [disabled]="disabled()"
-              class="w-full"
-            >
-              @for (l of lifetimes; track l.id) {
-                <option [value]="l.id">{{ l.label }}</option>
-              }
-            </select>
-            <p class="text-xs text-muted-foreground">
-              A consent that ends on its own is one less thing to remember.
-            </p>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          @for (area of areas(); track area.key) {
-            <div
-              class="rounded-lg border border-border p-3"
-              [attr.data-testid]="'area-' + area.key"
-            >
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-foreground">{{ area.label }}</p>
-                  <p class="text-xs text-muted-foreground">{{ chosenLabel(area.groups) }}</p>
-                </div>
-                <div
-                  class="inline-flex rounded-md border border-border bg-muted/40 p-0.5"
-                  role="radiogroup"
-                  [attr.aria-label]="area.label"
-                >
-                  <button
-                    type="button"
-                    role="radio"
-                    [attr.aria-checked]="!chosen(area.groups)"
-                    [disabled]="disabled()"
-                    (click)="choose(area.groups, null)"
-                    class="rounded px-3 py-1 text-xs font-medium transition-colors"
-                    [class]="
-                      !chosen(area.groups)
-                        ? 'bg-background text-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
-                    "
-                  >
-                    None
-                  </button>
-                  @for (g of area.groups; track g.key) {
-                    <button
-                      type="button"
-                      role="radio"
-                      [attr.data-testid]="'check-' + g.key"
-                      [attr.aria-checked]="picked().has(g.key)"
-                      [disabled]="!g.grantable || disabled()"
-                      [title]="g.grantable ? g.label : 'Not yours to grant'"
-                      (click)="choose(area.groups, g.key)"
-                      class="inline-flex items-center gap-1 rounded px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                      [class]="
-                        picked().has(g.key)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:text-foreground'
-                      "
-                    >
-                      @if (!g.grantable) {
-                        <ng-icon name="lucideLock" class="h-3 w-3" />
-                      }
-                      {{ depthWord(g.depth) }}
-                    </button>
-                  }
-                </div>
-              </div>
-              <button
-                type="button"
-                class="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                [attr.aria-expanded]="isOpen(area.key)"
-                (click)="toggleDetails(area.key)"
-              >
-                <ng-icon
-                  [name]="isOpen(area.key) ? 'lucideChevronDown' : 'lucideChevronRight'"
-                  class="h-3 w-3"
-                />
-                Details
-              </button>
-              <div class="mt-2 space-y-3 border-t border-border pt-3" [hidden]="!isOpen(area.key)">
-                @for (g of area.groups; track g.key) {
-                  <div
-                    [attr.data-testid]="'group-' + g.key"
-                    [attr.data-grantable]="g.grantable"
-                    class="space-y-1"
-                  >
-                    <div class="flex flex-wrap items-center gap-2">
-                      <span
-                        class="text-sm font-medium"
-                        [class]="g.grantable ? 'text-foreground' : 'text-muted-foreground'"
-                        >{{ g.label }}</span
-                      >
-                      @if (!g.grantable) {
-                        <span hlmBadge variant="secondary" class="gap-1 text-xs">
-                          <ng-icon name="lucideLock" class="h-3 w-3" />
-                          Not yours to grant
-                        </span>
-                      }
-                    </div>
-                    <p class="text-sm text-muted-foreground">{{ g.summary }}</p>
-                    @if (!g.grantable) {
-                      <p
-                        class="text-xs text-muted-foreground"
-                        [attr.data-testid]="'blocked-' + g.key"
-                      >
-                        A key is never worth more than the person who issued it, and this one would
-                        be: your own permissions do not cover
-                        <span class="font-mono">{{ g.blockedScopes.join(' · ') }}</span>.
-                      </p>
-                    }
-                    <p class="font-mono text-[11px] text-muted-foreground/80 break-all">
-                      {{ g.scopes.join(' · ') }}
-                    </p>
-                  </div>
-                }
-              </div>
+      <div class="flex flex-col gap-5">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <fl-field
+            label="Name"
+            for="key-name"
+            hint="So you can tell this agent from the next one when you come to revoke it."
+          >
+            <div class="fl-input fl-input--lg">
+              <input
+                id="key-name"
+                data-testid="key-name"
+                type="text"
+                [ngModel]="name()"
+                (ngModelChange)="name.set($event)"
+                [disabled]="disabled()"
+                placeholder="Claude Code on my laptop"
+              />
             </div>
-          }
+          </fl-field>
+          <fl-field
+            label="Expires"
+            for="key-life"
+            hint="A consent that ends on its own is one less thing to remember."
+          >
+            <span class="fl-select-wrap">
+              <select
+                id="key-life"
+                class="fl-select"
+                [(ngModel)]="lifetime"
+                [disabled]="disabled()"
+              >
+                @for (l of lifetimes; track l.id) {
+                  <option [value]="l.id">{{ l.label }}</option>
+                }
+              </select>
+            </span>
+          </fl-field>
         </div>
 
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Which applications
-            </p>
-            <button
-              type="button"
-              data-testid="toggle-app-scope"
-              (click)="limitToApps.set(!limitToApps())"
-              class="text-xs font-medium text-primary underline underline-offset-2"
-            >
-              {{
-                limitToApps() ? 'Reach every application instead' : 'Limit to specific applications'
-              }}
-            </button>
+        <section class="flex flex-col" aria-label="What the agent may do">
+          <h3 class="m-0 text-fl-body-sm font-semibold">What the agent may do</h3>
+          <div class="divide-y divide-fl-border-subtle">
+            @for (area of areas(); track area.key) {
+              <app-agent-key-area-row
+                [attr.data-testid]="'area-' + area.key"
+                [label]="area.label"
+                [groups]="area.groups"
+                [picked]="picked()"
+                [disabled]="disabled()"
+                (choose)="choose(area.groups, $event)"
+              />
+            }
           </div>
+        </section>
+
+        <section class="flex flex-col gap-2" aria-label="Which applications">
+          <h3 class="m-0 text-fl-body-sm font-semibold">Which applications</h3>
+          <label class="fl-check">
+            <input
+              type="checkbox"
+              data-testid="toggle-app-scope"
+              [checked]="limitToApps()"
+              (change)="limitToApps.set(!limitToApps())"
+            />
+            Limit to specific applications
+          </label>
           @if (limitToApps()) {
             <app-agent-key-application-picker
               #appPicker
@@ -257,69 +137,63 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
               (selectionChange)="pickedApps.set($event)"
             />
           } @else {
-            <p class="text-sm text-muted-foreground">
-              Every application you can already reach — the default. Narrow it above if this agent
-              is only meant to work on some of them.
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+              Every application you can already reach, the default. Narrow it if this agent is only
+              meant to work on some of them.
             </p>
           }
-        </div>
+        </section>
 
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Which projects
-            </p>
-            <button
-              type="button"
+        <section class="flex flex-col gap-2" aria-label="Which projects">
+          <h3 class="m-0 text-fl-body-sm font-semibold">Which projects</h3>
+          <label class="fl-check">
+            <input
+              type="checkbox"
               data-testid="toggle-project-scope"
-              (click)="limitToProjects.set(!limitToProjects())"
-              class="text-xs font-medium text-primary underline underline-offset-2"
-            >
-              {{ limitToProjects() ? 'Drop the project grant' : 'Also grant whole projects' }}
-            </button>
-          </div>
+              [checked]="limitToProjects()"
+              (change)="limitToProjects.set(!limitToProjects())"
+            />
+            Also grant whole projects
+          </label>
           @if (limitToProjects()) {
             <app-agent-key-project-picker
               #projectPicker
               (selectionChange)="pickedProjects.set($event)"
             />
-            <p class="text-xs text-muted-foreground">
-              An app added to a granted project later is reached too — nothing to reissue. Combines
-              with the applications above rather than replacing them.
+            <p class="m-0 text-fl-caption text-fl-ink-muted">
+              An app added to a granted project later is reached too, with nothing to reissue. It
+              combines with the applications above rather than replacing them.
             </p>
           } @else {
-            <p class="text-sm text-muted-foreground">
-              No project grant — the default. Grant one if this agent should keep reaching a
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+              No project grant, the default. Grant one if this agent should keep reaching a
               project's apps as it grows, without you widening the key by hand each time.
             </p>
           }
-        </div>
+        </section>
 
         @if (error(); as e) {
-          <div
-            class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
-            <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
+          <fl-alert tone="error" title="Key not created">
             <span data-testid="mint-error">{{ e }}</span>
-          </div>
+          </fl-alert>
         }
 
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="m-0 text-fl-caption text-fl-ink-muted">
+            Pick at least one area: a key with none would carry your full weight.
+          </p>
           <button
+            flButton="primary"
             type="button"
             data-testid="mint-key"
             (click)="submit()"
             [disabled]="!canSubmit()"
-            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             @if (busy()) {
-              <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
+              <fl-spinner label="Creating" />
             }
             Create key
           </button>
-          <p class="text-xs text-muted-foreground">
-            Pick at least one area: a key with none would carry your full weight.
-          </p>
         </div>
       </div>
     }
@@ -338,34 +212,11 @@ export class AgentKeyMintComponent {
   readonly dismiss = output<void>();
 
   protected readonly lifetimes = LIFETIMES;
-  /**
-   * A signal, like everything else `canSubmit` reads.
-   *
-   * It was a plain property bound with `[(ngModel)]`, and `canSubmit` is a
-   * `computed` — which re-runs only when a *signal* it read changes. Typing the
-   * name therefore never re-enabled the button: it stayed disabled until some
-   * other signal moved, and toggling a permission group was the thing that
-   * happened to move one. So the button looked broken, and the way to unstick it
-   * was to fiddle with the groups, which is what it took to mint a key today.
-   *
-   * The two pickers in this folder already bind their filter this way.
-   */
   protected readonly name = signal('');
   protected lifetime = '30d';
   protected readonly picked = signal<ReadonlySet<string>>(new Set());
   protected readonly limitToApps = signal(false);
   protected readonly pickedApps = signal<string[]>([]);
-  /**
-   * The key is shown once and is never recoverable, so it must not appear
-   * somewhere nobody is looking.
-   *
-   * The result replaces the form rather than joining it, and the form is long:
-   * somebody who scrolled down to reach the Create button is left, the instant
-   * it is pressed, staring at the empty space below a much shorter block, with
-   * the key above them and no reason to suspect it. Reported from the dashboard
-   * as "a strange scroll — I had to scroll to find the token". A person who does
-   * not scroll has minted a credential they do not have.
-   */
   private readonly result = viewChild<ElementRef<HTMLElement>>('result');
 
   private readonly appPicker = viewChild<AgentKeyApplicationPickerComponent>('appPicker');
@@ -404,32 +255,6 @@ export class AgentKeyMintComponent {
       !this.busy() && !this.disabled() && this.picked().size > 0 && this.name().trim().length > 0,
   );
 
-  private readonly openAreas = signal<ReadonlySet<string>>(new Set());
-
-  protected isOpen(area: string): boolean {
-    return this.openAreas().has(area);
-  }
-
-  protected toggleDetails(area: string): void {
-    const next = new Set(this.openAreas());
-    if (!next.delete(area)) next.add(area);
-    this.openAreas.set(next);
-  }
-
-  protected depthWord(depth: string): string {
-    return DEPTH_WORD[depth] ?? depth;
-  }
-
-  protected chosen(groups: PermissionGroupDto[]): PermissionGroupDto | undefined {
-    const picked = this.picked();
-    return groups.find((g) => picked.has(g.key));
-  }
-
-  protected chosenLabel(groups: PermissionGroupDto[]): string {
-    return this.chosen(groups)?.label ?? 'Nothing in this area';
-  }
-
-  /** A deeper group carries every shallower one in its area, so an area holds one pick at most. */
   protected choose(groups: PermissionGroupDto[], key: string | null): void {
     const next = new Set(this.picked());
     for (const g of groups) next.delete(g.key);

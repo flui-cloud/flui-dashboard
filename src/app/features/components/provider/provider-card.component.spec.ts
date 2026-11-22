@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { FlActionsMenu } from '../../../ui/overlays/actions-menu';
 import { ProviderCardComponent } from './provider-card.component';
 import { ProviderConfigurationDto, ProviderDefinitionDto } from '../../../core/api';
 import { credentialKind, providerCapabilities, providerState } from './provider-presentation';
@@ -78,7 +80,10 @@ describe('ProviderCardComponent', () => {
       'Not connected',
     );
     expect(el.textContent).toContain('Key and secret');
-    (el.querySelector('[data-testid="provider-connect"]') as HTMLButtonElement).click();
+    expect(el.querySelector('[data-testid="provider-connect"]')).not.toBeNull();
+    const menu = fixture.debugElement.query(By.directive(FlActionsMenu))
+      .componentInstance as FlActionsMenu;
+    menu.action.emit('connect');
 
     expect(emitted).toEqual(['ovh']);
   });
@@ -93,8 +98,10 @@ describe('ProviderCardComponent', () => {
         '[class*="text-green"], [class*="text-orange"], [class*="text-purple"], [class*="text-blue"]',
       ),
     );
+    const state = el.querySelector('[data-testid="provider-state"]');
 
-    expect(coloured.map((node) => node.getAttribute('data-testid'))).toEqual(['provider-state']);
+    expect(coloured).toEqual([]);
+    expect(state?.classList.contains('fl-status--success')).toBeTrue();
     expect(el.textContent).toContain('Connected');
   });
 });

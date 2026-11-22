@@ -1,9 +1,12 @@
 import {
+  durationOf,
+  formatDuration,
   formatWhen,
   shortId,
   sourceLabel,
-  statusBadgeClass,
   statusLabel,
+  statusText,
+  statusTone,
   typeLabel,
 } from './migration-row-view';
 import type { MigrationRow } from '../../service/migration.service';
@@ -14,12 +17,26 @@ describe('migration row view helpers', () => {
     expect(statusLabel('db_replicating')).toBe('db replicating');
   });
 
-  it('colours terminal, bridging and in-flight statuses differently', () => {
-    expect(statusBadgeClass('COMPLETED')).toContain('emerald');
-    expect(statusBadgeClass('bridging')).toContain('sky');
-    expect(statusBadgeClass('failed_forward')).toContain('red');
-    expect(statusBadgeClass('app_staging')).toContain('amber');
-    expect(statusBadgeClass('unknown')).toBe('border-border bg-muted text-muted-foreground');
+  it('maps terminal, failed and in-flight statuses to kit tones', () => {
+    expect(statusTone('COMPLETED')).toBe('success');
+    expect(statusTone('bridging')).toBe('progress');
+    expect(statusTone('failed_forward')).toBe('error');
+    expect(statusTone('app_staging')).toBe('progress');
+    expect(statusTone('unknown')).toBe('neutral');
+    expect(statusText('db_replicating')).toBe('DB replicating');
+  });
+
+  it('measures how long a migration ran, or has been running', () => {
+    expect(formatDuration(45_000)).toBe('45s');
+    expect(formatDuration(192_000)).toBe('3m 12s');
+    expect(formatDuration(3_720_000)).toBe('1h 02m');
+    const row = {
+      type: 'app',
+      startedAt: '2026-01-01T10:00:00.000Z',
+      finishedAt: '2026-01-01T10:05:00.000Z',
+    } as MigrationRow;
+    expect(durationOf(row)).toBe('5m 00s');
+    expect(durationOf({ type: 'app', startedAt: null } as unknown as MigrationRow)).toBe('—');
   });
 
   it('shortens ids and shows a dash when there is none', () => {

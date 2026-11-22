@@ -1,30 +1,5 @@
-import {
-  Component,
-  OnDestroy,
-  computed,
-  effect,
-  inject,
-  signal,
-  OnInit,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideActivity,
-  lucideArrowLeft,
-  lucideCircleCheck,
-  lucideCircleX,
-  lucideExternalLink,
-  lucideGlobe,
-  lucideLoader,
-  lucidePower,
-  lucideRefreshCw,
-  lucideShieldCheck,
-  lucideTrash2,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
 import { ProvidersService } from '../../service/providers.service';
 import { ProviderMarkComponent } from '../../../shared/components/provider-mark.component';
 import { ProviderConfigurationDto, ProviderDefinitionDto } from '../../../core/api';
@@ -32,6 +7,8 @@ import { HealthStatus } from '../../model/provider.models';
 import { ProviderCredentialsPanelComponent } from './provider-credentials-panel.component';
 import { ProviderRegionsPanelComponent } from './provider-regions-panel.component';
 import { ProviderInferencePanelComponent } from './provider-inference-panel.component';
+import { ProviderHealthPanel } from './provider-health-panel';
+import { ProviderDetailsPanel } from './provider-details-panel';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
@@ -41,338 +18,147 @@ import {
   presentedContent,
 } from './provider-surface';
 import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
+import { Crumb, FlBreadcrumb } from '../../../ui/patterns/breadcrumb';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
+import { PROVIDER_STATUS, providerState } from './provider-presentation';
+import { errorMessageOf } from './provider-credentials';
 
 @Component({
   selector: 'provider-manage',
-  standalone: true,
   imports: [
     ProviderMarkComponent,
     MaskIdPipe,
     ReadOnlySectionDirective,
     RouterLink,
-    NgIcon,
     ProviderCredentialsPanelComponent,
     ProviderRegionsPanelComponent,
     ProviderInferencePanelComponent,
+    ProviderHealthPanel,
+    ProviderDetailsPanel,
+    FlBreadcrumb,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlCopyId,
+    FlEmptyState,
+    FlLoadingState,
+    FlActionsMenu,
+    FlButton,
+    FlStatus,
   ],
-  providers: [
-    provideIcons({
-      lucideActivity,
-      lucideArrowLeft,
-      lucideCircleCheck,
-      lucideCircleX,
-      lucideExternalLink,
-      lucideGlobe,
-      lucideLoader,
-      lucidePower,
-      lucideRefreshCw,
-      lucideShieldCheck,
-      lucideTrash2,
-      lucideTriangleAlert,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
-      <a
-        routerLink="/management/providers"
-        class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
-      >
-        <ng-icon name="lucideArrowLeft" class="h-4 w-4 mr-2" />
-        Back to providers
-      </a>
-
+    <div class="fl-page">
       @if (isLoading()) {
-        <div class="flex items-center justify-center py-24">
-          <ng-icon name="lucideLoader" class="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <fl-breadcrumb [items]="crumbs()" />
+        <fl-panel><fl-loading-state [rows]="4" /></fl-panel>
       } @else if (!provider()) {
-        <div class="bg-card border border-border rounded-lg p-12 text-center">
-          <ng-icon name="lucideTriangleAlert" class="h-10 w-10 mx-auto text-yellow-500 mb-4" />
-          <h2 class="text-lg font-semibold mb-2">Provider not found</h2>
-          <p class="text-sm text-muted-foreground">
-            The provider <span class="font-mono">{{ providerId() }}</span> doesn't exist.
-          </p>
-        </div>
+        <fl-page-header title="Provider not found" [breadcrumb]="crumbs()" />
+        <fl-panel>
+          <fl-empty-state
+            title="Provider not found"
+            [body]="'The provider ' + providerId() + ' does not exist.'"
+          >
+            <a flButton size="sm" routerLink="/management/providers">Back to providers</a>
+          </fl-empty-state>
+        </fl-panel>
       } @else {
-        <!-- Hero -->
-        <div
-          class="relative overflow-hidden rounded-fl-lg border border-border bg-fl-surface p-6 md:p-8 mb-6"
-        >
-          <div class="flex flex-col md:flex-row md:items-center gap-5">
-            <div
-              class="flex items-center justify-center h-16 w-16 rounded-fl-lg bg-background border border-border shrink-0"
-            >
-              <app-provider-mark [name]="provider()!.displayName" [size]="40" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">
-                  {{ provider()!.displayName }}
-                </h1>
-                <span [class]="statusBadgeClass()">
-                  <ng-icon
-                    [name]="statusIcon()"
-                    [class]="'h-3.5 w-3.5 mr-1.5 ' + (isStatusSpinning() ? 'animate-spin' : '')"
-                  />
-                  {{ statusLabel() }}
-                </span>
+        @let p = provider()!;
+        <div class="flex flex-col gap-3">
+          <fl-breadcrumb [items]="crumbs()" />
+          <div class="fl-pagehead">
+            <div class="fl-pagehead__main">
+              <div class="fl-pagehead__line">
+                <app-provider-mark [name]="p.displayName" [size]="28" />
+                <h1 class="fl-pagehead__title">{{ p.displayName }}</h1>
+                <fl-status
+                  [tone]="status().tone"
+                  [label]="status().label"
+                  data-testid="provider-manage-status"
+                />
               </div>
-              <p class="text-sm text-muted-foreground mt-1">{{ provider()!.description }}</p>
-              <div class="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                <a
-                  [href]="provider()!.websiteUrl"
-                  target="_blank"
-                  class="inline-flex items-center hover:text-foreground transition-colors"
-                >
-                  <ng-icon name="lucideExternalLink" class="h-3 w-3 mr-1" /> Website
-                </a>
-                <a
-                  [href]="provider()!.documentationUrl"
-                  target="_blank"
-                  class="inline-flex items-center hover:text-foreground transition-colors"
-                >
-                  <ng-icon name="lucideExternalLink" class="h-3 w-3 mr-1" /> Docs
-                </a>
+              <div class="fl-pagehead__meta">
+                @if (configuration(); as c) {
+                  <fl-copy-id [value]="c.id" [display]="c.id | maskId" label="configuration ID" />
+                }
+                @if (p.description) {
+                  <span>{{ p.description }}</span>
+                }
+                @if (p.websiteUrl) {
+                  <a class="fl-link" [href]="p.websiteUrl" target="_blank" rel="noopener"
+                    >Website</a
+                  >
+                }
+                @if (p.documentationUrl) {
+                  <a class="fl-link" [href]="p.documentationUrl" target="_blank" rel="noopener"
+                    >Docs</a
+                  >
+                }
               </div>
             </div>
+            @if (configuration()) {
+              <div class="fl-pagehead__actions">
+                <button
+                  flButton
+                  type="button"
+                  appReadOnlySection="providers"
+                  [disabled]="isCheckingHealth()"
+                  (click)="refreshHealth()"
+                >
+                  {{ isCheckingHealth() ? 'Checking…' : 'Run health check' }}
+                </button>
+                <fl-actions-menu
+                  label="Actions"
+                  appReadOnlySection="providers"
+                  [items]="actions()"
+                  data-testid="provider-manage-actions"
+                  (action)="onAction($event)"
+                />
+              </div>
+            }
           </div>
         </div>
 
         @if (errorMessage()) {
-          <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3 mb-6">
-            <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-            <p class="text-sm text-red-800">{{ errorMessage() }}</p>
-          </div>
+          <fl-alert tone="error" title="Something went wrong">{{ errorMessage() }}</fl-alert>
         }
 
         @if (!configuration()) {
-          <div class="card-surface p-6 text-center">
-            <p class="text-sm text-muted-foreground mb-4">This provider isn't connected yet.</p>
-            <a
-              routerLink="/management/providers"
-              [queryParams]="{ configure: providerId() }"
-              class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          <fl-panel>
+            <fl-empty-state
+              title="Not connected"
+              [body]="'Connect an account so Flui can create machines on ' + p.displayName + '.'"
             >
-              Connect {{ provider()!.displayName }}
-            </a>
-          </div>
+              <a
+                flButton="primary"
+                size="sm"
+                routerLink="/management/providers"
+                [queryParams]="{ configure: providerId() }"
+              >
+                Connect {{ p.displayName }}
+              </a>
+            </fl-empty-state>
+          </fl-panel>
+          <app-provider-details-panel [provider]="p" />
         } @else {
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Main column -->
-            <div class="lg:col-span-2 space-y-6">
-              <provider-credentials-panel
-                [provider]="provider()!"
-                [configuration]="configuration()!"
-                (updated)="onConfigUpdated($event)"
-              />
-
-              <provider-regions-panel [provider]="provider()!" [configuration]="configuration()!" />
-
-              <provider-inference-panel [providerId]="providerId()" />
-
-              <!-- Health card -->
-              <section class="bg-card border border-border rounded-fl-lg overflow-hidden">
-                <header
-                  class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2"
-                >
-                  <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-muted-foreground" />
-                  <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Health
-                  </h2>
-                  <button
-                    appReadOnlySection="providers"
-                    type="button"
-                    (click)="refreshHealth()"
-                    [disabled]="isCheckingHealth()"
-                    class="ml-auto inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                  >
-                    <ng-icon
-                      name="lucideRefreshCw"
-                      [class]="'h-3.5 w-3.5 mr-1 ' + (isCheckingHealth() ? 'animate-spin' : '')"
-                    />
-                    Refresh
-                  </button>
-                </header>
-                <div class="p-6">
-                  @if (health(); as h) {
-                    <div class="flex items-start gap-4">
-                      <div [class]="healthIconWrapClass(h.status)">
-                        <ng-icon [name]="healthIcon(h.status)" class="h-5 w-5" />
-                      </div>
-                      <div class="flex-1">
-                        <p [class]="'font-semibold capitalize ' + healthTextClass(h.status)">
-                          {{ h.status }}
-                        </p>
-                        <p class="text-xs text-muted-foreground mt-0.5">
-                          Checked {{ formatDate(h.lastCheck.toISOString()) }}
-                          @if (h.responseTime !== undefined) {
-                            · {{ h.responseTime }}ms
-                          }
-                        </p>
-                        @if (h.errors?.length) {
-                          <p class="text-sm text-red-600 mt-2">
-                            {{ h.errors![0] }}
-                          </p>
-                        }
-                      </div>
-                    </div>
-                  } @else {
-                    <p class="text-sm text-muted-foreground">
-                      {{ isCheckingHealth() ? 'Checking…' : 'No health data yet.' }}
-                    </p>
-                  }
-                </div>
-              </section>
-            </div>
-
-            <!-- Sidebar -->
-            <aside class="space-y-6">
-              <section class="bg-card border border-border rounded-fl-lg overflow-hidden">
-                <header class="px-6 py-4 border-b border-border bg-muted/30">
-                  <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Quick actions
-                  </h2>
-                </header>
-                <div class="p-3 space-y-1">
-                  <button
-                    appReadOnlySection="providers"
-                    type="button"
-                    (click)="toggleEnabled()"
-                    [disabled]="isToggling()"
-                    class="w-full inline-flex items-center px-3 py-2.5 rounded-md text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
-                  >
-                    @if (isToggling()) {
-                      <ng-icon
-                        name="lucideLoader"
-                        class="h-4 w-4 mr-3 text-muted-foreground animate-spin"
-                      />
-                    } @else {
-                      <ng-icon
-                        name="lucidePower"
-                        [class]="
-                          'h-4 w-4 mr-3 ' +
-                          (configuration()!.isActive ? 'text-green-600' : 'text-muted-foreground')
-                        "
-                      />
-                    }
-                    {{ configuration()!.isActive ? 'Disable provider' : 'Enable provider' }}
-                  </button>
-                  <button
-                    appReadOnlySection="providers"
-                    type="button"
-                    (click)="refreshHealth()"
-                    [disabled]="isCheckingHealth()"
-                    class="w-full inline-flex items-center px-3 py-2.5 rounded-md text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
-                  >
-                    <ng-icon
-                      name="lucideRefreshCw"
-                      [class]="
-                        'h-4 w-4 mr-3 text-muted-foreground ' +
-                        (isCheckingHealth() ? 'animate-spin' : '')
-                      "
-                    />
-                    Run health check
-                  </button>
-                </div>
-                <div class="p-3 pt-0 border-t border-border mt-1">
-                  <button
-                    appReadOnlySection="providers"
-                    type="button"
-                    (click)="confirmRemove.set(true)"
-                    class="w-full inline-flex items-center px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <ng-icon name="lucideTrash2" class="h-4 w-4 mr-3" />
-                    Remove configuration
-                  </button>
-                </div>
-              </section>
-
-              <!-- Metadata -->
-              <section class="bg-card border border-border rounded-fl-lg overflow-hidden">
-                <header class="px-6 py-4 border-b border-border bg-muted/30">
-                  <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Metadata
-                  </h2>
-                </header>
-                <dl class="p-6 space-y-3 text-sm">
-                  <div class="flex justify-between gap-4">
-                    <dt class="text-muted-foreground shrink-0">ID</dt>
-                    <dd class="font-mono text-xs truncate" [title]="configuration()!.id | maskId">
-                      {{ configuration()!.id | maskId }}
-                    </dd>
-                  </div>
-                  <div class="flex justify-between gap-4">
-                    <dt class="text-muted-foreground">Active</dt>
-                    <dd class="font-medium">{{ configuration()!.isActive ? 'Yes' : 'No' }}</dd>
-                  </div>
-                  <div class="flex justify-between gap-4">
-                    <dt class="text-muted-foreground">Last update</dt>
-                    <dd class="font-medium text-right">
-                      {{ formatDate(configuration()!.updatedAt) }}
-                    </dd>
-                  </div>
-                  @if (configuration()!.lastHealthCheck) {
-                    <div class="flex justify-between gap-4">
-                      <dt class="text-muted-foreground">Last check</dt>
-                      <dd class="font-medium text-right">
-                        {{ formatDate(configuration()!.lastHealthCheck) }}
-                      </dd>
-                    </div>
-                  }
-                </dl>
-              </section>
-            </aside>
+          <div class="fl-grid-2 items-start">
+            <provider-credentials-panel
+              [provider]="p"
+              [configuration]="configuration()!"
+              (updated)="onConfigUpdated($event)"
+            />
+            <app-provider-health-panel [health]="health()" [checking]="isCheckingHealth()" />
           </div>
-        }
-
-        <!-- Remove confirm dialog -->
-        @if (confirmRemove()) {
-          <div
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            (click)="confirmRemove.set(false)"
-          >
-            <div
-              class="bg-card border border-border rounded-lg p-6 max-w-md w-full space-y-4"
-              (click)="$event.stopPropagation()"
-            >
-              <div class="flex items-start gap-3">
-                <div
-                  class="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0"
-                >
-                  <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-red-600" />
-                </div>
-                <div>
-                  <h3 class="text-lg font-semibold">Remove {{ provider()!.displayName }}?</h3>
-                  <p class="text-sm text-muted-foreground mt-1">
-                    This removes the saved credentials and configuration. Resources already
-                    provisioned on this provider are not affected.
-                  </p>
-                </div>
-              </div>
-              <div class="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  (click)="confirmRemove.set(false)"
-                  [disabled]="isRemoving()"
-                  class="inline-flex items-center justify-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  (click)="remove()"
-                  [disabled]="isRemoving()"
-                  class="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50"
-                >
-                  @if (isRemoving()) {
-                    <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                  }
-                  Remove
-                </button>
-              </div>
-            </div>
-          </div>
+          <provider-regions-panel [provider]="p" [configuration]="configuration()!" />
+          <provider-inference-panel [providerId]="providerId()" />
+          <app-provider-details-panel [provider]="p" [configuration]="configuration()!" />
         }
       }
     </div>
@@ -383,6 +169,7 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly providersService = inject(ProvidersService);
   private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly confirm = inject(ConfirmService);
 
   protected providerId = signal<string>('');
   protected isLoading = signal<boolean>(true);
@@ -390,7 +177,6 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
   protected isCheckingHealth = signal<boolean>(false);
   protected isToggling = signal<boolean>(false);
   protected isRemoving = signal<boolean>(false);
-  protected confirmRemove = signal<boolean>(false);
   protected errorMessage = signal<string>('');
 
   protected provider = computed<ProviderDefinitionDto | undefined>(() =>
@@ -401,45 +187,30 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
     this.providersService.configuredProviders().find((c) => c.provider === this.providerId()),
   );
 
-  protected statusLabel = computed(() =>
-    (this.configuration()?.status ?? 'not_configured').replaceAll('_', ' '),
-  );
-
-  protected statusIcon = computed(() => {
-    switch (this.configuration()?.status) {
-      case 'active':
-        return 'lucideCircleCheck';
-      case 'error':
-        return 'lucideCircleX';
-      case 'configuring':
-      case 'validating':
-        return 'lucideLoader';
-      default:
-        return 'lucideActivity';
-    }
+  protected readonly status = computed(() => {
+    const state = providerState(this.configuration()?.status);
+    return { label: state.label, tone: PROVIDER_STATUS[state.tone] };
   });
 
-  protected isStatusSpinning = computed(() => {
-    const s = this.configuration()?.status;
-    return s === 'configuring' || s === 'validating';
-  });
+  protected readonly crumbs = computed<Crumb[]>(() => [
+    { label: 'Providers', link: '/management/providers' },
+    { label: this.provider()?.displayName ?? this.providerId() },
+  ]);
 
-  protected statusBadgeClass = computed(() => {
-    const base = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize';
-    switch (this.configuration()?.status) {
-      case 'active':
-        return `${base} bg-green-100 text-green-800`;
-      case 'error':
-        return `${base} bg-red-100 text-red-800`;
-      case 'disabled':
-        return `${base} bg-gray-100 text-gray-700`;
-      case 'configuring':
-      case 'validating':
-        return `${base} bg-blue-100 text-blue-800`;
-      default:
-        return `${base} bg-yellow-100 text-yellow-800`;
-    }
-  });
+  protected readonly actions = computed<MenuAction[]>(() => [
+    {
+      id: 'toggle',
+      label: this.configuration()?.isActive ? 'Disable provider' : 'Enable provider',
+      disabled: this.isToggling(),
+    },
+    {
+      id: 'disconnect',
+      label: 'Disconnect',
+      danger: true,
+      separatorBefore: true,
+      disabled: this.isRemoving(),
+    },
+  ]);
 
   private readonly surfaceRevision = new ProviderSurfaceRevision();
 
@@ -458,8 +229,6 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // Publish this page's own Semantic Surface snapshot into the shared registry
-    // whenever it changes — same pattern as ApplicationDetailComponent.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -481,7 +250,25 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
   }
 
   onConfigUpdated(_config: ProviderConfigurationDto): void {
-    // ProvidersService already updated state; signal computed will re-derive automatically
+    return;
+  }
+
+  protected onAction(id: string): void {
+    if (id === 'toggle') void this.toggleEnabled();
+    if (id === 'disconnect') void this.confirmDisconnect();
+  }
+
+  async confirmDisconnect(): Promise<void> {
+    const provider = this.provider();
+    if (!provider || this.isRemoving()) return;
+    const confirmed = await this.confirm.confirm({
+      title: `Disconnect ${provider.displayName}?`,
+      body: 'This removes the saved credentials and configuration. Resources already provisioned on this provider are not affected.',
+      confirmLabel: 'Disconnect',
+      destructive: true,
+      typeToConfirm: provider.id,
+    });
+    if (confirmed) await this.remove();
   }
 
   async refreshHealth(): Promise<void> {
@@ -525,54 +312,7 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
     }
   }
 
-  protected formatDate(value: string | undefined): string {
-    if (!value) return '—';
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
-  }
-
-  protected healthIcon(status: string): string {
-    switch (status) {
-      case 'healthy':
-        return 'lucideCircleCheck';
-      case 'degraded':
-        return 'lucideTriangleAlert';
-      case 'unhealthy':
-        return 'lucideCircleX';
-      default:
-        return 'lucideActivity';
-    }
-  }
-
-  protected healthTextClass(status: string): string {
-    switch (status) {
-      case 'healthy':
-        return 'text-green-600';
-      case 'degraded':
-        return 'text-yellow-600';
-      case 'unhealthy':
-        return 'text-red-600';
-      default:
-        return '';
-    }
-  }
-
-  protected healthIconWrapClass(status: string): string {
-    const base = 'h-10 w-10 rounded-full flex items-center justify-center shrink-0';
-    switch (status) {
-      case 'healthy':
-        return `${base} bg-green-100 text-green-600`;
-      case 'degraded':
-        return `${base} bg-yellow-100 text-yellow-600`;
-      case 'unhealthy':
-        return `${base} bg-red-100 text-red-600`;
-      default:
-        return `${base} bg-muted text-muted-foreground`;
-    }
-  }
-
   private extractError(error: unknown, fallback: string): string {
-    const e = error as { error?: { message?: string }; message?: string } | undefined;
-    return e?.error?.message ?? e?.message ?? fallback;
+    return errorMessageOf(error, fallback);
   }
 }

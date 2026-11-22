@@ -5,13 +5,16 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { IamService } from '../../service/iam.service';
 import { GroupsTabComponent } from './groups-tab.component';
 import { PermissionService } from '../../../core/services/permission.service';
+import { ConfirmService } from '../../../ui/overlays/confirm';
 
 describe('deleting an access group', () => {
   let fixture: ComponentFixture<GroupsTabComponent>;
   let removeGroup: jasmine.Spy;
+  let confirm: jasmine.Spy;
 
   beforeEach(async () => {
     removeGroup = jasmine.createSpy('removeGroup');
+    confirm = jasmine.createSpy('confirm').and.resolveTo(false);
     const iam = {
       groups: signal([
         { name: 'platform', description: 'Runs the clusters', members: ['a@x.io', 'b@x.io'] },
@@ -32,6 +35,7 @@ describe('deleting an access group', () => {
         provideHttpClientTesting(),
         { provide: IamService, useValue: iam },
         { provide: PermissionService, useValue: { can: () => true } },
+        { provide: ConfirmService, useValue: { confirm } },
       ],
     }).compileComponents();
 
@@ -46,13 +50,6 @@ describe('deleting an access group', () => {
     return buttons.find((b) => b.getAttribute('title') === 'Delete group');
   };
 
-  const byText = (label: string): HTMLButtonElement | undefined => {
-    const buttons: HTMLButtonElement[] = Array.from(
-      fixture.nativeElement.querySelectorAll('button'),
-    );
-    return buttons.find((b) => b.textContent?.trim() === label);
-  };
-
   it('renders the gesture at all — a button that is not there proves nothing', () => {
     expect(trashButton()).toBeDefined();
   });
@@ -65,26 +62,24 @@ describe('deleting an access group', () => {
 
   it('says how many people lose access', () => {
     trashButton()!.click();
-    fixture.detectChanges();
-    const text = fixture.nativeElement.textContent as string;
-    expect(text).toContain('Delete group');
-    expect(text).toContain('cannot be undone');
-    expect(text).toContain('2 member(s) lose whatever this group granted them.');
+    const options = confirm.calls.mostRecent().args[0];
+    expect(options.title).toBe('Delete group');
+    expect(options.body).toContain('cannot be undone');
+    expect(options.body).toContain('2 member(s) lose whatever this group granted them.');
+    expect(options.destructive).toBeTrue();
   });
 
-  it('deletes once the person confirms', () => {
+  it('deletes once the person confirms', async () => {
+    confirm.and.resolveTo(true);
     trashButton()!.click();
-    fixture.detectChanges();
-    byText('Delete')!.click();
-    fixture.detectChanges();
+    await confirm.calls.mostRecent().returnValue;
     expect(removeGroup).toHaveBeenCalledWith('platform');
   });
 
-  it('deletes nothing when the person backs out', () => {
+  it('deletes nothing when the person backs out', async () => {
+    confirm.and.resolveTo(false);
     trashButton()!.click();
-    fixture.detectChanges();
-    byText('Cancel')!.click();
-    fixture.detectChanges();
+    await confirm.calls.mostRecent().returnValue;
     expect(removeGroup).not.toHaveBeenCalled();
   });
 });

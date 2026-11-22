@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   OnDestroy,
   OnInit,
@@ -9,50 +8,34 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowRight,
-  lucideArrowRightLeft,
-  lucideBan,
-  lucideLoader,
-  lucidePlus,
-  lucideRefreshCw,
-  lucideTrash2,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlus, lucideRefreshCw } from '@ng-icons/lucide';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ClusterService } from '../../service/cluster.service';
 import { MigrationRow, MigrationService } from '../../service/migration.service';
 import { MigrationLaunchModalComponent } from './migration-launch-modal.component';
 import {
-  bridgeLine,
-  canAbort,
-  canCutover,
-  canDestroySource,
-  cutoverLabel,
   destroyConfirmation,
   pendingConfirmation,
   type PendingMigrationAction,
 } from './migration-bridge';
-import { kindLabel, measuresLine, nextStepsOf, poolerLine } from './migration-measures';
-import {
-  formatWhen,
-  shortId,
-  sourceLabel,
-  statusBadgeClass,
-  statusLabel,
-  typeBadgeClass,
-  typeLabel,
-} from './migration-row-view';
+import { shortId, sourceLabel } from './migration-row-view';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import {
   MigrationsListSurfaceInput,
   MigrationsListSurfaceRevision,
   buildMigrationsListSurface,
   presentedContent,
 } from './migrations-list-surface';
+import { MigrationsTableComponent } from './migrations-table';
 
 /**
  * Monitor + drive surface for cross-cluster migrations. Lists app / DB / full
@@ -61,216 +44,81 @@ import {
  */
 @Component({
   selector: 'app-migrations-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReadOnlySectionDirective,
-    NgIcon,
-    ConfirmationDialogComponent,
     MigrationLaunchModalComponent,
+    MigrationsTableComponent,
+    FlAlert,
+    FlButton,
+    FlEmptyState,
+    FlIcon,
+    FlLoadingState,
+    FlPageHeader,
+    FlPanel,
   ],
-  providers: [
-    provideIcons({
-      lucideArrowRight,
-      lucideArrowRightLeft,
-      lucideBan,
-      lucideLoader,
-      lucidePlus,
-      lucideRefreshCw,
-      lucideTrash2,
-      lucideTriangleAlert,
-    }),
-  ],
+  providers: [provideIcons({ lucidePlus, lucideRefreshCw })],
   template: `
-    <div class="space-y-4 p-6">
-      <header class="flex items-start justify-between">
-        <div>
-          <h1 class="flex items-center gap-2 text-2xl font-semibold">
-            <ng-icon name="lucideArrowRightLeft" class="h-6 w-6 text-muted-foreground" />
-            Migrations
-          </h1>
-          <p class="mt-1 text-sm text-muted-foreground">
-            Move workloads, managed databases, and full apps across clusters.
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
+    <div class="fl-page">
+      <fl-page-header [title]="'Migrations (' + migrations().length + ')'">
+        <span headerMeta>Move workloads, managed databases and full apps across clusters.</span>
+        <ng-container headerActions>
           <button
+            flButton
             type="button"
-            (click)="reload()"
+            [iconOnly]="true"
+            aria-label="Refresh"
             [disabled]="loading()"
-            class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+            (click)="reload()"
           >
-            <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="loading()" />
-            Refresh
+            <fl-icon name="lucideRefreshCw" />
           </button>
           <button
-            appReadOnlySection="backup"
+            flButton="primary"
             type="button"
+            appReadOnlySection="backup"
             (click)="openLaunch()"
-            class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            <ng-icon name="lucidePlus" class="h-4 w-4" /> New migration
+            <fl-icon name="lucidePlus" />
+            New migration
           </button>
-        </div>
-      </header>
+        </ng-container>
+      </fl-page-header>
 
       @if (error(); as e) {
-        <div
-          class="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          <ng-icon name="lucideTriangleAlert" class="h-4 w-4" /> {{ e }}
-        </div>
+        <fl-alert tone="error" title="Could not load migrations">{{ e }}</fl-alert>
       }
 
-      @if (loading()) {
-        <p class="text-sm text-muted-foreground">Loading…</p>
-      } @else if (migrations().length === 0) {
-        <div class="rounded-lg border border-dashed border-border p-10 text-center">
-          <p class="text-sm text-muted-foreground">No migrations yet.</p>
-          <button
-            appReadOnlySection="backup"
-            type="button"
-            (click)="openLaunch()"
-            class="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      <fl-panel [flush]="true">
+        @if (loading()) {
+          <fl-loading-state [rows]="5" />
+        } @else if (migrations().length === 0) {
+          <fl-empty-state
+            title="No migrations yet"
+            body="Move an application, a managed database or both to another cluster."
           >
-            <ng-icon name="lucidePlus" class="h-4 w-4" /> New migration
-          </button>
-        </div>
-      } @else {
-        <div class="overflow-x-auto rounded-lg border border-border bg-card">
-          <table class="w-full text-sm">
-            <thead class="bg-muted/40 text-xs uppercase text-muted-foreground">
-              <tr>
-                <th class="px-4 py-2 text-left">Type</th>
-                <th class="px-4 py-2 text-left">Status</th>
-                <th class="px-4 py-2 text-left">Source → Target</th>
-                <th class="px-4 py-2 text-left">Cutover</th>
-                <th class="px-4 py-2 text-left">When</th>
-                <th class="px-4 py-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of migrations(); track row.type + ':' + row.id) {
-                <tr class="border-t border-border align-top hover:bg-muted/20">
-                  <td class="px-4 py-3">
-                    <span
-                      class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium"
-                      [class]="typeBadgeClass(row.type)"
-                    >
-                      {{ typeLabel(row.type) }}
-                    </span>
-                    @if (kindLabel(row); as kind) {
-                      <p class="mt-1 text-xs text-muted-foreground">{{ kind }}</p>
-                    }
-                  </td>
-                  <td class="px-4 py-3">
-                    <span
-                      class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium"
-                      [class]="statusBadgeClass(row.status)"
-                    >
-                      {{ statusLabel(row.status) }}
-                    </span>
-                    @if (bridgeLine(row); as line) {
-                      <p class="mt-1 max-w-xs text-xs text-muted-foreground">{{ line }}</p>
-                    }
-                    @if (measuresLine(row); as measures) {
-                      <p class="mt-1 max-w-xs text-xs text-muted-foreground">{{ measures }}</p>
-                    }
-                    @if (poolerLine(row); as pooler) {
-                      <p class="mt-1 max-w-xs text-xs text-muted-foreground">{{ pooler }}</p>
-                    }
-                    @if (nextStepsOf(row).length) {
-                      <button
-                        type="button"
-                        (click)="toggleSteps(row)"
-                        [attr.aria-expanded]="stepsOpen() === rowKey(row)"
-                        class="mt-1 text-xs font-medium text-primary hover:underline"
-                      >
-                        Next steps ({{ nextStepsOf(row).length }})
-                      </button>
-                      @if (stepsOpen() === rowKey(row)) {
-                        <ul
-                          class="mt-1 max-w-xs list-disc space-y-0.5 pl-4 text-xs text-muted-foreground"
-                        >
-                          @for (step of nextStepsOf(row); track step.key) {
-                            <li>{{ step.text }}</li>
-                          }
-                        </ul>
-                      }
-                    }
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-1.5 font-mono text-xs">
-                      <span>{{ srcLabel(row) }}</span>
-                      <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>{{ dstLabel(row) }}</span>
-                    </div>
-                    @if (row.errorMessage) {
-                      <p class="mt-1 flex items-center gap-1 text-xs text-destructive">
-                        <ng-icon name="lucideTriangleAlert" class="h-3 w-3" />
-                        {{ row.errorMessage }}
-                      </p>
-                    }
-                  </td>
-                  <td class="px-4 py-3 capitalize text-muted-foreground">{{ row.cutoverMode }}</td>
-                  <td class="px-4 py-3 text-muted-foreground">{{ fmt(row.createdAt) }}</td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center justify-end gap-1.5">
-                      @if (canCutover(row)) {
-                        <button
-                          type="button"
-                          (click)="onCutover(row)"
-                          [disabled]="busyId() === row.id"
-                          class="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                        >
-                          @if (busyId() === row.id) {
-                            <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                          } @else {
-                            <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5" />
-                          }
-                          {{ cutoverLabel(row) }}
-                        </button>
-                      }
-                      @if (canAbort(row)) {
-                        <button
-                          type="button"
-                          (click)="requestAbort(row)"
-                          [disabled]="busyId() === row.id"
-                          class="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-muted disabled:opacity-50"
-                        >
-                          <ng-icon name="lucideBan" class="h-3.5 w-3.5" /> Abort
-                        </button>
-                      }
-                      @if (canDestroySource(row)) {
-                        <button
-                          type="button"
-                          (click)="requestDestroy(row)"
-                          [disabled]="busyId() === row.id"
-                          class="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-muted disabled:opacity-50"
-                        >
-                          <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" /> Destroy source
-                        </button>
-                      }
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
+            <button
+              flButton
+              size="sm"
+              type="button"
+              appReadOnlySection="backup"
+              (click)="openLaunch()"
+            >
+              New migration
+            </button>
+          </fl-empty-state>
+        } @else {
+          <app-migrations-table
+            [rows]="migrations()"
+            [busyId]="busyId()"
+            [targetLabel]="dstLabel"
+            (cutover)="onCutover($event)"
+            (action)="request($event)"
+          />
+        }
+      </fl-panel>
     </div>
 
     <app-migration-launch-modal (launched)="onLaunched()" />
-
-    <app-confirmation-dialog
-      variant="danger"
-      [title]="confirmTitle()"
-      [message]="confirmMessage()"
-      [confirmText]="confirmButton()"
-      (confirmed)="onConfirm()"
-      (cancelled)="pending.set(null)"
-    />
   `,
 })
 export class MigrationsListComponent implements OnInit, OnDestroy {
@@ -279,14 +127,14 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
   private readonly toast = inject(ToastService);
   private readonly currentSurface = inject(CurrentSurfaceService);
 
+  private readonly confirmService = inject(ConfirmService);
+
   private readonly launchModal = viewChild(MigrationLaunchModalComponent);
-  private readonly confirmDialog = viewChild(ConfirmationDialogComponent);
 
   readonly migrations = signal<MigrationRow[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly busyId = signal<string | null>(null);
-  readonly pending = signal<PendingMigrationAction | null>(null);
 
   private readonly surfaceRevision = new MigrationsListSurfaceRevision();
 
@@ -310,27 +158,6 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.currentSurface.set(null);
-  }
-
-  readonly confirmTitle = computed(() => pendingConfirmation(this.pending()).title);
-  readonly confirmMessage = computed(() => pendingConfirmation(this.pending()).message);
-  readonly confirmButton = computed(() => pendingConfirmation(this.pending()).confirmText);
-
-  readonly bridgeLine = bridgeLine;
-  readonly cutoverLabel = cutoverLabel;
-  readonly kindLabel = kindLabel;
-  readonly measuresLine = measuresLine;
-  readonly poolerLine = poolerLine;
-  readonly nextStepsOf = nextStepsOf;
-  readonly stepsOpen = signal<string | null>(null);
-
-  rowKey(row: MigrationRow): string {
-    return `${row.type}:${row.id}`;
-  }
-
-  toggleSteps(row: MigrationRow): void {
-    const key = this.rowKey(row);
-    this.stepsOpen.set(this.stepsOpen() === key ? null : key);
   }
 
   ngOnInit(): void {
@@ -359,15 +186,6 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
     void this.reload();
   }
 
-  // ── Status gating ──────────────────────────────────────────────────────────
-  readonly canCutover = canCutover;
-  readonly canAbort = canAbort;
-
-  canDestroySource(row: MigrationRow): boolean {
-    return canDestroySource(row);
-  }
-
-  // ── Actions ────────────────────────────────────────────────────────────────
   async onCutover(row: MigrationRow): Promise<void> {
     this.busyId.set(row.id);
     try {
@@ -381,22 +199,20 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
     }
   }
 
-  requestAbort(row: MigrationRow): void {
-    this.pending.set({ kind: 'abort', row });
-    this.confirmDialog()?.open();
+  async request(action: PendingMigrationAction): Promise<void> {
+    const copy = pendingConfirmation(action);
+    const ok = await this.confirmService.confirm({
+      title: copy.title,
+      body: copy.message,
+      confirmLabel: copy.confirmText,
+      destructive: true,
+      typeToConfirm: action.kind === 'destroy' ? sourceLabel(action.row) : undefined,
+    });
+    if (ok) await this.run(action);
   }
 
-  requestDestroy(row: MigrationRow): void {
-    this.pending.set({ kind: 'destroy', row });
-    this.confirmDialog()?.open();
-  }
-
-  async onConfirm(): Promise<void> {
-    const action = this.pending();
-    if (!action) return;
+  private async run(action: PendingMigrationAction): Promise<void> {
     const row = action.row;
-    const dialog = this.confirmDialog();
-    dialog?.setProcessing(true);
     this.busyId.set(row.id);
     try {
       if (action.kind === 'abort') {
@@ -413,28 +229,16 @@ export class MigrationsListComponent implements OnInit, OnDestroy {
       this.toast.showError(this.msg(e));
     } finally {
       this.busyId.set(null);
-      dialog?.setProcessing(false);
-      dialog?.close();
-      this.pending.set(null);
     }
   }
 
-  // ── Rendering helpers ────────────────────────────────────────────────────────
-  readonly typeLabel = typeLabel;
-  readonly typeBadgeClass = typeBadgeClass;
-  readonly statusLabel = statusLabel;
-  readonly statusBadgeClass = statusBadgeClass;
-  readonly fmt = formatWhen;
-
-  readonly srcLabel = sourceLabel;
-
-  dstLabel(row: MigrationRow): string {
+  readonly dstLabel = (row: MigrationRow): string => {
     const cluster = this.clusterName(row.targetClusterId);
     if (row.type === 'db' && row.displayName) {
       return `${cluster} · ${row.displayName}`;
     }
     return cluster;
-  }
+  };
 
   private clusterName(id: string): string {
     return this.clusterService.clusters().find((c) => c.id === id)?.name ?? shortId(id);

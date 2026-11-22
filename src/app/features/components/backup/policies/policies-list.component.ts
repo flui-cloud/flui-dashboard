@@ -1,32 +1,24 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw, lucideSearch } from '@ng-icons/lucide';
 import { BackupService } from '../../../service/backup.service';
 import { ClusterService } from '../../../service/cluster.service';
 import { BackupPolicyActivity } from '../../../model/backup-run.models';
 import { policyEngineLabel } from '../../../model/backup-protection.models';
-import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
-import { BackupHealthBadgeComponent } from '../shared/health-badge.component';
-import {
-  activityByPolicyId,
-  formatLocalDateTime,
-  formatRelativeTime,
-  formatUtcDateTime,
-  runTime,
-  sortByAttention,
-} from '../../../model/backup-activity';
-import { BackupBackLinkComponent } from '../shared/back-link.component';
+import { activityByPolicyId, sortByAttention } from '../../../model/backup-activity';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
+import { Crumb } from '../../../../ui/patterns/breadcrumb';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlPageHeader } from '../../../../ui/patterns/page-header';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../../ui/patterns/states';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { policyRow } from './policies-list-rows';
+import { PoliciesListTable } from './policies-list-table';
 import {
   PoliciesListSurfaceInput,
   PoliciesListSurfaceRevision,
@@ -36,135 +28,115 @@ import {
 
 @Component({
   selector: 'app-policies-list',
-  standalone: true,
   imports: [
     ReadOnlySectionDirective,
     FormsModule,
     RouterLink,
-    BackupStatusBadgeComponent,
-    BackupHealthBadgeComponent,
-    BackupBackLinkComponent,
+    PoliciesListTable,
+    FlAlert,
+    FlPageHeader,
+    FlPanel,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideRefreshCw, lucideSearch })],
   template: `
-    <div class="p-6 space-y-4">
-      <app-backup-back-link link="/management/backup" label="Back to Backup" />
-      <header class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold">Backup policies</h1>
-          <p class="text-sm text-muted-foreground mt-1">
-            One policy per app and engine: continuous backups or dumps for databases, snapshots for
-            volumes, and Flui itself.
-          </p>
-        </div>
-        <a
-          appReadOnlySection="backup"
-          routerLink="/management/backup/policies/new"
-          class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          New policy
-        </a>
-      </header>
+    <div class="fl-page">
+      <fl-page-header
+        [title]="'Backup policies (' + backup.policies().length + ')'"
+        [breadcrumb]="breadcrumb"
+      >
+        <span headerMeta>
+          One policy per app and engine: continuous backups or dumps for databases, snapshots for
+          volumes, and Flui itself.
+        </span>
+        <ng-container headerActions>
+          <button
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
+            [disabled]="backup.loading()"
+            (click)="refresh()"
+          >
+            <fl-icon name="lucideRefreshCw" />
+          </button>
+          <a
+            flButton="primary"
+            appReadOnlySection="backup"
+            routerLink="/management/backup/policies/new"
+            >New policy</a
+          >
+        </ng-container>
+      </fl-page-header>
 
-      <div class="flex gap-2">
-        <select
-          [(ngModel)]="clusterFilter"
-          class="rounded-md border border-border bg-background px-3 py-2 text-sm"
-        >
-          <option value="">All clusters</option>
-          @for (c of clusters(); track c.id) {
-            <option [value]="c.id">{{ c.name }}</option>
-          }
-        </select>
-      </div>
-
-      @if (backup.loading()) {
-        <p class="text-sm text-muted-foreground">Loading…</p>
-      } @else if (filtered().length === 0) {
-        <div class="rounded-lg border border-dashed border-border p-8 text-center">
-          <p class="text-sm text-muted-foreground">No policies match the current filter.</p>
-        </div>
-      } @else {
-        @if (backup.activityError()) {
-          <p class="text-xs text-muted-foreground">
-            Run activity is unavailable right now; health and run times are not shown.
-          </p>
-        }
-        <div class="overflow-x-auto rounded-lg border border-border bg-card">
-          <table class="w-full text-sm">
-            <thead class="bg-muted/40 text-xs uppercase text-muted-foreground">
-              <tr>
-                <th class="text-left px-4 py-2">Name</th>
-                <th class="text-left px-4 py-2">Cluster</th>
-                <th class="text-left px-4 py-2">Protects</th>
-                <th class="text-left px-4 py-2">Profile</th>
-                <th class="text-left px-4 py-2">Schedule</th>
-                <th class="text-left px-4 py-2">Health</th>
-                <th class="text-left px-4 py-2">Last run</th>
-                <th class="text-left px-4 py-2">Next run</th>
-                <th class="text-left px-4 py-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (p of filtered(); track p.id) {
-                <tr class="border-t border-border hover:bg-muted/20">
-                  <td class="px-4 py-2">
-                    <a
-                      [routerLink]="['/management/backup/policies', p.id]"
-                      class="font-medium hover:underline"
-                    >
-                      {{ p.name }}
-                    </a>
-                  </td>
-                  <td class="px-4 py-2 text-muted-foreground">{{ clusterName(p.clusterId) }}</td>
-                  <td class="px-4 py-2 text-muted-foreground">
-                    {{ engineLabel(p.engineClass, p.engine) }}
-                  </td>
-                  <td class="px-4 py-2 text-muted-foreground capitalize">{{ p.profile }}</td>
-                  @if (activityFor(p.id); as a) {
-                    <td
-                      class="px-4 py-2 text-muted-foreground"
-                      [attr.title]="p.cronSchedule ? p.cronSchedule + ' (UTC)' : null"
-                    >
-                      {{ a.schedule.description }}
-                    </td>
-                    <td class="px-4 py-2">
-                      <app-backup-health-badge
-                        [state]="a.health.state"
-                        [detail]="a.health.detail"
-                      />
-                    </td>
-                    <td
-                      class="px-4 py-2 text-muted-foreground whitespace-nowrap"
-                      [attr.title]="hover(lastRunAt(a))"
-                    >
-                      {{ relative(lastRunAt(a)) }}
-                    </td>
-                    <td
-                      class="px-4 py-2 text-muted-foreground whitespace-nowrap"
-                      [attr.title]="hover(a.schedule.nextRunAt)"
-                    >
-                      {{ relative(a.schedule.nextRunAt) }}
-                    </td>
-                  } @else {
-                    <td class="px-4 py-2 text-muted-foreground font-mono text-xs">
-                      {{ p.cronSchedule || 'on-demand' }}
-                    </td>
-                    <td class="px-4 py-2 text-muted-foreground">
-                      {{ backup.activityLoaded() ? '—' : '…' }}
-                    </td>
-                    <td class="px-4 py-2 text-muted-foreground">—</td>
-                    <td class="px-4 py-2 text-muted-foreground">—</td>
-                  }
-                  <td class="px-4 py-2">
-                    <app-backup-status-badge kind="policy" [value]="p.status" />
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+      @if (backup.activityError()) {
+        <fl-alert tone="warning" title="Run activity is unavailable">
+          Health and run times are not shown right now.
+        </fl-alert>
       }
+
+      <fl-panel [flush]="true">
+        <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+          <div class="fl-toolbar__group">
+            <label class="fl-input">
+              <fl-icon name="lucideSearch" [size]="14" />
+              <span class="fl-sr">Search</span>
+              <input
+                type="search"
+                placeholder="Search by name"
+                aria-label="Search policies"
+                [ngModel]="search()"
+                (ngModelChange)="search.set($event)"
+              />
+            </label>
+            <span class="fl-select-wrap">
+              <select
+                class="fl-select fl-select--sm"
+                aria-label="Cluster"
+                [ngModel]="clusterFilter()"
+                (ngModelChange)="clusterFilter.set($event)"
+              >
+                <option value="">Cluster: All</option>
+                @for (c of clusters(); track c.id) {
+                  <option [value]="c.id">{{ c.name }}</option>
+                }
+              </select>
+            </span>
+          </div>
+          <div class="fl-toolbar__group">
+            <span class="fl-toolbar__info"
+              >{{ rows().length }} {{ rows().length === 1 ? 'policy' : 'policies' }}</span
+            >
+          </div>
+        </div>
+
+        @if (backup.loading() && backup.policies().length === 0) {
+          <fl-loading-state [rows]="5" />
+        } @else if (backup.policies().length === 0) {
+          <fl-empty-state
+            title="No backup policies yet"
+            body="A policy says what to back up, when, and where the copies go."
+          >
+            <a
+              flButton="primary"
+              size="sm"
+              appReadOnlySection="backup"
+              routerLink="/management/backup/policies/new"
+            >
+              New policy
+            </a>
+          </fl-empty-state>
+        } @else if (rows().length === 0) {
+          <fl-empty-state title="No policies match" body="Nothing matches these filters.">
+            <button flButton size="sm" type="button" (click)="clearFilters()">Clear filters</button>
+          </fl-empty-state>
+        } @else {
+          <app-policies-list-table [rows]="rows()" [activityLoaded]="backup.activityLoaded()" />
+        }
+      </fl-panel>
     </div>
   `,
 })
@@ -173,22 +145,36 @@ export class PoliciesListComponent implements OnInit, OnDestroy {
   private readonly clusterService = inject(ClusterService);
   private readonly currentSurface = inject(CurrentSurfaceService);
 
+  protected readonly breadcrumb: readonly Crumb[] = [
+    { label: 'Backups', link: '/management/backup' },
+    { label: 'Policies' },
+  ];
+
   readonly clusters = this.clusterService.clusters;
-  clusterFilter = '';
+  readonly clusterFilter = signal('');
+  protected readonly search = signal('');
 
   private readonly activityById = computed(() => activityByPolicyId(this.backup.activity()));
 
   readonly filtered = computed(() => {
-    const id = this.clusterFilter;
+    const id = this.clusterFilter();
     const all = this.backup.policies();
     const byId = this.activityById();
     const visible = id ? all.filter((p) => p.clusterId === id) : all;
     return sortByAttention(visible, (p) => byId.get(p.id)?.health.state);
   });
 
+  protected readonly rows = computed(() => {
+    const q = this.search().trim().toLowerCase();
+    return this.filtered()
+      .filter((p) => !q || p.name.toLowerCase().includes(q))
+      .map((p) => policyRow(p, this.clusterName(p.clusterId), this.activityFor(p.id)));
+  });
+
   private readonly surfaceRevision = new PoliciesListSurfaceRevision();
 
   readonly surface = computed(() => {
+    const clusterId = this.clusterFilter();
     const input: PoliciesListSurfaceInput = {
       rows: this.filtered().map((policy) => ({
         policy,
@@ -196,7 +182,7 @@ export class PoliciesListComponent implements OnInit, OnDestroy {
         activity: this.activityFor(policy.id),
       })),
       totalPolicies: this.backup.policies().length,
-      clusterFilterName: this.clusterFilter ? this.clusterName(this.clusterFilter) : null,
+      clusterFilterName: clusterId ? this.clusterName(clusterId) : null,
       loading: this.backup.loading(),
     };
     return buildPoliciesListSurface(input, {
@@ -225,26 +211,22 @@ export class PoliciesListComponent implements OnInit, OnDestroy {
     })();
   }
 
+  protected refresh(): void {
+    void Promise.all([this.backup.loadPolicies(), this.backup.loadActivity()]);
+  }
+
+  protected clearFilters(): void {
+    this.search.set('');
+    this.clusterFilter.set('');
+  }
+
   activityFor(policyId: string): BackupPolicyActivity | null {
     return this.activityById().get(policyId) ?? null;
-  }
-
-  protected lastRunAt(a: BackupPolicyActivity): string | null {
-    return a.lastRun ? runTime(a.lastRun) : null;
-  }
-
-  protected relative(iso: string | null): string {
-    return formatRelativeTime(iso);
-  }
-
-  protected hover(iso: string | null): string | null {
-    return iso ? `${formatLocalDateTime(iso)} (${formatUtcDateTime(iso)})` : null;
   }
 
   clusterName(id: string): string {
     return this.clusters().find((c) => c.id === id)?.name ?? id.slice(0, 8);
   }
 
-  /** What the policy actually protects — the three engines behave nothing alike. */
   readonly engineLabel = policyEngineLabel;
 }

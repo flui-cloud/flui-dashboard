@@ -1,0 +1,290 @@
+<fl-panel title="Write a note">
+  <form class="flex flex-col gap-6" data-testid="note-form" (submit)="submit($event)">
+    <fieldset class="fl-fieldset">
+      <legend>What kind of note is this</legend>
+      <div class="grid gap-2 sm:grid-cols-2">
+        @for (option of natures; track option) {
+          <label class="fl-radiocard" [attr.data-testid]="'nature-' + option">
+            <input
+              type="radio"
+              name="nature"
+              [value]="option"
+              [checked]="nature() === option"
+              (change)="nature.set(option)"
+            />
+            <span class="fl-radiocard__text">
+              <span class="fl-radiocard__title">{{ copyFor(option).label }}</span>
+              <span class="fl-radiocard__desc">{{ copyFor(option).means }}</span>
+            </span>
+          </label>
+        }
+      </div>
+    </fieldset>
+
+    <fieldset class="fl-fieldset">
+      <legend class="fl-row">
+        <span>Where it applies</span>
+        <app-explain
+          label="two axes"
+          labelClass="text-fl-body-sm font-normal text-fl-ink-muted"
+          testid="axes-why"
+        >
+          An application belongs to a project and runs on a cluster. It receives every note whose
+          region contains it, down either axis: neither is nested inside the other.
+        </app-explain>
+      </legend>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="flex flex-col gap-2">
+          <fl-field label="What it is about" for="about-axis">
+            <span class="fl-select-wrap">
+              <select
+                id="about-axis"
+                aria-labelledby="about-axis-label"
+                class="fl-select"
+                [ngModel]="about()"
+                name="about"
+                (ngModelChange)="about.set($event)"
+                data-testid="about-axis"
+              >
+                @for (axis of aboutAxes; track axis) {
+                  <option [value]="axis">{{ aboutLabel[axis] }}</option>
+                }
+              </select>
+            </span>
+          </fl-field>
+
+          @switch (about()) {
+            @case ('apps') {
+              <div class="fl-input fl-input--lg">
+                <input
+                  aria-label="Application slugs"
+                  placeholder="slugs, comma separated"
+                  [ngModel]="slugs()"
+                  name="slugs"
+                  (ngModelChange)="slugs.set($event)"
+                  data-testid="about-slugs"
+                />
+              </div>
+            }
+            @case ('project') {
+              <div class="fl-input fl-input--lg">
+                <input
+                  aria-label="Project"
+                  placeholder="project"
+                  [ngModel]="project()"
+                  name="project"
+                  (ngModelChange)="project.set($event)"
+                  data-testid="about-project"
+                />
+              </div>
+            }
+            @case ('kind') {
+              <div class="fl-input fl-input--lg">
+                <input
+                  aria-label="Kind"
+                  placeholder="kind, e.g. DATABASE"
+                  [ngModel]="kind()"
+                  name="kind"
+                  (ngModelChange)="kind.set($event)"
+                  data-testid="about-kind"
+                />
+              </div>
+            }
+            @case ('tag') {
+              <div class="fl-input fl-input--lg">
+                <input
+                  aria-label="Tags"
+                  placeholder="tags, comma separated"
+                  [ngModel]="tags()"
+                  name="tags"
+                  (ngModelChange)="tags.set($event)"
+                  data-testid="about-tags"
+                />
+              </div>
+            }
+          }
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <fl-field label="Where it runs" for="where-axis">
+            <span class="fl-select-wrap">
+              <select
+                id="where-axis"
+                aria-labelledby="where-axis-label"
+                class="fl-select"
+                [ngModel]="where()"
+                name="where"
+                (ngModelChange)="where.set($event)"
+                data-testid="where-axis"
+              >
+                @for (axis of whereAxes; track axis) {
+                  <option [value]="axis">{{ whereLabel[axis] }}</option>
+                }
+              </select>
+            </span>
+          </fl-field>
+
+          @switch (where()) {
+            @case ('cluster') {
+              <label class="fl-sr" for="where-cluster">Cluster</label>
+              <span class="fl-select-wrap">
+                <select
+                  id="where-cluster"
+                  class="fl-select"
+                  [ngModel]="clusterId()"
+                  name="clusterId"
+                  (ngModelChange)="clusterId.set($event)"
+                  data-testid="where-cluster"
+                >
+                  <option value="">Pick a cluster…</option>
+                  @for (cluster of clusters(); track cluster.id) {
+                    <option [value]="cluster.id">{{ cluster.name }}</option>
+                  }
+                </select>
+              </span>
+            }
+            @case ('provider') {
+              <div class="fl-input fl-input--lg">
+                <input
+                  aria-label="Provider"
+                  placeholder="provider, e.g. hetzner"
+                  [ngModel]="provider()"
+                  name="provider"
+                  (ngModelChange)="provider.set($event)"
+                  data-testid="where-provider"
+                />
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="fl-fieldset">
+      <legend>The note</legend>
+
+      <fl-field label="Subject" for="note-topic">
+        <div class="fl-input fl-input--lg">
+          <input
+            id="note-topic"
+            aria-label="Subject"
+            placeholder="master-node-scaling"
+            [ngModel]="topic()"
+            name="topic"
+            (ngModelChange)="topic.set($event)"
+            data-testid="topic"
+          />
+        </div>
+        <app-explain
+          label="A short lowercase handle"
+          labelClass="text-fl-caption text-fl-ink-muted"
+          testid="topic-hint"
+        >
+          {{ topicHint }}
+        </app-explain>
+      </fl-field>
+
+      <fl-field label="Title" for="note-title">
+        <div class="fl-input fl-input--lg">
+          <input
+            id="note-title"
+            aria-label="Title"
+            [ngModel]="title()"
+            name="title"
+            (ngModelChange)="title.set($event)"
+            data-testid="title"
+          />
+        </div>
+      </fl-field>
+
+      <fl-field label="Note" for="note-body">
+        <textarea
+          id="note-body"
+          aria-label="Note"
+          rows="5"
+          class="fl-textarea"
+          placeholder="What is done here, or why it was decided."
+          [ngModel]="noteBody()"
+          name="body"
+          (ngModelChange)="noteBody.set($event)"
+          data-testid="body"
+        ></textarea>
+      </fl-field>
+    </fieldset>
+
+    <app-context-note-check
+      [probes]="probes()"
+      [probeUsable]="probeUsable()"
+      [declaredParams]="declaredParams()"
+      [probeDescription]="probeDescription()"
+      [answerType]="answerType()"
+      [(checkKind)]="checkKind"
+      [(validForDays)]="validForDays"
+      [(probeId)]="probeId"
+      [(probeOp)]="probeOp"
+      [(probeExpected)]="probeExpected"
+      [(paramRows)]="paramRows"
+      [(paramAnswers)]="paramAnswers"
+    />
+
+    <div
+      class="flex items-start gap-3 rounded-fl-md border p-3"
+      [class]="reachEmphasis()"
+      role="note"
+      data-testid="reach"
+    >
+      <fl-icon name="lucideUsers" class="text-fl-ink-muted" />
+      <div class="flex min-w-0 flex-col gap-1">
+        <span class="text-fl-caption font-medium text-fl-ink-muted">This note will be read by</span>
+        @if (reachLoading()) {
+          <fl-loading-state [rows]="2" data-testid="reach-loading" aria-busy="true" />
+        } @else {
+          @if (reach(); as line) {
+            <p class="m-0 text-fl-body-sm" data-testid="reach-sentence">{{ line.sentence }}</p>
+            @if (line.reachesGuests) {
+              <p class="m-0 text-fl-caption text-fl-ink-muted" data-testid="reach-guests">
+                Visitors trying this installation are among them.
+              </p>
+            }
+          } @else if (reachError()) {
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="reach-error">
+              {{ reachError() }}
+            </p>
+          } @else {
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="reach-pending">
+              Name the level to see who reads it.
+            </p>
+          }
+        }
+        <app-explain
+          label="what happens, not what is permitted"
+          labelClass="text-fl-caption text-fl-ink-muted"
+          testid="advice-only"
+        >
+          A note advises; it never stops anyone doing anything.
+        </app-explain>
+      </div>
+    </div>
+
+    @if (error(); as message) {
+      <fl-alert tone="error" title="Not written" data-testid="form-error">{{ message }}</fl-alert>
+    }
+
+    @if (stillNeeded(); as missing) {
+      <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="still-needed">{{ missing }}</p>
+    }
+
+    <div class="fl-row justify-end">
+      <button flButton="ghost" type="button" (click)="dismissed.emit()" data-testid="cancel">
+        Cancel
+      </button>
+      <button flButton="primary" type="submit" [disabled]="busy() || !ready()" data-testid="save">
+        @if (busy()) {
+          <fl-spinner label="Writing" />
+        }
+        Write the note
+      </button>
+    </div>
+  </form>
+</fl-panel>

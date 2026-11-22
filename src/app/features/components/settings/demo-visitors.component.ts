@@ -1,16 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HlmCardContentDirective, HlmCardDirective } from '@spartan-ng/ui-card-helm';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { SandboxSignInService, VisitorStats } from '../../service/sandbox-sign-in.service';
+import { FlMetric, FlMetricStrip } from '../../../ui/patterns/metric-strip';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlStatus } from '../../../ui/primitives/status';
 
 const REASON_LABELS: Record<string, string> = {
   'limit-ip': 'Per-address limit',
@@ -30,36 +23,25 @@ export function refusalLabel(reason: string): string {
 
 @Component({
   selector: 'app-demo-visitors',
-  host: { class: 'block' },
-  standalone: true,
-  imports: [HlmCardDirective, HlmCardContentDirective, HlmBadgeDirective],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'fl-stack' },
+  imports: [FlMetric, FlMetricStrip, FlPanel, FlStatus],
   template: `
     @if (stats(); as s) {
-      <div hlmCard data-testid="demo-visitors">
-        <div hlmCardContent class="pt-5 space-y-3">
-          <div class="flex items-center gap-2">
-            <h4 class="text-sm font-medium">Visitors</h4>
-            @if (s.entranceOpen) {
-              <span hlmBadge variant="default" class="text-xs" data-testid="entrance"
-                >Entrance open</span
-              >
-            } @else {
-              <span hlmBadge variant="secondary" class="text-xs" data-testid="entrance"
-                >Entrance closed</span
-              >
-            }
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <fl-panel title="Visitors" data-testid="demo-visitors">
+        <fl-status
+          panelActions
+          data-testid="entrance"
+          [tone]="s.entranceOpen ? 'success' : 'neutral'"
+          [label]="s.entranceOpen ? 'Entrance open' : 'Entrance closed'"
+        />
+        <div class="flex flex-col gap-3">
+          <fl-metric-strip>
             @for (t of tiles(); track t.label) {
-              <div class="rounded-md border border-border p-3" [attr.data-tile]="t.label">
-                <p class="text-xs text-muted-foreground">{{ t.label }}</p>
-                <p class="text-lg font-semibold tabular-nums">{{ t.value }}</p>
-              </div>
+              <fl-metric [attr.data-tile]="t.label" [label]="t.label" [value]="t.value" />
             }
-          </div>
+          </fl-metric-strip>
           @if (reasons().length) {
-            <p class="text-xs text-muted-foreground" data-testid="refused-reasons">
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="refused-reasons">
               Refused:
               @for (r of reasons(); track r.reason; let last = $last) {
                 {{ r.label }} {{ r.count }}{{ last ? '' : ', ' }}
@@ -67,7 +49,7 @@ export function refusalLabel(reason: string): string {
             </p>
           }
         </div>
-      </div>
+      </fl-panel>
     }
   `,
 })

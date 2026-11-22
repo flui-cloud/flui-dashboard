@@ -6,19 +6,14 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideAlertCircle, lucideShield } from '@ng-icons/lucide';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import { AuthService as ApiAuthService } from '../../../core/api/api/auth.service';
-import {
-  HlmCardDirective,
-  HlmCardContentDirective,
-  HlmCardHeaderDirective,
-  HlmCardTitleDirective,
-  HlmCardDescriptionDirective,
-} from '@spartan-ng/ui-card-helm';
-import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
-import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
 function passwordMatchValidator(ctrl: AbstractControl): ValidationErrors | null {
   const newPwd = ctrl.get('newPassword')?.value;
@@ -31,112 +26,71 @@ function passwordMatchValidator(ctrl: AbstractControl): ValidationErrors | null 
 
 @Component({
   selector: 'app-security-tab',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    NgIcon,
-    HlmCardDirective,
-    HlmCardContentDirective,
-    HlmCardHeaderDirective,
-    HlmCardTitleDirective,
-    HlmCardDescriptionDirective,
-    HlmInputDirective,
-    HlmLabelDirective,
-  ],
-  providers: [provideIcons({ lucideCheck, lucideAlertCircle, lucideShield })],
+  imports: [ReactiveFormsModule, FlAlert, FlField, FlPanel, FlButton, FlSpinner, FlStatus],
+  host: { class: 'fl-stack' },
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div hlmCard>
-      <div hlmCardHeader>
-        <h3 hlmCardTitle>Change password</h3>
-        <p hlmCardDescription>Update your account password.</p>
-      </div>
-      <div hlmCardContent>
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
-          <div class="space-y-1.5">
-            <label hlmLabel for="currentPassword">Current password</label>
+    <fl-panel title="Change password">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex max-w-md flex-col gap-4">
+        <fl-field
+          label="Current password"
+          for="currentPassword"
+          [error]="isInvalid('currentPassword') ? 'Current password is required.' : null"
+        >
+          <div class="fl-input fl-input--lg">
             <input
-              hlmInput
               id="currentPassword"
               type="password"
               formControlName="currentPassword"
-              placeholder="••••••••"
-              class="w-full"
-              [class.border-destructive]="isInvalid('currentPassword')"
+              autocomplete="current-password"
             />
-            @if (isInvalid('currentPassword')) {
-              <p class="text-xs text-destructive">Current password is required.</p>
-            }
           </div>
+        </fl-field>
 
-          <div class="space-y-1.5">
-            <label hlmLabel for="newPassword">New password</label>
+        <fl-field
+          label="New password"
+          for="newPassword"
+          hint="At least 8 characters."
+          [error]="newPasswordError()"
+        >
+          <div class="fl-input fl-input--lg">
             <input
-              hlmInput
               id="newPassword"
               type="password"
               formControlName="newPassword"
-              placeholder="••••••••"
-              class="w-full"
-              [class.border-destructive]="isInvalid('newPassword')"
+              autocomplete="new-password"
             />
-            @if (isInvalid('newPassword')) {
-              <p class="text-xs text-destructive">
-                @if (form.get('newPassword')?.hasError('required')) {
-                  New password is required.
-                } @else if (form.get('newPassword')?.hasError('minlength')) {
-                  Minimum 8 characters.
-                }
-              </p>
-            }
           </div>
+        </fl-field>
 
-          <div class="space-y-1.5">
-            <label hlmLabel for="confirmPassword">Confirm new password</label>
+        <fl-field label="Confirm new password" for="confirmPassword" [error]="confirmError()">
+          <div class="fl-input fl-input--lg">
             <input
-              hlmInput
               id="confirmPassword"
               type="password"
               formControlName="confirmPassword"
-              placeholder="••••••••"
-              class="w-full"
-              [class.border-destructive]="isInvalid('confirmPassword') || hasMismatch()"
+              autocomplete="new-password"
             />
-            @if (isInvalid('confirmPassword')) {
-              <p class="text-xs text-destructive">Please confirm your new password.</p>
-            } @else if (hasMismatch()) {
-              <p class="text-xs text-destructive">Passwords do not match.</p>
-            }
           </div>
+        </fl-field>
 
-          @if (error()) {
-            <div
-              class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
-              <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
-              {{ error() }}
-            </div>
-          }
+        @if (error()) {
+          <fl-alert tone="error" title="Password not changed">{{ error() }}</fl-alert>
+        }
 
-          @if (success()) {
-            <div
-              class="flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600"
-            >
-              <ng-icon name="lucideCheck" class="h-4 w-4 shrink-0" />
-              Password changed successfully.
-            </div>
-          }
-
-          <button
-            type="submit"
-            class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            [disabled]="saving()"
-          >
-            {{ saving() ? 'Updating...' : 'Update password' }}
+        <div class="flex flex-wrap items-center gap-3">
+          <button flButton="primary" type="submit" [disabled]="saving()">
+            @if (saving()) {
+              <fl-spinner label="Updating" />
+            }
+            {{ saving() ? 'Updating…' : 'Update password' }}
           </button>
-        </form>
-      </div>
-    </div>
+          @if (success()) {
+            <fl-status tone="success" label="Password changed" />
+          }
+        </div>
+      </form>
+    </fl-panel>
   `,
 })
 export class SecurityTabComponent {
@@ -160,6 +114,19 @@ export class SecurityTabComponent {
   isInvalid(field: string): boolean {
     const ctrl = this.form.get(field);
     return !!(ctrl?.invalid && ctrl?.touched);
+  }
+
+  protected newPasswordError(): string | null {
+    if (!this.isInvalid('newPassword')) return null;
+    if (this.form.get('newPassword')?.hasError('required')) return 'New password is required.';
+    if (this.form.get('newPassword')?.hasError('minlength')) return 'Minimum 8 characters.';
+    return null;
+  }
+
+  protected confirmError(): string | null {
+    if (this.isInvalid('confirmPassword')) return 'Please confirm your new password.';
+    if (this.hasMismatch()) return 'Passwords do not match.';
+    return null;
   }
 
   hasMismatch(): boolean {

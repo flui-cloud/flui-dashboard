@@ -1,0 +1,389 @@
+<div class="fl-page">
+  <fl-page-header title="New backup policy" [breadcrumb]="breadcrumb">
+    <span headerMeta>Choose what to protect, when it runs and where the copies go.</span>
+  </fl-page-header>
+
+  <div class="fl-wizard">
+    <nav aria-label="Steps">
+      <fl-wizard-steps
+        [steps]="wizardSteps()"
+        [current]="step() - 1"
+        (stepSelect)="goTo($event + 1)"
+      />
+    </nav>
+
+    <fl-panel [title]="stepNames[step() - 1]" [flush]="true">
+      <div class="fl-stack p-4">
+        @if (step() === 1) {
+          <fl-field label="Policy name" for="policy-name">
+            <div class="fl-input">
+              <input
+                id="policy-name"
+                aria-label="Policy name"
+                [(ngModel)]="form.name"
+                required
+                placeholder="prod-daily"
+              />
+            </div>
+          </fl-field>
+          <fl-field label="Cluster" for="policy-cluster">
+            <span class="fl-select-wrap">
+              <select
+                id="policy-cluster"
+                aria-labelledby="policy-cluster-label"
+                class="fl-select"
+                [(ngModel)]="form.clusterId"
+                (ngModelChange)="selectedApps.set([])"
+                required
+              >
+                <option value="">Choose a cluster</option>
+                @for (c of clusters(); track c.id) {
+                  <option [value]="c.id">{{ c.name }}</option>
+                }
+              </select>
+            </span>
+          </fl-field>
+          <fieldset class="fl-fieldset">
+            <legend>What it backs up</legend>
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+              @for (e of engines; track e.id) {
+                <label class="fl-radiocard">
+                  <input
+                    type="radio"
+                    name="policy-engine"
+                    [checked]="form.engineClass === e.id"
+                    (change)="selectEngine(e.id)"
+                  />
+                  <span class="fl-radiocard__text">
+                    <span class="fl-radiocard__title">{{ e.title }}</span>
+                    <span class="fl-radiocard__desc">{{ e.description }}</span>
+                  </span>
+                </label>
+              }
+            </div>
+          </fieldset>
+          <fl-field
+            label="Scope"
+            for="policy-scope"
+            [hint]="perApp() ? 'Database and volume backups protect one application.' : undefined"
+          >
+            <span class="fl-select-wrap">
+              <select
+                id="policy-scope"
+                aria-labelledby="policy-scope-label"
+                class="fl-select"
+                [(ngModel)]="form.scope"
+                [disabled]="perApp()"
+              >
+                <option value="cluster_all">Entire cluster</option>
+                <option value="namespaces">Specific namespaces</option>
+                <option value="applications">Specific applications</option>
+                <option value="label_selector">Label selector</option>
+              </select>
+            </span>
+          </fl-field>
+          @if (form.scope === 'namespaces') {
+            <fl-field label="Namespaces" for="policy-namespaces" hint="Separate them with commas.">
+              <div class="fl-input">
+                <input
+                  id="policy-namespaces"
+                  aria-label="Namespaces"
+                  class="fl-mono"
+                  [(ngModel)]="namespacesText"
+                  placeholder="prod, app-prod"
+                />
+              </div>
+            </fl-field>
+          }
+          @if (form.scope === 'applications') {
+            <app-policy-app-picker
+              [clusterId]="form.clusterId"
+              [multiple]="!perApp()"
+              [(selected)]="selectedApps"
+              (optionsLoaded)="onAppsLoaded($event)"
+            />
+          }
+          @if (form.scope === 'label_selector') {
+            <fl-field label="Label selector" for="policy-labels">
+              <div class="fl-input">
+                <input
+                  id="policy-labels"
+                  aria-label="Label selector"
+                  class="fl-mono"
+                  [(ngModel)]="labelSelector"
+                  placeholder="tier=prod"
+                />
+              </div>
+            </fl-field>
+          }
+          @if (form.engineClass === 'volume_copy') {
+            <label class="fl-check">
+              <input type="checkbox" [(ngModel)]="pauseDuringCopy" />
+              <span>Stop the app during each copy</span>
+            </label>
+          }
+        }
+
+        @if (step() === 2) {
+          <fl-field
+            label="Cron schedule"
+            for="policy-cron"
+            [hint]="
+              form.cronSchedule
+                ? scheduleText() + (nextRunText() ? '. Next run ' + nextRunText() + '.' : '.')
+                : 'Empty: the default nightly time. Times are in UTC.'
+            "
+          >
+            <div class="fl-input">
+              <input
+                id="policy-cron"
+                aria-label="Cron schedule"
+                class="fl-mono"
+                [(ngModel)]="form.cronSchedule"
+                placeholder="0 3 * * *"
+              />
+            </div>
+          </fl-field>
+          @if (form.engineClass === 'volume_copy') {
+            <label class="fl-check" title="Two more months of history for about 30% more space">
+              <input type="checkbox" [(ngModel)]="keepMonthly" />
+              <span>Also keep 3 monthly snapshots</span>
+            </label>
+          } @else {
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <fl-field label="Retention in days" for="policy-retention-days">
+                <div class="fl-input">
+                  <input
+                    id="policy-retention-days"
+                    aria-label="Retention in days"
+                    type="number"
+                    min="1"
+                    [(ngModel)]="form.retentionDays"
+                  />
+                </div>
+              </fl-field>
+              <fl-field label="Max copies" for="policy-max-copies">
+                <div class="fl-input">
+                  <input
+                    id="policy-max-copies"
+                    aria-label="Max copies"
+                    type="number"
+                    min="1"
+                    [(ngModel)]="form.retentionMaxCopies"
+                  />
+                </div>
+              </fl-field>
+            </div>
+          }
+        }
+
+        @if (step() === 3) {
+          <fieldset class="fl-fieldset">
+            <legend>Profile</legend>
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+              @for (p of profiles; track p) {
+                <label class="fl-radiocard">
+                  <input
+                    type="radio"
+                    name="policy-profile"
+                    [checked]="form.profile === p"
+                    (change)="form.profile = p"
+                  />
+                  <span class="fl-radiocard__text">
+                    <span class="fl-radiocard__title">{{ profileTitle(p) }}</span>
+                    <span class="fl-radiocard__desc">{{ profileDescription(p) }}</span>
+                  </span>
+                </label>
+              }
+            </div>
+          </fieldset>
+
+          @if (noDestinations()) {
+            <fl-empty-state
+              data-testid="no-destinations"
+              title="No backup destination yet"
+              body="A destination is the bucket where Flui keeps the copies. Add one here: what you filled in so far stays as it is."
+            >
+              <button
+                flButton="primary"
+                size="sm"
+                type="button"
+                (click)="creatingDestination.set(true)"
+                data-testid="create-destination"
+              >
+                Add a destination
+              </button>
+              <a flButton="ghost" size="sm" routerLink="/management/backup/destinations"
+                >Go to destinations</a
+              >
+            </fl-empty-state>
+          } @else {
+            <fieldset class="fl-fieldset">
+              <legend>Destinations</legend>
+              @for (d of destinations(); track d.destinationId; let i = $index) {
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="fl-select-wrap min-w-0 flex-1">
+                    <select
+                      class="fl-select"
+                      [attr.aria-label]="'Destination ' + (i + 1)"
+                      [ngModel]="d.destinationId"
+                      (ngModelChange)="setDestinationField(i, 'destinationId', $event)"
+                    >
+                      <option value="">Choose a destination</option>
+                      @for (dst of backup.destinations(); track dst.id) {
+                        <option [value]="dst.id">{{ dst.name }} ({{ dst.provider }})</option>
+                      }
+                    </select>
+                  </span>
+                  <span class="fl-select-wrap">
+                    <select
+                      class="fl-select fl-select--sm"
+                      [attr.aria-label]="'Role of destination ' + (i + 1)"
+                      [ngModel]="d.role"
+                      (ngModelChange)="setDestinationField(i, 'role', $event)"
+                    >
+                      <option value="primary">Primary</option>
+                      <option value="replica">Replica</option>
+                    </select>
+                  </span>
+                  <button flButton="ghost" size="sm" type="button" (click)="removeDestination(i)">
+                    Remove
+                  </button>
+                </div>
+              }
+              <div class="fl-row">
+                @if (form.engineClass !== 'database' || destinations().length === 0) {
+                  <button flButton size="sm" type="button" (click)="addDestination()">
+                    Add destination
+                  </button>
+                }
+                <button
+                  flButton="ghost"
+                  size="sm"
+                  type="button"
+                  (click)="creatingDestination.set(true)"
+                >
+                  New destination
+                </button>
+              </div>
+            </fieldset>
+          }
+
+          @if (creatingDestination()) {
+            <div
+              class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+              data-testid="destination-modal"
+            >
+              <dialog
+                open
+                class="fl-dialog fl-dialog--wide relative max-h-full overflow-y-auto"
+                aria-modal="true"
+                aria-label="New destination"
+              >
+                <app-destination-form
+                  [embedded]="true"
+                  (created)="onDestinationCreated($event)"
+                  (cancelled)="creatingDestination.set(false)"
+                />
+              </dialog>
+            </div>
+          }
+
+          @if (validationError(); as v) {
+            @if (!noDestinations()) {
+              <fl-alert tone="warning" title="Destinations incomplete">{{ v }}</fl-alert>
+            }
+          }
+        }
+
+        @if (step() === 4) {
+          <app-deploy-review-group
+            title="What to protect"
+            step="1"
+            [editable]="editable"
+            (edit)="goTo(+$event)"
+          >
+            <fl-key-value>
+              <fl-kv-item key="Name">{{ form.name }}</fl-kv-item>
+              <fl-kv-item key="Cluster">{{ clusterName(form.clusterId) }}</fl-kv-item>
+              <fl-kv-item key="Engine">{{ engineLabel(form.engineClass) }}</fl-kv-item>
+              <fl-kv-item key="Scope">{{ scopeLabel(form.scope) }}</fl-kv-item>
+              @if (form.scope === 'applications') {
+                <fl-kv-item key="Applications">{{ appNames() || '—' }}</fl-kv-item>
+              }
+              @if (form.engineClass === 'volume_copy') {
+                <fl-kv-item key="During the copy">{{
+                  pauseDuringCopy ? 'App stopped' : 'App keeps running'
+                }}</fl-kv-item>
+              }
+            </fl-key-value>
+          </app-deploy-review-group>
+          <app-deploy-review-group
+            title="Schedule"
+            step="2"
+            [editable]="editable"
+            (edit)="goTo(+$event)"
+          >
+            <fl-key-value>
+              <fl-kv-item key="Runs">
+                <span class="flex flex-col gap-0.5">
+                  <span>{{ scheduleText() }}</span>
+                  @if (form.cronSchedule) {
+                    <span class="fl-mono text-fl-ink-muted">{{ form.cronSchedule }} (UTC)</span>
+                  }
+                </span>
+              </fl-kv-item>
+              <fl-kv-item [key]="form.engineClass === 'volume_copy' ? 'Keeps' : 'Retention'">{{
+                retentionText()
+              }}</fl-kv-item>
+            </fl-key-value>
+          </app-deploy-review-group>
+          <app-deploy-review-group
+            title="Destinations"
+            step="3"
+            [editable]="editable"
+            (edit)="goTo(+$event)"
+          >
+            <fl-key-value>
+              <fl-kv-item key="Profile">{{ profileTitle(inferredProfile()) }}</fl-kv-item>
+              @for (d of destinations(); track d.destinationId) {
+                <fl-kv-item [key]="d.role === 'primary' ? 'Primary' : 'Replica'">{{
+                  destName(d.destinationId)
+                }}</fl-kv-item>
+              }
+            </fl-key-value>
+          </app-deploy-review-group>
+          @if (submitError()) {
+            <fl-alert tone="error" title="Could not create the policy">{{
+              submitError()
+            }}</fl-alert>
+          }
+        }
+      </div>
+
+      <div class="fl-wizard__footer border-t border-fl-border px-4 py-3">
+        <a flButton="ghost" routerLink="/management/backup/policies">Cancel</a>
+        <button flButton type="button" [disabled]="step() === 1" (click)="prev()">Previous</button>
+        @if (step() < 4) {
+          <button flButton="primary" type="button" [disabled]="!canAdvance()" (click)="next()">
+            Next
+          </button>
+        } @else {
+          <button
+            flButton="primary"
+            type="button"
+            [disabled]="submitting() || !!validationError()"
+            (click)="onSubmit()"
+          >
+            @if (submitting()) {
+              <fl-spinner label="Creating" />
+              Creating…
+            } @else {
+              Create policy
+            }
+          </button>
+        }
+      </div>
+    </fl-panel>
+  </div>
+</div>

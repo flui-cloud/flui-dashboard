@@ -1,128 +1,125 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideGlobe, lucideServer, lucideTriangleAlert } from '@ng-icons/lucide';
 import { DnsZonesService } from '../../service/dns-zones.service';
 
 type DomainMode = 'zone' | 'external';
 
+let nextId = 0;
+
 @Component({
   selector: 'app-mail-domain-picker',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon],
-  providers: [provideIcons({ lucideGlobe, lucideServer, lucideTriangleAlert })],
+  imports: [FormsModule],
+  host: { class: 'fl-field' },
   template: `
-    <div>
-      <span class="mb-1 block text-xs font-medium text-foreground">
-        {{ label() }}
-      </span>
+    @if (label()) {
+      <label class="fl-field__label" [for]="id">{{ label() }}</label>
+    }
 
-      @if (zones().length) {
-        <div class="mb-2 grid grid-cols-2 gap-2">
-          <button type="button" (click)="setMode('zone')" [class]="cardClass(mode() === 'zone')">
-            <span class="flex items-center gap-1.5">
-              <ng-icon name="lucideServer" class="h-3.5 w-3.5 text-primary" />
-              <span class="text-xs font-medium">A zone Flui manages</span>
-            </span>
-            <span class="mt-0.5 block text-[11px] text-muted-foreground">
-              Records are written for you. Nothing to publish by hand.
-            </span>
-          </button>
-          <button
-            type="button"
-            (click)="setMode('external')"
-            [class]="cardClass(mode() === 'external')"
-          >
-            <span class="flex items-center gap-1.5">
-              <ng-icon name="lucideGlobe" class="h-3.5 w-3.5 text-primary" />
-              <span class="text-xs font-medium">A domain hosted elsewhere</span>
-            </span>
-            <span class="mt-0.5 block text-[11px] text-muted-foreground">
-              Flui hands back the records for you to publish there.
-            </span>
-          </button>
-        </div>
-      }
-
-      @if (mode() === 'zone' && zones().length) {
-        <div class="flex items-stretch">
+    @if (zones().length) {
+      <div
+        class="grid grid-cols-1 gap-2 sm:grid-cols-2"
+        role="radiogroup"
+        [attr.aria-label]="label() || 'Sending domain'"
+      >
+        <label class="fl-radiocard">
           <input
+            type="radio"
+            [name]="id + '-mode'"
+            [checked]="mode() === 'zone'"
+            (change)="setMode('zone')"
+          />
+          <span class="fl-radiocard__text">
+            <span class="fl-radiocard__title">A zone Flui manages</span>
+            <span class="fl-radiocard__desc"
+              >Records are written for you. Nothing to publish by hand.</span
+            >
+          </span>
+        </label>
+        <label class="fl-radiocard">
+          <input
+            type="radio"
+            [name]="id + '-mode'"
+            [checked]="mode() === 'external'"
+            (change)="setMode('external')"
+          />
+          <span class="fl-radiocard__text">
+            <span class="fl-radiocard__title">A domain hosted elsewhere</span>
+            <span class="fl-radiocard__desc"
+              >Flui hands back the records for you to publish there.</span
+            >
+          </span>
+        </label>
+      </div>
+    }
+
+    @if (mode() === 'zone' && zones().length) {
+      <div class="flex items-center gap-2">
+        <div class="fl-input fl-input--lg min-w-0 flex-1">
+          <input
+            [id]="id"
             type="text"
+            class="fl-mono"
+            [attr.aria-label]="label() ? null : 'Prefix'"
             [ngModel]="prefix()"
             (ngModelChange)="onPrefix($event)"
             [placeholder]="prefixPlaceholder()"
-            class="min-w-0 flex-1 rounded-l-md border border-border bg-background px-2.5 py-2 font-mono text-sm text-foreground focus:z-10 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
           />
-          <span
-            class="inline-flex items-center border border-l-0 border-border bg-muted px-2 font-mono text-sm text-muted-foreground"
-          >
-            .
-          </span>
-          @if (zones().length > 1) {
+        </div>
+        <span class="fl-mono text-fl-ink-muted" aria-hidden="true">.</span>
+        @if (zones().length > 1) {
+          <span class="fl-select-wrap">
             <select
+              class="fl-select fl-mono"
+              aria-label="Zone"
               [ngModel]="zone()"
               (ngModelChange)="onZone($event)"
-              class="cursor-pointer whitespace-nowrap rounded-r-md border border-l-0 border-border bg-muted px-2 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-              [class]="zone() ? 'text-muted-foreground' : 'text-foreground'"
             >
-              <option value="" disabled>choose a zone…</option>
+              <option value="" disabled>Choose a zone</option>
               @for (z of zones(); track z) {
                 <option [value]="z">{{ z }}</option>
               }
             </select>
-          } @else {
-            <span
-              class="inline-flex items-center whitespace-nowrap rounded-r-md border border-l-0 border-border bg-muted px-2.5 font-mono text-sm text-muted-foreground"
-            >
-              {{ zone() }}
-            </span>
-          }
-        </div>
-        @if (zone()) {
-          <span class="mt-1 block text-[11px] text-muted-foreground">
-            Leave the prefix empty to send from the zone itself (<span class="font-mono">{{
-              zone()
-            }}</span
-            >).
           </span>
         } @else {
-          <span class="mt-1 block text-[11px] text-muted-foreground">
-            Pick which of your zones this sends from.
-          </span>
+          <span class="fl-mono text-fl-ink-muted">{{ zone() }}</span>
         }
+      </div>
+      @if (zone()) {
+        <span class="fl-field__hint">
+          Leave the prefix empty to send from the zone itself (<span class="fl-mono">{{
+            zone()
+          }}</span
+          >).
+        </span>
       } @else {
+        <span class="fl-field__hint">Pick which of your zones this sends from.</span>
+      }
+    } @else {
+      <div class="fl-input fl-input--lg">
         <input
+          [id]="id"
           type="text"
+          class="fl-mono"
+          [attr.aria-label]="label() ? null : 'Sending domain'"
           [ngModel]="external()"
           (ngModelChange)="onExternal($event)"
           [placeholder]="placeholder()"
-          class="h-9 w-full rounded-md border border-border bg-background px-2.5 font-mono text-sm text-foreground"
         />
-        @if (!zones().length) {
-          <span class="mt-1 block text-[11px] text-muted-foreground">
-            Flui holds no DNS zone, so the records will come back here for you to publish wherever
-            this domain is hosted.
-          </span>
-        }
-      }
-
-      @if (value()) {
-        <span class="mt-1.5 block text-[11px] text-muted-foreground">
-          Sending from <span class="font-mono text-foreground">{{ value() }}</span> — a domain, not
-          an address. The mailbox part comes from <span class="font-mono">MAIL_FROM</span>.
+      </div>
+      @if (!zones().length) {
+        <span class="fl-field__hint">
+          Flui holds no DNS zone, so the records will come back here for you to publish wherever
+          this domain is hosted.
         </span>
       }
-    </div>
+    }
+
+    @if (value()) {
+      <span class="fl-field__hint">
+        Sending from <span class="fl-mono">{{ value() }}</span>, a domain, not an address. The
+        mailbox part comes from <span class="fl-mono">MAIL_FROM</span>.
+      </span>
+    }
   `,
 })
 export class MailDomainPickerComponent implements OnInit {
@@ -134,6 +131,7 @@ export class MailDomainPickerComponent implements OnInit {
 
   readonly domainChange = output<string>();
 
+  protected readonly id = `mail-domain-${nextId++}`;
   protected readonly zones = signal<string[]>([]);
   protected readonly mode = signal<DomainMode>('zone');
   protected readonly prefix = signal('');
@@ -144,7 +142,6 @@ export class MailDomainPickerComponent implements OnInit {
     if (this.mode() === 'external' || !this.zones().length) return this.external().trim();
     const zone = this.zone();
     if (!zone) return '';
-    // Trimmed in a loop: a pattern matching a run of dots backtracks.
     let prefix = this.prefix().trim();
     while (prefix.endsWith('.')) prefix = prefix.slice(0, -1);
     return prefix ? `${prefix}.${zone}` : zone;
@@ -192,11 +189,6 @@ export class MailDomainPickerComponent implements OnInit {
   protected onExternal(value: string): void {
     this.external.set(value);
     this.emit();
-  }
-
-  protected cardClass(active: boolean): string {
-    const base = 'rounded-md border px-2.5 py-2 text-left transition-colors';
-    return active ? `${base} border-primary bg-primary/10` : `${base} border-border hover:bg-muted`;
   }
 
   private emit(): void {

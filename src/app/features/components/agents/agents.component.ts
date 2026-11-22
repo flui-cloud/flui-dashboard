@@ -1,16 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideKeyRound, lucideLoader, lucideTriangleAlert } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideKeyRound } from '@ng-icons/lucide';
 import { AuthService as ApiAuthService } from '../../../core/api/api/auth.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import {
@@ -32,11 +23,16 @@ import {
 import { AgentCycleService } from '../../service/agent-cycle.service';
 import { AgentActivityLogComponent } from './agent-activity-log.component';
 import { AgentConcessionsTableComponent } from './agent-concessions-table.component';
-import { AgentRequestCardComponent } from './agent-request-card.component';
+import { AgentRequestsPanel } from './agent-requests-panel';
 import { AgentRevokeDialogComponent } from './agent-revoke-dialog.component';
 import { AgentSkill, AgentSkillService } from '../settings/agent-keys/agent-skill.service';
 import { ConnectAgentComponent } from '../settings/agent-keys/connect-agent.component';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import {
   AgentGrantRow,
   AgentRequestRow,
@@ -48,164 +44,91 @@ import {
 
 @Component({
   selector: 'app-agents',
-  standalone: true,
   imports: [
-    NgIcon,
     RouterLink,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlButton,
+    FlIcon,
     AgentActivityLogComponent,
-    AgentRequestCardComponent,
+    AgentRequestsPanel,
     AgentConcessionsTableComponent,
     AgentRevokeDialogComponent,
     ConnectAgentComponent,
   ],
-  providers: [provideIcons({ lucideKeyRound, lucideLoader, lucideTriangleAlert })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideIcons({ lucideKeyRound })],
   template: `
-    <div class="mx-auto max-w-5xl space-y-8 p-6">
-      <header class="flex flex-wrap items-start justify-between gap-4">
-        <div class="space-y-1">
-          <h1 class="text-2xl font-semibold tracking-tight text-foreground">Agents</h1>
-          <p class="m-0 text-sm text-muted-foreground">
-            What your agents are asking to do, what they may already do, and what they have done.
-          </p>
-        </div>
-        <a
-          routerLink="/settings"
-          fragment="agent-keys"
-          data-testid="configure-key-link"
-          class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+    <div class="fl-page">
+      <fl-page-header title="Agents">
+        <span headerMeta
+          >What your agents ask to do, what they may already do, and what they did</span
         >
-          <ng-icon name="lucideKeyRound" class="h-3.5 w-3.5" />
-          Configure key
-        </a>
-      </header>
+        <ng-container headerActions>
+          <a flButton routerLink="/settings" fragment="agent-keys" data-testid="configure-key-link">
+            <fl-icon name="lucideKeyRound" />
+            Configure key
+          </a>
+        </ng-container>
+      </fl-page-header>
 
       <app-connect-agent [skill]="skill()" [skillError]="skillError()" />
 
-      <div
-        role="note"
-        class="flex items-start gap-3.5 rounded-lg border border-primary/20 bg-primary/[0.07] px-4 py-3.5"
-        data-testid="ceiling"
-      >
-        <span
-          class="shrink-0 pt-0.5 font-mono text-[11px] font-semibold tracking-widest text-accent-foreground"
-        >
-          CEILING
-        </span>
-        <p class="m-0 text-sm text-muted-foreground">
-          <span class="font-semibold text-foreground"
-            >An agent can never do more than you can.</span
-          >
-          {{ ceiling() }}
-        </p>
-      </div>
+      <fl-alert tone="info" title="An agent can never do more than you can." data-testid="ceiling">
+        {{ ceiling() }}
+      </fl-alert>
 
       @if (loadError(); as e) {
-        <div
-          class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{ e }}</span>
-        </div>
+        <fl-alert tone="error" title="Could not load">{{ e }}</fl-alert>
       }
 
-      <!-- ── Waiting on you ────────────────────────────────────── -->
-      <section class="space-y-3" data-testid="group-waiting">
-        <div class="flex items-baseline justify-between gap-4 border-b border-border pb-2.5">
-          <p class="text-label m-0">Waiting on you</p>
-          <p class="m-0 text-[13px] text-muted-foreground" data-testid="waiting-count">
-            {{ waitingNote() }}
-          </p>
-        </div>
+      <app-agent-requests-panel
+        data-testid="group-waiting"
+        [waiting]="waiting()"
+        [loading]="loading()"
+        [answeredStatus]="answered()?.status ?? null"
+        [note]="waitingNote()"
+        [deciding]="deciding()"
+        [decideError]="decideError()"
+        [keyNames]="keyNames()"
+        (decide)="answer($event)"
+      />
 
-        @if (loading()) {
-          <div class="space-y-3" data-testid="waiting-loading" aria-busy="true">
-            @for (row of [1, 2]; track row) {
-              <div class="card-surface space-y-3 p-5">
-                <div class="flex items-center gap-2.5">
-                  <div class="skeleton h-5 w-64"></div>
-                  <div class="skeleton h-4 w-20"></div>
-                </div>
-                <div class="skeleton h-3 w-48"></div>
-                <div class="flex gap-2 pt-1">
-                  <div class="skeleton h-8 w-24"></div>
-                  <div class="skeleton h-8 w-24"></div>
-                  <div class="skeleton h-8 w-16"></div>
-                </div>
-              </div>
-            }
-          </div>
-        } @else if (answered()) {
-          <p class="m-0 text-sm text-muted-foreground" data-testid="already-answered">
-            The request you followed here was already answered ({{ answered()?.status }}). The agent
-            finds out by retrying the call it was stopped on.
-          </p>
-        }
+      <app-agent-concessions-table
+        data-testid="group-granted"
+        [concessions]="concessions()"
+        [busy]="revoking()"
+        [note]="grantedNote()"
+        (revoke)="openRevoke($event)"
+      />
 
-        @if (!loading()) {
-          @for (proposal of waiting(); track proposal.id) {
-            <app-agent-request-card
-              [proposal]="proposal"
-              [agentName]="agentName(proposal.keyId)"
-              [busy]="deciding() === proposal.id"
-              (decide)="answer($event)"
-            />
-          } @empty {
-            <p class="m-0 text-sm text-muted-foreground" data-testid="no-requests">
-              Nothing is waiting on you. An agent that meets something it may not do on its own
-              raises it here and carries on with the rest.
-            </p>
-          }
-        }
-
-        @if (decideError(); as e) {
-          <p class="m-0 text-sm text-destructive" data-testid="decide-error">{{ e }}</p>
-        }
-      </section>
-
-      <!-- ── Granted permanently ───────────────────────────────── -->
-      <section class="space-y-3" data-testid="group-granted">
-        <div class="flex items-baseline justify-between gap-4 border-b border-border pb-2.5">
-          <p class="text-label m-0">Granted permanently</p>
-          <p class="m-0 text-[13px] text-muted-foreground" data-testid="granted-count">
-            {{ grantedNote() }}
-          </p>
-        </div>
-
-        <app-agent-concessions-table
-          [concessions]="concessions()"
-          [busy]="revoking()"
-          (revoke)="openRevoke($event)"
+      @if (activityError(); as e) {
+        <section class="fl-stack" data-testid="group-activity">
+          <fl-panel title="Activity">
+            <span
+              panelActions
+              class="text-fl-caption text-fl-ink-muted"
+              data-testid="activity-count"
+            >
+              {{ activityNote() }}
+            </span>
+            <fl-alert tone="error" title="Could not load activity">
+              <span data-testid="activity-error-banner">{{ e }}</span>
+            </fl-alert>
+          </fl-panel>
+        </section>
+      } @else {
+        <app-agent-activity-log
+          data-testid="group-activity"
+          [entries]="activity().entries"
+          [identities]="actingIdentities()"
+          [scope]="activity().scope"
+          [total]="activity().total"
+          [keyNames]="keyNames()"
+          [identityNames]="identityNames()"
+          [note]="activityNote()"
         />
-      </section>
-
-      <!-- ── What it has done ──────────────────────────────────── -->
-      <section class="space-y-3" data-testid="group-activity">
-        <div class="flex items-baseline justify-between gap-4 border-b border-border pb-2.5">
-          <p class="text-label m-0">What it has done</p>
-          <p class="m-0 text-[13px] text-muted-foreground" data-testid="activity-count">
-            {{ activityNote() }}
-          </p>
-        </div>
-
-        @if (activityError(); as e) {
-          <div
-            class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
-            <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-            <span data-testid="activity-error-banner">{{ e }}</span>
-          </div>
-        } @else {
-          <app-agent-activity-log
-            [entries]="activity().entries"
-            [identities]="actingIdentities()"
-            [scope]="activity().scope"
-            [total]="activity().total"
-            [keyNames]="keyNames()"
-            [identityNames]="identityNames()"
-          />
-        }
-      </section>
+      }
     </div>
 
     @if (revokeTarget(); as target) {

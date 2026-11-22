@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, computed, input, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideChevronDown,
   lucideChevronRight,
@@ -7,6 +7,10 @@ import {
   lucideLockOpen,
 } from '@ng-icons/lucide';
 
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlTable } from '../../../../ui/patterns/table';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlStatus } from '../../../../ui/primitives/status';
 import { formatBytes } from '../../../model/backup.models';
 import { runStatusBadge, runStoredBadge } from '../../../model/backup-badges';
 import { BackupRun } from '../../../model/backup-run.models';
@@ -20,50 +24,48 @@ import {
   runTriggerLabel,
   sortRunsNewestFirst,
 } from '../../../model/backup-activity';
+import { backupBadgeTone, runStoredTone } from './backup-tones';
 
 @Component({
   selector: 'app-backup-runs-table',
-  standalone: true,
-  imports: [NgIcon],
+  imports: [FlTable, FlStatus, FlIcon, FlAlert],
   providers: [provideIcons({ lucideChevronDown, lucideChevronRight, lucideLock, lucideLockOpen })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'block' },
   template: `
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="text-xs text-muted-foreground">
-          <tr class="border-b border-border">
-            <th scope="col" class="px-2 py-1.5 text-left font-medium">When</th>
+    <div class="fl-table-wrap">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">When</th>
             @if (!compact()) {
-              <th scope="col" class="px-2 py-1.5 text-left font-medium">Trigger</th>
+              <th scope="col">Trigger</th>
             }
-            <th scope="col" class="px-2 py-1.5 text-left font-medium">Status</th>
+            <th scope="col">Status</th>
             @if (!compact()) {
-              <th scope="col" class="px-2 py-1.5 text-left font-medium">Duration</th>
+              <th scope="col" class="is-num">Duration</th>
             }
-            <th scope="col" class="px-2 py-1.5 text-right font-medium">Size</th>
-            <th scope="col" class="px-2 py-1.5 text-center font-medium">
-              <span class="sr-only">Encryption</span>
-            </th>
+            <th scope="col" class="is-num">Size</th>
+            <th scope="col" class="is-fit"><span class="fl-sr">Encryption</span></th>
             @if (!compact()) {
-              <th scope="col" class="px-2 py-1.5 text-left font-medium">Stored</th>
+              <th scope="col">Stored</th>
             }
           </tr>
         </thead>
         <tbody>
           @for (run of rows(); track run.jobId) {
-            <tr class="border-b border-border/60 last:border-0">
-              <td class="px-2 py-1.5 whitespace-nowrap" [attr.title]="hoverTime(run)">
+            <tr>
+              <td [attr.title]="hoverTime(run)">
                 @if (!compact() && run.errorMessage) {
                   <button
                     type="button"
-                    class="inline-flex items-center gap-1 hover:underline"
+                    class="fl-link inline-flex items-center gap-1"
                     [attr.aria-expanded]="expanded() === run.jobId"
                     [attr.aria-label]="relative(runTime(run)) + ', show error'"
                     (click)="toggle(run)"
                   >
-                    <ng-icon
+                    <fl-icon
                       [name]="expanded() === run.jobId ? 'lucideChevronDown' : 'lucideChevronRight'"
-                      class="h-3 w-3 text-muted-foreground"
+                      [size]="14"
                     />
                     {{ relative(runTime(run)) }}
                   </button>
@@ -72,66 +74,50 @@ import {
                 }
               </td>
               @if (!compact()) {
-                <td class="px-2 py-1.5 text-muted-foreground whitespace-nowrap">
-                  {{ trigger(run.trigger) }}
-                </td>
+                <td class="text-fl-ink-muted">{{ trigger(run.trigger) }}</td>
               }
-              <td class="px-2 py-1.5">
-                <span
-                  class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap"
-                  [class]="status(run.status).classes"
-                  [attr.title]="compact() ? run.errorMessage : null"
-                >
-                  {{ status(run.status).label }}
-                </span>
+              <td [attr.title]="compact() ? run.errorMessage : null">
+                <fl-status [tone]="statusTone(run.status)" [label]="status(run.status).label" />
               </td>
               @if (!compact()) {
-                <td class="px-2 py-1.5 text-muted-foreground whitespace-nowrap">
-                  {{ duration(run.durationSeconds) }}
-                </td>
+                <td class="is-num text-fl-ink-muted">{{ duration(run.durationSeconds) }}</td>
               }
-              <td class="px-2 py-1.5 text-right text-muted-foreground whitespace-nowrap">
-                {{ size(run.sizeBytes) }}
-              </td>
-              <td class="px-2 py-1.5 text-center" [attr.title]="lock(run.encrypted).label">
+              <td class="is-num text-fl-ink-muted">{{ size(run.sizeBytes) }}</td>
+              <td class="is-fit text-fl-ink-muted" [attr.title]="lock(run.encrypted).label">
                 @if (lock(run.encrypted).icon; as icon) {
-                  <ng-icon
-                    [name]="icon"
-                    class="h-3.5 w-3.5 align-middle"
-                    [class]="run.encrypted ? 'text-emerald-600' : 'text-muted-foreground'"
+                  <span
+                    class="inline-flex"
                     role="img"
                     [attr.aria-label]="lock(run.encrypted).label"
-                  />
-                } @else {
-                  <span class="text-muted-foreground" [attr.aria-label]="lock(run.encrypted).label"
-                    >—</span
                   >
+                    <fl-icon [name]="icon" [size]="14" />
+                  </span>
+                } @else {
+                  <span [attr.aria-label]="lock(run.encrypted).label">—</span>
                 }
               </td>
               @if (!compact()) {
-                <td class="px-2 py-1.5">
+                <td>
                   @if (producedNothing(run)) {
-                    <span class="text-muted-foreground" aria-label="Nothing stored">—</span>
+                    <span class="text-fl-ink-muted" aria-label="Nothing stored">—</span>
                   } @else {
                     <span
-                      class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap"
-                      [class]="stored(run.stored).classes"
+                      class="inline-flex"
                       [attr.title]="run.expiresAt ? 'Expires ' + absolute(run.expiresAt) : null"
                     >
-                      {{ stored(run.stored).label }}
+                      <fl-status
+                        [tone]="storedTone(run.stored)"
+                        [label]="stored(run.stored).label"
+                      />
                     </span>
                   }
                 </td>
               }
             </tr>
             @if (!compact() && run.errorMessage && expanded() === run.jobId) {
-              <tr class="border-b border-border/60">
-                <td [attr.colspan]="7" class="px-2 pb-2">
-                  <div
-                    class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 break-words"
-                  >
-                    {{ run.errorMessage }}
-                  </div>
+              <tr>
+                <td [attr.colspan]="7" class="whitespace-normal">
+                  <fl-alert tone="error" title="Run failed">{{ run.errorMessage }}</fl-alert>
                 </td>
               </tr>
             }
@@ -160,6 +146,8 @@ export class BackupRunsTableComponent {
   protected readonly trigger = runTriggerLabel;
   protected readonly status = runStatusBadge;
   protected readonly stored = runStoredBadge;
+  protected readonly statusTone = (status: string) => backupBadgeTone('job', status);
+  protected readonly storedTone = runStoredTone;
   protected readonly producedNothing = (run: BackupRun): boolean =>
     run.stored === 'unknown' && (run.status === 'failed' || run.status === 'cancelled');
   protected readonly duration = formatDuration;

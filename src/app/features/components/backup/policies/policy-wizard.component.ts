@@ -1,12 +1,11 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   OnInit,
   computed,
   inject,
   signal,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -23,6 +22,39 @@ import { PolicyDestinationInputDto } from '../../../../core/api/model/policyDest
 import { AppOption, PolicyAppPickerComponent } from './policy-app-picker.component';
 import { PROFILE_DESCRIPTION, policyDtoOf } from './policy-wizard.dto';
 import { DestinationFormComponent } from '../destinations/destination-form.component';
+import { DeployReviewGroup } from '../../application/deploy-review-group';
+import { describeCron } from '../../application/cron-text';
+import { formatUtcDateTime } from '../../../model/backup-activity';
+import { Crumb } from '../../../../ui/patterns/breadcrumb';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlField } from '../../../../ui/patterns/field';
+import { FlKeyValue, FlKvItem } from '../../../../ui/patterns/key-value';
+import { FlPageHeader } from '../../../../ui/patterns/page-header';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../../ui/patterns/states';
+import { FlWizardSteps, WizardStep } from '../../../../ui/patterns/wizard-steps';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlSpinner } from '../../../../ui/primitives/spinner';
+import { copiesRetentionText, nextRunIso, scopeLabel, volumeRetentionText } from './policy-text';
+
+const STEPS = ['What to protect', 'Schedule', 'Destinations', 'Review'];
+
+const ENGINES: { id: CreateBackupPolicyDto.EngineClassEnum; title: string; description: string }[] =
+  [
+    {
+      id: 'volume_copy',
+      title: 'Volume backups',
+      description:
+        "Encrypted snapshots of one app's volumes. Keeps 7 daily and 4 weekly snapshots. To protect every app at once, use Protect this cluster.",
+    },
+    {
+      id: 'database',
+      title: 'Database',
+      description:
+        'Continuous backup where the image allows, nightly dumps otherwise. One destination, no replicas.',
+    },
+    { id: 'platform', title: 'Flui itself', description: 'The control-plane database.' },
+  ];
 
 interface WizardDestination {
   destinationId: string;
@@ -32,396 +64,41 @@ interface WizardDestination {
 
 @Component({
   selector: 'app-policy-wizard',
-  standalone: true,
-  imports: [FormsModule, RouterLink, PolicyAppPickerComponent, DestinationFormComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    PolicyAppPickerComponent,
+    DestinationFormComponent,
+    DeployReviewGroup,
+    FlAlert,
+    FlField,
+    FlKeyValue,
+    FlKvItem,
+    FlPageHeader,
+    FlPanel,
+    FlEmptyState,
+    FlWizardSteps,
+    FlButton,
+    FlSpinner,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <div class="p-6 max-w-3xl space-y-5">
-      <header class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold">New backup policy</h1>
-        <a
-          routerLink="/management/backup/policies"
-          class="text-sm text-muted-foreground hover:underline"
-        >
-          Cancel
-        </a>
-      </header>
-
-      <ol class="flex gap-2 text-xs">
-        @for (s of [1, 2, 3, 4]; track s) {
-          <li
-            class="rounded-full px-3 py-1 border"
-            [class]="
-              step() === s ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
-            "
-          >
-            Step {{ s }}
-          </li>
-        }
-      </ol>
-
-      <!-- Step 1: cluster + scope -->
-      @if (step() === 1) {
-        <section class="space-y-4">
-          <label class="block">
-            <span class="text-sm font-medium">Policy name *</span>
-            <input
-              [(ngModel)]="form.name"
-              required
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              placeholder="prod-daily"
-            />
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">Cluster *</span>
-            <select
-              [(ngModel)]="form.clusterId"
-              (ngModelChange)="selectedApps.set([])"
-              required
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            >
-              <option value="">— Select cluster —</option>
-              @for (c of clusters(); track c.id) {
-                <option [value]="c.id">{{ c.name }}</option>
-              }
-            </select>
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">Engine</span>
-            <select
-              [(ngModel)]="form.engineClass"
-              (ngModelChange)="onEngineClassChange($event)"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            >
-              <option value="volume_copy">
-                Volume backups — encrypted snapshots of one app's volumes
-              </option>
-              <option value="database">
-                Database — continuous backup, or dumps, for one database
-              </option>
-              <option value="platform">Flui itself — the control-plane database</option>
-            </select>
-            @if (form.engineClass === 'database') {
-              <p class="mt-1 text-xs text-muted-foreground">
-                Continuous where the image allows, nightly dumps otherwise. One destination, no
-                replicas.
-              </p>
-            } @else if (form.engineClass === 'volume_copy') {
-              <p class="mt-1 text-xs text-muted-foreground">
-                Keeps 7 daily and 4 weekly snapshots. To protect every app at once, use "Protect
-                this cluster".
-              </p>
-            }
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">Scope</span>
-            <select
-              [(ngModel)]="form.scope"
-              [disabled]="perApp()"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-50"
-            >
-              <option value="cluster_all">Entire cluster</option>
-              <option value="namespaces">Specific namespaces</option>
-              <option value="applications">Specific applications</option>
-              <option value="label_selector">Label selector</option>
-            </select>
-          </label>
-          @if (form.scope === 'namespaces') {
-            <label class="block">
-              <span class="text-sm font-medium">Namespaces (comma-separated)</span>
-              <input
-                [(ngModel)]="namespacesText"
-                class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                placeholder="prod, app-prod"
-              />
-            </label>
-          }
-          @if (form.scope === 'applications') {
-            <app-policy-app-picker
-              [clusterId]="form.clusterId"
-              [multiple]="!perApp()"
-              [(selected)]="selectedApps"
-              (optionsLoaded)="onAppsLoaded($event)"
-            />
-          }
-          @if (form.scope === 'label_selector') {
-            <label class="block">
-              <span class="text-sm font-medium">Label selector</span>
-              <input
-                [(ngModel)]="labelSelector"
-                class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                placeholder="tier=prod"
-              />
-            </label>
-          }
-          @if (form.engineClass === 'volume_copy') {
-            <label class="inline-flex items-center gap-2 text-sm">
-              <input type="checkbox" [(ngModel)]="pauseDuringCopy" />
-              Stop the app during each copy
-            </label>
-          }
-        </section>
-      }
-
-      <!-- Step 2: schedule + retention -->
-      @if (step() === 2) {
-        <section class="space-y-4">
-          <label class="block">
-            <span class="text-sm font-medium">Cron schedule</span>
-            <input
-              [(ngModel)]="form.cronSchedule"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-              placeholder="0 3 * * *  (empty: the default nightly time)"
-            />
-          </label>
-          @if (form.engineClass === 'volume_copy') {
-            <label
-              class="inline-flex items-center gap-2 text-sm"
-              title="Two more months of history for about 30% more space"
-            >
-              <input type="checkbox" [(ngModel)]="keepMonthly" />
-              Also keep 3 monthly snapshots
-            </label>
-          } @else {
-            <div class="grid grid-cols-2 gap-4">
-              <label class="block">
-                <span class="text-sm font-medium">Retention (days)</span>
-                <input
-                  type="number"
-                  min="1"
-                  [(ngModel)]="form.retentionDays"
-                  class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                />
-              </label>
-              <label class="block">
-                <span class="text-sm font-medium">Max copies</span>
-                <input
-                  type="number"
-                  min="1"
-                  [(ngModel)]="form.retentionMaxCopies"
-                  class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                />
-              </label>
-            </div>
-          }
-        </section>
-      }
-
-      <!-- Step 3: profile + destinations -->
-      @if (step() === 3) {
-        <section class="space-y-4">
-          <div class="grid grid-cols-3 gap-2">
-            @for (p of profiles; track p) {
-              <button
-                type="button"
-                (click)="form.profile = p"
-                class="rounded-md border px-3 py-3 text-left transition-colors"
-                [class.border-primary]="form.profile === p"
-                [class.border-border]="form.profile !== p"
-              >
-                <div class="text-sm font-medium capitalize">{{ p }}</div>
-                <div class="text-xs text-muted-foreground">{{ profileDescription(p) }}</div>
-              </button>
-            }
-          </div>
-
-          @if (noDestinations()) {
-            <div
-              class="rounded-md border border-dashed border-border p-5 space-y-3"
-              data-testid="no-destinations"
-            >
-              <div>
-                <p class="text-sm font-medium">No backup destination yet</p>
-                <p class="text-sm text-muted-foreground mt-1">
-                  A destination is the bucket where Flui keeps the copies. Add one here: what you
-                  filled in so far stays as it is.
-                </p>
-              </div>
-              <div class="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                  (click)="creatingDestination.set(true)"
-                  data-testid="create-destination"
-                >
-                  Add a destination
-                </button>
-                <a
-                  routerLink="/management/backup/destinations"
-                  class="text-sm text-muted-foreground hover:underline"
-                >
-                  Go to destinations
-                </a>
-              </div>
-            </div>
-          } @else {
-            <div class="space-y-2">
-              @for (d of destinations(); track d.destinationId; let i = $index) {
-                <div class="flex items-center gap-2 rounded-md border border-border p-2">
-                  <select
-                    [ngModel]="d.destinationId"
-                    (ngModelChange)="setDestinationField(i, 'destinationId', $event)"
-                    class="flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm"
-                  >
-                    <option value="">— Select destination —</option>
-                    @for (dst of backup.destinations(); track dst.id) {
-                      <option [value]="dst.id">{{ dst.name }} ({{ dst.provider }})</option>
-                    }
-                  </select>
-                  <select
-                    [ngModel]="d.role"
-                    (ngModelChange)="setDestinationField(i, 'role', $event)"
-                    class="rounded-md border border-border bg-background px-2 py-1 text-sm"
-                  >
-                    <option value="primary">Primary</option>
-                    <option value="replica">Replica</option>
-                  </select>
-                  <button
-                    type="button"
-                    class="text-xs text-red-600 hover:underline"
-                    (click)="removeDestination(i)"
-                  >
-                    Remove
-                  </button>
-                </div>
-              }
-              @if (form.engineClass !== 'database' || destinations().length === 0) {
-                <button
-                  type="button"
-                  class="text-sm text-primary hover:underline"
-                  (click)="addDestination()"
-                >
-                  + Add destination
-                </button>
-              }
-              <button
-                type="button"
-                class="ml-4 text-sm text-muted-foreground hover:underline"
-                (click)="creatingDestination.set(true)"
-              >
-                New destination…
-              </button>
-            </div>
-          }
-
-          @if (creatingDestination()) {
-            <div
-              class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-              data-testid="destination-modal"
-            >
-              <div
-                class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border bg-background"
-              >
-                <app-destination-form
-                  [embedded]="true"
-                  (created)="onDestinationCreated($event)"
-                  (cancelled)="creatingDestination.set(false)"
-                />
-              </div>
-            </div>
-          }
-
-          @if (validationError(); as v) {
-            @if (!noDestinations()) {
-              <div
-                class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700"
-              >
-                {{ v }}
-              </div>
-            }
-          }
-        </section>
-      }
-
-      <!-- Step 4: review -->
-      @if (step() === 4) {
-        <section class="space-y-3 text-sm">
-          <h3 class="text-base font-semibold">Review</h3>
-          <div class="rounded-md border border-border p-3 space-y-1">
-            <div><span class="text-muted-foreground">Name:</span> {{ form.name }}</div>
-            <div>
-              <span class="text-muted-foreground">Cluster:</span> {{ clusterName(form.clusterId) }}
-            </div>
-            <div>
-              <span class="text-muted-foreground">Engine:</span> {{ engineLabel(form.engineClass) }}
-            </div>
-            <div><span class="text-muted-foreground">Scope:</span> {{ form.scope }}</div>
-            @if (form.scope === 'applications') {
-              <div>
-                <span class="text-muted-foreground">Applications:</span> {{ appNames() || '—' }}
-              </div>
-            }
-            <div>
-              <span class="text-muted-foreground">Schedule:</span>
-              {{ form.cronSchedule || 'default nightly time' }}
-            </div>
-            @if (form.engineClass === 'volume_copy') {
-              <div>
-                <span class="text-muted-foreground">Keeps:</span> 7 daily, 4 weekly{{
-                  keepMonthly ? ', 3 monthly' : ''
-                }}
-              </div>
-            } @else {
-              <div>
-                <span class="text-muted-foreground">Retention:</span> {{ form.retentionDays }}d /
-                {{ form.retentionMaxCopies || '∞' }} copies
-              </div>
-            }
-            <div><span class="text-muted-foreground">Profile:</span> {{ inferredProfile() }}</div>
-            <div><span class="text-muted-foreground">Destinations:</span></div>
-            <ul class="ml-4 list-disc">
-              @for (d of destinations(); track d.destinationId) {
-                <li>{{ destName(d.destinationId) }} — {{ d.role }}</li>
-              }
-            </ul>
-          </div>
-          @if (submitError()) {
-            <div
-              class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700"
-            >
-              {{ submitError() }}
-            </div>
-          }
-        </section>
-      }
-
-      <div class="flex justify-between">
-        <button
-          type="button"
-          class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted disabled:opacity-50"
-          [disabled]="step() === 1"
-          (click)="prev()"
-        >
-          Back
-        </button>
-        @if (step() < 4) {
-          <button
-            type="button"
-            class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            [disabled]="!canAdvance()"
-            (click)="next()"
-          >
-            Next
-          </button>
-        } @else {
-          <button
-            type="button"
-            class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            [disabled]="submitting() || !!validationError()"
-            (click)="onSubmit()"
-          >
-            {{ submitting() ? 'Creating…' : 'Create policy' }}
-          </button>
-        }
-      </div>
-    </div>
-  `,
+  templateUrl: './policy-wizard.component.html',
 })
 export class PolicyWizardComponent implements OnInit {
   protected readonly backup = inject(BackupService);
   private readonly clusterService = inject(ClusterService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+
+  protected readonly breadcrumb: readonly Crumb[] = [
+    { label: 'Backups', link: '/management/backup' },
+    { label: 'Policies', link: '/management/backup/policies' },
+    { label: 'New policy' },
+  ];
+  protected readonly stepNames = STEPS;
+  protected readonly engines = ENGINES;
+  protected readonly editable = ['1', '2', '3'];
+  protected readonly scopeLabel = scopeLabel;
 
   readonly clusters = this.clusterService.clusters;
   readonly profiles: BackupPolicyProfile[] = ['single', 'mirrored', 'custom'];
@@ -553,6 +230,50 @@ export class PolicyWizardComponent implements OnInit {
     return this.selectedApps()
       .map((id) => byId.get(id) ?? id)
       .join(', ');
+  }
+
+  protected wizardSteps(): WizardStep[] {
+    return [
+      { name: STEPS[0], summary: this.form.name || undefined },
+      { name: STEPS[1], summary: this.scheduleText() },
+      { name: STEPS[2], summary: this.destinationSummary() },
+      { name: STEPS[3] },
+    ];
+  }
+
+  protected goTo(step: number): void {
+    this.step.set(step);
+  }
+
+  protected selectEngine(engineClass: CreateBackupPolicyDto.EngineClassEnum): void {
+    this.form.engineClass = engineClass;
+    this.onEngineClassChange(engineClass);
+  }
+
+  protected scheduleText(): string {
+    return this.form.cronSchedule ? describeCron(this.form.cronSchedule) : 'Default nightly time';
+  }
+
+  protected nextRunText(): string | null {
+    const next = nextRunIso(this.form.cronSchedule);
+    return next ? formatUtcDateTime(next) : null;
+  }
+
+  protected retentionText(): string {
+    return this.form.engineClass === 'volume_copy'
+      ? volumeRetentionText(this.keepMonthly)
+      : copiesRetentionText(this.form.retentionDays ?? 0, this.form.retentionMaxCopies);
+  }
+
+  protected destinationSummary(): string | undefined {
+    const names = this.destinations()
+      .filter((d) => d.destinationId)
+      .map((d) => this.destName(d.destinationId));
+    return names.length ? names.join(', ') : undefined;
+  }
+
+  protected profileTitle(p: BackupPolicyProfile): string {
+    return p.charAt(0).toUpperCase() + p.slice(1);
   }
 
   profileDescription(p: BackupPolicyProfile): string {

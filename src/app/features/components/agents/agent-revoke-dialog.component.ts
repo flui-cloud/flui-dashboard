@@ -1,155 +1,119 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideTriangleAlert, lucideX } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
-import {
-  HlmCardContentDirective,
-  HlmCardDirective,
-  HlmCardHeaderDirective,
-  HlmCardTitleDirective,
-} from '@spartan-ng/ui-card-helm';
+import { Component, computed, input, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import { AgentConcession, ConcessionOperation } from '../../model/agent-cycle.models';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-agent-revoke-dialog',
-  standalone: true,
-  imports: [
-    NgIcon,
-    HlmButtonDirective,
-    HlmCardDirective,
-    HlmCardHeaderDirective,
-    HlmCardTitleDirective,
-    HlmCardContentDirective,
-  ],
-  providers: [provideIcons({ lucideLoader, lucideTriangleAlert, lucideX })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlAlert, FlLoadingState, FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideX })],
   template: `
-    <div class="fixed inset-0 z-50 bg-background/80" (click)="dismissed.emit()">
+    <div
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      (click)="dismissed.emit()"
+    >
       <div
-        class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
+        class="fl-dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="agent-revoke-title"
+        (click)="$event.stopPropagation()"
+        data-testid="revoke-dialog"
       >
-        <div hlmCard (click)="$event.stopPropagation()" data-testid="revoke-dialog">
-          <div hlmCardHeader>
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div
-                  class="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10"
-                >
-                  <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-destructive" />
-                </div>
-                <h2 hlmCardTitle class="text-lg">Take this permission back</h2>
-              </div>
-              <button
-                hlmBtn
-                variant="ghost"
-                size="sm"
-                class="h-8 w-8 p-0"
-                (click)="dismissed.emit()"
-              >
-                <ng-icon name="lucideX" class="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="agent-revoke-title">Take this permission back</h2>
+          <button
+            type="button"
+            class="fl-dialog__close"
+            aria-label="Close"
+            (click)="dismissed.emit()"
+          >
+            <fl-icon name="lucideX" />
+          </button>
+        </header>
 
-          <div hlmCardContent class="space-y-4">
-            <p class="m-0 text-sm text-muted-foreground">
-              Your agent will stop being able to
-              <code class="font-mono text-[12.5px] font-medium text-foreground">{{
-                concession().sentence
-              }}</code>
-              without asking. Nothing else changes: this was a pause removed, not a permission
-              granted, so nothing is taken away from you.
-            </p>
+        <div class="fl-dialog__body">
+          <p class="m-0">
+            Your agent will stop being able to
+            <code class="fl-mono">{{ concession().sentence }}</code>
+            without asking. Nothing else changes: this was a pause removed, not a permission
+            granted, so nothing is taken away from you.
+          </p>
 
-            @if (loading()) {
-              <div class="space-y-2" data-testid="running-loading" aria-busy="true">
-                <div class="skeleton h-4 w-52"></div>
-                <div class="skeleton h-4 w-40"></div>
-              </div>
-            } @else {
-              <div
-                class="rounded-md border px-3.5 py-3"
-                [class]="
-                  running().length ? 'border-orange-300 bg-orange-50' : 'border-border bg-muted/40'
-                "
-                data-testid="what-continues"
-              >
-                @if (running().length) {
-                  <p class="m-0 text-sm text-foreground">
-                    <span class="font-medium">{{ running().length }}</span>
-                    {{ running().length === 1 ? 'operation' : 'operations' }} already started under
-                    this permission and will <span class="font-medium">carry on</span> after you
-                    revoke it. Revoking stops the next departure, not this one.
-                  </p>
-                  <ul class="mt-2 space-y-1">
-                    @for (op of running(); track op.id) {
-                      <li
-                        class="font-mono text-[12.5px] text-muted-foreground"
-                        data-testid="running-operation"
-                      >
-                        {{ op.operationType }}
-                        @if (op.resourceName) {
-                          · {{ op.resourceName }}
-                        }
-                        · {{ op.status }}
-                        @if (op.progress !== null && op.progress !== undefined) {
-                          · {{ op.progress }}%
-                        }
-                      </li>
-                    }
-                  </ul>
-                } @else {
-                  <p class="m-0 text-sm text-muted-foreground">
-                    Nothing is running under this permission. Revoking takes effect immediately and
-                    leaves nothing behind.
-                  </p>
-                }
-              </div>
-
-              @if (running().length) {
-                <label class="flex cursor-pointer items-start gap-2.5 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    class="mt-0.5 h-4 w-4 rounded border-border"
-                    [checked]="alsoStop()"
-                    (change)="alsoStop.set(!alsoStop())"
-                    data-testid="also-stop"
-                  />
-                  <span>
-                    Also ask them to stop.
-                    <span class="text-muted-foreground">
-                      Honoured at the next step boundary and never mid-step — a provisioning cut in
-                      half leaves paid-for resources behind.
-                    </span>
+          @if (loading()) {
+            <fl-loading-state [rows]="2" data-testid="running-loading" />
+          } @else {
+            @if (running().length) {
+              <fl-alert tone="warning" title="Already running" data-testid="what-continues">
+                {{ running().length }}
+                {{ running().length === 1 ? 'operation' : 'operations' }} already started under this
+                permission and will carry on after you revoke it. Revoking stops the next departure,
+                not this one.
+                <ul class="m-0 mt-2 flex list-none flex-col gap-1 p-0">
+                  @for (op of running(); track op.id) {
+                    <li class="fl-mono" data-testid="running-operation">
+                      {{ op.operationType }}
+                      @if (op.resourceName) {
+                        · {{ op.resourceName }}
+                      }
+                      · {{ op.status }}
+                      @if (op.progress !== null && op.progress !== undefined) {
+                        · {{ op.progress }}%
+                      }
+                    </li>
+                  }
+                </ul>
+              </fl-alert>
+              <label class="fl-check items-start">
+                <input
+                  type="checkbox"
+                  [checked]="alsoStop()"
+                  (change)="alsoStop.set(!alsoStop())"
+                  data-testid="also-stop"
+                />
+                <span>
+                  Also ask them to stop.
+                  <span class="text-fl-ink-muted">
+                    Honoured at the next step boundary and never mid-step: a provisioning cut in
+                    half leaves paid-for resources behind.
                   </span>
-                </label>
-              }
+                </span>
+              </label>
+            } @else {
+              <p class="m-0 text-fl-ink-muted" data-testid="what-continues">
+                Nothing is running under this permission. Revoking takes effect immediately and
+                leaves nothing behind.
+              </p>
             }
+          }
 
-            @if (error(); as e) {
-              <p class="m-0 text-sm text-destructive" data-testid="revoke-error">{{ e }}</p>
-            }
-          </div>
-
-          <div class="flex justify-end gap-2 px-6 pb-6">
-            <button hlmBtn variant="outline" size="sm" type="button" (click)="dismissed.emit()">
-              Keep it
-            </button>
-            @if (!loading()) {
-              <button
-                hlmBtn
-                variant="destructive"
-                size="sm"
-                type="button"
-                [disabled]="busy()"
-                (click)="confirm.emit({ alsoStop: alsoStop() })"
-                data-testid="confirm-revoke"
-              >
-                {{ confirmLabel() }}
-              </button>
-            }
-          </div>
+          @if (error(); as e) {
+            <fl-alert tone="error" title="Not revoked" data-testid="revoke-error">{{ e }}</fl-alert>
+          }
         </div>
+
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" (click)="dismissed.emit()">Keep it</button>
+          @if (!loading()) {
+            <button
+              flButton="danger"
+              type="button"
+              [disabled]="busy()"
+              (click)="confirm.emit({ alsoStop: alsoStop() })"
+              data-testid="confirm-revoke"
+            >
+              @if (busy()) {
+                <fl-spinner label="Revoking" />
+              }
+              {{ confirmLabel() }}
+            </button>
+          }
+        </footer>
       </div>
     </div>
   `,

@@ -5,12 +5,14 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { InferenceSettingsService } from '../../service/inference-settings.service';
 import { PermissionService } from '../../../core/services/permission.service';
+import { ConfirmService } from '../../../ui/overlays/confirm';
 import { InferenceConnectionsComponent } from './inference-connections.component';
 
 describe('deleting an LLM connection', () => {
   let fixture: ComponentFixture<InferenceConnectionsComponent>;
   let deleteConnection: jasmine.Spy;
   let held: string[];
+  let confirm: jasmine.Spy;
 
   const connection = {
     id: 'conn-1',
@@ -32,6 +34,7 @@ describe('deleting an LLM connection', () => {
         .and.returnValue(of({ success: true })),
       createConnection: jasmine.createSpy('createConnection').and.returnValue(of(connection)),
     };
+    confirm = jasmine.createSpy('confirm').and.resolveTo(false);
 
     await TestBed.configureTestingModule({
       imports: [InferenceConnectionsComponent],
@@ -39,6 +42,7 @@ describe('deleting an LLM connection', () => {
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: InferenceSettingsService, useValue: service },
+        { provide: ConfirmService, useValue: { confirm } },
         {
           provide: PermissionService,
           useValue: {
@@ -63,14 +67,8 @@ describe('deleting an LLM connection', () => {
     await build();
   });
 
-  const deleteButton = (): HTMLButtonElement => {
-    const buttons: HTMLButtonElement[] = Array.from(
-      fixture.nativeElement.querySelectorAll('button'),
-    );
-    return buttons.find((b) => b.className.includes('border-destructive'))!;
-  };
-
-  const dialogText = (): string => (fixture.nativeElement.textContent ?? '') as string;
+  const deleteButton = (): HTMLButtonElement =>
+    fixture.nativeElement.querySelector('[data-testid="delete-connection-conn-1"]') ?? undefined;
 
   it('does not delete anything on the click itself', () => {
     deleteButton().click();
@@ -81,21 +79,18 @@ describe('deleting an LLM connection', () => {
   it('asks first, and names what goes with it', () => {
     deleteButton().click();
     fixture.detectChanges();
-    const text = dialogText();
-    expect(text).toContain('Delete LLM connection');
-    expect(text).toContain('cannot be undone');
-    expect(text).toContain('Mistral (prod)');
-    expect(text).toContain('The stored API key is deleted with it');
+    const options = confirm.calls.mostRecent().args[0];
+    expect(options.title).toBe('Delete LLM connection');
+    expect(options.body).toContain('cannot be undone');
+    expect(options.body).toContain('Mistral (prod)');
+    expect(options.body).toContain('The stored API key is deleted with it');
+    expect(options.confirmLabel).toBe('Delete');
   });
 
-  it('deletes once the person confirms', () => {
+  it('deletes once the person confirms', async () => {
+    confirm.and.resolveTo(true);
     deleteButton().click();
-    fixture.detectChanges();
-
-    const confirm: HTMLButtonElement[] = Array.from(
-      fixture.nativeElement.querySelectorAll('button'),
-    );
-    confirm.find((b) => b.textContent?.trim() === 'Delete')!.click();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(deleteConnection).toHaveBeenCalledWith('conn-1');
@@ -108,14 +103,9 @@ describe('deleting an LLM connection', () => {
     expect(deleteButton()).toBeUndefined();
   });
 
-  it('deletes nothing when the person backs out', () => {
+  it('deletes nothing when the person backs out', async () => {
     deleteButton().click();
-    fixture.detectChanges();
-
-    const buttons: HTMLButtonElement[] = Array.from(
-      fixture.nativeElement.querySelectorAll('button'),
-    );
-    buttons.find((b) => b.textContent?.trim() === 'Cancel')!.click();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(deleteConnection).not.toHaveBeenCalled();

@@ -1,31 +1,23 @@
 import {
   Component,
-  OnInit,
   OnDestroy,
+  OnInit,
   computed,
   effect,
   inject,
   signal,
   viewChild,
-  ChangeDetectionStrategy,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideKeyRound,
-  lucideUsers,
-  lucideUsersRound,
-  lucideShield,
-  lucideListChecks,
-  lucideTrash2,
-  lucideInfo,
-  lucideClock,
-  lucideActivity,
-} from '@ng-icons/lucide';
-import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
+import { provideIcons } from '@ng-icons/core';
+import { lucideInfo } from '@ng-icons/lucide';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTabs, TabLink } from '../../../ui/patterns/tabs';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { IamService } from '../../service/iam.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { AppConfigService } from '../../../core/services/app-config.service';
@@ -37,9 +29,8 @@ import {
   buildAccessSurface,
   presentedContent,
 } from './access-surface';
-import { CanDirective } from '../../../core/directives/can.directive';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
-import { GrantBuilderComponent } from './grant-builder.component';
+import { AccessGrantsComponent } from './access-grants';
+import { AccessPreviewDialog } from './access-preview-dialog';
 import { PeopleTabComponent } from './people-tab.component';
 import { GroupsTabComponent } from './groups-tab.component';
 import { RolesTabComponent } from './roles-tab.component';
@@ -49,11 +40,8 @@ import {
   AccessBinding,
   AccessDelta,
   AccessSelector,
-  GrantEnd,
   GrantRecord,
   accessDeltaLines,
-  formatWhen,
-  grantEnd,
 } from '../../model/iam.model';
 
 type TabId = AccessTabId;
@@ -61,238 +49,92 @@ type TabId = AccessTabId;
 interface TabDef {
   id: TabId;
   label: string;
-  icon: string;
 }
 
 @Component({
   selector: 'app-access',
-  standalone: true,
   imports: [
-    NgIcon,
-    HlmCardDirective,
-    HlmCardContentDirective,
-    HlmBadgeDirective,
-    CanDirective,
-    ConfirmationDialogComponent,
-    GrantBuilderComponent,
+    FlPageHeader,
+    FlPanel,
+    FlTabs,
+    FlButton,
+    FlIcon,
+    AccessGrantsComponent,
+    AccessPreviewDialog,
     PeopleTabComponent,
     GroupsTabComponent,
     RolesTabComponent,
     TemporaryAccessTabComponent,
     ActivityTabComponent,
   ],
-  providers: [
-    provideIcons({
-      lucideKeyRound,
-      lucideUsers,
-      lucideUsersRound,
-      lucideShield,
-      lucideListChecks,
-      lucideTrash2,
-      lucideInfo,
-      lucideClock,
-      lucideActivity,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideInfo })],
   template: `
-    <div class="p-6 max-w-6xl mx-auto space-y-6">
-      <div class="flex items-start justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <div
-            class="flex h-11 w-11 items-center justify-center rounded-fl-lg bg-muted border border-border text-muted-foreground shrink-0"
+    <div class="fl-page">
+      <fl-page-header title="Access">
+        <span headerMeta>Who can do what, on which resources.</span>
+        <ng-container headerActions>
+          <button
+            flButton="ghost"
+            type="button"
+            [attr.aria-expanded]="showHelp()"
+            (click)="showHelp.set(!showHelp())"
           >
-            <ng-icon name="lucideKeyRound" class="h-5 w-5" />
-          </div>
-          <div>
-            <h2 class="text-xl font-semibold text-foreground">Access</h2>
-            <p class="text-sm text-muted-foreground">Who can do what, on which resources.</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          (click)="showHelp.set(!showHelp())"
-          class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground whitespace-nowrap"
-        >
-          <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
-          How access works
-        </button>
-      </div>
+            <fl-icon name="lucideInfo" />
+            How access works
+          </button>
+        </ng-container>
+        <fl-tabs [tabs]="tabLinks" label="Access sections" />
+      </fl-page-header>
 
       @if (showHelp()) {
-        <div hlmCard class="border-primary/30">
-          <div hlmCardContent class="pt-5 text-sm text-muted-foreground space-y-2">
+        <fl-panel title="How access works">
+          <div class="flex flex-col gap-2 text-fl-body-sm text-fl-ink-secondary">
             <p>
-              <span class="font-medium text-foreground">Deny by default.</span> A member starts with
-              no access. They reach a resource only through an explicit
-              <span class="font-medium text-foreground">grant</span> — given to them directly or via
+              <span class="font-medium text-fl-ink">Deny by default.</span> A member starts with no
+              access. They reach a resource only through an explicit
+              <span class="font-medium text-fl-ink">grant</span>, given to them directly or through
               a group.
             </p>
             <p>
-              <span class="font-medium text-foreground">A grant = role × scope.</span> The
-              <span class="font-medium text-foreground">role</span> (Viewer &lt; Operator &lt;
-              Maintainer &lt; Owner) is <em>what</em> they can do, and each step contains the one
-              below it; the <span class="font-medium text-foreground">scope</span> (a project, a
-              cluster, or everything) is <em>where</em>.
+              <span class="font-medium text-fl-ink">A grant is a role on a scope.</span> The
+              <span class="font-medium text-fl-ink">role</span> (Viewer, Operator, Maintainer,
+              Owner) is <em>what</em> they can do, and each step contains the one below it. The
+              <span class="font-medium text-fl-ink">scope</span> (a project, a cluster, or
+              everything) is <em>where</em>.
             </p>
             <p>
-              <span class="font-medium text-foreground">Owner is the top of the ladder.</span> It
-              carries everything, everywhere — including who else may run this installation — and
-              only an owner may confer or revoke it. A maintainer can hand out the other three and
-              no more.
+              <span class="font-medium text-fl-ink">Owner is the top of the ladder.</span> It
+              carries everything, everywhere, including who else may run this installation, and only
+              an owner may confer or revoke it. A maintainer can hand out the other three and no
+              more.
             </p>
             @if (identityProvider) {
               <p>
-                <span class="font-medium text-foreground">This list is what Flui grants.</span> A
-                rung can also be conferred in your identity provider; it counts at sign-in but is
-                held there, so it is neither listed nor revocable here — and a preview of what a
-                change takes away cannot see it either.
+                <span class="font-medium text-fl-ink">This list is what Flui grants.</span> A rung
+                can also be conferred in your identity provider. It counts at sign-in but is held
+                there, so it is neither listed nor revocable here, and a preview of what a change
+                takes away cannot see it either.
               </p>
             }
             <p>
-              <span class="font-medium text-foreground">Platform admin is a separate flag,</span>
+              <span class="font-medium text-fl-ink">Platform admin is a separate flag,</span>
               older than the roles and outside the grant graph. It still governs a handful of
-              screens — creating and disabling accounts, projects — so it is what those buttons
-              check. It is not a grant and does not appear in the list below.
+              screens, such as creating and disabling accounts and projects, so it is what those
+              buttons check. It is not a grant and does not appear in the list below.
             </p>
           </div>
-        </div>
+        </fl-panel>
       }
-
-      <!-- Tab navigation -->
-      <div class="border-b border-border">
-        <nav class="flex -mb-px gap-1 overflow-x-auto scrollbar-none">
-          @for (t of tabs; track t.id) {
-            <button
-              type="button"
-              (click)="selectTab(t.id)"
-              class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
-              [class]="
-                activeTab() === t.id
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              "
-            >
-              <ng-icon [name]="t.icon" class="h-4 w-4" />
-              <span>{{ t.label }}</span>
-            </button>
-          }
-        </nav>
-      </div>
 
       @switch (activeTab()) {
         @case ('grants') {
-          <div class="space-y-5">
-            <!-- Builder (gated) -->
-            <app-grant-builder *fluiCan="'iam:assign-role'" />
-            @if (!canManage() && !readOnly()) {
-              <div hlmCard>
-                <div hlmCardContent class="pt-6">
-                  <p class="text-sm text-muted-foreground">
-                    You can see who has access here, but not change it.
-                  </p>
-                </div>
-              </div>
-            }
-
-            <!-- Grants list -->
-            <div hlmCard>
-              <div hlmCardContent class="pt-6">
-                <div class="mb-3">
-                  <h3 class="text-sm font-semibold text-foreground">
-                    Grants made in Flui ({{ iam.grants().length }})
-                  </h3>
-                  @if (identityProvider) {
-                    <p class="mt-1 text-xs text-muted-foreground">
-                      Only the grants conferred here. A role conferred in your identity provider
-                      also grants access and is not listed.
-                    </p>
-                  }
-                </div>
-                <div class="overflow-x-auto">
-                  <table class="w-full text-sm">
-                    <thead>
-                      <tr class="text-left text-xs text-muted-foreground border-b border-border">
-                        <th class="py-2 pr-4 font-medium">Who</th>
-                        <th class="py-2 pr-4 font-medium">Role</th>
-                        <th class="py-2 pr-4 font-medium">What</th>
-                        <th class="py-2 pr-4 font-medium">Applies to</th>
-                        <th class="py-2 pr-4 font-medium">Ends</th>
-                        <th class="py-2 w-10"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (g of iam.grants(); track g.id) {
-                        <tr
-                          class="border-b border-border/60 last:border-0"
-                          [class.opacity-60]="endOf(g) === 'ended'"
-                          data-testid="grant-row"
-                        >
-                          <td class="py-2.5 pr-4">
-                            {{ iam.principalDisplay(g.binding.principal) }}
-                            @if (g.grantedBy) {
-                              <div class="text-[11px] text-muted-foreground">
-                                granted by {{ g.grantedBy }}
-                              </div>
-                            }
-                          </td>
-                          <td class="py-2.5 pr-4">
-                            <span hlmBadge variant="outline" class="text-xs">{{
-                              iam.roleName(g.binding.role)
-                            }}</span>
-                          </td>
-                          <td class="py-2.5 pr-4 text-muted-foreground">
-                            {{ scopeText(g.binding) }}
-                          </td>
-                          <td class="py-2.5 pr-4 text-muted-foreground">
-                            {{
-                              g.binding.scope.type === 'section'
-                                ? 'portal section'
-                                : matchCount(g.binding) +
-                                  ' app' +
-                                  (matchCount(g.binding) === 1 ? '' : 's')
-                            }}
-                          </td>
-                          <td
-                            class="py-2.5 pr-4 text-muted-foreground whitespace-nowrap"
-                            data-testid="grant-end"
-                          >
-                            @switch (endOf(g)) {
-                              @case ('active') {
-                                until {{ when(g.expiresAt) }}
-                              }
-                              @case ('ended') {
-                                ended {{ when(g.expiresAt) }}
-                              }
-                            }
-                          </td>
-                          <td class="py-2.5">
-                            @if (iam.isRevocable(g.binding.role)) {
-                              <button
-                                type="button"
-                                (click)="askRemove(g)"
-                                *fluiCan="'iam:assign-role'"
-                                class="text-muted-foreground hover:text-destructive"
-                                title="Remove grant"
-                              >
-                                <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                              </button>
-                            }
-                          </td>
-                        </tr>
-                      } @empty {
-                        <tr>
-                          <td colspan="6" class="py-6 text-center text-sm text-muted-foreground">
-                            No grants yet.
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
+          <app-access-grants
+            [identityProvider]="identityProvider"
+            [canManage]="canManage()"
+            [readOnly]="readOnly()"
+            [scopeText]="scopeTextFn"
+            (remove)="askRemove($event)"
+          />
         }
         @case ('people') {
           <app-people-tab />
@@ -311,11 +153,10 @@ interface TabDef {
         }
       }
 
-      <app-confirmation-dialog
+      <app-access-preview-dialog
         #revokeDialog
         title="Remove this grant"
-        variant="danger"
-        confirmText="Remove"
+        confirmLabel="Remove"
         [message]="revokeMessage()"
         [details]="revokeDetails()"
         (confirmed)="onRemoveConfirmed()"
@@ -328,7 +169,6 @@ export class AccessComponent implements OnInit, OnDestroy {
   protected readonly iam = inject(IamService);
   private readonly perms = inject(PermissionService);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly appConfig = inject(AppConfigService);
   private readonly currentSurface = inject(CurrentSurfaceService);
 
@@ -362,8 +202,6 @@ export class AccessComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // Publish this page's own Semantic Surface snapshot into the shared registry
-    // whenever it changes — same pattern as ApplicationDetailComponent.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -379,13 +217,18 @@ export class AccessComponent implements OnInit, OnDestroy {
   }
 
   readonly tabs: TabDef[] = [
-    { id: 'grants', label: 'Grants', icon: 'lucideListChecks' },
-    { id: 'people', label: 'People', icon: 'lucideUsers' },
-    { id: 'groups', label: 'Groups', icon: 'lucideUsersRound' },
-    { id: 'roles', label: 'Roles', icon: 'lucideShield' },
-    { id: 'temporary', label: 'Temporary access', icon: 'lucideClock' },
-    { id: 'activity', label: 'Activity', icon: 'lucideActivity' },
+    { id: 'grants', label: 'Grants' },
+    { id: 'people', label: 'People' },
+    { id: 'groups', label: 'Groups' },
+    { id: 'roles', label: 'Roles' },
+    { id: 'temporary', label: 'Temporary access' },
+    { id: 'activity', label: 'Activity' },
   ];
+
+  protected readonly tabLinks: readonly TabLink[] = this.tabs.map((t) => ({
+    label: t.label,
+    link: ['/management/access', t.id],
+  }));
 
   readonly activeTab = toSignal(
     this.route.paramMap.pipe(map((p) => this.normalizeTab(p.get('tab')))),
@@ -395,10 +238,6 @@ export class AccessComponent implements OnInit, OnDestroy {
   readonly showHelp = signal(false);
   readonly canManage = computed(() => this.perms.can('iam:assign-role'));
   protected readonly readOnly = computed(() => this.perms.isSectionReadOnly('access'));
-
-  selectTab(id: TabId): void {
-    this.router.navigate(['/management/access', id]);
-  }
 
   private normalizeTab(value: string | null): TabId {
     return this.tabs.some((t) => t.id === value) ? (value as TabId) : 'grants';
@@ -433,19 +272,7 @@ export class AccessComponent implements OnInit, OnDestroy {
 
   readonly scopeTextFn = (b: AccessBinding): string => this.scopeText(b);
 
-  endOf(g: GrantRecord): GrantEnd {
-    return grantEnd(g);
-  }
-
-  when(value: string | null | undefined): string {
-    return value ? formatWhen(value) : '';
-  }
-
-  matchCount(b: AccessBinding): number {
-    return this.iam.matchApps(b.scope).length;
-  }
-
-  private readonly revokeDialog = viewChild.required<ConfirmationDialogComponent>('revokeDialog');
+  private readonly revokeDialog = viewChild.required<AccessPreviewDialog>('revokeDialog');
 
   readonly pendingRevoke = signal<GrantRecord | null>(null);
   private readonly revokeDelta = signal<AccessDelta | null>(null);

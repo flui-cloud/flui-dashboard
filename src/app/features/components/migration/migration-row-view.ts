@@ -1,47 +1,55 @@
+import type { StatusTone } from '../../../ui/primitives/status';
 import type { MigrationRow } from '../../service/migration.service';
 
 export function typeLabel(type: MigrationRow['type']): string {
   return { app: 'App', db: 'Database', full: 'Full' }[type];
 }
 
-export function typeBadgeClass(type: MigrationRow['type']): string {
-  switch (type) {
-    case 'app':
-      return 'border-blue-200 bg-blue-50 text-blue-700';
-    case 'db':
-      return 'border-violet-200 bg-violet-50 text-violet-700';
-    case 'full':
-      return 'border-indigo-200 bg-indigo-50 text-indigo-700';
-  }
-}
-
 export function statusLabel(status: string): string {
   return status.replaceAll('_', ' ');
 }
 
-export function statusBadgeClass(status: string): string {
+const DONE = new Set(['completed']);
+const FAILED = new Set(['failed', 'failed_forward', 'aborted']);
+const MOVING = new Set([
+  'bridging',
+  'ready',
+  'synced',
+  'pending',
+  'provisioning',
+  'db_replicating',
+  'app_staging',
+  'replicating',
+  'cutover',
+]);
+
+export function statusTone(status: string): StatusTone {
   const s = status.toLowerCase();
-  if (s === 'completed') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-  }
-  if (s === 'bridging') {
-    return 'border-sky-200 bg-sky-50 text-sky-700';
-  }
-  if (s === 'failed' || s === 'failed_forward' || s === 'aborted') {
-    return 'border-red-200 bg-red-50 text-red-700';
-  }
-  if (
-    s === 'ready' ||
-    s === 'synced' ||
-    s === 'pending' ||
-    s === 'provisioning' ||
-    s === 'db_replicating' ||
-    s === 'app_staging' ||
-    s === 'cutover'
-  ) {
-    return 'border-amber-200 bg-amber-50 text-amber-700';
-  }
-  return 'border-border bg-muted text-muted-foreground';
+  if (DONE.has(s)) return 'success';
+  if (FAILED.has(s)) return 'error';
+  return MOVING.has(s) ? 'progress' : 'neutral';
+}
+
+export function statusText(status: string): string {
+  const label = statusLabel(status.toLowerCase()).replace(/^db\b/, 'DB');
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+export function formatDuration(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = total % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
+  if (m > 0) return `${m}m ${String(sec).padStart(2, '0')}s`;
+  return `${sec}s`;
+}
+
+export function durationOf(row: MigrationRow, now: number = Date.now()): string {
+  const start = row.startedAt ? new Date(row.startedAt).getTime() : Number.NaN;
+  if (Number.isNaN(start)) return '—';
+  const end = row.finishedAt ? new Date(row.finishedAt).getTime() : now;
+  return Number.isNaN(end) ? '—' : formatDuration(end - start);
 }
 
 export function formatWhen(iso: string | null | undefined): string {

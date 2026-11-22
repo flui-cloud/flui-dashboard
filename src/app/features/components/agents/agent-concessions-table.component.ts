@@ -1,93 +1,74 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { Component, computed, input, output } from '@angular/core';
 import { AgentConcession, splitAction, standingConcessions } from '../../model/agent-cycle.models';
 import { formatTimeSince } from '../../model/dns.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
 
 @Component({
   selector: 'app-agent-concessions-table',
-  standalone: true,
-  imports: [HlmButtonDirective],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, FlTable, FlEmptyState, FlButton],
+  host: { class: 'fl-stack' },
   template: `
-    @if (rows().length === 0) {
-      <p class="m-0 text-sm text-muted-foreground" data-testid="no-concessions">
-        Nothing stands. Every action your agents take is asked for one at a time.
-      </p>
-    } @else {
-      <div class="overflow-x-auto">
-        <table class="w-full min-w-[660px] border-collapse">
-          <thead>
-            <tr>
-              <th
-                class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                What it can do
-              </th>
-              <th
-                class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                On what
-              </th>
-              <th
-                class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                Granted
-              </th>
-              <th
-                class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                Last used
-              </th>
-              <th class="border-b border-border pb-2.5"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of rows(); track row.id) {
-              <tr data-testid="concession">
-                <td
-                  class="border-b border-border/60 py-3 pr-3 align-top text-sm font-medium text-foreground"
-                >
-                  {{ row.sentence }}
-                </td>
-                <td
-                  class="border-b border-border/60 py-3 pr-3 align-top font-mono text-[12.5px] text-muted-foreground"
-                >
-                  {{ row.scope }}
-                </td>
-                <td
-                  class="border-b border-border/60 py-3 pr-3 align-top font-mono text-[12.5px] tabular-nums text-muted-foreground"
-                >
-                  {{ row.granted }}
-                </td>
-                <td
-                  class="border-b border-border/60 py-3 pr-3 align-top font-mono text-[12.5px] tabular-nums text-muted-foreground"
-                >
-                  {{ row.lastUsed }}
-                </td>
-                <td class="border-b border-border/60 py-3 text-right align-top">
-                  <button
-                    hlmBtn
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    [disabled]="busy() === row.id"
-                    (click)="revoke.emit(row.source)"
-                    data-testid="revoke"
-                  >
-                    Revoke
-                  </button>
-                </td>
+    <fl-panel title="Granted permanently" [flush]="true">
+      @if (note() !== null) {
+        <span panelActions class="text-fl-caption text-fl-ink-muted" data-testid="granted-count">
+          {{ note() }}
+        </span>
+      }
+
+      @if (rows().length === 0) {
+        <fl-empty-state
+          [compact]="true"
+          title="Nothing stands"
+          body="Every action your agents take is asked for one at a time."
+          data-testid="no-concessions"
+        />
+      } @else {
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">What it can do</th>
+                <th scope="col">On what</th>
+                <th scope="col">Granted</th>
+                <th scope="col">Last used</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.id) {
+                <tr data-testid="concession">
+                  <td class="is-wrap font-medium">{{ row.sentence }}</td>
+                  <td class="fl-mono text-fl-ink-secondary">{{ row.scope }}</td>
+                  <td class="fl-num text-fl-ink-secondary">{{ row.granted }}</td>
+                  <td class="fl-num text-fl-ink-secondary">{{ row.lastUsed }}</td>
+                  <td class="is-fit">
+                    <button
+                      flButton="ghost"
+                      size="sm"
+                      type="button"
+                      [disabled]="busy() === row.id"
+                      (click)="revoke.emit(row.source)"
+                      data-testid="revoke"
+                    >
+                      Revoke
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </fl-panel>
   `,
 })
 export class AgentConcessionsTableComponent {
   readonly concessions = input<AgentConcession[]>([]);
   readonly busy = input<string | null>(null);
+  readonly note = input<string | null>(null);
 
   readonly revoke = output<AgentConcession>();
 

@@ -1,16 +1,11 @@
-import {
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideCirclePlus, lucideInfo } from '@ng-icons/lucide';
-import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCirclePlus } from '@ng-icons/lucide';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlTag } from '../../../ui/primitives/tag';
 import { IamService } from '../../service/iam.service';
 import {
   AccessPrincipal,
@@ -23,20 +18,15 @@ import {
   grantExpiry,
 } from '../../model/iam.model';
 
-const SELECT_CLASS =
-  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 appearance-none';
-
 @Component({
   selector: 'app-grant-builder',
-  standalone: true,
-  imports: [NgIcon, HlmCardDirective, HlmCardContentDirective, HlmBadgeDirective],
-  providers: [provideIcons({ lucideArrowRight, lucideCirclePlus, lucideInfo })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlField, FlPanel, FlButton, FlIcon, FlTag],
+  providers: [provideIcons({ lucideCirclePlus })],
+  host: { class: 'block' },
   templateUrl: './grant-builder.component.html',
 })
 export class GrantBuilderComponent implements OnInit {
   protected readonly iam = inject(IamService);
-  protected readonly selectClass = SELECT_CLASS;
   protected readonly platformOperator = PLATFORM_OPERATOR_ROLE;
 
   readonly presetRole = input<AccessRole | null>(null);
@@ -47,7 +37,7 @@ export class GrantBuilderComponent implements OnInit {
     { key: '8h', label: 'In 8 hours' },
     { key: '1d', label: 'In 1 day' },
     { key: '7d', label: 'In 7 days' },
-    { key: 'date', label: 'On a date…' },
+    { key: 'date', label: 'On a date' },
   ];
 
   readonly principalKey = signal<string>('');

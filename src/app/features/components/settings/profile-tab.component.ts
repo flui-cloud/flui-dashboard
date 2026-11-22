@@ -8,118 +8,74 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideAlertCircle } from '@ng-icons/lucide';
 import { AuthService } from '../../../core/services/auth.service';
 import { AppConfigService } from '../../../core/services/app-config.service';
-import {
-  HlmCardDirective,
-  HlmCardContentDirective,
-  HlmCardHeaderDirective,
-  HlmCardTitleDirective,
-  HlmCardDescriptionDirective,
-} from '@spartan-ng/ui-card-helm';
-import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
-import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-profile-tab',
-  standalone: true,
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    NgIcon,
-    HlmCardDirective,
-    HlmCardContentDirective,
-    HlmCardHeaderDirective,
-    HlmCardTitleDirective,
-    HlmCardDescriptionDirective,
-    HlmInputDirective,
-    HlmLabelDirective,
+    FlAlert,
+    FlField,
+    FlKeyValue,
+    FlKvItem,
+    FlPanel,
+    FlButton,
+    FlSpinner,
+    FlStatus,
   ],
-  providers: [provideIcons({ lucideCheck, lucideAlertCircle })],
+  host: { class: 'fl-stack' },
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div hlmCard>
-      <div hlmCardHeader>
-        <h3 hlmCardTitle>Profile information</h3>
-        <p hlmCardDescription>Update your display name.</p>
-      </div>
-      <div hlmCardContent class="space-y-5">
-        <!-- Email (read-only) -->
-        <div class="space-y-1.5">
-          <label hlmLabel>Email</label>
-          <input hlmInput class="w-full" [value]="_email()" disabled />
-          <p class="text-xs text-muted-foreground">Email cannot be changed here.</p>
-        </div>
+    <fl-panel title="Profile information">
+      <div class="flex flex-col gap-5">
+        <fl-key-value>
+          <fl-kv-item key="Email">{{ _email() || '—' }}</fl-kv-item>
+          @if (!_isLocal()) {
+            <fl-kv-item key="Display name">{{ _name() || '—' }}</fl-kv-item>
+          }
+        </fl-key-value>
 
         @if (_isLocal()) {
-          <!-- Name form -->
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
-            <div class="space-y-1.5">
-              <label hlmLabel for="name">Display name</label>
-              <input
-                hlmInput
-                id="name"
-                formControlName="name"
-                placeholder="Your name"
-                class="w-full"
-                [class.border-destructive]="isInvalid('name')"
-              />
-              @if (isInvalid('name')) {
-                <p class="text-xs text-destructive">
-                  @if (form.get('name')?.hasError('required')) {
-                    Name is required.
-                  } @else if (form.get('name')?.hasError('minlength')) {
-                    Minimum 2 characters.
-                  }
-                </p>
-              }
-            </div>
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex max-w-md flex-col gap-4">
+            <fl-field label="Display name" for="name" [error]="nameError()">
+              <div class="fl-input fl-input--lg">
+                <input id="name" formControlName="name" placeholder="Your name" />
+              </div>
+            </fl-field>
 
             @if (error()) {
-              <div
-                class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
-                <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
-                {{ error() }}
-              </div>
+              <fl-alert tone="error" title="Profile not saved">{{ error() }}</fl-alert>
             }
 
-            @if (saved()) {
-              <div
-                class="flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600"
-              >
-                <ng-icon name="lucideCheck" class="h-4 w-4 shrink-0" />
-                Profile updated successfully.
-              </div>
-            }
-
-            <button
-              type="submit"
-              class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-              [disabled]="saving()"
-            >
-              {{ saving() ? 'Saving...' : 'Save changes' }}
-            </button>
+            <div class="flex flex-wrap items-center gap-3">
+              <button flButton="primary" type="submit" [disabled]="saving()">
+                @if (saving()) {
+                  <fl-spinner label="Saving" />
+                }
+                {{ saving() ? 'Saving…' : 'Save changes' }}
+              </button>
+              @if (saved()) {
+                <fl-status tone="success" label="Profile updated" />
+              }
+            </div>
           </form>
         } @else {
-          <!-- OIDC: sola lettura -->
-          <div class="space-y-1.5">
-            <label hlmLabel>Display name</label>
-            <input hlmInput class="w-full" [value]="_name()" disabled />
-          </div>
-          <p class="text-sm text-muted-foreground">
+          <p class="m-0 text-fl-body-sm text-fl-ink-muted">
             Change your name, password and sign-in options in
-            <a
-              routerLink="/account"
-              class="font-medium text-primary underline-offset-4 hover:underline"
-              >your account</a
-            >.
+            <a routerLink="/account" class="fl-link">your account</a>.
           </p>
         }
       </div>
-    </div>
+    </fl-panel>
   `,
 })
 export class ProfileTabComponent implements OnInit {
@@ -142,6 +98,13 @@ export class ProfileTabComponent implements OnInit {
   ngOnInit(): void {
     const name = this.authService.currentUser()?.name ?? '';
     this.form.patchValue({ name });
+  }
+
+  protected nameError(): string | null {
+    if (!this.isInvalid('name')) return null;
+    if (this.form.get('name')?.hasError('required')) return 'Name is required.';
+    if (this.form.get('name')?.hasError('minlength')) return 'Minimum 2 characters.';
+    return null;
   }
 
   isInvalid(field: string): boolean {

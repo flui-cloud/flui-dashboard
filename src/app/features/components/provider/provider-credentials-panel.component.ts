@@ -1,34 +1,40 @@
 import {
+  ChangeDetectionStrategy,
   Component,
+  OnInit,
   computed,
   inject,
   input,
   output,
   signal,
-  OnInit,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCalendar,
-  lucideChevronDown,
-  lucideChevronUp,
-  lucideEye,
-  lucideEyeOff,
-  lucideKeyRound,
-  lucideLoader,
-  lucideRotateCcw,
-  lucideX,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideEye, lucideEyeOff } from '@ng-icons/lucide';
 import { ProvidersService } from '../../service/providers.service';
 import {
   ProviderConfigurationDto,
-  ProviderDefinitionDto,
   ProviderCredentialsDto,
+  ProviderDefinitionDto,
 } from '../../../core/api';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlField } from '../../../ui/patterns/field';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
+import { CredentialFieldDefinition, formatDateTime } from './provider-presentation';
+import {
+  dateInputValue,
+  errorMessageOf,
+  expiryDaysLeft,
+  expiryRelativeLabel,
+  expiryTone,
+  fallbackCredentialFields,
+  savedCredentialLabel,
+} from './provider-credentials';
 
 interface CredentialField {
   key: string;
@@ -41,210 +47,176 @@ interface CredentialField {
 
 @Component({
   selector: 'provider-credentials-panel',
-  standalone: true,
-  imports: [ReadOnlySectionDirective, ReactiveFormsModule, NgIcon],
-  providers: [
-    provideIcons({
-      lucideCalendar,
-      lucideChevronDown,
-      lucideChevronUp,
-      lucideEye,
-      lucideEyeOff,
-      lucideKeyRound,
-      lucideLoader,
-      lucideRotateCcw,
-      lucideX,
-    }),
+  imports: [
+    ReadOnlySectionDirective,
+    ReactiveFormsModule,
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlField,
+    FlAlert,
+    FlButton,
+    FlIcon,
+    FlStatus,
   ],
+  providers: [provideIcons({ lucideEye, lucideEyeOff })],
   changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'fl-stack' },
   template: `
-    <section class="bg-card border border-border rounded-fl-lg overflow-hidden">
-      <header class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2">
-        <ng-icon name="lucideKeyRound" class="h-4 w-4 text-muted-foreground" />
-        <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Credentials
-        </h2>
-      </header>
+    <fl-panel title="Credentials">
+      <button
+        panelActions
+        flButton
+        size="sm"
+        type="button"
+        appReadOnlySection="providers"
+        [attr.aria-expanded]="showRotateForm()"
+        (click)="showRotateForm.set(!showRotateForm())"
+      >
+        {{ showRotateForm() ? 'Close' : 'Rotate credentials' }}
+      </button>
 
-      <div class="p-6 space-y-4">
-        <!-- Current info -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p class="text-xs text-muted-foreground uppercase tracking-wide">Type</p>
-            <p class="font-medium mt-1">{{ credentialTypeLabel() }}</p>
-          </div>
-          <div>
-            <p class="text-xs text-muted-foreground uppercase tracking-wide">Configured</p>
-            <p class="font-medium mt-1">{{ formatDate(configuration().createdAt) }}</p>
-          </div>
-        </div>
+      <div class="fl-stack">
+        <fl-key-value>
+          <fl-kv-item key="Type">{{ credentialTypeLabel() }}</fl-kv-item>
+          <fl-kv-item key="Connected">{{ formatDate(configuration().createdAt) }}</fl-kv-item>
+          <fl-kv-item key="Key expiry">
+            @if (configuration().credentialsExpiresAt) {
+              <fl-status
+                [tone]="expiryStatusTone()"
+                [label]="
+                  formatDate(configuration().credentialsExpiresAt) +
+                  ' (' +
+                  expiryRelativeLabel() +
+                  ')'
+                "
+              />
+            } @else {
+              <span class="text-fl-ink-muted">Not set</span>
+            }
+          </fl-kv-item>
+        </fl-key-value>
 
-        <!-- Expiry row -->
-        <div class="pt-3 border-t border-border">
-          @if (configuration().credentialsExpiresAt) {
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-center gap-2">
-                <ng-icon name="lucideCalendar" [class]="'h-4 w-4 ' + expiryIconClass()" />
-                <div>
-                  <p class="text-xs text-muted-foreground uppercase tracking-wide">Key expiry</p>
-                  <p [class]="'font-medium text-sm ' + expiryTextClass()">
-                    {{ formatDate(configuration().credentialsExpiresAt) }}
-                    <span class="text-xs ml-1">({{ expiryRelativeLabel() }})</span>
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                (click)="clearExpiry()"
-                [disabled]="isSavingExpiry()"
-                class="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 flex items-center gap-1"
-              >
-                <ng-icon name="lucideX" class="h-3 w-3" />
-                Clear
-              </button>
-            </div>
-          } @else {
-            <p class="text-xs text-muted-foreground">No expiry set for these credentials.</p>
-          }
-
-          <!-- Update expiry form -->
+        <div class="fl-row flex-wrap">
           <button
-            appReadOnlySection="providers"
+            flButton
+            size="sm"
             type="button"
+            appReadOnlySection="providers"
+            [attr.aria-expanded]="showExpiryForm()"
             (click)="showExpiryForm.set(!showExpiryForm())"
-            class="mt-2 inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors gap-1"
           >
-            <ng-icon
-              [name]="showExpiryForm() ? 'lucideChevronUp' : 'lucideChevronDown'"
-              class="h-3.5 w-3.5"
-            />
             {{ configuration().credentialsExpiresAt ? 'Change expiry date' : 'Set expiry date' }}
           </button>
+          @if (configuration().credentialsExpiresAt) {
+            <button
+              flButton="ghost"
+              size="sm"
+              type="button"
+              [disabled]="isSavingExpiry()"
+              (click)="clearExpiry()"
+            >
+              Clear expiry
+            </button>
+          }
+        </div>
 
-          @if (showExpiryForm()) {
-            <div class="mt-3 flex items-center gap-3">
-              <input
-                type="date"
-                [value]="expiryInputValue()"
-                (change)="onExpiryChange($event)"
-                class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
-              <button
-                type="button"
-                (click)="saveExpiry()"
-                [disabled]="isSavingExpiry() || !pendingExpiry()"
-                class="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+        @if (showExpiryForm()) {
+          <div class="flex flex-wrap items-end gap-2">
+            <fl-field label="Expiry date" for="credentials-expiry-date">
+              <span class="fl-input fl-input--lg">
+                <input
+                  id="credentials-expiry-date"
+                  type="date"
+                  [value]="expiryInputValue()"
+                  (change)="onExpiryChange($event)"
+                />
+              </span>
+            </fl-field>
+            <button
+              flButton
+              type="button"
+              [disabled]="isSavingExpiry() || !pendingExpiry()"
+              (click)="saveExpiry()"
+            >
+              {{ isSavingExpiry() ? 'Saving…' : 'Save expiry' }}
+            </button>
+          </div>
+        }
+        @if (expiryError()) {
+          <fl-alert tone="error" title="Could not update the expiry">{{ expiryError() }}</fl-alert>
+        }
+
+        @if (showRotateForm()) {
+          <form
+            [formGroup]="rotateForm"
+            (ngSubmit)="rotate()"
+            class="fl-stack border-t border-fl-border pt-4"
+          >
+            <p class="text-fl-body-sm text-fl-ink-muted">
+              Enter new credentials from the {{ provider().displayName }} console. They replace the
+              saved ones.
+            </p>
+            @for (field of credentialFields(); track field.key) {
+              <fl-field
+                [label]="
+                  (field.providerLabel || field.label) + (field.required ? '' : ' (optional)')
+                "
+                [for]="'rotate-' + field.key"
+                [hint]="field.hint"
               >
-                @if (isSavingExpiry()) {
-                  <ng-icon name="lucideLoader" class="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                }
-                Save
+                <span class="fl-input fl-input--lg">
+                  <input
+                    [id]="'rotate-' + field.key"
+                    [type]="field.secret && !showPasswords()[field.key] ? 'password' : 'text'"
+                    [formControlName]="field.key"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                  @if (field.secret) {
+                    <button
+                      type="button"
+                      class="inline-flex text-fl-ink-muted hover:text-fl-ink"
+                      [attr.aria-label]="showPasswords()[field.key] ? 'Hide value' : 'Show value'"
+                      (click)="togglePwd(field.key)"
+                    >
+                      <fl-icon [name]="showPasswords()[field.key] ? 'lucideEyeOff' : 'lucideEye'" />
+                    </button>
+                  }
+                </span>
+              </fl-field>
+            }
+
+            @if (supportsExpiry()) {
+              <fl-field label="Expiry date (optional)" for="rotate-expires-at">
+                <span class="fl-input fl-input--lg">
+                  <input id="rotate-expires-at" type="date" formControlName="expiresAt" />
+                </span>
+              </fl-field>
+            }
+
+            @if (rotateError()) {
+              <fl-alert tone="error" title="Could not rotate the credentials">{{
+                rotateError()
+              }}</fl-alert>
+            }
+
+            <div class="flex justify-end gap-2">
+              <button flButton="ghost" type="button" (click)="showRotateForm.set(false)">
+                Cancel
+              </button>
+              <button
+                flButton="primary"
+                type="submit"
+                [disabled]="rotateForm.invalid || isRotating()"
+              >
+                {{ isRotating() ? 'Saving…' : 'Save' }}
               </button>
             </div>
-            @if (expiryError()) {
-              <p class="text-xs text-red-600 mt-2">{{ expiryError() }}</p>
-            }
-          }
-        </div>
-
-        <!-- Rotate credentials -->
-        <div class="pt-3 border-t border-border">
-          <button
-            appReadOnlySection="providers"
-            type="button"
-            (click)="showRotateForm.set(!showRotateForm())"
-            class="inline-flex items-center gap-2 text-sm font-medium hover:text-foreground text-muted-foreground transition-colors"
-          >
-            <ng-icon name="lucideRotateCcw" class="h-4 w-4" />
-            Rotate credentials
-            <ng-icon
-              [name]="showRotateForm() ? 'lucideChevronUp' : 'lucideChevronDown'"
-              class="h-3.5 w-3.5 ml-auto"
-            />
-          </button>
-
-          @if (showRotateForm()) {
-            <form [formGroup]="rotateForm" (ngSubmit)="rotate()" class="mt-4 space-y-4">
-              @for (field of credentialFields(); track field.key) {
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium">
-                    {{ field.providerLabel || field.label }}
-                    @if (field.required) {
-                      <span class="text-red-500">*</span>
-                    }
-                  </label>
-                  @if (field.secret) {
-                    <div class="relative">
-                      <input
-                        [type]="showPasswords()[field.key] ? 'text' : 'password'"
-                        [formControlName]="field.key"
-                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      />
-                      <button
-                        type="button"
-                        (click)="togglePwd(field.key)"
-                        class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-muted-foreground"
-                      >
-                        <ng-icon
-                          [name]="showPasswords()[field.key] ? 'lucideEyeOff' : 'lucideEye'"
-                          class="h-4 w-4"
-                        />
-                      </button>
-                    </div>
-                  } @else {
-                    <input
-                      type="text"
-                      [formControlName]="field.key"
-                      class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    />
-                  }
-                  @if (field.hint) {
-                    <p class="text-xs text-muted-foreground">{{ field.hint }}</p>
-                  }
-                </div>
-              }
-
-              @if (supportsExpiry()) {
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium">
-                    Expiry date <span class="text-muted-foreground font-normal">(optional)</span>
-                  </label>
-                  <input
-                    type="date"
-                    formControlName="expiresAt"
-                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                </div>
-              }
-
-              @if (rotateError()) {
-                <p class="text-sm text-red-600">{{ rotateError() }}</p>
-              }
-
-              <div class="flex items-center gap-2 pt-1">
-                <button
-                  type="submit"
-                  [disabled]="rotateForm.invalid || isRotating()"
-                  class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-                >
-                  @if (isRotating()) {
-                    <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                  }
-                  Confirm rotation
-                </button>
-                <button
-                  type="button"
-                  (click)="showRotateForm.set(false)"
-                  class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          }
-        </div>
+          </form>
+        }
       </div>
-    </section>
+    </fl-panel>
   `,
 })
 export class ProviderCredentialsPanelComponent implements OnInit {
@@ -283,56 +255,21 @@ export class ProviderCredentialsPanelComponent implements OnInit {
     return type === 'api_key' || type === 'access_key_secret';
   });
 
-  protected credentialTypeLabel = computed(() => {
-    switch (this.configuration().credentialsType) {
-      case 'api_key':
-        return 'API Key';
-      case 'access_key_secret':
-        return 'Access Key + Secret';
-      case 'bearer_token':
-        return 'Bearer Token';
-      case 'user_password':
-        return 'Username / Password';
-      default:
-        return this.configuration().credentialsType ?? 'Unknown';
-    }
-  });
+  protected credentialTypeLabel = computed(() =>
+    savedCredentialLabel(this.configuration().credentialsType),
+  );
 
-  protected expiryDaysLeft = computed<number | null>(() => {
-    const v = this.configuration().credentialsExpiresAt;
-    if (!v) return null;
-    const diff = new Date(v).getTime() - Date.now();
-    return Number.isNaN(diff) ? null : Math.ceil(diff / 86400000);
-  });
+  protected expiryDaysLeft = computed<number | null>(() =>
+    expiryDaysLeft(this.configuration().credentialsExpiresAt),
+  );
 
-  protected expiryRelativeLabel = computed(() => {
-    const d = this.expiryDaysLeft();
-    if (d === null) return '';
-    if (d < 0) return `expired ${-d} day${-d === 1 ? '' : 's'} ago`;
-    if (d === 0) return 'expires today';
-    return `${d} day${d === 1 ? '' : 's'} left`;
-  });
+  protected expiryRelativeLabel = computed(() => expiryRelativeLabel(this.expiryDaysLeft()));
 
-  protected expiryIconClass = computed(() => {
-    const d = this.expiryDaysLeft();
-    if (d !== null && d < 0) return 'text-red-600';
-    if (d !== null && d <= 14) return 'text-yellow-600';
-    return 'text-muted-foreground';
-  });
+  protected expiryStatusTone = computed(() => expiryTone(this.expiryDaysLeft()));
 
-  protected expiryTextClass = computed(() => {
-    const d = this.expiryDaysLeft();
-    if (d !== null && d < 0) return 'text-red-600';
-    if (d !== null && d <= 14) return 'text-yellow-700';
-    return '';
-  });
-
-  protected expiryInputValue = computed(() => {
-    const v = this.configuration().credentialsExpiresAt;
-    if (!v) return '';
-    const d = new Date(v);
-    return Number.isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
-  });
+  protected expiryInputValue = computed(() =>
+    dateInputValue(this.configuration().credentialsExpiresAt),
+  );
 
   ngOnInit(): void {
     this.buildRotateForm();
@@ -364,7 +301,7 @@ export class ProviderCredentialsPanelComponent implements OnInit {
       this.showExpiryForm.set(false);
       this.pendingExpiry.set(null);
     } catch (e: unknown) {
-      this.expiryError.set(this.extractError(e, 'Failed to update expiry.'));
+      this.expiryError.set(errorMessageOf(e, 'Failed to update expiry.'));
     } finally {
       this.isSavingExpiry.set(false);
     }
@@ -379,7 +316,7 @@ export class ProviderCredentialsPanelComponent implements OnInit {
       });
       this.updated.emit(config);
     } catch (e: unknown) {
-      this.expiryError.set(this.extractError(e, 'Failed to clear expiry.'));
+      this.expiryError.set(errorMessageOf(e, 'Failed to clear expiry.'));
     } finally {
       this.isSavingExpiry.set(false);
     }
@@ -409,7 +346,7 @@ export class ProviderCredentialsPanelComponent implements OnInit {
       this.showRotateForm.set(false);
       this.rotateForm.reset();
     } catch (e: unknown) {
-      this.rotateError.set(this.extractError(e, 'Failed to rotate credentials.'));
+      this.rotateError.set(errorMessageOf(e, 'Failed to rotate credentials.'));
     } finally {
       this.isRotating.set(false);
     }
@@ -420,93 +357,13 @@ export class ProviderCredentialsPanelComponent implements OnInit {
   }
 
   protected formatDate(value: string | undefined): string {
-    if (!value) return '—';
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+    return formatDateTime(value);
   }
 
-  private fallbackFields(): CredentialField[] {
-    const type = this.configuration().credentialsType as string | undefined;
-    const name = this.provider().displayName;
-    switch (type) {
-      case 'api_key':
-        return [
-          {
-            key: 'apiKey',
-            label: 'API Token',
-            providerLabel: 'API Token',
-            hint: `Your ${name} API token`,
-            secret: true,
-            required: true,
-          },
-        ];
-      case 'access_key_secret':
-        return [
-          {
-            key: 'accessKey',
-            label: 'Access Key ID',
-            providerLabel: 'Access Key ID',
-            hint: `Your ${name} Access Key ID`,
-            secret: false,
-            required: true,
-          },
-          {
-            key: 'secretKey',
-            label: 'Secret Key',
-            providerLabel: 'Secret Key',
-            hint: `Your ${name} Secret Key`,
-            secret: true,
-            required: true,
-          },
-        ];
-      case 'bearer_token':
-        return [
-          {
-            key: 'bearerToken',
-            label: 'Bearer Token',
-            providerLabel: 'Bearer Token',
-            secret: true,
-            required: true,
-          },
-        ];
-      case 'user_password':
-        return [
-          {
-            key: 'clientId',
-            label: 'Client ID',
-            providerLabel: 'Client ID',
-            secret: false,
-            required: true,
-          },
-          {
-            key: 'clientSecret',
-            label: 'Client Secret',
-            providerLabel: 'Client Secret',
-            secret: true,
-            required: true,
-          },
-          {
-            key: 'username',
-            label: 'Username',
-            providerLabel: 'Username',
-            secret: false,
-            required: true,
-          },
-          {
-            key: 'password',
-            label: 'Password',
-            providerLabel: 'Password',
-            secret: true,
-            required: true,
-          },
-        ];
-      default:
-        return [];
-    }
-  }
-
-  private extractError(error: unknown, fallback: string): string {
-    const e = error as { error?: { message?: string }; message?: string } | undefined;
-    return e?.error?.message ?? e?.message ?? fallback;
+  private fallbackFields(): CredentialFieldDefinition[] {
+    return fallbackCredentialFields(
+      this.configuration().credentialsType as string | undefined,
+      this.provider().displayName,
+    );
   }
 }

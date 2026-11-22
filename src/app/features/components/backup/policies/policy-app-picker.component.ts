@@ -1,17 +1,8 @@
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  model,
-  output,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationsService } from '../../../../core/api/api/applications.service';
 import { ApplicationResponseDto } from '../../../../core/api/model/applicationResponseDto';
+import { FlAlert } from '../../../../ui/patterns/alert';
 
 export interface AppOption {
   id: string;
@@ -20,7 +11,7 @@ export interface AppOption {
   database: boolean;
 }
 
-const GONE: string[] = ['deleting', 'deleted'];
+const GONE = new Set<string>(['deleting', 'deleted']);
 const SEARCH_FROM = 8;
 
 /** Platform components are covered by the platform backup, so they are not offered here. */
@@ -28,7 +19,7 @@ export function appOptions(
   apps: Pick<ApplicationResponseDto, 'id' | 'name' | 'slug' | 'status' | 'kind'>[],
 ): AppOption[] {
   return apps
-    .filter((a) => !GONE.includes(a.status) && String(a.kind).toUpperCase() !== 'SYSTEM')
+    .filter((a) => !GONE.has(a.status) && String(a.kind).toUpperCase() !== 'SYSTEM')
     .map((a) => ({
       id: a.id,
       name: a.name,
@@ -51,58 +42,58 @@ export function matchesApp(app: AppOption, query: string): boolean {
 
 @Component({
   selector: 'app-policy-app-picker',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlAlert],
+  host: { class: 'fl-field' },
   template: `
-    <div class="block">
-      <span class="text-sm font-medium">{{ multiple() ? 'Applications' : 'Application' }} *</span>
-      @if (!clusterId()) {
-        <p class="mt-1 text-xs text-muted-foreground">Choose a cluster first.</p>
-      } @else if (loading()) {
-        <p class="mt-1 text-xs text-muted-foreground">Loading applications…</p>
-      } @else if (failed()) {
-        <p class="mt-1 text-xs text-red-600">Could not load the applications of this cluster.</p>
-      } @else if (options().length === 0) {
-        <p class="mt-1 text-xs text-muted-foreground">No applications on this cluster.</p>
-      } @else {
-        @if (options().length > searchFrom) {
+    <span class="fl-field__label">{{ multiple() ? 'Applications' : 'Application' }}</span>
+    @if (!clusterId()) {
+      <span class="fl-field__hint">Choose a cluster first.</span>
+    } @else if (loading()) {
+      <span class="fl-field__hint">Loading applications…</span>
+    } @else if (failed()) {
+      <fl-alert tone="error" title="Could not load the applications of this cluster" />
+    } @else if (options().length === 0) {
+      <span class="fl-field__hint">No applications on this cluster.</span>
+    } @else {
+      @if (options().length > searchFrom) {
+        <div class="fl-input">
           <input
             type="search"
+            aria-label="Search applications"
+            placeholder="Search by name"
             [value]="query()"
             (input)="query.set($any($event.target).value)"
-            placeholder="Search by name"
-            class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
           />
-        }
-        <ul
-          class="mt-1 max-h-64 overflow-y-auto rounded-md border border-border divide-y divide-border"
-          role="listbox"
-          data-testid="app-picker"
-        >
-          @for (app of shown(); track app.id) {
-            <li>
-              <label class="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-muted">
-                <input
-                  [type]="multiple() ? 'checkbox' : 'radio'"
-                  name="policy-app"
-                  [checked]="selected().includes(app.id)"
-                  (change)="toggle(app.id)"
-                />
-                <span class="min-w-0">
-                  <span class="block truncate text-sm font-medium">{{ app.name }}</span>
-                  @if (app.slug !== app.name) {
-                    <span class="block truncate text-xs text-muted-foreground">{{ app.slug }}</span>
-                  }
-                </span>
-              </label>
-            </li>
-          }
-        </ul>
-        @if (missing().length) {
-          <p class="mt-1 text-xs text-amber-700">The chosen application is not on this cluster.</p>
-        }
+        </div>
       }
-    </div>
+      <ul
+        class="m-0 flex max-h-64 list-none flex-col overflow-y-auto rounded-fl-md border border-fl-border p-0"
+        role="listbox"
+        data-testid="app-picker"
+      >
+        @for (app of shown(); track app.id) {
+          <li class="border-b border-fl-border-subtle px-3 py-2 last:border-b-0">
+            <label class="fl-check w-full">
+              <input
+                [type]="multiple() ? 'checkbox' : 'radio'"
+                name="policy-app"
+                [checked]="selected().includes(app.id)"
+                (change)="toggle(app.id)"
+              />
+              <span class="flex min-w-0 flex-col">
+                <span class="truncate font-medium">{{ app.name }}</span>
+                @if (app.slug !== app.name) {
+                  <span class="fl-mono truncate text-fl-ink-muted">{{ app.slug }}</span>
+                }
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+      @if (missing().length) {
+        <fl-alert tone="warning" title="The chosen application is not on this cluster" />
+      }
+    }
   `,
 })
 export class PolicyAppPickerComponent {

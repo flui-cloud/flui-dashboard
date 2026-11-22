@@ -1,98 +1,66 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideSearch, lucideTriangleAlert } from '@ng-icons/lucide';
-import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlSearchInput } from '../../../../ui/patterns/filter-bar';
+import { FlLoadingState } from '../../../../ui/patterns/states';
+import { FlButton } from '../../../../ui/primitives/button';
 import { AgentKeyProjectsService, SelectableProject } from './agent-key-projects.service';
 
 @Component({
   selector: 'app-agent-key-project-picker',
-  standalone: true,
-  imports: [FormsModule, NgIcon, HlmInputDirective],
-  providers: [provideIcons({ lucideLoader, lucideSearch, lucideTriangleAlert })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlAlert, FlSearchInput, FlLoadingState, FlButton],
+  host: { class: 'block' },
   template: `
     @if (loading()) {
-      <div class="flex items-center gap-2 text-sm text-muted-foreground">
-        <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-        Reading which projects there are…
-      </div>
+      <fl-loading-state [rows]="2" />
     } @else if (loadError()) {
-      <div
-        class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-      >
-        <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-        <span
-          >The project list could not be read. Every project stays reachable — nothing to narrow it
-          with.</span
-        >
-      </div>
+      <fl-alert tone="error" title="Projects not read">
+        The project list could not be read. Every project stays reachable, with nothing to narrow it
+        with.
+      </fl-alert>
     } @else if (projects().length === 0) {
-      <p class="text-sm text-muted-foreground">
-        No projects on this instance yet — there is nothing to limit this key to.
+      <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+        No projects on this instance yet, so there is nothing to limit this key to.
       </p>
     } @else {
-      <div class="space-y-3">
-        <div class="relative">
-          <ng-icon
-            name="lucideSearch"
-            class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            hlmInput
-            type="text"
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <fl-search-input
             data-testid="project-filter"
-            [ngModel]="filter()"
-            (ngModelChange)="filter.set($event)"
-            placeholder="Filter by name…"
-            class="w-full pl-8 text-sm"
+            label="Filter projects"
+            placeholder="Filter by name"
+            [value]="filter()"
+            (valueChange)="filter.set($event)"
           />
-        </div>
-
-        <div class="flex items-center justify-between">
           @if (picked().size > 0) {
-            <p class="text-xs text-muted-foreground">{{ picked().size }} selected</p>
-          } @else {
-            <span></span>
+            <span class="text-fl-caption text-fl-ink-muted">{{ picked().size }} selected</span>
           }
-          <span class="flex items-center gap-2 text-xs">
+          <span class="ml-auto flex items-center gap-1">
             <button
+              flButton="ghost"
+              size="sm"
               type="button"
               data-testid="select-all-projects"
               (click)="selectAll()"
-              class="font-medium text-primary underline underline-offset-2"
             >
               Select all
             </button>
             <button
+              flButton="ghost"
+              size="sm"
               type="button"
               data-testid="clear-projects"
               (click)="clear()"
-              class="font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
               Clear
             </button>
           </span>
         </div>
 
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
           @for (project of filtered(); track project.id) {
-            <label
-              [attr.data-testid]="'project-' + project.id"
-              class="flex cursor-pointer items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-sm transition-colors hover:border-primary/40 hover:bg-accent/40"
-            >
+            <label class="fl-check" [attr.data-testid]="'project-' + project.id">
               <input
                 type="checkbox"
-                class="h-3.5 w-3.5 accent-primary"
                 [attr.data-testid]="'project-check-' + project.id"
                 [checked]="picked().has(project.id)"
                 (change)="toggle(project.id)"
@@ -100,7 +68,9 @@ import { AgentKeyProjectsService, SelectableProject } from './agent-key-projects
               {{ project.name }}
             </label>
           } @empty {
-            <p class="text-sm text-muted-foreground">No project matches “{{ filter() }}”.</p>
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+              No project matches “{{ filter() }}”.
+            </p>
           }
         </div>
       </div>
@@ -111,8 +81,6 @@ export class AgentKeyProjectPickerComponent implements OnInit {
   /** Preselected project ids — undefined/empty reads as "every project". */
   readonly selected = input<string[] | undefined>(undefined);
 
-  // Never `change`: see the same collision note on the application picker —
-  // a native DOM event of that name bubbles from the checkboxes below.
   readonly selectionChange = output<string[]>();
 
   private readonly service = inject(AgentKeyProjectsService);
@@ -130,8 +98,6 @@ export class AgentKeyProjectPickerComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Signal inputs resolve their bound value by ngOnInit, not in the
-    // constructor — reading `selected()` there sees only its default.
     this.picked.set(new Set(this.selected() ?? []));
     this.service.list().subscribe({
       next: (projects) => {

@@ -4,33 +4,26 @@ import {
   computed,
   inject,
   signal,
-  viewChild,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCheck,
-  lucideAlertCircle,
-  lucideLoader,
-  lucidePlus,
-  lucideTrash2,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
 import { InferenceSettingsService } from '../../service/inference-settings.service';
-import {
-  HlmCardDirective,
-  HlmCardContentDirective,
-  HlmCardHeaderDirective,
-  HlmCardTitleDirective,
-  HlmCardDescriptionDirective,
-} from '@spartan-ng/ui-card-helm';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
-import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
-import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { SandboxLevelNoticeComponent } from '../../../shared/components/sandbox-level-notice.component';
-import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
 import { PermissionService } from '../../../core/services/permission.service';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
 
 interface ConnUiState {
   validating: boolean;
@@ -52,261 +45,214 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
 
 @Component({
   selector: 'app-inference-connections',
-  standalone: true,
   imports: [
     ReadOnlySectionDirective,
     SandboxLevelNoticeComponent,
-    DeleteConfirmationDialogComponent,
     ReactiveFormsModule,
-    NgIcon,
-    HlmCardDirective,
-    HlmCardContentDirective,
-    HlmCardHeaderDirective,
-    HlmCardTitleDirective,
-    HlmCardDescriptionDirective,
-    HlmBadgeDirective,
-    HlmInputDirective,
-    HlmLabelDirective,
+    FlAlert,
+    FlField,
+    FlPanel,
+    FlEmptyState,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
+    FlTag,
   ],
-  providers: [
-    provideIcons({ lucideCheck, lucideAlertCircle, lucideLoader, lucidePlus, lucideTrash2 }),
-  ],
+  providers: [provideIcons({ lucidePlus, lucideTrash2 })],
+  host: { class: 'fl-stack' },
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="space-y-4">
-      <app-sandbox-level-notice area="models" />
+    <app-sandbox-level-notice area="models" />
 
+    <fl-panel title="LLM connections" [count]="service.connections().length" [flush]="true">
+      @if (!service.isHosted() && mayManage() && !showForm()) {
+        <button
+          panelActions
+          appReadOnlySection="models"
+          flButton
+          size="sm"
+          type="button"
+          (click)="showForm.set(true)"
+        >
+          <fl-icon name="lucidePlus" />
+          Add connection
+        </button>
+      }
       @if (service.connections().length > 0) {
-        <div hlmCard>
-          <div hlmCardContent class="pt-6">
-            <ul class="divide-y divide-border">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Base URL</th>
+                <th scope="col" class="is-num">Models</th>
+                <th scope="col">Check</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
               @for (c of service.connections(); track c.id) {
                 @let st = connState(c.id);
-                <li class="flex flex-col gap-2 py-4 first:pt-0 last:pb-0">
-                  <div class="flex items-start justify-between gap-4">
-                    <div class="min-w-0 space-y-0.5">
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-sm font-medium">{{ c.label }}</span>
-                        @if (c.isDefault) {
-                          <span hlmBadge variant="secondary" class="text-xs">Default</span>
-                        }
-                      </div>
-                      <p class="font-mono text-xs text-muted-foreground truncate">
-                        {{ c.baseUrl }}
-                      </p>
-                      @if (c.models.length) {
-                        <p class="text-xs text-muted-foreground">
-                          {{ c.models.length }} model{{ c.models.length === 1 ? '' : 's' }}
-                        </p>
+                <tr>
+                  <td class="fl-cell-name">
+                    <span class="flex flex-wrap items-center gap-2">
+                      <span class="font-medium">{{ c.label }}</span>
+                      @if (c.isDefault) {
+                        <fl-tag>Default</fl-tag>
                       }
-                    </div>
-                    <div class="flex shrink-0 gap-1.5">
+                    </span>
+                  </td>
+                  <td class="fl-mono">{{ c.baseUrl }}</td>
+                  <td class="is-num">{{ c.models.length }}</td>
+                  <td class="whitespace-normal">
+                    @if (st.validating) {
+                      <fl-status tone="progress" label="Checking" />
+                    } @else if (st.validation) {
+                      <fl-status
+                        [tone]="st.validation.ok ? 'success' : 'error'"
+                        [label]="st.validation.message"
+                      />
+                    } @else {
+                      <span class="fl-muted">Not checked</span>
+                    }
+                  </td>
+                  <td class="is-fit">
+                    <span class="flex items-center gap-1">
                       <button
                         appReadOnlySection="models"
+                        flButton
+                        size="sm"
                         type="button"
                         (click)="validateConn(c.id)"
                         [disabled]="st.validating || st.deleting"
-                        class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        @if (st.validating) {
-                          <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
-                        }
                         Validate
                       </button>
                       @if (!service.isHosted() && mayManage()) {
                         <button
                           appReadOnlySection="models"
+                          flButton="ghost"
+                          size="sm"
                           type="button"
+                          [iconOnly]="true"
+                          [attr.aria-label]="'Delete ' + c.label"
+                          [attr.data-testid]="'delete-connection-' + c.id"
                           (click)="confirmDeleteConn(c)"
                           [disabled]="st.deleting || st.validating"
-                          class="inline-flex items-center gap-1 rounded-md border border-destructive/50 bg-background px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           @if (st.deleting) {
-                            <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
+                            <fl-spinner label="Deleting" />
                           } @else {
-                            <ng-icon name="lucideTrash2" class="h-3 w-3" />
+                            <fl-icon name="lucideTrash2" />
                           }
                         </button>
                       }
-                    </div>
-                  </div>
-                  @if (st.validation) {
-                    <div
-                      class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs"
-                      [class]="
-                        st.validation.ok
-                          ? 'bg-green-500/10 text-green-600'
-                          : 'bg-destructive/10 text-destructive'
-                      "
-                    >
-                      <ng-icon
-                        [name]="st.validation.ok ? 'lucideCheck' : 'lucideAlertCircle'"
-                        class="h-3.5 w-3.5 shrink-0"
-                      />
-                      {{ st.validation.message }}
-                    </div>
-                  }
-                </li>
+                    </span>
+                  </td>
+                </tr>
               }
-            </ul>
-          </div>
+            </tbody>
+          </table>
         </div>
       } @else {
-        <p class="text-sm text-muted-foreground">No LLM connections configured yet.</p>
+        <fl-empty-state
+          [compact]="true"
+          title="No LLM connections yet"
+          body="Add an OpenAI-compatible endpoint to give the assistant a model."
+        />
       }
+    </fl-panel>
 
-      @if (!service.isHosted() && mayManage()) {
-        @if (!showForm()) {
-          <button
-            appReadOnlySection="models"
-            type="button"
-            (click)="showForm.set(true)"
-            class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-          >
-            <ng-icon name="lucidePlus" class="h-4 w-4" />
-            Add connection
-          </button>
-        } @else {
-          <div hlmCard>
-            <div hlmCardHeader>
-              <h4 hlmCardTitle>New connection</h4>
-              <p hlmCardDescription>Connect an OpenAI-compatible LLM endpoint.</p>
-            </div>
-            <div hlmCardContent>
-              <form [formGroup]="form" (ngSubmit)="submitForm()" class="space-y-4">
-                <div class="space-y-1.5">
-                  <label hlmLabel for="conn-preset">Provider</label>
-                  <select
-                    id="conn-preset"
-                    formControlName="preset"
-                    (change)="applyPreset()"
-                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    @for (p of presets; track p.id) {
-                      <option [value]="p.id">{{ p.label }}</option>
-                    }
-                  </select>
-                </div>
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div class="space-y-1.5">
-                    <label hlmLabel for="conn-label">Label</label>
-                    <input
-                      hlmInput
-                      id="conn-label"
-                      formControlName="label"
-                      placeholder="OpenAI (prod)"
-                      class="w-full"
-                      [class.border-destructive]="isInvalid('label')"
-                    />
-                    @if (isInvalid('label')) {
-                      <p class="text-xs text-destructive">Required.</p>
-                    }
-                  </div>
-                  <div class="space-y-1.5">
-                    <label hlmLabel for="conn-url">Base URL</label>
-                    <input
-                      hlmInput
-                      id="conn-url"
-                      formControlName="baseUrl"
-                      placeholder="https://api.openai.com/v1"
-                      class="w-full"
-                      [class.border-destructive]="isInvalid('baseUrl')"
-                    />
-                    @if (isInvalid('baseUrl')) {
-                      <p class="text-xs text-destructive">Valid URL required.</p>
-                    }
-                  </div>
-                </div>
-                <div class="space-y-1.5">
-                  <label hlmLabel for="conn-key">API Key</label>
-                  <input
-                    hlmInput
-                    id="conn-key"
-                    type="password"
-                    formControlName="apiKey"
-                    placeholder="sk-…"
-                    autocomplete="new-password"
-                    class="w-full"
-                    [class.border-destructive]="isInvalid('apiKey')"
-                  />
-                  @if (isInvalid('apiKey')) {
-                    <p class="text-xs text-destructive">Required.</p>
-                  }
-                </div>
-                <div class="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="conn-default"
-                    formControlName="isDefault"
-                    class="h-4 w-4 rounded border-input accent-primary"
-                  />
-                  <label for="conn-default" class="text-sm text-foreground cursor-pointer"
-                    >Set as default</label
-                  >
-                </div>
-                @if (createError()) {
-                  <div
-                    class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                  >
-                    <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
-                    {{ createError() }}
-                  </div>
+    @if (!service.isHosted() && mayManage() && showForm()) {
+      <fl-panel title="New connection">
+        <form [formGroup]="form" (ngSubmit)="submitForm()" class="flex flex-col gap-4">
+          <fl-field label="Provider" for="conn-preset">
+            <span class="fl-select-wrap">
+              <select
+                id="conn-preset"
+                class="fl-select"
+                formControlName="preset"
+                (change)="applyPreset()"
+              >
+                @for (p of presets; track p.id) {
+                  <option [value]="p.id">{{ p.label }}</option>
                 }
-                <div class="flex gap-2">
-                  <button
-                    type="submit"
-                    [disabled]="creating()"
-                    class="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    @if (creating()) {
-                      <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                    }
-                    Add
-                  </button>
-                  <button
-                    type="button"
-                    (click)="cancelForm()"
-                    class="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
+              </select>
+            </span>
+          </fl-field>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <fl-field
+              label="Label"
+              for="conn-label"
+              [error]="isInvalid('label') ? 'Required.' : null"
+            >
+              <div class="fl-input fl-input--lg">
+                <input id="conn-label" formControlName="label" placeholder="OpenAI (prod)" />
+              </div>
+            </fl-field>
+            <fl-field
+              label="Base URL"
+              for="conn-url"
+              [error]="isInvalid('baseUrl') ? 'Valid URL required.' : null"
+            >
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="conn-url"
+                  formControlName="baseUrl"
+                  placeholder="https://api.openai.com/v1"
+                />
+              </div>
+            </fl-field>
           </div>
-        }
-      }
-    </div>
-
-    <app-delete-confirmation-dialog
-      #deleteDialog
-      [deleting]="connState(pendingId() ?? '').deleting"
-      (confirmed)="onDeleteConfirmed()"
-      (cancelled)="onDeleteCancelled()"
-    />
+          <fl-field
+            label="API key"
+            for="conn-key"
+            [error]="isInvalid('apiKey') ? 'Required.' : null"
+          >
+            <div class="fl-input fl-input--lg">
+              <input
+                id="conn-key"
+                type="password"
+                formControlName="apiKey"
+                placeholder="sk-…"
+                autocomplete="new-password"
+              />
+            </div>
+          </fl-field>
+          <label class="fl-check">
+            <input type="checkbox" id="conn-default" formControlName="isDefault" />
+            Set as default
+          </label>
+          @if (createError()) {
+            <fl-alert tone="error" title="Connection not added">{{ createError() }}</fl-alert>
+          }
+          <div class="flex justify-end gap-2">
+            <button flButton="ghost" type="button" (click)="cancelForm()">Cancel</button>
+            <button flButton="primary" type="submit" [disabled]="creating()">
+              @if (creating()) {
+                <fl-spinner label="Adding" />
+              }
+              Add
+            </button>
+          </div>
+        </form>
+      </fl-panel>
+    }
   `,
 })
 export class InferenceConnectionsComponent implements OnInit {
   protected readonly service = inject(InferenceSettingsService);
+  private readonly confirmService = inject(ConfirmService);
   private readonly fb = inject(FormBuilder);
   private readonly perms = inject(PermissionService);
   private readonly states = signal<Record<string, ConnUiState>>({});
 
-  /**
-   * A connection is the installation's own credential to a model provider, not
-   * anybody's personal setting: plugging one in spends somebody's account for
-   * everybody, and unplugging it takes the assistant away from everybody. The
-   * API now says so on both halves — `POST /inference/connections` and
-   * `DELETE /inference/connections/:id` ask for `integration:manage` — and this
-   * hides the controls rather than letting them answer 403, which reads as a
-   * fault instead of as a limit.
-   */
   protected readonly mayManage = computed(
     () => this.perms.isAdmin() || this.perms.can('integration:manage'),
   );
 
-  private readonly deleteDialog =
-    viewChild.required<DeleteConfirmationDialogComponent>('deleteDialog');
   protected readonly pendingId = signal<string | null>(null);
 
   readonly showForm = signal(false);
@@ -371,17 +317,19 @@ export class InferenceConnectionsComponent implements OnInit {
     });
   }
 
-  confirmDeleteConn(conn: { id: string; label: string; baseUrl: string }): void {
+  async confirmDeleteConn(conn: { id: string; label: string; baseUrl: string }): Promise<void> {
     this.pendingId.set(conn.id);
-    this.deleteDialog().open({
+    const ok = await this.confirmService.confirm({
       title: 'Delete LLM connection',
-      description: 'This action cannot be undone.',
-      itemName: conn.label,
-      itemDescription: conn.baseUrl,
-      warningMessage:
+      body:
+        `${conn.label} (${conn.baseUrl}) is deleted. This action cannot be undone. ` +
         'The stored API key is deleted with it, and anything using this ' +
         'connection stops working.',
+      confirmLabel: 'Delete',
+      destructive: true,
     });
+    if (ok) this.onDeleteConfirmed();
+    else this.onDeleteCancelled();
   }
 
   onDeleteConfirmed(): void {
@@ -392,7 +340,6 @@ export class InferenceConnectionsComponent implements OnInit {
       next: () => {
         this.patchConn(id, { deleting: false });
         this.pendingId.set(null);
-        this.deleteDialog().close();
       },
       error: (err) => {
         this.patchConn(id, {
@@ -400,7 +347,6 @@ export class InferenceConnectionsComponent implements OnInit {
           validation: { ok: false, message: err?.error?.message ?? 'Delete failed' },
         });
         this.pendingId.set(null);
-        this.deleteDialog().close();
       },
     });
   }

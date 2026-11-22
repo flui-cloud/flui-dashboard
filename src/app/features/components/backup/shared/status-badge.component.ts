@@ -1,5 +1,6 @@
-import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
+import { FlStatus } from '../../../../ui/primitives/status';
 import {
   ArtifactLocationState,
   BackupJobStatus,
@@ -15,25 +16,16 @@ import {
   policyStatusBadge,
   restoreStatusBadge,
 } from '../../../model/backup-badges';
-
-type Kind = 'health' | 'policy' | 'job' | 'location' | 'restore';
+import { BackupBadgeKind, backupBadgeTone } from './backup-tones';
 
 @Component({
   selector: 'app-backup-status-badge',
-  standalone: true,
-  imports: [],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <span
-      class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium"
-      [class]="style().classes"
-    >
-      {{ style().label }}
-    </span>
-  `,
+  imports: [FlStatus],
+  host: { class: 'inline-flex' },
+  template: `<fl-status [tone]="tone()" [label]="style().label" />`,
 })
 export class BackupStatusBadgeComponent {
-  readonly kind = input.required<Kind>();
+  readonly kind = input.required<BackupBadgeKind>();
   readonly value = input.required<string>();
 
   readonly style = computed<BadgeStyle>(() => {
@@ -50,4 +42,6 @@ export class BackupStatusBadgeComponent {
         return restoreStatusBadge(this.value() as RestoreJobStatus);
     }
   });
+
+  protected readonly tone = computed(() => backupBadgeTone(this.kind(), this.value()));
 }

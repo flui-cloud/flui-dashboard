@@ -1,18 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideSearch, lucideTriangleAlert } from '@ng-icons/lucide';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
-import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlSearchInput } from '../../../../ui/patterns/filter-bar';
+import { FlLoadingState } from '../../../../ui/patterns/states';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlTag } from '../../../../ui/primitives/tag';
 import {
   AgentKeyApplicationsService,
   SelectableApplication,
@@ -26,102 +17,73 @@ interface AppSection {
 
 @Component({
   selector: 'app-agent-key-application-picker',
-  standalone: true,
-  imports: [FormsModule, NgIcon, HlmBadgeDirective, HlmInputDirective],
-  providers: [provideIcons({ lucideLoader, lucideSearch, lucideTriangleAlert })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlAlert, FlSearchInput, FlLoadingState, FlButton, FlTag],
+  host: { class: 'block' },
   template: `
     @if (loading()) {
-      <div class="flex items-center gap-2 text-sm text-muted-foreground">
-        <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-        Reading which applications there are…
-      </div>
+      <fl-loading-state [rows]="2" />
     } @else if (loadError()) {
-      <div
-        class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-      >
-        <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-        <span
-          >The application list could not be read. Every application stays reachable — nothing to
-          narrow it with.</span
-        >
-      </div>
+      <fl-alert tone="error" title="Applications not read">
+        The application list could not be read. Every application stays reachable, with nothing to
+        narrow it with.
+      </fl-alert>
     } @else if (apps().length === 0) {
-      <p class="text-sm text-muted-foreground">
-        No applications on this instance yet — there is nothing to limit this key to.
+      <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+        No applications on this instance yet, so there is nothing to limit this key to.
       </p>
     } @else {
-      <div class="space-y-3">
-        <div class="relative">
-          <ng-icon
-            name="lucideSearch"
-            class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            hlmInput
-            type="text"
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <fl-search-input
             data-testid="app-filter"
-            [ngModel]="filter()"
-            (ngModelChange)="filter.set($event)"
-            placeholder="Filter by name…"
-            class="w-full pl-8 text-sm"
+            label="Filter applications"
+            placeholder="Filter by name"
+            [value]="filter()"
+            (valueChange)="filter.set($event)"
           />
+          @if (picked().size > 0) {
+            <span class="text-fl-caption text-fl-ink-muted">{{ picked().size }} selected</span>
+          }
         </div>
 
-        @if (picked().size > 0) {
-          <p class="text-xs text-muted-foreground">{{ picked().size }} selected</p>
-        }
-
         @for (section of sections(); track section.category) {
-          <div
-            class="space-y-2 rounded-md p-2.5"
-            [class]="section.category === 'system' ? 'bg-muted/30' : ''"
-          >
-            <div class="flex flex-wrap items-center gap-1.5">
-              <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {{ section.label }}
-              </p>
+          <div class="flex flex-col gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <h4 class="m-0 text-fl-body-sm font-semibold">{{ section.label }}</h4>
               @if (section.category === 'system') {
-                <span hlmBadge variant="secondary" class="text-[10px]">Platform-run</span>
+                <fl-tag>Platform-run</fl-tag>
               }
-              <span class="ml-auto flex items-center gap-2 text-xs">
+              <span class="ml-auto flex items-center gap-1">
                 <button
+                  flButton="ghost"
+                  size="sm"
                   type="button"
                   [attr.data-testid]="'select-all-' + section.category"
                   (click)="selectAll(section)"
-                  class="font-medium text-primary underline underline-offset-2"
                 >
                   Select all
                 </button>
                 <button
+                  flButton="ghost"
+                  size="sm"
                   type="button"
                   [attr.data-testid]="'clear-' + section.category"
                   (click)="clearSection(section)"
-                  class="font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
                 >
                   Clear
                 </button>
               </span>
             </div>
             @for (cluster of section.clusters; track cluster.name) {
-              <div class="space-y-1.5">
+              <div class="flex flex-col gap-1.5">
                 @if (section.clusters.length > 1) {
-                  <p class="text-[11px] font-medium text-muted-foreground/70">{{ cluster.name }}</p>
+                  <p class="m-0 text-fl-caption text-fl-ink-muted">{{ cluster.name }}</p>
                 }
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-x-5 gap-y-2">
                   @for (app of cluster.apps; track app.id) {
-                    <label
-                      [attr.data-testid]="'app-' + app.id"
-                      class="flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors"
-                      [class]="
-                        section.category === 'system'
-                          ? 'border-border/70 bg-background/60 hover:border-primary/40'
-                          : 'border-border hover:border-primary/40 hover:bg-accent/40'
-                      "
-                    >
+                    <label class="fl-check" [attr.data-testid]="'app-' + app.id">
                       <input
                         type="checkbox"
-                        class="h-3.5 w-3.5 accent-primary"
                         [attr.data-testid]="'app-check-' + app.id"
                         [checked]="picked().has(app.id)"
                         (change)="toggle(app.id)"
@@ -134,7 +96,9 @@ interface AppSection {
             }
           </div>
         } @empty {
-          <p class="text-sm text-muted-foreground">No application matches “{{ filter() }}”.</p>
+          <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+            No application matches “{{ filter() }}”.
+          </p>
         }
       </div>
     }
@@ -153,8 +117,6 @@ export class AgentKeyApplicationPickerComponent implements OnInit {
    */
   readonly suggestDefault = input(false);
 
-  // Never `change`: a native DOM event of that name bubbling from the
-  // checkboxes below would collide with a same-named custom output.
   readonly selectionChange = output<string[]>();
 
   private readonly service = inject(AgentKeyApplicationsService);
@@ -171,13 +133,6 @@ export class AgentKeyApplicationPickerComponent implements OnInit {
     return q ? all.filter((a) => a.name.toLowerCase().includes(q)) : all;
   });
 
-  /**
-   * User applications first, system ones marked apart — a key is almost
-   * always meant to reach what its owner built, not the platform components
-   * running underneath it. Splitting by category says that at a glance
-   * instead of leaving Grafana and Loki indistinguishable from an app a
-   * person deployed themselves.
-   */
   protected readonly sections = computed<AppSection[]>(() => {
     const grouped = this.filtered();
     const bySections: AppSection[] = [
@@ -201,8 +156,6 @@ export class AgentKeyApplicationPickerComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Signal inputs resolve their bound value by ngOnInit, not in the
-    // constructor — reading `selected()` there sees only its default.
     this.picked.set(new Set(this.selected() ?? []));
     this.service.list().subscribe({
       next: (apps) => {
@@ -217,13 +170,6 @@ export class AgentKeyApplicationPickerComponent implements OnInit {
     });
   }
 
-  /**
-   * The one default that needs no guessing: a single application on the
-   * whole instance is unambiguously the one a fresh key is "for". With more
-   * than one, silence is the honest answer — nothing here says which of them
-   * this agent is meant to touch, and picking one anyway would be a guess
-   * wearing a default's clothes.
-   */
   private applyDefaultIfOffered(apps: SelectableApplication[]): void {
     if (!this.suggestDefault() || this.selected()?.length) return;
     const userApps = apps.filter((a) => a.category === 'user');

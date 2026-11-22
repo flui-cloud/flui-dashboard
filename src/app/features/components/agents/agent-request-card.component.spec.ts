@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { AgentProposal, PROPOSAL_STATUS, ProposalDecision } from '../../model/agent-cycle.models';
 import { AgentCycleService } from '../../service/agent-cycle.service';
+import { ConfirmService } from '../../../ui/overlays/confirm';
 import { AgentRequestCardComponent } from './agent-request-card.component';
 
 const PROPOSAL: AgentProposal = {
@@ -22,6 +23,7 @@ const PROPOSAL: AgentProposal = {
 describe('one request, and the answers on offer', () => {
   let fixture: ComponentFixture<AgentRequestCardComponent>;
   let cycle: jasmine.SpyObj<AgentCycleService>;
+  let confirm: jasmine.Spy;
 
   const build = async (
     over: Partial<AgentProposal> = {},
@@ -29,10 +31,14 @@ describe('one request, and the answers on offer', () => {
   ): Promise<void> => {
     cycle = jasmine.createSpyObj<AgentCycleService>('AgentCycleService', ['estimate']);
     cycle.estimate.and.returnValue(of(estimate));
+    confirm = jasmine.createSpy('confirm').and.resolveTo(true);
 
     await TestBed.configureTestingModule({
       imports: [AgentRequestCardComponent],
-      providers: [{ provide: AgentCycleService, useValue: cycle }],
+      providers: [
+        { provide: AgentCycleService, useValue: cycle },
+        { provide: ConfirmService, useValue: { confirm } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AgentRequestCardComponent);
@@ -96,12 +102,15 @@ describe('one request, and the answers on offer', () => {
       find('allow-once')?.click();
       find('allow-always')?.click();
       find('deny')?.click();
+      await fixture.whenStable();
 
-      expect(seen).toEqual([
-        { id: 'p-1', decision: 'once' },
-        { id: 'p-1', decision: 'always' },
-        { id: 'p-1', decision: 'deny' },
-      ]);
+      expect(seen).toEqual(
+        jasmine.arrayWithExactContents([
+          { id: 'p-1', decision: 'once' },
+          { id: 'p-1', decision: 'always' },
+          { id: 'p-1', decision: 'deny' },
+        ]),
+      );
     });
   });
 
@@ -181,20 +190,20 @@ describe('one request, and the answers on offer', () => {
     it('sets the machine half of the card in monospace', async () => {
       await build();
       const facts = find('request-facts');
-      expect(facts?.className).toContain('grid');
-      const values = Array.from(facts?.querySelectorAll('dd') ?? []);
+      expect(facts?.className).toContain('fl-kv');
+      const values = Array.from(facts?.querySelectorAll('.fl-kv__value') ?? []);
       expect(values.length).toBeGreaterThan(0);
       for (const value of values) {
         expect(value.className)
           .withContext(value.textContent ?? '')
-          .toContain('font-mono');
+          .toContain('fl-mono');
       }
-      expect(find('request-who')?.className).toContain('font-mono');
+      expect(find('request-who')?.className).toContain('fl-mono');
     });
 
     it('leaves the product half in the product typeface', async () => {
       await build();
-      expect(find('request-sentence')?.className).not.toContain('font-mono');
+      expect(find('request-sentence')?.className).not.toContain('fl-mono');
     });
 
     it('names the credential when the page resolved it, and never invents one', async () => {

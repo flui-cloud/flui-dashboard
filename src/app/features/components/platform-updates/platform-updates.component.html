@@ -1,0 +1,102 @@
+<div class="fl-page">
+  <fl-page-header title="Updates" [breadcrumb]="breadcrumb">
+    @if (headerStatus(); as s) {
+      <fl-status headerStatus [tone]="s.tone" [label]="s.label" />
+    }
+    <span headerMeta>
+      @if (updates.status(); as status) {
+        Flui <span class="fl-mono">{{ status.installedVersion }}</span> · checked
+        {{ checkedAgo(status.checkedAt) }}
+      } @else {
+        The Flui release running on this installation
+      }
+    </span>
+    <ng-container headerActions>
+      <button flButton type="button" (click)="check()" [disabled]="updates.checking()">
+        <fl-icon name="lucideRefreshCw" />
+        Check now
+      </button>
+    </ng-container>
+  </fl-page-header>
+
+  <div class="fl-stack">
+    @if (updates.operation(); as operation) {
+      <app-platform-update-progress [operation]="operation" />
+    } @else if (stopped(); as operation) {
+      <app-platform-update-progress [operation]="operation" />
+      <div class="flex justify-end">
+        <button
+          flButton
+          type="button"
+          (click)="resume(operation.id)"
+          [disabled]="updates.starting()"
+        >
+          Resume the update
+        </button>
+      </div>
+    }
+
+    @if (updates.status(); as status) {
+      @if (!updates.running()) {
+        @if (updates.checkFailed()) {
+          <fl-alert tone="warning" title="Could not check for updates">
+            This installation runs Flui <span class="fl-mono">{{ status.installedVersion }}</span>.
+          </fl-alert>
+        } @else if (status.updateAvailable) {
+          <fl-panel title="Available update">
+            <div panelActions class="fl-row">
+              @if (status.applicable) {
+                <button flButton="primary" size="sm" type="button" (click)="openConfirm()">
+                  Update now
+                </button>
+              } @else {
+                <fl-status tone="warning" label="Needs the CLI" />
+                <button flButton="ghost" size="sm" type="button" (click)="detailsOpen.set(true)">
+                  Why?
+                </button>
+              }
+            </div>
+            <div class="flex flex-col gap-4">
+              <fl-key-value>
+                <fl-kv-item key="Version" [mono]="true">{{ status.availableVersion }}</fl-kv-item>
+                <fl-kv-item key="Installed" [mono]="true">{{ status.installedVersion }}</fl-kv-item>
+                @if (status.publishedAt) {
+                  <fl-kv-item key="Released">{{ status.publishedAt | date: 'd MMM y' }}</fl-kv-item>
+                }
+                <fl-kv-item key="Database migrations">{{ status.migrations }}</fl-kv-item>
+                @if (status.requiredCliVersion) {
+                  <fl-kv-item key="CLI" [mono]="true">
+                    <span
+                      title="The CLI on this release is the one that can re-run the bootstrap. Nothing here is gated on it."
+                      >{{ status.requiredCliVersion }}</span
+                    >
+                  </fl-kv-item>
+                }
+              </fl-key-value>
+              @if (status.notes.length > 0) {
+                <div class="flex flex-col gap-2">
+                  <h3 class="m-0 text-fl-body-sm font-semibold">Release notes</h3>
+                  <pre
+                    class="m-0 whitespace-pre-wrap rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3 font-sans text-fl-body-sm"
+                    >{{ releaseNotes() }}</pre>
+                </div>
+              }
+            </div>
+          </fl-panel>
+        }
+
+        <app-platform-update-details [status]="status" [(open)]="detailsOpen" />
+      }
+    } @else if (updates.loading()) {
+      <fl-panel title="Available update">
+        <fl-loading-state [rows]="3" />
+      </fl-panel>
+    }
+
+    <app-platform-update-history [operations]="updates.history()" />
+  </div>
+</div>
+
+@if (confirming()) {
+  <app-platform-upgrade-confirm [(acknowledged)]="acknowledged" (closed)="closeConfirm()" />
+}

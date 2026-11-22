@@ -1,375 +1,236 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideChevronDown,
-  lucideChevronRight,
-  lucideKeyRound,
-  lucidePencil,
-  lucidePlugZap,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
-import { DeleteConfirmationDialogComponent } from '../../../../shared/components/delete-confirmation-dialog.component';
+import { provideIcons } from '@ng-icons/core';
+import { lucideChevronDown, lucideChevronRight } from '@ng-icons/lucide';
 import { ApiKeyResponseDto } from '../../../../core/api/model/apiKeyResponseDto';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
-import { KeySurface, readKeySurface, understatesItself } from './agent-key-surface';
-import { ConnectedKey, KeyConnection, readKeyConnection } from './agent-key-connection';
+import { ConfirmService } from '../../../../ui/overlays/confirm';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlEmptyState } from '../../../../ui/patterns/states';
+import { FlTable } from '../../../../ui/patterns/table';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlStatus } from '../../../../ui/primitives/status';
+import { FlTag } from '../../../../ui/primitives/tag';
 import { AgentKeyApplicationsService } from './agent-key-applications.service';
-import { AgentKeyApplicationPickerComponent } from './agent-key-application-picker.component';
 import { AgentKeyProjectsService } from './agent-key-projects.service';
-import { AgentKeyProjectPickerComponent } from './agent-key-project-picker.component';
 import { AgentKeyPermissionsEditorComponent } from './agent-key-permissions-editor.component';
-
-interface KeyRow {
-  key: ApiKeyResponseDto;
-  surface: KeySurface;
-  warn: boolean;
-  expired: boolean;
-  scopes: string;
-  connection: KeyConnection;
-  /** Names of the applications `key.applicationIds` resolves to; null = every application. */
-  appNames: string[] | null;
-  /** Names of the projects `key.projectIds` resolves to; null = no project grant. */
-  projectNames: string[] | null;
-}
-
-/** Which of a row's editors, if any, is open right now. */
-interface EditTarget {
-  keyId: string;
-  field: 'applications' | 'projects' | 'permissions';
-}
-
-/** An id absent from the lookup is one the list no longer has — deleted, not hidden. */
-function resolveNames(
-  ids: string[] | null | undefined,
-  names: ReadonlyMap<string, string>,
-): string[] | null {
-  if (!ids) return null;
-  return ids.map((id) => names.get(id) ?? `${id} (deleted)`);
-}
+import { AgentKeyReachEditor } from './agent-key-reach-editor';
+import { EditTarget, KeyRow, keyRows, reachLine, revokeQuestion } from './agent-key-rows';
 
 @Component({
   selector: 'app-agent-key-list',
-  standalone: true,
   imports: [
     DatePipe,
-    NgIcon,
-    HlmBadgeDirective,
-    DeleteConfirmationDialogComponent,
-    AgentKeyApplicationPickerComponent,
-    AgentKeyProjectPickerComponent,
+    FlAlert,
+    FlEmptyState,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    FlTag,
     AgentKeyPermissionsEditorComponent,
+    AgentKeyReachEditor,
   ],
-  providers: [
-    provideIcons({
-      lucideChevronDown,
-      lucideChevronRight,
-      lucideKeyRound,
-      lucidePencil,
-      lucidePlugZap,
-      lucideTriangleAlert,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideIcons({ lucideChevronDown, lucideChevronRight })],
   template: `
     @if (rows().length === 0) {
-      <div class="rounded-lg border border-dashed border-border px-4 py-6 text-center">
-        <ng-icon name="lucideKeyRound" class="mx-auto h-5 w-5 text-muted-foreground" />
-        <p class="mt-2 text-sm text-muted-foreground" data-testid="no-keys">
-          No keys yet. Nothing is holding a credential of yours.
-        </p>
-      </div>
+      <fl-empty-state
+        [compact]="true"
+        title="No keys yet"
+        body="Nothing is holding a credential of yours."
+        data-testid="no-keys"
+      />
     } @else {
-      <ul class="divide-y divide-border rounded-lg border border-border">
-        @for (row of rows(); track row.key.id) {
-          <li class="space-y-2 p-4" [attr.data-testid]="'key-' + row.key.id">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-              <div class="min-w-0 space-y-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="text-sm font-medium text-foreground">{{ row.key.name }}</span>
-                  @if (row.key.revoked) {
-                    <span hlmBadge variant="secondary" class="text-xs">Revoked</span>
-                  } @else if (row.expired) {
-                    <span hlmBadge variant="secondary" class="text-xs">Expired</span>
-                  }
-                  @if (row.warn) {
-                    <span
-                      hlmBadge
-                      variant="destructive"
-                      class="text-xs"
-                      data-testid="beyond-groups"
-                    >
-                      Wider than its name
-                    </span>
-                  }
-                  @if (row.key.current) {
-                    <span hlmBadge variant="secondary" class="text-xs" data-testid="current-key">
-                      You are signed in with this
-                    </span>
-                  }
-                </div>
-                <p
-                  class="text-sm text-muted-foreground"
-                  [attr.data-testid]="'headline-' + row.key.id"
-                >
-                  {{ row.surface.headline }}
-                </p>
-              </div>
-
-              @if (!row.key.revoked) {
-                <div class="flex shrink-0 items-center gap-2">
-                  @if (row.key.scopes?.length) {
+      <div class="fl-table-wrap">
+        <table flTable density="dense">
+          <thead>
+            <tr>
+              <th scope="col">Key</th>
+              <th scope="col">Reach</th>
+              <th scope="col">Last contact</th>
+              <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.key.id) {
+              @let id = row.key.id;
+              @let edit = editing()?.keyId === id ? editing()!.field : null;
+              <tr [attr.data-testid]="'key-' + id">
+                <td class="is-wrap">
+                  <div class="flex flex-col gap-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-medium">{{ row.key.name }}</span>
+                      @if (row.key.revoked) {
+                        <fl-status tone="neutral" label="Revoked" />
+                      } @else if (row.expired) {
+                        <fl-status tone="neutral" label="Expired" />
+                      }
+                      @if (row.warn) {
+                        <fl-status
+                          tone="warning"
+                          label="Wider than its name"
+                          data-testid="beyond-groups"
+                        />
+                      }
+                      @if (row.key.current) {
+                        <fl-tag data-testid="current-key">You are signed in with this</fl-tag>
+                      }
+                    </div>
+                    <span class="text-fl-ink-muted" [attr.data-testid]="'headline-' + id">{{
+                      row.surface.headline
+                    }}</span>
+                    @if (row.surface.groups.length) {
+                      <span class="flex flex-wrap gap-1">
+                        @for (g of row.surface.groups; track g.key) {
+                          <fl-tag [title]="g.summary">{{ g.label }}</fl-tag>
+                        }
+                      </span>
+                    }
                     <button
                       type="button"
-                      [attr.data-testid]="'edit-permissions-' + row.key.id"
-                      (click)="toggleEdit(row.key, 'permissions')"
-                      class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                      class="fl-link inline-flex items-center gap-1 self-start text-fl-caption"
+                      [attr.aria-expanded]="isOpen(id)"
+                      (click)="toggleDetails(id)"
                     >
-                      <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
-                      Permissions
+                      <fl-icon
+                        [name]="isOpen(id) ? 'lucideChevronDown' : 'lucideChevronRight'"
+                        [size]="13"
+                      />
+                      Details
                     </button>
+                  </div>
+                </td>
+                <td class="is-wrap text-fl-ink-muted" [attr.data-testid]="'apps-' + id">
+                  {{ reach(row) }}
+                </td>
+                <td class="is-wrap">
+                  <div class="flex flex-col gap-1">
+                    <span class="text-fl-ink-muted" [attr.data-testid]="'when-' + id">
+                      Created {{ row.key.createdAt | date: 'medium' }}
+                      @if (row.key.expiresAt) {
+                        · {{ row.expired ? 'expired' : 'expires' }}
+                        {{ row.key.expiresAt | date: 'medium' }}
+                      } @else {
+                        · no expiry
+                      }
+                      · {{ row.connection.seen }}
+                    </span>
+                    <span [attr.data-testid]="'connection-' + id">
+                      @if (row.connection.outOfDate) {
+                        <fl-status tone="warning" [label]="connectionText(row)" />
+                      } @else {
+                        <span class="text-fl-ink-muted">{{ connectionText(row) }}</span>
+                      }
+                    </span>
+                  </div>
+                </td>
+                <td class="is-fit">
+                  @if (!row.key.revoked) {
+                    <span class="flex items-center gap-1">
+                      @if (row.key.scopes?.length) {
+                        <button
+                          flButton="ghost"
+                          size="sm"
+                          type="button"
+                          [attr.aria-pressed]="edit === 'permissions'"
+                          [attr.data-testid]="'edit-permissions-' + id"
+                          (click)="toggleEdit(row.key, 'permissions')"
+                        >
+                          Permissions
+                        </button>
+                      }
+                      <button
+                        flButton="ghost"
+                        size="sm"
+                        type="button"
+                        [attr.aria-pressed]="edit === 'applications'"
+                        [attr.data-testid]="'edit-applications-' + id"
+                        (click)="toggleEdit(row.key, 'applications')"
+                      >
+                        Applications
+                      </button>
+                      <button
+                        flButton="ghost"
+                        size="sm"
+                        type="button"
+                        [attr.aria-pressed]="edit === 'projects'"
+                        [attr.data-testid]="'edit-projects-' + id"
+                        (click)="toggleEdit(row.key, 'projects')"
+                      >
+                        Projects
+                      </button>
+                      <button
+                        flButton="danger"
+                        size="sm"
+                        type="button"
+                        [attr.data-testid]="'revoke-' + id"
+                        [disabled]="revoking() === id"
+                        (click)="ask(row.key)"
+                      >
+                        {{ revoking() === id ? 'Revoking…' : 'Revoke' }}
+                      </button>
+                    </span>
                   }
-                  <button
-                    type="button"
-                    [attr.data-testid]="'edit-applications-' + row.key.id"
-                    (click)="toggleEdit(row.key, 'applications')"
-                    class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-                  >
-                    <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
-                    Applications
-                  </button>
-                  <button
-                    type="button"
-                    [attr.data-testid]="'edit-projects-' + row.key.id"
-                    (click)="toggleEdit(row.key, 'projects')"
-                    class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-                  >
-                    <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
-                    Projects
-                  </button>
-                  <button
-                    type="button"
-                    [attr.data-testid]="'revoke-' + row.key.id"
-                    (click)="ask(row.key)"
-                    [disabled]="revoking() === row.key.id"
-                    class="inline-flex items-center gap-1.5 rounded-md border border-destructive/50 bg-background px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
-                  >
-                    {{ revoking() === row.key.id ? 'Revoking…' : 'Revoke' }}
-                  </button>
-                </div>
-              }
-            </div>
-
-            @if (row.surface.groups.length) {
-              <div class="flex flex-wrap gap-1.5">
-                @for (g of row.surface.groups; track g.key) {
-                  <span hlmBadge variant="outline" class="text-xs" [title]="g.summary">{{
-                    g.label
-                  }}</span>
-                }
-              </div>
+                </td>
+              </tr>
+              <tr [hidden]="!isOpen(id) && !edit">
+                <td colspan="4" class="whitespace-normal">
+                  <div class="flex flex-col gap-3 py-1">
+                    <div class="flex flex-col gap-2" [hidden]="!isOpen(id)">
+                      @if (row.surface.caution; as caution) {
+                        <fl-alert
+                          tone="warning"
+                          title="Does more than its name"
+                          [attr.data-testid]="'caution-' + id"
+                          >{{ caution }}</fl-alert
+                        >
+                      }
+                      <p class="m-0 fl-mono fl-muted break-all">{{ row.scopes }}</p>
+                    </div>
+                    @if (edit === 'permissions') {
+                      <app-agent-key-permissions-editor
+                        [attr.data-testid]="'edit-permissions-panel-' + id"
+                        [catalogue]="catalogue()"
+                        [scopes]="row.key.scopes ?? []"
+                        [saving]="updatingScopes() === id"
+                        [error]="updateScopesError()"
+                        (save)="saveScopes(row.key, $event)"
+                        (cancelled)="editing.set(null)"
+                      />
+                    } @else if (edit === 'applications') {
+                      <app-agent-key-reach-editor
+                        field="applications"
+                        [attr.data-testid]="'edit-applications-panel-' + id"
+                        [keyId]="id"
+                        [selected]="row.key.applicationIds ?? undefined"
+                        [saving]="updatingApplications() === id"
+                        [error]="updateApplicationsError()"
+                        (picked)="editPicked.set($event)"
+                        (save)="saveApplications(row.key)"
+                        (cancelled)="editing.set(null)"
+                      />
+                    } @else if (edit === 'projects') {
+                      <app-agent-key-reach-editor
+                        field="projects"
+                        [attr.data-testid]="'edit-projects-panel-' + id"
+                        [keyId]="id"
+                        [selected]="row.key.projectIds ?? undefined"
+                        [saving]="updatingProjects() === id"
+                        [error]="updateProjectsError()"
+                        (picked)="editPicked.set($event)"
+                        (save)="saveProjects(row.key)"
+                        (cancelled)="editing.set(null)"
+                      />
+                    }
+                  </div>
+                </td>
+              </tr>
             }
-
-            <p class="text-xs text-muted-foreground" [attr.data-testid]="'apps-' + row.key.id">
-              @if (row.appNames === null && row.projectNames === null) {
-                Reaches every application you can.
-              } @else {
-                @if (row.projectNames !== null) {
-                  @if (row.projectNames.length === 0) {
-                    Every project it named is gone.
-                  } @else {
-                    Reaches {{ row.projectNames.join(', ') }}
-                  }
-                  @if (row.appNames !== null && row.appNames.length > 0) {
-                    , plus {{ row.appNames.join(', ') }}.
-                  } @else {
-                    .
-                  }
-                } @else if (row.appNames !== null) {
-                  @if (row.appNames.length === 0) {
-                    Reaches no application — every application id it named is gone.
-                  } @else {
-                    Limited to {{ row.appNames.join(', ') }}.
-                  }
-                }
-              }
-            </p>
-
-            <button
-              type="button"
-              class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-              [attr.aria-expanded]="isOpen(row.key.id)"
-              (click)="toggleDetails(row.key.id)"
-            >
-              <ng-icon
-                [name]="isOpen(row.key.id) ? 'lucideChevronDown' : 'lucideChevronRight'"
-                class="h-3 w-3"
-              />
-              Details
-            </button>
-            <div class="space-y-2" [hidden]="!isOpen(row.key.id)">
-              @if (row.surface.caution; as caution) {
-                <div
-                  class="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-foreground"
-                  [attr.data-testid]="'caution-' + row.key.id"
-                >
-                  <ng-icon
-                    name="lucideTriangleAlert"
-                    class="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive"
-                  />
-                  <span>{{ caution }}</span>
-                </div>
-              }
-              <p class="font-mono text-[11px] text-muted-foreground/80 break-all">
-                {{ row.scopes }}
-              </p>
-            </div>
-
-            @if (editing()?.keyId === row.key.id && editing()?.field === 'permissions') {
-              <div
-                class="rounded-md border border-border bg-muted/20 p-3"
-                [attr.data-testid]="'edit-permissions-panel-' + row.key.id"
-              >
-                <app-agent-key-permissions-editor
-                  [catalogue]="catalogue()"
-                  [scopes]="row.key.scopes ?? []"
-                  [saving]="updatingScopes() === row.key.id"
-                  [error]="updateScopesError()"
-                  (save)="saveScopes(row.key, $event)"
-                  (cancel)="editing.set(null)"
-                />
-              </div>
-            }
-
-            @if (editing()?.keyId === row.key.id && editing()?.field === 'applications') {
-              <div
-                class="space-y-2 rounded-md border border-border bg-muted/20 p-3"
-                [attr.data-testid]="'edit-applications-panel-' + row.key.id"
-              >
-                <app-agent-key-application-picker
-                  #editAppPicker
-                  [selected]="row.key.applicationIds ?? undefined"
-                  (selectionChange)="editPicked.set($event)"
-                />
-                @if (updateApplicationsError(); as e) {
-                  <p
-                    class="text-xs text-destructive"
-                    [attr.data-testid]="'edit-applications-error-' + row.key.id"
-                  >
-                    {{ e }}
-                  </p>
-                }
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    [attr.data-testid]="'save-applications-' + row.key.id"
-                    (click)="saveApplications(row.key)"
-                    [disabled]="updatingApplications() === row.key.id"
-                    class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    {{ updatingApplications() === row.key.id ? 'Saving…' : 'Save' }}
-                  </button>
-                  <button
-                    type="button"
-                    (click)="editing.set(null)"
-                    class="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                  >
-                    Cancel
-                  </button>
-                  <p class="text-xs text-muted-foreground">
-                    Empty means every application — the key is not limited.
-                  </p>
-                </div>
-              </div>
-            }
-
-            @if (editing()?.keyId === row.key.id && editing()?.field === 'projects') {
-              <div
-                class="space-y-2 rounded-md border border-border bg-muted/20 p-3"
-                [attr.data-testid]="'edit-projects-panel-' + row.key.id"
-              >
-                <app-agent-key-project-picker
-                  #editProjectPicker
-                  [selected]="row.key.projectIds ?? undefined"
-                  (selectionChange)="editPicked.set($event)"
-                />
-                @if (updateProjectsError(); as e) {
-                  <p
-                    class="text-xs text-destructive"
-                    [attr.data-testid]="'edit-projects-error-' + row.key.id"
-                  >
-                    {{ e }}
-                  </p>
-                }
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    [attr.data-testid]="'save-projects-' + row.key.id"
-                    (click)="saveProjects(row.key)"
-                    [disabled]="updatingProjects() === row.key.id"
-                    class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    {{ updatingProjects() === row.key.id ? 'Saving…' : 'Save' }}
-                  </button>
-                  <button
-                    type="button"
-                    (click)="editing.set(null)"
-                    class="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                  >
-                    Cancel
-                  </button>
-                  <p class="text-xs text-muted-foreground">
-                    Empty means no project grant — an app is still reached individually, if named
-                    above.
-                  </p>
-                </div>
-              </div>
-            }
-
-            <p class="text-xs text-muted-foreground" [attr.data-testid]="'when-' + row.key.id">
-              Created {{ row.key.createdAt | date: 'medium' }}
-              @if (row.key.expiresAt) {
-                · {{ row.expired ? 'expired' : 'expires' }} {{ row.key.expiresAt | date: 'medium' }}
-              } @else {
-                · no expiry
-              }
-              · {{ row.connection.seen }}
-            </p>
-
-            <p
-              class="flex items-start gap-1.5 text-xs"
-              [class]="row.connection.outOfDate ? 'text-destructive' : 'text-muted-foreground'"
-              [attr.data-testid]="'connection-' + row.key.id"
-            >
-              <ng-icon name="lucidePlugZap" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span>
-                @if (!row.connection.everUsed) {
-                  Never spoken to this instance.
-                }
-                {{ row.connection.skill }}
-              </span>
-            </p>
-          </li>
-        }
-      </ul>
+          </tbody>
+        </table>
+      </div>
     }
-
-    <app-delete-confirmation-dialog
-      #revokeDialog
-      (confirmed)="confirm()"
-      (cancelled)="pending.set(null)"
-    />
   `,
 })
 export class AgentKeyListComponent {
@@ -395,30 +256,16 @@ export class AgentKeyListComponent {
   }>();
   readonly updateScopes = output<{ key: ApiKeyResponseDto; scopes: string[] }>();
 
-  private readonly dialog = viewChild.required<DeleteConfirmationDialogComponent>('revokeDialog');
+  private readonly confirmService = inject(ConfirmService);
   private readonly appsService = inject(AgentKeyApplicationsService);
   private readonly projectsService = inject(AgentKeyProjectsService);
-  protected readonly pending = signal<ApiKeyResponseDto | null>(null);
   protected readonly editing = signal<EditTarget | null>(null);
   private readonly openRows = signal<ReadonlySet<string>>(new Set());
-
-  protected isOpen(id: string): boolean {
-    return this.openRows().has(id);
-  }
-
-  protected toggleDetails(id: string): void {
-    const next = new Set(this.openRows());
-    if (!next.delete(id)) next.add(id);
-    this.openRows.set(next);
-  }
   protected readonly editPicked = signal<string[]>([]);
-  /** Application id → name, loaded once; a name missing from it is a stale/deleted id. */
   private readonly appNamesById = signal<Map<string, string>>(new Map());
-  /** Project id → name, loaded once, same convention as {@link appNamesById}. */
   private readonly projectNamesById = signal<Map<string, string>>(new Map());
 
   constructor() {
-    // The permissions panel closes once its save went through, and only then.
     let saving: string | null = null;
     effect(() => {
       const now = this.updatingScopes();
@@ -433,23 +280,34 @@ export class AgentKeyListComponent {
     });
   }
 
-  protected readonly rows = computed<KeyRow[]>(() => {
-    const appNames = this.appNamesById();
-    const projectNames = this.projectNamesById();
-    return this.keys().map((key) => {
-      const surface = readKeySurface(key, this.catalogue());
-      return {
-        key,
-        surface,
-        warn: understatesItself(surface) || surface.shape === 'unscoped',
-        expired: !!key.expiresAt && new Date(key.expiresAt).getTime() < Date.now(),
-        scopes: key.scopes?.length ? key.scopes.join(' · ') : 'no scope list — unscoped',
-        connection: readKeyConnection(key as ConnectedKey, this.currentSkillVersion()),
-        appNames: resolveNames(key.applicationIds, appNames),
-        projectNames: resolveNames(key.projectIds, projectNames),
-      };
-    });
-  });
+  protected readonly rows = computed<KeyRow[]>(() =>
+    keyRows(
+      this.keys(),
+      this.catalogue(),
+      this.appNamesById(),
+      this.projectNamesById(),
+      this.currentSkillVersion(),
+    ),
+  );
+
+  protected isOpen(id: string): boolean {
+    return this.openRows().has(id);
+  }
+
+  protected toggleDetails(id: string): void {
+    const next = new Set(this.openRows());
+    if (!next.delete(id)) next.add(id);
+    this.openRows.set(next);
+  }
+
+  protected reach(row: KeyRow): string {
+    return reachLine(row);
+  }
+
+  protected connectionText(row: KeyRow): string {
+    const never = row.connection.everUsed ? '' : 'Never spoken to this instance. ';
+    return `${never}${row.connection.skill}`;
+  }
 
   protected toggleEdit(key: ApiKeyResponseDto, field: EditTarget['field']): void {
     const current = this.editing();
@@ -468,7 +326,6 @@ export class AgentKeyListComponent {
     this.editing.set(null);
   }
 
-  /** Kept open until the page reports back: a refusal is read where it was asked. */
   protected saveScopes(key: ApiKeyResponseDto, scopes: string[]): void {
     this.updateScopes.emit({ key, scopes });
   }
@@ -478,31 +335,10 @@ export class AgentKeyListComponent {
     this.editing.set(null);
   }
 
-  protected ask(key: ApiKeyResponseDto): void {
-    this.pending.set(key);
-    const connection = readKeyConnection(key as ConnectedKey, this.currentSkillVersion());
-    this.dialog().open({
-      title: key.current ? 'Revoke the key you are using' : 'Revoke this key',
-      description: key.current
-        ? 'This is the credential this browser is signed in with. Revoking it ends your session here.'
-        : 'The agent holding it stops working the moment you confirm.',
-      itemName: key.name,
-      itemDescription: `${readKeySurface(key, this.catalogue()).headline} · ${
-        connection.everUsed ? connection.seen : 'never used'
-      }`,
-      warningMessage: key.current
-        ? 'You will be signed out immediately, and there is no way back in with this credential. ' +
-          'Anything already built stays where it is — only the credential goes.'
-        : 'Anything the agent has already built stays where it is — only the credential goes. ' +
-          'You are not signed in with this one, so your own session is unaffected.',
-      confirmButtonText: 'Revoke',
-    });
-  }
-
-  protected confirm(): void {
-    const key = this.pending();
-    this.pending.set(null);
-    this.dialog().close();
-    if (key) this.revoke.emit(key);
+  protected async ask(key: ApiKeyResponseDto): Promise<void> {
+    const ok = await this.confirmService.confirm(
+      revokeQuestion(key, this.catalogue(), this.currentSkillVersion()),
+    );
+    if (ok) this.revoke.emit(key);
   }
 }

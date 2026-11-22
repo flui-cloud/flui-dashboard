@@ -1,76 +1,80 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideKeyRound, lucideRefreshCw } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 import { MailConsoleService } from '../../service/mail-console.service';
 import { MailIdentityStatus } from '../../model/mail-console.models';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { consoleError } from './mail-format';
-import { mailIdentityView } from './mail-identity-email-view';
+import { MailIdentityTone, mailIdentityView } from './mail-identity-email-view';
 
-const TONE: Record<string, string> = {
-  ok: 'bg-emerald-50 font-medium text-emerald-700',
-  warn: 'bg-amber-50 text-amber-800',
-  error: 'bg-destructive/10 text-destructive',
-  idle: 'bg-muted text-muted-foreground',
+const TONE: Record<MailIdentityTone, StatusTone> = {
+  ok: 'success',
+  warn: 'warning',
+  error: 'error',
+  idle: 'neutral',
 };
 
 @Component({
   selector: 'app-mail-identity-email',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, DatePipe, ReadOnlySectionDirective],
-  providers: [provideIcons({ lucideKeyRound, lucideRefreshCw })],
+  imports: [
+    DatePipe,
+    ReadOnlySectionDirective,
+    FlAlert,
+    FlKeyValue,
+    FlKvItem,
+    FlPanel,
+    FlButton,
+    FlIcon,
+    FlStatus,
+  ],
+  providers: [provideIcons({ lucideRefreshCw })],
+  host: { class: 'block' },
   template: `
-    <div class="mb-4 rounded-lg border border-border bg-card px-4 py-3">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2 text-sm">
-            <ng-icon name="lucideKeyRound" class="h-4 w-4 text-muted-foreground" />
-            <span class="font-medium text-foreground">Sign-in emails</span>
-            @if (view(); as v) {
-              <span class="rounded-md px-1.5 py-0.5 text-[11px]" [class]="toneClass()">
-                {{ v.badge }}
-              </span>
-            }
-          </div>
-          <p class="mt-1 text-xs text-muted-foreground">
-            Verification and password reset emails
-            @if (view()?.provider; as provider) {
-              are sent through <span class="text-foreground">{{ provider }}</span>.
-            } @else {
-              are sent through your transactional provider.
-            }
-          </p>
-          @if (view()?.note; as note) {
-            <p class="mt-1 text-xs text-amber-700">{{ note }}</p>
-          }
-          @if (status()?.lastDeliveryAt; as at) {
-            <p class="mt-1 text-xs text-muted-foreground">Last sent {{ at | date: 'medium' }}</p>
-          }
-          @if (error()) {
-            <p class="mt-1 text-xs text-destructive">{{ error() }}</p>
-          }
-        </div>
+    <fl-panel title="Sign-in emails">
+      <div panelActions class="fl-row">
+        @if (view(); as v) {
+          <fl-status [tone]="statusTone()" [label]="v.badge" />
+        }
         <button
           appReadOnlySection="mail"
+          flButton
+          size="sm"
           type="button"
-          (click)="sync()"
           [disabled]="syncing() || loading()"
-          class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:opacity-60"
+          (click)="sync()"
         >
-          <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="syncing()" />
-          Sync
+          <fl-icon name="lucideRefreshCw" [size]="14" />
+          {{ syncing() ? 'Syncing…' : 'Sync' }}
         </button>
       </div>
-    </div>
+
+      <div class="flex flex-col gap-3">
+        <fl-key-value>
+          <fl-kv-item key="Covers">Verification and password reset emails</fl-kv-item>
+          <fl-kv-item key="Sent through">{{
+            view()?.provider ?? 'Your transactional provider'
+          }}</fl-kv-item>
+          @if (status()?.lastDeliveryAt; as at) {
+            <fl-kv-item key="Last sent">{{ at | date: 'medium' }}</fl-kv-item>
+          }
+        </fl-key-value>
+        @if (view()?.note; as note) {
+          <fl-alert tone="warning" [title]="noteTitle()">{{ note }}</fl-alert>
+        }
+        @if (error()) {
+          <fl-alert tone="error" title="Could not read the sign-in email status">{{
+            error()
+          }}</fl-alert>
+        }
+      </div>
+    </fl-panel>
   `,
 })
 export class MailIdentityEmailComponent implements OnInit {
@@ -85,7 +89,10 @@ export class MailIdentityEmailComponent implements OnInit {
     const status = this.status();
     return status ? mailIdentityView(status) : null;
   });
-  readonly toneClass = computed(() => TONE[this.view()?.tone ?? 'idle']);
+  readonly statusTone = computed(() => TONE[this.view()?.tone ?? 'idle']);
+  readonly noteTitle = computed(() =>
+    this.view()?.tone === 'ok' ? 'The last message failed' : (this.view()?.badge ?? ''),
+  );
 
   ngOnInit(): void {
     this.load();

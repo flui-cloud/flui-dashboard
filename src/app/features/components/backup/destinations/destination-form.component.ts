@@ -1,238 +1,272 @@
 import { Component, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlField } from '../../../../ui/patterns/field';
+import { FlPageHeader } from '../../../../ui/patterns/page-header';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlStatus } from '../../../../ui/primitives/status';
 import { BackupService } from '../../../service/backup.service';
 import { StorageBackendProvider, EncryptionMode } from '../../../model/backup.models';
 import { CreateBackupDestinationDto } from '../../../../core/api/model/createBackupDestinationDto';
 
 @Component({
   selector: 'app-destination-form',
-  standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [
+    FormsModule,
+    RouterLink,
+    NgTemplateOutlet,
+    FlPageHeader,
+    FlPanel,
+    FlField,
+    FlAlert,
+    FlButton,
+    FlIcon,
+    FlStatus,
+  ],
+  providers: [provideIcons({ lucideX })],
   changeDetection: ChangeDetectionStrategy.Eager,
+  host: { '[class]': 'embedded() ? "flex min-h-0 flex-col" : "block"' },
   template: `
-    <div class="space-y-6" [class]="embedded() ? 'p-5' : 'p-6 max-w-2xl'">
-      <header class="flex items-center justify-between">
-        <h1 class="font-semibold" [class]="embedded() ? 'text-lg' : 'text-2xl'">
-          New backup destination
-        </h1>
-        @if (embedded()) {
-          <button
-            type="button"
-            class="text-sm text-muted-foreground hover:underline"
-            (click)="cancelled.emit()"
-          >
-            Cancel
-          </button>
-        } @else {
-          <a
-            routerLink="/management/backup/destinations"
-            class="text-sm text-muted-foreground hover:underline"
-          >
-            Cancel
-          </a>
-        }
-      </header>
-
-      <p class="text-sm text-muted-foreground">
-        Add an <strong class="text-foreground">external</strong> S3-compatible bucket as a backup
-        destination — AWS, Wasabi, Backblaze B2, Cloudflare R2, IDrive E2, MinIO, or any other
-        endpoint that speaks the S3 API.
-        @if (!embedded()) {
-          On Scaleway you don't need this form.
-        }
-      </p>
-
-      @if (!embedded()) {
-        <div
-          class="rounded-md border border-primary/30 bg-primary/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-        >
-          <div class="text-sm">
-            <p class="font-medium">⚡ Using Scaleway? Skip this form.</p>
-            <p class="text-xs text-muted-foreground mt-0.5">
-              Flui sets up the destination, schedule and first backup for a cluster in one click —
-              no bucket or keys to copy.
-            </p>
-          </div>
-          <a
-            routerLink="/management/backup"
-            class="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 text-center"
-          >
-            Enable backups →
-          </a>
+    <form
+      (ngSubmit)="onSubmit()"
+      #f="ngForm"
+      [class]="embedded() ? 'flex min-h-0 flex-col' : 'fl-page'"
+    >
+      <ng-template #bucketFields>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <fl-field label="Name" for="dest-name">
+            <div class="fl-input fl-input--lg">
+              <input
+                id="dest-name"
+                required
+                name="name"
+                [(ngModel)]="form.name"
+                maxlength="120"
+                placeholder="my-s3-backup"
+              />
+            </div>
+          </fl-field>
+          <fl-field label="Region" for="dest-region">
+            <div class="fl-input fl-input--lg">
+              <input
+                id="dest-region"
+                required
+                name="region"
+                [(ngModel)]="form.region"
+                placeholder="eu-central-1"
+              />
+            </div>
+          </fl-field>
+          <fl-field label="Endpoint" for="dest-endpoint" class="sm:col-span-2">
+            <div class="fl-input fl-input--lg">
+              <input
+                id="dest-endpoint"
+                required
+                name="endpoint"
+                type="url"
+                [(ngModel)]="form.endpoint"
+                placeholder="https://s3.example.com"
+              />
+            </div>
+          </fl-field>
+          <fl-field label="Bucket" for="dest-bucket">
+            <div class="fl-input fl-input--lg">
+              <input
+                id="dest-bucket"
+                class="fl-mono"
+                required
+                name="bucket"
+                [(ngModel)]="form.bucket"
+              />
+            </div>
+          </fl-field>
+          <fl-field label="Path prefix" for="dest-prefix" hint="Optional">
+            <div class="fl-input fl-input--lg">
+              <input
+                id="dest-prefix"
+                class="fl-mono"
+                name="pathPrefix"
+                [(ngModel)]="form.pathPrefix"
+              />
+            </div>
+          </fl-field>
         </div>
-      }
+      </ng-template>
 
-      <form (ngSubmit)="onSubmit()" #f="ngForm" class="space-y-5">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label class="block">
-            <span class="text-sm font-medium">Name *</span>
-            <input
-              required
-              name="name"
-              [(ngModel)]="form.name"
-              maxlength="120"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              placeholder="my-s3-backup"
-            />
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">Region *</span>
-            <input
-              required
-              name="region"
-              [(ngModel)]="form.region"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              placeholder="e.g. eu-central-1"
-            />
-          </label>
+      <ng-template #credentialFields>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <fl-field label="Access key" for="dest-access-key">
+            <div class="fl-input fl-input--lg">
+              <input
+                id="dest-access-key"
+                class="fl-mono"
+                required
+                name="accessKey"
+                autocomplete="off"
+                [(ngModel)]="form.accessKey"
+              />
+            </div>
+          </fl-field>
+          <fl-field label="Secret key" for="dest-secret-key">
+            <div class="fl-input fl-input--lg">
+              <input
+                id="dest-secret-key"
+                class="fl-mono"
+                required
+                name="secretKey"
+                type="password"
+                autocomplete="new-password"
+                [(ngModel)]="form.secretKey"
+              />
+            </div>
+          </fl-field>
         </div>
+      </ng-template>
 
-        <label class="block">
-          <span class="text-sm font-medium">Endpoint *</span>
-          <input
-            required
-            name="endpoint"
-            type="url"
-            [(ngModel)]="form.endpoint"
-            class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            placeholder="https://s3.example.com"
-          />
-        </label>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label class="block">
-            <span class="text-sm font-medium">Bucket *</span>
-            <input
-              required
-              name="bucket"
-              [(ngModel)]="form.bucket"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">Path prefix</span>
-            <input
-              name="pathPrefix"
-              [(ngModel)]="form.pathPrefix"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              placeholder="optional"
-            />
-          </label>
+      <ng-template #optionFields>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <fl-field label="Encryption" for="dest-encryption">
+            <span class="fl-select-wrap">
+              <select
+                id="dest-encryption"
+                class="fl-select"
+                name="encryptionMode"
+                [(ngModel)]="form.encryptionMode"
+              >
+                <option value="flui_managed">Flui-managed</option>
+                <option value="byo_passphrase">Bring your own passphrase</option>
+                <option value="none">None</option>
+              </select>
+            </span>
+          </fl-field>
+          <fl-field label="Cost in cents per GB per month" for="dest-cost" hint="Optional">
+            <div class="fl-input fl-input--lg">
+              <input
+                id="dest-cost"
+                type="number"
+                name="costPerGbMonthCents"
+                min="0"
+                placeholder="595"
+                [(ngModel)]="form.costPerGbMonthCents"
+              />
+            </div>
+          </fl-field>
+          @if (form.encryptionMode === 'byo_passphrase') {
+            <fl-field label="Passphrase" for="dest-passphrase" class="sm:col-span-2">
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="dest-passphrase"
+                  class="fl-mono"
+                  required
+                  type="password"
+                  name="encryptionPassphrase"
+                  autocomplete="new-password"
+                  [(ngModel)]="form.encryptionPassphrase"
+                />
+              </div>
+            </fl-field>
+          }
         </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label class="block">
-            <span class="text-sm font-medium">Access key *</span>
-            <input
-              required
-              name="accessKey"
-              [(ngModel)]="form.accessKey"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-            />
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">Secret key *</span>
-            <input
-              required
-              name="secretKey"
-              type="password"
-              [(ngModel)]="form.secretKey"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-            />
-          </label>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label class="block">
-            <span class="text-sm font-medium">Encryption mode</span>
-            <select
-              name="encryptionMode"
-              [(ngModel)]="form.encryptionMode"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            >
-              <option value="flui_managed">Flui-managed</option>
-              <option value="byo_passphrase">Bring your own passphrase</option>
-              <option value="none">None</option>
-            </select>
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">Cost (cents per GB / month)</span>
-            <input
-              type="number"
-              name="costPerGbMonthCents"
-              [(ngModel)]="form.costPerGbMonthCents"
-              min="0"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              placeholder="optional, e.g. 595"
-            />
-          </label>
-        </div>
-
-        @if (form.encryptionMode === 'byo_passphrase') {
-          <label class="block">
-            <span class="text-sm font-medium">Passphrase *</span>
-            <input
-              required
-              type="password"
-              name="encryptionPassphrase"
-              [(ngModel)]="form.encryptionPassphrase"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-            />
-          </label>
-        }
-
-        <div class="flex flex-wrap gap-4">
-          <label class="inline-flex items-center gap-2 text-sm">
+        <div class="flex flex-col gap-2">
+          <label class="fl-check">
             <input type="checkbox" name="forcePathStyle" [(ngModel)]="form.forcePathStyle" />
-            Force path-style addressing
+            <span>Force path-style addressing</span>
           </label>
-          <label class="inline-flex items-center gap-2 text-sm">
+          <label class="fl-check">
             <input type="checkbox" name="useSse" [(ngModel)]="form.useSse" />
-            Use server-side encryption (SSE)
+            <span>Use server-side encryption (SSE)</span>
           </label>
-          <label class="inline-flex items-center gap-2 text-sm">
+          <label class="fl-check">
             <input type="checkbox" name="usableForEtcdL1" [(ngModel)]="form.usableForEtcdL1" />
-            Usable for etcd L1 snapshots
+            <span>Usable for etcd L1 snapshots</span>
           </label>
         </div>
+      </ng-template>
 
+      <ng-template #outcome>
         @if (errorMsg()) {
-          <div
-            class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700"
-          >
-            {{ errorMsg() }}
-          </div>
+          <fl-alert tone="error" title="Destination not created">{{ errorMsg() }}</fl-alert>
         }
         @if (testResult(); as r) {
-          <div
-            class="rounded border px-3 py-2 text-sm"
-            [class]="
-              r.healthy
-                ? 'border-green-500/30 bg-green-500/10 text-green-700'
-                : 'border-red-500/30 bg-red-500/10 text-red-700'
-            "
-          >
-            @if (r.healthy) {
-              Connection successful.
-            } @else {
-              Connection failed: {{ r.error }}
-            }
-          </div>
+          @if (r.healthy) {
+            <fl-status tone="success" label="Connection successful" />
+          } @else {
+            <fl-alert tone="error" title="Connection failed">{{ r.error }}</fl-alert>
+          }
         }
+      </ng-template>
 
-        <div class="flex gap-2">
+      @if (embedded()) {
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title">New backup destination</h2>
           <button
-            type="submit"
-            class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-            [disabled]="submitting() || !f.form.valid"
+            type="button"
+            class="fl-dialog__close"
+            aria-label="Close"
+            (click)="cancelled.emit()"
           >
-            {{ submitting() ? 'Creating…' : 'Create &amp; test' }}
+            <fl-icon name="lucideX" />
           </button>
+        </header>
+        <div class="fl-dialog__body">
+          <p class="text-fl-body-sm text-fl-ink-muted">
+            An external S3-compatible bucket: AWS, Wasabi, Backblaze B2, Cloudflare R2, IDrive E2,
+            MinIO or any endpoint that speaks the S3 API.
+          </p>
+          <ng-container [ngTemplateOutlet]="bucketFields" />
+          <ng-container [ngTemplateOutlet]="credentialFields" />
+          <ng-container [ngTemplateOutlet]="optionFields" />
+          <ng-container [ngTemplateOutlet]="outcome" />
         </div>
-      </form>
-    </div>
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" (click)="cancelled.emit()">Cancel</button>
+          <button flButton="primary" type="submit" [disabled]="submitting() || !f.form.valid">
+            {{ submitting() ? 'Creating…' : 'Create and test' }}
+          </button>
+        </footer>
+      } @else {
+        <fl-page-header title="New backup destination" [breadcrumb]="breadcrumb">
+          <span headerMeta
+            >An external S3-compatible bucket: AWS, Wasabi, Backblaze B2, Cloudflare R2, IDrive E2,
+            MinIO or any endpoint that speaks the S3 API.</span
+          >
+        </fl-page-header>
+
+        <fl-alert tone="info" title="Using Scaleway? Skip this form.">
+          Flui sets up the destination, schedule and first backup for a cluster in one click, with
+          no bucket or keys to copy.
+          <a alertActions flButton size="sm" routerLink="/management/backup">Enable backups</a>
+        </fl-alert>
+
+        <div class="fl-stack">
+          <fl-panel title="Bucket">
+            <ng-container [ngTemplateOutlet]="bucketFields" />
+          </fl-panel>
+          <fl-panel title="Credentials">
+            <ng-container [ngTemplateOutlet]="credentialFields" />
+          </fl-panel>
+          <fl-panel title="Encryption and options">
+            <div class="flex flex-col gap-4">
+              <ng-container [ngTemplateOutlet]="optionFields" />
+            </div>
+          </fl-panel>
+          <ng-container [ngTemplateOutlet]="outcome" />
+          <div class="fl-row justify-end">
+            <a flButton="ghost" routerLink="/management/backup/destinations">Cancel</a>
+            <button flButton="primary" type="submit" [disabled]="submitting() || !f.form.valid">
+              {{ submitting() ? 'Creating…' : 'Create and test' }}
+            </button>
+          </div>
+        </div>
+      }
+    </form>
   `,
 })
 export class DestinationFormComponent {
@@ -246,6 +280,12 @@ export class DestinationFormComponent {
   readonly submitting = signal(false);
   readonly errorMsg = signal<string | null>(null);
   readonly testResult = signal<{ healthy: boolean; error?: string } | null>(null);
+
+  protected readonly breadcrumb = [
+    { label: 'Backups', link: '/management/backup' },
+    { label: 'Destinations', link: '/management/backup/destinations' },
+    { label: 'New' },
+  ];
 
   form: CreateBackupDestinationDto = {
     name: '',

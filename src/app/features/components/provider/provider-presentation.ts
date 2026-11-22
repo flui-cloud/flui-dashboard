@@ -1,19 +1,13 @@
 import type { ProviderDefinitionDto } from '../../../core/api';
+import type { StatusTone } from '../../../ui/primitives/status';
 
 export type ProviderTone = 'ok' | 'warn' | 'danger' | 'muted';
 
-export const PROVIDER_DOT: Record<ProviderTone, string> = {
-  ok: 'bg-green-500',
-  warn: 'bg-amber-500',
-  danger: 'bg-destructive',
-  muted: 'bg-muted-foreground/50',
-};
-
-export const PROVIDER_TEXT: Record<ProviderTone, string> = {
-  ok: 'text-green-700',
-  warn: 'text-amber-700',
-  danger: 'text-destructive',
-  muted: 'text-muted-foreground',
+export const PROVIDER_STATUS: Record<ProviderTone, StatusTone> = {
+  ok: 'success',
+  warn: 'progress',
+  danger: 'error',
+  muted: 'neutral',
 };
 
 export interface ProviderState {
@@ -143,3 +137,21 @@ export function providerCapabilities(provider: ProviderDefinitionDto): ProviderC
 
 /** Where a guest who has walked the whole connection goes to do it for real. */
 export const GET_FLUI_RUNNING_URL = 'https://docs.flui.cloud/tasks/get-flui-running/';
+
+export function sinceText(iso: string | undefined, now = Date.now()): string {
+  if (!iso) return '';
+  const time = new Date(iso).getTime();
+  if (Number.isNaN(time)) return '';
+  const minutes = Math.floor((now - time) / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+export function formatDateTime(value: string | undefined): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+}

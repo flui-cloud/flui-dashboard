@@ -1,48 +1,99 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
+import { Component, computed, inject } from '@angular/core';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
 import { IamService } from '../../service/iam.service';
+import { RoleDef } from '../../model/iam.model';
 
 @Component({
   selector: 'app-roles-tab',
-  standalone: true,
-  imports: [HlmCardDirective, HlmCardContentDirective, HlmBadgeDirective],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlEmptyState, FlTable],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="grid gap-4 md:grid-cols-2">
-      @for (r of iam.roles(); track r.key) {
-        <div hlmCard>
-          <div hlmCardContent class="pt-5 space-y-3">
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-base font-semibold text-foreground">{{ r.name }}</h3>
-                @if (!r.grantable) {
-                  <span hlmBadge variant="outline" class="text-[10px] uppercase tracking-wide">
-                    {{ r.assignable ? 'not yours to grant' : 'assigned by the platform' }}
-                  </span>
-                }
-              </div>
-              <p class="text-sm text-muted-foreground">{{ r.description }}</p>
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-              @for (p of r.permissions; track p) {
-                <span hlmBadge variant="secondary" class="text-[11px] font-mono">{{ p }}</span>
+    <fl-panel title="Roles" [count]="iam.roles().length" [flush]="true">
+      @if (iam.roles().length) {
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Role</th>
+                <th scope="col">What it allows</th>
+                <th scope="col">Who confers it</th>
+                <th scope="col" class="is-num">Permissions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of iam.roles(); track r.key) {
+                <tr>
+                  <td class="font-medium">{{ r.name }}</td>
+                  <td class="whitespace-normal text-fl-ink-secondary">{{ r.description }}</td>
+                  <td class="text-fl-ink-secondary">{{ conferredBy(r) }}</td>
+                  <td class="is-num">{{ r.permissions.length }}</td>
+                </tr>
               }
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>
+      } @else {
+        <fl-empty-state [compact]="true" title="No roles to show" />
       }
-    </div>
-    <p class="mt-4 text-xs text-muted-foreground">
-      Built-in roles are read-only. Custom roles are not available at launch. Viewer, Operator,
-      Maintainer and Owner are a ladder — each one carries everything the one before it carries, and
-      adds to it;
-      <span class="font-medium">Owner</span> is conferred only by another owner.
-      <span class="font-medium">Platform operator</span> sits outside the ladder: it runs the
-      installation without reaching any application data.
-    </p>
+      <p class="border-t border-fl-border px-4 py-3 text-fl-body-sm text-fl-ink-muted">
+        Built-in roles are read-only. Custom roles are not available at launch. Viewer, Operator,
+        Maintainer and Owner are a ladder: each one carries everything the one before it carries,
+        and adds to it. <span class="font-medium text-fl-ink">Owner</span> is conferred only by
+        another owner. <span class="font-medium text-fl-ink">Platform operator</span> sits outside
+        the ladder: it runs the installation without reaching any application data.
+      </p>
+    </fl-panel>
+
+    @if (permissions().length) {
+      <fl-panel title="Permissions" [count]="permissions().length" [flush]="true">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Permission</th>
+                @for (r of iam.roles(); track r.key) {
+                  <th scope="col" class="text-center">{{ r.name }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of permissions(); track p) {
+                <tr>
+                  <td class="fl-mono">{{ p }}</td>
+                  @for (r of iam.roles(); track r.key) {
+                    <td class="text-center">
+                      <label class="fl-check">
+                        <input type="checkbox" disabled [checked]="holds(r, p)" />
+                        <span class="fl-sr">{{ p }} in {{ r.name }}</span>
+                      </label>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </fl-panel>
+    }
   `,
 })
 export class RolesTabComponent {
   protected readonly iam = inject(IamService);
+
+  protected readonly permissions = computed(() => {
+    const seen = new Set<string>();
+    for (const r of this.iam.roles()) for (const p of r.permissions) seen.add(p);
+    return [...seen];
+  });
+
+  protected holds(r: RoleDef, permission: string): boolean {
+    return r.permissions.includes(permission);
+  }
+
+  protected conferredBy(r: RoleDef): string {
+    if (r.grantable) return 'You can grant it';
+    return r.assignable ? 'Not yours to grant' : 'Assigned by the platform';
+  }
 }

@@ -1,23 +1,26 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
-import { Router, RouterLink } from '@angular/router';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw, lucideSearch } from '@ng-icons/lucide';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlPageHeader } from '../../../../ui/patterns/page-header';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../../ui/patterns/states';
+import { FlTable } from '../../../../ui/patterns/table';
+import { FlActionsMenu, MenuAction } from '../../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../../ui/overlays/confirm';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlStatus } from '../../../../ui/primitives/status';
 import { BackupService } from '../../../service/backup.service';
 import {
+  BackupDestination,
   formatBytes,
   providerLabel,
   type StorageBackendProvider,
 } from '../../../model/backup.models';
-import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
-import { BackupBackLinkComponent } from '../shared/back-link.component';
+import { destinationReachability } from '../shared/backup-tones';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
 import {
@@ -29,138 +32,173 @@ import {
 
 @Component({
   selector: 'app-destinations-list',
-  standalone: true,
   imports: [
     ReadOnlySectionDirective,
+    FormsModule,
     RouterLink,
-    BackupStatusBadgeComponent,
-    BackupBackLinkComponent,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlEmptyState,
+    FlLoadingState,
+    FlTable,
+    FlActionsMenu,
+    FlButton,
+    FlIcon,
+    FlStatus,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideRefreshCw, lucideSearch })],
   template: `
-    <div class="p-6 space-y-4">
-      <app-backup-back-link link="/management/backup" label="Back to Backup" />
-      <header class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold">Backup destinations</h1>
-          <p class="text-sm text-muted-foreground mt-1">
-            S3-compatible storage targets shared by your policies.
-          </p>
-        </div>
-        <a
-          appReadOnlySection="backup"
-          routerLink="/management/backup/destinations/new"
-          class="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
-        >
-          Add external S3
-        </a>
-      </header>
-
-      <div
-        class="rounded-lg border border-primary/30 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+    <div class="fl-page">
+      <fl-page-header
+        [title]="'Backup destinations (' + backup.destinations().length + ')'"
+        [breadcrumb]="breadcrumb"
       >
-        <div>
-          <p class="text-sm font-medium">⚡ One-click Scaleway backups</p>
-          <p class="text-xs text-muted-foreground mt-0.5">
-            Pick a cluster and Flui provisions the destination, protects every app on it and takes
-            the first backups automatically — using your existing Scaleway credentials. Most users
-            don't need to add a destination by hand.
-          </p>
-        </div>
+        <span headerMeta>S3-compatible storage shared by your backup policies.</span>
+        <ng-container headerActions>
+          <button
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
+            [disabled]="backup.loading()"
+            (click)="reload()"
+          >
+            <fl-icon name="lucideRefreshCw" />
+          </button>
+          <a
+            flButton="primary"
+            appReadOnlySection="backup"
+            routerLink="/management/backup/destinations/new"
+            >Add external S3</a
+          >
+        </ng-container>
+      </fl-page-header>
+
+      <fl-alert tone="info" title="One-click Scaleway backups">
+        Pick a cluster and Flui provisions the destination, protects every app on it and takes the
+        first backups, with your existing Scaleway credentials. Most setups need no destination
+        added by hand.
         <a
+          alertActions
+          flButton
+          size="sm"
           appReadOnlySection="backup"
           routerLink="/management/backup"
-          class="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 text-center"
+          >Enable backups</a
         >
-          Enable backups →
-        </a>
-      </div>
+      </fl-alert>
 
       @if (backup.error()) {
-        <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700">
-          {{ backup.error() }}
-        </div>
+        <fl-alert tone="error" title="Could not load destinations">{{ backup.error() }}</fl-alert>
       }
-      @if (backup.loading()) {
-        <p class="text-sm text-muted-foreground">Loading…</p>
-      } @else if (backup.destinations().length === 0) {
-        <div class="rounded-lg border border-dashed border-border p-8 text-center">
-          <p class="text-sm text-muted-foreground">
-            No destinations yet. Use
-            <span class="font-medium text-foreground">one-click Scaleway backups</span>
-            above, or add an external S3 bucket manually.
-          </p>
+
+      <fl-panel [flush]="true">
+        <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+          <div class="fl-toolbar__group">
+            <label class="fl-input">
+              <fl-icon name="lucideSearch" [size]="14" />
+              <span class="fl-sr">Search</span>
+              <input
+                type="search"
+                placeholder="Search by name, bucket or region"
+                aria-label="Search destinations"
+                [ngModel]="search()"
+                (ngModelChange)="search.set($event)"
+              />
+            </label>
+          </div>
+          <div class="fl-toolbar__group">
+            <span class="fl-toolbar__info"
+              >{{ rows().length }} {{ rows().length === 1 ? 'item' : 'items' }}</span
+            >
+          </div>
         </div>
-      } @else {
-        <div class="overflow-hidden rounded-lg border border-border bg-card">
-          <table class="w-full text-sm">
-            <thead class="bg-muted/40 text-xs uppercase text-muted-foreground">
-              <tr>
-                <th class="text-left px-4 py-2">Name</th>
-                <th class="text-left px-4 py-2">Provider</th>
-                <th class="text-left px-4 py-2">Region / Bucket</th>
-                <th class="text-left px-4 py-2">Health</th>
-                <th class="text-left px-4 py-2">Usage</th>
-                <th class="text-right px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (d of backup.destinations(); track d.id) {
-                <tr class="border-t border-border hover:bg-muted/20">
-                  <td class="px-4 py-2">
-                    <a
-                      [routerLink]="['/management/backup/destinations', d.id]"
-                      class="font-medium hover:underline"
-                    >
-                      {{ d.name }}
-                    </a>
-                  </td>
-                  <td class="px-4 py-2 text-muted-foreground">{{ providerLabel(d.provider) }}</td>
-                  <td class="px-4 py-2 text-muted-foreground">{{ d.region }} / {{ d.bucket }}</td>
-                  <td class="px-4 py-2">
-                    <app-backup-status-badge kind="health" [value]="d.healthStatus" />
-                  </td>
-                  <td class="px-4 py-2 text-muted-foreground">{{ formatBytes(d.usageBytes) }}</td>
-                  <td class="px-4 py-2 text-right space-x-2">
-                    <button
-                      type="button"
-                      class="text-xs text-primary hover:underline"
-                      [disabled]="busy().has(d.id)"
-                      (click)="onTest(d.id)"
-                    >
-                      Test
-                    </button>
-                    <button
-                      type="button"
-                      class="text-xs text-primary hover:underline"
-                      [disabled]="busy().has(d.id)"
-                      (click)="onRefresh(d.id)"
-                    >
-                      Refresh usage
-                    </button>
-                    <button
-                      type="button"
-                      class="text-xs text-red-600 hover:underline"
-                      (click)="onDelete(d.id)"
-                    >
-                      Delete
-                    </button>
-                  </td>
+        @if (backup.loading() && backup.destinations().length === 0) {
+          <fl-loading-state [rows]="4" />
+        } @else if (backup.destinations().length === 0) {
+          <fl-empty-state
+            title="No destinations yet"
+            body="Use one-click Scaleway backups, or add an external S3 bucket by hand."
+          />
+        } @else if (rows().length === 0) {
+          <fl-empty-state title="No destinations" body="Nothing matches this search.">
+            <button flButton size="sm" type="button" (click)="search.set('')">Clear search</button>
+          </fl-empty-state>
+        } @else {
+          <div class="fl-table-wrap">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Region</th>
+                  <th scope="col">Bucket</th>
+                  <th scope="col">Reachability</th>
+                  <th scope="col" class="is-num">Usage</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
                 </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
+              </thead>
+              <tbody>
+                @for (d of rows(); track d.id) {
+                  <tr>
+                    <td class="fl-cell-name">
+                      <a class="fl-link" [routerLink]="['/management/backup/destinations', d.id]">{{
+                        d.name
+                      }}</a>
+                    </td>
+                    <td class="text-fl-ink-muted">{{ providerLabel(d.provider) }}</td>
+                    <td class="fl-mono">{{ d.region }}</td>
+                    <td>
+                      <span class="fl-mono fl-cell-clip" [title]="d.bucket">{{ d.bucket }}</span>
+                    </td>
+                    <td>
+                      <fl-status
+                        [tone]="reachability(d.healthStatus).tone"
+                        [label]="reachability(d.healthStatus).label"
+                      />
+                    </td>
+                    <td class="is-num">{{ formatBytes(d.usageBytes) }}</td>
+                    <td class="is-fit">
+                      <fl-actions-menu
+                        [compact]="true"
+                        [label]="'Actions for ' + d.name"
+                        [items]="actionsFor(d)"
+                        (action)="onAction(d, $event)"
+                      />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </fl-panel>
     </div>
   `,
 })
 export class DestinationsListComponent implements OnInit, OnDestroy {
   protected readonly backup = inject(BackupService);
-  private readonly router = inject(Router);
   private readonly currentSurface = inject(CurrentSurfaceService);
 
+  private readonly confirm = inject(ConfirmService);
+
+  protected readonly breadcrumb = [
+    { label: 'Backups', link: '/management/backup' },
+    { label: 'Destinations' },
+  ];
   protected readonly busy = signal<Set<string>>(new Set());
+  protected readonly search = signal('');
+  protected readonly reachability = destinationReachability;
+
+  protected readonly rows = computed(() => {
+    const q = this.search().trim().toLowerCase();
+    const all = this.backup.destinations();
+    if (!q) return all;
+    return all.filter((d) =>
+      [d.name, d.bucket, d.region, d.endpoint].some((v) => (v ?? '').toLowerCase().includes(q)),
+    );
+  });
   protected readonly providerLabel = (p: StorageBackendProvider): string =>
     providerLabel(p, this.backup.presets());
   protected readonly formatBytes = formatBytes;
@@ -196,6 +234,25 @@ export class DestinationsListComponent implements OnInit, OnDestroy {
     })();
   }
 
+  protected reload(): void {
+    void this.backup.loadDestinations();
+  }
+
+  protected actionsFor(d: BackupDestination): readonly MenuAction[] {
+    const busy = this.busy().has(d.id);
+    return [
+      { id: 'test', label: 'Test connection', disabled: busy },
+      { id: 'refresh', label: 'Refresh usage', disabled: busy },
+      { id: 'delete', label: 'Delete', danger: true, separatorBefore: true },
+    ];
+  }
+
+  protected onAction(d: BackupDestination, action: string): void {
+    if (action === 'test') void this.onTest(d.id);
+    else if (action === 'refresh') void this.onRefresh(d.id);
+    else if (action === 'delete') void this.onDelete(d.id);
+  }
+
   async onTest(id: string): Promise<void> {
     this.markBusy(id, true);
     await this.backup.testDestination(id);
@@ -209,7 +266,15 @@ export class DestinationsListComponent implements OnInit, OnDestroy {
   }
 
   async onDelete(id: string): Promise<void> {
-    if (!confirm('Delete this destination? Policies referencing it must be removed first.')) return;
+    const name = this.backup.destinations().find((d) => d.id === id)?.name ?? id;
+    const ok = await this.confirm.confirm({
+      title: `Delete ${name}?`,
+      body: 'Flui stops using this storage. Policies that write to it must be removed first.',
+      confirmLabel: 'Delete destination',
+      destructive: true,
+      typeToConfirm: name,
+    });
+    if (!ok) return;
     await this.backup.deleteDestination(id);
   }
 

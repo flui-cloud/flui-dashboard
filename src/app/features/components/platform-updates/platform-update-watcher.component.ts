@@ -1,47 +1,42 @@
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader } from '@ng-icons/lucide';
+import { Component, OnInit, effect, inject } from '@angular/core';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PlatformUpdateService } from '../../service/platform-update.service';
+import { FlStatus } from '../../../ui/primitives/status';
 
-// Mounted once by the shell: the only thing that checks for a release, and the only thing shown while the API is being replaced.
 @Component({
   selector: 'app-platform-update-watcher',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideLoader })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlStatus],
   host: { class: 'contents' },
   template: `
     @if (restarting()) {
-      <div
-        class="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4 backdrop-blur-[2px]"
-      >
-        <div class="w-full max-w-md card-surface p-6">
-          <div class="flex items-center gap-3">
-            <div class="step-icon bg-primary/10 text-primary">
-              <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-            </div>
-            <div>
-              <h3 class="text-sm font-semibold">Control plane restarting</h3>
-              <p class="text-xs text-muted-foreground mt-0.5">
-                flui-api is starting on {{ updates.operation()?.targetVersion }}
-                @if (migrations() > 0) {
-                  and applying {{ migrations() }} database migration{{
-                    migrations() === 1 ? '' : 's'
-                  }}
-                }
-                .
-              </p>
-            </div>
+      <div class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          class="fl-dialog"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="platform-restart-title"
+          aria-live="polite"
+        >
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" id="platform-restart-title">Control plane restarting</h2>
+            <fl-status tone="progress" label="Restarting" />
+          </header>
+          <div class="fl-dialog__body">
+            <p class="m-0">
+              <span class="fl-mono">flui-api</span> is starting on
+              <span class="fl-mono">{{ updates.operation()?.targetVersion }}</span>
+              @if (migrations() > 0) {
+                and applying {{ migrations() }} database migration{{
+                  migrations() === 1 ? '' : 's'
+                }}
+              }
+              .
+            </p>
+            <p class="m-0 text-fl-ink-muted">
+              Your applications keep running. This page reloads by itself as soon as the API answers
+              on the new version.
+            </p>
           </div>
-          <div class="mt-5 h-1.5 overflow-hidden rounded-full bg-muted">
-            <div class="h-full w-1/3 rounded-full bg-primary animate-indeterminate"></div>
-          </div>
-          <p class="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
-            Your applications keep running. This page reloads by itself as soon as the API answers
-            on the new version.
-          </p>
         </div>
       </div>
     }
@@ -73,7 +68,6 @@ export class PlatformUpdateWatcherComponent implements OnInit {
     });
   }
 
-  // True either the API told us it's restarting, or it stopped answering mid-update.
   protected restarting(): boolean {
     return (
       this.updates.controlPlaneRestarting() ||
@@ -85,7 +79,7 @@ export class PlatformUpdateWatcherComponent implements OnInit {
     return this.updates.operation()?.migrations ?? 0;
   }
 
-  async ngOnInit(): Promise<void> {
-    await this.updates.ensureLoaded();
+  ngOnInit(): void {
+    void this.updates.ensureLoaded();
   }
 }

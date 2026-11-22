@@ -1,26 +1,8 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArchive,
-  lucideCircleAlert,
-  lucideLayers,
-  lucideLoader,
-  lucidePlus,
-  lucideTriangleAlert,
-  lucideX,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlus, lucideX } from '@ng-icons/lucide';
 import { Observable } from 'rxjs';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { InfrastructureClustersService } from '../../../core/api/api/infrastructureClusters.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
@@ -46,412 +28,41 @@ import {
   presentedContent,
 } from './operating-context-surface';
 import { ManagementNetworkCardComponent } from '../vnet/management-network-card.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 type ContextTab = 'attention' | 'holding' | 'archive';
 
 @Component({
   selector: 'app-operating-context',
-  standalone: true,
   imports: [
     FormsModule,
-    NgIcon,
-    HlmButtonDirective,
     ContextNoteCardComponent,
     ContextNoteFormComponent,
     ExplainComponent,
     ManagementNetworkCardComponent,
+    FlAlert,
+    FlButton,
+    FlEmptyState,
+    FlField,
+    FlIcon,
+    FlLoadingState,
+    FlPageHeader,
+    FlPanel,
   ],
-  providers: [
-    provideIcons({
-      lucideArchive,
-      lucideCircleAlert,
-      lucideLayers,
-      lucideLoader,
-      lucidePlus,
-      lucideTriangleAlert,
-      lucideX,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="mx-auto max-w-5xl space-y-8 p-6">
-      <header class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="m-0 text-2xl font-semibold tracking-tight text-foreground">
-          How this installation is run
-        </h1>
-        <span
-          class="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/[0.07] px-2.5 py-1"
-          data-testid="preamble"
-        >
-          <span class="font-mono text-[10px] font-semibold tracking-widest text-accent-foreground">
-            ADVICE
-          </span>
-          <app-explain
-            label="not permissions"
-            labelClass="text-[12px] text-muted-foreground"
-            testid="preamble-why"
-          >
-            {{ preamble() }}
-          </app-explain>
-        </span>
-      </header>
-
-      <app-management-network-card [compact]="true" />
-
-      <!-- ── What reaches a given thing ────────────────────────── -->
-      @if (!firstRun()) {
-        <section class="space-y-2" data-testid="focus">
-          <div class="flex flex-wrap items-end gap-3">
-            <div class="space-y-1">
-              <label class="block text-[12px] font-medium text-foreground" for="focus-slug">
-                Application
-              </label>
-              <input
-                id="focus-slug"
-                [class]="fieldClass"
-                placeholder="slug"
-                [ngModel]="focusSlug()"
-                (ngModelChange)="focusSlug.set($event)"
-                data-testid="focus-slug"
-              />
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[12px] font-medium text-foreground" for="focus-cluster">
-                Cluster
-              </label>
-              <select
-                id="focus-cluster"
-                [class]="selectClass"
-                [ngModel]="focusCluster()"
-                (ngModelChange)="focusCluster.set($event)"
-                data-testid="focus-cluster"
-              >
-                <option value="">Any cluster</option>
-                @for (cluster of clusters(); track cluster.id) {
-                  <option [value]="cluster.id">{{ cluster.name }}</option>
-                }
-              </select>
-            </div>
-            <button hlmBtn size="sm" variant="outline" (click)="load()" data-testid="focus-apply">
-              Show what reaches it
-            </button>
-            @if (focused()) {
-              <button
-                hlmBtn
-                size="sm"
-                variant="ghost"
-                (click)="clearFocus()"
-                data-testid="focus-clear"
-              >
-                <ng-icon name="lucideX" class="mr-1.5 h-3.5 w-3.5" />
-                Everything again
-              </button>
-            }
-          </div>
-          <app-explain label="Two axes, not a hierarchy" testid="reach-why">
-            What a thing is, and where it runs. A resource receives every note whose region contains
-            it — down both at once, neither taking precedence.
-          </app-explain>
-        </section>
-      }
-
-      @if (loadError(); as message) {
-        <div
-          class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          data-testid="load-error"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{ message }}</span>
-        </div>
-      }
-
-      <!-- ── The first time anybody arrives ────────────────────── -->
-      @if (firstRun() && !writing()) {
-        <section
-          class="card-surface mx-auto max-w-2xl space-y-5 p-8 text-center"
-          data-testid="first-run"
-        >
-          <div class="space-y-2">
-            <h2 class="m-0 text-lg font-semibold text-foreground">
-              Nothing has been written down yet
-            </h2>
-            <p class="m-0 text-sm text-muted-foreground">
-              The local conventions nobody can work out from the code — why the master is left
-              alone, when deploys happen, which cluster is not to be touched. Everybody here reads
-              them, and so does every agent before it changes anything.
-            </p>
-          </div>
-
-          <div class="rounded-lg border border-dashed border-border p-4 text-left">
-            <p class="m-0 text-[11px] uppercase tracking-wide text-muted-foreground">For example</p>
-            <p class="m-0 mt-1.5 text-sm font-medium text-foreground">The master is not resized</p>
-            <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
-              The API runs on it, so resizing takes the control plane down. Add a node from the
-              cluster's Scaling tab instead.
-            </p>
-          </div>
-
-          @if (readOnlyHere()) {
-            <p class="m-0 text-sm text-muted-foreground" data-testid="first-run-read-only">
-              {{ readOnlyWhy() }}
-            </p>
-          } @else {
-            <button hlmBtn (click)="writing.set(true)" data-testid="write-first">
-              <ng-icon name="lucidePlus" class="mr-1.5 h-4 w-4" />
-              Write the first note
-            </button>
-          }
-        </section>
-      }
-
-      <!-- ── Writing one ───────────────────────────────────────── -->
-      @if (readOnlyHere() && !firstRun()) {
-        <p class="m-0 text-sm text-muted-foreground" data-testid="read-only-here">
-          {{ readOnlyWhy() }}
-        </p>
-      } @else if (writing()) {
-        <app-context-note-form
-          [clusters]="clusters()"
-          [probes]="probes()"
-          [busy]="saving()"
-          [error]="saveError()"
-          (save)="write($event)"
-          (dismissed)="writing.set(false)"
-        />
-      } @else if (!firstRun()) {
-        <button hlmBtn (click)="writing.set(true)" data-testid="start-writing">
-          <ng-icon name="lucidePlus" class="mr-1.5 h-4 w-4" />
-          Write a note
-        </button>
-      }
-
-      @if (loading()) {
-        <div class="space-y-3" data-testid="loading" aria-busy="true">
-          @for (row of [1, 2, 3]; track row) {
-            <div class="card-surface space-y-3 p-4">
-              <div class="flex items-center gap-2">
-                <div class="skeleton h-5 w-56"></div>
-                <div class="skeleton h-4 w-16"></div>
-              </div>
-              <div class="skeleton h-3 w-72"></div>
-              <div class="skeleton h-3 w-full max-w-xl"></div>
-            </div>
-          }
-        </div>
-      }
-
-      @if (!loading() && !firstRun()) {
-        <!-- ── Three questions, one at a time ─────────────────── -->
-        <div class="border-b border-border">
-          <nav class="-mb-px flex gap-1 overflow-x-auto scrollbar-none" data-testid="tabs">
-            @for (t of tabs; track t.id) {
-              <button
-                type="button"
-                (click)="chooseTab(t.id)"
-                class="inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors md:px-5"
-                [class]="
-                  tab() === t.id
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
-                "
-                [attr.aria-current]="tab() === t.id ? 'page' : null"
-                [attr.data-testid]="'tab-' + t.id"
-              >
-                <ng-icon [name]="t.icon" class="h-4 w-4" />
-                <span>{{ t.label }}</span>
-                @if (countFor(t.id); as n) {
-                  <span
-                    class="rounded-full px-1.5 py-0.5 text-[11px] tabular-nums"
-                    [class]="
-                      t.id === 'attention'
-                        ? 'bg-amber-500/15 text-amber-600'
-                        : 'bg-muted text-muted-foreground'
-                    "
-                    [attr.data-testid]="'tab-count-' + t.id"
-                  >
-                    {{ n }}
-                  </span>
-                }
-              </button>
-            }
-          </nav>
-        </div>
-      }
-
-      <!-- ── Asking to be re-read ──────────────────────────────── -->
-      @if (!loading() && !firstRun() && tab() === 'attention') {
-        <section class="space-y-3" data-testid="group-review">
-          <div class="flex items-baseline justify-between gap-4 pb-1">
-            <p class="text-label m-0">Asking to be re-read</p>
-            <p class="m-0 text-[13px] text-muted-foreground" data-testid="review-count">
-              {{ reviewNote() }}
-            </p>
-          </div>
-
-          @for (entry of review(); track entry.id) {
-            <app-context-note-card
-              [entry]="entry"
-              [clusterNames]="clusterNames()"
-              [busy]="acting() === entry.id"
-              [readOnly]="readOnlyHere()"
-              [error]="errorFor(entry.id)"
-              (confirm)="confirm($event)"
-              (archive)="archive($event)"
-              (reword)="reword($event)"
-            />
-          } @empty {
-            <app-explain
-              label="Nothing is asking to be revisited"
-              labelClass="text-sm text-muted-foreground"
-              testid="nothing-to-review"
-            >
-              A note that leans on a live fact appears here the moment the platform stops agreeing
-              with it.
-            </app-explain>
-          }
-        </section>
-
-        <!-- ── Where two notes disagree ────────────────────────── -->
-        <section class="space-y-3" data-testid="group-conflicts">
-          <div class="flex items-baseline justify-between gap-4 pb-1">
-            <p class="text-label m-0">Where two notes disagree</p>
-            <p class="m-0 text-[13px] text-muted-foreground" data-testid="conflict-count">
-              {{ conflictNote() }}
-            </p>
-          </div>
-
-          @for (group of conflicts(); track group.topic) {
-            <div
-              class="space-y-2 rounded-lg border border-dashed border-border p-3"
-              data-testid="conflict"
-            >
-              <p class="m-0 flex items-center gap-2 text-[12px] text-muted-foreground">
-                <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5 shrink-0" />
-                <span class="font-mono text-foreground">{{ group.topic }}</span>
-                <app-explain
-                  label="neither wins"
-                  labelClass="text-[12px] text-muted-foreground"
-                  [testid]="'conflict-why-' + group.topic"
-                >
-                  Being written at a narrower level does not make a note more right, and one of the
-                  two is very often simply older.
-                </app-explain>
-              </p>
-              @for (entry of group.entries; track entry.id) {
-                <app-context-note-card
-                  [entry]="entry"
-                  [clusterNames]="clusterNames()"
-                  [busy]="acting() === entry.id"
-                  [readOnly]="readOnlyHere()"
-                  [error]="errorFor(entry.id)"
-                  (confirm)="confirm($event)"
-                  (archive)="archive($event)"
-                  (reword)="reword($event)"
-                />
-              }
-            </div>
-          } @empty {
-            <p class="m-0 text-sm text-muted-foreground" data-testid="no-conflicts">
-              {{ noConflictNote() }}
-            </p>
-          }
-        </section>
-      }
-
-      <!-- ── What still holds ──────────────────────────────────── -->
-      @if (!loading() && !firstRun() && tab() === 'holding') {
-        <section class="space-y-3" data-testid="group-holding">
-          <div class="flex items-baseline justify-between gap-4 pb-1">
-            <p class="text-label m-0">What still holds</p>
-            <p class="m-0 text-[13px] text-muted-foreground" data-testid="holding-count">
-              {{ holdingNote() }}
-            </p>
-          </div>
-
-          @for (entry of holding(); track entry.id) {
-            <app-context-note-card
-              [entry]="entry"
-              [clusterNames]="clusterNames()"
-              [busy]="acting() === entry.id"
-              [readOnly]="readOnlyHere()"
-              [error]="errorFor(entry.id)"
-              (confirm)="confirm($event)"
-              (archive)="archive($event)"
-              (reword)="reword($event)"
-            />
-          } @empty {
-            <app-explain
-              label="Nothing written down yet"
-              labelClass="text-sm text-muted-foreground"
-              testid="nothing-here"
-            >
-              The first note is usually the one somebody had to explain twice.
-            </app-explain>
-          }
-        </section>
-      }
-
-      <!-- ── Why it used to be done this way ───────────────────── -->
-      @if (!loading() && !firstRun() && tab() === 'archive') {
-        @if (!readOnlyHere()) {
-          <section class="space-y-3" data-testid="group-archive">
-            <div class="flex items-baseline justify-between gap-4 pb-1">
-              <p class="text-label m-0">Why it used to be done this way</p>
-            </div>
-
-            <app-explain
-              label="Archived, not deleted"
-              labelClass="text-[12px] text-muted-foreground"
-              testid="archive-why"
-            >
-              A rule that was true once explains a decision that was made once. These are read here
-              and nowhere else — a withdrawn rule is never handed to an agent as advice, and its
-              premise is not asked again, so each one says what was believed on the day it was
-              withdrawn.
-            </app-explain>
-
-            @if (archiveLoading()) {
-              <div class="space-y-3" data-testid="archive-loading" aria-busy="true">
-                @for (row of [1, 2]; track row) {
-                  <div class="card-surface space-y-2 p-4">
-                    <div class="skeleton h-4 w-48"></div>
-                    <div class="skeleton h-3 w-64"></div>
-                  </div>
-                }
-              </div>
-            } @else if (archiveError()) {
-              <p class="m-0 text-sm text-muted-foreground" data-testid="archive-error">
-                {{ archiveError() }}
-              </p>
-            } @else {
-              @for (entry of archived(); track entry.id) {
-                <app-context-note-card
-                  [entry]="entry"
-                  [clusterNames]="clusterNames()"
-                  [readOnly]="true"
-                />
-              } @empty {
-                <p class="m-0 text-sm text-muted-foreground" data-testid="archive-empty">
-                  Nothing has been retired here yet.
-                </p>
-              }
-            }
-          </section>
-        }
-      }
-    </div>
-  `,
+  providers: [provideIcons({ lucidePlus, lucideX })],
+  templateUrl: './operating-context.component.html',
 })
 export class OperatingContextComponent implements OnInit, OnDestroy {
   private readonly api = inject(OperatingContextService);
   private readonly clusterApi = inject(InfrastructureClustersService);
   private readonly sandbox = inject(SandboxService);
   private readonly currentSurface = inject(CurrentSurfaceService);
-
-  protected readonly fieldClass =
-    'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
-
-  protected readonly selectClass = `${this.fieldClass} h-10 appearance-none pr-8`;
 
   private readonly entries = signal<ContextEntry[]>([]);
   private readonly rawConflicts = signal<ContextConflict[]>([]);
@@ -475,14 +86,10 @@ export class OperatingContextComponent implements OnInit, OnDestroy {
 
   private chosen = false;
 
-  protected readonly tabs: ReadonlyArray<{
-    id: ContextTab;
-    label: string;
-    icon: string;
-  }> = [
-    { id: 'attention', label: 'Needs a look', icon: 'lucideCircleAlert' },
-    { id: 'holding', label: 'In force', icon: 'lucideLayers' },
-    { id: 'archive', label: 'Retired', icon: 'lucideArchive' },
+  protected readonly tabs: ReadonlyArray<{ id: ContextTab; label: string }> = [
+    { id: 'attention', label: 'Needs a look' },
+    { id: 'holding', label: 'In force' },
+    { id: 'archive', label: 'Retired' },
   ];
 
   protected readonly showArchive = signal(false);
@@ -495,7 +102,7 @@ export class OperatingContextComponent implements OnInit, OnDestroy {
   protected readonly preamble = computed(
     () =>
       this.deliveredPreamble() ||
-      'Follow them where they help. Nothing written here widens what anybody may do — that is decided by permissions, elsewhere.',
+      'Follow them where they help. Nothing written here widens what anybody may do: that is decided by permissions, elsewhere.',
   );
 
   protected readonly clusterNames = computed(() =>
@@ -560,8 +167,6 @@ export class OperatingContextComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // Publish this page's own Semantic Surface snapshot into the shared registry
-    // whenever it changes — same pattern as SettingsComponent.
     effect(() => {
       this.currentSurface.set(this.surface());
     });

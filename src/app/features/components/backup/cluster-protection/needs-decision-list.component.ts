@@ -1,4 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlTable } from '../../../../ui/patterns/table';
+import { FlButton } from '../../../../ui/primitives/button';
 import { BackupService } from '../../../service/backup.service';
 import { NeedsDecisionItem } from '../../../model/backup-protection.models';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
@@ -9,79 +13,102 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
  */
 @Component({
   selector: 'app-needs-decision-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReadOnlySectionDirective],
+  imports: [ReadOnlySectionDirective, FlPanel, FlTable, FlAlert, FlButton],
+  host: { class: 'fl-stack' },
   template: `
     @if (items().length) {
-      <div
-        class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 space-y-2"
+      <fl-panel
+        title="Needs a decision"
+        [count]="items().length"
+        [flush]="true"
         data-testid="needs-decision"
       >
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-sm font-medium text-amber-800">
-            {{
-              items().length === 1
-                ? '1 volume needs a decision'
-                : items().length + ' volumes need a decision'
-            }}
-          </span>
-          <button
-            type="button"
-            class="text-xs text-muted-foreground hover:underline"
-            (click)="showHelp.set(!showHelp())"
-          >
-            {{ showHelp() ? 'Less' : 'Why?' }}
-          </button>
-        </div>
+        <button
+          panelActions
+          flButton="ghost"
+          size="sm"
+          type="button"
+          [attr.aria-expanded]="showHelp()"
+          (click)="showHelp.set(!showHelp())"
+        >
+          {{ showHelp() ? 'Less' : 'Why?' }}
+        </button>
         @if (showHelp()) {
-          <p class="text-xs text-muted-foreground">
+          <p class="border-b border-fl-border-subtle px-4 py-3 text-fl-body-sm text-fl-ink-muted">
             A copy taken while a database writes to its volume may not open again. Stop the app for
             the length of each copy, or leave the volume out and protect that data another way.
           </p>
         }
-        <ul class="space-y-2">
-          @for (item of items(); track key(item)) {
-            <li class="text-sm">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <span>
-                  <span class="font-medium">{{ item.name || item.slug }}</span>
-                  @if (item.volume) {
-                    <span class="font-mono text-xs text-muted-foreground">
-                      / {{ item.volume }}</span
-                    >
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Application</th>
+                <th scope="col">Volume</th>
+                @if (showCluster()) {
+                  <th scope="col">Cluster</th>
+                }
+                <th scope="col">Why</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">Decision</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of items(); track key(item)) {
+                <tr>
+                  <td class="fl-cell-name font-medium">{{ item.name || item.slug }}</td>
+                  <td>
+                    @if (item.volume) {
+                      <span class="fl-mono">{{ item.volume }}</span>
+                    } @else {
+                      <span class="text-fl-ink-muted">All volumes</span>
+                    }
+                  </td>
+                  @if (showCluster()) {
+                    <td class="text-fl-ink-muted">
+                      {{ clusterNames()[item.clusterId] ?? item.clusterId }}
+                    </td>
                   }
-                </span>
-                <span class="inline-flex gap-1.5" appReadOnlySection="backup">
-                  <button
-                    type="button"
-                    class="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                    [disabled]="busy() === key(item) || (!item.policyId && !destinationId())"
-                    [title]="!item.policyId && !destinationId() ? 'Add backup storage first' : ''"
-                    (click)="stopDuringCopy(item)"
-                  >
-                    Stop the app during each copy
-                  </button>
-                  @if (item.policyId && item.volume) {
-                    <button
-                      type="button"
-                      class="rounded-md border border-border px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-50"
-                      [disabled]="busy() === key(item)"
-                      (click)="leaveOut(item)"
-                    >
-                      Leave it out
-                    </button>
-                  }
-                </span>
-              </div>
-              <div class="text-xs text-muted-foreground mt-0.5">{{ item.reason }}</div>
-            </li>
-          }
-        </ul>
+                  <td class="is-wrap text-fl-ink-muted">{{ item.reason }}</td>
+                  <td class="is-fit">
+                    <div class="fl-row justify-end" appReadOnlySection="backup">
+                      <button
+                        flButton
+                        size="sm"
+                        type="button"
+                        [disabled]="
+                          busy() === key(item) || (!item.policyId && !destinationOf(item))
+                        "
+                        [title]="
+                          !item.policyId && !destinationOf(item) ? 'Add backup storage first' : ''
+                        "
+                        (click)="stopDuringCopy(item)"
+                      >
+                        Stop the app during each copy
+                      </button>
+                      @if (item.policyId && item.volume) {
+                        <button
+                          flButton="ghost"
+                          size="sm"
+                          type="button"
+                          [disabled]="busy() === key(item)"
+                          (click)="leaveOut(item)"
+                        >
+                          Leave it out
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
         @if (failure()) {
-          <p class="text-xs text-red-600">{{ failure() }}</p>
+          <div class="border-t border-fl-border-subtle p-4">
+            <fl-alert tone="error" title="Decision not saved">{{ failure() }}</fl-alert>
+          </div>
         }
-      </div>
+      </fl-panel>
     }
   `,
 })
@@ -91,11 +118,21 @@ export class NeedsDecisionListComponent {
   readonly items = input<NeedsDecisionItem[]>([]);
   /** Where a new policy writes, for an app that has none yet. */
   readonly destinationId = input<string | null>(null);
+  readonly clusterDestinations = input<Readonly<Record<string, string | null>>>({});
+  readonly clusterNames = input<Readonly<Record<string, string>>>({});
   readonly decided = output<void>();
 
   protected readonly busy = signal<string | null>(null);
   protected readonly failure = signal<string | null>(null);
   protected readonly showHelp = signal(false);
+
+  protected showCluster(): boolean {
+    return Object.keys(this.clusterNames()).length > 0;
+  }
+
+  protected destinationOf(item: NeedsDecisionItem): string | null {
+    return this.clusterDestinations()[item.clusterId] ?? this.destinationId();
+  }
 
   protected key(item: NeedsDecisionItem): string {
     return `${item.applicationId}:${item.volume ?? ''}`;
@@ -109,7 +146,7 @@ export class NeedsDecisionListComponent {
         });
         return;
       }
-      const destinationId = this.destinationId();
+      const destinationId = this.destinationOf(item);
       if (!destinationId) throw new Error('Add backup storage first');
       const created = await this.backup.createPolicy({
         name: `${item.slug}-volumes`,

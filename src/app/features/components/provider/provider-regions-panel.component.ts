@@ -1,65 +1,59 @@
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideGlobe, lucideLoader } from '@ng-icons/lucide';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ProvidersService } from '../../service/providers.service';
 import {
   ProviderConfigurationDto,
   ProviderDefinitionDto,
   ProviderRegionDto,
 } from '../../../core/api';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'provider-regions-panel',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideGlobe, lucideLoader })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlTable, FlEmptyState, FlLoadingState, FlStatus],
+  host: { class: 'fl-stack' },
   template: `
-    <section class="bg-card border border-border rounded-fl-lg overflow-hidden">
-      <header class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2">
-        <ng-icon name="lucideGlobe" class="h-4 w-4 text-muted-foreground" />
-        <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Enabled regions
-        </h2>
-        <span class="ml-auto text-xs text-muted-foreground">
-          {{ enabledRegionObjects().length }} active
-        </span>
-      </header>
-
-      <div class="p-6">
-        @if (isLoadingRegions()) {
-          <div class="flex items-center justify-center py-4">
-            <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        } @else if (configuration().enabledRegions.length > 0) {
-          <div class="flex flex-wrap gap-2">
-            @for (region of enabledRegionObjects(); track region.id) {
-              <span
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted text-sm font-medium"
-              >
-                @if (region.flagEmoji) {
-                  <span>{{ region.flagEmoji }}</span>
-                } @else {
-                  <ng-icon name="lucideGlobe" class="h-3.5 w-3.5 text-muted-foreground" />
-                }
-                {{ region.displayName || region.id }}
-              </span>
-            }
-          </div>
-        } @else {
-          <p class="text-sm text-muted-foreground">No regions enabled.</p>
-        }
-      </div>
-    </section>
+    <fl-panel title="Enabled regions" [count]="enabledRegionObjects().length" [flush]="true">
+      @if (isLoadingRegions()) {
+        <fl-loading-state [rows]="3" />
+      } @else if (configuration().enabledRegions.length > 0) {
+        <div class="fl-table-wrap">
+          <table flTable density="dense" data-testid="provider-regions-table">
+            <thead>
+              <tr>
+                <th scope="col">Region</th>
+                <th scope="col">Code</th>
+                <th scope="col">Location</th>
+                <th scope="col">Availability</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (region of enabledRegionObjects(); track region.id) {
+                <tr [attr.data-testid]="'provider-region-' + region.id">
+                  <td>{{ region.displayName || region.name || region.id }}</td>
+                  <td class="fl-mono">{{ region.id }}</td>
+                  <td>{{ region.location || region.country || '—' }}</td>
+                  <td>
+                    <fl-status
+                      [tone]="region.available === false ? 'warning' : 'success'"
+                      [label]="region.available === false ? 'Unavailable' : 'Available'"
+                    />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <fl-empty-state
+          [compact]="true"
+          title="No regions enabled"
+          body="New machines on this provider have nowhere to go until a region is enabled."
+        />
+      }
+    </fl-panel>
   `,
 })
 export class ProviderRegionsPanelComponent {

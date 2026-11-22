@@ -1,15 +1,16 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlCopyId } from '../../../../ui/patterns/copy-id';
+import { FlKeyValue, FlKvItem } from '../../../../ui/patterns/key-value';
+import { FlPageHeader } from '../../../../ui/patterns/page-header';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../../ui/patterns/states';
+import { FlActionsMenu, MenuAction } from '../../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../../ui/overlays/confirm';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlStatus } from '../../../../ui/primitives/status';
 import { BackupService } from '../../../service/backup.service';
 import {
   BackupDestination,
@@ -17,8 +18,7 @@ import {
   formatBytes,
   providerLabel,
 } from '../../../model/backup.models';
-import { BackupStatusBadgeComponent } from '../shared/status-badge.component';
-import { BackupBackLinkComponent } from '../shared/back-link.component';
+import { destinationReachability } from '../shared/backup-tones';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../../core/services/current-surface.service';
 import {
@@ -28,147 +28,133 @@ import {
   presentedContent,
 } from './destination-detail-surface';
 
+const DELETE_ACTIONS: readonly MenuAction[] = [
+  { id: 'delete', label: 'Delete destination', danger: true },
+];
+
 @Component({
   selector: 'app-destination-detail',
-  standalone: true,
-  imports: [ReadOnlySectionDirective, BackupStatusBadgeComponent, BackupBackLinkComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [
+    ReadOnlySectionDirective,
+    RouterLink,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlCopyId,
+    FlKeyValue,
+    FlKvItem,
+    FlEmptyState,
+    FlLoadingState,
+    FlActionsMenu,
+    FlButton,
+    FlStatus,
+  ],
   template: `
-    <div class="p-6 space-y-4 max-w-3xl">
-      <app-backup-back-link link="/management/backup/destinations" label="Back to destinations" />
-
+    <div class="fl-page">
       @if (dest(); as d) {
-        <header class="flex items-start justify-between">
-          <div>
-            <h1 class="text-2xl font-semibold">{{ d.name }}</h1>
-            <p class="text-sm text-muted-foreground mt-1">
-              {{ providerLabel(d.provider) }}
-            </p>
-          </div>
-          <div class="flex gap-2">
-            <button
-              appReadOnlySection="backup"
-              class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
-              (click)="onTest()"
-            >
+        <fl-page-header [title]="d.name" [breadcrumb]="breadcrumb()">
+          <fl-status
+            headerStatus
+            [tone]="reachability(d.healthStatus).tone"
+            [label]="reachability(d.healthStatus).label"
+          />
+          <span headerMeta>{{ providerLabel(d.provider) }}</span>
+          <fl-copy-id headerMeta [value]="d.id" label="destination ID" />
+          <ng-container headerActions>
+            <button flButton type="button" appReadOnlySection="backup" (click)="onTest()">
               Test connection
             </button>
-            <button
-              appReadOnlySection="backup"
-              class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
-              (click)="onRefresh()"
-            >
+            <button flButton type="button" appReadOnlySection="backup" (click)="onRefresh()">
               Refresh usage
             </button>
-          </div>
-        </header>
+            <fl-actions-menu
+              appReadOnlySection="backup"
+              [items]="deleteActions"
+              (action)="onDelete(d)"
+            />
+          </ng-container>
+        </fl-page-header>
 
-        <div class="rounded-lg border border-border bg-card p-5 space-y-3">
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <div class="text-xs text-muted-foreground">Health</div>
-              <app-backup-status-badge kind="health" [value]="d.healthStatus" />
-            </div>
-            <div>
-              <div class="text-xs text-muted-foreground">Endpoint</div>
-              <div class="font-mono text-xs break-all">{{ d.endpoint }}</div>
-            </div>
-            <div>
-              <div class="text-xs text-muted-foreground">Region / Bucket</div>
-              <div>{{ d.region }} / {{ d.bucket }}</div>
-            </div>
-            <div>
-              <div class="text-xs text-muted-foreground">Path prefix</div>
-              <div>{{ d.pathPrefix || '—' }}</div>
-            </div>
-            <div>
-              <div class="text-xs text-muted-foreground">Encryption</div>
-              <div>{{ d.encryptionMode }}</div>
-            </div>
-            <div>
-              <div class="text-xs text-muted-foreground">Usage</div>
-              <div>{{ formatBytes(d.usageBytes) }}</div>
-            </div>
-            <div>
-              <div class="text-xs text-muted-foreground">Estimated cost / month</div>
-              <div>{{ estimatedCost(d) }}</div>
-            </div>
-            <div>
-              <div class="text-xs text-muted-foreground">Price per GB / month</div>
-              @if (editingCost()) {
-                <div class="flex items-center gap-1 mt-0.5">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.001"
-                    [value]="d.costPerGbMonthCents ?? ''"
-                    (input)="costDraft.set($any($event.target).value)"
-                    class="w-24 h-8 px-2 rounded-md border border-input bg-background text-sm"
-                    aria-label="Cents per GB per month"
-                  />
-                  <span class="text-xs text-muted-foreground">cents</span>
-                  <button
-                    type="button"
-                    (click)="saveCost()"
-                    class="px-2 h-8 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    (click)="saveCost(true)"
-                    class="px-2 h-8 text-xs rounded-md hover:bg-muted"
-                  >
-                    List price
-                  </button>
-                </div>
-                @if (costError()) {
-                  <div class="text-xs text-red-600 mt-1">{{ costError() }}</div>
-                }
-              } @else {
-                <div>
-                  {{ d.costPerGbMonthCents == null ? 'Not set' : d.costPerGbMonthCents + ' cents' }}
-                  @if (d.metadata?.['costSource'] === 'list-price') {
-                    <span class="text-xs text-muted-foreground">(list price)</span>
+        @if (d.lastHealthError) {
+          <fl-alert tone="error" title="Last check failed">{{ d.lastHealthError }}</fl-alert>
+        }
+
+        <div class="fl-stack">
+          <fl-panel title="Storage">
+            <fl-key-value>
+              <fl-kv-item key="Endpoint" [mono]="true">{{ d.endpoint }}</fl-kv-item>
+              <fl-kv-item key="Region" [mono]="true">{{ d.region }}</fl-kv-item>
+              <fl-kv-item key="Bucket" [mono]="true">{{ d.bucket }}</fl-kv-item>
+              <fl-kv-item key="Path prefix" [mono]="!!d.pathPrefix">{{
+                d.pathPrefix || '—'
+              }}</fl-kv-item>
+              <fl-kv-item key="Encryption" [mono]="true">{{ d.encryptionMode }}</fl-kv-item>
+              <fl-kv-item key="Last health check">{{ d.lastHealthCheckAt || '—' }}</fl-kv-item>
+            </fl-key-value>
+          </fl-panel>
+
+          <fl-panel title="Usage and cost">
+            <fl-key-value>
+              <fl-kv-item key="Usage">{{ formatBytes(d.usageBytes) }}</fl-kv-item>
+              <fl-kv-item key="Estimated cost per month">{{ estimatedCost(d) }}</fl-kv-item>
+              <fl-kv-item key="Price per GB per month">
+                @if (editingCost()) {
+                  <span class="fl-row">
+                    <span class="fl-input w-24">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.001"
+                        [value]="d.costPerGbMonthCents ?? ''"
+                        (input)="costDraft.set($any($event.target).value)"
+                        aria-label="Cents per GB per month"
+                      />
+                    </span>
+                    <span class="text-fl-ink-muted">cents</span>
+                    <button flButton size="sm" type="button" (click)="saveCost()">Save</button>
+                    <button flButton="ghost" size="sm" type="button" (click)="saveCost(true)">
+                      List price
+                    </button>
+                  </span>
+                  @if (costError()) {
+                    <span class="mt-2 block">
+                      <fl-alert tone="error" title="Price not saved">{{ costError() }}</fl-alert>
+                    </span>
                   }
-                  <button
-                    type="button"
-                    (click)="editingCost.set(true)"
-                    class="ml-1 text-xs text-blue-600 hover:underline"
-                  >
-                    Change
-                  </button>
-                </div>
-              }
-            </div>
-            <div>
-              <div class="text-xs text-muted-foreground">Last health check</div>
-              <div>{{ d.lastHealthCheckAt || '—' }}</div>
-            </div>
-          </div>
-          @if (d.lastHealthError) {
-            <div
-              class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700"
-            >
-              {{ d.lastHealthError }}
-            </div>
-          }
-        </div>
-
-        <div class="flex justify-end">
-          <button
-            appReadOnlySection="backup"
-            type="button"
-            class="text-sm text-red-600 hover:underline"
-            (click)="onDelete(d)"
-          >
-            Delete destination
-          </button>
+                } @else {
+                  <span class="fl-row">
+                    {{
+                      d.costPerGbMonthCents == null ? 'Not set' : d.costPerGbMonthCents + ' cents'
+                    }}
+                    @if (d.metadata?.['costSource'] === 'list-price') {
+                      <span class="text-fl-ink-muted">(list price)</span>
+                    }
+                    <button
+                      flButton="ghost"
+                      size="sm"
+                      type="button"
+                      (click)="editingCost.set(true)"
+                    >
+                      Change
+                    </button>
+                  </span>
+                }
+              </fl-kv-item>
+            </fl-key-value>
+          </fl-panel>
         </div>
       } @else if (loading()) {
-        <p class="text-sm text-muted-foreground">Loading…</p>
+        <fl-page-header title="Destination" [breadcrumb]="breadcrumb()" />
+        <fl-panel><fl-loading-state [rows]="4" /></fl-panel>
       } @else {
-        <p class="text-sm text-muted-foreground">Destination not found.</p>
+        <fl-page-header title="Destination" [breadcrumb]="breadcrumb()" />
+        <fl-panel>
+          <fl-empty-state title="Destination not found">
+            <a flButton size="sm" routerLink="/management/backup/destinations"
+              >Back to destinations</a
+            >
+          </fl-empty-state>
+        </fl-panel>
       }
     </div>
   `,
@@ -184,6 +170,14 @@ export class DestinationDetailComponent implements OnInit, OnDestroy {
   protected readonly editingCost = signal(false);
   protected readonly costDraft = signal('');
   protected readonly costError = signal<string | null>(null);
+  private readonly confirm = inject(ConfirmService);
+  protected readonly deleteActions = DELETE_ACTIONS;
+  protected readonly reachability = destinationReachability;
+  protected readonly breadcrumb = computed(() => [
+    { label: 'Backups', link: '/management/backup' },
+    { label: 'Destinations', link: '/management/backup/destinations' },
+    { label: this.dest()?.name ?? 'Destination' },
+  ]);
 
   async saveCost(listPrice = false): Promise<void> {
     const d = this.dest();
@@ -259,7 +253,14 @@ export class DestinationDetailComponent implements OnInit, OnDestroy {
   }
 
   async onDelete(d: BackupDestination): Promise<void> {
-    if (!confirm(`Delete destination "${d.name}"?`)) return;
+    const confirmed = await this.confirm.confirm({
+      title: `Delete ${d.name}?`,
+      body: 'Flui stops using this storage. Policies that write to it must be removed first.',
+      confirmLabel: 'Delete destination',
+      destructive: true,
+      typeToConfirm: d.name,
+    });
+    if (!confirmed) return;
     const ok = await this.backup.deleteDestination(d.id);
     if (ok) this.router.navigate(['/management/backup/destinations']);
   }

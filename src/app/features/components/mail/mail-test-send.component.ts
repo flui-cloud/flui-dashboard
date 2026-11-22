@@ -1,181 +1,151 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleCheck,
-  lucideLoader,
-  lucideSend,
-  lucideTriangleAlert,
-  lucideX,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideSend, lucideX } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { MailConsoleService } from '../../service/mail-console.service';
 import { MailTestMessage, MailTestResult } from '../../model/mail-console.models';
 import { consoleError } from './mail-format';
 
 type Kind = 'delivery' | 'bounce';
 
+let nextId = 0;
+
 @Component({
   selector: 'app-mail-test-send',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, NgIcon],
-  providers: [
-    provideIcons({
-      lucideCircleCheck,
-      lucideLoader,
-      lucideSend,
-      lucideTriangleAlert,
-      lucideX,
-    }),
-  ],
+  imports: [FormsModule, RouterLink, FlAlert, FlButton, FlIcon],
+  providers: [provideIcons({ lucideSend, lucideX })],
+  host: { class: 'flex flex-col gap-3' },
   template: `
-    <div class="mt-3 border-t border-border pt-3">
-      @if (!draft()) {
-        <div class="flex flex-wrap items-center gap-2">
+    @if (!draft()) {
+      <div class="flex flex-col gap-1">
+        <div class="fl-row">
           <button
+            flButton
+            size="sm"
             type="button"
-            (click)="open('delivery')"
             [disabled]="loading()"
-            class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+            (click)="open('delivery')"
           >
-            @if (loading()) {
-              <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-            } @else {
-              <ng-icon name="lucideSend" class="h-3.5 w-3.5" />
-            }
+            <fl-icon name="lucideSend" [size]="14" />
             Compose a test message
           </button>
           <button
+            flButton="ghost"
+            size="sm"
             type="button"
-            (click)="open('bounce')"
             [disabled]="loading()"
-            class="inline-flex h-8 items-center rounded-md px-2 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+            (click)="open('bounce')"
             title="Addressed to a subdomain of this domain that deliberately does not exist, so you can watch a real refusal travel from the provider into Activity."
           >
             Probe a bounce
           </button>
         </div>
-        <p class="mt-1.5 text-[11px] text-muted-foreground">
+        <span class="text-fl-caption text-fl-ink-muted">
           A green readiness check says the records are correct. Only a real message says one
           arrives.
-        </p>
+        </span>
+      </div>
+    } @else {
+      @let d = draft()!;
+      <div class="flex flex-col gap-3 rounded-fl-md border border-fl-border p-3">
+        <div class="flex items-center justify-between">
+          <span class="text-fl-body-sm font-medium">
+            {{ kind() === 'bounce' ? 'Bounce probe' : 'Test message' }}
+          </span>
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [iconOnly]="true"
+            aria-label="Discard"
+            (click)="close()"
+          >
+            <fl-icon name="lucideX" [size]="14" />
+          </button>
+        </div>
+
+        <div class="fl-kv fl-kv--compact">
+          <div class="fl-kv__item">
+            <span class="fl-kv__key">From</span>
+            <span class="fl-kv__value fl-mono">{{ d.from }}</span>
+          </div>
+          @if (kind() === 'bounce') {
+            <div class="fl-kv__item">
+              <span class="fl-kv__key">To</span>
+              <span class="fl-kv__value fl-mono">{{ d.to }}</span>
+            </div>
+          }
+        </div>
+
+        @if (kind() !== 'bounce') {
+          <div class="fl-field">
+            <label class="fl-field__label" [for]="id + '-to'">To</label>
+            <div class="fl-input fl-input--lg">
+              <input [id]="id + '-to'" type="email" class="fl-mono" [(ngModel)]="to" />
+            </div>
+          </div>
+        }
+
+        <div class="fl-field">
+          <label class="fl-field__label" [for]="id + '-subject'">Subject</label>
+          <div class="fl-input fl-input--lg">
+            <input [id]="id + '-subject'" type="text" [(ngModel)]="subject" />
+          </div>
+        </div>
+
+        <div class="fl-field">
+          <label class="fl-field__label" [for]="id + '-text'">Message</label>
+          <textarea [id]="id + '-text'" class="fl-textarea" rows="5" [(ngModel)]="text"></textarea>
+          <span class="fl-field__hint">One recipient, plain text, no attachments.</span>
+        </div>
+
+        <div class="fl-row">
+          <button
+            flButton
+            size="sm"
+            type="button"
+            [disabled]="busy() || !readyToSend()"
+            (click)="send()"
+          >
+            <fl-icon name="lucideSend" [size]="14" />
+            {{ busy() ? 'Sending…' : 'Send to ' + recipient() }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (error(); as failure) {
+      <fl-alert tone="error" title="Could not send">{{ failure }}</fl-alert>
+    }
+
+    @if (result(); as r) {
+      @if (r.alreadySuppressed) {
+        <fl-alert tone="info" title="Nothing was sent, and that is the result">
+          <span class="fl-mono">{{ r.to }}</span> is already on the do-not-send list from an earlier
+          probe, so Flui refused before dialling. Clear it under
+          <a class="fl-link" routerLink="/management/mail/suppressions">Suppressions</a> to run it
+          again.
+        </fl-alert>
       } @else {
-        @let d = draft()!;
-        <div class="rounded-md border border-border bg-muted/30 p-3">
-          <div class="mb-2 flex items-center justify-between">
-            <span class="text-xs font-medium text-foreground">
-              {{ kind() === 'bounce' ? 'Bounce probe' : 'Test message' }}
-            </span>
-            <button
-              type="button"
-              (click)="close()"
-              class="text-muted-foreground hover:text-foreground"
-              title="Discard"
-            >
-              <ng-icon name="lucideX" class="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          <div class="space-y-2 text-xs">
-            <div class="flex items-center gap-2">
-              <span class="w-14 shrink-0 text-muted-foreground">From</span>
-              <span class="min-w-0 flex-1 truncate font-mono text-foreground">{{ d.from }}</span>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <span class="w-14 shrink-0 text-muted-foreground">To</span>
-              @if (kind() === 'bounce') {
-                <span class="min-w-0 flex-1 truncate font-mono text-foreground">{{ d.to }}</span>
-              } @else {
-                <input
-                  type="email"
-                  [(ngModel)]="to"
-                  class="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2.5 font-mono text-xs text-foreground"
-                />
-              }
-            </div>
-
-            <div class="flex items-center gap-2">
-              <span class="w-14 shrink-0 text-muted-foreground">Subject</span>
-              <input
-                type="text"
-                [(ngModel)]="subject"
-                class="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2.5 text-xs text-foreground"
-              />
-            </div>
-
-            <textarea
-              [(ngModel)]="text"
-              rows="5"
-              class="w-full rounded-md border border-border bg-background px-2.5 py-2 text-xs text-foreground"
-            ></textarea>
-          </div>
-
-          <div class="mt-2 flex items-center gap-2">
-            <button
-              type="button"
-              (click)="send()"
-              [disabled]="busy() || !readyToSend()"
-              class="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground disabled:opacity-50"
-            >
-              @if (busy()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-              } @else {
-                <ng-icon name="lucideSend" class="h-3.5 w-3.5" />
-              }
-              Send to {{ recipient() }}
-            </button>
-            <span class="text-[11px] text-muted-foreground">
-              One recipient, plain text, no attachments.
-            </span>
-          </div>
-        </div>
-      }
-
-      @if (error(); as failure) {
-        <div
-          class="mt-2 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive"
+        <fl-alert
+          tone="info"
+          [title]="'Accepted by ' + r.provider + '. Accepted is not delivered.'"
         >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>{{ failure }}</span>
-        </div>
+          <span class="fl-mono">{{ r.from }}</span> to <span class="fl-mono">{{ r.to }}</span>.
+          {{
+            r.kind === 'bounce'
+              ? 'It cannot be delivered; the refusal should follow within minutes.'
+              : 'The receiver answers in seconds to minutes.'
+          }}
+          Watch it land in
+          <a class="fl-link" routerLink="/management/mail/activity">Activity</a>.
+        </fl-alert>
       }
-
-      @if (result(); as r) {
-        <div
-          class="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-900"
-        >
-          <div class="flex items-start gap-2">
-            <ng-icon name="lucideCircleCheck" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <div class="min-w-0">
-              @if (r.alreadySuppressed) {
-                <p class="font-medium">Nothing was sent — and that is the result.</p>
-                <p class="mt-0.5">
-                  <span class="font-mono">{{ r.to }}</span> is already on the do-not-send list from
-                  an earlier probe, so Flui refused before dialling. Clear it under
-                  <a routerLink="/management/mail/suppressions" class="underline">Suppressions</a>
-                  to run it again.
-                </p>
-              } @else {
-                <p class="font-medium">Accepted by {{ r.provider }} — accepted is not delivered.</p>
-                <p class="mt-0.5">
-                  <span class="font-mono">{{ r.from }}</span> →
-                  <span class="font-mono">{{ r.to }}</span>.
-                  {{
-                    r.kind === 'bounce'
-                      ? 'It cannot be delivered; the refusal should follow within minutes.'
-                      : 'The receiver answers in seconds to minutes.'
-                  }}
-                  Watch it land in
-                  <a routerLink="/management/mail/activity" class="underline">Activity</a>.
-                </p>
-              }
-            </div>
-          </div>
-        </div>
-      }
-    </div>
+    }
   `,
 })
 export class MailTestSendComponent {
@@ -184,6 +154,7 @@ export class MailTestSendComponent {
 
   private readonly api = inject(MailConsoleService);
 
+  protected readonly id = `mail-test-${nextId++}`;
   protected to = '';
   protected subject = '';
   protected text = '';

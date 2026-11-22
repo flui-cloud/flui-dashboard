@@ -1,104 +1,106 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideInfo, lucideTriangleAlert } from '@ng-icons/lucide';
-import {
-  PlatformComponentUpdate,
-  PlatformUpdateStatus,
-} from '../../service/platform-update.service';
+import { Component, input, model } from '@angular/core';
+import { PlatformUpdateStatus } from '../../service/platform-update.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { AlertTone, FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { changeLabel } from './platform-update-format';
+
+const ADVISORY_TONES: Record<string, AlertTone> = {
+  info: 'info',
+  warning: 'warning',
+  blocker: 'error',
+};
 
 @Component({
   selector: 'app-platform-update-details',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideInfo, lucideTriangleAlert })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'contents' },
+  imports: [FlPanel, FlTable, FlAlert, FlButton],
+  host: { class: 'fl-stack' },
   template: `
-    <div
-      class="grid grid-cols-[180px_1fr_220px_110px] gap-3 border-t border-border bg-muted px-5 py-2 text-label"
-    >
-      <div>Component</div>
-      <div>Role</div>
-      <div>Version</div>
-      <div>Change</div>
-    </div>
-    @for (component of status().components; track component.key) {
-      <div
-        class="grid grid-cols-[180px_1fr_220px_110px] items-center gap-3 border-t border-border px-5 py-3"
-        [class.opacity-60]="!component.changed || !component.installed"
+    <fl-panel title="Components" [count]="status().components.length" [flush]="true">
+      <button
+        panelActions
+        flButton="ghost"
+        size="sm"
+        type="button"
+        [attr.aria-expanded]="open()"
+        (click)="open.set(!open())"
       >
-        <div class="font-mono text-sm font-medium">
-          {{ component.deploymentName }}
-        </div>
-        <div class="text-xs text-muted-foreground">
-          {{ component.role }}
-          @if (component.restartsControlPlane) {
-            · restarts once
-          }
-        </div>
-        <div class="font-mono text-xs">
-          @if (!component.installed) {
-            <span class="font-sans text-muted-foreground">Not installed</span>
-          } @else {
-            @if (component.changed) {
-              <span class="text-muted-foreground">{{ component.installedVersion }}</span>
-              <span class="mx-1.5 text-muted-foreground/50">&rarr;</span>
-            }
-            <span class="font-semibold">{{
-              component.targetVersion ?? component.installedVersion ?? '—'
-            }}</span>
-            @if (!component.installedIsRelease && !component.changed) {
-              <span class="ml-1.5 font-sans text-[11px] text-amber-600">build</span>
-            }
-            @if (!component.observed) {
-              <span class="ml-1.5 font-sans text-[11px] text-muted-foreground"
-                >pinned, not read from the cluster</span
-              >
-            }
-          }
-        </div>
-        <div>
-          <span
-            class="badge"
-            [class]="component.changed ? 'bg-primary/10 text-primary' : 'badge-in-progress'"
-          >
-            {{ changeLabel(component, status().availableVersion) }}
-          </span>
-        </div>
-      </div>
-    }
+        {{ open() ? 'Hide details' : 'Show details' }}
+      </button>
 
-    @if (status().advisories.length > 0) {
-      <div class="grid gap-3 border-t border-border p-5 sm:grid-cols-2">
-        @for (advisory of status().advisories; track advisory.title) {
-          <div class="flex items-start gap-2.5">
-            <ng-icon
-              [name]="advisory.level === 'info' ? 'lucideInfo' : 'lucideTriangleAlert'"
-              class="mt-0.5 h-4 w-4 shrink-0"
-              [class]="advisory.level === 'blocker' ? 'text-destructive' : 'text-amber-600'"
-            />
-            <div>
-              <p class="text-sm">{{ advisory.title }}</p>
-              <p class="text-xs text-muted-foreground mt-0.5">
+      @if (open()) {
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Component</th>
+                <th scope="col">Role</th>
+                <th scope="col">Version</th>
+                <th scope="col">Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (component of status().components; track component.key) {
+                <tr [class.text-fl-ink-muted]="!component.changed || !component.installed">
+                  <td class="fl-mono font-medium">{{ component.deploymentName }}</td>
+                  <td class="is-wrap text-fl-ink-secondary">
+                    {{ component.role }}
+                    @if (component.restartsControlPlane) {
+                      · restarts once
+                    }
+                  </td>
+                  <td>
+                    @if (!component.installed) {
+                      <span class="text-fl-ink-muted">Not installed</span>
+                    } @else {
+                      <span class="fl-mono">
+                        @if (component.changed) {
+                          <span class="text-fl-ink-muted">{{ component.installedVersion }}</span> →
+                        }
+                        <span class="font-semibold">{{
+                          component.targetVersion ?? component.installedVersion ?? '—'
+                        }}</span>
+                      </span>
+                      @if (!component.installedIsRelease && !component.changed) {
+                        <span class="text-fl-caption text-fl-ink-muted"> · build</span>
+                      }
+                      @if (!component.observed) {
+                        <span class="text-fl-caption text-fl-ink-muted">
+                          · pinned, not read from the cluster</span
+                        >
+                      }
+                    }
+                  </td>
+                  <td class="text-fl-ink-secondary">
+                    {{ change(component, status().availableVersion) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (status().advisories.length > 0) {
+          <div class="grid gap-3 border-t border-fl-border-subtle p-4 sm:grid-cols-2">
+            @for (advisory of status().advisories; track advisory.title) {
+              <fl-alert [tone]="advisoryTone(advisory.level)" [title]="advisory.title">
                 {{ advisory.detail }}
-              </p>
-            </div>
+              </fl-alert>
+            }
           </div>
         }
-      </div>
-    }
+      }
+    </fl-panel>
   `,
 })
 export class PlatformUpdateDetailsComponent {
   readonly status = input.required<PlatformUpdateStatus>();
+  readonly open = model(true);
 
-  /** "Unchanged" is a comparison; without a release there was none to make. */
-  protected changeLabel(
-    component: PlatformComponentUpdate,
-    availableVersion: string | null,
-  ): string {
-    if (!component.installed) return 'Absent';
-    if (!availableVersion) return 'Not compared';
-    return component.changed ? 'Will update' : 'Unchanged';
+  protected readonly change = changeLabel;
+
+  protected advisoryTone(level: string): AlertTone {
+    return ADVISORY_TONES[level] ?? 'info';
   }
 }

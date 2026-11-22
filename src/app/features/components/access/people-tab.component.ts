@@ -1,28 +1,16 @@
-import {
-  Component,
-  computed,
-  inject,
-  signal,
-  viewChild,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideUserPlus,
-  lucideBan,
-  lucideRotateCcw,
-  lucideLink,
-  lucideCopy,
-  lucideCheck,
-  lucideX,
-  lucideShield,
-  lucideShieldCheck,
-  lucideShieldPlus,
-  lucideInfo,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
-import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideUserPlus } from '@ng-icons/lucide';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
 import { IamService } from '../../service/iam.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { AppConfigService } from '../../../core/services/app-config.service';
@@ -30,103 +18,58 @@ import { CanDirective } from '../../../core/directives/can.directive';
 import {
   AccessDelta,
   AccessRole,
-  ALL_SECTION_KEYS,
-  SECTION_LABELS,
   UserKind,
   UserRecord,
   UserStatus,
   accessDeltaLines,
-  sectionsForPermissions,
 } from '../../model/iam.model';
+import { AccessPreviewDialog } from './access-preview-dialog';
+import { PeopleInviteDialog } from './people-invite-dialog';
+import { PeopleInviteResult } from './people-invite-result';
 
-const FIELD =
-  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
+const STATUS_TONE: Record<UserStatus, StatusTone> = {
+  active: 'success',
+  invited: 'warning',
+  disabled: 'error',
+};
+
+const STATUS_LABEL: Record<UserStatus, string> = {
+  active: 'Active',
+  invited: 'Invited',
+  disabled: 'Disabled',
+};
 
 @Component({
   selector: 'app-people-tab',
-  standalone: true,
   imports: [
-    NgIcon,
-    HlmCardDirective,
-    HlmCardContentDirective,
+    FlActionsMenu,
+    FlAlert,
+    FlPanel,
+    FlEmptyState,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    FlTag,
     CanDirective,
-    ConfirmationDialogComponent,
+    AccessPreviewDialog,
+    PeopleInviteDialog,
+    PeopleInviteResult,
   ],
-  providers: [
-    provideIcons({
-      lucideUserPlus,
-      lucideBan,
-      lucideRotateCcw,
-      lucideLink,
-      lucideCopy,
-      lucideCheck,
-      lucideX,
-      lucideShield,
-      lucideShieldCheck,
-      lucideShieldPlus,
-      lucideInfo,
-      lucideTriangleAlert,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideUserPlus })],
+  host: { class: 'fl-stack' },
   templateUrl: './people-tab.component.html',
 })
 export class PeopleTabComponent {
   protected readonly iam = inject(IamService);
   protected readonly perms = inject(PermissionService);
   private readonly appConfig = inject(AppConfigService);
+  private readonly confirm = inject(ConfirmService);
 
   /** Decision 111 — see the note on the same signal in AccessComponent. */
   protected readonly identityProvider = this.appConfig.authMode === 'oidc';
-  protected readonly fieldClass = FIELD;
-  protected readonly selectClass = FIELD + ' pr-8 appearance-none';
-  protected readonly rowSelectClass =
-    'h-9 w-40 rounded-md border border-input bg-background pl-3 pr-8 text-sm ' +
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ' +
-    'focus-visible:ring-offset-2 appearance-none';
 
   readonly showInvite = signal(false);
-  readonly email = signal('');
-  readonly firstName = signal('');
-  readonly lastName = signal('');
-  readonly role = signal<AccessRole>('viewer');
-  readonly sendInvite = signal(true);
-  readonly copied = signal(false);
-
-  readonly isAdminAccount = signal(false);
-  readonly accessMode = signal<'global' | 'project' | 'group'>('project');
-  readonly projectSlug = signal('');
-  readonly groupName = signal('');
-
-  private rolePermissions(role: AccessRole): string[] {
-    return this.iam.roles().find((r) => r.key === role)?.permissions ?? [];
-  }
-
-  private groupSections(name: string): string[] {
-    const keys = new Set<string>(['home', 'settings']);
-    for (const g of this.iam.grants()) {
-      if (g.binding.principal.type !== 'group' || g.binding.principal.ref !== name) continue;
-      const perms = this.rolePermissions(g.binding.role);
-      const isGlobal = g.binding.scope.type === 'global';
-      for (const s of sectionsForPermissions(perms, isGlobal)) keys.add(s);
-    }
-    return ALL_SECTION_KEYS.filter((k) => keys.has(k));
-  }
-
-  readonly previewSections = computed<string[]>(() => {
-    if (this.isAdminAccount()) return ALL_SECTION_KEYS;
-    if (this.accessMode() === 'group') {
-      return this.groupName() ? this.groupSections(this.groupName()) : ['home', 'settings'];
-    }
-    return sectionsForPermissions(
-      this.rolePermissions(this.role()),
-      this.accessMode() === 'global',
-    );
-  });
-
-  sectionLabel(key: string): string {
-    return SECTION_LABELS[key] ?? key;
-  }
 
   protected readonly kindFilters: ReadonlyArray<{ label: string; kind: UserKind | null }> = [
     { label: 'All', kind: null },
@@ -140,10 +83,53 @@ export class PeopleTabComponent {
     this.iam.loadUsers();
   }
 
-  segClass(active: boolean): string {
-    return active
-      ? 'rounded px-3 py-1.5 bg-primary text-primary-foreground'
-      : 'rounded px-3 py-1.5 text-muted-foreground hover:text-foreground';
+  protected statusTone(s: UserStatus): StatusTone {
+    return STATUS_TONE[s];
+  }
+
+  protected statusLabel(s: UserStatus): string {
+    return STATUS_LABEL[s];
+  }
+
+  protected readonly rowActions = computed(() => {
+    const manage = this.perms.can('iam:manage-users');
+    const map = new Map<string, MenuAction[]>();
+    for (const u of this.iam.users()) map.set(u.id, this.actionsFor(u, manage));
+    return map;
+  });
+
+  private actionsFor(u: UserRecord, manage: boolean): MenuAction[] {
+    if (!manage || u.isBootstrapAdmin || u.isSystemUser) return [];
+    const items: MenuAction[] = [];
+    if (u.kind !== 'visitor') items.push({ id: 'invite-link', label: 'Generate invite link' });
+    if (u.isAdmin) {
+      items.push({ id: 'revoke-admin', label: 'Revoke platform admin', danger: true });
+    } else if (u.status === 'disabled') {
+      items.push({ id: 'enable', label: 'Enable: let them sign in again' });
+    } else {
+      items.push({
+        id: 'disable',
+        label: 'Disable: refuse every request and end their demo space',
+        danger: true,
+        separatorBefore: items.length > 0,
+      });
+    }
+    return items;
+  }
+
+  protected onRowAction(u: UserRecord, id: string): void {
+    switch (id) {
+      case 'invite-link':
+        this.iam.createInviteLink(u.id, u.email);
+        return;
+      case 'revoke-admin':
+        void this.toggleAdmin(u);
+        return;
+      case 'enable':
+      case 'disable':
+        void this.toggleStatus(u);
+        return;
+    }
   }
 
   readonly pendingGlobals = signal<Record<string, 'none' | AccessRole>>({});
@@ -171,59 +157,12 @@ export class PeopleTabComponent {
     return p != null && p !== this.currentGlobal(u);
   }
 
-  private accessComplete(): boolean {
-    if (this.isAdminAccount()) return true;
-    switch (this.accessMode()) {
-      case 'global':
-        return true;
-      case 'project':
-        return this.projectSlug().length > 0;
-      case 'group':
-        return this.groupName().length > 0;
-    }
-  }
-
-  readonly canInvite = computed(
-    () =>
-      /^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(this.email().trim()) &&
-      this.firstName().trim().length > 0 &&
-      this.lastName().trim().length > 0 &&
-      this.accessComplete(),
-  );
-
-  value(e: Event): string {
-    return (e.target as HTMLInputElement | HTMLSelectElement).value;
-  }
-
-  checked(e: Event): boolean {
-    return (e.target as HTMLInputElement).checked;
-  }
-
-  selectAll(e: Event): void {
-    (e.target as HTMLInputElement).select();
-  }
-
-  async copy(text: string): Promise<void> {
-    if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 1500);
-    } catch {
-      /* clipboard unavailable; field stays selectable for manual copy */
-    }
-  }
-
-  onRoleSelect(e: Event): void {
-    this.role.set(this.value(e) as AccessRole);
-  }
-
   onRowGlobalChange(id: string, e: Event): void {
-    const value = this.value(e) as 'none' | AccessRole;
+    const value = (e.target as HTMLSelectElement).value as 'none' | AccessRole;
     this.pendingGlobals.update((m) => ({ ...m, [id]: value }));
   }
 
-  private readonly roleDialog = viewChild.required<ConfirmationDialogComponent>('roleDialog');
+  private readonly roleDialog = viewChild.required<AccessPreviewDialog>('roleDialog');
 
   readonly pendingRoleUser = signal<UserRecord | null>(null);
   private readonly roleDelta = signal<AccessDelta | null>(null);
@@ -241,8 +180,8 @@ export class PeopleTabComponent {
     return delta ? accessDeltaLines(delta, { identityProvider: this.identityProvider }) : [];
   });
 
-  readonly roleDialogVariant = computed<'danger' | 'info'>(() =>
-    this.roleDelta()?.losesNothing && !this.roleUnknown() ? 'info' : 'danger',
+  readonly roleDialogDestructive = computed(
+    () => !(this.roleDelta()?.losesNothing && !this.roleUnknown()),
   );
 
   askSaveGlobal(u: UserRecord): void {
@@ -285,65 +224,35 @@ export class PeopleTabComponent {
     this.iam.setUserGlobalRole(u.email, value === 'none' ? null : value);
   }
 
-  private readonly adminDialog = viewChild.required<ConfirmationDialogComponent>('adminDialog');
-  readonly pendingAdminUser = signal<UserRecord | null>(null);
-
-  readonly adminDialogTitle = computed(() =>
-    this.pendingAdminUser()?.isAdmin ? 'Revoke platform admin' : 'Make platform admin',
-  );
-  readonly adminDialogCta = computed(() =>
-    this.pendingAdminUser()?.isAdmin ? 'Revoke' : 'Make admin',
-  );
-  readonly adminDialogMessage = computed(() => {
-    const u = this.pendingAdminUser();
-    if (!u) return '';
-    return u.isAdmin
-      ? `Revoke platform admin from ${u.email}? They keep only their explicit grants.`
-      : `Make ${u.email} a platform admin? They will see and control everything — beyond any role.`;
-  });
-
-  toggleAdmin(u: UserRecord): void {
-    this.pendingAdminUser.set(u);
-    this.adminDialog().open();
-  }
-
-  onAdminConfirmed(): void {
-    const u = this.pendingAdminUser();
-    if (u) this.iam.setUserAdmin(u.id, !u.isAdmin);
-    this.adminDialog().close();
-    this.pendingAdminUser.set(null);
-  }
-
-  toggleStatus(id: string, current: UserStatus): void {
-    this.iam.setUserStatus(id, current === 'disabled' ? 'active' : 'disabled');
-  }
-
-  submitInvite(): void {
-    if (!this.canInvite()) return;
-    this.iam.inviteUser({
-      email: this.email().trim(),
-      firstName: this.firstName().trim(),
-      lastName: this.lastName().trim(),
-      sendInvite: this.sendInvite(),
-      admin: this.isAdminAccount(),
-      access: this.isAdminAccount()
-        ? undefined
+  async toggleAdmin(u: UserRecord): Promise<void> {
+    const ok = await this.confirm.confirm(
+      u.isAdmin
+        ? {
+            title: 'Revoke platform admin',
+            body: `Revoke platform admin from ${u.email}? They keep only their explicit grants.`,
+            confirmLabel: 'Revoke',
+            destructive: true,
+          }
         : {
-            mode: this.accessMode(),
-            role: this.role(),
-            project: this.projectSlug() || undefined,
-            group: this.groupName() || undefined,
+            title: 'Make platform admin',
+            body: `Make ${u.email} a platform admin? They will see and control everything, beyond any role.`,
+            confirmLabel: 'Make admin',
+            destructive: true,
           },
-    });
-    this.email.set('');
-    this.firstName.set('');
-    this.lastName.set('');
-    this.role.set('viewer');
-    this.sendInvite.set(true);
-    this.isAdminAccount.set(false);
-    this.accessMode.set('project');
-    this.projectSlug.set('');
-    this.groupName.set('');
-    this.showInvite.set(false);
+    );
+    if (ok) this.iam.setUserAdmin(u.id, !u.isAdmin);
+  }
+
+  async toggleStatus(u: UserRecord): Promise<void> {
+    if (u.status !== 'disabled') {
+      const ok = await this.confirm.confirm({
+        title: 'Disable this user',
+        body: `${u.email} can no longer sign in. Every request they make is refused and their demo space ends.`,
+        confirmLabel: 'Disable',
+        destructive: true,
+      });
+      if (!ok) return;
+    }
+    this.iam.setUserStatus(u.id, u.status === 'disabled' ? 'active' : 'disabled');
   }
 }

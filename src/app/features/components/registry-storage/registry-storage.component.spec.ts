@@ -1,120 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
-import {
-  RegistryBucket,
-  RegistryModeStatus,
-  RegistryStorageStatus,
-  RegistryTraffic,
-  RegistryTrafficWindow,
-} from '../../model/registry-storage.models';
+import { RegistryStorageStatus } from '../../model/registry-storage.models';
 import { ToastService } from '../../../shared/services/toast.service';
-import {
-  RegistryConnecting,
-  RegistryStorageService,
-  RegistrySwitching,
-} from '../../service/registry-storage.service';
+import { RegistryStorageService } from '../../service/registry-storage.service';
 import { RegistryStorageComponent } from './registry-storage.component';
-
-const GIB = 1024 ** 3;
-
-function status(over: Partial<RegistryStorageStatus> = {}): RegistryStorageStatus {
-  return {
-    backend: 'filesystem',
-    connected: false,
-    usage: {
-      measuredAt: new Date().toISOString(),
-      totalBytes: 6 * GIB,
-      alertBytes: 16 * GIB,
-      capacityBytes: 20 * GIB,
-      alerting: false,
-      applications: [
-        { applicationId: 'app-1', name: 'shop-api', bytes: 3 * GIB },
-        { applicationId: 'app-2', name: 'shop-web', bytes: 512 * 1024 * 1024 },
-      ],
-      unreadable: 0,
-    },
-    ...over,
-  };
-}
-
-class FakeRegistry {
-  readonly status = signal<RegistryStorageStatus | null>(null);
-  readonly loading = signal(false);
-  readonly measuring = signal(false);
-  readonly connecting = signal<RegistryConnecting>(null);
-  readonly refused = signal(false);
-  readonly refusalMessage = signal<string | null>(null);
-  readonly loadError = signal<string | null>(null);
-  readonly connectError = signal<string | null>(null);
-  readonly load = jasmine.createSpy('load').and.resolveTo();
-  readonly connectScaleway = jasmine.createSpy('connectScaleway').and.resolveTo(true);
-  readonly connectOwn = jasmine.createSpy('connectOwn').and.resolveTo(true);
-  readonly clearConnectError = jasmine.createSpy('clearConnectError');
-  readonly buckets = signal<RegistryBucket[]>([]);
-  readonly removing = signal<string | null>(null);
-  readonly removeError = signal<string | null>(null);
-  readonly loadBuckets = jasmine.createSpy('loadBuckets').and.resolveTo();
-  readonly removeBucket = jasmine.createSpy('removeBucket');
-  readonly clearRemoveError = jasmine.createSpy('clearRemoveError');
-  readonly traffic = signal<RegistryTraffic | null>(null);
-  readonly trafficWindow = signal<RegistryTrafficWindow>('24h');
-  readonly trafficLoading = signal(false);
-  readonly trafficHidden = signal(false);
-  readonly trafficFailed = signal(false);
-  readonly loadTraffic = jasmine.createSpy('loadTraffic').and.resolveTo();
-  readonly mode = signal<RegistryModeStatus | null>(null);
-  readonly switching = signal<RegistrySwitching>(null);
-  readonly switchError = signal<string | null>(null);
-  readonly loadMode = jasmine.createSpy('loadMode').and.resolveTo();
-  readonly enable = jasmine.createSpy('enable').and.resolveTo(true);
-  readonly disable = jasmine.createSpy('disable').and.resolveTo(true);
-  readonly stopFollowing = jasmine.createSpy('stopFollowing');
-  readonly stillNotReady = signal(false);
-  readonly checkReadyAgain = jasmine.createSpy('checkReadyAgain').and.resolveTo();
-  readonly clearSwitchError = jasmine.createSpy('clearSwitchError');
-}
-
-function mode(over: Partial<RegistryModeStatus> = {}): RegistryModeStatus {
-  return {
-    mode: 'ghcr',
-    source: 'install',
-    storage: null,
-    host: 'api.example.test',
-    ready: null,
-    detail: null,
-    bucketConnected: false,
-    applicationsOnRegistry: 0,
-    ...over,
-  };
-}
-
-function traffic(over: Partial<RegistryTraffic> = {}): RegistryTraffic {
-  return {
-    window: '24h',
-    requests: { pulls: 120, pushes: 8, deletes: 1 },
-    outcomes: { ok: 125, refused: 0, notFound: 1, failed: 0 },
-    bytesIn: 2 * GIB,
-    bytesOut: 9 * GIB,
-    peakBytesPerSecondIn: 1_000_000,
-    peakBytesPerSecondOut: 12_500_000,
-    readFromBucketBytes: null,
-    ...over,
-  };
-}
-
-function bucket(over: Partial<RegistryBucket> = {}): RegistryBucket {
-  return {
-    id: 'b-old',
-    provider: 'scaleway_object_storage',
-    region: 'fr-par',
-    bucket: 'flui-registry-old',
-    active: false,
-    createdByFlui: true,
-    connectedAt: '2026-09-01T08:00:00.000Z',
-    ...over,
-  };
-}
+import { FakeRegistry, GIB, bucket, mode, status, traffic } from './registry-storage-fixtures';
 
 describe('image registry page', () => {
   let fixture: ComponentFixture<RegistryStorageComponent>;
@@ -123,6 +13,8 @@ describe('image registry page', () => {
   let toast: jasmine.SpyObj<ToastService>;
 
   const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const meter = (testid: string): string | null =>
+    q(testid)!.querySelector('[role="meter"]')!.getAttribute('aria-valuenow');
   const q = (testid: string): HTMLElement | null => el().querySelector(`[data-testid="${testid}"]`);
   const render = async (value: RegistryStorageStatus | null): Promise<void> => {
     registry.status.set(value);
@@ -158,7 +50,7 @@ describe('image registry page', () => {
     expect(q('registry-location')!.textContent).toContain('A volume on the control cluster');
     expect(q('registry-used')!.textContent).toContain('6.0 GiB');
     expect(q('registry-limit')!.textContent).toContain('of 20.0 GiB volume');
-    expect((q('registry-bar') as HTMLElement).style.width).toBe('30%');
+    expect(meter('registry-bar')).toBe('30');
     expect(q('registry-alerting')).toBeNull();
     expect(q('registry-apps')!.textContent).toContain('shop-api');
     expect(q('registry-apps')!.textContent).toContain('512 MiB');
@@ -184,7 +76,7 @@ describe('image registry page', () => {
     );
     expect(q('registry-location')!.textContent).toContain('Bucket images on OVH');
     expect(q('registry-limit')!.textContent).toContain('alert at 12.0 GiB');
-    expect((q('registry-bar') as HTMLElement).style.width).toBe('50%');
+    expect(meter('registry-bar')).toBe('50');
     expect(q('registry-not-in-use')).toBeNull();
   });
 
@@ -396,7 +288,7 @@ describe('image registry page', () => {
     );
     expect(registry.loadBuckets).toHaveBeenCalled();
     const list = q('registry-replaced')!;
-    expect(list.querySelectorAll('li')).toHaveSize(2);
+    expect(list.querySelectorAll('tbody tr')).toHaveSize(2);
     expect(list.textContent).toContain('created by Flui');
     expect(list.textContent).toContain('your own');
     expect(list.textContent).not.toContain('flui-registry-new');
@@ -459,10 +351,10 @@ describe('image registry page', () => {
     expect(q('registry-traffic-out')!.textContent).toContain('9.0 GiB');
     expect(q('registry-traffic-in')!.textContent).toContain('2.0 GiB');
     expect(q('registry-traffic-peak')!.textContent).toContain('100 Mbit/s out · 8.0 Mbit/s in');
-    expect(q('registry-traffic-refused')!.classList).not.toContain('text-amber-600');
-    expect(q('registry-traffic-failed')!.classList).not.toContain('text-destructive');
+    expect(q('registry-traffic-refused')!.classList).not.toContain('fl-status--warning');
+    expect(q('registry-traffic-failed')!.classList).not.toContain('fl-status--error');
     expect(q('registry-traffic-bucket')).toBeNull();
-    const cards = Array.from(el().querySelectorAll('section')).map((s) =>
+    const cards = Array.from(el().querySelectorAll('fl-panel')).map((s) =>
       s.getAttribute('data-testid'),
     );
     expect(cards.indexOf('registry-traffic')).toBe(cards.indexOf('registry-usage') + 1);
@@ -477,11 +369,11 @@ describe('image registry page', () => {
       }),
     );
     await render(status({ backend: 's3', connected: true, bucket: 'images' }));
-    expect(q('registry-traffic-refused')!.classList).toContain('text-amber-600');
+    expect(q('registry-traffic-refused')!.classList).toContain('fl-status--warning');
     expect(q('registry-traffic-refused')!.getAttribute('title')).toContain(
       'over an application quota',
     );
-    expect(q('registry-traffic-failed')!.classList).toContain('text-destructive');
+    expect(q('registry-traffic-failed')!.classList).toContain('fl-status--error');
     expect(q('registry-traffic-bucket')!.textContent).toContain(
       '3.0 GiB read from the bucket to serve pulls',
     );

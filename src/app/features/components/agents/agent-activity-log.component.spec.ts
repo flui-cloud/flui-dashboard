@@ -196,7 +196,7 @@ describe('the register of what an agent did', () => {
       expect(said).toContain('release-bot');
       expect(said).toContain('12 calls');
       expect(said).toContain('2 refused');
-      expect(said).toContain('last acted');
+      expect(said).toContain('2 minutes ago');
     });
 
     it('marks a credential that has since been switched off', async () => {

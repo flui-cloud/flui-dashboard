@@ -1,0 +1,331 @@
+<ng-template #confirm>
+  <form
+    class="flex flex-wrap items-center gap-2"
+    (ngSubmit)="confirmPending()"
+    data-testid="confirm-form"
+  >
+    <div class="fl-input w-56">
+      <input
+        type="password"
+        name="confirmPassword"
+        aria-label="Current password"
+        placeholder="Current password"
+        autocomplete="current-password"
+        [(ngModel)]="confirmPassword"
+      />
+    </div>
+    <button flButton="danger" size="sm" type="submit" [disabled]="busy() || !confirmPassword">
+      Remove
+    </button>
+    <button flButton="ghost" size="sm" type="button" (click)="cancelPending()">Cancel</button>
+  </form>
+</ng-template>
+
+@if (notice()) {
+  <div>
+    <fl-status tone="success" [label]="notice()!" data-testid="notice" />
+  </div>
+}
+@if (error()) {
+  <fl-alert tone="error" title="Request failed" data-testid="error">{{ error() }}</fl-alert>
+}
+
+<fl-panel title="Password" data-testid="password-card">
+  <fl-status
+    panelActions
+    [tone]="overview().security.password ? 'success' : 'neutral'"
+    [label]="overview().security.password ? 'Set' : 'No password'"
+  />
+  @if (overview().security.password) {
+    <form
+      class="flex max-w-md flex-col gap-4"
+      (ngSubmit)="changePassword()"
+      data-testid="password-form"
+    >
+      <fl-field label="Current password" for="current">
+        <div class="fl-input fl-input--lg">
+          <input
+            id="current"
+            aria-label="Current password"
+            name="current"
+            type="password"
+            autocomplete="current-password"
+            [(ngModel)]="current"
+          />
+        </div>
+      </fl-field>
+      <fl-field label="New password" for="next">
+        <div class="fl-input fl-input--lg">
+          <input
+            id="next"
+            aria-label="New password"
+            name="next"
+            type="password"
+            autocomplete="new-password"
+            [(ngModel)]="next"
+            (ngModelChange)="typed.set($event)"
+          />
+        </div>
+      </fl-field>
+      @if (policy(); as p) {
+        <ul class="flex flex-col gap-1" data-testid="requirements">
+          @for (r of p.requirements; track r.rule) {
+            <li>
+              <fl-status [tone]="met(r.rule) ? 'success' : 'neutral'" [label]="r.label" />
+            </li>
+          }
+        </ul>
+      }
+      <fl-field
+        label="New password again"
+        for="again"
+        [error]="again && next !== again ? 'The two passwords differ.' : null"
+      >
+        <div class="fl-input fl-input--lg">
+          <input
+            id="again"
+            aria-label="New password again"
+            name="again"
+            type="password"
+            autocomplete="new-password"
+            [(ngModel)]="again"
+          />
+        </div>
+      </fl-field>
+      <div>
+        <button flButton type="submit" [disabled]="busy() || !canChangePassword()">
+          Change password
+        </button>
+      </div>
+    </form>
+  } @else {
+    <p class="text-fl-body-sm text-fl-ink-muted">
+      You sign in with a linked account, without a password.
+    </p>
+  }
+</fl-panel>
+
+<fl-panel title="Authenticator app" data-testid="totp-card">
+  <fl-status
+    panelActions
+    [tone]="overview().security.totp ? 'success' : 'neutral'"
+    [label]="overview().security.totp ? 'On' : 'Off'"
+  />
+  @if (overview().security.totp) {
+    @if (pending()?.kind === 'totp') {
+      <ng-container [ngTemplateOutlet]="confirm" />
+    } @else {
+      <div class="flex items-center justify-between gap-3">
+        <p class="text-fl-body-sm text-fl-ink-muted">
+          Sign-in asks for a code from your authenticator app.
+        </p>
+        <button
+          flButton
+          size="sm"
+          type="button"
+          (click)="ask({ kind: 'totp', id: 'totp', label: 'authenticator app' })"
+        >
+          Remove
+        </button>
+      </div>
+    }
+  } @else if (totp(); as reg) {
+    <div class="flex max-w-md flex-col gap-3" data-testid="totp-setup">
+      <p class="text-fl-body-sm">
+        Scan the code with your authenticator app, or add the secret by hand, then type the code it
+        shows.
+      </p>
+      @if (totpQr(); as qr) {
+        <img
+          [src]="qr"
+          alt="Authenticator app QR code"
+          width="176"
+          height="176"
+          class="self-start rounded-fl-md border border-fl-border bg-fl-surface p-2"
+          data-testid="totp-qr"
+        />
+      }
+      <code
+        class="fl-mono block break-all rounded-fl-md border border-fl-border bg-fl-surface-subtle px-3 py-2"
+        data-testid="totp-secret"
+        >{{ reg.secret }}</code
+      >
+      <a class="fl-link text-fl-body-sm" [href]="reg.uri"
+        >Open in an authenticator app on this device</a
+      >
+      <form class="flex items-center gap-2" (ngSubmit)="verifyTotp()">
+        <div class="fl-input w-32">
+          <input
+            name="code"
+            class="fl-mono"
+            aria-label="Code from the app"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            placeholder="123456"
+            [(ngModel)]="code"
+          />
+        </div>
+        <button flButton size="sm" type="submit" [disabled]="busy() || !code.trim()">
+          Confirm
+        </button>
+        <button flButton="ghost" size="sm" type="button" (click)="totp.set(null)">Cancel</button>
+      </form>
+    </div>
+  } @else if (askingTotpPassword()) {
+    <form
+      class="flex flex-wrap items-center gap-2"
+      (ngSubmit)="startTotp()"
+      data-testid="totp-password-form"
+    >
+      <div class="fl-input w-56">
+        <input
+          type="password"
+          name="totpPassword"
+          aria-label="Current password"
+          placeholder="Current password"
+          autocomplete="current-password"
+          [(ngModel)]="totpPassword"
+        />
+      </div>
+      <button flButton size="sm" type="submit" [disabled]="busy() || !totpPassword">
+        Continue
+      </button>
+      <button flButton="ghost" size="sm" type="button" (click)="cancelTotp()">Cancel</button>
+    </form>
+  } @else {
+    <div class="flex items-center justify-between gap-3">
+      <p class="text-fl-body-sm text-fl-ink-muted">
+        Add a second step to sign-in with a code from an app on your phone.
+      </p>
+      <button
+        flButton
+        size="sm"
+        type="button"
+        [disabled]="busy()"
+        (click)="beginTotp()"
+        data-testid="totp-start"
+      >
+        Set up
+      </button>
+    </div>
+  }
+</fl-panel>
+
+@if (keys().length) {
+  <fl-panel
+    title="Passkeys and security keys"
+    [count]="keys().length"
+    [flush]="true"
+    data-testid="keys-card"
+  >
+    <div class="fl-table-wrap">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Type</th>
+            <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (k of keys(); track k.id) {
+            <tr>
+              <td>{{ k.name || 'Unnamed' }}</td>
+              <td class="text-fl-ink-secondary">
+                {{ k.kind === 'passkey' ? 'Passkey' : 'Security key' }}
+              </td>
+              <td class="is-fit">
+                @if (pending()?.id !== k.id) {
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    (click)="ask({ kind: k.kind, id: k.id, label: k.name || 'key' })"
+                  >
+                    Remove
+                  </button>
+                }
+              </td>
+            </tr>
+            @if (pending()?.id === k.id) {
+              <tr>
+                <td colspan="3" class="whitespace-normal">
+                  <ng-container [ngTemplateOutlet]="confirm" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </fl-panel>
+}
+
+@if (overview().security.links.length) {
+  <fl-panel
+    title="Linked accounts"
+    [count]="overview().security.links.length"
+    [flush]="true"
+    data-testid="links-card"
+  >
+    <div class="fl-table-wrap">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">Provider</th>
+            <th scope="col">Account</th>
+            <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (l of overview().security.links; track l.idpId + l.externalUserId) {
+            <tr>
+              <td>{{ l.provider }}</td>
+              <td class="fl-mono text-fl-ink-secondary">
+                {{ l.externalUserName || l.externalUserId }}
+              </td>
+              <td class="is-fit">
+                @if (
+                  overview().limits.canUnlink && pending()?.id !== l.idpId + ':' + l.externalUserId
+                ) {
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    data-testid="unlink"
+                    (click)="
+                      ask({
+                        kind: 'link',
+                        id: l.idpId + ':' + l.externalUserId,
+                        label: l.provider,
+                        idpId: l.idpId,
+                        externalUserId: l.externalUserId,
+                      })
+                    "
+                  >
+                    Unlink
+                  </button>
+                }
+              </td>
+            </tr>
+            @if (pending()?.id === l.idpId + ':' + l.externalUserId) {
+              <tr>
+                <td colspan="3" class="whitespace-normal">
+                  <ng-container [ngTemplateOutlet]="confirm" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (overview().limits.guest) {
+      <p
+        class="border-t border-fl-border px-4 py-3 text-fl-body-sm text-fl-ink-muted"
+        data-testid="guest-link-note"
+      >
+        Stays linked during the trial.
+      </p>
+    }
+  </fl-panel>
+}

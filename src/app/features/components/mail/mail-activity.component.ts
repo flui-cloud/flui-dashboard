@@ -1,7 +1,14 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideRotateCcw, lucideSearch, lucideTriangleAlert } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw, lucideSearch } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 import { MailSectionNavComponent } from './mail-section-nav.component';
 import { MailConsoleService } from '../../service/mail-console.service';
 import { MailDeliveryEvent, MailEventKind } from '../../model/mail-console.models';
@@ -16,158 +23,136 @@ const FILTERS: { label: string; kinds: MailEventKind[] }[] = [
   { label: 'In flight', kinds: ['queued', 'sent', 'deferred'] },
 ];
 
-const KIND_CLASS: Record<string, string> = {
-  delivered: 'bg-muted text-foreground',
-  sent: 'bg-muted text-muted-foreground',
-  queued: 'bg-muted text-muted-foreground',
-  deferred: 'bg-amber-50 text-amber-800',
-  bounced: 'bg-red-50 text-red-700',
-  complained: 'bg-red-50 text-red-700',
-  unsubscribed: 'bg-amber-50 text-amber-800',
-  canceled: 'bg-muted text-muted-foreground',
+const KIND_STATUS: Record<MailEventKind, { tone: StatusTone; label: string }> = {
+  delivered: { tone: 'success', label: 'Delivered' },
+  sent: { tone: 'progress', label: 'Sent' },
+  queued: { tone: 'progress', label: 'Queued' },
+  deferred: { tone: 'warning', label: 'Deferred' },
+  bounced: { tone: 'error', label: 'Bounced' },
+  complained: { tone: 'error', label: 'Complaint' },
+  unsubscribed: { tone: 'warning', label: 'Unsubscribed' },
+  canceled: { tone: 'neutral', label: 'Canceled' },
 };
 
 @Component({
   selector: 'app-mail-activity',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon, MailSectionNavComponent],
-  providers: [provideIcons({ lucideLoader, lucideRotateCcw, lucideSearch, lucideTriangleAlert })],
+  imports: [
+    FormsModule,
+    FlAlert,
+    FlPanel,
+    FlTable,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    MailSectionNavComponent,
+  ],
+  providers: [provideIcons({ lucideRefreshCw, lucideSearch })],
   template: `
-    <div class="p-4 md:p-6">
+    <div class="fl-page">
       <app-mail-section-nav>
         <button
-          slot="actions"
+          headerActions
+          flButton
           type="button"
-          (click)="reload()"
+          [iconOnly]="true"
+          aria-label="Refresh"
           [disabled]="loading()"
-          class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:opacity-60"
+          (click)="reload()"
         >
-          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
-          Refresh
+          <fl-icon name="lucideRefreshCw" />
         </button>
       </app-mail-section-nav>
 
-      <div class="mb-3 flex flex-wrap items-center gap-2">
-        <div class="flex rounded-md border border-border p-0.5">
-          @for (f of filters; track f.label) {
-            <button
-              type="button"
-              (click)="applyFilter(f.kinds)"
-              class="rounded px-2.5 py-1 text-xs font-medium transition-colors"
-              [class]="
-                isActive(f.kinds)
-                  ? 'bg-muted text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              "
-            >
-              {{ f.label }}
-            </button>
-          }
-        </div>
-        <div class="relative">
-          <ng-icon
-            name="lucideSearch"
-            class="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-          />
-          <input
-            type="text"
-            [(ngModel)]="query"
-            (keydown.enter)="reload()"
-            placeholder="Address, either side"
-            class="h-9 w-64 rounded-md border border-border bg-background pl-8 pr-3 text-sm text-foreground"
-          />
-        </div>
-      </div>
-
       @if (error()) {
-        <div
-          class="mb-3 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{ error() }}</span>
-        </div>
+        <fl-alert tone="error" title="Could not load the activity">{{ error() }}</fl-alert>
       }
 
-      @if (loading() && !events().length) {
-        <div class="overflow-hidden rounded-lg border border-border bg-card">
-          <div class="border-b border-border px-4 py-2">
-            <div class="skeleton h-3 w-56"></div>
+      <fl-panel [flush]="true">
+        <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+          <div class="fl-toolbar__group">
+            <label class="fl-input">
+              <fl-icon name="lucideSearch" [size]="14" />
+              <span class="fl-sr">Search</span>
+              <input
+                type="search"
+                [(ngModel)]="query"
+                (keydown.enter)="reload()"
+                placeholder="Address, either side"
+                aria-label="Search by address"
+              />
+            </label>
+            <div class="fl-segmented" role="group" aria-label="Outcome">
+              @for (f of filters; track f.label) {
+                <button
+                  type="button"
+                  [attr.aria-pressed]="isActive(f.kinds)"
+                  (click)="applyFilter(f.kinds)"
+                >
+                  {{ f.label }}
+                </button>
+              }
+            </div>
           </div>
-          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-            <div class="flex items-start gap-4 border-b border-border/60 px-4 py-3 last:border-0">
-              <div class="skeleton h-4 w-24"></div>
-              <div class="skeleton h-5 w-20"></div>
-              <div class="skeleton h-4 w-56"></div>
-              <div class="skeleton h-4 w-44"></div>
-              <div class="skeleton h-4 flex-1"></div>
+          <div class="fl-toolbar__group">
+            <span class="fl-toolbar__info"
+              >{{ events().length }}{{ more() ? '+' : '' }}
+              {{ events().length === 1 ? 'event' : 'events' }}</span
+            >
+          </div>
+        </div>
+
+        @if (loading() && !events().length) {
+          <fl-loading-state [rows]="6" />
+        } @else if (!events().length) {
+          <fl-empty-state title="Nothing matches in this window" />
+        } @else {
+          <div class="fl-table-wrap">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">When</th>
+                  <th scope="col">Outcome</th>
+                  <th scope="col">To</th>
+                  <th scope="col">From</th>
+                  <th scope="col">Subject</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of events(); track e.messageId + e.recipient) {
+                  <tr>
+                    <td class="fl-num text-fl-ink-muted">{{ at(e.at) }}</td>
+                    <td>
+                      <fl-status [tone]="status(e.kind).tone" [label]="status(e.kind).label" />
+                    </td>
+                    <td class="fl-mono">{{ e.recipient }}</td>
+                    <td class="fl-mono text-fl-ink-muted">{{ e.from ?? '—' }}</td>
+                    <td class="whitespace-normal">
+                      <div class="flex max-w-md flex-col">
+                        <span class="truncate">{{ e.subject ?? '—' }}</span>
+                        @if (e.reason) {
+                          <span class="fl-mono truncate text-fl-ink-muted" [title]="e.reason"
+                            >{{ e.code ? e.code + ' ' : '' }}{{ e.reason }}</span
+                          >
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (more()) {
+            <div class="flex justify-center border-t border-fl-border p-3">
+              <button flButton size="sm" type="button" [disabled]="loading()" (click)="loadMore()">
+                Load more
+              </button>
             </div>
           }
-        </div>
-      } @else if (!events().length) {
-        <p class="text-sm text-muted-foreground">Nothing matches in this window.</p>
-      } @else {
-        <div class="overflow-x-auto rounded-lg border border-border bg-card">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-border text-left text-xs text-muted-foreground">
-                <th class="px-4 py-2 font-medium">When</th>
-                <th class="px-4 py-2 font-medium">Outcome</th>
-                <th class="px-4 py-2 font-medium">To</th>
-                <th class="px-4 py-2 font-medium">From</th>
-                <th class="px-4 py-2 font-medium">Subject</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (e of events(); track e.messageId + e.recipient) {
-                <tr class="border-b border-border/60 last:border-0 align-top">
-                  <td class="whitespace-nowrap px-4 py-2 text-xs text-muted-foreground">
-                    {{ at(e.at) }}
-                  </td>
-                  <td class="px-4 py-2">
-                    <span
-                      class="rounded-md px-1.5 py-0.5 text-[11px] font-medium"
-                      [class]="kindClass(e.kind)"
-                      >{{ e.kind }}</span
-                    >
-                  </td>
-                  <td class="px-4 py-2 font-mono text-xs text-foreground">{{ e.recipient }}</td>
-                  <td class="px-4 py-2 font-mono text-xs text-muted-foreground">
-                    {{ e.from ?? '—' }}
-                  </td>
-                  <td class="px-4 py-2">
-                    <div class="max-w-md truncate text-foreground">{{ e.subject ?? '—' }}</div>
-                    @if (e.reason) {
-                      <div
-                        class="max-w-md truncate font-mono text-[11px] text-red-600"
-                        [title]="e.reason"
-                      >
-                        {{ e.code ? e.code + ' ' : '' }}{{ e.reason }}
-                      </div>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        @if (more()) {
-          <div class="mt-3 flex justify-center">
-            <button
-              type="button"
-              (click)="loadMore()"
-              [disabled]="loading()"
-              class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-xs text-muted-foreground hover:bg-muted disabled:opacity-50"
-            >
-              @if (loading()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-              }
-              Load more
-            </button>
-          </div>
         }
-      }
+      </fl-panel>
     </div>
   `,
 })
@@ -231,7 +216,7 @@ export class MailActivityComponent implements OnInit {
     return shortWhen(iso);
   }
 
-  protected kindClass(kind: string): string {
-    return KIND_CLASS[kind] ?? 'bg-muted text-muted-foreground';
+  protected status(kind: MailEventKind): { tone: StatusTone; label: string } {
+    return KIND_STATUS[kind] ?? { tone: 'neutral', label: kind };
   }
 }

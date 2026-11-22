@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { AccessComponent } from './access.component';
 import { IamService } from '../../service/iam.service';
@@ -100,7 +100,7 @@ describe('revoking a grant on the access screen', () => {
           provide: ActivatedRoute,
           useValue: { paramMap: of({ get: () => 'grants' }) },
         },
-        { provide: Router, useValue: { navigate: jasmine.createSpy() } },
+        provideRouter([]),
       ],
     }).compileComponents();
 
@@ -224,7 +224,7 @@ describe('the access screen says whose grants it is listing', () => {
           provide: ActivatedRoute,
           useValue: { paramMap: of({ get: () => 'grants' }) },
         },
-        { provide: Router, useValue: { navigate: jasmine.createSpy() } },
+        provideRouter([]),
       ],
     }).compileComponents();
     const f = TestBed.createComponent(AccessComponent);
@@ -350,7 +350,7 @@ describe('the grants list says when each grant ends', () => {
           provide: ActivatedRoute,
           useValue: { paramMap: of({ get: () => 'grants' }) },
         },
-        { provide: Router, useValue: { navigate: jasmine.createSpy() } },
+        provideRouter([]),
       ],
     }).compileComponents();
     const f = TestBed.createComponent(AccessComponent);

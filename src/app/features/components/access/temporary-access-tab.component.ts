@@ -1,24 +1,13 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideChevronDown,
-  lucideChevronRight,
-  lucideClock,
-  lucideCirclePlus,
-  lucideTrash2,
-} from '@ng-icons/lucide';
-import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
+import { provideIcons } from '@ng-icons/core';
+import { lucideChevronDown, lucideChevronRight, lucideCirclePlus } from '@ng-icons/lucide';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlTag } from '../../../ui/primitives/tag';
 import { IamService } from '../../service/iam.service';
 import { AuditService } from '../../service/audit.service';
 import { MaskModeService } from '../../../core/services/mask-mode.service';
@@ -43,168 +32,194 @@ interface ActivityState {
 
 @Component({
   selector: 'app-temporary-access-tab',
-  standalone: true,
   imports: [
     NgTemplateOutlet,
-    NgIcon,
-    HlmCardDirective,
-    HlmCardContentDirective,
-    HlmBadgeDirective,
+    FlPanel,
+    FlEmptyState,
+    FlLoadingState,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlTag,
     CanDirective,
     GrantBuilderComponent,
     AuditEventListComponent,
   ],
-  providers: [
-    provideIcons({
-      lucideChevronDown,
-      lucideChevronRight,
-      lucideClock,
-      lucideCirclePlus,
-      lucideTrash2,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideChevronDown, lucideChevronRight, lucideCirclePlus })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-5">
-      @if (showBuilder()) {
-        <app-grant-builder
+    @if (showBuilder()) {
+      <app-grant-builder
+        *fluiCan="'iam:assign-role'"
+        [presetRole]="platformOperator"
+        presetDuration="1d"
+      />
+    }
+
+    <fl-panel title="Active" [count]="split().active.length" [flush]="true">
+      @if (split().active.length && !showBuilder()) {
+        <button
           *fluiCan="'iam:assign-role'"
-          [presetRole]="platformOperator"
-          presetDuration="1d"
+          panelActions
+          flButton
+          size="sm"
+          type="button"
+          (click)="showBuilder.set(true)"
+        >
+          <fl-icon name="lucideCirclePlus" [size]="14" />
+          Give temporary access
+        </button>
+      }
+      @if (split().active.length) {
+        <ng-container
+          *ngTemplateOutlet="table; context: { $implicit: split().active, ended: false }"
         />
-      }
-
-      <div hlmCard>
-        <div hlmCardContent class="pt-6 space-y-3">
-          <div class="flex items-center justify-between gap-3">
-            <h3 class="text-sm font-semibold text-foreground">
-              Active ({{ split().active.length }})
-            </h3>
-            @if (split().active.length && !showBuilder()) {
-              <button
-                type="button"
-                *fluiCan="'iam:assign-role'"
-                (click)="showBuilder.set(true)"
-                class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <ng-icon name="lucideCirclePlus" class="h-3.5 w-3.5" />
-                Give temporary access
-              </button>
-            }
-          </div>
-
-          @for (g of split().active; track g.id) {
-            <ng-container *ngTemplateOutlet="row; context: { $implicit: g, ended: false }" />
-          } @empty {
-            <div class="py-6 text-center space-y-3" data-testid="temporary-empty">
-              <p class="text-sm text-muted-foreground">Nobody has temporary access right now.</p>
-              @if (!showBuilder()) {
-                <button
-                  type="button"
-                  *fluiCan="'iam:assign-role'"
-                  (click)="showBuilder.set(true)"
-                  class="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                >
-                  <ng-icon name="lucideCirclePlus" class="h-4 w-4" />
-                  Give temporary access
-                </button>
-              }
-            </div>
-          }
-        </div>
-      </div>
-
-      @if (split().ended.length) {
-        <div hlmCard>
-          <div hlmCardContent class="pt-6 space-y-3">
+      } @else {
+        <fl-empty-state
+          [compact]="true"
+          title="Nobody has temporary access right now."
+          body="A temporary grant ends on its own, so nobody has to remember to take it back."
+          data-testid="temporary-empty"
+        >
+          @if (!showBuilder()) {
             <button
-              type="button"
-              (click)="showEnded.set(!showEnded())"
-              class="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground"
-            >
-              <ng-icon
-                [name]="showEnded() ? 'lucideChevronDown' : 'lucideChevronRight'"
-                class="h-4 w-4"
-              />
-              Ended ({{ split().ended.length }})
-            </button>
-            @if (showEnded()) {
-              @for (g of split().ended; track g.id) {
-                <ng-container *ngTemplateOutlet="row; context: { $implicit: g, ended: true }" />
-              }
-            }
-          </div>
-        </div>
-      }
-    </div>
-
-    <ng-template #row let-g let-ended="ended">
-      <div
-        class="rounded-md border border-border/60"
-        [class.opacity-60]="ended"
-        data-testid="temporary-row"
-      >
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2.5 text-sm">
-          @if (g.binding.principal.type === 'user') {
-            <button
-              type="button"
-              (click)="toggle(g)"
-              class="text-muted-foreground hover:text-foreground"
-              [attr.aria-label]="'Recent activity of ' + iam.principalDisplay(g.binding.principal)"
-            >
-              <ng-icon
-                [name]="expanded().has(g.id) ? 'lucideChevronDown' : 'lucideChevronRight'"
-                class="h-4 w-4"
-              />
-            </button>
-          } @else {
-            <span class="w-4"></span>
-          }
-          <span class="font-medium text-foreground">{{
-            iam.principalDisplay(g.binding.principal)
-          }}</span>
-          <span hlmBadge variant="outline" class="text-xs">{{ iam.roleName(g.binding.role) }}</span>
-          <span class="text-muted-foreground">{{ scopeText()(g.binding) }}</span>
-          <span class="text-muted-foreground inline-flex items-center gap-1">
-            <ng-icon name="lucideClock" class="h-3.5 w-3.5" />
-            @if (ended) {
-              ended {{ when(g.expiresAt) }}
-            } @else {
-              ends in {{ left(g.expiresAt) }} · {{ when(g.expiresAt) }}
-            }
-          </span>
-          @if (g.grantedBy) {
-            <span class="text-xs text-muted-foreground">granted by {{ g.grantedBy }}</span>
-          }
-          <span class="flex-1"></span>
-          @if (!ended && iam.isRevocable(g.binding.role)) {
-            <button
-              type="button"
               *fluiCan="'iam:assign-role'"
-              (click)="revoke.emit(g)"
-              class="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-destructive"
+              flButton="primary"
+              size="sm"
+              type="button"
+              (click)="showBuilder.set(true)"
             >
-              <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
-              Revoke
+              <fl-icon name="lucideCirclePlus" [size]="14" />
+              Give temporary access
             </button>
           }
+        </fl-empty-state>
+      }
+    </fl-panel>
+
+    @if (split().ended.length) {
+      <fl-panel [flush]="true">
+        <div class="px-4 py-3">
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [attr.aria-expanded]="showEnded()"
+            (click)="showEnded.set(!showEnded())"
+          >
+            Ended ({{ split().ended.length }})
+            <fl-icon
+              [name]="showEnded() ? 'lucideChevronDown' : 'lucideChevronRight'"
+              [size]="14"
+            />
+          </button>
         </div>
-        @if (expanded().has(g.id)) {
-          <div class="border-t border-border/60 px-3 py-2">
-            @let state = activity()[g.id];
-            @if (!state || state.loading) {
-              <p class="text-xs text-muted-foreground py-2">Loading activity…</p>
-            } @else if (state.error) {
-              <p class="text-xs text-muted-foreground py-2">Activity could not be read.</p>
-            } @else {
-              <app-audit-event-list
-                [events]="state.events"
-                [showWho]="false"
-                emptyText="No recorded activity."
-              />
-            }
+        @if (showEnded()) {
+          <div class="border-t border-fl-border">
+            <ng-container
+              *ngTemplateOutlet="table; context: { $implicit: split().ended, ended: true }"
+            />
           </div>
         }
+      </fl-panel>
+    }
+
+    <ng-template #table let-grants let-ended="ended">
+      <div class="fl-table-wrap">
+        <table flTable density="dense">
+          <thead>
+            <tr>
+              <th scope="col" class="is-fit"><span class="fl-sr">Activity</span></th>
+              <th scope="col">Who</th>
+              <th scope="col">Role</th>
+              <th scope="col">What</th>
+              <th scope="col">Ends</th>
+              <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+            </tr>
+          </thead>
+          @for (g of asGrants(grants); track g.id) {
+            <tbody
+              class="border-t border-fl-border-subtle"
+              [class.opacity-60]="ended"
+              data-testid="temporary-row"
+            >
+              <tr>
+                <td class="is-fit">
+                  @if (g.binding.principal.type === 'user') {
+                    <button
+                      flButton="ghost"
+                      size="sm"
+                      type="button"
+                      [iconOnly]="true"
+                      [attr.aria-expanded]="expanded().has(g.id)"
+                      [attr.aria-label]="
+                        'Recent activity of ' + iam.principalDisplay(g.binding.principal)
+                      "
+                      (click)="toggle(g)"
+                    >
+                      <fl-icon
+                        [name]="expanded().has(g.id) ? 'lucideChevronDown' : 'lucideChevronRight'"
+                        [size]="14"
+                      />
+                    </button>
+                  }
+                </td>
+                <td class="whitespace-normal">
+                  <div class="fl-cell-name flex flex-col gap-0.5">
+                    <span>{{ iam.principalDisplay(g.binding.principal) }}</span>
+                    @if (g.grantedBy) {
+                      <span class="text-fl-caption text-fl-ink-muted"
+                        >granted by {{ g.grantedBy }}</span
+                      >
+                    }
+                  </div>
+                </td>
+                <td>
+                  <fl-tag>{{ iam.roleName(g.binding.role) }}</fl-tag>
+                </td>
+                <td class="text-fl-ink-secondary">{{ scopeText()(g.binding) }}</td>
+                <td class="text-fl-ink-secondary">
+                  @if (ended) {
+                    ended {{ when(g.expiresAt) }}
+                  } @else {
+                    ends in {{ left(g.expiresAt) }} · {{ when(g.expiresAt) }}
+                  }
+                </td>
+                <td class="is-fit">
+                  @if (!ended && iam.isRevocable(g.binding.role)) {
+                    <button
+                      *fluiCan="'iam:assign-role'"
+                      flButton="ghost"
+                      size="sm"
+                      type="button"
+                      (click)="revoke.emit(g)"
+                    >
+                      Revoke
+                    </button>
+                  }
+                </td>
+              </tr>
+              @if (expanded().has(g.id)) {
+                <tr>
+                  <td colspan="6" class="whitespace-normal bg-fl-surface-subtle">
+                    @let state = activity()[g.id];
+                    @if (!state || state.loading) {
+                      <fl-loading-state [rows]="2" />
+                    } @else if (state.error) {
+                      <p class="text-fl-body-sm text-fl-ink-muted">Activity could not be read.</p>
+                    } @else {
+                      <app-audit-event-list
+                        [events]="state.events"
+                        [showWho]="false"
+                        emptyText="No recorded activity."
+                      />
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          }
+        </table>
       </div>
     </ng-template>
   `,
@@ -241,6 +256,10 @@ export class TemporaryAccessTabComponent {
 
   when(value: string | null | undefined): string {
     return value ? formatWhen(value) : '';
+  }
+
+  protected asGrants(value: unknown): GrantRecord[] {
+    return value as GrantRecord[];
   }
 
   left(value: string | null | undefined): string {

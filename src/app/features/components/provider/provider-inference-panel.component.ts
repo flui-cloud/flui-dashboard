@@ -1,79 +1,56 @@
-import {
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-  input,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCpu, lucideCheck, lucideCircleX, lucideLoader } from '@ng-icons/lucide';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { InferenceSettingsService } from '../../service/inference-settings.service';
 import { ValidationResultDto } from '../../../core/api/model/validationResultDto';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
 
 @Component({
   selector: 'provider-inference-panel',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideCpu, lucideCheck, lucideCircleX, lucideLoader })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlKeyValue, FlKvItem, FlCopyId, FlButton, FlStatus, FlTag],
+  host: { class: 'fl-stack' },
   template: `
     @if (info(); as p) {
-      <section class="bg-card border border-border rounded-fl-lg overflow-hidden">
-        <header class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2">
-          <ng-icon name="lucideCpu" class="h-4 w-4 text-muted-foreground" />
-          <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Inference
-          </h2>
-          @if (p.euDataResidency) {
-            <span
-              class="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-              >EU</span
-            >
-          }
-          <button
-            type="button"
-            (click)="test()"
-            [disabled]="testing()"
-            class="ml-auto inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-          >
-            <ng-icon
-              name="lucideLoader"
-              [class]="'h-3.5 w-3.5 mr-1 ' + (testing() ? 'animate-spin' : 'hidden')"
-            />
-            Test inference
-          </button>
-        </header>
-        <div class="p-6 space-y-3">
-          <p class="text-sm text-muted-foreground">
-            Uses this provider's credentials — no separate key.
+      <fl-panel title="Inference">
+        <button
+          panelActions
+          flButton
+          size="sm"
+          type="button"
+          [disabled]="testing()"
+          (click)="test()"
+        >
+          {{ testing() ? 'Testing…' : 'Test inference' }}
+        </button>
+        <div class="fl-stack">
+          <p class="text-fl-body-sm text-fl-ink-muted">
+            Uses this provider's credentials. No separate key.
           </p>
-          <p class="font-mono text-xs break-all text-muted-foreground">{{ p.baseUrl }}</p>
-          @if (p.models.length) {
-            <div class="flex flex-wrap gap-1">
-              @for (m of p.models; track m) {
-                <code class="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">{{
-                  m
-                }}</code>
+          <fl-key-value>
+            <fl-kv-item key="Endpoint">
+              <fl-copy-id [value]="p.baseUrl" label="endpoint" />
+            </fl-kv-item>
+            <fl-kv-item key="Data residency">{{ p.euDataResidency ? 'EU' : '—' }}</fl-kv-item>
+            <fl-kv-item key="Models">
+              @if (p.models.length) {
+                <span class="flex flex-wrap gap-1">
+                  @for (m of p.models; track m) {
+                    <fl-tag class="fl-mono">{{ m }}</fl-tag>
+                  }
+                </span>
+              } @else {
+                <span class="text-fl-ink-muted">No models reachable yet</span>
               }
-            </div>
-          } @else {
-            <p class="text-sm text-muted-foreground">No models reachable yet.</p>
-          }
+            </fl-kv-item>
+          </fl-key-value>
           @if (result(); as r) {
-            <div
-              class="flex items-center gap-2 rounded-md px-3 py-2 text-sm"
-              [class]="
-                r.ok ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'
-              "
-            >
-              <ng-icon [name]="r.ok ? 'lucideCheck' : 'lucideCircleX'" class="h-4 w-4 shrink-0" />
-              {{ r.message }}
-            </div>
+            <fl-status [tone]="r.ok ? 'success' : 'error'" [label]="r.message" />
           }
         </div>
-      </section>
+      </fl-panel>
     }
   `,
 })
@@ -96,18 +73,22 @@ export class ProviderInferencePanelComponent implements OnInit {
   test(): void {
     this.testing.set(true);
     this.result.set(null);
-    this.service.validateProvider(this.providerId() as any).subscribe({
-      next: (r) => {
-        const models = (r.details as any)?.models;
-        const msg = this.describeValidationResult(r, models);
-        this.testing.set(false);
-        this.result.set({ ok: r.success, message: msg });
-      },
-      error: (e) => {
-        this.testing.set(false);
-        this.result.set({ ok: false, message: e?.error?.message ?? 'Validation failed' });
-      },
-    });
+    this.service
+      .validateProvider(
+        this.providerId() as Parameters<InferenceSettingsService['validateProvider']>[0],
+      )
+      .subscribe({
+        next: (r) => {
+          const models = (r.details as { models?: unknown } | undefined)?.models;
+          const msg = this.describeValidationResult(r, models);
+          this.testing.set(false);
+          this.result.set({ ok: r.success, message: msg });
+        },
+        error: (e) => {
+          this.testing.set(false);
+          this.result.set({ ok: false, message: e?.error?.message ?? 'Validation failed' });
+        },
+      });
   }
 
   private describeValidationResult(r: ValidationResultDto, models: unknown): string {

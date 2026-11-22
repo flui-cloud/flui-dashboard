@@ -1,21 +1,17 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-  untracked,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideChevronLeft,
   lucideChevronRight,
   lucideInfo,
   lucideRefreshCw,
 } from '@ng-icons/lucide';
-import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlErrorState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { AuditService } from '../../service/audit.service';
 import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { AuditEventListComponent } from './audit-event-list.component';
@@ -29,16 +25,17 @@ import {
 
 const PAGE_SIZE = 50;
 
-const PAGE_BUTTON_CLASS =
-  'inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:pointer-events-none';
-
-const INPUT_CLASS =
-  'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
-
 @Component({
   selector: 'app-activity-tab',
-  standalone: true,
-  imports: [NgIcon, HlmCardDirective, HlmCardContentDirective, AuditEventListComponent],
+  imports: [
+    FlAlert,
+    FlPanel,
+    FlErrorState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    AuditEventListComponent,
+  ],
   providers: [
     provideIcons({
       lucideChevronLeft,
@@ -47,135 +44,123 @@ const INPUT_CLASS =
       lucideRefreshCw,
     }),
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'fl-stack' },
   template: `
-    <div hlmCard>
-      <div hlmCardContent class="pt-6 space-y-4">
-        <div class="flex items-start justify-between gap-3">
-          <h3 class="text-sm font-semibold text-foreground">Activity</h3>
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              (click)="reload()"
-              title="Refresh"
-              class="inline-flex items-center rounded-md border border-border p-1.5 text-muted-foreground hover:text-foreground"
-            >
-              <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              (click)="showInfo.set(!showInfo())"
-              class="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
-              What is recorded
-            </button>
-          </div>
-        </div>
-        @if (showInfo()) {
-          <p class="text-xs text-muted-foreground rounded-md border border-border bg-muted/40 p-3">
-            Every change, every refused request and every read of application data, newest first.
-            "data" marks what reached an application's data; "key" and "agent" mark actions made
-            with an API key or by an agent.
-          </p>
-        }
-
-        <div class="flex flex-col gap-3 md:flex-row md:items-end md:flex-wrap">
-          <div class="md:w-64">
-            <label for="act-person" class="block text-xs font-medium text-muted-foreground mb-1"
-              >Person</label
-            >
+    <fl-panel title="Activity" [flush]="true">
+      <ng-container panelActions>
+        <button
+          flButton="ghost"
+          size="sm"
+          type="button"
+          [attr.aria-expanded]="showInfo()"
+          (click)="showInfo.set(!showInfo())"
+        >
+          <fl-icon name="lucideInfo" [size]="14" />
+          What is recorded
+        </button>
+        <button
+          flButton
+          size="sm"
+          type="button"
+          [iconOnly]="true"
+          title="Refresh"
+          aria-label="Refresh"
+          (click)="reload()"
+        >
+          <fl-icon name="lucideRefreshCw" [size]="14" />
+        </button>
+      </ng-container>
+      <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+        <div class="fl-toolbar__group">
+          <label class="fl-input">
+            <span class="fl-sr">Person</span>
             <input
               id="act-person"
               type="email"
-              placeholder="name@example.com"
-              [class]="inputClass"
+              placeholder="Filter by email"
               [value]="email()"
               (change)="email.set(value($event))"
               (keyup.enter)="email.set(value($event))"
             />
-          </div>
-          <div class="md:w-44">
-            <label for="act-period" class="block text-xs font-medium text-muted-foreground mb-1"
-              >Period</label
-            >
+          </label>
+          <span class="fl-select-wrap">
             <select
               id="act-period"
-              [class]="inputClass + ' appearance-none'"
+              class="fl-select fl-select--sm"
+              aria-label="Period"
               (change)="period.set(periodValue($event))"
             >
               @for (p of periods; track p) {
                 <option [value]="p" [selected]="period() === p">{{ periodLabels[p] }}</option>
               }
             </select>
-          </div>
-          <label class="inline-flex items-center gap-2 text-sm text-foreground h-9">
+          </span>
+          <label class="fl-check">
             <input
               id="act-data"
               type="checkbox"
               [checked]="dataOnly()"
               (change)="dataOnly.set(checked($event))"
             />
-            Only application data
+            <span>Only application data</span>
           </label>
-          <label class="inline-flex items-center gap-2 text-sm text-foreground h-9">
+          <label class="fl-check">
             <input
               id="act-refused"
               type="checkbox"
               [checked]="refusedOnly()"
               (change)="refusedOnly.set(checked($event))"
             />
-            Only refused
+            <span>Only refused</span>
           </label>
         </div>
-
-        @if (emailInvalid()) {
-          <p class="text-xs text-destructive">Enter a full email address.</p>
-        } @else if (loading()) {
-          <p class="text-sm text-muted-foreground py-4">Loading…</p>
-        } @else if (error()) {
-          <p class="text-sm text-muted-foreground py-4">The activity record could not be read.</p>
-        } @else {
-          <app-audit-event-list
-            [events]="events()"
-            emptyText="Nothing recorded for these filters."
-          />
-          @if (page() > 0 || hasOlder()) {
-            <div class="flex items-center justify-between gap-3 pt-1">
-              <span class="text-xs text-muted-foreground">{{ range() }}</span>
-              <div class="flex items-center gap-2">
-                <button
-                  type="button"
-                  [class]="pageButtonClass"
-                  [disabled]="page() === 0"
-                  (click)="newer()"
-                >
-                  <ng-icon name="lucideChevronLeft" class="h-3.5 w-3.5" />
-                  Newer
-                </button>
-                <button
-                  type="button"
-                  [class]="pageButtonClass"
-                  [disabled]="!hasOlder()"
-                  (click)="older()"
-                >
-                  Older
-                  <ng-icon name="lucideChevronRight" class="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          }
-        }
       </div>
-    </div>
+
+      @if (showInfo()) {
+        <p class="border-b border-fl-border px-4 py-3 text-fl-body-sm text-fl-ink-secondary">
+          Every change, every refused request and every read of application data, newest first.
+          "data" marks what reached an application's data; "key" and "agent" mark actions made with
+          an API key or by an agent.
+        </p>
+      }
+
+      @if (emailInvalid()) {
+        <div class="p-4">
+          <fl-alert tone="warning" title="Enter a full email address." />
+        </div>
+      } @else if (loading()) {
+        <fl-loading-state [rows]="5" />
+      } @else if (error()) {
+        <fl-error-state
+          [compact]="true"
+          title="The activity record could not be read."
+          (retry)="reload()"
+        />
+      } @else {
+        <app-audit-event-list [events]="events()" emptyText="Nothing recorded for these filters." />
+        @if (page() > 0 || hasOlder()) {
+          <div class="flex items-center justify-between gap-3 border-t border-fl-border px-4 py-3">
+            <span class="fl-toolbar__info">{{ range() }}</span>
+            <div class="fl-row">
+              <button flButton size="sm" type="button" [disabled]="page() === 0" (click)="newer()">
+                <fl-icon name="lucideChevronLeft" [size]="14" />
+                Newer
+              </button>
+              <button flButton size="sm" type="button" [disabled]="!hasOlder()" (click)="older()">
+                Older
+                <fl-icon name="lucideChevronRight" [size]="14" />
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </fl-panel>
   `,
 })
 export class ActivityTabComponent {
   private readonly audit = inject(AuditService);
   private readonly maskMode = inject(MaskModeService);
 
-  protected readonly inputClass = INPUT_CLASS;
-  protected readonly pageButtonClass = PAGE_BUTTON_CLASS;
   protected readonly periods: AuditPeriod[] = ['24h', '7d', '30d'];
   protected readonly periodLabels = AUDIT_PERIOD_LABELS;
 
