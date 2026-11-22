@@ -1,85 +1,89 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import { ToastService } from '../../../shared/services/toast.service';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { WriteScalingGroup } from '../../model/scaling-group.models';
 import { ScalingApiService } from '../../service/scaling-api.service';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
+import { groupModeStatus } from './scaling-tabs-format';
+
+let nextCapId = 0;
 
 @Component({
   selector: 'app-scaling-mode',
-  standalone: true,
-  imports: [ExplainComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ExplainComponent, FlButton, FlStatus],
+  host: { class: 'block' },
   template: `
-    <div class="flex flex-wrap items-center gap-2" data-testid="scaling-mode">
-      <app-explain
-        [floating]="true"
-        [label]="label()"
-        [labelClass]="labelClass()"
-        testid="scaling-mode-label"
-      >
-        {{ group().acts.says }}
-        <ng-content />
-      </app-explain>
-
-      @if (canSwitch()) {
-        @if (!confirming()) {
+    <div class="flex flex-col gap-3" data-testid="scaling-mode">
+      <div class="flex flex-wrap items-center gap-3">
+        <fl-status [tone]="mode().tone" [label]="label()" data-testid="scaling-mode-status" />
+        <app-explain
+          [floating]="true"
+          label="What this means"
+          labelClass="text-fl-body-sm text-fl-ink-muted"
+          testid="scaling-mode-label"
+        >
+          {{ group().acts.says }}
+          <ng-content />
+        </app-explain>
+        @if (canSwitch() && !confirming()) {
           <button
+            flButton
+            size="sm"
             type="button"
-            class="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-muted"
             data-testid="scaling-mode-switch"
             (click)="confirming.set(true)"
           >
             {{ switchLabel() }}
           </button>
-        } @else {
-          <span
-            class="inline-flex flex-wrap items-center gap-2 text-xs"
-            data-testid="scaling-mode-confirm"
-          >
-            @if (needsCap()) {
-              <label class="inline-flex items-center gap-1">
-                <span>Spending ceiling €</span>
+        }
+      </div>
+
+      @if (canSwitch() && confirming()) {
+        <div class="flex flex-wrap items-end gap-3" data-testid="scaling-mode-confirm">
+          @if (needsCap()) {
+            <div class="fl-field">
+              <label class="fl-field__label" [for]="capId">Spending ceiling</label>
+              <div class="fl-input w-32">
+                <span class="text-fl-body-sm">€</span>
                 <input
+                  [id]="capId"
                   type="number"
                   min="1"
                   step="1"
-                  class="w-20 rounded-md border border-border bg-background px-2 py-0.5"
+                  class="fl-mono"
                   data-testid="scaling-mode-cap"
                   [value]="capOrSuggested() ?? ''"
                   (input)="cap.set(asAmount($any($event.target).value))"
                 />
-              </label>
-            }
-            <span>{{ promise() }}</span>
+              </div>
+            </div>
+          }
+          <p class="m-0 max-w-prose flex-1 text-fl-body-sm">{{ promise() }}</p>
+          <span class="inline-flex items-center gap-2">
             <button
+              flButton="ghost"
+              size="sm"
               type="button"
-              class="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground disabled:opacity-50"
+              [disabled]="saving()"
+              (click)="confirming.set(false)"
+            >
+              Cancel
+            </button>
+            <button
+              flButton="primary"
+              size="sm"
+              type="button"
               [disabled]="saving() || !ceiling()"
               data-testid="scaling-mode-switch-confirm"
               (click)="switchToAutomatic()"
             >
               {{ saving() ? 'Switching…' : 'Switch' }}
             </button>
-            <button
-              type="button"
-              class="px-1.5 py-1 text-muted-foreground hover:text-foreground"
-              [disabled]="saving()"
-              (click)="confirming.set(false)"
-            >
-              Cancel
-            </button>
           </span>
-        }
+        </div>
       }
     </div>
   `,
@@ -95,26 +99,17 @@ export class ScalingModeComponent {
   protected readonly saving = signal(false);
   protected readonly cap = signal<number | null>(null);
 
-  protected readonly label = computed(() => {
-    const g = this.group();
-    if (g.acts.label) return g.acts.label;
-    if (!g.capability.canProvision) return 'Alarm only';
-    return g.acts.acts ? 'Automatic' : 'Manual — Flui does not add nodes';
-  });
+  protected readonly capId = `scaling-mode-cap-${nextCapId++}`;
 
-  protected readonly attention = computed(() => {
-    const g = this.group();
-    return g.acts.attention ?? (g.capability.canProvision && !g.acts.acts);
-  });
+  protected readonly mode = computed(() => groupModeStatus(this.group()));
 
-  protected readonly labelClass = computed(() =>
-    this.attention()
-      ? 'rounded-md bg-amber-100 px-2 py-0.5 text-sm font-semibold text-amber-900'
-      : 'rounded-md bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary',
-  );
+  protected readonly label = computed(() => this.mode().label);
 
   /** An automatic group only buys under a spending ceiling, the safety net, so one without it is asked for it here. */
-  protected readonly needsCap = computed(() => !(Number(this.group().limits.maxMonthlyCost) > 0));
+  protected readonly needsCap = computed(() => {
+    const cap = Number(this.group().limits.maxMonthlyCost);
+    return Number.isNaN(cap) || cap <= 0;
+  });
 
   protected readonly canSwitch = computed(() => {
     const g = this.group();

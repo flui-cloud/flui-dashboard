@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideArrowDown, lucideArrowUp, lucidePlus, lucideX } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { ListMove } from './group-draft';
 import {
   ArchitectureBadgeComponent,
@@ -29,108 +30,96 @@ export interface ListChoice {
 
 @Component({
   selector: 'app-settings-list-editor',
-  standalone: true,
-  imports: [FormsModule, NgIcon, HlmButtonDirective, ArchitectureBadgeComponent],
+  imports: [FormsModule, FlButton, FlIcon, ArchitectureBadgeComponent],
   providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucidePlus, lucideX })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'flex flex-col gap-2' },
   template: `
-    <span class="flex flex-col gap-2">
-      @if (ordered()) {
-        @for (item of items(); track item; let i = $index) {
-          <span class="flex items-center gap-2" [attr.data-testid]="kind() + '-' + item">
-            <span
-              class="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] tabular-nums text-muted-foreground"
-            >
-              {{ i + 1 }}
-            </span>
-            <span class="font-mono text-[13px] text-foreground">{{ item }}</span>
+    @if (items().length) {
+      <ul class="m-0 flex list-none flex-col rounded-fl-md border border-fl-border p-0">
+        @for (item of items(); track item; let i = $index; let last = $last) {
+          <li
+            class="flex items-center gap-2 px-3 py-1.5"
+            [class.border-b]="!last"
+            [class.border-fl-border-subtle]="!last"
+            [attr.data-testid]="kind() + '-' + item"
+          >
+            @if (ordered()) {
+              <span class="fl-mono fl-num w-4 text-fl-ink-muted">{{ i + 1 }}</span>
+            }
+            <span class="fl-mono">{{ item }}</span>
             <app-architecture-badge [architecture]="architectures()[item]" />
             @if (label(item) !== item) {
-              <span class="truncate text-[12px] text-muted-foreground">{{ label(item) }}</span>
+              <span class="min-w-0 flex-1 truncate text-fl-caption text-fl-ink-muted">{{
+                label(item)
+              }}</span>
+            } @else {
+              <span class="flex-1"></span>
+            }
+            @if (ordered()) {
+              <button
+                flButton="ghost"
+                size="sm"
+                type="button"
+                [iconOnly]="true"
+                (click)="move.emit({ index: i, by: -1 })"
+                [disabled]="i === 0"
+                [attr.aria-label]="'Prefer ' + item + ' sooner'"
+                [attr.data-testid]="kind() + '-up-' + item"
+              >
+                <fl-icon name="lucideArrowUp" [size]="14" />
+              </button>
+              <button
+                flButton="ghost"
+                size="sm"
+                type="button"
+                [iconOnly]="true"
+                (click)="move.emit({ index: i, by: 1 })"
+                [disabled]="last"
+                [attr.aria-label]="'Prefer ' + item + ' later'"
+                [attr.data-testid]="kind() + '-down-' + item"
+              >
+                <fl-icon name="lucideArrowDown" [size]="14" />
+              </button>
             }
             <button
+              flButton="ghost"
+              size="sm"
               type="button"
-              (click)="move.emit({ index: i, by: -1 })"
-              [disabled]="i === 0"
-              [class]="iconBtn"
-              [attr.aria-label]="'Prefer ' + item + ' sooner'"
-              [attr.data-testid]="kind() + '-up-' + item"
-            >
-              <ng-icon name="lucideArrowUp" class="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              (click)="move.emit({ index: i, by: 1 })"
-              [disabled]="i === items().length - 1"
-              [class]="iconBtn"
-              [attr.aria-label]="'Prefer ' + item + ' later'"
-              [attr.data-testid]="kind() + '-down-' + item"
-            >
-              <ng-icon name="lucideArrowDown" class="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
+              [iconOnly]="true"
               (click)="remove.emit(item)"
-              [class]="iconBtn"
               [attr.aria-label]="'Remove ' + item"
               [attr.data-testid]="kind() + '-remove-' + item"
             >
-              <ng-icon name="lucideX" class="h-3.5 w-3.5" />
+              <fl-icon name="lucideX" [size]="14" />
             </button>
-          </span>
-        } @empty {
-          <span class="text-muted-foreground" [attr.data-testid]="'no-' + kind() + 's'">
-            {{ emptyNote() }}
-          </span>
+          </li>
         }
-      } @else {
-        <span class="flex flex-wrap gap-1">
-          @for (item of items(); track item) {
-            <span
-              class="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-0.5 text-[12px]"
-              [attr.data-testid]="kind() + '-' + item"
-            >
-              <span class="font-mono text-foreground">{{ item }}</span>
-              <app-architecture-badge [architecture]="architectures()[item]" />
-              @if (label(item) !== item) {
-                <span class="text-muted-foreground">{{ label(item) }}</span>
-              }
-              <button
-                type="button"
-                (click)="remove.emit(item)"
-                class="text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                [attr.aria-label]="'Remove ' + item"
-                [attr.data-testid]="kind() + '-remove-' + item"
-              >
-                <ng-icon name="lucideX" class="h-3 w-3" />
-              </button>
-            </span>
-          } @empty {
-            <span class="text-muted-foreground" [attr.data-testid]="'no-' + kind() + 's'">
-              {{ emptyNote() }}
-            </span>
-          }
-        </span>
-      }
+      </ul>
+    } @else {
+      <span class="text-fl-body-sm text-fl-ink-muted" [attr.data-testid]="'no-' + kind() + 's'">
+        {{ emptyNote() }}
+      </span>
+    }
 
-      @if (listedWarning(); as warning) {
-        <span class="text-[12px] text-muted-foreground" [attr.data-testid]="kind() + '-warning'">{{
-          warning
-        }}</span>
-      }
+    @if (listedWarning(); as warning) {
+      <span class="text-fl-caption text-fl-ink-muted" [attr.data-testid]="kind() + '-warning'">{{
+        warning
+      }}</span>
+    }
 
-      <span class="flex items-center gap-2">
-        @if (choices(); as all) {
-          @if (all.length) {
+    <span class="flex flex-wrap items-center gap-2">
+      @if (choices(); as all) {
+        @if (all.length) {
+          <span class="fl-select-wrap">
             <select
-              [class]="field"
+              class="fl-select fl-select--sm"
               [ngModel]="draft()"
               (ngModelChange)="draft.set($event)"
               [attr.aria-label]="'Add a ' + kind()"
               [attr.data-testid]="kind() + '-add-select'"
             >
               <option value="">
-                {{ available().length ? 'choose…' : 'all listed' }}
+                {{ available().length ? 'Choose…' : 'All listed' }}
               </option>
               @for (choice of all; track choice.value) {
                 <option
@@ -143,17 +132,19 @@ export interface ListChoice {
                 </option>
               }
             </select>
-          } @else {
-            <span
-              class="text-[12px] text-muted-foreground"
-              [attr.data-testid]="kind() + '-all-listed'"
-            >
-              {{ exhausted() }}
-            </span>
-          }
+          </span>
         } @else {
+          <span
+            class="text-fl-caption text-fl-ink-muted"
+            [attr.data-testid]="kind() + '-all-listed'"
+          >
+            {{ exhausted() }}
+          </span>
+        }
+      } @else {
+        <span class="fl-input">
           <input
-            [class]="field"
+            class="fl-mono"
             [placeholder]="kind()"
             [ngModel]="draft()"
             (ngModelChange)="draft.set($event)"
@@ -161,20 +152,19 @@ export interface ListChoice {
             [attr.aria-label]="'Add a ' + kind()"
             [attr.data-testid]="kind() + '-add-input'"
           />
-        }
-        <button
-          hlmBtn
-          size="sm"
-          variant="outline"
-          type="button"
-          [disabled]="!!choices() && !available().length"
-          (click)="submit()"
-          [attr.data-testid]="kind() + '-add'"
-        >
-          <ng-icon name="lucidePlus" class="mr-1.5 h-3.5 w-3.5" />
-          Add
-        </button>
-      </span>
+        </span>
+      }
+      <button
+        flButton
+        size="sm"
+        type="button"
+        [disabled]="!!choices() && !available().length"
+        (click)="submit()"
+        [attr.data-testid]="kind() + '-add'"
+      >
+        <fl-icon name="lucidePlus" [size]="14" />
+        Add
+      </button>
     </span>
   `,
 })
@@ -249,12 +239,6 @@ export class SettingsListEditorComponent {
     ].filter(Boolean);
     return marks.length ? `${choice.label} — ${marks.join(' · ')}` : choice.label;
   }
-
-  protected readonly field =
-    'w-32 rounded-md border border-input bg-background px-2.5 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
-
-  protected readonly iconBtn =
-    'inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
   protected submit(): void {
     const value = this.draft().trim();

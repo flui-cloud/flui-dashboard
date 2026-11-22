@@ -1,0 +1,284 @@
+@if (compact()) {
+  <p class="m-0 text-fl-body-sm text-fl-ink" data-testid="flui-network-line">
+    <span class="font-medium">Flui network:</span> {{ line() }}
+  </p>
+} @else {
+  <fl-panel title="Flui network" [flush]="true" data-testid="flui-network">
+    @if (network(); as n) {
+      <div panelActions class="fl-row">
+        <fl-status
+          [tone]="n.enabled ? 'success' : 'neutral'"
+          [label]="n.enabled ? 'On' : 'Off'"
+          data-testid="flui-network-state"
+        />
+        @if (!confirming()) {
+          <button
+            flButton
+            size="sm"
+            type="button"
+            [disabled]="!n.enabled && !!n.unavailable"
+            (click)="confirming.set(true)"
+            data-testid="flui-network-toggle"
+          >
+            {{ n.enabled ? 'Switch off' : 'Switch on' }}
+          </button>
+        }
+      </div>
+    }
+
+    <div class="fl-panel__body flex flex-col gap-4">
+      <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+        Connects clusters on another provider to the control cluster.
+      </p>
+      @if (failed()) {
+        <fl-alert tone="error" title="Could not load">{{ failed() }}</fl-alert>
+      } @else if (network(); as n) {
+        @if (confirming()) {
+          <fl-alert
+            tone="warning"
+            [title]="n.enabled ? 'Switch off the Flui network?' : 'Switch on the Flui network?'"
+            data-testid="flui-network-confirm"
+          >
+            {{
+              n.enabled
+                ? 'No new cluster joins it; other-provider clusters cannot be created.'
+                : 'Other-provider clusters will be managed over it.'
+            }}
+            <button
+              alertActions
+              flButton
+              size="sm"
+              type="button"
+              [disabled]="saving()"
+              (click)="toggle()"
+            >
+              @if (saving()) {
+                <fl-spinner label="Saving" />
+                Saving…
+              } @else {
+                Confirm
+              }
+            </button>
+            <button
+              alertActions
+              flButton="ghost"
+              size="sm"
+              type="button"
+              [disabled]="saving()"
+              (click)="confirming.set(false)"
+            >
+              Cancel
+            </button>
+          </fl-alert>
+        }
+        @if (n.unavailable) {
+          <fl-alert tone="warning" title="Not available" data-testid="flui-network-unavailable">
+            {{ n.unavailable }}
+          </fl-alert>
+        }
+        @if (n.hubProblem) {
+          <fl-alert
+            tone="error"
+            title="Control end not set up"
+            data-testid="flui-network-hub-problem"
+          >
+            Members stay pending: {{ n.hubProblem }}
+          </fl-alert>
+        }
+        @if (!n.hubs?.length && n.hub) {
+          <fl-key-value>
+            <fl-kv-item key="Control end" [mono]="true">{{ n.hub.address }}</fl-kv-item>
+            <fl-kv-item key="State">
+              @if (n.hub.keyed) {
+                <fl-status tone="success" label="Up" />
+              } @else {
+                <fl-status tone="progress" label="Not up yet" />
+              }
+            </fl-kv-item>
+          </fl-key-value>
+        }
+      }
+    </div>
+
+    @if (!failed()) {
+      @if (network(); as n) {
+        @if (n.hubs?.length) {
+          <div class="fl-table-wrap border-t border-fl-border">
+            <table
+              flTable
+              density="dense"
+              aria-label="Control ends"
+              data-testid="flui-network-hubs"
+            >
+              <thead>
+                <tr>
+                  <th scope="col">Control end</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Endpoint</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="is-num">Members reached</th>
+                  <th scope="col" class="is-num">Not reached</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (h of n.hubs; track h.address) {
+                  @let st = hubStatus(h);
+                  <tr>
+                    <td class="font-medium">
+                      <span class="fl-row">
+                        {{ h.nodeName ?? h.address }}
+                        @if (h.primary) {
+                          <fl-tag>primary</fl-tag>
+                        }
+                      </span>
+                    </td>
+                    <td class="fl-mono">{{ h.address }}</td>
+                    <td class="fl-mono">{{ h.endpoint ?? '—' }}</td>
+                    <td><fl-status [tone]="st.tone" [label]="st.label" /></td>
+                    <td class="is-num">{{ h.membersReached }}</td>
+                    <td class="is-num">{{ h.membersNotReached }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        @if (n.members.length) {
+          <div class="fl-table-wrap border-t border-fl-border">
+            <table flTable density="dense" aria-label="Members" data-testid="flui-network-members">
+              <thead>
+                <tr>
+                  <th scope="col">Cluster</th>
+                  <th scope="col">Node</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Last handshake</th>
+                  @if (canManage()) {
+                    <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                  }
+                </tr>
+              </thead>
+              @for (c of clusters(); track c.clusterId) {
+                <tbody class="border-t border-fl-border-subtle" data-testid="flui-network-cluster">
+                  @for (m of c.members; track m.address; let first = $first) {
+                    @let st = peerStatus(m.status);
+                    <tr>
+                      @if (first) {
+                        <td class="align-top font-medium" [attr.rowspan]="c.members.length">
+                          <span class="fl-row">
+                            {{ c.clusterName }}
+                            @if (c.held) {
+                              <fl-status
+                                tone="warning"
+                                label="Held on its public address"
+                                data-testid="flui-network-held"
+                              />
+                            }
+                          </span>
+                        </td>
+                      }
+                      <td>{{ m.nodeName ?? '—' }}</td>
+                      <td class="fl-mono">{{ m.address }}</td>
+                      <td>
+                        <span class="fl-row">
+                          <fl-status [tone]="st.tone" [label]="st.label" />
+                          @if (m.unreachedFrom?.length) {
+                            <fl-status
+                              tone="warning"
+                              [label]="'Not reached from ' + m.unreachedFrom!.join(', ')"
+                              data-testid="flui-network-unreached"
+                            />
+                          }
+                        </span>
+                      </td>
+                      <td class="fl-num">{{ handshake(m) }}</td>
+                      @if (canManage() && first) {
+                        <td class="is-fit align-top" [attr.rowspan]="c.members.length">
+                          @if (c.held) {
+                            <button
+                              flButton
+                              size="sm"
+                              type="button"
+                              [disabled]="busy() === c.clusterId"
+                              (click)="release(c)"
+                              data-testid="flui-network-release"
+                            >
+                              {{ busy() === c.clusterId ? 'Releasing…' : 'Release' }}
+                            </button>
+                          } @else {
+                            <button
+                              flButton="ghost"
+                              size="sm"
+                              type="button"
+                              [disabled]="busy() === c.clusterId"
+                              (click)="askDemote(c)"
+                              data-testid="flui-network-demote"
+                            >
+                              Use public address
+                            </button>
+                          }
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              }
+            </table>
+          </div>
+        } @else {
+          <fl-empty-state
+            class="border-t border-fl-border"
+            [compact]="true"
+            title="No cluster on it yet"
+          />
+        }
+      }
+    }
+  </fl-panel>
+
+  @if (pendingDemote(); as c) {
+    <div
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      (click)="$event.target === $event.currentTarget && closeDemote()"
+      (keydown.escape)="closeDemote()"
+    >
+      <dialog
+        open
+        class="fl-dialog relative"
+        aria-modal="true"
+        aria-labelledby="flui-network-demote-title"
+      >
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="flui-network-demote-title">
+            Use the public address of {{ c.clusterName }}?
+          </h2>
+          <button
+            type="button"
+            class="fl-dialog__close"
+            aria-label="Close"
+            [disabled]="!!busy()"
+            (click)="closeDemote()"
+          >
+            <fl-icon name="lucideX" />
+          </button>
+        </header>
+        <div class="fl-dialog__body">
+          <p>Flui will manage this cluster over its public address until you release it.</p>
+        </div>
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" [disabled]="!!busy()" (click)="closeDemote()">
+            Cancel
+          </button>
+          <button flButton="primary" type="button" [disabled]="!!busy()" (click)="demote()">
+            @if (busy()) {
+              <fl-spinner label="Moving" />
+              Moving…
+            } @else {
+              Use public address
+            }
+          </button>
+        </footer>
+      </dialog>
+    </div>
+  }
+}

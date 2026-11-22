@@ -1,0 +1,200 @@
+<div class="fl-page">
+  <fl-page-header title="Register DNS zone" [breadcrumb]="breadcrumb">
+    <span headerMeta>Pick a DNS provider, then one of the zones in that account.</span>
+  </fl-page-header>
+
+  @if (dnsZonesService.error()) {
+    <fl-alert tone="error" title="DNS zones request failed">{{ dnsZonesService.error() }}</fl-alert>
+  }
+
+  <div class="fl-wizard">
+    <nav aria-label="Steps">
+      <fl-wizard-steps
+        [steps]="wizardSteps()"
+        [current]="step() - 1"
+        (stepSelect)="goToStepIndex($event)"
+      />
+    </nav>
+
+    <fl-panel [title]="stepLabel()" [flush]="true">
+      <div class="flex flex-col gap-4 p-4">
+        @switch (step()) {
+          @case (1) {
+            @if (loadingProviders()) {
+              <fl-loading-state [rows]="2" />
+            } @else {
+              <fl-field label="DNS provider" for="dns-zone-provider">
+                <span class="fl-select-wrap">
+                  <select
+                    id="dns-zone-provider"
+                    class="fl-select"
+                    aria-labelledby="dns-zone-provider-label"
+                    [ngModel]="selectedProvider()"
+                    (ngModelChange)="selectedProvider.set($event)"
+                  >
+                    <option value="">Select a provider</option>
+                    @for (p of dnsZonesService.dnsCapableProviders(); track p.id) {
+                      <option [value]="p.id">{{ p.displayName }}</option>
+                    }
+                  </select>
+                </span>
+              </fl-field>
+              @if (dnsZonesService.dnsCapableProviders().length === 0) {
+                <fl-alert tone="warning" title="No DNS-capable providers">
+                  No active provider supports DNS zones. Configure a provider with DNS capabilities
+                  first.
+                </fl-alert>
+              }
+            }
+          }
+
+          @case (2) {
+            @if (dnsZonesService.providerZones().length === 0) {
+              <fl-alert
+                tone="warning"
+                [title]="'No DNS zones found in your ' + providerName() + ' account'"
+              >
+                <span class="flex flex-col gap-2">
+                  <span>
+                    Zones are read directly from your {{ providerName() }} account through its API.
+                    To add a domain, either:
+                  </span>
+                  <ul class="list-disc pl-5">
+                    <li>
+                      Purchase a domain on {{ providerName() }}. It appears here once it is active.
+                    </li>
+                    <li>
+                      Bring an existing domain by pointing its NS records at your registrar to the
+                      {{ providerName() }} nameservers.
+                    </li>
+                  </ul>
+                  <span
+                    >Once the zone is active in {{ providerName() }}, come back to this step.</span
+                  >
+                </span>
+                @if (selectedProviderInfo()?.dnsZoneDelegation; as delegation) {
+                  <a
+                    alertActions
+                    class="fl-link inline-flex items-center gap-1"
+                    target="_blank"
+                    rel="noopener"
+                    [href]="delegation.delegationGuideUrl"
+                  >
+                    View official delegation guide
+                    <fl-icon name="lucideExternalLink" [size]="13" />
+                  </a>
+                }
+              </fl-alert>
+            } @else {
+              <fieldset class="fl-fieldset">
+                <legend>Zone from {{ providerName() }}</legend>
+                <div class="flex max-h-80 flex-col gap-2 overflow-y-auto">
+                  @for (zone of dnsZonesService.providerZones(); track zone.zoneId) {
+                    @let alreadyRegistered = registeredZoneIds().has(zone.zoneId);
+                    <label
+                      class="fl-radiocard"
+                      [class.opacity-50]="alreadyRegistered"
+                      [class.cursor-not-allowed]="alreadyRegistered"
+                    >
+                      <input
+                        type="radio"
+                        name="zone"
+                        [value]="zone.zoneId"
+                        [ngModel]="selectedZoneId()"
+                        (ngModelChange)="selectedZoneId.set($event)"
+                        [disabled]="alreadyRegistered"
+                      />
+                      <span class="fl-radiocard__text">
+                        <span class="fl-radiocard__title fl-mono">{{ zone.name }}</span>
+                        <span class="fl-radiocard__desc">
+                          <span class="fl-mono">{{ zone.zoneId }}</span>
+                          @if (alreadyRegistered) {
+                            · Already registered
+                          }
+                        </span>
+                      </span>
+                    </label>
+                  }
+                </div>
+              </fieldset>
+              <fl-alert tone="info" title="Don't see your domain?">
+                Zones are read directly from your {{ providerName() }} account. To add a missing
+                domain, point its NS records at your registrar to the {{ providerName() }}
+                nameservers, then come back to this step.
+                @if (selectedProviderInfo()?.dnsZoneDelegation; as delegation) {
+                  <a
+                    alertActions
+                    class="fl-link inline-flex items-center gap-1"
+                    target="_blank"
+                    rel="noopener"
+                    [href]="delegation.delegationGuideUrl"
+                  >
+                    View official delegation guide
+                    <fl-icon name="lucideExternalLink" [size]="13" />
+                  </a>
+                }
+              </fl-alert>
+            }
+          }
+
+          @case (3) {
+            <fl-key-value>
+              <fl-kv-item key="Provider">{{ providerName() }}</fl-kv-item>
+              <fl-kv-item key="Zone" [mono]="true">{{ selectedZoneName() }}</fl-kv-item>
+            </fl-key-value>
+            <fl-field label="Description" for="dns-zone-description" hint="Optional.">
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="dns-zone-description"
+                  type="text"
+                  aria-label="Description"
+                  placeholder="Production zone for flui.cloud"
+                  [ngModel]="description()"
+                  (ngModelChange)="description.set($event)"
+                />
+              </div>
+            </fl-field>
+          }
+        }
+      </div>
+
+      <div class="fl-wizard__footer border-t border-fl-border px-4 py-3">
+        <a flButton="ghost" routerLink="/infrastructure/domains">Cancel</a>
+        @switch (step()) {
+          @case (1) {
+            <button
+              flButton="primary"
+              type="button"
+              [disabled]="!selectedProvider() || loadingZones()"
+              (click)="goToStep2()"
+            >
+              {{ loadingZones() ? 'Loading zones' : 'Next' }}
+            </button>
+          }
+          @case (2) {
+            <button flButton type="button" (click)="step.set(1)">Previous</button>
+            <button
+              flButton="primary"
+              type="button"
+              [disabled]="!selectedZoneId()"
+              (click)="step.set(3)"
+            >
+              Next
+            </button>
+          }
+          @case (3) {
+            <button flButton type="button" (click)="step.set(2)">Previous</button>
+            <button
+              flButton="primary"
+              type="button"
+              [disabled]="dnsZonesService.loading()"
+              (click)="register()"
+            >
+              {{ dnsZonesService.loading() ? 'Registering' : 'Register zone' }}
+            </button>
+          }
+        }
+      </div>
+    </fl-panel>
+  </div>
+</div>

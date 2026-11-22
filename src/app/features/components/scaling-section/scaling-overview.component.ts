@@ -1,15 +1,14 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  computed,
-  effect,
-  inject,
-} from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw } from '@ng-icons/lucide';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import { ClusterScalingRow } from '../../model/scaling-section.models';
 import { ScalingApiService } from '../../service/scaling-api.service';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { OverviewClusterTableComponent } from './overview-cluster-table.component';
 import { OverviewSituationComponent } from './overview-situation.component';
 import { loadedOf } from './section-reading';
@@ -24,35 +23,55 @@ import {
 
 @Component({
   selector: 'app-scaling-overview',
-  standalone: true,
   imports: [
     ExplainComponent,
+    FlPageHeader,
+    FlPanel,
+    FlButton,
+    FlIcon,
     OverviewSituationComponent,
     OverviewClusterTableComponent,
     SectionFailureComponent,
     SectionSkeletonComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideIcons({ lucideRefreshCw })],
   template: `
-    <div class="mx-auto max-w-7xl space-y-4 p-6" data-testid="scaling-overview">
-      <header class="flex flex-wrap items-start justify-between gap-3">
-        <div class="space-y-1">
-          <h1 class="m-0 text-2xl font-semibold tracking-tight text-foreground">Scaling</h1>
-          <p class="m-0 max-w-prose text-sm text-muted-foreground">
-            Every cluster in the installation, whether or not it can scale itself. Nothing is
-            filtered out.
-          </p>
-        </div>
-      </header>
+    <div class="fl-page" data-testid="scaling-overview">
+      <fl-page-header title="Scaling">
+        <span headerMeta
+          >Every cluster in the installation, whether or not it can scale itself</span
+        >
+        <button
+          headerActions
+          flButton
+          type="button"
+          [iconOnly]="true"
+          aria-label="Refresh"
+          title="Refresh"
+          [disabled]="rowsRes.isLoading()"
+          (click)="rowsRes.reload()"
+        >
+          <fl-icon name="lucideRefreshCw" />
+        </button>
+      </fl-page-header>
 
       @if (loading()) {
-        <app-section-skeleton
-          variant="cards"
-          [count]="3"
-          label="the situation across every cluster"
-          testid="situation"
-        />
-        <app-section-skeleton variant="table" [count]="5" label="every cluster" testid="clusters" />
+        <fl-panel>
+          <app-section-skeleton
+            variant="cards"
+            [count]="2"
+            label="the situation across every cluster"
+            testid="situation"
+          />
+        </fl-panel>
+        <fl-panel title="Clusters" [flush]="true">
+          <app-section-skeleton
+            variant="table"
+            [count]="5"
+            label="every cluster"
+            testid="clusters"
+          />
+        </fl-panel>
       } @else if (failed()) {
         <app-section-failure
           [message]="failed() ?? ''"
@@ -70,11 +89,11 @@ import {
         <app-overview-cluster-table [rows]="rows()" />
       }
 
-      <section class="flex flex-wrap gap-x-6 gap-y-2" data-testid="legend">
+      <section class="flex flex-wrap gap-x-6 gap-y-2" data-testid="legend" aria-label="Legend">
         <app-explain
           [floating]="true"
           label="Nodes reads floor · target · ceiling"
-          labelClass="text-[13px] font-medium text-foreground"
+          labelClass="text-fl-body-sm text-fl-ink-muted"
           testid="bounds-why"
         >
           The floor is held now. The target is only approached. The ceiling is as far as it may go.
@@ -83,10 +102,10 @@ import {
         <app-explain
           [floating]="true"
           label="An open alarm is a node waiting to be added by hand"
-          labelClass="text-[13px] font-medium text-foreground"
+          labelClass="text-fl-body-sm text-fl-ink-muted"
           testid="alarm-why"
         >
-          It clears when the group decides something else — never because time passed. What it asks
+          It clears when the group decides something else, never because time passed. What it asks
           for is on the cluster's own screen.
         </app-explain>
       </section>
@@ -130,9 +149,6 @@ export class ScalingOverviewComponent implements OnDestroy {
   });
 
   constructor() {
-    // Publish this page's own Semantic Surface snapshot into the shared registry
-    // whenever it changes. ngOnDestroy clears it, so the snapshot never outlives this
-    // page — same discipline as every other producer in this repo.
     effect(() => {
       this.currentSurface.set(this.surface());
     });

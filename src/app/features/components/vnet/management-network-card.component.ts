@@ -1,19 +1,21 @@
 import { HttpClient } from '@angular/common/http';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import { PermissionService } from '../../../core/services/permission.service';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { ToastService } from '../../../shared/services/toast.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 type PeerStatus = 'pending' | 'active' | 'stale';
 
@@ -54,7 +56,7 @@ export interface ManagementNetwork {
   enabled: boolean;
   source: 'setting' | 'install' | 'default';
   unavailable: string | null;
-  /** @deprecated the primary end only; read `hubs`. */
+  /** The primary end only, what older APIs send instead of `hubs`. */
   hub: { address: string; endpoint: string | null; keyed: boolean } | null;
   /** Every control node's end, the primary first; absent from older APIs. */
   hubs?: ManagementNetworkHubNode[];
@@ -71,195 +73,40 @@ interface MemberCluster {
 
 const HUB_MARK: Record<PeerStatus, string> = { active: '✓', pending: '…', stale: '!' };
 
+const PEER_STATUS: Record<PeerStatus, { tone: StatusTone; label: string }> = {
+  active: { tone: 'success', label: 'Connected' },
+  pending: { tone: 'progress', label: 'Pending' },
+  stale: { tone: 'warning', label: 'Quiet' },
+};
+
 /**
  * The Flui network: the tunnel that lets clusters on another provider than the
  * control be reached. `compact` is the one line "How it is run" shows.
  */
 @Component({
   selector: 'app-management-network-card',
-  standalone: true,
-  imports: [ConfirmationDialogComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    @if (compact()) {
-      <p class="m-0 text-sm text-foreground" data-testid="flui-network-line">
-        <span class="font-medium">Flui network:</span> {{ line() }}
-      </p>
-    } @else {
-      <section class="card-surface p-4 space-y-3" data-testid="flui-network">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="m-0 text-base font-semibold text-foreground">Flui network</h2>
-            <p class="m-0 text-xs text-sub">
-              Connects clusters on another provider to the control cluster.
-            </p>
-          </div>
-          @if (network(); as n) {
-            <div class="flex items-center gap-2">
-              <span
-                class="rounded-md px-2 py-0.5 text-xs font-semibold"
-                [class]="n.enabled ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-900'"
-                data-testid="flui-network-state"
-              >
-                {{ n.enabled ? 'On' : 'Off' }}
-              </span>
-              @if (!confirming()) {
-                <button
-                  type="button"
-                  class="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-muted disabled:opacity-40"
-                  [disabled]="!n.enabled && !!n.unavailable"
-                  (click)="confirming.set(true)"
-                  data-testid="flui-network-toggle"
-                >
-                  {{ n.enabled ? 'Switch off' : 'Switch on' }}
-                </button>
-              } @else {
-                <span
-                  class="inline-flex items-center gap-2 text-xs"
-                  data-testid="flui-network-confirm"
-                >
-                  {{
-                    n.enabled
-                      ? 'No new cluster joins it; other-provider clusters cannot be created.'
-                      : 'Other-provider clusters will be managed over it.'
-                  }}
-                  <button
-                    type="button"
-                    class="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground disabled:opacity-50"
-                    [disabled]="saving()"
-                    (click)="toggle()"
-                  >
-                    {{ saving() ? 'Saving…' : 'Confirm' }}
-                  </button>
-                  <button
-                    type="button"
-                    class="text-muted-foreground"
-                    [disabled]="saving()"
-                    (click)="confirming.set(false)"
-                  >
-                    Cancel
-                  </button>
-                </span>
-              }
-            </div>
-          }
-        </div>
-
-        @if (failed()) {
-          <p class="m-0 text-sm text-sub">{{ failed() }}</p>
-        } @else if (network(); as n) {
-          @if (n.unavailable) {
-            <p class="m-0 text-sm text-amber-700" data-testid="flui-network-unavailable">
-              {{ n.unavailable }}
-            </p>
-          }
-          @if (n.hubs?.length) {
-            <p class="m-0 text-sm text-sub" data-testid="flui-network-hubs">
-              Control ends:
-              @for (h of n.hubs; track h.address; let last = $last) {
-                <span
-                  [class]="h.status === 'stale' ? 'text-red-600' : 'text-foreground'"
-                  [title]="hubTitle(h)"
-                  >{{ hubLabel(h) }}</span
-                >
-                @if (!last) {
-                  <span>, </span>
-                }
-              }
-            </p>
-          } @else if (n.hub) {
-            <p class="m-0 text-sm text-sub">
-              Control end <span class="font-mono text-foreground">{{ n.hub.address }}</span>
-              @if (!n.hub.keyed) {
-                · not up yet
-              }
-            </p>
-          }
-          @if (n.hubProblem) {
-            <p class="m-0 text-sm text-red-600" data-testid="flui-network-hub-problem">
-              The control's end is not set up, so members stay pending: {{ n.hubProblem }}
-            </p>
-          }
-          @if (n.members.length) {
-            <div class="divide-y divide-border/50 text-sm" data-testid="flui-network-members">
-              @for (c of clusters(); track c.clusterId) {
-                <div class="space-y-1 py-2" data-testid="flui-network-cluster">
-                  <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="flex flex-wrap items-center gap-2">
-                      <span class="font-medium text-foreground">{{ c.clusterName }}</span>
-                      @if (c.held) {
-                        <span
-                          class="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900"
-                          data-testid="flui-network-held"
-                          >held on its public address</span
-                        >
-                      }
-                    </span>
-                    @if (canManage()) {
-                      @if (c.held) {
-                        <button
-                          type="button"
-                          class="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-muted disabled:opacity-40"
-                          [disabled]="busy() === c.clusterId"
-                          (click)="release(c)"
-                          data-testid="flui-network-release"
-                        >
-                          {{ busy() === c.clusterId ? 'Releasing…' : 'Release' }}
-                        </button>
-                      } @else {
-                        <button
-                          type="button"
-                          class="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted disabled:opacity-40"
-                          [disabled]="busy() === c.clusterId"
-                          (click)="askDemote(c)"
-                          data-testid="flui-network-demote"
-                        >
-                          Use public address
-                        </button>
-                      }
-                    }
-                  </div>
-                  @for (m of c.members; track m.address) {
-                    <div class="flex flex-wrap gap-x-3 text-xs text-sub">
-                      <span>{{ m.nodeName ?? '—' }}</span>
-                      <span class="font-mono">{{ m.address }}</span>
-                      <span [class.text-red-600]="m.status === 'stale'">{{ handshake(m) }}</span>
-                      @if (m.unreachedFrom?.length) {
-                        <span class="text-amber-700" data-testid="flui-network-unreached"
-                          >not reached from {{ m.unreachedFrom!.join(', ') }}</span
-                        >
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="m-0 text-sm text-sub">No cluster is on it yet.</p>
-          }
-        }
-      </section>
-
-      <app-confirmation-dialog
-        variant="warning"
-        [title]="
-          'Use the public address of ' + (pendingDemote()?.clusterName ?? 'this cluster') + '?'
-        "
-        message="Flui will manage this cluster over its public address until you release it."
-        confirmText="Use public address"
-        processingText="Moving…"
-        (confirmed)="demote()"
-        (cancelled)="pendingDemote.set(null)"
-      />
-    }
-  `,
+  imports: [
+    FlPanel,
+    FlAlert,
+    FlTable,
+    FlKeyValue,
+    FlKvItem,
+    FlEmptyState,
+    FlStatus,
+    FlTag,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+  ],
+  providers: [provideIcons({ lucideX })],
+  host: { class: 'fl-stack' },
+  templateUrl: './management-network-card.component.html',
 })
 export class ManagementNetworkCardComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly config = inject(AppConfigService);
   private readonly toast = inject(ToastService);
   private readonly permissions = inject(PermissionService);
-  private readonly confirmDialog = viewChild(ConfirmationDialogComponent);
 
   readonly compact = input(false);
 
@@ -300,7 +147,9 @@ export class ManagementNetworkCardComponent implements OnInit {
     const stale = n.members.filter((m) => m.status === 'stale').length;
     const held = this.clusters().filter((c) => c.held).length;
     const members = `${n.members.length} ${n.members.length === 1 ? 'member' : 'members'}`;
-    const extra = `${stale ? ` · ${stale} quiet` : ''}${held ? ` · ${held} held on public address` : ''}`;
+    const quiet = stale ? ` · ${stale} quiet` : '';
+    const onPublic = held ? ` · ${held} held on public address` : '';
+    const extra = quiet + onPublic;
     if (n.hubProblem) return `on · control end not set up · ${members}${extra}`;
     if (n.hubs?.length)
       return `on · control ends: ${n.hubs.map((h) => this.hubLabel(h)).join(', ')} · ${members}${extra}`;
@@ -312,9 +161,17 @@ export class ManagementNetworkCardComponent implements OnInit {
   }
 
   protected handshake(m: ManagementNetworkMember): string {
-    if (!m.lastHandshakeAt) return 'none yet';
-    const at = m.lastHandshakeAt.replace('T', ' ').slice(0, 16);
-    return m.status === 'stale' ? `${at} UTC — quiet` : `${at} UTC`;
+    if (!m.lastHandshakeAt) return 'None yet';
+    return `${m.lastHandshakeAt.replace('T', ' ').slice(0, 16)} UTC`;
+  }
+
+  protected peerStatus(status: PeerStatus): { tone: StatusTone; label: string } {
+    return PEER_STATUS[status];
+  }
+
+  protected hubStatus(h: ManagementNetworkHubNode): { tone: StatusTone; label: string } {
+    if (!h.keyed) return { tone: 'progress', label: 'Not up yet' };
+    return PEER_STATUS[h.status];
   }
 
   protected hubLabel(h: ManagementNetworkHubNode): string {
@@ -322,22 +179,17 @@ export class ManagementNetworkCardComponent implements OnInit {
     return `${h.nodeName ?? h.address} ${HUB_MARK[h.status]}${missed}`;
   }
 
-  protected hubTitle(h: ManagementNetworkHubNode): string {
-    const role = h.primary ? ' · primary' : '';
-    const up = h.keyed ? '' : ' · not up yet';
-    return `${h.address}${role}${up} · ${h.status} · ${h.membersReached} member(s) reached, ${h.membersNotReached} not`;
-  }
-
   protected askDemote(c: MemberCluster): void {
     this.pendingDemote.set(c);
-    this.confirmDialog()?.open();
+  }
+
+  protected closeDemote(): void {
+    if (!this.busy()) this.pendingDemote.set(null);
   }
 
   protected async demote(): Promise<void> {
     const c = this.pendingDemote();
     if (!c) return;
-    const dialog = this.confirmDialog();
-    dialog?.setProcessing(true);
     this.busy.set(c.clusterId);
     try {
       const r = await firstValueFrom(
@@ -355,7 +207,6 @@ export class ManagementNetworkCardComponent implements OnInit {
       this.toast.showError({ title: 'Not moved', message: this.messageOf(err) });
     } finally {
       this.busy.set(null);
-      dialog?.close();
       this.pendingDemote.set(null);
     }
   }

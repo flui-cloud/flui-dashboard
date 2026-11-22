@@ -1,17 +1,8 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideClock, lucideX } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingApiService } from '../../service/scaling-api.service';
 import { GroupChoicesService } from './group-choices.service';
@@ -21,14 +12,13 @@ import {
   architectureLabel,
   architectureWarning,
 } from '../../../shared/components/architecture-badge.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
-/**
- * "Add this machine as soon as it can be had", whatever the load.
- *
- * Shut by default: most visits to this page are to read it, and the form is
- * one line of intent, not a panel to keep open.
- */
-/** A standing order that waits for the first region of the group that has the machine. */
 const ANY = 'any';
 
 function specLabel(spec: { cores: number; memoryMi: number; monthlyEur: number | null }): string {
@@ -50,101 +40,142 @@ function regionAvailability(up: string[] | null, region: string): string {
 
 @Component({
   selector: 'app-scaling-now-add-order',
-  standalone: true,
-  imports: [FormsModule, NgIcon, HlmButtonDirective],
+  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner, FlStatus],
   providers: [provideIcons({ lucideClock, lucideX })],
-  host: { class: 'block' },
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'contents', '(document:keydown.escape)': 'onEscape()' },
   template: `
-    @if (!open()) {
-      <button
-        hlmBtn
-        size="sm"
-        variant="outline"
-        type="button"
-        (click)="open.set(true)"
-        [disabled]="!canOrder()"
-        [title]="canOrder() ? '' : 'Name at least one machine and one region in Group first.'"
-        data-testid="add-order-open"
-      >
-        <ng-icon name="lucideClock" class="mr-1.5 h-3.5 w-3.5" />
-        Add a machine
-      </button>
-    } @else {
+    <button
+      flButton
+      size="sm"
+      type="button"
+      (click)="open.set(true)"
+      [disabled]="!canOrder()"
+      [title]="canOrder() ? '' : 'Name at least one machine and one region in Group first.'"
+      data-testid="add-order-open"
+    >
+      <fl-icon name="lucideClock" [size]="14" />
+      Add a machine
+    </button>
+
+    @if (open()) {
       <div
-        class="space-y-2 rounded-lg border border-border bg-card px-3 py-3 text-sm"
-        data-testid="add-order-form"
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        (click)="close()"
       >
-        <div class="flex flex-wrap items-center gap-2">
-          <select
-            [class]="field"
-            [ngModel]="shape()"
-            (ngModelChange)="shape.set($event)"
-            aria-label="Machine"
-            data-testid="add-order-shape"
-          >
-            @for (option of shapes(); track option.value) {
-              <option [value]="option.value" [attr.title]="option.warning">
-                {{ option.text }}
-              </option>
-            }
-          </select>
-          <span class="text-muted-foreground">in</span>
-          <select
-            [class]="field"
-            [ngModel]="region()"
-            (ngModelChange)="region.set($event)"
-            aria-label="Region"
-            data-testid="add-order-region"
-          >
-            @for (option of regions(); track option.value) {
-              <option [value]="option.value">{{ option.text }}</option>
-            }
-          </select>
-          <span class="text-muted-foreground">×</span>
-          <input
-            type="number"
-            min="1"
-            [max]="room()"
-            class="w-16 rounded-md border border-input bg-background px-2 py-1.5 text-sm"
-            [ngModel]="wanted()"
-            (ngModelChange)="wanted.set(+$event || 1)"
-            aria-label="How many"
-            data-testid="add-order-wanted"
-          />
-          <button
-            hlmBtn
-            size="sm"
-            type="button"
-            [disabled]="saving() || !!refused()"
-            (click)="submit()"
-            data-testid="add-order-submit"
-          >
-            {{ saving() ? 'Adding…' : 'Add' }}
-          </button>
-          <button
-            hlmBtn
-            size="sm"
-            variant="ghost"
-            type="button"
-            (click)="close()"
-            aria-label="Close"
-          >
-            <ng-icon name="lucideX" class="h-3.5 w-3.5" />
-          </button>
-        </div>
-        <p
-          class="m-0 text-[13px]"
-          [class]="refused() || failure() ? 'text-red-600' : 'text-muted-foreground'"
-          data-testid="add-order-says"
+        <form
+          class="fl-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-order-title"
+          data-testid="add-order-form"
+          (click)="$event.stopPropagation()"
+          (ngSubmit)="submit()"
         >
-          {{ failure() ?? refused() ?? says() }}
-        </p>
-        @if (warning(); as text) {
-          <p class="m-0 text-[12px] text-muted-foreground" data-testid="add-order-warning">
-            {{ text }}
-          </p>
-        }
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" id="add-order-title">Add a machine</h2>
+            <button
+              type="button"
+              class="fl-dialog__close"
+              aria-label="Close"
+              [disabled]="saving()"
+              (click)="close()"
+            >
+              <fl-icon name="lucideX" />
+            </button>
+          </header>
+
+          <div class="fl-dialog__body">
+            <fl-field label="Machine" for="add-order-shape">
+              <span class="fl-select-wrap">
+                <select
+                  id="add-order-shape"
+                  name="shape"
+                  class="fl-select"
+                  [ngModel]="shape()"
+                  (ngModelChange)="shape.set($event)"
+                  data-testid="add-order-shape"
+                >
+                  @for (option of shapes(); track option.value) {
+                    <option [value]="option.value" [attr.title]="option.warning">
+                      {{ option.text }}
+                    </option>
+                  }
+                </select>
+              </span>
+            </fl-field>
+            @if (warning(); as text) {
+              <fl-status
+                class="whitespace-normal"
+                tone="warning"
+                [label]="text"
+                data-testid="add-order-warning"
+              />
+            }
+
+            <fl-field label="Region" for="add-order-region">
+              <span class="fl-select-wrap">
+                <select
+                  id="add-order-region"
+                  name="region"
+                  class="fl-select"
+                  [ngModel]="region()"
+                  (ngModelChange)="region.set($event)"
+                  data-testid="add-order-region"
+                >
+                  @for (option of regions(); track option.value) {
+                    <option [value]="option.value">{{ option.text }}</option>
+                  }
+                </select>
+              </span>
+            </fl-field>
+
+            <fl-field
+              label="How many"
+              for="add-order-wanted"
+              [hint]="'At most ' + room() + ' within the node ceiling.'"
+            >
+              <span class="fl-input fl-input--lg w-24">
+                <input
+                  id="add-order-wanted"
+                  name="wanted"
+                  type="number"
+                  min="1"
+                  [max]="room()"
+                  [ngModel]="wanted()"
+                  (ngModelChange)="wanted.set(+$event || 1)"
+                  data-testid="add-order-wanted"
+                />
+              </span>
+            </fl-field>
+
+            @if (failure() ?? refused(); as problem) {
+              <fl-alert tone="error" title="Cannot add this order" data-testid="add-order-says">
+                {{ problem }}
+              </fl-alert>
+            } @else {
+              <p class="m-0 text-fl-body-sm text-fl-ink-secondary" data-testid="add-order-says">
+                {{ says() }}
+              </p>
+            }
+          </div>
+
+          <footer class="fl-dialog__footer">
+            <button flButton="ghost" type="button" [disabled]="saving()" (click)="close()">
+              Cancel
+            </button>
+            <button
+              flButton="primary"
+              type="submit"
+              [disabled]="saving() || !!refused()"
+              data-testid="add-order-submit"
+            >
+              @if (saving()) {
+                <fl-spinner label="Adding" />
+              }
+              {{ saving() ? 'Adding…' : 'Add order' }}
+            </button>
+          </footer>
+        </form>
       </div>
     }
   `,
@@ -202,9 +233,10 @@ export class ScalingNowAddOrderComponent {
       const where = up === null ? '' : ` — available in ${up.length} of ${total} regions`;
       const architecture = entry?.architecture ?? architectures[value];
       const named = [architectureLabel(architecture), label].filter(Boolean).join(' · ');
+      const namedSuffix = named ? ` — ${named}` : '';
       return {
         value,
-        text: `${value}${named ? ` — ${named}` : ''}${where}`,
+        text: `${value}${namedSuffix}${where}`,
         warning: architectureWarning(architecture),
       };
     });
@@ -274,6 +306,10 @@ export class ScalingNowAddOrderComponent {
       : `${target} This group only decides: it will name ${machine} when it can be had, and add nothing.`;
   });
 
+  protected onEscape(): void {
+    if (this.open() && !this.saving()) this.close();
+  }
+
   protected close(): void {
     this.open.set(false);
     this.failure.set(null);
@@ -298,7 +334,4 @@ export class ScalingNowAddOrderComponent {
       this.saving.set(false);
     }
   }
-
-  protected readonly field =
-    'rounded-md border border-input bg-background px-2.5 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 }

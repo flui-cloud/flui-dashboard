@@ -1,60 +1,21 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideCircleCheck, lucideCircleAlert, lucideCircleMinus } from '@ng-icons/lucide';
+import { Component, computed, input } from '@angular/core';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+
+const STATUS: Record<string, { label: string; tone: StatusTone }> = {
+  healthy: { label: 'Healthy', tone: 'success' },
+  degraded: { label: 'Degraded', tone: 'warning' },
+  missing: { label: 'Missing', tone: 'error' },
+};
 
 @Component({
   selector: 'app-platform-component-status-badge',
-  standalone: true,
-  imports: [NgIconComponent],
-  providers: [provideIcons({ lucideCircleCheck, lucideCircleAlert, lucideCircleMinus })],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <span
-      class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
-      [class]="badgeClass()"
-    >
-      <ng-icon [name]="icon()" class="h-3 w-3" />
-      {{ label() }}
-    </span>
-  `,
+  imports: [FlStatus],
+  template: `<fl-status [tone]="view().tone" [label]="view().label" />`,
 })
 export class PlatformComponentStatusBadgeComponent {
   status = input.required<string>();
 
-  label() {
-    switch (this.status()) {
-      case 'healthy':
-        return 'Healthy';
-      case 'degraded':
-        return 'Degraded';
-      case 'missing':
-        return 'Missing';
-      default:
-        return this.status();
-    }
-  }
-
-  icon() {
-    switch (this.status()) {
-      case 'healthy':
-        return 'lucideCircleCheck';
-      case 'degraded':
-        return 'lucideCircleAlert';
-      default:
-        return 'lucideCircleMinus';
-    }
-  }
-
-  badgeClass() {
-    switch (this.status()) {
-      case 'healthy':
-        return 'bg-green-100 text-green-800';
-      case 'degraded':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'missing':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  }
+  protected readonly view = computed(
+    () => STATUS[this.status()] ?? { label: this.status(), tone: 'neutral' as StatusTone },
+  );
 }

@@ -1,456 +1,81 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
+  effect,
+  inject,
   input,
   output,
   signal,
-  computed,
-  inject,
-  effect,
   untracked,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideNetwork,
-  lucideSearch,
-  lucideLoader,
-  lucideCircleAlert,
-  lucideCheck,
-  lucideX,
-  lucideInfo,
-  lucidePlus,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideNetwork, lucidePlus, lucideSearch, lucideX } from '@ng-icons/lucide';
 import { VNetService } from '../../../features/service/vnet.service';
 import {
   VNetInfo,
-  VNetStatus,
   CreateVNetConfiguration,
   vnetServesRegion,
   vnetServedRegions,
 } from '../../../features/model/vnet.models';
 import { ProviderWizardService } from '../../services/provider-wizard.service';
 import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
+import { vnetProviderLabel, vnetStatus } from '../../../features/components/vnet/vnet-status';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
-/**
- * VNet Selector Component
- *
- * Reusable component for selecting a VNet from available VNets.
- *
- * Features:
- * - List available VNets filtered by provider
- * - Search/filter VNets by name
- * - Show VNet details (IP range, subnets, attached servers)
- * - Optional "No VNet" selection
- * - Loading states and error handling
- */
+let nextId = 0;
+
 @Component({
   selector: 'app-vnet-selector',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideNetwork,
-      lucideSearch,
-      lucideLoader,
-      lucideCircleAlert,
-      lucideCheck,
-      lucideX,
-      lucideInfo,
-      lucidePlus,
-    }),
+  imports: [
+    FormsModule,
+    FlPanel,
+    FlAlert,
+    FlField,
+    FlTable,
+    FlEmptyState,
+    FlLoadingState,
+    FlStatus,
+    FlButton,
+    FlIcon,
+    FlSpinner,
   ],
+  providers: [provideIcons({ lucideNetwork, lucidePlus, lucideSearch, lucideX })],
+  host: { class: 'flex flex-col gap-3' },
   changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <div class="space-y-4">
-      <!-- Description -->
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2">
-          Virtual Network {{ required() ? '' : '(Optional)' }}
-        </label>
-        <p class="text-sm text-slate-500">
-          {{ description() || 'Select a VNet to attach all cluster nodes to a private network.' }}
-        </p>
-      </div>
-
-      @if (!showCreateForm()) {
-        <div class="flex items-center gap-2">
-          <div class="relative flex-1">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <ng-icon name="lucideSearch" size="18" class="text-slate-400"></ng-icon>
-            </div>
-            <input
-              type="text"
-              [(ngModel)]="searchQuery"
-              (ngModelChange)="onSearchChange()"
-              placeholder="Search VNets by name..."
-              class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          @if (canCreate()) {
-            <button
-              type="button"
-              (click)="openCreateForm()"
-              class="inline-flex items-center gap-1.5 px-3 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap"
-            >
-              <ng-icon name="lucidePlus" size="16"></ng-icon>
-              New VNet
-            </button>
-          }
-        </div>
-      }
-
-      <!-- Loading State -->
-      @if (isLoading() && !showCreateForm()) {
-        <div class="flex items-center justify-center py-12">
-          <ng-icon name="lucideLoader" size="32" class="animate-spin text-blue-500"></ng-icon>
-        </div>
-      }
-
-      <!-- Error State -->
-      @if (error() && !isLoading() && !showCreateForm()) {
-        <div class="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
-          <ng-icon name="lucideCircleAlert" size="20"></ng-icon>
-          <span>{{ error() }}</span>
-        </div>
-      }
-
-      <!-- VNets List -->
-      @if (!isLoading() && !error() && !showCreateForm()) {
-        <div class="space-y-2 max-h-96 overflow-y-auto">
-          <!-- No VNet Option (if not required) -->
-          @if (!required()) {
-            <div
-              (click)="selectVNet(null)"
-              [class]="getVNetCardClass(null)"
-              class="p-4 border-2 rounded-lg cursor-pointer transition-all"
-            >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="p-2 bg-slate-100 rounded-lg">
-                    <ng-icon name="lucideX" size="20" class="text-slate-500"></ng-icon>
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-slate-900">No VNet</h3>
-                    <p class="text-sm text-slate-500">Skip VNet configuration</p>
-                  </div>
-                </div>
-                @if (!selectedVNet()) {
-                  <ng-icon name="lucideCheck" size="24" class="text-blue-600"></ng-icon>
-                }
-              </div>
-            </div>
-          }
-          <!-- VNet Cards -->
-          @for (vnet of filteredVNets(); track vnet) {
-            <div
-              (click)="isUsable(vnet) && selectVNet(vnet)"
-              [class]="getVNetCardClass(vnet)"
-              class="p-4 border-2 rounded-lg transition-all"
-              [class.cursor-pointer]="isUsable(vnet)"
-              [class.hover:shadow-md]="isUsable(vnet)"
-              [class.cursor-not-allowed]="!isUsable(vnet)"
-              [class.opacity-50]="!isUsable(vnet)"
-              [attr.aria-disabled]="!isUsable(vnet)"
-              [attr.data-testid]="'vnet-card-' + vnet.name"
-            >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                  <!-- VNet Icon -->
-                  <div class="flex-shrink-0 p-2 bg-blue-100 rounded-lg">
-                    <ng-icon name="lucideNetwork" size="24" class="text-blue-600"></ng-icon>
-                  </div>
-                  <!-- VNet Info -->
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <h3 class="font-semibold text-slate-900 truncate">
-                        {{ vnet.name }}
-                      </h3>
-                      <span
-                        [class]="getStatusBadgeClass(vnet.status)"
-                        class="px-2 py-0.5 text-xs rounded-full font-medium"
-                      >
-                        {{ vnet.status }}
-                      </span>
-                    </div>
-                    <div class="flex items-center gap-4 mt-1 text-sm text-slate-500">
-                      <span class="font-mono">{{ vnet.ipRange }}</span>
-                      <span>{{ vnet.subnets.length }} subnet(s)</span>
-                      <span class="capitalize">{{ vnet.provider }}</span>
-                    </div>
-                    @if (!isUsable(vnet)) {
-                      <p class="mt-1 text-xs text-slate-500" data-testid="vnet-other-region">
-                        Not reachable from {{ region() }}: only from
-                        {{ servedRegions(vnet).join(', ') }}
-                      </p>
-                    }
-                  </div>
-                </div>
-                <!-- Selection Indicator -->
-                @if (isSelected(vnet)) {
-                  <ng-icon
-                    name="lucideCheck"
-                    size="24"
-                    class="flex-shrink-0 text-blue-600 ml-2"
-                  ></ng-icon>
-                }
-              </div>
-              <!-- Subnet Info (expanded when selected) -->
-              @if (isSelected(vnet) && vnet.subnets.length > 0) {
-                <div class="mt-3 pt-3 border-t border-slate-200">
-                  <div class="text-xs font-medium text-slate-700 mb-2">Available Subnets</div>
-                  <div class="grid grid-cols-1 gap-2">
-                    @for (subnet of vnet.subnets; track subnet) {
-                      <div class="flex items-center gap-2 p-2 bg-slate-50 rounded text-xs">
-                        <span class="font-mono text-slate-900">{{ subnet.ipRange }}</span>
-                        <span class="text-slate-500">•</span>
-                        <span class="text-slate-600">{{ subnet.networkZone }}</span>
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          }
-          <!-- Empty State -->
-          @if (filteredVNets().length === 0) {
-            <div class="text-center py-12 text-slate-500">
-              <ng-icon name="lucideNetwork" size="48" class="mx-auto mb-3 opacity-30"></ng-icon>
-              @if (searchQuery()) {
-                <p>No VNets found matching "{{ searchQuery() }}"</p>
-              }
-              @if (!searchQuery() && provider()) {
-                <p>No VNets available for {{ provider() }}</p>
-              }
-              @if (!searchQuery() && !provider()) {
-                <p>No VNets available</p>
-              }
-              @if (canCreate() && !searchQuery()) {
-                <button
-                  type="button"
-                  (click)="openCreateForm()"
-                  class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <ng-icon name="lucidePlus" size="16"></ng-icon>
-                  Create a VNet for {{ provider() }}
-                </button>
-              }
-            </div>
-          }
-        </div>
-      }
-
-      @if (showCreateForm()) {
-        <div class="border-2 border-blue-200 rounded-lg p-4 bg-blue-50/40 space-y-4">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <ng-icon name="lucideNetwork" size="20" class="text-blue-600"></ng-icon>
-              <h3 class="font-semibold text-slate-900">
-                New VNet on <span class="capitalize">{{ provider() }}</span>
-              </h3>
-            </div>
-            <button
-              type="button"
-              (click)="closeCreateForm()"
-              class="p-1 text-slate-400 hover:text-slate-600"
-            >
-              <ng-icon name="lucideX" size="18"></ng-icon>
-            </button>
-          </div>
-
-          @if (createError()) {
-            <div class="flex items-start gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-              <ng-icon name="lucideCircleAlert" size="18" class="flex-shrink-0 mt-0.5"></ng-icon>
-              <span>{{ createError() }}</span>
-            </div>
-          }
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">
-              VNet Name <span class="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              [(ngModel)]="newVnetName"
-              placeholder="e.g., hetzner-vnet"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">
-              IP Range (CIDR) <span class="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              [(ngModel)]="newIpRange"
-              [placeholder]="'e.g., 10.0.0.0/' + suggestedVnetPrefix()"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              [class.border-red-500]="newIpRange && !isValidVnetCidr()"
-            />
-            <p class="text-xs text-slate-500 mt-1">
-              {{ vnetCidrHint() }} —
-              <button
-                type="button"
-                (click)="newIpRange = '10.0.0.0/' + suggestedVnetPrefix()"
-                class="text-blue-600 hover:text-blue-700 underline"
-              >
-                Use /{{ suggestedVnetPrefix() }}
-              </button>
-            </p>
-            @if (newIpRange && !isValidVnetCidr()) {
-              <p class="text-xs text-red-600 mt-1">{{ vnetCidrError() }}</p>
-            } @else if (newIpRange && cidrOccupied(newIpRange)) {
-              <p class="text-xs text-red-600 mt-1">
-                This range is already in use on {{ provider() }}.
-                <button
-                  type="button"
-                  (click)="useFreeVnetCidr()"
-                  class="text-blue-600 hover:text-blue-700 underline"
-                >
-                  Use a free range
-                </button>
-              </p>
-            }
-          </div>
-
-          @if (regionForNew()) {
-            <p class="m-0 text-xs text-slate-600" data-testid="vnet-region-for-new">
-              Created in {{ regionForNew() }}, where this cluster runs: a network here is regional.
-            </p>
-          }
-          @if (vnetZones().length > 0) {
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">
-                Network Zone <span class="text-red-500">*</span>
-              </label>
-              <select
-                [(ngModel)]="newSubnetZone"
-                class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                @for (zone of vnetZones(); track zone.id) {
-                  <option [value]="zone.id" [disabled]="!zoneServesRegion(zone)">
-                    {{ zone.displayName }}
-                  </option>
-                }
-              </select>
-            </div>
-
-            @if (supportsSubnets()) {
-              <div>
-                <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
-                  <input
-                    type="checkbox"
-                    [(ngModel)]="newCreateSubnet"
-                    class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  Create an initial subnet in this zone
-                </label>
-                @if (newCreateSubnet) {
-                  <div class="mt-2 ml-6">
-                    <input
-                      type="text"
-                      [(ngModel)]="newSubnetIpRange"
-                      placeholder="e.g., 10.0.0.0/24"
-                      class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      [class.border-red-500]="newSubnetIpRange && !isValidSubnetCidr()"
-                    />
-                    <p class="text-xs text-slate-500 mt-1">
-                      Subnet CIDR within the VNet range (required for this provider).
-                    </p>
-                    @if (newSubnetIpRange && !isValidSubnetCidr()) {
-                      <p class="text-xs text-red-600 mt-1">
-                        Enter a valid CIDR (e.g., 10.0.1.0/24)
-                      </p>
-                    }
-                  </div>
-                }
-              </div>
-            }
-          }
-
-          <div class="flex gap-2 pt-2">
-            <button
-              type="button"
-              (click)="submitCreateVNet()"
-              [disabled]="isCreating() || !isCreateFormValid()"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {{ isCreating() ? 'Creating…' : 'Create & select' }}
-            </button>
-            <button
-              type="button"
-              (click)="closeCreateForm()"
-              [disabled]="isCreating()"
-              class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      }
-
-      @if (selectedVNet() && selectedVNet()!.subnets.length === 0) {
-        <div class="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <ng-icon
-            name="lucideInfo"
-            size="18"
-            class="text-yellow-600 flex-shrink-0 mt-0.5"
-          ></ng-icon>
-          <div class="text-sm text-yellow-800">
-            <strong>Note:</strong> This VNet has no subnets. You'll need to add subnets before
-            attaching servers.
-          </div>
-        </div>
-      }
-    </div>
-  `,
+  templateUrl: './vnet-selector.component.html',
 })
 export class VNetSelectorComponent implements OnInit {
   private readonly vnetService = inject(VNetService);
   private readonly providerWizardService = inject(ProviderWizardService);
 
-  // ===== INPUTS =====
+  protected readonly uid = `vnet-selector-${nextId++}`;
 
-  /**
-   * Filter VNets by provider (required)
-   */
   provider = input<string | undefined>(undefined);
 
-  /**
-   * Whether VNet selection is required
-   */
   required = input<boolean>(false);
 
-  /**
-   * Custom description text
-   */
   description = input<string | undefined>(undefined);
 
-  /**
-   * The region the cluster runs in. Where the provider's networks are regional
-   * and it lists no zones of its own, a new network is created there — a
-   * network in another region is one the cluster's nodes cannot join.
-   */
   region = input<string | undefined>(undefined);
 
-  /** The region a new network goes to on its own, when nothing else says. */
   readonly regionForNew = computed(() =>
     this.vnetZones().length === 0 && this.vnetTopology()?.scope === 'regional'
       ? (this.region() ?? '')
       : '',
   );
 
-  // ===== OUTPUTS =====
-
-  /**
-   * Emitted when a VNet is selected
-   */
   vnetSelected = output<VNetInfo | null>();
-
-  // ===== STATE SIGNALS =====
 
   selectedVNet = signal<VNetInfo | null>(null);
   searchQuery = signal<string>('');
@@ -460,8 +85,6 @@ export class VNetSelectorComponent implements OnInit {
   showCreateForm = signal<boolean>(false);
   isCreating = signal<boolean>(false);
   createError = signal<string | null>(null);
-  // Ranges already in use on this provider (shared-VPC providers only; empty for
-  // isolated-network providers). Used to steer the user off an overlapping CIDR.
   occupiedCidrs = signal<string[]>([]);
 
   newVnetName = '';
@@ -470,14 +93,11 @@ export class VNetSelectorComponent implements OnInit {
   newCreateSubnet = true;
   newSubnetIpRange = '';
 
-  // ===== COMPUTED SIGNALS =====
-
   filteredVNets = computed(() => {
     const vnets = this.vnetService.vnets();
     const query = this.searchQuery().toLowerCase();
 
     return vnets.filter((vnet) => {
-      // Filter by search query
       if (query) {
         const name = vnet.name.toLowerCase();
         const ipRange = vnet.ipRange.toLowerCase();
@@ -485,6 +105,18 @@ export class VNetSelectorComponent implements OnInit {
       }
       return true;
     });
+  });
+
+  protected readonly providerName = computed(() => {
+    const p = this.provider() ?? '';
+    return this.providerWizardService.getProviderDefinition(p)?.displayName || p;
+  });
+
+  protected readonly emptyTitle = computed(() => {
+    const query = this.searchQuery();
+    if (query) return `No networks match "${query}"`;
+    const p = this.provider();
+    return p ? `No networks on ${this.providerName()}` : 'No networks yet';
   });
 
   readonly canCreate = computed<boolean>(() => !!this.provider() && !!this.vnetTopology());
@@ -514,8 +146,6 @@ export class VNetSelectorComponent implements OnInit {
     return `Allowed: /${c.minPrefix}–/${c.maxPrefix}`;
   });
 
-  // ===== LIFECYCLE =====
-
   constructor() {
     effect(() => {
       this.provider();
@@ -531,7 +161,6 @@ export class VNetSelectorComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadVNets();
-    // Provider definitions carry vnetTopology, needed to drive the inline create form.
     void this.providerWizardService.loadProviders();
   }
 
@@ -549,8 +178,6 @@ export class VNetSelectorComponent implements OnInit {
     this.newSubnetIpRange = this.deriveDefaultSubnetCidr() ?? '';
     this.showCreateForm.set(true);
 
-    // Steer away from ranges already used on shared-VPC providers (empty on
-    // isolated providers). Pre-pick a free default so the user rarely hits it.
     if (p) {
       const occupied = await this.vnetService.getOccupiedSubnets(
         p,
@@ -583,12 +210,10 @@ export class VNetSelectorComponent implements OnInit {
     return ra[0] <= rb[1] && rb[0] <= ra[1];
   }
 
-  /** True if the given CIDR overlaps a range already in use on the provider. */
   cidrOccupied(cidr: string): boolean {
     return this.occupiedCidrs().some((c) => this.cidrsOverlap(c, cidr));
   }
 
-  /** First 10.x.0.0/<prefix> block that doesn't overlap any occupied range. */
   private firstFreeVnetCidr(prefix: number): string {
     for (let second = 0; second < 256; second++) {
       const candidate = `10.${second}.0.0/${prefix}`;
@@ -602,7 +227,6 @@ export class VNetSelectorComponent implements OnInit {
     this.newSubnetIpRange = this.deriveDefaultSubnetCidr() ?? '';
   }
 
-  /** Derive a concrete first-subnet CIDR from the VNet range (e.g. 10.0.0.0/16 → 10.0.0.0/24). */
   private deriveDefaultSubnetCidr(): string | undefined {
     const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/(\d{1,2})$/.exec(this.newIpRange);
     if (!m) return undefined;
@@ -610,7 +234,6 @@ export class VNetSelectorComponent implements OnInit {
     const c = this.subnetIpConstraints();
     let prefix = Math.max(24, vnetPrefix);
     if (c) prefix = Math.min(Math.max(prefix, c.minPrefix), c.maxPrefix);
-    // Network base of the VNet's first two octets is a valid subnet base for any prefix >= 16.
     return `${m[1]}.${m[2]}.0.0/${prefix}`;
   }
 
@@ -645,7 +268,7 @@ export class VNetSelectorComponent implements OnInit {
   }
 
   isValidSubnetCidr(): boolean {
-    if (!this.newSubnetIpRange) return true; // optional
+    if (!this.newSubnetIpRange) return true;
     return this.cidrMatches(this.newSubnetIpRange, this.subnetIpConstraints());
   }
 
@@ -670,9 +293,6 @@ export class VNetSelectorComponent implements OnInit {
       subnet: includeSubnet
         ? {
             networkZone: this.newSubnetZone,
-            // Concrete CIDR required — the provider drops subnets without one.
-            // With no subnet field on screen, the range typed above is the only one
-            // the person chose, so the subnet follows it.
             ipRange: this.regionForNew()
               ? this.deriveDefaultSubnetCidr()
               : this.newSubnetIpRange || this.deriveDefaultSubnetCidr(),
@@ -690,8 +310,6 @@ export class VNetSelectorComponent implements OnInit {
       this.isCreating.set(false);
     }
   }
-
-  // ===== METHODS =====
 
   async loadVNets(): Promise<void> {
     this.isLoading.set(true);
@@ -732,27 +350,23 @@ export class VNetSelectorComponent implements OnInit {
     return selected ? selected.id === vnet.id : false;
   }
 
-  onSearchChange(): void {
-    // Search is reactive via signal, no action needed
+  protected statusOf(vnet: VNetInfo) {
+    return vnetStatus(vnet.status);
   }
 
-  getVNetCardClass(vnet: VNetInfo | null): string {
-    const isSelected = vnet ? this.isSelected(vnet) : !this.selectedVNet();
-    return isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300';
+  protected providerLabel(vnet: VNetInfo): string {
+    return vnetProviderLabel(
+      vnet,
+      (id) => this.providerWizardService.getProviderDefinition(id)?.displayName,
+    );
   }
 
-  getStatusBadgeClass(status: VNetStatus): string {
-    switch (status) {
-      case VNetStatus.ACTIVE:
-        return 'bg-green-100 text-green-800';
-      case VNetStatus.PENDING:
-        return 'bg-yellow-100 text-yellow-800';
-      case VNetStatus.FAILED:
-        return 'bg-red-100 text-red-800';
-      case VNetStatus.DELETING:
-        return 'bg-orange-100 text-orange-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  protected ipRangeError(): string | null {
+    if (!this.newIpRange) return null;
+    if (!this.isValidVnetCidr()) return this.vnetCidrError();
+    if (this.cidrOccupied(this.newIpRange)) {
+      return `This range is already in use on ${this.providerName()}.`;
     }
+    return null;
   }
 }

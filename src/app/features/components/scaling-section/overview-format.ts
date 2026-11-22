@@ -1,11 +1,12 @@
 import { ProviderScalingCapability, ScalingModeLabel } from '../../model/scaling-section.models';
+import { StatusTone } from '../../../ui/primitives/status';
 
 export type ScalingMode = 'flui-buys' | 'flui-decides' | 'you-buy' | 'you-attach';
 
 export interface ModeCopy {
   id: ScalingMode;
   label: string;
-  pill: string;
+  tone: StatusTone;
   how: string;
 }
 
@@ -13,25 +14,25 @@ export const MODES: Record<ScalingMode, ModeCopy> = {
   'flui-buys': {
     id: 'flui-buys',
     label: 'Automatic — Flui adds nodes',
-    pill: 'bg-primary/10 text-primary',
+    tone: 'success',
     how: 'Flui adds the machine and it joins on its own. The provider bills it by the hour.',
   },
   'flui-decides': {
     id: 'flui-decides',
     label: 'Manual — Flui does not add nodes',
-    pill: 'bg-amber-100 text-amber-900',
+    tone: 'warning',
     how: 'Flui could add nodes here and is set not to. It names the machine and a person adds it, or switches the group to automatic.',
   },
   'you-buy': {
     id: 'you-buy',
     label: 'You add, Flui asks',
-    pill: 'bg-muted text-foreground',
+    tone: 'neutral',
     how: 'Flui can read prices but cannot add nodes here. An alarm names the machine and its price; you create it.',
   },
   'you-attach': {
     id: 'you-attach',
     label: 'You attach the machine',
-    pill: 'bg-muted text-muted-foreground',
+    tone: 'neutral',
     how: 'No prices to read here, so an alarm can only say what the machine has to hold.',
   },
 };
@@ -45,7 +46,7 @@ export function modeOf(
   return {
     ...base,
     label: row.mode.label,
-    pill: row.mode.attention ? MODES['flui-decides'].pill : base.pill,
+    tone: row.mode.attention ? MODES['flui-decides'].tone : base.tone,
   };
 }
 
@@ -59,21 +60,6 @@ function baseModeOf(
   if (row && !row.acts) return MODES['flui-decides'];
   return MODES['flui-buys'];
 }
-
-export const TABLE = {
-  card: 'card-surface overflow-hidden',
-  scroll: 'overflow-x-auto',
-  table: 'w-full min-w-[42rem] border-collapse text-left text-sm',
-  headRow: 'text-left text-muted-foreground border-b border-border',
-  th: 'py-2 font-normal',
-  thNum: 'py-2 text-right font-normal',
-  row: 'border-b border-border/50',
-  td: 'py-2 align-top',
-  tdNum: 'py-2 text-right align-top tabular-nums',
-  note: 'm-0 text-[13px] leading-snug text-muted-foreground',
-  mono: 'font-mono text-[13px] text-foreground',
-  pill: 'inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
-} as const;
 
 export function eurMonth(value: number | null): string {
   return value === null ? '—' : `€${value.toFixed(2)}/mo`;

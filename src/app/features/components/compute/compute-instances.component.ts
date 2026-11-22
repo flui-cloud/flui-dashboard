@@ -1,39 +1,19 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideChevronDown,
-  lucideFilter,
-  lucideLoader,
-  lucidePause,
-  lucideRefreshCw,
-  lucideServer,
-  lucideSettings,
-  lucideTriangleAlert,
-  lucideX,
-} from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
-import {
-  HlmCardContentDirective,
-  HlmCardDirective,
-  HlmCardHeaderDirective,
-} from '@spartan-ng/ui-card-helm';
-import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
-import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw, lucideSearch, lucideServer } from '@ng-icons/lucide';
 import { InstanceResponseDto, ProviderErrorDto, VirtualInstancesService } from '../../../core/api';
 import { InstanceWithLabels } from '../../model/instance.models';
 import { ProvidersService } from '../../service/providers.service';
 import { InstanceRowComponent } from './instance-row.component';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { INSTANCE_STATUS_FILTERS } from './instance-status';
 import {
   ComputeInstancesSurfaceInput,
   ComputeInstancesSurfaceRevision,
@@ -50,254 +30,160 @@ interface FilterState {
 
 @Component({
   selector: 'app-compute-instances',
-  standalone: true,
   imports: [
-    RouterModule,
-    NgIcon,
-    HlmCardDirective,
-    HlmCardContentDirective,
-    HlmCardHeaderDirective,
-    HlmButtonDirective,
-    HlmInputDirective,
-    HlmLabelDirective,
     InstanceRowComponent,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlTable,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
   ],
-  providers: [
-    provideIcons({
-      lucideServer,
-      lucideTriangleAlert,
-      lucideLoader,
-      lucidePause,
-      lucideSettings,
-      lucideRefreshCw,
-      lucideFilter,
-      lucideChevronDown,
-      lucideX,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideRefreshCw, lucideSearch, lucideServer })],
   template: `
-    <div class="p-6 space-y-6">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 class="text-3xl font-bold text-foreground">Compute Instances</h1>
-          <p class="text-muted-foreground">
-            Monitor your auto-managed virtual machines across providers
-          </p>
-        </div>
-
-        <div class="flex gap-2">
+    <div class="fl-page">
+      <fl-page-header [title]="'Compute instances (' + instances().length + ')'">
+        <span headerMeta>Virtual machines across your providers</span>
+        <ng-container headerActions>
           <button
-            hlmBtn
-            variant="outline"
-            size="sm"
-            (click)="refreshInstances()"
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
+            title="Refresh"
             [disabled]="isLoading()"
+            (click)="refreshInstances()"
           >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-4 w-4 mr-2"
-              [class.animate-spin]="isLoading()"
-            />
-            Refresh
+            <fl-icon name="lucideRefreshCw" />
           </button>
-        </div>
-      </div>
+        </ng-container>
+      </fl-page-header>
 
-      <div hlmCard class="border-border">
-        <div hlmCardHeader class="pb-4">
-          <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
-            <div class="flex-1 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <!-- Search Input -->
-              <div class="space-y-2 min-w-0">
-                <label hlmLabel class="text-sm font-medium">Search</label>
-                <input
-                  hlmInput
-                  placeholder="Search instances..."
-                  [value]="filters().search"
-                  (input)="updateSearchFilter($event)"
-                />
-              </div>
+      @if (loadError() && !isLoading()) {
+        <fl-alert tone="error" title="Could not load the instances">{{ loadError() }}</fl-alert>
+      }
 
-              <!-- Provider Select -->
-              <div class="space-y-2 min-w-0">
-                <label hlmLabel class="text-sm font-medium">Provider</label>
-                <div class="relative w-full">
-                  <select
-                    class="flex h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none truncate"
-                    [value]="filters().provider"
-                    (change)="updateProviderFilter($event)"
-                  >
-                    <option value="">All providers</option>
-                    @for (p of activeProviders(); track p.id) {
-                      <option [value]="p.id">{{ p.displayName }}</option>
-                    }
-                  </select>
-                  <ng-icon
-                    name="lucideChevronDown"
-                    class="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none flex-shrink-0"
-                  />
-                </div>
-              </div>
+      @if (partialErrors().length > 0) {
+        <fl-alert tone="warning" title="Some providers did not answer">
+          @for (error of partialErrors(); track error.provider) {
+            <span class="block">{{ error.provider }}: {{ error.message }}</span>
+          }
+        </fl-alert>
+      }
 
-              <!-- Status Select -->
-              <div class="space-y-2 min-w-0">
-                <label hlmLabel class="text-sm font-medium">Status</label>
-                <div class="relative w-full">
-                  <select
-                    class="flex h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none truncate"
-                    [value]="filters().status"
-                    (change)="updateStatusFilter($event)"
-                  >
-                    <option value="">All statuses</option>
-                    <option value="running">Running</option>
-                    <option value="stopped">Stopped</option>
-                    <option value="starting">Starting</option>
-                    <option value="stopping">Stopping</option>
-                    <option value="error">Error</option>
-                  </select>
-                  <ng-icon
-                    name="lucideChevronDown"
-                    class="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none flex-shrink-0"
-                  />
-                </div>
-              </div>
-
-              <!-- Region Select -->
-              <div class="space-y-2 min-w-0">
-                <label hlmLabel class="text-sm font-medium">Region</label>
-                <div class="relative w-full">
-                  <select
-                    class="flex h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none truncate"
-                    [value]="filters().region"
-                    (change)="updateRegionFilter($event)"
-                  >
-                    <option value="">All regions</option>
-                    @for (region of uniqueRegions(); track region) {
-                      <option [value]="region">{{ region }}</option>
-                    }
-                  </select>
-                  <ng-icon
-                    name="lucideChevronDown"
-                    class="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none flex-shrink-0"
-                  />
-                </div>
-              </div>
-            </div>
-
-            @if (hasActiveFilters()) {
-              <button
-                hlmBtn
-                variant="outline"
-                size="sm"
-                (click)="clearAllFilters()"
-                class="shrink-0"
+      <fl-panel [flush]="true">
+        <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+          <div class="fl-toolbar__group">
+            <label class="fl-input">
+              <fl-icon name="lucideSearch" [size]="14" />
+              <span class="fl-sr">Search</span>
+              <input
+                type="search"
+                placeholder="Search by name"
+                aria-label="Search instances"
+                [value]="filters().search"
+                (input)="updateSearchFilter($event)"
+              />
+            </label>
+            <span class="fl-select-wrap">
+              <select
+                class="fl-select fl-select--sm"
+                aria-label="Provider"
+                [value]="filters().provider"
+                (change)="updateProviderFilter($event)"
               >
-                <ng-icon name="lucideX" class="h-4 w-4 mr-2" />
+                <option value="">Provider: All</option>
+                @for (p of activeProviders(); track p.id) {
+                  <option [value]="p.id">{{ p.displayName }}</option>
+                }
+              </select>
+            </span>
+            <span class="fl-select-wrap">
+              <select
+                class="fl-select fl-select--sm"
+                aria-label="Status"
+                [value]="filters().status"
+                (change)="updateStatusFilter($event)"
+              >
+                <option value="">Status: All</option>
+                @for (o of statusOptions; track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
+              </select>
+            </span>
+            <span class="fl-select-wrap">
+              <select
+                class="fl-select fl-select--sm"
+                aria-label="Region"
+                [value]="filters().region"
+                (change)="updateRegionFilter($event)"
+              >
+                <option value="">Region: All</option>
+                @for (region of uniqueRegions(); track region) {
+                  <option [value]="region">{{ region }}</option>
+                }
+              </select>
+            </span>
+            @if (hasActiveFilters()) {
+              <button flButton="ghost" size="sm" type="button" (click)="clearAllFilters()">
                 Clear filters
               </button>
             }
           </div>
-
-          <!-- Active Filters Display - Always visible container -->
-          <div class="flex flex-wrap gap-2 mt-4 min-h-[28px]">
-            @if (filters().search) {
-              <span
-                class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
-              >
-                Search: "{{ filters().search }}"
-                <button (click)="clearFilter('search')" class="hover:bg-primary/20 rounded p-0.5">
-                  <ng-icon name="lucideX" class="h-3 w-3" />
-                </button>
-              </span>
-            }
-            @if (filters().provider) {
-              <span
-                class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
-              >
-                Provider: {{ getProviderLabel(filters().provider) }}
-                <button (click)="clearFilter('provider')" class="hover:bg-primary/20 rounded p-0.5">
-                  <ng-icon name="lucideX" class="h-3 w-3" />
-                </button>
-              </span>
-            }
-            @if (filters().status) {
-              <span
-                class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
-              >
-                Status: {{ getStatusLabel(filters().status) }}
-                <button (click)="clearFilter('status')" class="hover:bg-primary/20 rounded p-0.5">
-                  <ng-icon name="lucideX" class="h-3 w-3" />
-                </button>
-              </span>
-            }
-            @if (filters().region) {
-              <span
-                class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
-              >
-                Region: {{ filters().region }}
-                <button (click)="clearFilter('region')" class="hover:bg-primary/20 rounded p-0.5">
-                  <ng-icon name="lucideX" class="h-3 w-3" />
-                </button>
-              </span>
-            }
-            @if (!hasActiveFilters()) {
-              <span class="text-xs text-muted-foreground italic py-1"> No active filters </span>
-            }
+          <div class="fl-toolbar__group">
+            <span class="fl-toolbar__info"
+              >{{ filteredInstances().length }}
+              {{ filteredInstances().length === 1 ? 'instance' : 'instances' }}</span
+            >
           </div>
         </div>
 
-        <div hlmCardContent class="p-0">
-          @if (partialErrors().length > 0) {
-            <div class="mx-6 mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div class="flex items-center gap-2 text-yellow-800 font-medium mb-2">
-                <ng-icon name="lucideTriangleAlert" class="h-4 w-4" />
-                Partial Data Warning
-              </div>
-              <div class="text-sm text-yellow-700 space-y-1">
-                @for (error of partialErrors(); track error.provider) {
-                  <div>{{ error.provider }}: {{ error.message }}</div>
+        @if (isLoading() && instances().length === 0) {
+          <fl-loading-state [rows]="5" />
+        } @else if (filteredInstances().length === 0) {
+          <fl-empty-state
+            icon="lucideServer"
+            [title]="hasActiveFilters() ? 'No matching instances' : 'No instances yet'"
+            [body]="
+              hasActiveFilters()
+                ? 'Nothing matches these filters.'
+                : 'Instances appear here when your clusters scale up.'
+            "
+          >
+            @if (hasActiveFilters()) {
+              <button flButton size="sm" type="button" (click)="clearAllFilters()">
+                Clear filters
+              </button>
+            }
+          </fl-empty-state>
+        } @else {
+          <div class="fl-table-wrap">
+            <table flTable density="dense" aria-label="Compute instances">
+              <thead>
+                <tr>
+                  <th scope="col">Instance</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Provider</th>
+                  <th scope="col">Region</th>
+                  <th scope="col" class="is-num">CPU</th>
+                  <th scope="col" class="is-num">Memory</th>
+                  <th scope="col" class="is-num">Disk</th>
+                  <th scope="col">IPv4</th>
+                  <th scope="col">Ownership</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (instance of filteredInstances(); track instance.id || instance.providerId) {
+                  <tr app-instance-row [instance]="instance"></tr>
                 }
-              </div>
-            </div>
-          }
-
-          @if (isLoading()) {
-            <div class="flex items-center justify-center py-12">
-              <div class="flex items-center gap-2 text-muted-foreground">
-                <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin" />
-                Loading instances...
-              </div>
-            </div>
-          } @else if (filteredInstances().length === 0) {
-            <div class="flex flex-col items-center justify-center py-12 text-center">
-              <ng-icon name="lucideServer" class="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 class="text-lg font-medium text-foreground mb-2">No instances found</h3>
-              <p class="text-muted-foreground mb-4">
-                @if (hasActiveFilters()) {
-                  Try adjusting your filters to see more instances.
-                } @else {
-                  Instances will appear automatically when your cluster scales up.
-                }
-              </p>
-              <div class="flex gap-2">
-                @if (hasActiveFilters()) {
-                  <button hlmBtn variant="outline" (click)="clearAllFilters()">
-                    <ng-icon name="lucideX" class="h-4 w-4 mr-2" />
-                    Clear filters
-                  </button>
-                }
-              </div>
-            </div>
-          } @else {
-            <div class="flex flex-col gap-2 p-4">
-              @for (instance of filteredInstances(); track instance.id || instance.providerId) {
-                <app-instance-row [instance]="instance" />
-              }
-            </div>
-          }
-        </div>
-      </div>
+              </tbody>
+            </table>
+          </div>
+        }
+      </fl-panel>
     </div>
   `,
 })
@@ -322,9 +208,6 @@ export class ComputeInstancesComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // Publish this page's own Semantic Surface snapshot whenever it changes;
-    // ngOnDestroy clears it so the snapshot never outlives this page — same
-    // lifecycle as ApplicationDetailComponent's.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -337,6 +220,7 @@ export class ComputeInstancesComponent implements OnInit, OnDestroy {
   instances = signal<InstanceWithLabels[]>([]);
   partialErrors = signal<ProviderErrorDto[]>([]);
   isLoading = signal(true);
+  loadError = signal<string | null>(null);
   filters = signal<FilterState>({
     search: '',
     provider: '',
@@ -344,7 +228,8 @@ export class ComputeInstancesComponent implements OnInit, OnDestroy {
     region: '',
   });
 
-  // Active configured providers for the filter dropdown
+  protected readonly statusOptions = INSTANCE_STATUS_FILTERS;
+
   activeProviders = computed(() => this.providersService.availableProviders());
 
   uniqueRegions = computed(() => {
@@ -403,6 +288,7 @@ export class ComputeInstancesComponent implements OnInit, OnDestroy {
 
   loadInstances() {
     this.isLoading.set(true);
+    this.loadError.set(null);
 
     this.virtualInstancesService
       .instancesControllerFindAll(
@@ -424,6 +310,7 @@ export class ComputeInstancesComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Failed to load instances:', error);
+          this.loadError.set(error?.error?.message ?? error?.message ?? 'Unknown error');
           this.instances.set([]);
           this.partialErrors.set([]);
           this.isLoading.set(false);
@@ -462,40 +349,5 @@ export class ComputeInstancesComponent implements OnInit, OnDestroy {
       status: '',
       region: '',
     });
-  }
-
-  clearFilter(filterKey: keyof FilterState) {
-    this.filters.update((current) => ({ ...current, [filterKey]: '' }));
-  }
-
-  getProviderLabel(provider: string): string {
-    return this.providersService.getProviderById(provider)?.displayName ?? provider;
-  }
-
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'running':
-        return 'Running';
-      case 'stopped':
-        return 'Stopped';
-      case 'starting':
-        return 'Starting';
-      case 'stopping':
-        return 'Stopping';
-      case 'provisioning':
-        return 'Provisioning';
-      case 'error':
-        return 'Error';
-      case 'unknown':
-        return 'Unknown';
-      case 'rebuilding':
-        return 'Rebuilding';
-      case 'migrating':
-        return 'Migrating';
-      case 'deleting':
-        return 'Deleting';
-      default:
-        return status;
-    }
   }
 }

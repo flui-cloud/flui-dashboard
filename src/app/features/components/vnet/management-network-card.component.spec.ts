@@ -74,7 +74,7 @@ describe('the Flui network card', () => {
   it('shows the members with their last handshake, and a quiet one as such', async () => {
     await build(network());
     expect(find('flui-network-members')!.textContent).toContain('10.250.0.2');
-    expect(find('flui-network-members')!.textContent).toContain('quiet');
+    expect(find('flui-network-members')!.textContent).toContain('Quiet');
   });
 
   it('says in one line how it is run', async () => {
@@ -143,9 +143,14 @@ describe('the Flui network card', () => {
 
   it('shows every control end with its status', async () => {
     await build(network({ hubs: hubs() }));
-    expect(find('flui-network-hubs')!.textContent!.replace(/\s+/g, ' ')).toContain(
-      'Control ends: master ✓, worker-1 ✓ (1 not reached)',
+    const rows = [...find('flui-network-hubs')!.querySelectorAll('tbody tr')].map((r) =>
+      r.textContent!.replace(/\s+/g, ' ').trim(),
     );
+    expect(rows).toHaveSize(2);
+    expect(rows[0]).toContain('master');
+    expect(rows[0]).toContain('Connected');
+    expect(rows[1]).toContain('worker-1');
+    expect(rows[1]).toMatch(/1\s*1$/);
   });
 
   it('names every control end in the one line', async () => {
@@ -162,15 +167,15 @@ describe('the Flui network card', () => {
         members: [{ ...network().members[0], unreachedFrom: ['worker-1'] }],
       }),
     );
-    expect(find('flui-network-unreached')!.textContent).toContain('not reached from worker-1');
+    expect(find('flui-network-unreached')!.textContent).toContain('Not reached from worker-1');
   });
 
   it('offers the public address after a confirmation, once per cluster', async () => {
     const m = network().members[0];
     await build(network({ members: [m, { ...m, nodeName: 'scw-worker', address: '10.250.0.4' }] }));
     expect(
-      fixture.nativeElement.querySelectorAll('[data-testid="flui-network-demote"]').length,
-    ).toBe(1);
+      fixture.nativeElement.querySelectorAll('[data-testid="flui-network-demote"]'),
+    ).toHaveSize(1);
     find('flui-network-demote')!.click();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain(
@@ -191,7 +196,7 @@ describe('the Flui network card', () => {
 
   it('shows a held cluster and releases it', async () => {
     await build(network({ members: [{ ...network().members[0], heldOffOverlay: true }] }));
-    expect(find('flui-network-held')!.textContent).toContain('held on its public address');
+    expect(find('flui-network-held')!.textContent).toContain('Held on its public address');
     expect(find('flui-network-demote')).toBeNull();
     find('flui-network-release')!.click();
     await fixture.whenStable();

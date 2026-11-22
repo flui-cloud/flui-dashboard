@@ -15,6 +15,8 @@ import {
 import { Terminal } from 'xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { TerminalService } from '../../../core/services/terminal.service';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 /**
  * SSH Terminal Component
@@ -22,32 +24,27 @@ import { TerminalService } from '../../../core/services/terminal.service';
  */
 @Component({
   selector: 'app-ssh-terminal',
-  standalone: true,
-  imports: [],
+  imports: [FlStatus, FlSpinner],
   template: `
     <div class="terminal-container">
-      <!-- Status overlay -->
       @if (showOverlay()) {
-        <div class="status-overlay">
+        <div class="status-overlay" role="status">
           <div class="status-content">
             @if (connectionState() === 'connecting') {
-              <div class="spinner"></div>
-              <p>Connecting to server...</p>
+              <fl-spinner label="Connecting" />
+              <p class="status-title">Connecting to the server…</p>
             }
             @if (connectionState() === 'error') {
-              <div class="error-icon">⚠</div>
-              <p class="error-message">{{ errorMessage() }}</p>
-              <p class="error-hint">Check server status and try again</p>
+              <fl-status tone="error" [label]="errorMessage() || 'Could not connect'" />
+              <p class="status-hint">Check the server status and try again.</p>
             }
             @if (connectionState() === 'disconnected' && hasAttemptedConnection()) {
-              <div class="info-icon">ℹ</div>
-              <p>Disconnected from server</p>
+              <fl-status tone="neutral" label="Disconnected from the server" />
             }
           </div>
         </div>
       }
 
-      <!-- Terminal container -->
       <div #terminalContainer class="xterm-wrapper" (click)="focusTerminal()"></div>
     </div>
   `,
@@ -63,30 +60,26 @@ import { TerminalService } from '../../../core/services/terminal.service';
         position: relative;
         height: 100%;
         background: #1e1e1e;
-        border-radius: 6px;
+        border-radius: var(--fl-radius-md);
         overflow: hidden;
-        border: 1px solid hsl(var(--border));
+        border: 1px solid var(--fl-border);
       }
 
       .xterm-wrapper {
         width: 100%;
         height: 100%;
-        padding: 8px 8px 16px 8px; /* top right bottom left - more space at bottom */
+        padding: 8px 8px 16px 8px;
         box-sizing: border-box;
       }
 
       .status-overlay {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(4px);
-        color: white;
+        background: var(--fl-surface);
+        color: var(--fl-ink);
         z-index: 10;
       }
 
@@ -95,37 +88,27 @@ import { TerminalService } from '../../../core/services/terminal.service';
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 12px;
+        gap: var(--fl-space-2);
+        max-width: 420px;
+        padding: var(--fl-space-4);
+        color: var(--fl-ink-muted);
       }
 
-      .spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(255, 255, 255, 0.3);
-        border-top-color: white;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+      .status-title {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--fl-ink);
       }
 
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
+      .status-content fl-status {
+        white-space: normal;
       }
 
-      .error-icon,
-      .info-icon {
-        font-size: 48px;
-      }
-
-      .error-message {
-        font-weight: 600;
-        font-size: 16px;
-      }
-
-      .error-hint {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.7);
+      .status-hint {
+        margin: 0;
+        font-size: 12px;
+        color: var(--fl-ink-muted);
       }
 
       :host ::ng-deep .xterm {
@@ -143,16 +126,13 @@ import { TerminalService } from '../../../core/services/terminal.service';
   ],
 })
 export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
-  // Inputs
   serverId = input.required<string>();
   serverIp = input.required<string>();
   useBootstrapKey = input<boolean>(false);
   clusterId = input<string | undefined>(undefined);
 
-  // Services
   private readonly terminalService = inject(TerminalService);
 
-  // Terminal elements
   readonly terminalContainer = viewChild.required<ElementRef<HTMLDivElement>>('terminalContainer');
 
   private terminal: Terminal | null = null;
@@ -161,7 +141,6 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
   private wheelListener: ((e: WheelEvent) => void) | null = null;
   private hasAttempted = false;
 
-  // Computed states
   connectionState = this.terminalService.connectionState;
   errorMessage = this.terminalService.errorMessage;
 
@@ -175,17 +154,14 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
   hasAttemptedConnection = computed(() => this.hasAttempted);
 
   constructor() {
-    // Auto-focus terminal when connection is established
     effect(() => {
       if (this.connectionState() === 'connected' && this.terminal) {
         this.terminal.clear();
         this.terminal.writeln('\x1b[32mConnected to SSH session\x1b[0m');
         this.terminal.writeln('');
 
-        // Force resize after connection to ensure PTY has correct dimensions
         this.terminalService.resizeTerminal(this.terminal.cols, this.terminal.rows);
 
-        // Focus terminal for user interaction
         setTimeout(() => {
           this.terminal?.focus();
         }, 100);
@@ -233,11 +209,9 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
       allowProposedApi: true,
       allowTransparency: false,
       windowOptions: {},
-      // Critical for proper character handling
-      convertEol: false, // Don't convert line endings - let the server handle it
-      disableStdin: false, // Enable stdin
+      convertEol: false,
+      disableStdin: false,
       screenReaderMode: false,
-      // Better scrolling
       fastScrollModifier: 'shift',
       fastScrollSensitivity: 5,
       scrollSensitivity: 1,
@@ -274,7 +248,6 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
       const dims = this.fitAddon?.proposeDimensions();
 
       if (dims) {
-        // Subtract 1 row to prevent last line from being cut off
         const adjustedRows = Math.max(dims.rows - 1, 10);
         this.terminal?.resize(dims.cols, adjustedRows);
       }
@@ -288,16 +261,12 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
     this.setupResizeObserver();
   }
 
-  /**
-   * Setup resize observer to auto-fit terminal on container resize
-   */
   private setupResizeObserver(): void {
     const terminalContainer = this.terminalContainer();
     if (!terminalContainer) return;
 
     this.resizeObserver = new ResizeObserver(() => {
       if (this.fitAddon && this.terminal) {
-        // Fit addon to container
         this.fitAddon.fit();
         const dims = this.fitAddon.proposeDimensions();
 
@@ -305,7 +274,6 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
           const adjustedRows = Math.max(dims.rows - 1, 10);
           this.terminal.resize(dims.cols, adjustedRows);
 
-          // Notify server of new dimensions (only if connected)
           if (this.connectionState() === 'connected') {
             this.terminalService.resizeTerminal(dims.cols, adjustedRows);
           }
@@ -316,9 +284,6 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
     this.resizeObserver.observe(terminalContainer.nativeElement);
   }
 
-  /**
-   * Connect to SSH session
-   */
   private connect(): void {
     this.hasAttempted = true;
 

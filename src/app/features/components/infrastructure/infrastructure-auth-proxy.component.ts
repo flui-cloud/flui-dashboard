@@ -1,283 +1,239 @@
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-  OnInit,
-  viewChild,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideShieldPlus,
-  lucideInfo,
-  lucideLoader,
-  lucideAlertTriangle,
-  lucideCircleCheck,
-  lucideCircle,
-  lucideAlertCircle,
-  lucideRefreshCw,
-  lucideServer,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { AuthzInstallService } from '../../service/authz-install.service';
 import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallResponseDto';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+
+const STATUS = AuthzInstallResponseDto.StatusEnum;
 
 @Component({
   selector: 'app-infrastructure-auth-proxy',
-  standalone: true,
-  imports: [NgIconComponent, FormsModule, ConfirmationDialogComponent],
-  providers: [
-    provideIcons({
-      lucideShieldPlus,
-      lucideInfo,
-      lucideLoader,
-      lucideAlertTriangle,
-      lucideCircleCheck,
-      lucideCircle,
-      lucideAlertCircle,
-      lucideRefreshCw,
-      lucideServer,
-    }),
+  imports: [
+    FormsModule,
+    FlPanel,
+    FlAlert,
+    FlKeyValue,
+    FlKvItem,
+    FlUsageBar,
+    FlEmptyState,
+    FlLoadingState,
+    FlActionsMenu,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideRefreshCw })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-4">
-      <div class="flex items-start gap-2 text-sm text-muted-foreground">
-        <ng-icon name="lucideInfo" class="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-500" />
-        <p>
-          Auth Proxy checks the Flui sign-in for internal apps and routes that require one, so only
-          team members with access reach them. Install it once on each cluster other than the
-          control — no extra config.
-        </p>
-      </div>
-
-      @if (clustersLoading()) {
-        <div class="h-9 w-full max-w-sm rounded bg-muted"></div>
-      } @else if (workloadClusters().length === 0) {
-        <div class="flex items-start gap-3 p-3 bg-muted/40 border border-border rounded-md text-sm">
-          <ng-icon name="lucideInfo" class="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-          <p class="text-muted-foreground">No clusters available. Create a cluster first.</p>
-        </div>
-      } @else {
-        <!-- Cluster picker row -->
-        <div class="flex flex-wrap items-center gap-2">
-          <label class="inline-flex items-center gap-2 text-sm text-muted-foreground">
-            <ng-icon name="lucideServer" class="h-4 w-4" />
-            Cluster
-          </label>
-          <select
-            [ngModel]="selectedClusterId()"
-            (ngModelChange)="onClusterChange($event)"
-            class="px-3 py-1.5 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[16rem]"
-          >
-            <option value="">Select a cluster...</option>
-            @for (c of workloadClusters(); track c.id) {
-              <option [value]="c.id">{{ c.name }}</option>
-            }
-          </select>
-          @if (selectedClusterId()) {
+    <fl-panel title="Internal app protection" [flush]="true">
+      <ng-container panelActions>
+        @if (selectedClusterId()) {
+          @if (showInstallButton()) {
             <button
+              flButton="primary"
+              size="sm"
               type="button"
-              (click)="refresh()"
-              [disabled]="authzService.loading()"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border text-sm rounded-md hover:bg-muted text-foreground transition-colors disabled:opacity-50 ml-auto"
+              [disabled]="authzService.installing() || authzService.loading()"
+              (click)="onInstall()"
             >
-              <ng-icon
-                name="lucideRefreshCw"
-                class="h-3.5 w-3.5"
-                [class.animate-spin]="authzService.loading()"
-              />
-              Refresh
+              @if (authzService.installing()) {
+                <fl-spinner label="Installing" />
+                Installing…
+              } @else {
+                Install
+              }
             </button>
           }
-        </div>
-
-        <!-- Status card (full width) -->
-        @if (!selectedClusterId()) {
-          <p class="text-sm text-muted-foreground">
-            Select a cluster to view its Auth Proxy status.
-          </p>
-        } @else if (authzService.loading() && !authzService.install()) {
-          <div
-            class="border border-border rounded-md p-4 flex items-center gap-2 text-sm text-muted-foreground"
-          >
-            <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-            Loading status...
-          </div>
-        } @else {
-          <div class="border border-border rounded-md p-4 space-y-4">
-            <!-- Header row: title + status + actions -->
-            <div class="flex flex-wrap items-center gap-3">
-              <div class="flex items-center gap-2 min-w-0">
-                <ng-icon name="lucideShieldPlus" class="h-4 w-4 text-blue-600 flex-shrink-0" />
-                <span class="text-sm font-semibold text-foreground truncate"
-                  >Internal app protection</span
-                >
-              </div>
-              <span
-                class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
-                [class]="statusBadgeClass()"
-              >
-                <span class="w-1.5 h-1.5 rounded-full" [class]="statusDotClass()"></span>
-                {{ statusLabel() }}
-              </span>
-
-              <div class="flex items-center gap-2 ml-auto">
-                @if (showInstallButton()) {
-                  <button
-                    (click)="onInstall()"
-                    [disabled]="authzService.installing() || authzService.loading()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    @if (authzService.installing()) {
-                      <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                      Installing...
-                    } @else {
-                      Install
-                    }
-                  </button>
-                }
-                @if (showRetryButton()) {
-                  <button
-                    (click)="onInstall()"
-                    [disabled]="authzService.installing()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    @if (authzService.installing()) {
-                      <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                      Retrying...
-                    } @else {
-                      Retry
-                    }
-                  </button>
-                }
-                @if (showUninstallButton()) {
-                  <button
-                    (click)="uninstallDialog.open()"
-                    [disabled]="authzService.installing()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Uninstall
-                  </button>
-                }
-              </div>
-            </div>
-
-            @if (authzService.install()?.installedAt) {
-              <p class="text-xs text-muted-foreground">
-                Installed {{ formatDate(authzService.install()!.installedAt!) }}
-              </p>
-            }
-
-            <!-- Progress bar -->
-            @if (authzService.installing()) {
-              <div class="space-y-1.5">
-                <div class="flex justify-between text-xs text-muted-foreground">
-                  <span>{{ authzService.progressStep() || 'Working...' }}</span>
-                  <span>{{ authzService.progress() }}%</span>
-                </div>
-                <div class="w-full bg-muted rounded-full h-1.5">
-                  <div
-                    class="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
-                    [style.width.%]="authzService.progress()"
-                  ></div>
-                </div>
-              </div>
-            }
-
-            <!-- Errors -->
-            @if (authzService.error()) {
-              <div
-                class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700"
-              >
-                <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-                {{ authzService.error() }}
-              </div>
-            }
-            @if (
-              authzService.install()?.status === 'FAILED' && authzService.install()?.errorMessage
-            ) {
-              <div
-                class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700"
-              >
-                <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-                {{ authzService.install()!.errorMessage }}
-              </div>
-            }
-          </div>
+          @if (showRetryButton()) {
+            <button
+              flButton="primary"
+              size="sm"
+              type="button"
+              [disabled]="authzService.installing()"
+              (click)="onInstall()"
+            >
+              @if (authzService.installing()) {
+                <fl-spinner label="Retrying" />
+                Retrying…
+              } @else {
+                Retry
+              }
+            </button>
+          }
+          @if (showUninstallButton()) {
+            <fl-actions-menu
+              label="Auth Proxy actions"
+              size="sm"
+              [compact]="true"
+              [items]="menuItems()"
+              (action)="confirmUninstall()"
+            />
+          }
         }
-      }
-    </div>
+      </ng-container>
 
-    <app-confirmation-dialog
-      #uninstallDialog
-      title="Remove Auth Proxy"
-      message="Remove flui-authz from this cluster? Internal apps will fall back to the legacy external ForwardAuth proxy. No data is lost."
-      confirmText="Remove"
-      variant="danger"
-      (confirmed)="onUninstall()"
-    />
+      @if (!clustersLoading() && workloadClusters().length > 0) {
+        <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Cluster">
+          <div class="fl-toolbar__group">
+            <span class="fl-select-wrap">
+              <select
+                class="fl-select fl-select--sm"
+                aria-label="Cluster"
+                [ngModel]="selectedClusterId()"
+                (ngModelChange)="onClusterChange($event)"
+              >
+                <option value="">Select a cluster</option>
+                @for (c of workloadClusters(); track c.id) {
+                  <option [value]="c.id">{{ c.name }}</option>
+                }
+              </select>
+            </span>
+          </div>
+          @if (selectedClusterId()) {
+            <div class="fl-toolbar__group">
+              <button
+                flButton="ghost"
+                size="sm"
+                type="button"
+                [iconOnly]="true"
+                aria-label="Refresh"
+                title="Refresh"
+                [disabled]="authzService.loading()"
+                (click)="refresh()"
+              >
+                <fl-icon name="lucideRefreshCw" [size]="14" />
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="flex flex-col gap-4 p-4">
+        <p class="text-fl-body-sm text-fl-ink-muted">
+          Auth Proxy checks the Flui sign-in for internal apps and routes that require one, so only
+          team members with access reach them. Install it once on each cluster other than the
+          control. It needs no extra configuration.
+        </p>
+
+        @if (clustersLoading()) {
+          <fl-loading-state [rows]="2" />
+        } @else if (workloadClusters().length === 0) {
+          <fl-empty-state
+            [compact]="true"
+            title="No clusters yet"
+            body="Create a cluster first, then install Auth Proxy on it."
+          />
+        } @else if (!selectedClusterId()) {
+          <p class="text-fl-ink-muted">Select a cluster to see its Auth Proxy status.</p>
+        } @else if (authzService.loading() && !authzService.install()) {
+          <fl-loading-state [rows]="2" />
+        } @else {
+          <fl-key-value>
+            <fl-kv-item key="Status">
+              <fl-status [tone]="statusTone()" [label]="statusLabel()" />
+            </fl-kv-item>
+            <fl-kv-item key="Cluster">{{ selectedClusterName() }}</fl-kv-item>
+            @if (authzService.install()?.installedAt; as installedAt) {
+              <fl-kv-item key="Installed">{{ formatDate(installedAt) }}</fl-kv-item>
+            }
+          </fl-key-value>
+
+          @if (authzService.installing()) {
+            <fl-usage-bar
+              label="Install progress"
+              [percent]="authzService.progress()"
+              [aside]="authzService.progressStep() || 'Working…'"
+              [warnAt]="101"
+              [criticalAt]="101"
+            />
+          }
+
+          @if (authzService.error()) {
+            <fl-alert tone="error" title="Auth Proxy request failed">{{
+              authzService.error()
+            }}</fl-alert>
+          }
+          @if (
+            authzService.install()?.status === 'FAILED' && authzService.install()?.errorMessage
+          ) {
+            <fl-alert tone="error" title="Install failed">{{
+              authzService.install()!.errorMessage
+            }}</fl-alert>
+          }
+        }
+      </div>
+    </fl-panel>
   `,
 })
 export class InfrastructureAuthProxyComponent implements OnInit {
   protected readonly authzService = inject(AuthzInstallService);
   private readonly clusterService = inject(ClusterService);
+  private readonly confirm = inject(ConfirmService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   protected clustersLoading = signal(false);
   protected selectedClusterId = signal('');
 
-  private readonly Status = AuthzInstallResponseDto.StatusEnum;
-
   protected workloadClusters = computed(() => this.clusterService.clusters());
+
+  protected selectedClusterName = computed(() => {
+    const id = this.selectedClusterId();
+    return this.workloadClusters().find((c) => c.id === id)?.name ?? id;
+  });
 
   protected statusLabel = computed(() => {
     const s = this.authzService.install()?.status;
-    if (!s || s === this.Status.Uninstalled) return 'Not installed';
-    if (s === this.Status.Pending || s === this.Status.Installing) return 'Installing...';
-    if (s === this.Status.Running) return 'Active';
-    if (s === this.Status.Failed) return 'Failed';
+    if (!s || s === STATUS.Uninstalled) return 'Not installed';
+    if (s === STATUS.Pending || s === STATUS.Installing) return 'Installing';
+    if (s === STATUS.Running) return 'Active';
+    if (s === STATUS.Failed) return 'Failed';
     return 'Unknown';
   });
 
-  protected statusBadgeClass = computed(() => {
+  protected statusTone = computed<StatusTone>(() => {
     const s = this.authzService.install()?.status;
-    if (s === this.Status.Running) return 'bg-green-100 text-green-700';
-    if (s === this.Status.Failed) return 'bg-red-100 text-red-700';
-    if (s === this.Status.Pending || s === this.Status.Installing)
-      return 'bg-amber-100 text-amber-700';
-    return 'bg-gray-100 text-gray-600';
-  });
-
-  protected statusDotClass = computed(() => {
-    const s = this.authzService.install()?.status;
-    if (s === this.Status.Running) return 'bg-green-500';
-    if (s === this.Status.Failed) return 'bg-red-500';
-    if (s === this.Status.Pending || s === this.Status.Installing) return 'bg-amber-500';
-    return 'bg-gray-400';
+    if (s === STATUS.Running) return 'success';
+    if (s === STATUS.Failed) return 'error';
+    if (s === STATUS.Pending || s === STATUS.Installing) return 'progress';
+    return 'neutral';
   });
 
   protected showInstallButton = computed(() => {
     const s = this.authzService.install()?.status;
-    return !s || s === this.Status.Uninstalled;
+    return !s || s === STATUS.Uninstalled;
   });
 
-  protected showRetryButton = computed(
-    () => this.authzService.install()?.status === this.Status.Failed,
-  );
+  protected showRetryButton = computed(() => this.authzService.install()?.status === STATUS.Failed);
+
   protected showUninstallButton = computed(() => {
     const s = this.authzService.install()?.status;
-    return s === this.Status.Running || s === this.Status.Failed;
+    return s === STATUS.Running || s === STATUS.Failed;
   });
 
-  protected readonly uninstallDialog =
-    viewChild.required<ConfirmationDialogComponent>('uninstallDialog');
+  protected menuItems = computed<MenuAction[]>(() => [
+    {
+      id: 'uninstall',
+      label: 'Uninstall',
+      danger: true,
+      disabled: this.authzService.installing(),
+    },
+  ]);
 
   constructor() {
     effect(() => {
@@ -321,12 +277,20 @@ export class InfrastructureAuthProxyComponent implements OnInit {
     if (id) await this.authzService.installAuthz(id);
   }
 
+  protected async confirmUninstall(): Promise<void> {
+    const ok = await this.confirm.confirm({
+      title: 'Remove Auth Proxy',
+      body: 'Remove flui-authz from this cluster? Internal apps fall back to the legacy external ForwardAuth proxy. No data is lost.',
+      confirmLabel: 'Remove',
+      destructive: true,
+    });
+    if (ok) await this.onUninstall();
+  }
+
   async onUninstall(): Promise<void> {
     const install = this.authzService.install();
     if (!install) return;
-    this.uninstallDialog().setProcessing(true);
     await this.authzService.uninstallAuthz(install.id);
-    this.uninstallDialog().close();
   }
 
   protected formatDate(iso: string): string {

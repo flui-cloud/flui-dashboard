@@ -1,13 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideTriangleAlert } from '@ng-icons/lucide';
 import { STRATEGIES } from '../../model/scaling-group.models';
 import { ExplainComponent } from '../../../shared/components/explain.component';
+import { FlAlert } from '../../../ui/patterns/alert';
 import { GroupChoicesService } from './group-choices.service';
 import { ScalingGroupStore } from './scaling-group.store';
 import { GroupDraft } from './group-draft';
-import { TABLE } from './scaling-tabs-format';
 import { SettingsListEditorComponent } from './settings-list-editor.component';
 import { ShapeSpec } from '../../model/scaling-section.models';
 
@@ -20,48 +18,41 @@ import { ShapeSpec } from '../../model/scaling-section.models';
  * applicable", which is the seam this half was cut along.
  */
 @Component({
-  selector: 'tbody[app-group-catalogue-rows]',
-  standalone: true,
-  imports: [ExplainComponent, FormsModule, NgIcon, SettingsListEditorComponent],
-  providers: [provideIcons({ lucideTriangleAlert })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-group-catalogue-rows',
+  imports: [ExplainComponent, FormsModule, FlAlert, SettingsListEditorComponent],
+  host: { class: 'flex flex-col gap-5' },
   template: `
     @if (d().hasCatalogue()) {
-      <tr [class]="t.row" data-testid="row-regions">
-        <th scope="row" [class]="t.td + ' font-normal'">Where it may add nodes</th>
-        <td [class]="t.td">
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div class="fl-field" data-testid="row-regions">
+          <app-explain
+            [floating]="true"
+            label="Where it may add nodes"
+            labelClass="fl-field__label"
+            testid="regions-why"
+          >
+            More than one region is what opens "cheapest, anywhere", and what lets it find a machine
+            when the cluster's own region is out.
+          </app-explain>
           <app-settings-list-editor
             kind="region"
-            emptyNote="nowhere to add nodes"
-            exhausted="this cluster's network reaches no other region"
+            emptyNote="Nowhere to add nodes"
+            exhausted="This cluster's network reaches no other region"
             [items]="g().regions"
             [choices]="regionChoices()"
             [labels]="labels()"
             (add)="d().addRegion($event)"
             (remove)="d().removeRegion($event)"
           />
-        </td>
-        <td [class]="t.tdMuted">
-          <app-explain
-            [floating]="true"
-            label="Where it may add nodes."
-            labelClass="text-[12px] text-muted-foreground"
-            testid="regions-why"
-          >
-            More than one region is what opens "cheapest, anywhere", and what lets it find a machine
-            when the cluster's own region is out.
-          </app-explain>
-        </td>
-      </tr>
+        </div>
 
-      <tr [class]="t.row" data-testid="row-shapes">
-        <th scope="row" [class]="t.td + ' font-normal'">What it may add</th>
-        <td [class]="t.td">
+        <div class="fl-field" data-testid="row-shapes">
+          <span class="fl-field__label">What it may add</span>
           <app-settings-list-editor
             kind="machine"
             [choices]="machineChoices()"
             [labels]="labels()"
-            emptyNote="nothing to add"
+            emptyNote="Nothing to add"
             [ordered]="true"
             [architectures]="architectures()"
             [items]="g().shapes"
@@ -69,154 +60,139 @@ import { ShapeSpec } from '../../model/scaling-section.models';
             (remove)="d().removeShape($event)"
             (move)="d().moveShape($event)"
           />
-        </td>
-        <td [class]="t.tdMuted">In order of preference: the first is tried first.</td>
-      </tr>
+          <span class="fl-field__hint">In order of preference: the first is tried first.</span>
+        </div>
+      </div>
     } @else {
-      <tr [class]="t.row" data-testid="row-requirement">
-        <th scope="row" [class]="t.td + ' font-normal'">What a machine has to hold</th>
-        <td [class]="t.td">
-          <span class="flex flex-col gap-2">
-            <label class="flex items-center gap-2 text-[12px] text-muted-foreground">
-              <span class="w-14">vCPU</span>
-              <input
-                [class]="t.field + ' w-24 tabular-nums'"
-                [ngModel]="g().requirement?.cpu ?? ''"
-                (ngModelChange)="d().setRequirement('cpu', $event)"
-                data-testid="requirement-cpu"
-              />
-            </label>
-            <label class="flex items-center gap-2 text-[12px] text-muted-foreground">
-              <span class="w-14">Memory</span>
-              <input
-                [class]="t.field + ' w-24 tabular-nums'"
-                [ngModel]="g().requirement?.memory ?? ''"
-                (ngModelChange)="d().setRequirement('memory', $event)"
-                data-testid="requirement-memory"
-              />
-            </label>
-          </span>
-        </td>
-        <td [class]="t.tdMuted">
+      <fieldset class="fl-fieldset" data-testid="row-requirement">
+        <legend>
           <app-explain
             [floating]="true"
-            label="What the alarm asks for."
-            labelClass="text-[12px] text-muted-foreground"
+            label="What a machine has to hold"
+            labelClass="text-fl-body-sm font-semibold"
             testid="requirement-why"
           >
             {{ provider() }} publishes no prices, so the alarm asks for a machine with at least this
             much free and you decide which one.
           </app-explain>
-        </td>
-      </tr>
+        </legend>
+        <div class="grid max-w-md grid-cols-2 gap-3">
+          <div class="fl-field">
+            <label class="fl-field__label" [for]="'requirement-cpu-' + g().id">vCPU</label>
+            <div class="fl-input fl-input--lg">
+              <input
+                class="fl-mono"
+                [id]="'requirement-cpu-' + g().id"
+                [ngModel]="g().requirement?.cpu ?? ''"
+                (ngModelChange)="d().setRequirement('cpu', $event)"
+                data-testid="requirement-cpu"
+              />
+            </div>
+          </div>
+          <div class="fl-field">
+            <label class="fl-field__label" [for]="'requirement-memory-' + g().id">Memory</label>
+            <div class="fl-input fl-input--lg">
+              <input
+                class="fl-mono"
+                [id]="'requirement-memory-' + g().id"
+                [ngModel]="g().requirement?.memory ?? ''"
+                (ngModelChange)="d().setRequirement('memory', $event)"
+                data-testid="requirement-memory"
+              />
+            </div>
+          </div>
+        </div>
+        <span class="fl-field__hint">What the alarm asks for.</span>
+      </fieldset>
     }
 
-    <tr [class]="t.row" data-testid="row-strategy">
-      <th scope="row" [class]="t.td + ' font-normal'">How it chooses</th>
-      <td [class]="t.td">
-        @if (d().hasCatalogue()) {
-          <span class="flex flex-col gap-1" role="radiogroup" aria-label="How it chooses">
-            @for (option of strategies; track option.id) {
-              <button
-                type="button"
-                role="radio"
-                (click)="d().setStrategy(option.id)"
-                class="flex items-center justify-between gap-3 rounded-md border px-2.5 py-1.5 text-left text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                [class]="
-                  g().strategy === option.id
-                    ? 'border-primary bg-primary/[0.06] text-foreground'
-                    : 'border-border text-muted-foreground hover:bg-muted/40'
-                "
-                [attr.aria-checked]="g().strategy === option.id"
-                [attr.data-testid]="'strategy-' + option.id"
-              >
-                <span>{{ option.label }}</span>
-                <span class="text-[11px] text-muted-foreground">{{ option.optimises }}</span>
-              </button>
-            }
-          </span>
-        } @else {
-          <span class="text-foreground" data-testid="strategy-inert">
-            {{ d().chosenStrategy()?.label ?? g().strategy }}
-          </span>
-        }
-      </td>
-      <td [class]="t.tdMuted">
-        @if (d().hasCatalogue()) {
+    <fieldset class="fl-fieldset" data-testid="row-strategy">
+      <legend>How it chooses</legend>
+      @if (d().hasCatalogue()) {
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          @for (option of strategies; track option.id) {
+            <label class="fl-radiocard" [attr.data-testid]="'strategy-' + option.id">
+              <input
+                type="radio"
+                [name]="'strategy-' + g().id"
+                [checked]="g().strategy === option.id"
+                (change)="d().setStrategy(option.id)"
+              />
+              <span class="fl-radiocard__text">
+                <span class="fl-radiocard__title">{{ option.label }}</span>
+                <span class="fl-radiocard__desc">Optimises {{ option.optimises }}</span>
+              </span>
+            </label>
+          }
+        </div>
+        <span class="fl-field__hint">
           Only among machines that already fit. One that is too small is never a candidate, whatever
           it costs.
-          @if (d().chosenStrategy(); as picked) {
-            <span class="mt-1 block text-foreground" data-testid="strategy-when">
-              {{ picked.when }}
-            </span>
-          }
-        } @else {
+        </span>
+      } @else {
+        <span class="text-fl-body-sm font-medium" data-testid="strategy-inert">
+          {{ d().chosenStrategy()?.label ?? g().strategy }}
+        </span>
+        <span class="fl-field__hint">
           With no catalogue there is nothing to choose between: every node here is whatever was
           attached.
-          @if (d().chosenStrategy(); as picked) {
-            <span class="mt-1 block text-foreground" data-testid="strategy-when">
-              {{ picked.when }}
-            </span>
-          }
-        }
-      </td>
-    </tr>
+        </span>
+      }
+      @if (d().chosenStrategy(); as picked) {
+        <span class="text-fl-body-sm" data-testid="strategy-when">{{ picked.when }}</span>
+      }
+    </fieldset>
 
-    <tr [class]="capWarning() ? t.rowWarn : t.row" data-testid="row-cost">
-      <th scope="row" [class]="t.td + ' font-normal'">
+    <div class="fl-field" data-testid="row-cost">
+      <app-explain
+        [floating]="true"
+        label="Spending ceiling"
+        labelClass="fl-field__label"
+        testid="cap-why"
+      >
+        The safety net under the node limits. Before every node is added the fleet's whole monthly
+        list price is weighed against it, not one machine: what is already running counts. Required
+        to add nodes automatically; set it above the worst case below and it only ever stops a
+        runaway.
+      </app-explain>
+      @if (d().hasCatalogue()) {
+        <div class="fl-input fl-input--lg max-w-xs">
+          <span class="text-fl-body-sm">€</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            class="fl-mono"
+            placeholder="None"
+            [ngModel]="g().limits.maxMonthlyCost"
+            (ngModelChange)="d().setCost($event)"
+            aria-label="Spending ceiling per month"
+            data-testid="max-monthly"
+          />
+          <span class="text-fl-caption">per month</span>
+        </div>
+        @if (!capWarning()) {
+          <span class="fl-field__hint"
+            >Safety net: never passed, whatever the node limits allow.</span
+          >
+        }
+      } @else {
+        <span class="text-fl-ink-muted" data-testid="cost-not-applicable">—</span>
         <app-explain
           [floating]="true"
-          label="Spending ceiling"
-          labelClass="text-[13px] text-foreground"
-          testid="cap-why"
+          label="Nothing to cap"
+          labelClass="text-fl-caption text-fl-ink-muted"
+          testid="cost-why"
         >
-          The safety net under the node limits. Before every node is added the fleet's whole monthly
-          list price is weighed against it, not one machine: what is already running counts.
-          Required to add nodes automatically; set it above the worst case below and it only ever
-          stops a runaway.
+          Flui never sees a bill for your own machines.
         </app-explain>
-      </th>
-      <td [class]="t.td">
-        @if (d().hasCatalogue()) {
-          <span class="inline-flex items-center gap-2">
-            <span class="text-sm text-muted-foreground">€</span>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              [class]="t.field + ' w-28 tabular-nums'"
-              placeholder="none"
-              [ngModel]="g().limits.maxMonthlyCost"
-              (ngModelChange)="d().setCost($event)"
-              aria-label="Spending ceiling per month"
-              data-testid="max-monthly"
-            />
-            <span class="text-[12px] text-muted-foreground">per month</span>
-          </span>
-        } @else {
-          <span class="text-muted-foreground" data-testid="cost-not-applicable">—</span>
-        }
-      </td>
-      <td [class]="t.tdMuted">
-        @if (capWarning(); as warning) {
-          <span class="flex items-start gap-2 text-destructive" data-testid="cap-warning">
-            <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{{ warning }}</span>
-          </span>
-        } @else if (d().hasCatalogue()) {
-          Safety net: never passed, whatever the node limits allow.
-        } @else {
-          <app-explain
-            [floating]="true"
-            label="Nothing to cap."
-            labelClass="text-[12px] text-muted-foreground"
-            testid="cost-why"
-          >
-            Flui never sees a bill for your own machines.
-          </app-explain>
-        }
-      </td>
-    </tr>
+      }
+      @if (capWarning(); as warning) {
+        <fl-alert tone="warning" title="Nothing can be added" data-testid="cap-warning">
+          {{ warning }}
+        </fl-alert>
+      }
+    </div>
   `,
 })
 export class GroupCatalogueRowsComponent {
@@ -301,7 +277,6 @@ export class GroupCatalogueRowsComponent {
 
   readonly draft = input.required<GroupDraft>();
 
-  protected readonly t = TABLE;
   protected readonly strategies = STRATEGIES;
 
   protected readonly d = this.draft;

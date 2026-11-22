@@ -1,533 +1,159 @@
-/**
- * VNet Details Component
- *
- * Displays detailed information about a Virtual Network including subnets,
- * routes, and attached servers. Provides subnet management capabilities.
- */
-
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  signal,
-  computed,
-  inject,
-  effect,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideRefreshCw,
-  lucidePlus,
-  lucideTrash2,
-  lucideNetwork,
-  lucideServer,
-  lucideTag,
-  lucideActivity,
-  lucideMapPin,
-  lucideInfo,
-  lucideX,
-} from '@ng-icons/lucide';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw } from '@ng-icons/lucide';
 
 import { VNetService } from '../../service/vnet.service';
-import { SubnetInfo, VNetStatus, getAllAttachedServerIds } from '../../model/vnet.models';
-import { ServerSelectorComponent } from '../../../shared/components/server-selector/server-selector.component';
+import {
+  AddSubnetConfiguration,
+  SubnetInfo,
+  getAllAttachedServerIds,
+} from '../../model/vnet.models';
 import { VirtualInstancesService } from '../../../core/api/api/virtualInstances.service';
 import { InstanceWithLabels } from '../../model/instance.models';
-import { InstanceStatusBadgeComponent } from '../compute/instance-status-badge.component';
-import { firstValueFrom } from 'rxjs';
 import { ProviderWizardService } from '../../../shared/services/provider-wizard.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import {
   VNetDetailSurfaceInput,
   VNetDetailSurfaceRevision,
   buildVNetDetailSurface,
   presentedContent,
 } from './vnet-details-surface';
+import { vnetProviderLabel, vnetStatus } from './vnet-status';
+import { AttachedServerRow, VNetSubnetsPanel } from './vnet-subnets-panel';
+import { VNetAddSubnetDialog } from './vnet-add-subnet-dialog';
 
 @Component({
   selector: 'vnet-details',
-  standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    NgIcon,
-    ServerSelectorComponent,
-    InstanceStatusBadgeComponent,
+    DatePipe,
+    MaskIdPipe,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlCopyId,
+    FlKeyValue,
+    FlKvItem,
+    FlLoadingState,
+    FlActionsMenu,
+    FlStatus,
+    FlTag,
+    FlButton,
+    FlIcon,
+    VNetSubnetsPanel,
+    VNetAddSubnetDialog,
   ],
-  providers: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideRefreshCw,
-      lucidePlus,
-      lucideTrash2,
-      lucideNetwork,
-      lucideServer,
-      lucideTag,
-      lucideActivity,
-      lucideMapPin,
-      lucideInfo,
-      lucideX,
-    }),
-  ],
+  providers: [provideIcons({ lucideRefreshCw })],
   template: `
-    <div class="space-y-6 p-6">
-      <!-- Header with Back Button -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <button
-            (click)="goBack()"
-            class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-            Back
-          </button>
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900">
-              @if (vnet()) {
-                {{ vnet()!.name }}
-              } @else {
-                VNet Details
-              }
-            </h1>
-            <p class="mt-2 text-sm text-gray-600">Virtual Network details and subnet management</p>
-          </div>
-        </div>
-        <div class="flex gap-3">
-          <button
-            (click)="syncVNet()"
-            [disabled]="isLoading()"
-            class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
-            Sync
-          </button>
-          <button
-            (click)="showDeleteConfirmation()"
-            [disabled]="isLoading()"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <ng-icon name="lucideTrash2" class="h-4 w-4" />
-            Delete VNet
-          </button>
-        </div>
-      </div>
-
-      <!-- Loading State -->
-      @if (isLoading() && !vnet()) {
-        <div
-          class="flex items-center justify-center py-12 bg-white border border-gray-200 rounded-lg"
-        >
-          <div class="text-center">
-            <ng-icon name="lucideRefreshCw" class="h-8 w-8 animate-spin mx-auto text-blue-600" />
-            <p class="mt-2 text-sm text-gray-600">Loading VNet details...</p>
-          </div>
-        </div>
+    <div class="fl-page">
+      @if (vnet(); as v) {
+        @let st = status();
+        <fl-page-header [title]="v.name" [breadcrumb]="breadcrumb()">
+          <fl-status headerStatus [tone]="st.tone" [label]="st.label" />
+          <fl-copy-id headerMeta [value]="v.id" [display]="v.id | maskId" label="network ID" />
+          <span headerMeta>{{ providerLabel() }}</span>
+          <span headerMeta class="fl-mono">{{ v.ipRange }}</span>
+          <ng-container headerActions>
+            <button flButton type="button" [disabled]="isLoading()" (click)="syncVNet()">
+              <fl-icon name="lucideRefreshCw" />
+              Sync
+            </button>
+            <fl-actions-menu
+              label="Actions"
+              [items]="moreActions()"
+              data-testid="vnet-more-actions"
+              (action)="showDeleteConfirmation()"
+            />
+          </ng-container>
+        </fl-page-header>
+      } @else {
+        <fl-page-header title="Network" [breadcrumb]="breadcrumb()" />
       }
 
-      <!-- Error Message -->
       @if (errorMessage()) {
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div class="text-sm text-red-800">
-            {{ errorMessage() }}
-          </div>
-        </div>
+        <fl-alert tone="error" title="Could not complete the request">{{
+          errorMessage()
+        }}</fl-alert>
       }
 
-      <!-- VNet Details -->
-      @if (vnet()) {
-        <!-- Overview Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="bg-white border border-gray-200 rounded-lg p-4">
-            <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
-              <ng-icon name="lucideActivity" class="h-4 w-4" />
-              Status
-            </div>
-            <span
-              class="inline-block px-2.5 py-1 rounded-full text-sm font-medium"
-              [ngClass]="getStatusBadgeClass(vnet()!.status)"
-            >
-              {{ vnet()!.status }}
-            </span>
-          </div>
+      @if (isLoading() && !vnet()) {
+        <fl-panel><fl-loading-state [rows]="6" /></fl-panel>
+      }
 
-          <div class="bg-white border border-gray-200 rounded-lg p-4">
-            <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
-              <ng-icon name="lucideMapPin" class="h-4 w-4" />
-              Provider
-            </div>
-            <div class="text-xl font-bold text-gray-900 capitalize">
-              {{ vnet()!.provider }}
-            </div>
-          </div>
-
-          <div class="bg-white border border-gray-200 rounded-lg p-4">
-            <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
-              <ng-icon name="lucideNetwork" class="h-4 w-4" />
-              Subnets
-            </div>
-            <div class="text-xl font-bold text-gray-900">
-              {{ vnet()!.subnets.length }}
-            </div>
-          </div>
-
-          <div class="bg-white border border-gray-200 rounded-lg p-4">
-            <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
-              <ng-icon name="lucideServer" class="h-4 w-4" />
-              Attached Servers
-            </div>
-            <div class="text-xl font-bold text-gray-900">
-              {{ getAllAttachedServers() }}
-            </div>
-          </div>
-        </div>
-
-        <!-- VNet Information -->
-        <div class="bg-white border border-gray-200 rounded-lg p-6">
-          <div class="flex items-center gap-2 mb-4">
-            <ng-icon name="lucideInfo" class="h-5 w-5 text-gray-500" />
-            <h2 class="text-lg font-semibold text-gray-900">Network Information</h2>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div class="text-sm text-gray-500 mb-1">VNet ID</div>
-              <div class="text-sm font-mono text-gray-900">
-                {{ vnet()!.id }}
-              </div>
-            </div>
-
-            <div>
-              <div class="text-sm text-gray-500 mb-1">Provider Resource ID</div>
-              <div class="text-sm font-mono text-gray-900">
-                {{ vnet()!.providerResourceId }}
-              </div>
-            </div>
-
-            <div>
-              <div class="text-sm text-gray-500 mb-1">IP Range</div>
-              <div class="text-sm font-mono text-gray-900">
-                {{ vnet()!.ipRange }}
-              </div>
-            </div>
-
-            <div>
-              <div class="text-sm text-gray-500 mb-1">Created At</div>
-              <div class="text-sm text-gray-900">
-                {{ vnet()!.createdAt | date: 'medium' }}
-              </div>
-            </div>
-          </div>
-
-          @if (vnet()!.labels.length > 0) {
-            <div class="mt-6">
-              <div class="flex items-center gap-2 mb-3">
-                <ng-icon name="lucideTag" class="h-4 w-4 text-gray-500" />
-                <div class="text-sm font-medium text-gray-700">Labels</div>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                @for (label of vnet()!.labels; track label.key) {
-                  <span class="px-3 py-1.5 text-sm rounded-md bg-gray-100 text-gray-700">
-                    <span class="font-medium">{{ label.key }}:</span> {{ label.value }}
-                  </span>
+      @if (vnet(); as v) {
+        <div class="fl-stack">
+          <fl-panel title="Details">
+            <fl-key-value>
+              <fl-kv-item key="Network ID">
+                <fl-copy-id [value]="v.id" label="network ID" />
+              </fl-kv-item>
+              <fl-kv-item key="Provider resource ID">
+                @if (v.providerResourceId) {
+                  <fl-copy-id [value]="v.providerResourceId" label="provider resource ID" />
+                } @else {
+                  <span class="fl-muted">—</span>
                 }
-              </div>
-            </div>
-          }
-        </div>
-
-        <!-- Subnets Section -->
-        <div class="bg-white border border-gray-200 rounded-lg p-6">
-          <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-2">
-              <ng-icon name="lucideNetwork" class="h-5 w-5 text-gray-500" />
-              <h2 class="text-lg font-semibold text-gray-900">Subnets</h2>
-            </div>
-            @if (supportsSubnets()) {
-              <button
-                (click)="showAddSubnetForm()"
-                [disabled]="isLoading()"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ng-icon name="lucidePlus" class="h-4 w-4" />
-                Add Subnet
-              </button>
-            }
-          </div>
-
-          @if (vnet()!.subnets.length === 0) {
-            <div class="text-center py-8">
-              <ng-icon name="lucideNetwork" class="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p class="text-sm text-gray-600">No subnets configured yet</p>
-            </div>
-          } @else {
-            <div class="space-y-3">
-              @for (subnet of vnet()!.subnets; track subnet.id) {
-                <div
-                  class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                >
-                  <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                      <div class="flex items-center gap-3 mb-2">
-                        <span class="text-base font-mono font-semibold text-gray-900">
-                          {{ subnet.ipRange }}
-                        </span>
-                        <span
-                          class="px-2 py-0.5 text-xs rounded-fl-sm bg-fl-surface text-gray-800 border"
-                        >
-                          {{ subnet.attachedServerIds.length }} server(s)
-                        </span>
-                      </div>
-
-                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-                        <div>
-                          <div class="text-xs text-gray-500">Network Zone</div>
-                          <div class="text-sm text-gray-900 mt-1">
-                            {{ subnet.networkZone }}
-                          </div>
-                        </div>
-
-                        @if (subnet.gateway) {
-                          <div>
-                            <div class="text-xs text-gray-500">Gateway</div>
-                            <div class="text-sm font-mono text-gray-900 mt-1">
-                              {{ subnet.gateway }}
-                            </div>
-                          </div>
-                        }
-
-                        @if (subnet.providerSubnetId) {
-                          <div>
-                            <div class="text-xs text-gray-500">Provider Subnet ID</div>
-                            <div class="text-sm font-mono text-gray-900 mt-1">
-                              {{ subnet.providerSubnetId }}
-                            </div>
-                          </div>
-                        }
-                      </div>
-
-                      <!-- Attached Servers Section -->
-                      @if (subnet.attachedServerIds.length > 0) {
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                          <div class="text-xs font-medium text-gray-700 mb-2">Attached Servers</div>
-                          <div class="space-y-2">
-                            @for (serverId of subnet.attachedServerIds; track serverId) {
-                              <div
-                                class="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-                              >
-                                <div class="flex items-center gap-2">
-                                  <ng-icon name="lucideServer" size="16" class="text-gray-500" />
-                                  <span class="text-sm font-mono text-gray-900">
-                                    {{ getServerName(serverId) || serverId }}
-                                  </span>
-                                  @if (getServer(serverId)) {
-                                    <app-instance-status-badge
-                                      [status]="getServer(serverId)!.status || 'unknown'"
-                                    />
-                                  }
-                                </div>
-                                <button
-                                  (click)="detachServer(subnet, serverId)"
-                                  [disabled]="isLoading()"
-                                  class="p-1 text-red-600 hover:bg-red-50 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                  title="Detach server"
-                                >
-                                  <ng-icon name="lucideX" size="16" />
-                                </button>
-                              </div>
-                            }
-                          </div>
-                        </div>
-                      }
-
-                      <!-- Attach Server Form -->
-                      @if (showAttachServerForm() === subnet.id) {
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                          <div class="flex items-center justify-between mb-3">
-                            <h4 class="text-sm font-medium text-gray-900">
-                              Attach Server to Subnet
-                            </h4>
-                            <button
-                              (click)="cancelAttachServer()"
-                              class="text-sm text-gray-600 hover:text-gray-900"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                          <app-server-selector
-                            [provider]="vnet()!.provider"
-                            [excludeServerIds]="subnet.attachedServerIds"
-                            [multiSelect]="false"
-                            (serverSelected)="onServerSelected(subnet, $event)"
-                          />
-                        </div>
-                      } @else {
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                          <button
-                            (click)="showAttachServerToSubnet(subnet)"
-                            [disabled]="isLoading()"
-                            class="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <ng-icon name="lucidePlus" size="16" />
-                            Attach Server
-                          </button>
-                        </div>
-                      }
-                    </div>
-
-                    <button
-                      (click)="confirmDeleteSubnet(subnet)"
-                      [disabled]="isLoading()"
-                      class="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Delete subnet"
-                    >
-                      <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </div>
-
-        <!-- Add Subnet Modal -->
-        @if (showSubnetForm() && supportsSubnets()) {
-          <div
-            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            (click)="cancelAddSubnet()"
-          >
-            <div
-              class="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-              (click)="$event.stopPropagation()"
-            >
-              <div class="flex items-center justify-between mb-5">
-                <h3 class="text-lg font-semibold text-gray-900">Add Subnet</h3>
-                <button
-                  (click)="cancelAddSubnet()"
-                  class="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-                >
-                  <ng-icon name="lucideX" class="h-5 w-5" />
-                </button>
-              </div>
-
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1"> Region </label>
-                  @if (vnetTopologyZones().length > 0) {
-                    <select
-                      [(ngModel)]="newSubnetZone"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      @for (zone of vnetTopologyZones(); track zone.id) {
-                        <option [value]="zone.id">{{ zone.displayName || zone.id }}</option>
-                      }
-                    </select>
-                  } @else {
-                    <input
-                      type="text"
-                      [(ngModel)]="newSubnetZone"
-                      placeholder="e.g., eu-central"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  }
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1"> IP Range </label>
-                  <input
-                    type="text"
-                    [ngModel]="newSubnetIpRange()"
-                    (ngModelChange)="newSubnetIpRange.set($event)"
-                    [placeholder]="'e.g., 10.0.1.0/' + suggestedSubnetPrefix()"
-                    [class.border-red-500]="newSubnetIpRange() && !isSubnetCidrValid()"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <p class="text-xs text-gray-500 mt-1">
-                    {{ subnetCidrHint() }} —
-                    <button
-                      type="button"
-                      (click)="newSubnetIpRange.set('10.0.1.0/' + suggestedSubnetPrefix())"
-                      class="text-blue-600 hover:text-blue-700 underline"
-                    >
-                      Use /{{ suggestedSubnetPrefix() }}
-                    </button>
-                    @if (subnetIpAddressLabel()) {
-                      <span class="ml-2 text-gray-400">· {{ subnetIpAddressLabel() }}</span>
+              </fl-kv-item>
+              <fl-kv-item key="Provider">{{ providerLabel() }}</fl-kv-item>
+              <fl-kv-item key="IP range" [mono]="true">{{ v.ipRange }}</fl-kv-item>
+              <fl-kv-item key="Subnets">{{ v.subnets.length }}</fl-kv-item>
+              <fl-kv-item key="Attached servers">{{ getAllAttachedServers() }}</fl-kv-item>
+              <fl-kv-item key="Created">{{ v.createdAt | date: 'medium' }}</fl-kv-item>
+              @if (v.labels.length > 0) {
+                <fl-kv-item key="Labels">
+                  <span class="fl-row">
+                    @for (label of v.labels; track label.key) {
+                      <fl-tag>{{ label.key }}: {{ label.value }}</fl-tag>
                     }
-                  </p>
-                  @if (subnetCidrError()) {
-                    <p class="text-xs text-red-600 mt-1">
-                      {{ subnetCidrError() }}
-                    </p>
-                  }
-                </div>
-              </div>
+                  </span>
+                </fl-kv-item>
+              }
+            </fl-key-value>
+          </fl-panel>
 
-              <div class="flex gap-3 justify-end mt-6">
-                <button
-                  (click)="cancelAddSubnet()"
-                  [disabled]="isLoading()"
-                  class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  (click)="addSubnet()"
-                  [disabled]="isLoading() || !newSubnetZone"
-                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  @if (isLoading()) {
-                    Adding…
-                  } @else {
-                    Add Subnet
-                  }
-                </button>
-              </div>
-            </div>
-          </div>
-        }
+          <app-vnet-subnets-panel
+            [vnet]="v"
+            [servers]="serversCache()"
+            [busy]="isLoading()"
+            [supportsSubnets]="supportsSubnets()"
+            [attachingSubnetId]="showAttachServerForm()"
+            (addSubnet)="showAddSubnetForm()"
+            (deleteSubnet)="confirmDeleteSubnet($event)"
+            (attach)="showAttachServerToSubnet($event)"
+            (cancelAttach)="cancelAttachServer()"
+            (serverSelected)="onServerSelected($event.subnet, $event.server)"
+            (detach)="onDetach($event)"
+          />
+        </div>
 
-        <!-- Delete Confirmation Modal (Simple) -->
-        @if (showDeleteModal()) {
-          <div
-            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            (click)="cancelDelete()"
-          >
-            <div
-              class="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-              (click)="$event.stopPropagation()"
-            >
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Confirm Deletion</h3>
-              <p class="text-sm text-gray-600 mb-6">
-                {{ deleteConfirmMessage() }}
-              </p>
-              <div class="flex gap-3 justify-end">
-                <button
-                  (click)="cancelDelete()"
-                  class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  (click)="confirmDelete()"
-                  [disabled]="isLoading()"
-                  class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
+        @if (showSubnetForm() && supportsSubnets()) {
+          <app-vnet-add-subnet-dialog
+            [zones]="vnetTopologyZones()"
+            [constraints]="subnetIpConstraints()"
+            [busy]="isLoading()"
+            (cancelled)="cancelAddSubnet()"
+            (submitted)="addSubnet($event)"
+          />
         }
       }
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [],
 })
 export class VNetDetailsComponent implements OnInit, OnDestroy {
   private readonly vnetService = inject(VNetService);
@@ -536,6 +162,7 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
   private readonly instancesApi = inject(VirtualInstancesService);
   private readonly providerWizardService = inject(ProviderWizardService);
   private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly confirmService = inject(ConfirmService);
   private readonly surfaceRevision = new VNetDetailSurfaceRevision();
 
   readonly vnet = this.vnetService.selectedVNet;
@@ -556,9 +183,27 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
     });
   });
 
+  protected readonly status = computed(() => vnetStatus(this.vnet()?.status ?? ''));
+
+  protected readonly providerLabel = computed(() => {
+    const v = this.vnet();
+    if (!v) return '';
+    return vnetProviderLabel(
+      v,
+      (id) => this.providerWizardService.getProviderDefinition(id)?.displayName,
+    );
+  });
+
+  protected readonly breadcrumb = computed<Crumb[]>(() => [
+    { label: 'Networks', link: '/infrastructure/vnet' },
+    { label: this.vnet()?.name ?? 'Network' },
+  ]);
+
+  protected readonly moreActions = computed<MenuAction[]>(() => [
+    { id: 'delete', label: 'Delete network', danger: true, disabled: this.isLoading() },
+  ]);
+
   constructor() {
-    // Publish this page's own Semantic Surface snapshot whenever it changes;
-    // ngOnDestroy clears it so the snapshot never outlives this page.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -582,95 +227,31 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
 
   readonly subnetIpConstraints = computed(() => this.vnetTopology()?.subnetIpRange ?? null);
 
-  readonly suggestedSubnetPrefix = computed(() => {
-    const c = this.subnetIpConstraints();
-    if (!c) return 28;
-    if (28 >= c.minPrefix && 28 <= c.maxPrefix) return 28;
-    return Math.round((c.minPrefix + c.maxPrefix) / 2);
-  });
-
-  readonly subnetCidrHint = computed(() => {
-    const c = this.subnetIpConstraints();
-    if (!c) return 'Leave empty for auto /28 allocation';
-    return `Allowed: /${c.minPrefix}–/${c.maxPrefix}`;
-  });
-
-  readonly subnetIpAddressLabel = computed(() => {
-    const val = this.newSubnetIpRange();
-    const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/(\d{1,2})$/;
-    if (!val || !cidrRegex.test(val)) return null;
-    const [ipPart, prefixStr] = val.split('/');
-    const prefix = Number.parseInt(prefixStr, 10);
-    if (prefix < 0 || prefix > 32) return null;
-    const count = Math.pow(2, 32 - prefix);
-    const parts = ipPart.split('.').map(Number);
-    const base = (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3];
-    const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
-    const first = (base & mask) >>> 0;
-    const last = (first | (~mask >>> 0)) >>> 0;
-    const toIp = (n: number) =>
-      `${(n >>> 24) & 0xff}.${(n >>> 16) & 0xff}.${(n >>> 8) & 0xff}.${n & 0xff}`;
-    const countLabel =
-      count >= 1_000_000 ? `${(count / 1_000_000).toFixed(1)}M` : count.toLocaleString();
-    return `${countLabel} addresses · ${toIp(first)}–${toIp(last)}`;
-  });
-
-  readonly isSubnetCidrValid = computed(() => {
-    const val = this.newSubnetIpRange();
-    if (!val) return true; // optional
-    const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/(\d{1,2})$/;
-    if (!cidrRegex.test(val)) return false;
-    const prefix = Number.parseInt(val.split('/')[1], 10);
-    const c = this.subnetIpConstraints();
-    if (c && (prefix < c.minPrefix || prefix > c.maxPrefix)) return false;
-    return true;
-  });
-
-  readonly subnetCidrError = computed(() => {
-    const val = this.newSubnetIpRange();
-    if (!val) return '';
-    const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/(\d{1,2})$/;
-    if (!cidrRegex.test(val)) return 'Enter a valid CIDR (e.g., 10.0.1.0/28)';
-    const prefix = Number.parseInt(val.split('/')[1], 10);
-    const c = this.subnetIpConstraints();
-    if (c && (prefix < c.minPrefix || prefix > c.maxPrefix)) {
-      return `Prefix must be /${c.minPrefix}–/${c.maxPrefix} for this provider`;
-    }
-    return '';
-  });
-
-  // Local state for forms and modals
   showSubnetForm = signal(false);
   showDeleteModal = signal(false);
   deleteTarget = signal<'vnet' | 'subnet'>('vnet');
   deleteTargetSubnet = signal<SubnetInfo | null>(null);
-  showAttachServerForm = signal<string | null>(null); // subnet ID
+  showAttachServerForm = signal<string | null>(null);
   serversCache = signal<Map<string, InstanceWithLabels>>(new Map());
 
-  // Subnet form fields
-  newSubnetZone = '';
-  newSubnetIpRange = signal<string>('');
-
   deleteConfirmMessage = computed(() => {
+    const detached = (n: number) => {
+      if (n <= 0) return '';
+      const noun = n === 1 ? 'server' : 'servers';
+      return ` ${n} attached ${noun} will be detached.`;
+    };
     if (this.deleteTarget() === 'vnet') {
       const vnet = this.vnet();
       if (!vnet) return '';
-      const totalServers = getAllAttachedServerIds(vnet).length;
-      return `Are you sure you want to delete VNet "${vnet.name}"? This action cannot be undone. ${
-        totalServers > 0
-          ? `\n\nWarning: ${totalServers} server(s) are currently attached and will be detached.`
-          : ''
-      }`;
-    } else {
-      const subnet = this.deleteTargetSubnet();
-      if (!subnet) return '';
-      const serverCount = subnet.attachedServerIds.length;
-      return `Are you sure you want to delete subnet ${subnet.ipRange}? This action cannot be undone.${
-        serverCount > 0
-          ? `\n\nWarning: ${serverCount} server(s) are currently attached and will be detached.`
-          : ''
-      }`;
+      return `This deletes ${vnet.name} at the provider. It cannot be undone.${detached(
+        getAllAttachedServerIds(vnet).length,
+      )}`;
     }
+    const subnet = this.deleteTargetSubnet();
+    if (!subnet) return '';
+    return `This deletes subnet ${subnet.ipRange}. It cannot be undone.${detached(
+      subnet.attachedServerIds.length,
+    )}`;
   });
 
   ngOnInit() {
@@ -699,7 +280,6 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
       const allServerIds = getAllAttachedServerIds(vnet);
       if (allServerIds.length === 0) return;
 
-      // Load all servers for this provider
       const response = await firstValueFrom(
         this.instancesApi.instancesControllerFindAll(
           undefined,
@@ -737,50 +317,49 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/infrastructure/vnet']);
   }
 
-  // Subnet management
   showAddSubnetForm() {
     this.showSubnetForm.set(true);
-    this.resetSubnetForm();
   }
 
   cancelAddSubnet() {
     this.showSubnetForm.set(false);
-    this.resetSubnetForm();
   }
 
-  resetSubnetForm() {
-    const zones = this.vnetTopologyZones();
-    this.newSubnetZone = zones.length > 0 ? zones[0].id : '';
-    this.newSubnetIpRange.set('');
-  }
-
-  async addSubnet() {
+  async addSubnet(config: AddSubnetConfiguration) {
     const vnet = this.vnet();
-    if (!vnet || !this.newSubnetZone) return;
+    if (!vnet || !config.networkZone) return;
 
     try {
-      await this.vnetService.addSubnet(vnet.id, {
-        networkZone: this.newSubnetZone,
-        ipRange: this.newSubnetIpRange() || undefined,
-      });
+      await this.vnetService.addSubnet(vnet.id, config);
 
       this.showSubnetForm.set(false);
-      this.resetSubnetForm();
     } catch (error) {
       console.error('Failed to add subnet:', error);
     }
   }
 
-  confirmDeleteSubnet(subnet: SubnetInfo) {
+  async confirmDeleteSubnet(subnet: SubnetInfo) {
     this.deleteTarget.set('subnet');
     this.deleteTargetSubnet.set(subnet);
-    this.showDeleteModal.set(true);
+    await this.askDelete(`Delete subnet ${subnet.ipRange}`, 'Delete subnet');
   }
 
-  showDeleteConfirmation() {
+  async showDeleteConfirmation() {
     this.deleteTarget.set('vnet');
     this.deleteTargetSubnet.set(null);
+    await this.askDelete(`Delete ${this.vnet()?.name ?? 'network'}`, 'Delete network');
+  }
+
+  private async askDelete(title: string, confirmLabel: string) {
     this.showDeleteModal.set(true);
+    const confirmed = await this.confirmService.confirm({
+      title,
+      body: this.deleteConfirmMessage(),
+      confirmLabel,
+      destructive: true,
+    });
+    if (confirmed) await this.confirmDelete();
+    else this.cancelDelete();
   }
 
   cancelDelete() {
@@ -826,8 +405,6 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Server management methods
-
   showAttachServerToSubnet(subnet: SubnetInfo) {
     this.showAttachServerForm.set(subnet.id);
   }
@@ -844,10 +421,8 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
         serverId: server.id,
       });
 
-      // Refresh servers cache
       await this.loadServers();
 
-      // Hide the form
       this.showAttachServerForm.set(null);
     } catch (error) {
       console.error('Failed to attach server:', error);
@@ -860,11 +435,14 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
         serverId,
       });
 
-      // Refresh servers cache
       await this.loadServers();
     } catch (error) {
       console.error('Failed to detach server:', error);
     }
+  }
+
+  onDetach(row: AttachedServerRow) {
+    void this.detachServer(row.subnet, row.serverId);
   }
 
   getServer(serverId: string): InstanceWithLabels | null {
@@ -879,22 +457,5 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
   getAllAttachedServers(): number {
     const vnet = this.vnet();
     return vnet ? getAllAttachedServerIds(vnet).length : 0;
-  }
-
-  getStatusBadgeClass(status: VNetStatus): string {
-    switch (status) {
-      case VNetStatus.ACTIVE:
-        return 'bg-green-100 text-green-800';
-      case VNetStatus.PENDING:
-        return 'bg-yellow-100 text-yellow-800';
-      case VNetStatus.FAILED:
-        return 'bg-red-100 text-red-800';
-      case VNetStatus.DELETING:
-        return 'bg-orange-100 text-orange-800';
-      case VNetStatus.DELETED:
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
   }
 }

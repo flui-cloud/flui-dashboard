@@ -1,0 +1,284 @@
+<div class="flex flex-col gap-1">
+  <h3 class="m-0 text-fl-body-sm font-semibold">
+    Private network{{ required() ? '' : ' (optional)' }}
+  </h3>
+  <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+    {{ description() || 'Attach every cluster node to a private network.' }}
+  </p>
+</div>
+
+@if (showCreateForm()) {
+  <fl-panel [title]="'New network on ' + providerName()">
+    <button
+      panelActions
+      flButton="ghost"
+      size="sm"
+      type="button"
+      [iconOnly]="true"
+      aria-label="Close"
+      (click)="closeCreateForm()"
+    >
+      <fl-icon name="lucideX" />
+    </button>
+    <div class="flex flex-col gap-4">
+      @if (createError()) {
+        <fl-alert tone="error" title="Could not create the network">{{ createError() }}</fl-alert>
+      }
+
+      <fl-field label="Name" [for]="uid + '-name'">
+        <div class="fl-input fl-input--lg">
+          <input
+            [id]="uid + '-name'"
+            type="text"
+            autocomplete="off"
+            placeholder="hetzner-vnet"
+            [(ngModel)]="newVnetName"
+          />
+        </div>
+      </fl-field>
+
+      <fl-field label="IP range" [for]="uid + '-range'" [error]="ipRangeError()">
+        <div class="fl-input fl-input--lg fl-mono">
+          <input
+            [id]="uid + '-range'"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            [placeholder]="'10.0.0.0/' + suggestedVnetPrefix()"
+            [(ngModel)]="newIpRange"
+          />
+        </div>
+        <span class="fl-field__hint">
+          {{ vnetCidrHint() }}.
+          <button
+            type="button"
+            class="fl-link"
+            (click)="newIpRange = '10.0.0.0/' + suggestedVnetPrefix()"
+          >
+            Use /{{ suggestedVnetPrefix() }}
+          </button>
+          @if (newIpRange && isValidVnetCidr() && cidrOccupied(newIpRange)) {
+            ·
+            <button type="button" class="fl-link" (click)="useFreeVnetCidr()">
+              Use a free range
+            </button>
+          }
+        </span>
+      </fl-field>
+
+      @if (regionForNew()) {
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="vnet-region-for-new">
+          Created in {{ regionForNew() }}, where this cluster runs: a network here is regional.
+        </p>
+      }
+
+      @if (vnetZones().length > 0) {
+        <fl-field label="Network zone" [for]="uid + '-zone'">
+          <span class="fl-select-wrap">
+            <select [id]="uid + '-zone'" class="fl-select" [(ngModel)]="newSubnetZone">
+              @for (zone of vnetZones(); track zone.id) {
+                <option [value]="zone.id" [disabled]="!zoneServesRegion(zone)">
+                  {{ zone.displayName }}
+                </option>
+              }
+            </select>
+          </span>
+        </fl-field>
+
+        @if (supportsSubnets()) {
+          <label class="fl-check">
+            <input type="checkbox" [(ngModel)]="newCreateSubnet" />
+            <span>Create a first subnet in this zone</span>
+          </label>
+          @if (newCreateSubnet) {
+            <fl-field
+              label="Subnet IP range"
+              [for]="uid + '-subnet'"
+              hint="Within the network range. This provider needs one."
+              [error]="
+                newSubnetIpRange && !isValidSubnetCidr()
+                  ? 'Enter a valid CIDR (e.g., 10.0.1.0/24)'
+                  : null
+              "
+            >
+              <div class="fl-input fl-input--lg fl-mono">
+                <input
+                  [id]="uid + '-subnet'"
+                  type="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="10.0.0.0/24"
+                  [(ngModel)]="newSubnetIpRange"
+                />
+              </div>
+            </fl-field>
+          }
+        }
+      }
+
+      <div class="flex justify-end gap-2">
+        <button
+          flButton="ghost"
+          type="button"
+          [disabled]="isCreating()"
+          (click)="closeCreateForm()"
+        >
+          Cancel
+        </button>
+        <button
+          flButton="primary"
+          type="button"
+          [disabled]="isCreating() || !isCreateFormValid()"
+          (click)="submitCreateVNet()"
+        >
+          @if (isCreating()) {
+            <fl-spinner label="Creating" />
+            Creating…
+          } @else {
+            Create and select
+          }
+        </button>
+      </div>
+    </div>
+  </fl-panel>
+} @else {
+  <div class="flex items-center gap-2">
+    <label class="fl-input fl-input--lg min-w-0 flex-1">
+      <fl-icon name="lucideSearch" [size]="14" />
+      <span class="fl-sr">Search networks</span>
+      <input type="search" placeholder="Search by name or range" [(ngModel)]="searchQuery" />
+    </label>
+    @if (canCreate()) {
+      <button flButton type="button" (click)="openCreateForm()">
+        <fl-icon name="lucidePlus" />
+        New network
+      </button>
+    }
+  </div>
+
+  @if (isLoading()) {
+    <fl-loading-state [rows]="3" />
+  } @else if (error()) {
+    <fl-alert tone="error" title="Could not load the networks">{{ error() }}</fl-alert>
+  } @else {
+    @if (!required() || filteredVNets().length > 0) {
+      <div class="fl-table-wrap max-h-96 overflow-y-auto rounded-fl-lg border border-fl-border">
+        <table flTable density="dense" aria-label="Networks">
+          <thead>
+            <tr>
+              <th scope="col" class="is-fit"><span class="fl-sr">Selected</span></th>
+              <th scope="col">Network</th>
+              <th scope="col">Status</th>
+              <th scope="col">IP range</th>
+              <th scope="col" class="is-num">Subnets</th>
+              <th scope="col">Provider</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (!required()) {
+              <tr
+                class="cursor-pointer"
+                [class.is-selected]="!selectedVNet()"
+                (click)="selectVNet(null)"
+                (keydown.enter)="$event.preventDefault(); selectVNet(null)"
+              >
+                <td class="is-fit">
+                  <input
+                    type="radio"
+                    [name]="uid"
+                    [checked]="!selectedVNet()"
+                    aria-label="No private network"
+                  />
+                </td>
+                <td class="font-medium">No network</td>
+                <td colspan="4" class="fl-muted">Skip the private network</td>
+              </tr>
+            }
+            @for (vnet of filteredVNets(); track vnet.id) {
+              @let usable = isUsable(vnet);
+              @let st = statusOf(vnet);
+              <tr
+                [class.cursor-pointer]="usable"
+                [class.cursor-not-allowed]="!usable"
+                [class.fl-muted]="!usable"
+                [class.is-selected]="isSelected(vnet)"
+                [attr.aria-disabled]="!usable"
+                [attr.data-testid]="'vnet-card-' + vnet.name"
+                (click)="usable && selectVNet(vnet)"
+                (keydown.enter)="$event.preventDefault(); usable && selectVNet(vnet)"
+              >
+                <td class="is-fit">
+                  <input
+                    type="radio"
+                    [name]="uid"
+                    [checked]="isSelected(vnet)"
+                    [disabled]="!usable"
+                    [attr.aria-label]="'Use ' + vnet.name"
+                  />
+                </td>
+                <td class="fl-cell-name whitespace-normal">
+                  <span class="font-medium">{{ vnet.name }}</span>
+                  @if (!usable) {
+                    <span
+                      class="block text-fl-caption text-fl-ink-muted"
+                      data-testid="vnet-other-region"
+                    >
+                      Not reachable from {{ region() }}, only from
+                      {{ servedRegions(vnet).join(', ') }}
+                    </span>
+                  }
+                </td>
+                <td><fl-status [tone]="st.tone" [label]="st.label" /></td>
+                <td class="fl-mono">{{ vnet.ipRange }}</td>
+                <td class="is-num">{{ vnet.subnets.length }}</td>
+                <td>{{ providerLabel(vnet) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (filteredVNets().length === 0) {
+      <fl-empty-state icon="lucideNetwork" [compact]="true" [title]="emptyTitle()">
+        @if (canCreate() && !searchQuery()) {
+          <button flButton size="sm" type="button" (click)="openCreateForm()">
+            Create a network on {{ providerName() }}
+          </button>
+        }
+      </fl-empty-state>
+    }
+
+    @if (selectedVNet(); as selected) {
+      @if (selected.subnets.length > 0) {
+        <div class="flex flex-col gap-2">
+          <h4 class="m-0 text-fl-body-sm font-semibold">Subnets in {{ selected.name }}</h4>
+          <div class="fl-table-wrap rounded-fl-lg border border-fl-border">
+            <table flTable density="dense" aria-label="Subnets">
+              <thead>
+                <tr>
+                  <th scope="col">IP range</th>
+                  <th scope="col">Zone</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (subnet of selected.subnets; track subnet.id) {
+                  <tr>
+                    <td class="fl-mono">{{ subnet.ipRange }}</td>
+                    <td class="fl-mono">{{ subnet.networkZone }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    }
+  }
+}
+
+@if (selectedVNet() && selectedVNet()!.subnets.length === 0) {
+  <fl-alert tone="warning" title="This network has no subnets">
+    Add a subnet before attaching servers.
+  </fl-alert>
+}

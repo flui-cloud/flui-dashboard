@@ -1,122 +1,16 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleCheck,
-  lucideCircleX,
-  lucideCirclePause,
-  lucideLoader,
-  lucideCircleAlert,
-  lucideCircleHelp,
-  lucideTrash,
-} from '@ng-icons/lucide';
+import { Component, computed, input } from '@angular/core';
+import { FlStatus } from '../../../ui/primitives/status';
+import { instanceStatusLabel, instanceStatusTone } from './instance-status';
 
 @Component({
   selector: 'app-instance-status-badge',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideCircleCheck,
-      lucideCircleX,
-      lucideCirclePause,
-      lucideLoader,
-      lucideCircleAlert,
-      lucideCircleHelp,
-      lucideTrash,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <div class="relative group inline-flex items-center">
-      <ng-icon
-        [name]="getStatusIcon()"
-        [class]="getStatusIconClass()"
-        class="h-5 w-5 cursor-help"
-      />
-      <!-- Tooltip -->
-      <div
-        class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1.5 bg-popover text-popover-foreground text-sm rounded-md border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50"
-      >
-        {{ getStatusLabel() }}
-        <div
-          class="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-popover"
-        ></div>
-      </div>
-    </div>
-  `,
+  imports: [FlStatus],
+  host: { class: 'inline-flex' },
+  template: `<fl-status [tone]="tone()" [label]="label()" />`,
 })
 export class InstanceStatusBadgeComponent {
   readonly status = input.required<string>();
 
-  getStatusIcon(): string {
-    switch (this.status()) {
-      case 'running':
-        return 'lucideCircleCheck';
-      case 'stopped':
-        return 'lucideCirclePause';
-      case 'starting':
-      case 'stopping':
-      case 'provisioning':
-      case 'rebuilding':
-      case 'migrating':
-        return 'lucideLoader';
-      case 'error':
-        return 'lucideCircleAlert';
-      case 'deleting':
-        return 'lucideTrash';
-      case 'unknown':
-      default:
-        return 'lucideCircleHelp';
-    }
-  }
-
-  getStatusIconClass(): string {
-    switch (this.status()) {
-      case 'running':
-        return 'text-green-600';
-      case 'stopped':
-        return 'text-gray-500';
-      case 'starting':
-      case 'stopping':
-      case 'provisioning':
-      case 'rebuilding':
-      case 'migrating':
-        return 'text-blue-600 animate-spin';
-      case 'error':
-        return 'text-red-600';
-      case 'deleting':
-        return 'text-orange-600';
-      case 'unknown':
-      default:
-        return 'text-muted-foreground';
-    }
-  }
-
-  getStatusLabel(): string {
-    const status = this.status();
-    switch (status) {
-      case 'running':
-        return 'Running';
-      case 'stopped':
-        return 'Stopped';
-      case 'starting':
-        return 'Starting...';
-      case 'stopping':
-        return 'Stopping...';
-      case 'provisioning':
-        return 'Provisioning...';
-      case 'error':
-        return 'Error';
-      case 'unknown':
-        return 'Unknown';
-      case 'rebuilding':
-        return 'Rebuilding...';
-      case 'migrating':
-        return 'Migrating...';
-      case 'deleting':
-        return 'Deleting...';
-      default:
-        return status;
-    }
-  }
+  protected readonly tone = computed(() => instanceStatusTone(this.status()));
+  protected readonly label = computed(() => instanceStatusLabel(this.status()));
 }

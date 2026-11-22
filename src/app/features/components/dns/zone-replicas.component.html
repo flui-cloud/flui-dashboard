@@ -1,0 +1,178 @@
+<fl-panel title="Provider redundancy" [count]="replicas().length" [flush]="true">
+  <ng-container panelActions>
+    @if (canAddMore()) {
+      <button flButton size="sm" type="button" (click)="toggleAdd()">
+        @if (!adding()) {
+          <fl-icon name="lucidePlus" [size]="14" />
+        }
+        {{ adding() ? 'Cancel' : 'Add replica' }}
+      </button>
+    }
+  </ng-container>
+
+  <div class="flex flex-col gap-4 p-4">
+    <p class="text-fl-body-sm text-fl-ink-muted">
+      Publish <span class="fl-mono">{{ zone().zoneName }}</span> on a second, independent DNS
+      provider. Primary: <span class="text-fl-ink">{{ primaryLabel() }}</span>
+    </p>
+
+    @if (adding()) {
+      <div class="flex flex-wrap items-end gap-3">
+        <fl-field label="Provider" [for]="id + '-provider'">
+          <span class="fl-select-wrap">
+            <select
+              class="fl-select"
+              [id]="id + '-provider'"
+              [value]="newProvider()"
+              (change)="onProviderChange($event)"
+            >
+              <option value="" disabled [selected]="!newProvider()">Select a provider</option>
+              @for (p of availableProviders(); track p) {
+                <option [value]="p">{{ providerLabel(p) }}</option>
+              }
+            </select>
+          </span>
+        </fl-field>
+        <fl-field class="flex-1" label="Provider zone ID (optional)" [for]="id + '-zone'">
+          <div class="fl-input fl-input--lg">
+            <input
+              type="text"
+              [id]="id + '-zone'"
+              placeholder="Discovered automatically when blank"
+              [value]="newProviderZoneId()"
+              (input)="onZoneIdChange($event)"
+            />
+          </div>
+        </fl-field>
+        <button
+          flButton="primary"
+          type="button"
+          [disabled]="!newProvider() || submitting()"
+          (click)="register()"
+        >
+          @if (submitting()) {
+            <fl-spinner label="Registering" />
+          }
+          Register
+        </button>
+      </div>
+
+      <fl-alert tone="info" title="Don't see your domain?">
+        The zone is discovered directly in your {{ secondaryLabel() }} account, so
+        <span class="fl-mono">{{ zone().zoneName }}</span> must already exist there. Once it is
+        registered, update the domain's NS records at your registrar to include the
+        {{ secondaryLabel() }} nameservers.
+        @if (secondaryDelegation(); as delegation) {
+          <a
+            alertActions
+            class="fl-link inline-flex items-center gap-1"
+            target="_blank"
+            rel="noopener"
+            [href]="delegation.delegationGuideUrl"
+          >
+            View official delegation guide
+            <fl-icon name="lucideExternalLink" [size]="13" />
+          </a>
+        }
+      </fl-alert>
+    }
+
+    @if (hint()) {
+      <fl-alert tone="info" title="Before you delegate">{{ hint() }}</fl-alert>
+    }
+  </div>
+
+  @if (replicas().length === 0) {
+    <fl-empty-state
+      class="border-t border-fl-border"
+      icon="lucideRadioTower"
+      [compact]="true"
+      title="No redundancy configured"
+      [body]="'This zone is published on ' + primaryLabel() + ' only.'"
+    />
+  } @else {
+    <div class="fl-table-wrap border-t border-fl-border">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">Provider</th>
+            <th scope="col">Status</th>
+            <th scope="col">Provider zone ID</th>
+            <th scope="col">Last reconciled</th>
+            <th scope="col">Last run</th>
+            <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of replicas(); track r.id) {
+            @let report = reports()[r.id];
+            @let open = expandedReport() === r.id && !!report;
+            @let busy = busyId() === r.id;
+            <tr [class.is-selected]="open">
+              <td>{{ providerLabel(r.dnsProvider) }}</td>
+              <td>
+                <fl-status [tone]="statusOf(r.status).tone" [label]="statusOf(r.status).label" />
+              </td>
+              <td class="fl-mono">{{ r.providerZoneId || '—' }}</td>
+              <td>{{ formatDate(r.lastReconciledAt) }}</td>
+              <td>
+                @if (report) {
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    [attr.aria-expanded]="open"
+                    (click)="toggleReport(r.id)"
+                  >
+                    <fl-icon [name]="open ? 'lucideChevronDown' : 'lucideChevronRight'" />
+                    {{ reportSummary(report) }}
+                  </button>
+                } @else {
+                  <span class="text-fl-ink-muted">—</span>
+                }
+              </td>
+              <td class="is-fit">
+                <div class="flex items-center justify-end gap-1">
+                  @if (busy) {
+                    <fl-spinner label="Working" />
+                  }
+                  @if (canPopulate(r)) {
+                    <button
+                      flButton
+                      size="sm"
+                      type="button"
+                      [disabled]="busy"
+                      (click)="populate(r)"
+                    >
+                      Populate
+                    </button>
+                  }
+                  <fl-actions-menu
+                    label="Replica actions"
+                    [compact]="true"
+                    [items]="actionsOf()[r.id] ?? []"
+                    (action)="onAction(r, $event)"
+                  />
+                </div>
+              </td>
+            </tr>
+            @if (r.errorMessage || open) {
+              <tr>
+                <td colspan="6" class="whitespace-normal">
+                  <div class="flex flex-col gap-3 py-1">
+                    @if (r.errorMessage) {
+                      <fl-alert tone="error" title="Replica error">{{ r.errorMessage }}</fl-alert>
+                    }
+                    @if (open && report) {
+                      <app-zone-replica-report [report]="report" />
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</fl-panel>

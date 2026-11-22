@@ -1,17 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideArrowRight,
-  lucideBan,
-  lucideBell,
-  lucideCircleCheck,
-  lucideCircleDashed,
-  lucideEuro,
-  lucidePause,
-  lucideX,
-} from '@ng-icons/lucide';
+import { Component, computed, input, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideArrowLeft, lucideArrowRight, lucideX } from '@ng-icons/lucide';
 import { LadderRow } from './ladder-rows';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 
 /**
  * The ladder, one rung at a time.
@@ -22,131 +15,103 @@ import { LadderRow } from './ladder-rows';
  */
 @Component({
   selector: 'app-scaling-ladder-dialog',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideArrowRight,
-      lucideBan,
-      lucideBell,
-      lucideCircleCheck,
-      lucideCircleDashed,
-      lucideEuro,
-      lucidePause,
-      lucideX,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlButton, FlIcon, FlStatus],
+  providers: [provideIcons({ lucideArrowLeft, lucideArrowRight, lucideX })],
   host: { '(document:keydown.escape)': 'closed.emit()' },
   template: `
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4"
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       (click)="closed.emit()"
     >
       <div
+        class="fl-dialog"
         role="dialog"
         aria-modal="true"
-        aria-label="If a node were needed now"
-        (click)="$event.stopPropagation()"
-        class="card-surface flex w-full max-w-lg flex-col gap-5 p-6"
+        aria-labelledby="ladder-dialog-title"
         data-testid="ladder-dialog"
+        (click)="$event.stopPropagation()"
       >
-        <div class="flex items-start gap-4">
-          <div class="flex flex-col gap-1">
-            <h3 class="m-0 text-lg font-semibold text-foreground">If a node were needed now</h3>
-            <p class="m-0 text-[13px] text-sub">{{ subtitle() }}</p>
-          </div>
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="ladder-dialog-title">If a node were needed now</h2>
           <button
             type="button"
-            class="ml-auto -mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            class="fl-dialog__close"
             aria-label="Close"
             data-testid="ladder-dialog-close"
             (click)="closed.emit()"
           >
-            <ng-icon name="lucideX" class="h-4 w-4" />
+            <fl-icon name="lucideX" />
           </button>
+        </header>
+
+        <div class="fl-dialog__body">
+          <p class="m-0 text-fl-body-sm text-fl-ink-muted">{{ subtitle() }}</p>
+
+          <ol class="m-0 flex list-none gap-1.5 p-0" aria-label="Steps">
+            @for (row of rows(); track row.rung.step; let i = $index) {
+              <li class="flex-1">
+                <button
+                  type="button"
+                  class="flex h-1.5 w-full rounded-fl-sm"
+                  [class]="i === at() ? 'bg-fl-accent' : 'bg-fl-track'"
+                  [attr.aria-label]="'Step ' + row.rung.step"
+                  [attr.aria-current]="i === at() ? 'step' : null"
+                  [attr.data-testid]="'ladder-dot-' + row.rung.step"
+                  (click)="at.set(i)"
+                ></button>
+              </li>
+            }
+          </ol>
+
+          @if (current(); as row) {
+            <div class="flex flex-col gap-3" [attr.data-testid]="'ladder-step-' + row.rung.step">
+              <p class="m-0 text-fl-caption text-fl-ink-muted">
+                Step {{ row.rung.step }} of {{ rows().length }}
+              </p>
+
+              <p class="m-0 font-medium text-fl-ink">{{ row.rung.describes }}</p>
+
+              @if (row.offer) {
+                <p class="m-0 fl-mono fl-num text-fl-ink-secondary" data-testid="ladder-step-offer">
+                  {{ row.offer }}
+                </p>
+              }
+
+              <div
+                class="flex flex-col gap-1 rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3"
+              >
+                <fl-status [tone]="row.tone" [label]="row.verdict" />
+                <span class="text-fl-body-sm text-fl-ink-secondary" data-testid="ladder-step-why">
+                  {{ row.why }}
+                </span>
+              </div>
+            </div>
+          }
         </div>
 
-        <ol class="m-0 flex list-none gap-1.5 p-0">
-          @for (row of rows(); track row.rung.step; let i = $index) {
-            <li class="flex-1">
-              <button
-                type="button"
-                class="flex h-1.5 w-full rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                [class]="i === at() ? 'bg-primary' : 'bg-border hover:bg-muted-foreground/40'"
-                [attr.aria-label]="'Step ' + row.rung.step"
-                [attr.aria-current]="i === at() ? 'step' : null"
-                [attr.data-testid]="'ladder-dot-' + row.rung.step"
-                (click)="at.set(i)"
-              ></button>
-            </li>
-          }
-        </ol>
-
-        @if (current(); as row) {
-          <div class="flex flex-col gap-3" [attr.data-testid]="'ladder-step-' + row.rung.step">
-            <p class="m-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Step {{ row.rung.step }} of {{ rows().length }}
-            </p>
-
-            <p class="m-0 text-[15px] font-medium leading-snug text-foreground">
-              {{ row.rung.describes }}
-            </p>
-
-            @if (row.offer) {
-              <p
-                class="m-0 font-mono text-[13px] tabular-nums text-sub"
-                data-testid="ladder-step-offer"
-              >
-                {{ row.offer }}
-              </p>
-            }
-
-            <div class="flex flex-col gap-1 rounded-lg border border-border bg-muted/30 p-3.5">
-              <span
-                class="inline-flex items-center gap-1.5 text-[13px] font-medium"
-                [class]="row.tone"
-              >
-                <ng-icon [name]="row.icon" class="h-4 w-4" />
-                {{ row.verdict }}
-              </span>
-              <span class="text-[13px] leading-relaxed text-sub" data-testid="ladder-step-why">
-                {{ row.why }}
-              </span>
-            </div>
-          </div>
-        }
-
-        <div class="flex items-center gap-2">
+        <footer class="fl-dialog__footer">
           <button
+            flButton
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-[13px] font-medium text-foreground disabled:opacity-40 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             [disabled]="at() === 0"
             data-testid="ladder-prev"
             (click)="at.set(at() - 1)"
           >
-            <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
+            <fl-icon name="lucideArrowLeft" />
             Back
           </button>
           <button
+            flButton
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-[13px] font-medium text-foreground disabled:opacity-40 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             [disabled]="at() >= rows().length - 1"
             data-testid="ladder-next"
             (click)="at.set(at() + 1)"
           >
             Next
-            <ng-icon name="lucideArrowRight" class="h-4 w-4" />
+            <fl-icon name="lucideArrowRight" />
           </button>
-          <button
-            type="button"
-            class="ml-auto rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            (click)="closed.emit()"
-          >
-            Done
-          </button>
-        </div>
+          <button flButton="primary" type="button" (click)="closed.emit()">Done</button>
+        </footer>
       </div>
     </div>
   `,

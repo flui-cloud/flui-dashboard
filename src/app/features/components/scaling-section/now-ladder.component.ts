@@ -1,25 +1,23 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideBan,
-  lucideBell,
-  lucideCircleCheck,
-  lucideCircleDashed,
-  lucideEuro,
-  lucideListOrdered,
-  lucidePause,
-  lucideSettings,
-} from '@ng-icons/lucide';
+import { firstValueFrom } from 'rxjs';
+import { provideIcons } from '@ng-icons/core';
+import { lucideListOrdered } from '@ng-icons/lucide';
 import { ScalingPreview } from '../../model/scaling-group.models';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { LadderRow, ladderRows, rowsAgree } from './ladder-rows';
 import { ScalingLadderDialogComponent } from './now-ladder-dialog.component';
 import { ScalingGroupStore } from './scaling-group.store';
-import { firstValueFrom } from 'rxjs';
 import { ScalingApiService } from '../../service/scaling-api.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
 const EMPTY_PREVIEW: ScalingPreview = {
   pending: null,
@@ -29,193 +27,222 @@ const EMPTY_PREVIEW: ScalingPreview = {
   asks: null,
 };
 
-/**
- * What would happen if a node were needed, in one line.
- *
- * The search behind it has five rungs and, whenever it fails, five copies of
- * the same reason; reading them is a deliberate act and belongs behind a
- * button. On the page there is only the answer.
- */
 @Component({
   selector: 'app-scaling-now-ladder',
-  standalone: true,
   imports: [
-    NgIcon,
     RouterLink,
     ScalingLadderDialogComponent,
     SectionFailureComponent,
     SectionSkeletonComponent,
+    FlAlert,
+    FlPanel,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
   ],
-  providers: [
-    provideIcons({
-      lucideBan,
-      lucideBell,
-      lucideCircleCheck,
-      lucideCircleDashed,
-      lucideEuro,
-      lucideListOrdered,
-      lucidePause,
-      lucideSettings,
-    }),
-  ],
+  providers: [provideIcons({ lucideListOrdered })],
   host: { class: 'block' },
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="space-y-2" data-testid="ladder">
-      @if (removable(); as node) {
-        <div
-          class="card-surface flex flex-wrap items-center gap-x-4 gap-y-3 p-4"
-          data-testid="ladder-give-back"
-        >
-          <span class="min-w-0 flex-1 text-[13px] leading-relaxed text-sub">
-            The fleet is above its target: this manual group would remove
-            <span class="font-medium text-foreground">{{ node }}</span>. Its work moves to the nodes
-            that stay.
-          </span>
-          @if (!confirmRemove()) {
-            <button
-              type="button"
-              class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground hover:opacity-90"
-              data-testid="ladder-remove-once"
-              (click)="confirmRemove.set(true)"
-            >
-              Remove {{ node }}
-            </button>
-          } @else {
-            <span
-              class="inline-flex flex-wrap items-center gap-2 text-[12px]"
-              data-testid="ladder-remove-confirm"
-            >
-              Drain and delete {{ node }}? The group stays manual.
-              <button
-                type="button"
-                class="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground disabled:opacity-50"
-                [disabled]="removing()"
-                (click)="removeOnce(node)"
-                data-testid="ladder-remove-confirm-yes"
-              >
-                {{ removing() ? 'Removing…' : 'Remove' }}
-              </button>
-              <button
-                type="button"
-                class="text-muted-foreground"
-                [disabled]="removing()"
-                (click)="confirmRemove.set(false)"
-              >
-                Cancel
-              </button>
-            </span>
-          }
-        </div>
-      }
-
-      <h2 class="text-label m-0">If a node were needed now</h2>
-
-      @if (loading()) {
-        <app-section-skeleton
-          variant="cards"
-          [count]="1"
-          label="the urgency ladder"
-          testid="ladder"
-        />
-      } @else if (failed(); as message) {
-        <app-section-failure [message]="message" testid="ladder" (retry)="store.reload()" />
-      } @else if (unsearchable()) {
-        <div
-          class="card-surface flex flex-wrap items-center gap-x-4 gap-y-3 p-4"
-          data-testid="ladder-unsearchable"
-        >
-          <span class="inline-flex items-center gap-1.5 text-[13px] font-medium text-amber-600">
-            <ng-icon name="lucideSettings" class="h-4 w-4 shrink-0" />
-            Not set up
-          </span>
-          <span class="min-w-0 flex-1 text-[13px] leading-relaxed text-sub">
-            No machines are chosen, so there is nothing Flui may add and nothing for it to name when
-            an app has nowhere to run.
-          </span>
-          <a
-            routerLink="../group"
-            class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            data-testid="ladder-choose-machines"
+    <fl-panel title="If a node were needed now" [flush]="true" data-testid="ladder">
+      <ng-container panelActions>
+        @if (!loading() && !failed() && !unsearchable() && rows().length) {
+          <button
+            flButton
+            size="sm"
+            type="button"
+            data-testid="ladder-open-steps"
+            (click)="stepping.set(true)"
           >
-            Choose machines
-          </a>
-        </div>
-      } @else if (rows().length) {
-        <div class="card-surface flex flex-wrap items-center gap-x-4 gap-y-3 p-4">
-          <span
-            class="inline-flex items-center gap-1.5 text-[13px] font-medium"
-            [class]="headline().tone"
-            data-testid="ladder-verdict"
-          >
-            <ng-icon [name]="headline().icon" class="h-4 w-4 shrink-0" />
-            {{ headline().verdict }}
-          </span>
-
-          <span
-            class="min-w-0 flex-1 text-[13px] leading-relaxed text-sub"
-            data-testid="ladder-why"
-          >
-            {{ headline().why }}
-          </span>
-
+            <fl-icon name="lucideListOrdered" [size]="14" />
+            See the {{ rows().length }} steps
+          </button>
           @if (buyable(); as machine) {
             @if (!confirmBuy()) {
               <button
+                flButton="primary"
+                size="sm"
                 type="button"
-                class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground hover:opacity-90"
                 data-testid="ladder-buy-once"
                 (click)="confirmBuy.set(true)"
               >
                 Add this {{ machine.shape }}
               </button>
+            }
+          }
+        }
+      </ng-container>
+
+      @if (removable(); as node) {
+        <div class="p-4 pb-0">
+          <fl-alert
+            tone="info"
+            title="The fleet is above its target"
+            data-testid="ladder-give-back"
+          >
+            @if (!confirmRemove()) {
+              This manual group would remove <span class="fl-mono">{{ node }}</span>. Its work moves
+              to the nodes that stay.
             } @else {
-              <span
-                class="inline-flex flex-wrap items-center gap-2 text-[12px]"
-                data-testid="ladder-buy-confirm"
+              <span data-testid="ladder-remove-confirm"
+                >Drain and delete <span class="fl-mono">{{ node }}</span>? The group stays
+                manual.</span
               >
-                Add one {{ machine.shape }} in {{ machine.region }}{{ machine.price }}? The group
-                stays manual.
+            }
+            <ng-container alertActions>
+              @if (!confirmRemove()) {
                 <button
+                  flButton
+                  size="sm"
                   type="button"
-                  class="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground disabled:opacity-50"
-                  [disabled]="buying()"
-                  (click)="buyOnce(machine.shape, machine.region)"
-                  data-testid="ladder-buy-confirm-yes"
+                  data-testid="ladder-remove-once"
+                  (click)="confirmRemove.set(true)"
                 >
-                  {{ buying() ? 'Adding…' : 'Add' }}
+                  Remove {{ node }}
+                </button>
+              } @else {
+                <button
+                  flButton="danger"
+                  size="sm"
+                  type="button"
+                  [disabled]="removing()"
+                  (click)="removeOnce(node)"
+                  data-testid="ladder-remove-confirm-yes"
+                >
+                  @if (removing()) {
+                    <fl-spinner label="Removing" />
+                  }
+                  {{ removing() ? 'Removing…' : 'Remove ' + node }}
                 </button>
                 <button
+                  flButton="ghost"
+                  size="sm"
                   type="button"
-                  class="text-muted-foreground"
-                  [disabled]="buying()"
-                  (click)="confirmBuy.set(false)"
+                  [disabled]="removing()"
+                  (click)="confirmRemove.set(false)"
                 >
                   Cancel
                 </button>
-              </span>
-            }
-          }
-          <button
-            type="button"
-            class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            data-testid="ladder-open-steps"
-            (click)="stepping.set(true)"
-          >
-            <ng-icon name="lucideListOrdered" class="h-3.5 w-3.5" />
-            See the {{ rows().length }} steps
-          </button>
+              }
+            </ng-container>
+          </fl-alert>
         </div>
       }
 
-      @if (stepping()) {
-        <app-scaling-ladder-dialog
-          [rows]="rows()"
-          [subtitle]="subtitle()"
-          (closed)="stepping.set(false)"
-        />
+      @if (loading()) {
+        <div class="p-4">
+          <app-section-skeleton
+            variant="cards"
+            [count]="1"
+            label="the urgency ladder"
+            testid="ladder"
+          />
+        </div>
+      } @else if (failed(); as message) {
+        <div class="p-4">
+          <app-section-failure [message]="message" testid="ladder" (retry)="store.reload()" />
+        </div>
+      } @else if (unsearchable()) {
+        <div class="p-4">
+          <fl-alert tone="warning" title="Not set up" data-testid="ladder-unsearchable">
+            No machines are chosen, so there is nothing Flui may add and nothing for it to name when
+            an app has nowhere to run.
+            <a
+              alertActions
+              flButton
+              size="sm"
+              routerLink="../group"
+              data-testid="ladder-choose-machines"
+              >Choose machines</a
+            >
+          </fl-alert>
+        </div>
+      } @else if (rows().length) {
+        <div class="flex flex-col gap-1 px-4 py-3">
+          <fl-status
+            [tone]="headline().tone"
+            [label]="headline().verdict"
+            data-testid="ladder-verdict"
+          />
+          <span class="text-fl-body-sm text-fl-ink-secondary" data-testid="ladder-why">
+            {{ headline().why }}
+          </span>
+        </div>
+
+        @if (buyable(); as machine) {
+          @if (confirmBuy()) {
+            <div class="px-4 pb-3">
+              <fl-alert
+                tone="info"
+                [title]="'Add one ' + machine.shape + ' in ' + machine.region + machine.price + '?'"
+                data-testid="ladder-buy-confirm"
+              >
+                The group stays manual.
+                <ng-container alertActions>
+                  <button
+                    flButton="primary"
+                    size="sm"
+                    type="button"
+                    [disabled]="buying()"
+                    (click)="buyOnce(machine.shape, machine.region)"
+                    data-testid="ladder-buy-confirm-yes"
+                  >
+                    @if (buying()) {
+                      <fl-spinner label="Adding" />
+                    }
+                    {{ buying() ? 'Adding…' : 'Add ' + machine.shape }}
+                  </button>
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    [disabled]="buying()"
+                    (click)="confirmBuy.set(false)"
+                  >
+                    Cancel
+                  </button>
+                </ng-container>
+              </fl-alert>
+            </div>
+          }
+        }
+
+        <div class="fl-table-wrap border-t border-fl-border">
+          <table flTable density="dense" aria-label="Steps of the search">
+            <thead>
+              <tr>
+                <th scope="col" class="is-num">Step</th>
+                <th scope="col">What it tries</th>
+                <th scope="col">Machine</th>
+                <th scope="col">Verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.rung.step) {
+                <tr
+                  [class.is-selected]="row.chosen"
+                  [attr.data-testid]="'ladder-row-' + row.rung.step"
+                >
+                  <td class="is-num">{{ row.rung.step }}</td>
+                  <td class="is-wrap">{{ row.rung.describes }}</td>
+                  <td class="fl-mono">{{ row.offer || '—' }}</td>
+                  <td><fl-status [tone]="row.tone" [label]="row.verdict" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
-    </section>
+    </fl-panel>
+
+    @if (stepping()) {
+      <app-scaling-ladder-dialog
+        [rows]="rows()"
+        [subtitle]="subtitle()"
+        (closed)="stepping.set(false)"
+      />
+    }
   `,
 })
 export class ScalingNowLadderComponent {

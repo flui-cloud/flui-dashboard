@@ -1,45 +1,32 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEye } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
 import { InstanceWithLabels } from '../../model/instance.models';
+
+const ACTIONS: readonly MenuAction[] = [{ id: 'details', label: 'View details' }];
 
 @Component({
   selector: 'app-instance-actions',
-  standalone: true,
-  imports: [NgIcon, HlmButtonDirective],
-  providers: [
-    provideIcons({
-      lucideEye,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlActionsMenu],
+  host: { class: 'inline-flex' },
   template: `
-    <div class="flex items-center justify-center">
-      @if (isManaged()) {
-        <button
-          hlmBtn
-          variant="ghost"
-          size="sm"
-          (click)="onViewDetails()"
-          class="h-8 px-3"
-          title="View details"
-        >
-          <ng-icon name="lucideEye" class="h-4 w-4 mr-2" />
-          Details
-        </button>
-      } @else {
-        <span class="text-xs text-muted-foreground italic"> No actions </span>
-      }
-    </div>
+    @if (isManaged()) {
+      <fl-actions-menu
+        label="Instance actions"
+        [compact]="true"
+        [items]="actions"
+        (action)="onViewDetails()"
+      />
+    }
   `,
 })
 export class InstanceActionsComponent {
+  private readonly router = inject(Router);
+
   readonly instance = input.required<InstanceWithLabels>();
   readonly isManaged = input.required<boolean>();
 
-  constructor(private readonly router: Router) {}
+  protected readonly actions = ACTIONS;
 
   onViewDetails() {
     this.router.navigate([

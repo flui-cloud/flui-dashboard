@@ -1,354 +1,269 @@
-import {
-  Component,
-  input,
-  output,
-  signal,
-  inject,
-  computed,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideChevronRight,
-  lucideLoader,
-  lucideX,
-  lucideAlertCircle,
-  lucideRefreshCw,
-  lucideFileText,
-  lucideCircleCheck,
-  lucideCircleAlert,
-  lucideCircleMinus,
-  lucideSearch,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
-import { FormsModule } from '@angular/forms';
+import { Component, input, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideFileText, lucideRefreshCw, lucideX } from '@ng-icons/lucide';
 import { PlatformComponentResponseDto } from '../../../core/api/model/platformComponentResponseDto';
 import { PlatformComponentResourceStatusDto } from '../../../core/api/model/platformComponentResourceStatusDto';
 import { RedeployPlatformComponentResponseDto } from '../../../core/api/model/redeployPlatformComponentResponseDto';
-import { PlatformComponentsService } from '../../service/platform-components.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
 import { PlatformComponentStatusBadgeComponent } from './platform-component-status-badge.component';
-import { LogTableComponent } from '../application/log-table.component';
-import { MaskModeService } from '../../../core/services/mask-mode.service';
-import type { AppLogEntryDto } from '../../service/application-logs.service';
+import { PlatformComponentLogsDialog } from './platform-component-logs-dialog';
+
+interface LogsTarget {
+  readonly podName: string;
+  readonly containerName?: string;
+}
 
 @Component({
   selector: 'app-platform-component-detail-panel',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent, PlatformComponentStatusBadgeComponent, LogTableComponent],
-  providers: [
-    provideIcons({
-      lucideChevronRight,
-      lucideLoader,
-      lucideX,
-      lucideAlertCircle,
-      lucideRefreshCw,
-      lucideFileText,
-      lucideCircleCheck,
-      lucideCircleAlert,
-      lucideCircleMinus,
-      lucideSearch,
-      lucideTriangleAlert,
-    }),
+  imports: [
+    FlAlert,
+    FlKeyValue,
+    FlKvItem,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
+    FlTag,
+    PlatformComponentStatusBadgeComponent,
+    PlatformComponentLogsDialog,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideFileText, lucideRefreshCw, lucideX })],
   template: `
-    <div class="border-t border-gray-100 bg-gray-50/50 px-4 py-3 space-y-3">
-      <!-- Errors -->
-      @if (component().errors.length) {
-        <div>
-          <p class="text-xs font-medium text-gray-500 mb-1.5">Errors</p>
-          <div class="space-y-1">
-            @for (err of component().errors; track err) {
-              <div
-                class="flex items-start gap-2 px-3 py-2 rounded bg-red-50 border border-red-200 text-xs text-red-700"
-              >
-                <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                <span class="font-mono">{{ err }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      }
+    <div
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      (click)="closed.emit()"
+    >
+      <div
+        class="fl-dialog fl-dialog--wide"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="platform-component-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="platform-component-title">{{ component().name }}</h2>
+          <button type="button" class="fl-dialog__close" aria-label="Close" (click)="closed.emit()">
+            <fl-icon name="lucideX" />
+          </button>
+        </header>
 
-      <!-- Resources -->
-      @if (component().resources.length) {
-        <div>
-          <p class="text-xs font-medium text-gray-500 mb-1.5">Resources</p>
-          <div class="overflow-x-auto rounded border border-gray-200">
-            <table class="w-full text-xs">
-              <thead class="bg-gray-100">
-                <tr>
-                  <th class="text-left px-3 py-2 text-gray-500 font-medium">Resource</th>
-                  <th class="text-left px-3 py-2 text-gray-500 font-medium">Namespace</th>
-                  <th class="text-left px-3 py-2 text-gray-500 font-medium">Status</th>
-                  <th class="text-left px-3 py-2 text-gray-500 font-medium">Replicas</th>
-                  <th class="px-3 py-2"></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 bg-white">
-                @for (res of component().resources; track res.name) {
+        <div class="fl-dialog__body">
+          <fl-key-value>
+            <fl-kv-item key="Status">
+              <app-platform-component-status-badge [status]="component().status" />
+            </fl-kv-item>
+            @if (clusterName()) {
+              <fl-kv-item key="Cluster">{{ clusterName() }}</fl-kv-item>
+            }
+            <fl-kv-item key="Category">{{ component().category }}</fl-kv-item>
+            <fl-kv-item key="Managed by"
+              ><fl-tag>{{ component().managedBy }}</fl-tag></fl-kv-item
+            >
+          </fl-key-value>
+
+          @if (component().errors.length) {
+            <fl-alert
+              tone="error"
+              [title]="
+                component().errors.length === 1 ? '1 error' : component().errors.length + ' errors'
+              "
+            >
+              <ul class="flex flex-col gap-1">
+                @for (err of component().errors; track err) {
+                  <li class="fl-mono">{{ err }}</li>
+                }
+              </ul>
+            </fl-alert>
+          }
+
+          @if (component().resources.length) {
+            <div class="fl-table-wrap">
+              <table flTable density="dense">
+                <thead>
                   <tr>
-                    <td class="px-3 py-2 font-mono text-gray-700">
-                      <span class="text-gray-400">{{ res.kind }}/</span>{{ res.name }}
-                    </td>
-                    <td class="px-3 py-2 text-gray-500">{{ res.namespace }}</td>
-                    <td class="px-3 py-2">
-                      <app-platform-component-status-badge [status]="res.status" />
-                    </td>
-                    <td class="px-3 py-2 text-gray-500">
-                      @if (res.replicas) {
-                        <span [class]="replicaClass(res)">
-                          {{ res.replicas.ready }}/{{ res.replicas.desired }}
-                        </span>
-                      } @else {
-                        <span>—</span>
-                      }
-                    </td>
-                    <td class="px-3 py-2 text-right">
-                      @if (res.pods?.length === 1) {
-                        <button
-                          class="flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                          (click)="onViewLogs(res.pods![0].podName)"
-                        >
-                          <ng-icon name="lucideFileText" class="h-3 w-3" />
-                          Logs
-                        </button>
-                      }
-                    </td>
+                    <th scope="col">Resource</th>
+                    <th scope="col">Namespace</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Replicas</th>
+                    <th scope="col" class="is-fit"><span class="fl-sr">Logs</span></th>
                   </tr>
-                  <!-- Multiple pods: one row per pod with Logs button -->
-                  @if ((res.pods?.length ?? 0) > 1) {
-                    @for (pod of res.pods!; track pod.podName) {
-                      <tr class="bg-gray-50/60">
-                        <td colspan="4" class="px-3 py-1.5">
-                          <div class="flex items-center gap-1.5 text-xs text-gray-600">
-                            <span
-                              class="h-1.5 w-1.5 rounded-full flex-shrink-0"
-                              [class]="pod.ready ? 'bg-green-500' : 'bg-orange-400'"
-                            ></span>
-                            <span class="font-mono truncate">{{ pod.podName }}</span>
-                            <span class="text-gray-400">{{ pod.phase }}</span>
-                          </div>
-                        </td>
-                        <td class="px-3 py-1.5 text-right">
+                </thead>
+                <tbody>
+                  @for (res of component().resources; track res.name) {
+                    <tr>
+                      <td class="fl-mono">
+                        <span class="text-fl-ink-muted">{{ res.kind }}/</span>{{ res.name }}
+                      </td>
+                      <td class="fl-mono">{{ res.namespace }}</td>
+                      <td><app-platform-component-status-badge [status]="res.status" /></td>
+                      <td>
+                        @if (res.replicas) {
+                          <fl-status
+                            [tone]="replicaTone(res)"
+                            [label]="res.replicas.ready + '/' + res.replicas.desired"
+                          />
+                        } @else {
+                          <span class="text-fl-ink-muted">—</span>
+                        }
+                      </td>
+                      <td class="is-fit">
+                        @if (res.pods?.length === 1) {
                           <button
-                            class="flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                            (click)="onViewLogs(pod.podName)"
+                            flButton="ghost"
+                            size="sm"
+                            type="button"
+                            (click)="onViewLogs(res.pods![0].podName)"
                           >
-                            <ng-icon name="lucideFileText" class="h-3 w-3" />
+                            <fl-icon name="lucideFileText" [size]="14" />
+                            Logs
+                          </button>
+                        }
+                      </td>
+                    </tr>
+                    @if ((res.pods?.length ?? 0) > 1) {
+                      @for (pod of res.pods!; track pod.podName) {
+                        <tr>
+                          <td colspan="4">
+                            <span class="fl-row">
+                              <fl-status
+                                [tone]="pod.ready ? 'success' : 'warning'"
+                                [label]="pod.phase || (pod.ready ? 'Ready' : 'Not ready')"
+                              />
+                              <span class="fl-mono">{{ pod.podName }}</span>
+                            </span>
+                          </td>
+                          <td class="is-fit">
+                            <button
+                              flButton="ghost"
+                              size="sm"
+                              type="button"
+                              (click)="onViewLogs(pod.podName)"
+                            >
+                              <fl-icon name="lucideFileText" [size]="14" />
+                              Logs
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    }
+                    @for (issue of res.podIssues; track issue.podName) {
+                      <tr>
+                        <td colspan="4" class="whitespace-normal">
+                          <span class="fl-row">
+                            <fl-status tone="warning" [label]="issue.reason ?? issue.phase" />
+                            <span class="fl-mono">{{ issue.podName }}</span>
+                            @if (issue.message) {
+                              <span class="text-fl-ink-muted">{{ issue.message }}</span>
+                            }
+                            @if (issue.restartCount) {
+                              <span class="text-fl-ink-muted fl-num"
+                                >{{ issue.restartCount }} restarts</span
+                              >
+                            }
+                          </span>
+                        </td>
+                        <td class="is-fit">
+                          <button
+                            flButton="ghost"
+                            size="sm"
+                            type="button"
+                            (click)="onViewLogs(issue.podName, issue.containerName)"
+                          >
+                            <fl-icon name="lucideFileText" [size]="14" />
                             Logs
                           </button>
                         </td>
                       </tr>
                     }
                   }
-                  <!-- Pod Issues inline -->
-                  @for (issue of res.podIssues; track issue.podName) {
-                    <tr class="bg-orange-50/30">
-                      <td colspan="5" class="px-3 py-1.5">
-                        <div class="flex items-center justify-between gap-2">
-                          <div class="flex items-center gap-2 text-xs text-orange-700">
-                            <ng-icon name="lucideCircleAlert" class="h-3 w-3 flex-shrink-0" />
-                            <span class="font-mono">{{ issue.podName }}</span>
-                            <span class="text-orange-500">{{ issue.reason }}</span>
-                            @if (issue.message) {
-                              <span class="text-gray-500 truncate max-w-xs"
-                                >— {{ issue.message }}</span
-                              >
-                            }
-                            @if (issue.restartCount) {
-                              <span class="text-gray-400">restarts: {{ issue.restartCount }}</span>
-                            }
-                          </div>
-                          <button
-                            class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 text-xs text-blue-600 hover:underline"
-                            (click)="onViewLogs(issue.podName, issue.containerName)"
-                          >
-                            <ng-icon name="lucideFileText" class="h-3 w-3" />
-                            Logs
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  }
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      }
+                </tbody>
+              </table>
+            </div>
+          }
 
-      <!-- Redeploy result -->
-      @if (redeployResult()) {
-        <div class="text-xs rounded border px-3 py-2" [class]="redeployResultClass()">
-          <p class="font-medium mb-1">
-            {{ redeployResultLabel() }}: {{ redeployResult()!.message }}
-          </p>
-          @if (redeployResult()!.restartedResources.length) {
-            <p class="text-gray-600">
-              Restarted: {{ redeployResult()!.restartedResources.join(', ') }}
-            </p>
+          @if (redeployResult(); as r) {
+            <fl-alert
+              [tone]="r.result === 'partial' ? 'warning' : 'info'"
+              [title]="redeployResultLabel()"
+            >
+              {{ r.message }}
+              @if (r.restartedResources.length) {
+                <span class="block">Restarted: {{ r.restartedResources.join(', ') }}</span>
+              }
+              @if (r.missingResources.length) {
+                <span class="block">Missing: {{ r.missingResources.join(', ') }}</span>
+              }
+              @if (r.skippedResources.length) {
+                <span class="block">Skipped: {{ r.skippedResources.join(', ') }}</span>
+              }
+            </fl-alert>
           }
-          @if (redeployResult()!.missingResources.length) {
-            <p>Missing: {{ redeployResult()!.missingResources.join(', ') }}</p>
-          }
-          @if (redeployResult()!.skippedResources.length) {
-            <p class="text-gray-500">
-              Skipped: {{ redeployResult()!.skippedResources.join(', ') }}
+
+          @if (component().restartSupported) {
+            <p class="text-fl-caption text-fl-ink-muted">
+              Redeploy triggers a rolling restart of the workload resources.
             </p>
           }
         </div>
-      }
 
-      <!-- Redeploy button -->
-      @if (component().restartSupported) {
-        <div class="flex items-center gap-2">
-          <button
-            class="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            [disabled]="isRedeploying()"
-            (click)="onRedeploy()"
-          >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-3.5 w-3.5"
-              [class.animate-spin]="isRedeploying()"
-            />
-            {{ isRedeploying() ? 'Redeploying...' : 'Redeploy' }}
-          </button>
-          <span class="text-xs text-gray-500"
-            >Triggers a rolling restart of workload resources</span
-          >
-        </div>
-      }
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" (click)="closed.emit()">Close</button>
+          @if (component().restartSupported) {
+            <button
+              flButton="primary"
+              type="button"
+              [disabled]="isRedeploying()"
+              (click)="onRedeploy()"
+            >
+              @if (isRedeploying()) {
+                <fl-spinner label="Redeploying" />
+                Redeploying…
+              } @else {
+                <fl-icon name="lucideRefreshCw" />
+                Redeploy
+              }
+            </button>
+          }
+        </footer>
+      </div>
     </div>
 
-    <!-- Logs modal -->
-    @if (logsModal()) {
-      <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg w-full max-w-5xl flex flex-col max-h-[85vh]">
-          <!-- Modal header -->
-          <div
-            class="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0"
-          >
-            <div>
-              <p class="text-sm font-medium text-gray-900">Pod Logs</p>
-              <p class="text-xs text-gray-500 font-mono">
-                {{ logsModal()!.podName }}
-              </p>
-            </div>
-            <button class="text-gray-400 hover:text-gray-600" (click)="closeLogsModal()">
-              <ng-icon name="lucideX" class="h-5 w-5" />
-            </button>
-          </div>
-
-          @if (maskMode.enabled()) {
-            <div
-              data-testid="mask-mode-log-banner"
-              class="flex items-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 flex-shrink-0"
-            >
-              <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 shrink-0" />
-              Mask mode cannot protect log content — do not share this screen.
-            </div>
-          }
-
-          <!-- Toolbar -->
-          @if (!logsLoading()) {
-            <div class="flex items-center gap-3 px-4 py-2.5 border-b border-gray-200 flex-shrink-0">
-              <!-- Search -->
-              <div class="relative flex-1">
-                <ng-icon
-                  name="lucideSearch"
-                  class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Filter across all fields…"
-                  [ngModel]="logSearch()"
-                  (ngModelChange)="logSearch.set($event)"
-                  class="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-
-              <!-- Entry count -->
-              <span class="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
-                {{ filteredLogEntries().length }} / {{ logsModal()!.entries.length }}
-              </span>
-            </div>
-          }
-
-          <!-- Modal body -->
-          <div class="flex-1 overflow-y-auto p-4">
-            @if (logsLoading()) {
-              <div class="flex items-center justify-center py-12">
-                <ng-icon name="lucideLoader" class="h-8 w-8 animate-spin text-blue-600" />
-              </div>
-            } @else {
-              <app-log-table [entries]="filteredLogEntries()" [error]="logsModal()!.parseError" />
-            }
-          </div>
-        </div>
-      </div>
+    @if (logsTarget(); as target) {
+      <app-platform-component-logs-dialog
+        [clusterId]="clusterId()"
+        [componentKey]="component().key"
+        [podName]="target.podName"
+        [containerName]="target.containerName"
+        (closed)="closeLogsModal()"
+      />
     }
   `,
 })
 export class PlatformComponentDetailPanelComponent {
-  protected readonly maskMode = inject(MaskModeService);
-
   component = input.required<PlatformComponentResponseDto>();
   clusterId = input.required<string>();
+  clusterName = input<string>('');
   isRedeploying = input<boolean>(false);
   redeployRequested = output<void>();
-
-  private readonly service = inject(PlatformComponentsService);
+  closed = output<void>();
 
   redeployResult = signal<RedeployPlatformComponentResponseDto | null>(null);
-  logsModal = signal<{
-    podName: string;
-    entries: AppLogEntryDto[];
-    parseError: string | null;
-  } | null>(null);
-  logsLoading = signal(false);
+  readonly logsTarget = signal<LogsTarget | null>(null);
 
-  readonly logSearch = signal('');
-
-  readonly filteredLogEntries = computed(() => {
-    const entries = this.logsModal()?.entries ?? [];
-    const q = this.logSearch().toLowerCase().trim();
-    if (!q) return entries;
-    return entries.filter((e) => {
-      const metaStr = e.metadata ? JSON.stringify(e.metadata) : '';
-      const haystack = [
-        e.message,
-        e.pod,
-        e.level,
-        e.container,
-        e.namespace,
-        e.stream,
-        e.hostname,
-        e.server_id,
-        e.server_type,
-        metaStr,
-      ]
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  });
-
-  replicaClass(res: PlatformComponentResourceStatusDto): string {
-    if (!res.replicas) return '';
+  replicaTone(res: PlatformComponentResourceStatusDto): StatusTone {
+    if (!res.replicas) return 'neutral';
     const { ready, desired } = res.replicas;
-    if (ready === desired) return 'text-green-600';
-    if (ready === 0) return 'text-red-600';
-    return 'text-yellow-600';
-  }
-
-  redeployResultClass(): string {
-    const r = this.redeployResult()?.result;
-    if (r === 'ok') return 'border-green-200 bg-green-50 text-green-800';
-    if (r === 'partial') return 'border-yellow-200 bg-yellow-50 text-yellow-800';
-    return 'border-gray-200 bg-gray-50 text-gray-700';
+    if (ready === desired) return 'success';
+    if (ready === 0) return 'error';
+    return 'warning';
   }
 
   redeployResultLabel(): string {
@@ -363,85 +278,15 @@ export class PlatformComponentDetailPanelComponent {
     this.redeployRequested.emit();
   }
 
-  async onViewLogs(podName: string, containerName?: string): Promise<void> {
-    this.logsModal.set({ podName, entries: [], parseError: null });
-    this.logSearch.set('');
-    this.logsLoading.set(true);
-    const result = await this.service.getPodLogs(
-      this.clusterId(),
-      this.component().key,
-      podName,
-      containerName,
-    );
-    this.logsLoading.set(false);
-    if (result) {
-      const { entries, parseError } = this.parseLogText(result.logs, podName);
-      this.logsModal.set({ podName, entries, parseError });
-    }
+  onViewLogs(podName: string, containerName?: string): void {
+    this.logsTarget.set({ podName, containerName });
   }
 
   closeLogsModal(): void {
-    this.logsModal.set(null);
+    this.logsTarget.set(null);
   }
 
   setRedeployResult(result: RedeployPlatformComponentResponseDto): void {
     this.redeployResult.set(result);
-  }
-
-  private parseLogText(
-    raw: string,
-    podName: string,
-  ): { entries: AppLogEntryDto[]; parseError: string | null } {
-    if (!raw?.trim()) {
-      return { entries: [], parseError: null };
-    }
-
-    const lines = raw.split('\n').filter((l) => l.trim());
-    const entries: AppLogEntryDto[] = [];
-    let parseError: string | null = null;
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-
-      // Try JSON parse first
-      if (trimmed.startsWith('{')) {
-        try {
-          const parsed = JSON.parse(trimmed);
-          entries.push({
-            timestamp: parsed.timestamp ?? parsed.time ?? parsed.ts ?? new Date().toISOString(),
-            level: parsed.level ?? parsed.severity ?? parsed.lvl,
-            message: parsed.message ?? parsed.msg ?? parsed.log ?? trimmed,
-            pod: parsed.pod ?? podName,
-            namespace: parsed.namespace,
-            container: parsed.container,
-            stream: parsed.stream,
-            hostname: parsed.hostname ?? parsed.host,
-            metadata: parsed,
-          });
-          continue;
-        } catch {
-          // not valid JSON, fall through to plain text
-        }
-      }
-
-      // Plain text line — try to extract timestamp prefix (e.g. "2026-03-03T10:00:00.000Z ")
-      const tsMatch = /^(\d{4}-\d{2}-\d{2}T[\d:.]+Z)\s+(.*)/s.exec(trimmed);
-      if (tsMatch) {
-        entries.push({
-          timestamp: tsMatch[1],
-          message: tsMatch[2],
-          pod: podName,
-        });
-      } else {
-        entries.push({
-          timestamp: new Date().toISOString(),
-          message: trimmed,
-          pod: podName,
-        });
-      }
-    }
-
-    return { entries, parseError };
   }
 }

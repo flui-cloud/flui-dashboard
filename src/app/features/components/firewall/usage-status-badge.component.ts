@@ -1,38 +1,14 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideX } from '@ng-icons/lucide';
+import { Component, computed, input } from '@angular/core';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-usage-status-badge',
-  standalone: true,
-  imports: [HlmBadgeDirective, NgIcon],
-  providers: [
-    provideIcons({
-      lucideCheck,
-      lucideX,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <span hlmBadge [variant]="variant()" class="inline-flex items-center gap-1.5 font-medium">
-      <ng-icon [name]="icon()" class="h-3 w-3" />
-      {{ label() }}
-    </span>
-  `,
+  imports: [FlStatus],
+  host: { class: 'inline-flex' },
+  template: `<fl-status [tone]="inUse() ? 'success' : 'neutral'" [label]="label()" />`,
 })
 export class UsageStatusBadgeComponent {
   inUse = input.required<boolean>();
 
-  variant() {
-    return this.inUse() ? 'default' : 'outline';
-  }
-
-  icon() {
-    return this.inUse() ? 'lucideCheck' : 'lucideX';
-  }
-
-  label() {
-    return this.inUse() ? 'In Use' : 'Unused';
-  }
+  readonly label = computed(() => (this.inUse() ? 'In use' : 'Unused'));
 }

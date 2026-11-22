@@ -1,250 +1,147 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-  untracked,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { HistoryWindow, HistoryZoom, ScalingApiService } from '../../service/scaling-api.service';
 import { ScalingDecision } from '../../model/scaling-group.models';
-import { operationDetail, operationLabel, operationTone } from '../scaling/decision-operation';
 import { FleetHistoryPoint, SectionGroup } from '../../model/scaling-section.models';
 import { FleetLoadChartComponent } from '../scaling/fleet-load-chart.component';
 import { FleetHistoryComponent } from '../scaling/fleet-history.component';
 import { outcomeText } from '../scaling/fleet-history.geometry';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
 import { ScalingGroupStore } from './scaling-group.store';
-import { TABLE, ago } from './now-format';
+import { ago } from './now-format';
+import { HistoryDecisionLog, LogFilter, LogRow } from './history-decision-log';
+import { outcomeTone } from './scaling-tabs-format';
 import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
-
-interface LogRow {
-  decision: ScalingDecision;
-  when: string;
-  outcomePill: string;
-}
 
 const PAGE = 50;
 
 @Component({
   selector: 'app-scaling-history-tab',
-  standalone: true,
   imports: [
     FleetHistoryComponent,
     FleetLoadChartComponent,
+    FlPanel,
+    FlEmptyState,
+    FlButton,
+    HistoryDecisionLog,
     SectionFailureComponent,
     SectionSkeletonComponent,
   ],
-  host: { class: 'block' },
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'fl-stack' },
   template: `
     @if (group(); as g) {
-      <div class="space-y-6" data-testid="tab-history">
-        <p class="m-0 max-w-prose text-[13px] text-muted-foreground" data-testid="history-lead">
-          {{ lead() }}
-        </p>
-
-        @if (historyLoading()) {
-          <app-section-skeleton
-            variant="table"
-            [count]="4"
-            label="the fleet over time"
-            testid="history"
-          />
-        } @else if (historyFailed()) {
-          <app-section-failure
-            [message]="historyFailed() ?? ''"
-            testid="history"
-            (retry)="store.reload()"
-          />
-        } @else {
-          <div
-            class="mb-2 flex flex-wrap gap-1.5"
-            role="group"
-            aria-label="Span"
-            data-testid="history-window"
-          >
-            @for (w of windows; track w) {
-              <button
-                type="button"
-                class="rounded-full border px-2.5 py-0.5 text-[12px]"
-                [class]="
-                  store.historyWindow() === w
-                    ? 'border-primary bg-primary/10 text-foreground'
-                    : 'border-border text-muted-foreground hover:text-foreground'
-                "
-                (click)="store.historyWindow.set(w); store.historyZoom.set(null)"
-                [attr.data-testid]="'history-window-' + w"
-              >
-                {{ windowLabel[w] }}
-              </button>
-            }
-          </div>
-          @if (store.historyZoom(); as z) {
-            <p
-              class="m-0 mb-2 flex flex-wrap items-center gap-2 text-[12px] text-muted-foreground"
-              data-testid="history-zoom"
-            >
-              <span>Zoomed to {{ zoomLabel(z) }}</span>
-              <button
-                type="button"
-                class="rounded-full border border-border px-2.5 py-0.5 text-foreground hover:bg-muted"
-                (click)="store.historyZoom.set(null)"
-                data-testid="history-zoom-reset"
-              >
-                Reset
-              </button>
-            </p>
-          } @else {
-            <p class="m-0 mb-2 text-[12px] text-muted-foreground">
-              Drag across the chart to zoom into a stretch.
-            </p>
-          }
-          <app-fleet-history
-            [points]="points()"
-            [decisions]="chartDecisions()"
-            [monthlyCap]="cap()"
-            (zoomed)="store.historyZoom.set($event)"
-          />
-          <app-fleet-load-chart [points]="points()" />
-
-          @if (unpricedNote(); as note) {
-            <p
-              class="m-0 max-w-prose text-[13px] text-muted-foreground"
-              data-testid="unbilled-note"
-            >
-              {{ note }}
-            </p>
-          }
-
-          @if (orphanNote(); as note) {
-            <p class="m-0 max-w-prose text-[13px] text-muted-foreground" data-testid="orphan-note">
-              {{ note }}
-            </p>
-          }
-        }
-
-        <section class="space-y-2" data-testid="decision-log">
-          <h2 class="text-label m-0">Decision log</h2>
-
-          @if (decisionsLoading()) {
-            <app-section-skeleton
-              variant="table"
-              [count]="3"
-              label="the decision log"
-              testid="decisions"
-            />
-          } @else if (decisionsFailed()) {
-            <app-section-failure
-              [message]="decisionsFailed() ?? ''"
-              testid="decisions"
-              (retry)="store.reload()"
-            />
-          } @else {
+      <div class="fl-stack" data-testid="tab-history">
+        <fl-panel title="Fleet over time">
+          @if (!historyLoading() && !historyFailed()) {
             <div
-              class="mb-2 flex flex-wrap gap-1.5"
+              panelActions
+              class="fl-segmented"
               role="group"
-              aria-label="Show"
-              data-testid="decision-filter"
+              aria-label="Span"
+              data-testid="history-window"
             >
-              @for (f of filters; track f.key) {
+              @for (w of windows; track w) {
                 <button
                   type="button"
-                  class="rounded-full border px-2.5 py-0.5 text-[12px]"
-                  [class]="
-                    filter() === f.key
-                      ? 'border-primary bg-primary/10 text-foreground'
-                      : 'border-border text-muted-foreground hover:text-foreground'
-                  "
-                  (click)="setFilter(f.key)"
-                  [attr.data-testid]="'decision-filter-' + f.key"
+                  [attr.aria-pressed]="store.historyWindow() === w"
+                  (click)="store.historyWindow.set(w); store.historyZoom.set(null)"
+                  [attr.data-testid]="'history-window-' + w"
                 >
-                  {{ f.label }}
+                  {{ windowLabel[w] }}
                 </button>
               }
             </div>
-            <div [class]="t.card">
-              <div [class]="t.scroll">
-                <table [class]="t.table">
-                  <caption [class]="t.captionTop">
-                    Newest first. The top row is where the group stands now.
-                  </caption>
-                  <thead>
-                    <tr [class]="t.headRow">
-                      <th scope="col" [class]="t.th">When</th>
-                      <th scope="col" [class]="t.th">Force · outcome</th>
-                      <th scope="col" [class]="t.th">Saw</th>
-                      <th scope="col" [class]="t.th">Did · why</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of log(); track row.decision.id) {
-                      <tr
-                        [class]="t.row"
-                        [attr.data-testid]="'decision-row-' + row.decision.id"
-                        [attr.data-outcome]="row.decision.outcome"
-                      >
-                        <th scope="row" [class]="t.td + ' whitespace-nowrap font-normal'">
-                          <span class="tabular-nums">{{ row.when }}</span>
-                        </th>
-                        <td [class]="t.td">
-                          <span [class]="t.pill + ' w-fit ' + row.outcomePill">
-                            {{ row.decision.force }} ·
-                            {{ outcomeText(row.decision.outcome) }}
-                          </span>
-                        </td>
-                        <td [class]="t.tdMuted">{{ row.decision.saw }}</td>
-                        <td [class]="t.td">
-                          <span class="flex flex-col gap-0.5">
-                            <span>{{ row.decision.did }}</span>
-                            <span [class]="t.note">{{ row.decision.why }}</span>
-                            @if (row.decision.force !== 'fleet' && row.decision.operation; as op) {
-                              <span
-                                class="inline-flex flex-wrap items-center gap-1.5 text-[12px]"
-                                [attr.data-testid]="'decision-operation-' + row.decision.id"
-                              >
-                                <span [class]="operationTone(op.state)">{{
-                                  operationLabel(op)
-                                }}</span>
-                                @if (operationDetail(op); as detail) {
-                                  <span class="text-muted-foreground">— {{ detail }}</span>
-                                }
-                              </span>
-                            }
-                          </span>
-                        </td>
-                      </tr>
-                    } @empty {
-                      <tr [class]="t.row">
-                        <td [class]="t.tdMuted" colspan="4" data-testid="log-empty">
-                          Nothing decided yet — it has never had to act.
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            @if (more()) {
-              <button
-                type="button"
-                class="mt-2 rounded-md border border-border px-3 py-1.5 text-[13px] text-muted-foreground hover:text-foreground disabled:opacity-50"
-                [disabled]="paging()"
-                (click)="loadOlder()"
-                data-testid="decisions-older"
-              >
-                {{ paging() ? 'Loading…' : 'Load older' }}
-              </button>
-            }
           }
-        </section>
+
+          <div class="flex flex-col gap-4">
+            <p class="m-0 max-w-prose text-fl-body-sm text-fl-ink-muted" data-testid="history-lead">
+              {{ lead() }}
+            </p>
+
+            @if (historyLoading()) {
+              <app-section-skeleton
+                variant="table"
+                [count]="4"
+                label="the fleet over time"
+                testid="history"
+              />
+            } @else if (historyFailed()) {
+              <app-section-failure
+                [message]="historyFailed() ?? ''"
+                testid="history"
+                (retry)="store.reload()"
+              />
+            } @else {
+              @if (store.historyZoom(); as z) {
+                <p
+                  class="m-0 flex flex-wrap items-center gap-2 text-fl-caption text-fl-ink-muted"
+                  data-testid="history-zoom"
+                >
+                  <span>Zoomed to {{ zoomLabel(z) }}</span>
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    (click)="store.historyZoom.set(null)"
+                    data-testid="history-zoom-reset"
+                  >
+                    Reset
+                  </button>
+                </p>
+              } @else {
+                <p class="m-0 text-fl-caption text-fl-ink-muted">
+                  Drag across the chart to zoom into a stretch.
+                </p>
+              }
+              <app-fleet-history
+                [points]="points()"
+                [decisions]="chartDecisions()"
+                [monthlyCap]="cap()"
+                (zoomed)="store.historyZoom.set($event)"
+              />
+              <app-fleet-load-chart [points]="points()" />
+
+              @if (unpricedNote(); as note) {
+                <p
+                  class="m-0 max-w-prose text-fl-body-sm text-fl-ink-muted"
+                  data-testid="unbilled-note"
+                >
+                  {{ note }}
+                </p>
+              }
+
+              @if (orphanNote(); as note) {
+                <p
+                  class="m-0 max-w-prose text-fl-body-sm text-fl-ink-muted"
+                  data-testid="orphan-note"
+                >
+                  {{ note }}
+                </p>
+              }
+            }
+          </div>
+        </fl-panel>
+
+        <app-history-decision-log
+          [rows]="log()"
+          [filters]="filters"
+          [filter]="filter()"
+          [loading]="decisionsLoading()"
+          [failed]="decisionsFailed()"
+          [more]="more()"
+          [paging]="paging()"
+          (filterChange)="setFilter($event)"
+          (retry)="store.reload()"
+          (older)="loadOlder()"
+        />
       </div>
     } @else {
-      <p class="m-0 text-sm text-muted-foreground" data-testid="tab-history-no-group">
-        No such group.
-      </p>
+      <fl-panel data-testid="tab-history-no-group">
+        <fl-empty-state title="No such group" />
+      </fl-panel>
     }
   `,
 })
@@ -260,20 +157,18 @@ export class ScalingHistoryTabComponent {
     '30d': '30 days',
   };
 
-  protected readonly filters = [
+  protected readonly filters: readonly (LogFilter & { outcome?: string })[] = [
     { key: 'all', label: 'All', outcome: undefined },
     { key: 'nodes', label: 'Nodes', outcome: 'nodes' },
     { key: 'alarms', label: 'Alarms', outcome: 'alerted' },
     { key: 'declines', label: 'Declines', outcome: 'declined' },
     { key: 'changes', label: 'Changes', outcome: 'changed' },
-  ] as const;
-  protected readonly filter = signal<(typeof this.filters)[number]['key']>('all');
+  ];
+  protected readonly filter = signal<string>('all');
   /** Rows read past the store's first page, or for a filter the store does not apply. */
   private readonly extra = signal<ScalingDecision[] | null>(null);
   protected readonly paging = signal(false);
   private readonly exhausted = signal(false);
-
-  protected readonly t = TABLE;
 
   protected readonly group = computed<SectionGroup | null>(() => this.store.group().data);
 
@@ -334,7 +229,7 @@ export class ScalingHistoryTabComponent {
     });
   }
 
-  protected async setFilter(key: (typeof this.filters)[number]['key']): Promise<void> {
+  protected async setFilter(key: string): Promise<void> {
     this.filter.set(key);
     this.exhausted.set(false);
     if (key === 'all') {
@@ -383,7 +278,7 @@ export class ScalingHistoryTabComponent {
       return 'The spend view is flat at zero and stays there. Flui never saw a bill for these machines, and a run rate it invented would be worse than no line at all.';
     }
     if (all) {
-      return 'The spend view is flat at zero because no node in this window carries a price — unpriced, not free. Nothing here says the fleet cost nothing.';
+      return 'The spend view is flat at zero because no node in this window carries a price: unpriced, not free. Nothing here says the fleet cost nothing.';
     }
     return `The spend line covers only the priced nodes: up to ${unpriced} of them carry no price in this window, so what it draws is a floor rather than the bill.`;
   });
@@ -410,7 +305,7 @@ export class ScalingHistoryTabComponent {
       ? 'an alarm Flui raised, naming a machine, or one somebody created in the provider panel and joined'
       : 'an alarm Flui raised, naming a requirement, or a machine somebody attached';
 
-    return `Nothing here added anything. Every entry is ${what} — which makes this the only record of who changed the fleet and why, and the most useful of the four tabs on a cluster like this one.`;
+    return `Nothing here added anything. Every entry is ${what}. That makes this the only record of who changed the fleet and why, and the most useful of the four tabs on a cluster like this one.`;
   });
 
   protected readonly log = computed<LogRow[]>(() => {
@@ -429,36 +324,8 @@ export class ScalingHistoryTabComponent {
             ? ` · ×${decision.repeats} since ${new Date(decision.since).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
             : ''
         }`,
-        outcomePill: this.outcomePill(decision.outcome),
+        outcome: `${decision.force} · ${outcomeText(decision.outcome)}`,
+        tone: outcomeTone(decision.outcome),
       }));
   });
-
-  protected readonly operationLabel = operationLabel;
-  protected readonly outcomeText = outcomeText;
-  protected readonly operationDetail = operationDetail;
-  protected readonly operationTone = operationTone;
-
-  private outcomePill(outcome: ScalingDecision['outcome']): string {
-    switch (outcome) {
-      case 'added':
-      case 'replaced':
-        return 'badge-success';
-      case 'removed':
-        return 'bg-muted text-muted-foreground';
-      case 'alerted':
-        return 'badge-error';
-      case 'declined':
-        return 'bg-amber-500/15 text-amber-600';
-      case 'changed':
-        return 'bg-violet-500/15 text-violet-700';
-      case 'node-joined':
-        return 'badge-success';
-      case 'purchase-failed':
-        return 'badge-error';
-      case 'node-ordered':
-      case 'node-drained':
-      case 'node-removed':
-        return 'bg-sky-500/15 text-sky-700';
-    }
-  }
 }

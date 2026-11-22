@@ -1,7 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideClock } from '@ng-icons/lucide';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import {
   ArchitectureBadgeComponent,
@@ -9,6 +7,12 @@ import {
 } from '../../../shared/components/architecture-badge.component';
 import { AvailabilityOutlook } from '../../model/scaling-group.models';
 import { SectionGroup, ShapeSpec } from '../../model/scaling-section.models';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 import { GroupDraftStore } from './group-draft.store';
 import { ScalingGroupStore } from './scaling-group.store';
 import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
@@ -16,8 +20,7 @@ import {
   CatalogueState,
   STALE_AFTER_SECONDS,
   STATE_LABEL,
-  STATE_PILL,
-  TABLE,
+  STATE_TONE,
   heldFor,
   readingAge,
   refusesWholeCatalogue,
@@ -42,46 +45,51 @@ interface MarketRow {
 
 @Component({
   selector: 'app-scaling-market-tab',
-  standalone: true,
   imports: [
-    NgIcon,
     RouterLink,
     ExplainComponent,
     SectionFailureComponent,
     SectionSkeletonComponent,
     ArchitectureBadgeComponent,
+    FlAlert,
+    FlPanel,
+    FlEmptyState,
+    FlTable,
+    FlButton,
+    FlStatus,
   ],
-  providers: [provideIcons({ lucideClock })],
-  host: { class: 'block' },
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'fl-stack' },
   template: `
     @if (group(); as g) {
-      <section class="space-y-3" data-testid="market-tab">
-        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 class="text-label m-0">Catalogue</h2>
-          <p class="m-0 text-[12px] text-muted-foreground" data-testid="market-provider">
-            Read from
-            <span class="font-mono text-foreground">{{ g.capability.provider }}</span>.
-          </p>
-        </div>
-
+      <div class="fl-stack" data-testid="market-tab">
         @if (!g.capability.hasCatalogue) {
-          <div class="card-surface p-6" data-testid="market-none">
-            <p class="m-0 max-w-prose text-sm text-foreground">There is no market to read.</p>
-            <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
-              {{ g.clusterName }} runs your own machines, so there are no prices and no availability
-              to read. What a machine has to hold is on the group tab.
-            </p>
-            <a
-              [routerLink]="['/scaling', g.id, 'group']"
-              class="card-link"
-              data-testid="market-none-to-group"
+          <fl-panel title="Machines" data-testid="market-none">
+            <fl-empty-state
+              title="There is no market to read"
+              [body]="
+                g.clusterName +
+                ' runs your own machines, so there are no prices and no availability to read. What a machine has to hold is on the Group tab.'
+              "
             >
-              What a machine has to hold
-            </a>
-          </div>
+              <a
+                flButton
+                size="sm"
+                [routerLink]="['/scaling', g.id, 'group']"
+                data-testid="market-none-to-group"
+              >
+                What a machine has to hold
+              </a>
+            </fl-empty-state>
+          </fl-panel>
         } @else if (loading()) {
-          <app-section-skeleton variant="table" [count]="4" label="the catalogue" testid="market" />
+          <fl-panel title="Catalogue" [flush]="true">
+            <app-section-skeleton
+              variant="table"
+              [count]="4"
+              label="the catalogue"
+              testid="market"
+            />
+          </fl-panel>
         } @else if (failed()) {
           <app-section-failure
             [message]="failed() ?? ''"
@@ -89,189 +97,187 @@ interface MarketRow {
             (retry)="store.reload()"
           />
         } @else {
-          <app-explain
-            [floating]="true"
-            label="The catalogue informs; it never decides."
-            labelClass="text-[13px] text-muted-foreground"
-            testid="informs-not-decides"
-          >
-            A machine listed as up can still be refused when Flui tries to add it.
-          </app-explain>
-
           @if (unread(); as catalogue) {
-            <p
-              class="m-0 max-w-prose border-l-2 border-l-border py-1 pl-3 text-[13px] leading-relaxed text-muted-foreground"
+            <fl-alert
+              [tone]="catalogue.reading === 'unreachable' ? 'warning' : 'info'"
+              title="The catalogue was not read"
               [attr.data-reading]="catalogue.reading"
               data-testid="market-reading"
             >
               {{ catalogue.says }}
-            </p>
+            </fl-alert>
           }
 
-          <div [class]="t.card">
-            <div [class]="t.scroll">
-              <table [class]="t.table">
-                <caption [class]="t.caption">
-                  Every row carries the age of its own reading. Nothing here is live.
-                </caption>
-                <thead>
-                  <tr [class]="t.headRow">
-                    <th scope="col" [class]="t.th">Machine</th>
-                    <th scope="col" [class]="t.th">State</th>
-                    <th scope="col" [class]="t.th">Up in</th>
-                    <th scope="col" [class]="t.th">Down in</th>
-                    <th scope="col" [class]="t.thNum">
-                      <app-explain
-                        [floating]="true"
-                        label="Read"
-                        labelClass="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-                        testid="read-why"
-                      >
-                        A machine read ten minutes ago may have sold out since.
-                      </app-explain>
-                    </th>
-                    <th scope="col" [class]="t.th">In this group</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (row of rows(); track row.shape) {
-                    <tr
-                      [class]="t.row"
-                      [attr.data-testid]="'shape-' + row.shape"
-                      [attr.data-state]="row.state"
-                    >
-                      <th scope="row" [class]="t.td + ' font-normal'">
-                        <span class="inline-flex items-center gap-1.5">
-                          <span [class]="t.mono">{{ row.shape }}</span>
-                          <app-architecture-badge [architecture]="row.architecture" />
-                        </span>
-                        @if (row.spec) {
-                          <span
-                            class="block text-[12px] text-muted-foreground"
-                            [attr.data-testid]="'spec-' + row.shape"
-                            >{{ row.spec }}</span
-                          >
-                        }
-                      </th>
-                      <td [class]="t.td">
-                        <span
-                          [class]="t.pill + ' w-fit ' + pill(row.state)"
-                          [attr.data-testid]="'state-' + row.shape"
-                        >
-                          {{ row.stateLabel }}
-                        </span>
-                      </td>
-                      <td [class]="t.td">
-                        @if (row.up.length) {
-                          <span class="flex flex-wrap gap-1">
-                            @for (region of row.up; track region) {
-                              <span
-                                class="status-healthy inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px]"
-                                [attr.data-testid]="'up-' + row.shape + '-' + region"
-                              >
-                                <span class="dot-healthy h-1.5 w-1.5 rounded-full"></span>
-                                {{ region }}
-                              </span>
-                            }
-                          </span>
-                        } @else {
-                          <span class="text-muted-foreground">nowhere</span>
-                        }
-                      </td>
-                      <td [class]="t.td">
-                        @if (row.down.length) {
-                          <span class="flex flex-wrap gap-1">
-                            @for (region of row.down; track region) {
-                              <span
-                                class="status-error inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px]"
-                                [attr.data-testid]="'down-' + row.shape + '-' + region"
-                              >
-                                <span class="dot-error h-1.5 w-1.5 rounded-full"></span>
-                                {{ region }}
-                              </span>
-                            }
-                          </span>
-                        } @else {
-                          <span class="text-muted-foreground">nowhere</span>
-                        }
-                      </td>
-                      <td [class]="t.tdNum">
-                        <span
-                          class="inline-flex items-center gap-1 tabular-nums"
-                          [class]="row.stale ? 'text-amber-600' : 'text-muted-foreground'"
-                          [attr.data-testid]="'read-' + row.shape"
-                        >
-                          <ng-icon name="lucideClock" class="h-3 w-3" />
-                          {{ row.age }}
-                        </span>
-                      </td>
-                      <td [class]="t.td">
-                        <span
-                          class="flex flex-col gap-0.5"
-                          [attr.data-testid]="'allowed-' + row.shape"
-                          [attr.data-allowance]="row.allowance"
-                        >
-                          @switch (row.allowance) {
-                            @case ('preferred') {
-                              <span class="tabular-nums text-foreground">
-                                preference {{ row.rank }}
-                              </span>
-                            }
-                            @case ('refused-by-limit') {
-                              <span class="text-destructive">refused by limit</span>
-                            }
-                            @default {
-                              <span class="text-muted-foreground">not on the list</span>
-                            }
-                          }
-                          @if (row.awaited) {
-                            <span [class]="t.note">a standing order waits on it</span>
-                          }
-                        </span>
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr [class]="t.row">
-                      <td [class]="t.tdMuted" colspan="6" data-testid="market-empty">
-                        {{ emptyLine() }}
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          @if (armWarning(); as warning) {
-            <p
-              class="m-0 text-[12px] text-muted-foreground"
-              data-testid="market-architecture-warning"
+          <fl-panel title="Catalogue" [count]="rows().length" [flush]="true">
+            <span
+              panelActions
+              class="text-fl-body-sm text-fl-ink-muted"
+              data-testid="market-provider"
             >
-              {{ warning }}
-            </p>
-          }
+              Read from <span class="fl-mono text-fl-ink">{{ g.capability.provider }}</span>
+            </span>
+
+            <div class="border-b border-fl-border px-4 py-3">
+              <app-explain
+                [floating]="true"
+                label="The catalogue informs; it never decides."
+                labelClass="text-fl-body-sm text-fl-ink-muted"
+                testid="informs-not-decides"
+              >
+                A machine listed as up can still be refused when Flui tries to add it.
+              </app-explain>
+            </div>
+
+            @if (rows().length) {
+              <div class="fl-table-wrap">
+                <table flTable density="dense">
+                  <thead>
+                    <tr>
+                      <th scope="col">Machine</th>
+                      <th scope="col">State</th>
+                      <th scope="col">Up in</th>
+                      <th scope="col">Down in</th>
+                      <th scope="col" class="is-num">
+                        <app-explain
+                          [floating]="true"
+                          label="Read"
+                          labelClass="text-fl-caption font-semibold"
+                          testid="read-why"
+                        >
+                          A machine read ten minutes ago may have sold out since.
+                        </app-explain>
+                      </th>
+                      <th scope="col">In this group</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of rows(); track row.shape) {
+                      <tr [attr.data-testid]="'shape-' + row.shape" [attr.data-state]="row.state">
+                        <th scope="row" class="font-normal">
+                          <span class="inline-flex items-center gap-1.5">
+                            <span class="fl-mono">{{ row.shape }}</span>
+                            <app-architecture-badge [architecture]="row.architecture" />
+                          </span>
+                          @if (row.spec) {
+                            <span
+                              class="block fl-mono text-fl-ink-muted"
+                              [attr.data-testid]="'spec-' + row.shape"
+                              >{{ row.spec }}</span
+                            >
+                          }
+                        </th>
+                        <td>
+                          <fl-status
+                            [tone]="tone(row.state)"
+                            [label]="row.stateLabel"
+                            [attr.data-testid]="'state-' + row.shape"
+                          />
+                        </td>
+                        <td class="whitespace-normal">
+                          @if (row.up.length) {
+                            <span class="flex flex-wrap gap-x-2 gap-y-1">
+                              @for (region of row.up; track region) {
+                                <span
+                                  class="fl-mono"
+                                  [attr.data-testid]="'up-' + row.shape + '-' + region"
+                                  >{{ region }}</span
+                                >
+                              }
+                            </span>
+                          } @else {
+                            <span class="text-fl-ink-muted">Nowhere</span>
+                          }
+                        </td>
+                        <td class="whitespace-normal">
+                          @if (row.down.length) {
+                            <span class="flex flex-wrap gap-x-2 gap-y-1">
+                              @for (region of row.down; track region) {
+                                <span
+                                  class="fl-mono"
+                                  [attr.data-testid]="'down-' + row.shape + '-' + region"
+                                  >{{ region }}</span
+                                >
+                              }
+                            </span>
+                          } @else {
+                            <span class="text-fl-ink-muted">Nowhere</span>
+                          }
+                        </td>
+                        <td class="is-num" [attr.data-testid]="'read-' + row.shape">
+                          @if (row.stale) {
+                            <fl-status tone="warning" class="fl-mono" [label]="row.age" />
+                          } @else {
+                            <span class="fl-mono text-fl-ink-muted">{{ row.age }}</span>
+                          }
+                        </td>
+                        <td>
+                          <span
+                            class="flex flex-col gap-0.5"
+                            [attr.data-testid]="'allowed-' + row.shape"
+                            [attr.data-allowance]="row.allowance"
+                          >
+                            @switch (row.allowance) {
+                              @case ('preferred') {
+                                <span class="fl-num">preference {{ row.rank }}</span>
+                              }
+                              @case ('refused-by-limit') {
+                                <fl-status tone="error" label="Refused by limit" />
+                              }
+                              @default {
+                                <span class="text-fl-ink-muted">Not on the list</span>
+                              }
+                            }
+                            @if (row.awaited) {
+                              <span class="text-fl-caption text-fl-ink-muted"
+                                >A standing order waits on it</span
+                              >
+                            }
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <fl-empty-state
+                [compact]="true"
+                title="No machines to list"
+                [body]="emptyLine()"
+                data-testid="market-empty"
+              />
+            }
+
+            <div class="flex flex-col gap-1 border-t border-fl-border px-4 py-3">
+              <p class="m-0 text-fl-caption text-fl-ink-muted">
+                Every row carries the age of its own reading. Nothing here is live.
+              </p>
+              @if (armWarning(); as warning) {
+                <p
+                  class="m-0 text-fl-caption text-fl-ink-muted"
+                  data-testid="market-architecture-warning"
+                >
+                  {{ warning }}
+                </p>
+              }
+            </div>
+          </fl-panel>
         }
-      </section>
+      </div>
     } @else {
-      <section class="card-surface p-6" data-testid="market-tab-unknown">
-        <h2 class="m-0 text-base font-medium text-foreground">No such scaling group</h2>
-        <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
-          Nothing is configured under
-          <span class="font-mono text-foreground">{{ groupId() ?? 'no id' }}</span>, so there is no
-          provider whose catalogue to read.
-        </p>
-        <a routerLink="/scaling" class="card-link" data-testid="back-to-scaling">
-          Back to every cluster
-        </a>
-      </section>
+      <fl-panel data-testid="market-tab-unknown">
+        <fl-empty-state title="No such scaling group" [body]="unknownBody()">
+          <a flButton size="sm" routerLink="/scaling" data-testid="back-to-scaling">
+            Back to every cluster
+          </a>
+        </fl-empty-state>
+      </fl-panel>
     }
   `,
 })
 export class ScalingMarketTabComponent {
   protected readonly store = inject(ScalingGroupStore);
   private readonly drafts = inject(GroupDraftStore);
-
-  protected readonly t = TABLE;
 
   protected readonly groupId = this.store.groupId;
 
@@ -350,12 +356,17 @@ export class ScalingMarketTabComponent {
     const catalogue = this.reading();
     if (!catalogue) return 'Nothing has been read yet.';
     if (catalogue.reading !== 'read') return 'Nothing to list.';
-    return `Read, and it names no machine this group may add — an answer about the group's list, not about the provider.`;
+    return "Read, and it names no machine this group may add. That is an answer about the group's list, not about the provider.";
   });
 
-  protected pill(state: CatalogueState): string {
-    return STATE_PILL[state];
+  protected tone(state: CatalogueState): StatusTone {
+    return STATE_TONE[state];
   }
+
+  protected readonly unknownBody = computed(
+    () =>
+      `Nothing is configured under ${this.groupId() ?? 'this ID'}, so there is no provider whose catalogue to read.`,
+  );
 
   private allowance(onList: boolean, refused: boolean): Allowance {
     if (!onList) return 'not-listed';

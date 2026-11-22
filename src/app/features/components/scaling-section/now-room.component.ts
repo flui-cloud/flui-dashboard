@@ -1,10 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingGroupStore } from './scaling-group.store';
 import { ExplainComponent } from '../../../shared/components/explain.component';
-import { TABLE } from './now-format';
 import { NodeRoom } from '../../model/scaling-group.models';
 import { TIGHT_PERCENT, cores, gib, nodeUsageLine, roomLine, share } from './room-format';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlStatus } from '../../../ui/primitives/status';
 
 /**
  * How much room each node has left for new apps.
@@ -14,113 +17,131 @@ import { TIGHT_PERCENT, cores, gib, nodeUsageLine, roomLine, share } from './roo
  */
 @Component({
   selector: 'app-scaling-now-room',
-  standalone: true,
-  imports: [ExplainComponent],
+  imports: [ExplainComponent, FlPanel, FlTable, FlUsageBar, FlStatus],
   host: { class: 'block' },
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (room(); as r) {
-      <section class="space-y-2" data-testid="room">
-        <h2 class="m-0 flex items-center gap-1.5">
-          <app-explain [floating]="true" label="Room" labelClass="text-label" testid="room-why">
-            What apps reserve on each node against what it can hold, after the reserve kept for the
-            system. This is what decides whether the next app fits or Flui adds a node. Below each
-            node: what the apps use now, and what they may grow to at their limits.
-          </app-explain>
-        </h2>
+      <fl-panel title="Room" [count]="r.nodes.length || null" [flush]="true" data-testid="room">
+        <app-explain
+          panelActions
+          [floating]="true"
+          label="How it is counted"
+          labelClass="text-fl-body-sm text-fl-ink-muted"
+          testid="room-why"
+        >
+          What apps reserve on each node against what it can hold, after the reserve kept for the
+          system. This is what decides whether the next app fits or Flui adds a node. Beside each
+          node: what the apps use now, and what they may grow to at their limits.
+        </app-explain>
 
-        <div [class]="t.card">
-          <p class="m-0 text-sm text-foreground" data-testid="room-line">
-            {{ line() }}
-          </p>
+        <p class="m-0 px-4 py-3 text-fl-body-sm text-fl-ink" data-testid="room-line">
+          {{ line() }}
+        </p>
 
-          <ul class="m-0 mt-3 list-none space-y-2.5 p-0">
-            @for (node of r.nodes; track node.name) {
-              <li
-                class="grid grid-cols-[minmax(10rem,18rem)_1fr] items-center gap-x-4 gap-y-1"
-                [attr.data-testid]="'room-node-' + node.name"
-              >
-                <span class="min-w-0">
-                  <span [class]="t.mono" class="block truncate">{{ node.name }}</span>
-                  <span class="text-[12px] text-muted-foreground">
-                    {{ node.role }}
-                    @if (!node.takesWork) {
-                      · takes no new apps
-                    }
-                  </span>
-                </span>
-                <span class="grid gap-1">
+        <div class="fl-table-wrap border-t border-fl-border">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Node</th>
+                <th scope="col">Role</th>
+                <th scope="col">Memory reserved</th>
+                <th scope="col">CPU reserved</th>
+                <th scope="col">In use and at limits</th>
+                <th scope="col">Apps</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (node of r.nodes; track node.name) {
+                <tr [attr.data-testid]="'room-node-' + node.name">
+                  <td class="fl-mono">{{ node.name }}</td>
+                  <td>
+                    <span class="flex flex-col">
+                      <span>{{ node.role }}</span>
+                      @if (!node.takesWork) {
+                        <span class="text-fl-caption text-fl-ink-muted">Takes no new apps</span>
+                      }
+                    </span>
+                  </td>
                   @for (bar of bars(node); track bar.label) {
-                    <span class="grid grid-cols-[4rem_1fr_9rem] items-center gap-2 text-[12px]">
-                      <span class="text-muted-foreground">{{ bar.label }}</span>
-                      <span
-                        class="h-1.5 overflow-hidden rounded-full bg-muted"
-                        role="img"
-                        [attr.aria-label]="bar.label + ' ' + bar.text"
-                      >
+                    <td>
+                      <fl-usage-bar
+                        [percent]="bar.percent"
+                        [label]="bar.label + ' reserved on ' + node.name"
+                        [aside]="bar.text"
+                        [warnAt]="tight"
+                        [criticalAt]="100"
+                      />
+                    </td>
+                  }
+                  <td class="is-wrap">
+                    @if (usage(node); as u) {
+                      @if (u.overcommitted) {
+                        <fl-status
+                          class="whitespace-normal"
+                          tone="warning"
+                          [label]="u.text"
+                          [attr.data-testid]="'room-usage-' + node.name"
+                        />
+                      } @else {
                         <span
-                          class="block h-full rounded-full"
-                          [class]="bar.tight ? 'bg-amber-500' : 'bg-sky-600'"
-                          [style.width.%]="bar.percent"
-                        ></span>
+                          class="text-fl-caption text-fl-ink-secondary"
+                          [attr.data-testid]="'room-usage-' + node.name"
+                          >{{ u.text }}</span
+                        >
+                      }
+                    } @else {
+                      <span class="text-fl-ink-muted">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (node.apps?.length) {
+                      <span
+                        class="fl-cell-clip"
+                        [title]="node.apps!.join(', ')"
+                        [attr.data-testid]="'room-apps-' + node.name"
+                      >
+                        {{
+                          node.apps!.length === 1
+                            ? node.apps![0]
+                            : node.apps!.length + ' apps: ' + node.apps!.join(', ')
+                        }}
                       </span>
-                      <span class="tabular-nums text-muted-foreground">{{ bar.text }}</span>
-                    </span>
-                  }
-                  @if (usage(node); as u) {
-                    <span
-                      class="text-[12px]"
-                      [class]="u.overcommitted ? 'text-amber-700' : 'text-muted-foreground'"
-                      [attr.data-testid]="'room-usage-' + node.name"
-                      >{{ u.text }}</span
-                    >
-                  }
-                  @if (node.apps?.length) {
-                    <span
-                      class="truncate text-[12px] text-muted-foreground"
-                      [title]="node.apps!.join(', ')"
-                      [attr.data-testid]="'room-apps-' + node.name"
-                    >
-                      Runs
-                      {{
-                        node.apps!.length === 1
-                          ? node.apps![0]
-                          : node.apps!.length + ' apps: ' + node.apps!.join(', ')
-                      }}
-                    </span>
-                  }
-                </span>
-              </li>
-            }
-            @if (group().purchase?.state === 'buying') {
-              <li
-                class="grid grid-cols-[minmax(10rem,18rem)_1fr] items-center gap-x-4 gap-y-1 opacity-60"
-                data-testid="room-node-joining"
-              >
-                <span class="min-w-0">
-                  <span [class]="t.mono" class="block truncate"
-                    >{{ group().purchase?.shape ?? 'new node'
-                    }}{{ group().purchase?.region ? ' · ' + group().purchase?.region : '' }}</span
-                  >
-                  <span class="text-[12px] text-muted-foreground"
-                    >worker · joining ({{ group().purchase?.progress }}%)</span
-                  >
-                </span>
-                <span class="text-[12px] text-muted-foreground"
-                  >Takes apps once it has joined.</span
-                >
-              </li>
-            }
-          </ul>
+                    } @else {
+                      <span class="text-fl-ink-muted">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+              @if (group().purchase?.state === 'buying') {
+                <tr data-testid="room-node-joining">
+                  <td class="fl-mono">
+                    {{ group().purchase?.shape ?? 'new node'
+                    }}{{ group().purchase?.region ? ' · ' + group().purchase?.region : '' }}
+                  </td>
+                  <td>worker</td>
+                  <td colspan="4">
+                    <fl-status
+                      tone="progress"
+                      [label]="
+                        'Joining, ' +
+                        group().purchase?.progress +
+                        '%. Takes apps once it has joined.'
+                      "
+                    />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
-      </section>
+      </fl-panel>
     }
   `,
 })
 export class ScalingNowRoomComponent {
   readonly group = input.required<SectionGroup>();
   private readonly store = inject(ScalingGroupStore);
-  protected readonly t = TABLE;
+  protected readonly tight = TIGHT_PERCENT;
 
   protected readonly room = computed(() => this.store.preview().data?.room ?? null);
 
@@ -143,13 +164,11 @@ export class ScalingNowRoomComponent {
         label: 'Memory',
         percent: memory,
         text: `${gib(node.requested.memoryMi)} / ${gib(node.allocatable.memoryMi)}`,
-        tight: memory >= TIGHT_PERCENT,
       },
       {
         label: 'CPU',
         percent: cpu,
         text: `${cores(node.requested.cpuMillicores)} / ${cores(node.allocatable.cpuMillicores)}`,
-        tight: cpu >= TIGHT_PERCENT,
       },
     ];
   }

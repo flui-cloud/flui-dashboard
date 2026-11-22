@@ -1,5 +1,6 @@
 import { AvailabilityOutlook, LadderRung, ScalingPreview } from '../../model/scaling-group.models';
 import { SectionGroup } from '../../model/scaling-section.models';
+import { StatusTone } from '../../../ui/primitives/status';
 import { eurHour, heldFor } from './now-format';
 
 export interface LadderRow {
@@ -8,8 +9,7 @@ export interface LadderRow {
   offer: string;
   verdict: string;
   why: string;
-  icon: string;
-  tone: string;
+  tone: StatusTone;
 }
 
 /** Everything a rung's wording depends on, gathered once instead of per row. */
@@ -30,7 +30,6 @@ export function ladderRows(ctx: LadderContext): LadderRow[] {
     offer: offer(rung),
     verdict: verdict(ctx, rung),
     why: why(ctx, rung),
-    icon: icon(ctx, rung.outcome),
     tone: tone(ctx, rung, rung.step === chosenStep),
   }));
 }
@@ -139,24 +138,8 @@ function whyAlert(ctx: LadderContext): string {
     : 'Another machine. Nothing here can name a type.';
 }
 
-function icon(ctx: LadderContext, outcome: LadderRung['outcome']): string {
-  switch (outcome) {
-    case 'would-buy':
-      return withheld(ctx) ? 'lucidePause' : 'lucideCircleCheck';
-    case 'unavailable':
-      return 'lucideCircleDashed';
-    case 'does-not-fit':
-    case 'refused-by-limit':
-      return 'lucideBan';
-    case 'over-budget':
-      return 'lucideEuro';
-    case 'alert':
-      return 'lucideBell';
-  }
-}
-
-function tone(ctx: LadderContext, rung: LadderRung, chosen: boolean): string {
-  if (rung.outcome === 'alert') return 'text-amber-600';
-  if (chosen && withheld(ctx)) return 'text-foreground';
-  return chosen ? 'status-healthy' : 'text-muted-foreground';
+function tone(ctx: LadderContext, rung: LadderRung, chosen: boolean): StatusTone {
+  if (rung.outcome === 'alert') return 'warning';
+  if (chosen && withheld(ctx)) return 'neutral';
+  return chosen ? 'success' : 'neutral';
 }

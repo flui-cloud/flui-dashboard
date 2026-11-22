@@ -1,16 +1,7 @@
-import {
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { JsonPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft } from '@ng-icons/lucide';
 import { FirewallV2Service } from '../../service/firewall-v2.service';
 import { ProvidersService } from '../../service/providers.service';
 import { InfrastructureClustersService } from '../../../core/api/api/infrastructureClusters.service';
@@ -18,28 +9,50 @@ import { ReconciliationStatusBadgeComponent } from './reconciliation-status-badg
 import { DriftIndicatorComponent } from './drift-indicator.component';
 import { FirewallRuleComparisonComponent } from './firewall-rule-comparison.component';
 import { FirewallInlineRuleEditorComponent } from './firewall-inline-rule-editor.component';
+import { FirewallRulesTable } from './firewall-rules-table';
 import {
   FirewallRuleFormData,
   convertRuleResponseToFormData,
 } from '../../model/firewall-v2.models';
+import { FirewallRuleResponseDto } from '../../../core/api/model/models';
 import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+
+const LIST_LINK = '/infrastructure/firewall/clusters';
 
 @Component({
   selector: 'app-firewall-detail',
-  standalone: true,
   imports: [
     MaskIdPipe,
-    CommonModule,
-    NgIcon,
+    JsonPipe,
     ReconciliationStatusBadgeComponent,
     DriftIndicatorComponent,
     FirewallRuleComparisonComponent,
     FirewallInlineRuleEditorComponent,
+    FirewallRulesTable,
+    FlPageHeader,
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlAlert,
+    FlCopyId,
+    FlLoadingState,
+    FlButton,
+    FlSpinner,
+    FlActionsMenu,
   ],
-  viewProviders: [provideIcons({ lucideArrowLeft })],
+  host: { class: 'block' },
   templateUrl: './firewall-detail.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrls: ['./firewall-detail.component.scss'],
 })
 export class FirewallDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -47,6 +60,7 @@ export class FirewallDetailComponent implements OnInit {
   private readonly firewallService = inject(FirewallV2Service);
   private readonly providersService = inject(ProvidersService);
   private readonly clustersApi = inject(InfrastructureClustersService);
+  private readonly confirmService = inject(ConfirmService);
 
   private readonly clusterProvider = signal<string | null>(null);
   readonly firewallCap = computed(() => {
@@ -69,14 +83,32 @@ export class FirewallDetailComponent implements OnInit {
   desiredRules = computed(() => {
     const fw = this.firewall();
     if (!fw?.desiredRules) return [];
-    return fw.desiredRules.map((rule: any) => convertRuleResponseToFormData(rule));
+    return fw.desiredRules.map((rule) =>
+      convertRuleResponseToFormData(rule as FirewallRuleResponseDto),
+    );
   });
 
   appliedRules = computed(() => {
     const fw = this.firewall();
     if (!fw?.lastAppliedRules) return [];
-    return fw.lastAppliedRules.map((rule: any) => convertRuleResponseToFormData(rule));
+    return fw.lastAppliedRules.map((rule) =>
+      convertRuleResponseToFormData(rule as FirewallRuleResponseDto),
+    );
   });
+
+  readonly title = computed(() => {
+    const name = this.firewall()?.clusterInfo?.clusterName;
+    return name ? `${name} firewall` : 'Firewall';
+  });
+
+  readonly breadcrumb = computed<Crumb[]>(() => [
+    { label: 'Cluster firewalls', link: LIST_LINK },
+    { label: this.firewall()?.clusterInfo?.clusterName ?? 'Firewall' },
+  ]);
+
+  readonly moreActions = computed<MenuAction[]>(() => [
+    { id: 'delete', label: 'Delete firewall', danger: true, disabled: this.isDeleting() },
+  ]);
 
   canReconcile = computed(() => {
     const fw = this.firewall();
@@ -127,10 +159,18 @@ export class FirewallDetailComponent implements OnInit {
     }
   }
 
+  onAction(action: string) {
+    if (action === 'delete') void this.deleteFirewall();
+  }
+
   async deleteFirewall() {
-    if (!confirm('Are you sure? This will leave the cluster unprotected!')) {
-      return;
-    }
+    const ok = await this.confirmService.confirm({
+      title: 'Delete this firewall?',
+      body: 'The cluster is left without a firewall and every port is unprotected.',
+      confirmLabel: 'Delete firewall',
+      destructive: true,
+    });
+    if (!ok) return;
 
     const id = this.firewallId();
     if (!id) return;
@@ -139,7 +179,7 @@ export class FirewallDetailComponent implements OnInit {
     try {
       const success = await this.firewallService.deleteFirewall(id);
       if (success) {
-        this.router.navigate(['/infrastructure/firewall/clusters']);
+        this.router.navigate([LIST_LINK]);
       }
     } finally {
       this.isDeleting.set(false);
@@ -175,7 +215,7 @@ export class FirewallDetailComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/infrastructure/firewall/clusters']);
+    this.router.navigate([LIST_LINK]);
   }
 
   formatDate(dateString?: string): string {

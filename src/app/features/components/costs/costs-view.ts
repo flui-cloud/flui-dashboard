@@ -80,3 +80,7 @@ export function monthCell(month: CostMonth | undefined): {
   if (!month) return { spent: null, forecast: null };
   return { spent: month.spentNet, forecast: month.current ? month.forecastNet : null };
 }
+
+export function providerTitle(provider: string): string {
+  return provider.charAt(0).toUpperCase() + provider.slice(1);
+}

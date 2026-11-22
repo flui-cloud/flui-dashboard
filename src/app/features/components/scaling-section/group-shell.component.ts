@@ -1,20 +1,22 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideChartLine,
-  lucideGauge,
-  lucideSettings2,
-  lucideServer,
-} from '@ng-icons/lucide';
+import { ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { GroupDraftStore } from './group-draft.store';
 import { LookOnlyDirective } from '../../../shared/directives/look-only.directive';
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { ScalingGroupStore } from './scaling-group.store';
 import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTabs, TabLink } from '../../../ui/patterns/tabs';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
+import { groupModeStatus } from './scaling-tabs-format';
 
 interface TabMarker {
   count: number;
@@ -24,47 +26,56 @@ interface TabMarker {
 interface ShellTab {
   path: string;
   label: string;
-  icon: string;
   marker: TabMarker | null;
 }
 
 @Component({
   selector: 'app-scaling-group-shell',
-  standalone: true,
   imports: [
     LookOnlyDirective,
     RouterLink,
-    RouterLinkActive,
     RouterOutlet,
-    NgIcon,
     SectionFailureComponent,
     SectionSkeletonComponent,
+    FlAlert,
+    FlCopyId,
+    FlPageHeader,
+    FlPanel,
+    FlEmptyState,
+    FlTabs,
+    FlButton,
+    FlStatus,
   ],
-  providers: [
-    ScalingGroupStore,
-    GroupDraftStore,
-    provideIcons({
-      lucideArrowLeft,
-      lucideChartLine,
-      lucideGauge,
-      lucideSettings2,
-      lucideServer,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [ScalingGroupStore, GroupDraftStore],
   template: `
-    <div class="space-y-5 p-4 md:p-6">
-      <a
-        routerLink="/scaling"
-        class="inline-flex items-center gap-1.5 rounded text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        data-testid="back-to-overview"
-      >
-        <ng-icon name="lucideArrowLeft" class="h-3.5 w-3.5" />
-        All clusters
-      </a>
+    <div class="fl-page">
+      <fl-page-header [title]="title()" [breadcrumb]="breadcrumb()" data-testid="group-header">
+        @if (mode(); as m) {
+          <fl-status headerStatus [tone]="m.tone" [label]="m.label" data-testid="group-status" />
+        }
+        @if (group(); as g) {
+          <div headerMeta class="flex flex-col gap-1.5">
+            <span class="flex flex-wrap items-center gap-x-3.5 gap-y-1">
+              <span class="fl-mono" data-testid="group-cluster">{{ g.clusterName }}</span>
+              <span data-testid="group-provider">{{ g.provider }}</span>
+              <fl-copy-id [value]="g.id" label="group ID" />
+            </span>
+            <span data-testid="group-line">{{ line() }}</span>
+            @if (!g.capability.hasCatalogue) {
+              <span data-testid="no-market-note">
+                No Machines tab: {{ g.provider }} publishes no prices, so this group asks for a
+                requirement instead.
+              </span>
+            }
+          </div>
+        }
+        @if (group()) {
+          <fl-tabs [tabs]="tabLinks()" label="Scaling group" data-testid="group-tabs" />
+        }
+      </fl-page-header>
 
       @if (loading()) {
-        <div class="space-y-5" data-testid="group-loading">
+        <fl-panel data-testid="group-loading">
           <app-section-skeleton
             variant="lines"
             [count]="2"
@@ -77,102 +88,35 @@ interface ShellTab {
             label="this scaling group"
             testid="group-body"
           />
-        </div>
+        </fl-panel>
       } @else if (failed()) {
         <app-section-failure [message]="failed() ?? ''" testid="group" (retry)="store.reload()" />
-      } @else {
-        @if (group(); as g) {
-          <header class="space-y-2" data-testid="group-header">
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1 class="m-0 text-xl font-semibold text-foreground" data-testid="group-name">
-                {{ g.name }}
-              </h1>
-              <span class="font-mono text-[13px] text-muted-foreground" data-testid="group-cluster">
-                {{ g.clusterName }}
-              </span>
-              <span
-                class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-                data-testid="group-provider"
-              >
-                {{ g.provider }}
-              </span>
-            </div>
-
-            <p class="m-0 text-[13px] text-muted-foreground" data-testid="group-line">
-              {{ line() }}
-            </p>
-
-            @if (!g.capability.hasCatalogue) {
-              <p class="m-0 text-[13px] text-muted-foreground" data-testid="no-market-note">
-                No Market tab: {{ g.provider }} publishes no prices, so this group asks for a
-                requirement instead.
-              </p>
-            }
-          </header>
-
-          <div class="relative border-b border-border">
-            <nav
-              class="-mb-px flex gap-1 overflow-x-auto pr-8"
-              aria-label="Scaling group"
-              data-testid="group-tabs"
-            >
-              @for (tab of tabs(); track tab.path) {
-                <a
-                  [routerLink]="[tab.path]"
-                  routerLinkActive
-                  #rla="routerLinkActive"
-                  [routerLinkActiveOptions]="{ exact: true }"
-                  [attr.aria-current]="rla.isActive ? 'page' : null"
-                  [attr.data-testid]="'tab-' + tab.path"
-                  class="inline-flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:px-5"
-                  [class]="
-                    rla.isActive
-                      ? 'border-primary text-foreground'
-                      : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
-                  "
-                >
-                  <ng-icon [name]="tab.icon" class="h-4 w-4 flex-shrink-0" />
-                  <span>{{ tab.label }}</span>
-
-                  @if (tab.marker; as marker) {
-                    @if (marker.count > 1) {
-                      <span
-                        class="inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-amber-500/15 px-1 text-[11px] font-semibold tabular-nums text-amber-600"
-                        [attr.data-testid]="'tab-marker-' + tab.path"
-                        aria-hidden="true"
-                      >
-                        {{ marker.count }}
-                      </span>
-                    } @else {
-                      <span
-                        class="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500"
-                        [attr.data-testid]="'tab-marker-' + tab.path"
-                        aria-hidden="true"
-                      ></span>
-                    }
-                    <span class="sr-only">— {{ marker.why }}</span>
-                  }
-                </a>
+      } @else if (group()) {
+        @if (markers().length) {
+          <fl-alert tone="warning" title="Needs attention" data-testid="group-markers">
+            <ul class="m-0 flex list-none flex-col gap-1 p-0">
+              @for (tab of markers(); track tab.path) {
+                <li [attr.data-testid]="'tab-marker-' + tab.path">
+                  <a class="fl-link" [routerLink]="['/scaling', groupId(), tab.path]">{{
+                    tab.label
+                  }}</a>: {{ tab.marker?.why }}
+                </li>
               }
-            </nav>
-          </div>
+            </ul>
+          </fl-alert>
+        }
 
-          <div [appLookOnly]="sandbox.inSandbox()">
-            <router-outlet />
-          </div>
-        } @else {
-          <section class="card-surface space-y-2 p-6" data-testid="no-such-group">
-            <h1 class="m-0 text-lg font-semibold text-foreground">No such group</h1>
-            <p class="m-0 max-w-prose text-sm text-muted-foreground">
-              Nothing is configured under
-              <span class="font-mono text-foreground">{{ groupId() ?? '—' }}</span>. A cluster
-              without one will not grow, and will raise no alarm when it should have.
-            </p>
-            <a routerLink="/scaling" class="card-link w-fit" data-testid="no-such-group-back">
+        <div [appLookOnly]="sandbox.inSandbox()">
+          <router-outlet />
+        </div>
+      } @else {
+        <fl-panel data-testid="no-such-group">
+          <fl-empty-state title="No such group" [body]="missingBody()">
+            <a flButton size="sm" routerLink="/scaling" data-testid="no-such-group-back">
               Back to all clusters
             </a>
-          </section>
-        }
+          </fl-empty-state>
+        </fl-panel>
       }
     </div>
   `,
@@ -215,6 +159,30 @@ export class ScalingGroupShellComponent {
     return 'Flui can only ask for a machine; a person attaches it.';
   }
 
+  protected readonly title = computed(() => this.group()?.name ?? 'Scaling group');
+
+  protected readonly breadcrumb = computed<Crumb[]>(() => [
+    { label: 'Scaling', link: '/scaling' },
+    { label: this.group()?.name ?? this.groupId() ?? 'Group' },
+  ]);
+
+  protected readonly mode = computed(() => {
+    const g = this.group();
+    return g ? groupModeStatus(g) : null;
+  });
+
+  protected readonly missingBody = computed(
+    () =>
+      `Nothing is configured under ${this.groupId() ?? 'this ID'}. A cluster without one will not grow, and will raise no alarm when it should have.`,
+  );
+
+  protected readonly tabLinks = computed<TabLink[]>(() => {
+    const id = this.groupId();
+    return this.tabs().map((tab) => ({ label: tab.label, link: ['/scaling', id, tab.path] }));
+  });
+
+  protected readonly markers = computed(() => this.tabs().filter((tab) => tab.marker !== null));
+
   protected readonly tabs = computed<ShellTab[]>(() => {
     const g = this.group();
     if (!g) return [];
@@ -223,13 +191,11 @@ export class ScalingGroupShellComponent {
       {
         path: 'now',
         label: 'Now',
-        icon: 'lucideGauge',
         marker: this.nowMarker(g),
       },
       {
         path: 'group',
         label: 'Group',
-        icon: 'lucideSettings2',
         marker: this.groupMarker(g),
       },
     ];
@@ -238,7 +204,6 @@ export class ScalingGroupShellComponent {
       tabs.push({
         path: 'market',
         label: 'Machines',
-        icon: 'lucideServer',
         marker: this.marketMarker(g),
       });
     }
@@ -246,7 +211,6 @@ export class ScalingGroupShellComponent {
     tabs.push({
       path: 'history',
       label: 'History',
-      icon: 'lucideChartLine',
       marker: null,
     });
 
@@ -276,7 +240,7 @@ export class ScalingGroupShellComponent {
     const why: string[] = [];
     if (g.limits.hourlyBillingOnly && g.capability.billing === 'monthly') {
       why.push(
-        `hourly billing only is on, and ${g.provider} bills by the month — it refuses every machine this provider has`,
+        `hourly billing only is on, and ${g.provider} bills by the month so it refuses every machine this provider has`,
       );
     }
     if (g.capability.canProvision && !g.acts.acts) {

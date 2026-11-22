@@ -1,39 +1,25 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
+import { FlPanel } from '../../../ui/patterns/panel';
 import { GroupDraft } from './group-draft';
-import { TABLE } from './scaling-tabs-format';
 import { GroupBoundsRowsComponent } from './group-bounds-rows.component';
 import { GroupCatalogueRowsComponent } from './group-catalogue-rows.component';
 
-/**
- * The settings table: a header, and two halves of rows that each turn on a
- * different fact about the provider.
- */
 @Component({
   selector: 'app-group-settings-table',
-  standalone: true,
-  imports: [GroupBoundsRowsComponent, GroupCatalogueRowsComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, GroupBoundsRowsComponent, GroupCatalogueRowsComponent],
+  host: { class: 'fl-stack' },
   template: `
-    <div [class]="t.card">
-      <div [class]="t.scroll">
-        <table [class]="t.table">
-          <thead>
-            <tr [class]="t.headRow">
-              <th scope="col" [class]="t.th">Setting</th>
-              <th scope="col" [class]="t.th">Value</th>
-              <th scope="col" [class]="t.th">What it means on {{ provider() }}</th>
-            </tr>
-          </thead>
-          <tbody app-group-bounds-rows [draft]="draft()"></tbody>
-          <tbody app-group-catalogue-rows [draft]="draft()"></tbody>
-        </table>
-      </div>
-    </div>
+    <fl-panel title="Provisioning and node limits">
+      <ng-container panelActions><ng-content select="[settingsActions]" /></ng-container>
+      <app-group-bounds-rows [draft]="draft()" />
+    </fl-panel>
+    <fl-panel [title]="'What it may add on ' + provider()">
+      <app-group-catalogue-rows [draft]="draft()" />
+    </fl-panel>
   `,
 })
 export class GroupSettingsTableComponent {
   readonly draft = input.required<GroupDraft>();
 
-  protected readonly t = TABLE;
   protected readonly provider = computed(() => this.draft().provider());
 }

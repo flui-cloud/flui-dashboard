@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ScalingApiService } from '../../service/scaling-api.service';
 import { withoutOrder } from './standing-order-write';
@@ -6,7 +6,14 @@ import { ExplainComponent } from '../../../shared/components/explain.component';
 import { ReplacePlan, StandingOrder } from '../../model/scaling-group.models';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingGroupStore } from './scaling-group.store';
-import { CatalogueState, STATE_LABEL, STATE_PILL, TABLE, heldFor } from './now-format';
+import { CatalogueState, STATE_LABEL, STATE_TONE, heldFor } from './now-format';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { ConfirmService } from '../../../ui/overlays/confirm';
 
 const REPLACE_PLAN: ReplacePlan = {
   steps: [
@@ -38,159 +45,168 @@ interface OrderRow {
   shape: string;
   kindNote: string;
   state: CatalogueState;
+  stateTone: StatusTone;
   where: string;
   status: OrderStatus;
   statusNote: string;
-  statusPill: string;
+  statusTone: StatusTone;
   blocked: BlockedBy[];
   cleared: string;
 }
 
 @Component({
   selector: 'app-scaling-now-orders',
-  standalone: true,
-  imports: [ExplainComponent],
+  imports: [ExplainComponent, FlPanel, FlEmptyState, FlTable, FlButton, FlStatus, FlTag],
   host: { class: 'block' },
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="space-y-2" data-testid="orders">
-      <h2 class="text-label m-0">Standing orders</h2>
+    <fl-panel
+      title="Standing orders"
+      [count]="rows().length || null"
+      [flush]="true"
+      data-testid="orders"
+    >
+      <ng-container panelActions><ng-content /></ng-container>
 
-      <div [class]="t.card">
-        <div [class]="t.scroll">
-          <table [class]="t.table">
+      @if (rows().length === 0) {
+        <fl-empty-state
+          title="No standing orders"
+          [body]="emptyLine()"
+          [compact]="true"
+          data-testid="orders-empty"
+        />
+      } @else {
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
             <thead>
-              <tr [class]="t.headRow">
-                <th scope="col" [class]="t.th">Order</th>
-                <th scope="col" [class]="t.th">Availability</th>
-                <th scope="col" [class]="t.th">
-                  <app-explain
-                    [floating]="true"
-                    label="Status"
-                    labelClass="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-                    testid="status-why"
-                  >
-                    Nothing breaks if one never fires — the fleet just costs more than it had to.
+              <tr>
+                <th scope="col">Order</th>
+                <th scope="col">Availability</th>
+                <th scope="col">
+                  <app-explain [floating]="true" label="Status" labelClass="" testid="status-why">
+                    Nothing breaks if one never fires: the fleet just costs more than it had to.
                     They stand down while an app is waiting to run.
                   </app-explain>
                 </th>
-                <th scope="col" [class]="t.th">Blocked by</th>
+                <th scope="col">Blocked by</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track row.order.kind + row.order.shape) {
-                <tr
-                  [class]="t.row"
-                  [attr.data-testid]="'order-' + row.order.kind + '-' + row.order.shape"
-                >
-                  <th scope="row" [class]="t.td + ' font-normal'">
+                <tr [attr.data-testid]="'order-' + row.order.kind + '-' + row.order.shape">
+                  <th scope="row" class="font-normal">
                     <span class="flex flex-col gap-0.5">
-                      <span class="flex items-center gap-1.5">
-                        <span
-                          [class]="t.pill + ' w-fit ' + kindPill(row.order.kind)"
-                          [attr.data-testid]="'order-kind-' + row.order.kind"
-                        >
-                          {{ row.order.kind }}
-                        </span>
-                        <span [class]="t.mono">{{ row.shape }}</span>
+                      <span class="flex items-center gap-2">
+                        <fl-tag [attr.data-testid]="'order-kind-' + row.order.kind">{{
+                          row.order.kind
+                        }}</fl-tag>
+                        <span class="fl-mono">{{ row.shape }}</span>
                       </span>
                       @if (row.kindNote) {
-                        <span [class]="t.note">{{ row.kindNote }}</span>
-                      }
-                      @if (row.order.kind === 'expand') {
-                        <button
-                          type="button"
-                          class="w-fit text-[12px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
-                          [disabled]="cancelling()"
-                          (click)="cancel(row.order)"
-                          [attr.data-testid]="'order-cancel-' + row.order.shape"
-                        >
-                          Cancel, and lower the target back
-                        </button>
+                        <span class="text-fl-caption text-fl-ink-muted">{{ row.kindNote }}</span>
                       }
                     </span>
                   </th>
-                  <td [class]="t.td">
-                    <span [class]="t.pill + ' w-fit ' + pill(row.state)" data-testid="order-state">
-                      {{ row.where }}
-                    </span>
+                  <td>
+                    <fl-status
+                      [tone]="row.stateTone"
+                      [label]="row.where"
+                      data-testid="order-state"
+                    />
                   </td>
-                  <td [class]="t.td">
+                  <td>
                     <span class="flex flex-col gap-0.5">
-                      <span
-                        [class]="t.pill + ' w-fit ' + row.statusPill"
+                      <fl-status
+                        [tone]="row.statusTone"
+                        [label]="row.status"
                         [attr.data-testid]="'order-status-' + row.order.kind"
-                      >
-                        {{ row.status }}
-                      </span>
+                      />
                       @if (row.statusNote) {
-                        <span [class]="t.note">{{ row.statusNote }}</span>
+                        <span class="text-fl-caption text-fl-ink-muted">{{ row.statusNote }}</span>
                       }
                     </span>
                   </td>
-                  <td [class]="t.td">
+                  <td class="is-wrap">
                     @if (row.blocked.length) {
                       <span class="flex flex-col gap-1.5">
                         @for (blocker of row.blocked; track blocker.what) {
                           <span class="flex flex-col gap-0.5" data-testid="blocker">
-                            <span class="font-mono text-[12px] text-foreground">
-                              {{ blocker.what }}
-                            </span>
+                            <span class="fl-mono">{{ blocker.what }}</span>
                             @if (blocker.fix; as fix) {
-                              <span [class]="t.note">{{ fix }}</span>
+                              <span class="text-fl-caption text-fl-ink-muted">{{ fix }}</span>
                             }
                           </span>
                         }
                         @if (row.cleared) {
-                          <span [class]="t.note" data-testid="drain-cleared">
+                          <span
+                            class="text-fl-caption text-fl-ink-muted"
+                            data-testid="drain-cleared"
+                          >
                             Cleared: {{ row.cleared }}
                           </span>
                         }
                       </span>
+                    } @else {
+                      <span class="text-fl-ink-muted">—</span>
                     }
                   </td>
-                </tr>
-              } @empty {
-                <tr [class]="t.row">
-                  <td [class]="t.tdMuted" colspan="4" data-testid="orders-empty">
-                    {{ emptyLine() }}
+                  <td class="is-fit">
+                    @if (row.order.kind === 'expand') {
+                      <button
+                        flButton="ghost"
+                        size="sm"
+                        type="button"
+                        [disabled]="cancelling()"
+                        (click)="cancel(row.order)"
+                        [attr.data-testid]="'order-cancel-' + row.order.shape"
+                      >
+                        Cancel, and lower the target back
+                      </button>
+                    }
                   </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
-      </div>
+      }
 
       @if (replaces()) {
-        <app-explain
-          [floating]="true"
-          label="What a replacement does, in order — an expansion does none of it"
-          labelClass="text-[12px] font-medium text-foreground"
-          testid="replace-plan"
-        >
-          @for (step of plan; track step.at) {
-            <span class="block" [attr.data-testid]="'plan-step-' + step.at">
-              {{ step.at }}. {{ step.does }}
-              @if (step.note; as note) {
-                — {{ note }}
-              }
-            </span>
-          }
-        </app-explain>
+        <div class="border-t border-fl-border px-4 py-3">
+          <app-explain
+            [floating]="true"
+            label="What a replacement does, in order. An expansion does none of it."
+            labelClass="text-fl-body-sm font-medium text-fl-ink"
+            testid="replace-plan"
+          >
+            @for (step of plan; track step.at) {
+              <span class="block" [attr.data-testid]="'plan-step-' + step.at">
+                {{ step.at }}. {{ step.does }}{{ step.note ? '. ' + step.note : '' }}
+              </span>
+            }
+          </app-explain>
+        </div>
       }
-    </section>
+    </fl-panel>
   `,
 })
 export class ScalingNowOrdersComponent {
   private readonly store = inject(ScalingGroupStore);
   private readonly api = inject(ScalingApiService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly cancelling = signal(false);
 
   protected async cancel(order: StandingOrder): Promise<void> {
     const index = this.group().standingOrders.indexOf(order);
     if (index < 0) return;
+    const ok = await this.confirm.confirm({
+      title: 'Cancel this standing order?',
+      body: `This removes the standing order for ${order.shape} and lowers the group's target back.`,
+      confirmLabel: 'Cancel order',
+      destructive: true,
+    });
+    if (!ok) return;
     this.cancelling.set(true);
     try {
       await firstValueFrom(
@@ -204,8 +220,6 @@ export class ScalingNowOrdersComponent {
 
   readonly group = input.required<SectionGroup>();
 
-  protected readonly t = TABLE;
-
   private readonly held = computed(() => this.store.preview().data?.opportunityHeldBecause ?? null);
 
   protected readonly replaces = computed(() =>
@@ -217,12 +231,12 @@ export class ScalingNowOrdersComponent {
   protected readonly emptyLine = computed(() => {
     const group = this.group();
     if (!group.capability.hasCatalogue) {
-      return 'No standing order. There is no catalogue to wait on — a machine arrives when a person attaches one.';
+      return 'There is no catalogue to wait on. A machine arrives when a person attaches one.';
     }
     if (!group.capability.canProvision) {
-      return 'No standing order. Nothing here can add nodes, so the patient force has nothing to act with.';
+      return 'Nothing here can add nodes, so the patient force has nothing to act with.';
     }
-    return 'No standing order. The fleet keeps whatever urgency added.';
+    return 'The fleet keeps whatever urgency added.';
   });
 
   protected readonly rows = computed<OrderRow[]>(() =>
@@ -237,12 +251,13 @@ export class ScalingNowOrdersComponent {
         shape: `${order.shape} · ${order.region === 'any' ? 'any region' : order.region} ×${order.wanted}`,
         kindNote: order.kind === 'expand' ? '' : `would drain ${order.replaces ?? 'a node'}`,
         state,
+        stateTone: STATE_TONE[state],
         where: outlook?.sinceHours
           ? `${STATE_LABEL[state]} · ${heldFor(outlook.sinceHours)}`
           : STATE_LABEL[state],
         status,
         statusNote: this.statusNote(status, order),
-        statusPill: this.statusPill(status),
+        statusTone: this.statusTone(status),
         blocked,
         cleared: order.drainable?.cleared.join(' · ') ?? '',
       };
@@ -269,14 +284,6 @@ export class ScalingNowOrdersComponent {
     return ready ? 'Ready' : 'Waiting';
   }
 
-  protected pill(state: CatalogueState): string {
-    return STATE_PILL[state];
-  }
-
-  protected kindPill(kind: StandingOrder['kind']): string {
-    return kind === 'expand' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground';
-  }
-
   private statusNote(status: OrderStatus, order: StandingOrder): string {
     switch (status) {
       case 'Stood down':
@@ -290,16 +297,16 @@ export class ScalingNowOrdersComponent {
     }
   }
 
-  private statusPill(status: OrderStatus): string {
+  private statusTone(status: OrderStatus): StatusTone {
     switch (status) {
       case 'Stood down':
-        return 'bg-muted text-muted-foreground';
+        return 'neutral';
       case 'Blocked':
-        return 'badge-error';
+        return 'error';
       case 'Waiting':
-        return 'bg-amber-500/15 text-amber-600';
+        return 'warning';
       case 'Ready':
-        return 'badge-success';
+        return 'success';
     }
   }
 }

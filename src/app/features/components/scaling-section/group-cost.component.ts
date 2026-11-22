@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   catchError,
@@ -13,6 +13,11 @@ import { ScalingApiService } from '../../service/scaling-api.service';
 import { ScalingCost, ScalingCostDraft } from '../../model/scaling-group.models';
 import { costRows } from './group-cost-format';
 import { formatMoney } from '../../../shared/utils/money';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
 
 type Reading =
   | { state: 'loading' }
@@ -27,67 +32,86 @@ type Reading =
  */
 @Component({
   selector: 'app-group-cost',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlAlert, FlPanel, FlTable, FlButton, FlStatus],
+  host: { class: 'block' },
   template: `
-    <div class="card-surface space-y-2 p-4" data-testid="group-cost">
-      <h3 class="m-0 text-[13px] font-semibold text-foreground">What these limits can cost</h3>
+    <fl-panel title="What these limits can cost" [flush]="true" data-testid="group-cost">
       @switch (reading().state) {
         @case ('loading') {
-          <p class="m-0 text-[12px] text-muted-foreground">Pricing…</p>
+          <div class="p-4"><fl-status tone="progress" label="Pricing" /></div>
         }
         @case ('invalid') {
-          <p class="m-0 text-[12px] text-muted-foreground">
+          <p class="m-0 p-4 text-fl-body-sm text-fl-ink-muted">
             Fix the node limits above to see what they cost.
           </p>
         }
         @case ('failed') {
-          <p class="m-0 text-[12px] text-muted-foreground" data-testid="group-cost-failed">
+          <p class="m-0 p-4 text-fl-body-sm text-fl-ink-muted" data-testid="group-cost-failed">
             The cost could not be read just now.
           </p>
         }
         @case ('read') {
           @if (cost(); as c) {
-            <p class="m-0 text-[12px] text-muted-foreground" data-testid="group-cost-says">
+            <p class="m-0 p-4 text-fl-body-sm text-fl-ink-muted" data-testid="group-cost-says">
               {{ c.says }}
             </p>
             @if (rows().length) {
-              <table class="w-full text-[13px]">
-                <tbody>
-                  @for (row of rows(); track row.kind) {
-                    <tr [attr.data-testid]="'cost-' + row.kind">
-                      <td class="py-0.5 pr-4 text-foreground">{{ row.label }}</td>
-                      <td class="py-0.5 text-right tabular-nums font-medium text-foreground">
-                        {{ row.value }}
-                      </td>
+              <div class="fl-table-wrap border-t border-fl-border">
+                <table flTable density="dense">
+                  <thead>
+                    <tr>
+                      <th scope="col">Scenario</th>
+                      <th scope="col" class="is-num">Per month</th>
                     </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of rows(); track row.kind) {
+                      <tr [attr.data-testid]="'cost-' + row.kind">
+                        <td class="whitespace-normal">{{ row.label }}</td>
+                        <td class="is-num fl-mono">{{ row.value }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+            @if (c.ceiling.says || offerCeiling()) {
+              <div class="flex flex-col items-start gap-3 border-t border-fl-border p-4">
+                @if (c.ceiling.says) {
+                  @if (c.ceiling.stopsBeforeMax) {
+                    <fl-alert
+                      tone="warning"
+                      title="The ceiling stops before the maximum"
+                      data-testid="group-cost-ceiling"
+                    >
+                      {{ c.ceiling.says }}
+                    </fl-alert>
+                  } @else {
+                    <p
+                      class="m-0 text-fl-body-sm text-fl-ink-muted"
+                      data-testid="group-cost-ceiling"
+                    >
+                      {{ c.ceiling.says }}
+                    </p>
                   }
-                </tbody>
-              </table>
-            }
-            @if (c.ceiling.says) {
-              <p
-                class="m-0 text-[12px]"
-                [class]="c.ceiling.stopsBeforeMax ? 'text-amber-700' : 'text-muted-foreground'"
-                data-testid="group-cost-ceiling"
-              >
-                {{ c.ceiling.says }}
-              </p>
-            }
-            @if (offerCeiling(); as suggested) {
-              <button
-                type="button"
-                class="rounded-md border border-border px-2.5 py-1 text-[12px] font-medium hover:bg-muted"
-                data-testid="group-cost-use-suggested"
-                (click)="useCeiling.emit(suggested)"
-              >
-                Set the spending ceiling to {{ money(suggested) }} (covers the worst case)
-              </button>
+                }
+                @if (offerCeiling(); as suggested) {
+                  <button
+                    flButton
+                    size="sm"
+                    type="button"
+                    data-testid="group-cost-use-suggested"
+                    (click)="useCeiling.emit(suggested)"
+                  >
+                    Set the spending ceiling to {{ money(suggested) }}, the worst case
+                  </button>
+                }
+              </div>
             }
           }
         }
       }
-    </div>
+    </fl-panel>
   `,
 })
 export class GroupCostComponent {

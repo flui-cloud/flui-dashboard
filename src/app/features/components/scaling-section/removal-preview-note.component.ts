@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { RemovalPreview } from '../../model/scaling-section.models';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
 
 /**
  * Which machine a lower floor or target gives back and what runs on it, shown
@@ -8,52 +10,46 @@ import { RemovalPreview } from '../../model/scaling-section.models';
  */
 @Component({
   selector: 'app-removal-preview-note',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlStatus, FlTag],
+  host: { class: 'block' },
   template: `
     @if (preview(); as p) {
-      <div class="flex flex-col gap-1.5 text-[12px] leading-relaxed" data-testid="removal-preview">
-        <span
-          [class]="p.proceeds ? 'text-foreground' : 'text-amber-700'"
-          data-testid="removal-preview-sentence"
-        >
-          {{ p.proceeds && p.moves.length ? p.headline : p.sentence }}
-        </span>
+      <div class="flex flex-col gap-1.5 text-fl-caption" data-testid="removal-preview">
+        @if (p.proceeds) {
+          <span class="text-fl-ink" data-testid="removal-preview-sentence">
+            {{ p.moves.length ? p.headline : p.sentence }}
+          </span>
+        } @else {
+          <fl-status
+            class="whitespace-normal"
+            tone="warning"
+            [label]="p.sentence"
+            data-testid="removal-preview-sentence"
+          />
+        }
         @if (p.proceeds && p.moves.length) {
           <span class="flex flex-wrap gap-1" data-testid="removal-preview-moves">
             @for (move of p.moves; track move.what) {
-              <span
-                class="rounded border px-1.5 py-0.5 font-mono text-[11px]"
-                [class]="
-                  move.system
-                    ? 'border-primary/40 bg-primary/10 text-foreground'
-                    : 'border-border text-sub'
-                "
-                [title]="move.system ? 'Part of Flui itself' : 'An app you deployed'"
+              <fl-tag
+                class="fl-mono"
+                [attr.title]="move.system ? 'Part of Flui itself' : 'An app you deployed'"
               >
                 {{ move.what }}
                 @if (move.system) {
                   · Flui
                 }
-              </span>
+              </fl-tag>
             }
           </span>
         }
         @for (reason of p.waitsFor; track reason.kind) {
-          <span class="text-sub" data-testid="removal-preview-wait"
+          <span class="text-fl-ink-muted" data-testid="removal-preview-wait"
             >{{ reason.title }}: {{ reason.fix }}</span
           >
         }
       </div>
     }
   `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `,
-  ],
 })
 export class RemovalPreviewNoteComponent {
   readonly preview = input<RemovalPreview | null>(null);

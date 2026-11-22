@@ -1,145 +1,66 @@
-import { Component, Input, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCopy,
-  lucideCpu,
-  lucideCheck,
-  lucideGlobe,
-  lucideHardDrive,
-  lucideLoader,
-  lucideMapPin,
-  lucideMemoryStick,
-  lucidePlay,
-  lucideServer,
-  lucideSquare,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { Component, Input, computed } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { InstanceWithLabels, getOwnership } from '../../model/instance.models';
 import { InstanceManagedBadgeComponent } from './instance-managed-badge.component';
 import { InstanceActionsComponent } from './instance-actions.component';
 import { InstanceStatusBadgeComponent } from './instance-status-badge.component';
-import { ProviderMarkComponent } from '../../../shared/components/provider-mark.component';
-import { ArchitectureBadgeComponent } from '../../../shared/components/architecture-badge.component';
+import { architectureLabel } from '../../../shared/components/architecture-badge.component';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlTag } from '../../../ui/primitives/tag';
+import { formatDisk, formatMemory } from './instance-status';
 
 @Component({
-  selector: 'app-instance-row',
-  standalone: true,
+  selector: 'tr[app-instance-row]',
   imports: [
-    ProviderMarkComponent,
-    NgIcon,
+    RouterLink,
+    FlCopyId,
+    FlTag,
     InstanceManagedBadgeComponent,
     InstanceActionsComponent,
     InstanceStatusBadgeComponent,
-    ArchitectureBadgeComponent,
   ],
-  providers: [
-    provideIcons({
-      lucideServer,
-      lucidePlay,
-      lucideSquare,
-      lucideTriangleAlert,
-      lucideLoader,
-      lucideHardDrive,
-      lucideCpu,
-      lucideMemoryStick,
-      lucideGlobe,
-      lucideMapPin,
-      lucideCopy,
-      lucideCheck,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="border border-border rounded-lg hover:bg-muted/30 transition-colors">
-      <!-- Header: instance name + actions -->
-      <div class="flex items-center justify-between px-4 py-2 border-b border-border/50">
-        <div class="flex items-center gap-2 min-w-0">
-          <span class="font-semibold text-foreground text-sm truncate">
-            {{ instance.displayName || instance.name }}
-          </span>
-          @if (instance.displayName && instance.displayName !== instance.name) {
-            <span class="text-xs text-muted-foreground font-mono truncate hidden sm:inline">{{
-              instance.name
-            }}</span>
-          }
-          @if (instance.osType) {
-            <span class="text-xs text-muted-foreground hidden lg:inline"
-              >· {{ instance.osType }}</span
+    @let name = instance.displayName || instance.name;
+    <td>
+      <div class="flex flex-col gap-0.5">
+        <div class="flex items-center gap-1.5">
+          @if (isSelf()) {
+            <a
+              class="fl-link"
+              [routerLink]="['/infrastructure/compute', instance.provider, instance.providerId]"
+              >{{ name }}</a
             >
-          }
-        </div>
-        <app-instance-actions [instance]="instance" [isManaged]="isSelf()" />
-      </div>
-
-      <!-- Details row -->
-      <div
-        class="grid items-center gap-x-4 px-4 py-2 text-sm"
-        style="grid-template-columns: 1fr auto 2fr 1fr 1.5fr auto"
-      >
-        <!-- Provider -->
-        <div class="flex items-center gap-2">
-          <app-provider-mark [name]="instance.provider" [size]="20" />
-          <span class="text-xs text-muted-foreground">{{ instance.provider }}</span>
-        </div>
-
-        <!-- Status -->
-        <div>
-          <app-instance-status-badge [status]="instance.status" />
-        </div>
-
-        <!-- Resources -->
-        <div class="flex items-center gap-2.5 text-xs text-muted-foreground">
-          <span class="flex items-center gap-1">
-            <ng-icon name="lucideCpu" class="h-3 w-3 text-blue-600" />
-            {{ instance.cpuCores }}C
-          </span>
-          <span class="flex items-center gap-1">
-            <ng-icon name="lucideMemoryStick" class="h-3 w-3 text-purple-600" />
-            {{ formatMemory(instance.ramMb) }}
-          </span>
-          <span class="flex items-center gap-1">
-            <ng-icon name="lucideHardDrive" class="h-3 w-3 text-green-600" />
-            {{ formatDisk(instance.diskMb) }}
-          </span>
-          <app-architecture-badge [architecture]="instance.architecture" />
-        </div>
-
-        <!-- Location -->
-        <div class="flex items-center gap-1">
-          <ng-icon name="lucideMapPin" class="h-3 w-3 text-orange-600 flex-shrink-0" />
-          <span class="text-xs text-muted-foreground">{{
-            instance.regionName || instance.region
-          }}</span>
-        </div>
-
-        <!-- IP with copy -->
-        <div>
-          @if (instance.ipConfig?.v4?.ip) {
-            <div class="flex items-center gap-1">
-              <ng-icon name="lucideGlobe" class="h-3 w-3 text-blue-600 flex-shrink-0" />
-              <span class="font-mono text-xs">{{ instance.ipConfig?.v4?.ip }}</span>
-              <button
-                (click)="
-                  copyIp($safeNavigationMigration(instance.ipConfig?.v4?.ip));
-                  $event.stopPropagation()
-                "
-                class="p-0.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                [title]="copiedIp() ? 'Copied!' : 'Copy IP'"
-              >
-                <ng-icon [name]="copiedIp() ? 'lucideCheck' : 'lucideCopy'" class="h-3 w-3" />
-              </button>
-            </div>
           } @else {
-            <span class="text-xs text-muted-foreground italic">No IP</span>
+            <span class="font-medium">{{ name }}</span>
+          }
+          @if (architecture(); as arch) {
+            <fl-tag [attr.title]="'CPU architecture: ' + arch" data-testid="architecture-badge">{{
+              arch
+            }}</fl-tag>
           }
         </div>
-
-        <!-- Managed -->
-        <div class="flex justify-end">
-          <app-instance-managed-badge [ownership]="ownership()" />
-        </div>
+        @if (subtitle()) {
+          <span class="text-fl-caption text-fl-ink-muted">{{ subtitle() }}</span>
+        }
       </div>
-    </div>
+    </td>
+    <td><app-instance-status-badge [status]="instance.status" /></td>
+    <td>{{ instance.provider }}</td>
+    <td>{{ instance.regionName || instance.region || '—' }}</td>
+    <td class="is-num">{{ instance.cpuCores }}</td>
+    <td class="is-num">{{ memory(instance.ramMb) }}</td>
+    <td class="is-num">{{ disk(instance.diskMb) }}</td>
+    <td>
+      @if (instance.ipConfig?.v4?.ip; as ip) {
+        <fl-copy-id [value]="ip" label="IP address" />
+      } @else {
+        <span class="text-fl-ink-muted">—</span>
+      }
+    </td>
+    <td><app-instance-managed-badge [ownership]="ownership()" /></td>
+    <td class="is-fit">
+      <app-instance-actions [instance]="instance" [isManaged]="isSelf()" />
+    </td>
   `,
 })
 export class InstanceRowComponent {
@@ -147,32 +68,15 @@ export class InstanceRowComponent {
 
   ownership = computed(() => getOwnership(this.instance));
   isSelf = computed(() => this.ownership() === 'self');
-  copiedIp = signal(false);
+  architecture = computed(() => architectureLabel(this.instance.architecture));
+  subtitle = computed(() => {
+    const parts: string[] = [];
+    const inst = this.instance;
+    if (inst.displayName && inst.displayName !== inst.name) parts.push(inst.name);
+    if (inst.osType) parts.push(inst.osType);
+    return parts.join(' · ');
+  });
 
-  async copyIp(ip?: string) {
-    if (!ip) return;
-    try {
-      await navigator.clipboard.writeText(ip);
-      this.copiedIp.set(true);
-      setTimeout(() => this.copiedIp.set(false), 2000);
-    } catch {
-      // Clipboard API unavailable (e.g. insecure context) — nothing more we can do.
-    }
-  }
-
-  formatMemory(mb: number): string {
-    if (mb >= 1024) {
-      return `${(mb / 1024).toFixed(0)} GB`;
-    }
-    return `${mb} MB`;
-  }
-
-  formatDisk(mb: number): string {
-    if (mb >= 1024 * 1024) {
-      return `${(mb / (1024 * 1024)).toFixed(0)} TB`;
-    } else if (mb >= 1024) {
-      return `${(mb / 1024).toFixed(0)} GB`;
-    }
-    return `${mb} MB`;
-  }
+  protected readonly memory = formatMemory;
+  protected readonly disk = formatDisk;
 }

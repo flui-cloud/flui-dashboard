@@ -1,47 +1,42 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { ClusterScalingRow } from '../../model/scaling-section.models';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlMetric, FlMetricStrip, MetricTone } from '../../../ui/patterns/metric-strip';
 import { eurMonth, oldestAlarm } from './overview-format';
 
 interface Card {
   id: string;
   label: string;
   value: string;
-  suffix: string | null;
-  caption: string | null;
+  caption: string | undefined;
   attention: boolean;
-  emphasis: boolean;
+  tone: MetricTone;
 }
 
 @Component({
   selector: 'app-overview-situation',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlAlert, FlMetric, FlMetricStrip],
+  host: { class: 'fl-stack' },
   template: `
-    <dl class="m-0 grid grid-cols-1 gap-3 sm:grid-cols-3" data-testid="situation">
+    <fl-metric-strip data-testid="situation">
       @for (card of cards(); track card.id) {
-        <div
-          class="rounded-lg border border-border bg-card px-4 py-3"
+        <fl-metric
+          [label]="card.label"
+          [value]="card.value"
+          [caption]="card.caption"
+          [tone]="card.tone"
           [attr.data-testid]="'tile-' + card.id"
           [attr.data-attention]="card.attention ? 'yes' : 'no'"
-        >
-          <dt class="m-0 text-xs text-muted-foreground">{{ card.label }}</dt>
-          <dd class="m-0 mt-0.5">
-            <span
-              class="text-2xl font-bold tabular-nums"
-              [class]="card.emphasis ? 'status-degraded' : 'text-foreground'"
-              [attr.data-testid]="'tile-value-' + card.id"
-              >{{ card.value }}
-              @if (card.suffix; as suffix) {
-                <span class="ml-1.5 text-sm font-normal text-muted-foreground">{{ suffix }}</span>
-              }
-            </span>
-            @if (card.caption; as caption) {
-              <span class="mt-0.5 block text-xs text-muted-foreground">{{ caption }}</span>
-            }
-          </dd>
-        </div>
+        />
       }
-    </dl>
+    </fl-metric-strip>
+
+    @if (needing() > 0) {
+      <fl-alert tone="warning" [title]="needingTitle()" data-testid="situation-alert">
+        Each one is marked in the table below. An open alarm names a node waiting to be added by
+        hand.
+      </fl-alert>
+    }
   `,
 })
 export class OverviewSituationComponent {
@@ -50,6 +45,11 @@ export class OverviewSituationComponent {
   protected readonly needing = computed(
     () => this.rows().filter((r) => r.needsPerson !== null).length,
   );
+
+  protected readonly needingTitle = computed(() => {
+    const n = this.needing();
+    return `${n} of ${this.rows().length} ${n === 1 ? 'cluster needs' : 'clusters need'} a person`;
+  });
 
   private readonly oldest = computed(() =>
     oldestAlarm(
@@ -70,35 +70,32 @@ export class OverviewSituationComponent {
     const overCap = all.filter(
       (r) => r.monthlyCap !== null && r.monthlyEur !== null && r.monthlyEur > r.monthlyCap,
     ).length;
-    const untracked = tracked === null ? 'no cluster carries one' : null;
+    const untracked = tracked === null ? 'No cluster carries one' : undefined;
 
     return [
       {
         id: 'needs-person',
         label: 'Need a person',
         value: `${needing}`,
-        suffix: `of ${all.length}`,
-        caption: null,
+        caption: `of ${all.length} clusters`,
         attention: needing > 0,
-        emphasis: needing > 0,
+        tone: needing > 0 ? 'warning' : 'default',
       },
       {
         id: 'alarms',
         label: 'Open alarms',
         value: `${alarms}`,
-        suffix: oldest ? `oldest ${oldest}` : null,
-        caption: null,
+        caption: oldest ? `Oldest ${oldest}` : undefined,
         attention: alarms > 0,
-        emphasis: alarms > 0,
+        tone: alarms > 0 ? 'warning' : 'default',
       },
       {
         id: 'spend',
         label: 'Billed to Flui',
         value: tracked === null ? 'No bill' : eurMonth(tracked),
-        suffix: overCap ? `${overCap} over cap` : untracked,
-        caption: null,
+        caption: overCap ? `${overCap} over cap` : untracked,
         attention: overCap > 0,
-        emphasis: false,
+        tone: overCap > 0 ? 'warning' : 'default',
       },
     ];
   });

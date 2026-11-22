@@ -1,36 +1,30 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  computed,
-  inject,
-  effect,
-  signal,
-  viewChild,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
-  lucideTrash2,
-  lucideGlobe,
-  lucideAlertCircle,
-  lucideRefreshCw,
-  lucidePlus,
-  lucideServer,
   lucideChevronDown,
   lucideChevronRight,
-  lucideClock,
-  lucideRadioTower,
+  lucideGlobe,
+  lucidePlus,
+  lucideRefreshCw,
 } from '@ng-icons/lucide';
 import { DnsZonesService, ZoneClusterAssignment } from '../../service/dns-zones.service';
 import { DnsRefreshService } from '../../service/dns-refresh.service';
 import { DnsReplicaService, DnsZone } from '../../service/dns-replica.service';
 import { DnsZoneResponseDto } from '../../../core/api/model/dnsZoneResponseDto';
-import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
-import { ZoneReplicasComponent } from './zone-replicas.component';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { ZoneReplicasComponent } from './zone-replicas.component';
 import {
   DnsZonesListSurfaceInput,
   DnsZonesListSurfaceRevision,
@@ -40,228 +34,171 @@ import {
 
 @Component({
   selector: 'app-dns-zones-list',
-  standalone: true,
   imports: [
     ReadOnlySectionDirective,
-    NgIconComponent,
     RouterLink,
-    DeleteConfirmationDialogComponent,
     ZoneReplicasComponent,
+    FlPanel,
+    FlAlert,
+    FlTable,
+    FlEmptyState,
+    FlLoadingState,
+    FlActionsMenu,
+    FlStatus,
+    FlButton,
+    FlIcon,
+    FlSpinner,
   ],
   providers: [
     provideIcons({
-      lucideTrash2,
-      lucideGlobe,
-      lucideAlertCircle,
-      lucideRefreshCw,
-      lucidePlus,
-      lucideServer,
       lucideChevronDown,
       lucideChevronRight,
-      lucideClock,
-      lucideRadioTower,
+      lucideGlobe,
+      lucidePlus,
+      lucideRefreshCw,
     }),
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-4">
-      <div class="flex items-center justify-end gap-2">
+    @if (dnsZonesService.error()) {
+      <fl-alert tone="error" title="DNS zones request failed">{{
+        dnsZonesService.error()
+      }}</fl-alert>
+    }
+
+    <fl-panel
+      title="Registered zones"
+      [count]="dnsZonesService.loading() && !zones().length ? null : zones().length"
+      [flush]="true"
+    >
+      <ng-container panelActions>
         <button
-          (click)="refresh()"
+          flButton
+          size="sm"
+          type="button"
+          [iconOnly]="true"
+          aria-label="Refresh"
+          title="Refresh"
           [disabled]="dnsZonesService.loading()"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50 text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="refresh()"
         >
-          <ng-icon
-            name="lucideRefreshCw"
-            class="h-3.5 w-3.5"
-            [class.animate-spin]="dnsZonesService.loading()"
-          />
-          Refresh
+          <fl-icon name="lucideRefreshCw" [size]="14" />
         </button>
         <a
+          flButton="primary"
+          size="sm"
           appReadOnlySection="infrastructure"
-          routerLink="../register"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+          routerLink="/infrastructure/domains/register"
         >
-          <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-          Register Zone
+          <fl-icon name="lucidePlus" [size]="14" />
+          Register zone
         </a>
-      </div>
+      </ng-container>
 
-      @if (dnsZonesService.error()) {
-        <div
-          class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
-        >
-          <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-          <span>{{ dnsZonesService.error() }}</span>
-        </div>
-      }
-
-      @if (dnsZonesService.loading()) {
-        <div class="border border-gray-200 rounded-lg overflow-hidden">
-          <div class="bg-gray-50 border-b border-gray-200 px-4 py-3 flex gap-4">
-            <div class="h-3 w-32 rounded bg-gray-200"></div>
-            <div class="h-3 w-20 rounded bg-gray-200"></div>
-            <div class="h-3 w-28 rounded bg-gray-200"></div>
-            <div class="h-3 w-20 rounded bg-gray-200"></div>
-          </div>
-          @for (i of [1, 2, 3]; track i) {
-            <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-4">
-              <div class="h-4 w-40 rounded bg-gray-200"></div>
-              <div class="h-5 w-20 rounded-full bg-gray-200"></div>
-              <div class="h-4 w-32 rounded bg-gray-200 flex-1"></div>
-              <div class="h-4 w-20 rounded bg-gray-200"></div>
-              <div class="h-6 w-14 rounded bg-gray-200"></div>
-            </div>
-          }
-        </div>
-      } @else if (dnsZonesService.zones().length === 0) {
-        <div class="text-center py-16 px-4">
-          <ng-icon name="lucideGlobe" class="h-10 w-10 mx-auto text-gray-300 mb-3" />
-          <p class="text-sm font-medium text-gray-900">No DNS zones registered</p>
-          <p class="mt-1 text-sm text-gray-500">
-            Register a DNS zone from your provider to assign it to clusters.
-          </p>
-        </div>
+      @if (dnsZonesService.loading() && zones().length === 0) {
+        <fl-loading-state [rows]="3" />
+      } @else if (zones().length === 0) {
+        <fl-empty-state
+          icon="lucideGlobe"
+          title="No DNS zones registered"
+          body="Register a DNS zone from your provider to assign it to clusters."
+        />
       } @else {
-        <div class="border border-gray-200 rounded-lg overflow-hidden">
-          <table class="w-full text-sm">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
             <thead>
-              <tr class="bg-gray-50 border-b border-gray-200">
-                <th class="text-left px-4 py-3 font-medium text-gray-600">Zone Name</th>
-                <th class="text-left px-4 py-3 font-medium text-gray-600">Provider</th>
-                <th class="text-left px-4 py-3 font-medium text-gray-600">Description</th>
-                <th class="text-left px-4 py-3 font-medium text-gray-600">Registered</th>
-                <th class="px-4 py-3"></th>
+              <tr>
+                <th scope="col" class="is-fit"><span class="fl-sr">Redundancy details</span></th>
+                <th scope="col">Zone</th>
+                <th scope="col">Provider</th>
+                <th scope="col">Redundancy</th>
+                <th scope="col" class="is-num">TTL</th>
+                <th scope="col">Used by</th>
+                <th scope="col">Description</th>
+                <th scope="col" class="is-num">Registered</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
               </tr>
             </thead>
             <tbody>
-              @for (zone of dnsZonesService.zones(); track zone.id) {
+              @for (zone of zones(); track zone.id) {
                 @let clusters = assignmentsMap()[zone.id] ?? [];
-                @let isLoading = loadingAssignments();
-
-                <!-- Zone row -->
-                <tr class="bg-white border-t border-gray-200 hover:bg-gray-50 transition-colors">
-                  <td class="px-4 py-3 font-medium text-gray-900 font-mono">
-                    {{ zone.zoneName }}
+                @let open = expandedZoneId() === zone.id;
+                @let providers = providerCountFor(zone.id);
+                <tr [class.is-selected]="open">
+                  <td class="is-fit">
+                    <button
+                      flButton="ghost"
+                      size="sm"
+                      type="button"
+                      [iconOnly]="true"
+                      [attr.aria-expanded]="open"
+                      [attr.aria-label]="
+                        (open ? 'Hide redundancy for ' : 'Show redundancy for ') + zone.zoneName
+                      "
+                      (click)="toggleReplicas(zone.id)"
+                    >
+                      <fl-icon [name]="open ? 'lucideChevronDown' : 'lucideChevronRight'" />
+                    </button>
                   </td>
-                  <td class="px-4 py-3">
-                    <div class="flex flex-wrap items-center gap-1.5">
-                      <span
-                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700"
-                      >
-                        {{ zone.dnsProvider }}
+                  <td class="fl-cell-name fl-mono">{{ zone.zoneName }}</td>
+                  <td>{{ zone.dnsProvider }}</td>
+                  <td>
+                    <fl-status
+                      [tone]="providers > 1 ? 'success' : 'neutral'"
+                      [label]="providerCountLabel(zone.id)"
+                      [attr.title]="
+                        providers > 1
+                          ? 'Published on multiple DNS providers'
+                          : 'Single DNS provider'
+                      "
+                    />
+                  </td>
+                  <td class="is-num" title="Record TTL. A low value speeds up failover.">
+                    {{ ttlFor(zone.id) ? ttlFor(zone.id) + ' s' : '—' }}
+                  </td>
+                  <td class="whitespace-normal">
+                    @if (loadingAssignments()) {
+                      <span class="fl-row text-fl-ink-muted">
+                        <fl-spinner label="Loading cluster assignments" />
+                        Loading
                       </span>
-                      <span
-                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
-                        [class]="
-                          providerCountFor(zone.id) > 1
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-gray-100 text-gray-600'
-                        "
-                        [title]="
-                          providerCountFor(zone.id) > 1
-                            ? 'Published on multiple DNS providers'
-                            : 'Single DNS provider'
-                        "
-                      >
-                        <ng-icon name="lucideRadioTower" class="h-3 w-3" />
-                        {{ providerCountLabel(zone.id) }}
+                    } @else if (clusters.length > 0) {
+                      <span class="fl-row">
+                        @for (c of clusters; track c.clusterId) {
+                          <a class="fl-link" [routerLink]="['/cluster', c.clusterId, 'dns']">{{
+                            c.clusterName
+                          }}</a>
+                        }
                       </span>
-                      @if (ttlFor(zone.id); as ttl) {
-                        <span
-                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600"
-                          title="Record TTL — a low value speeds up failover"
-                        >
-                          <ng-icon name="lucideClock" class="h-3 w-3" />
-                          TTL {{ ttl }}s
-                        </span>
-                      }
-                    </div>
+                    } @else {
+                      <span class="text-fl-ink-muted">Not assigned</span>
+                    }
                   </td>
-                  <td class="px-4 py-3 text-gray-500">
-                    {{ zone.description || '—' }}
-                  </td>
-                  <td class="px-4 py-3 text-gray-500 text-xs">
-                    {{ formatDate(zone.createdAt) }}
-                  </td>
-                  <td class="px-4 py-3 text-right">
-                    <div class="flex items-center justify-end gap-1">
-                      <button
-                        (click)="toggleReplicas(zone.id)"
-                        class="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 rounded transition-colors"
-                      >
-                        <ng-icon
-                          [name]="
-                            expandedZoneId() === zone.id
-                              ? 'lucideChevronDown'
-                              : 'lucideChevronRight'
-                          "
-                          class="h-3.5 w-3.5"
-                        />
-                        Redundancy
-                      </button>
-                      <button
-                        appReadOnlySection
-                        (click)="confirmDeleteZone(zone)"
-                        [disabled]="deletingId() === zone.id || isLoading || clusters.length > 0"
-                        [title]="
-                          clusters.length > 0
-                            ? 'Remove cluster assignments before deleting'
-                            : 'Delete zone'
-                        "
-                        class="inline-flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
-                        Delete
-                      </button>
-                    </div>
+                  <td class="text-fl-ink-secondary">{{ zone.description || '—' }}</td>
+                  <td class="is-num">{{ formatDate(zone.createdAt) }}</td>
+                  <td class="is-fit">
+                    <fl-actions-menu
+                      appReadOnlySection
+                      label="Zone actions"
+                      [compact]="true"
+                      [items]="zoneActions()[zone.id] ?? []"
+                      [attr.title]="
+                        clusters.length > 0 ? 'Remove cluster assignments before deleting' : null
+                      "
+                      (action)="confirmDeleteZone(zone)"
+                    />
                   </td>
                 </tr>
-
-                <!-- Replicas panel sub-row -->
-                @if (expandedZoneId() === zone.id) {
-                  <tr class="bg-gray-50/60 border-t border-gray-200">
-                    <td colspan="5" class="px-4 py-3">
+                @if (open) {
+                  <tr>
+                    <td colspan="9" class="whitespace-normal">
                       @if (enrichedFor(zone.id); as enriched) {
                         <app-zone-replicas [zone]="enriched" (changed)="loadEnriched()" />
                       } @else {
-                        <div class="flex items-center gap-2 text-xs text-gray-400">
-                          <ng-icon name="lucideRefreshCw" class="h-3 w-3 animate-spin" />
-                          Loading redundancy…
-                        </div>
-                      }
-                    </td>
-                  </tr>
-                }
-
-                <!-- Assignments sub-row -->
-                @if (isLoading || clusters.length > 0) {
-                  <tr class="bg-amber-50/60 border-t border-amber-100">
-                    <td colspan="5" class="px-4 py-2">
-                      @if (isLoading) {
-                        <div class="flex items-center gap-2 text-xs text-gray-400">
-                          <ng-icon name="lucideRefreshCw" class="h-3 w-3 animate-spin" />
-                          Loading cluster assignments…
-                        </div>
-                      } @else {
-                        <div class="flex flex-wrap items-center gap-2">
-                          <div
-                            class="flex items-center gap-1 text-xs text-amber-700 font-medium shrink-0"
-                          >
-                            <ng-icon name="lucideServer" class="h-3 w-3" />
-                            Used by:
-                          </div>
-                          @for (c of clusters; track c.clusterId) {
-                            <a
-                              [routerLink]="['/cluster', c.clusterId, 'dns']"
-                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200 transition-colors"
-                            >
-                              {{ c.clusterName }}
-                              <span class="opacity-50">→</span>
-                            </a>
-                          }
-                        </div>
+                        <span class="fl-row py-2 text-fl-ink-muted">
+                          <fl-spinner label="Loading redundancy" />
+                          Loading redundancy
+                        </span>
                       }
                     </td>
                   </tr>
@@ -271,14 +208,7 @@ import {
           </table>
         </div>
       }
-    </div>
-
-    <app-delete-confirmation-dialog
-      #deleteDialog
-      [deleting]="!!deletingId()"
-      (confirmed)="onDeleteConfirmed()"
-      (cancelled)="onDeleteCancelled()"
-    />
+    </fl-panel>
   `,
 })
 export class DnsZonesListComponent implements OnInit, OnDestroy {
@@ -286,7 +216,10 @@ export class DnsZonesListComponent implements OnInit, OnDestroy {
   private readonly refreshService = inject(DnsRefreshService);
   private readonly replicaService = inject(DnsReplicaService);
   private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly confirmService = inject(ConfirmService);
   private readonly surfaceRevision = new DnsZonesListSurfaceRevision();
+
+  protected readonly zones = this.dnsZonesService.zones;
 
   readonly surface = computed(() => {
     const input: DnsZonesListSurfaceInput = {
@@ -311,12 +244,8 @@ export class DnsZonesListComponent implements OnInit, OnDestroy {
   protected expandedZoneId = signal<string | null>(null);
 
   private pendingZone: DnsZoneResponseDto | null = null;
-  private readonly deleteDialog =
-    viewChild.required<DeleteConfirmationDialogComponent>('deleteDialog');
 
   constructor() {
-    // Publish this page's own Semantic Surface snapshot whenever it changes;
-    // ngOnDestroy clears it so the snapshot never outlives this page.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -350,13 +279,10 @@ export class DnsZonesListComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Fetches the enriched zones (recordTtlSeconds + replicas) for the chips + panel. */
   async loadEnriched(): Promise<void> {
-    try {
-      const zones = await this.replicaService.listZones();
+    const zones = await this.replicaService.listZones().catch(() => null);
+    if (zones) {
       this.enrichedMap.set(Object.fromEntries(zones.map((z) => [z.id, z])));
-    } catch {
-      // Non-fatal: chips/panel simply stay empty if the enriched fetch fails.
     }
   }
 
@@ -372,7 +298,6 @@ export class DnsZonesListComponent implements OnInit, OnDestroy {
     return this.enrichedMap()[zoneId]?.recordTtlSeconds;
   }
 
-  /** Primary provider (1) plus each configured replica. */
   providerCountFor(zoneId: string): number {
     const replicas = this.enrichedMap()[zoneId]?.replicas ?? [];
     return 1 + replicas.length;
@@ -382,6 +307,25 @@ export class DnsZonesListComponent implements OnInit, OnDestroy {
     const count = this.providerCountFor(zoneId);
     return count === 1 ? '1 provider' : `${count} providers`;
   }
+
+  protected readonly zoneActions = computed<Record<string, MenuAction[]>>(() => {
+    const deleting = this.deletingId();
+    const loading = this.loadingAssignments();
+    const assignments = this.assignmentsMap();
+    return Object.fromEntries(
+      this.zones().map((zone) => [
+        zone.id,
+        [
+          {
+            id: 'delete',
+            label: 'Delete zone',
+            danger: true,
+            disabled: deleting === zone.id || loading || (assignments[zone.id] ?? []).length > 0,
+          },
+        ],
+      ]),
+    );
+  });
 
   private async loadAssignments(): Promise<void> {
     const zones = this.dnsZonesService.zones();
@@ -397,14 +341,20 @@ export class DnsZonesListComponent implements OnInit, OnDestroy {
     this.loadingAssignments.set(false);
   }
 
-  confirmDeleteZone(zone: DnsZoneResponseDto): void {
+  async confirmDeleteZone(zone: DnsZoneResponseDto): Promise<void> {
     this.pendingZone = zone;
-    this.deleteDialog().open({
-      title: 'Delete DNS Zone',
-      description: 'This action cannot be undone.',
-      itemName: zone.zoneName,
-      itemDescription: zone.description ?? undefined,
+    const descriptionSuffix = zone.description ? ` (${zone.description})` : '';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete DNS zone',
+      body: `Delete ${zone.zoneName}${descriptionSuffix} from Flui? This cannot be undone.`,
+      confirmLabel: 'Delete zone',
+      destructive: true,
     });
+    if (confirmed) {
+      await this.onDeleteConfirmed();
+    } else {
+      this.onDeleteCancelled();
+    }
   }
 
   async onDeleteConfirmed(): Promise<void> {
@@ -414,7 +364,6 @@ export class DnsZonesListComponent implements OnInit, OnDestroy {
     await this.dnsZonesService.deleteZone(zone.id);
     this.deletingId.set(null);
     this.pendingZone = null;
-    this.deleteDialog().close();
   }
 
   onDeleteCancelled(): void {

@@ -1,15 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowRight,
-  lucideBellRing,
-  lucidePlus,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideArrowRight, lucidePlus } from '@ng-icons/lucide';
 import { ClusterScalingRow } from '../../model/scaling-section.models';
-import { ModeCopy, Reading, ScalingMode, TABLE, age, eurMonth, modeOf } from './overview-format';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { ModeCopy, Reading, ScalingMode, age, eurMonth, modeOf } from './overview-format';
 import { OverviewReadingComponent } from './overview-reading.component';
 
 interface OverviewRow {
@@ -29,135 +30,131 @@ interface OverviewRow {
 
 @Component({
   selector: 'app-overview-cluster-table',
-  standalone: true,
-  imports: [NgIcon, OverviewReadingComponent, RouterLink],
-  providers: [
-    provideIcons({
-      lucideArrowRight,
-      lucideBellRing,
-      lucidePlus,
-      lucideTriangleAlert,
-    }),
+  imports: [
+    FlPanel,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    FlTag,
+    OverviewReadingComponent,
+    RouterLink,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideIcons({ lucideArrowRight, lucidePlus })],
+  host: { class: 'fl-stack' },
   template: `
-    <div [class]="t.card">
-      <div [class]="t.scroll">
-        <table [class]="t.table" data-testid="cluster-table">
+    <fl-panel title="Clusters" [count]="displayed().length" [flush]="true">
+      <div class="fl-table-wrap">
+        <table flTable density="dense" data-testid="cluster-table">
           <thead>
-            <tr [class]="t.headRow">
-              <th scope="col" [class]="t.th + ' pl-4'">Cluster</th>
-              <th scope="col" [class]="t.th">Who can add a node</th>
-              <th scope="col" [class]="t.thNum">Nodes</th>
-              <th scope="col" [class]="t.thNum">Spend</th>
-              <th scope="col" [class]="t.th + ' pr-4'" aria-label="Actions"></th>
+            <tr>
+              <th scope="col">Cluster</th>
+              <th scope="col">Provider</th>
+              <th scope="col">Who can add a node</th>
+              <th scope="col" class="is-num">Nodes</th>
+              <th scope="col" class="is-num">Spend</th>
+              <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
             </tr>
           </thead>
 
           @for (row of displayed(); track row.id) {
-            <tbody [class]="t.row + ' last:border-0'" [attr.data-testid]="'cluster-' + row.id">
+            <tbody
+              class="border-b border-fl-border-subtle last:border-b-0"
+              [attr.data-testid]="'cluster-' + row.id"
+            >
               <tr
+                [class.is-selected]="row.highlighted"
                 [attr.data-testid]="'row-' + row.id"
                 [attr.data-attention]="row.needsPerson ? 'yes' : 'no'"
                 [attr.aria-current]="row.highlighted ? 'true' : null"
               >
-                <th scope="row" [class]="t.td + ' pl-4 font-normal'">
-                  <span [class]="t.mono"
-                    >{{ row.name
-                    }}<span class="font-sans text-muted-foreground">
-                      · {{ row.provider }}</span
-                    ></span
-                  >
-                  @if (row.highlighted) {
-                    <span
-                      [class]="t.pill + ' ml-2 bg-primary/10 text-primary'"
-                      [attr.data-testid]="'came-from-' + row.id"
-                    >
-                      You came from here
+                <th scope="row" class="fl-cell-name is-wrap font-normal">
+                  <span class="flex flex-col gap-1">
+                    <span class="flex flex-wrap items-center gap-2">
+                      <span class="fl-mono font-medium">{{ row.name }}</span>
+                      @if (row.highlighted) {
+                        <fl-tag [attr.data-testid]="'came-from-' + row.id"
+                          >You came from here</fl-tag
+                        >
+                      }
                     </span>
-                  }
+                    @if (row.alarmAge || row.needsPerson) {
+                      <span class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        @if (row.alarmAge; as alarmAge) {
+                          <fl-status
+                            tone="warning"
+                            [label]="'Alarm open ' + alarmAge"
+                            [attr.title]="row.alarmSince"
+                            [attr.data-testid]="'alarm-' + row.id"
+                          />
+                        }
+                        <span
+                          class="flex flex-col gap-0.5"
+                          [attr.data-testid]="'needs-person-' + row.id"
+                        >
+                          <fl-status tone="warning" label="Needs a person" />
+                          <span class="text-fl-caption text-fl-ink-muted">{{
+                            row.needsPerson ??
+                              'An alarm is open, and it stands until this group decides something else.'
+                          }}</span>
+                        </span>
+                      </span>
+                    }
+                  </span>
                 </th>
 
-                <td [class]="t.td">
-                  <span
-                    [class]="t.pill + ' ' + row.mode.pill"
+                <td class="text-fl-ink-secondary">{{ row.provider }}</td>
+
+                <td>
+                  <fl-status
+                    [tone]="row.mode.tone"
+                    [label]="row.mode.label"
                     [attr.data-testid]="'mode-' + row.id"
-                  >
-                    {{ row.mode.label }}
-                  </span>
+                  />
                 </td>
 
-                <td [class]="t.tdNum" [attr.data-testid]="'nodes-' + row.id">
+                <td class="is-num" [attr.data-testid]="'nodes-' + row.id">
                   <app-overview-reading [reading]="row.nodes" />
                 </td>
 
-                <td [class]="t.tdNum" [attr.data-testid]="'spend-' + row.id">
+                <td class="is-num" [attr.data-testid]="'spend-' + row.id">
                   <app-overview-reading [reading]="row.spend" />
                 </td>
 
-                <td [class]="t.td + ' pr-4 text-right'">
+                <td class="is-fit">
                   @if (row.groupId; as groupId) {
                     <a
+                      flButton
+                      size="sm"
                       [routerLink]="['/scaling', groupId]"
-                      class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       [attr.data-testid]="'manage-' + row.id"
                     >
                       Manage
-                      <ng-icon name="lucideArrowRight" class="h-4 w-4" />
+                      <fl-icon name="lucideArrowRight" [size]="14" />
                     </a>
                   } @else {
                     <button
+                      flButton
+                      size="sm"
                       type="button"
-                      class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       [attr.aria-expanded]="setupOpen() === row.id"
                       [attr.aria-controls]="'setup-panel-' + row.id"
                       [attr.data-testid]="'setup-' + row.id"
                       (click)="toggleSetup(row.id)"
                     >
-                      <ng-icon name="lucidePlus" class="h-4 w-4" />
+                      <fl-icon name="lucidePlus" [size]="14" />
                       Set up scaling
                     </button>
                   }
                 </td>
               </tr>
 
-              @if (row.needsPerson || row.alarmAge) {
-                <tr>
-                  <td colspan="5" class="px-4 pb-2 pt-0">
-                    <p class="m-0 flex flex-wrap items-baseline gap-x-2 text-[13px] leading-snug">
-                      <ng-icon
-                        name="lucideTriangleAlert"
-                        class="status-degraded h-3.5 w-3.5 shrink-0 translate-y-0.5"
-                      />
-                      @if (row.alarmAge; as alarmAge) {
-                        <span
-                          [class]="t.pill + ' badge-error'"
-                          [attr.title]="row.alarmSince"
-                          [attr.data-testid]="'alarm-' + row.id"
-                        >
-                          <ng-icon name="lucideBellRing" class="h-3 w-3" />
-                          <span class="tabular-nums">open {{ alarmAge }}</span>
-                        </span>
-                      }
-                      <span
-                        class="font-medium text-foreground"
-                        [attr.data-testid]="'needs-person-' + row.id"
-                        >Needs a person<span class="ml-2 font-normal text-muted-foreground">{{
-                          row.needsPerson ??
-                            'An alarm is open, and it stands until this group decides something else.'
-                        }}</span></span
-                      >
-                    </p>
-                  </td>
-                </tr>
-              }
-
               @if (setupOpen() === row.id) {
                 <tr>
-                  <td colspan="5" class="px-4 pb-3 pt-0">
+                  <td colspan="6" class="whitespace-normal">
                     <p
                       [id]="'setup-panel-' + row.id"
-                      [class]="t.note + ' max-w-prose rounded-md border border-border p-3'"
+                      class="m-0 max-w-prose text-fl-body-sm text-fl-ink-secondary"
                       [attr.data-testid]="'setup-panel-' + row.id"
                     >
                       {{ row.setupCopy }}
@@ -171,30 +168,26 @@ interface OverviewRow {
       </div>
 
       <ul
-        class="m-0 list-none space-y-1.5 border-t border-border px-4 py-3"
+        class="m-0 flex list-none flex-col gap-2 border-t border-fl-border p-4"
         data-testid="mode-legend"
       >
         @for (mode of legend(); track mode.id) {
           <li
-            class="flex flex-wrap items-baseline gap-x-2 text-[12px] leading-snug text-muted-foreground"
+            class="flex flex-wrap items-center gap-x-3 gap-y-1 text-fl-body-sm text-fl-ink-muted"
             [attr.data-testid]="'legend-' + mode.id"
           >
-            <span class="w-[10.5rem] shrink-0">
-              <span [class]="t.pill + ' ' + mode.pill">{{ mode.label }}</span>
-            </span>
-            {{ mode.how }}
+            <fl-status [tone]="mode.tone" [label]="mode.label" />
+            <span>{{ mode.how }}</span>
           </li>
         }
       </ul>
-    </div>
+    </fl-panel>
   `,
 })
 export class OverviewClusterTableComponent {
   readonly rows = input.required<ClusterScalingRow[]>();
 
   private readonly route = inject(ActivatedRoute);
-
-  protected readonly t = TABLE;
 
   protected readonly setupOpen = signal<string | null>(null);
 
@@ -277,6 +270,6 @@ export class OverviewClusterTableComponent {
       'you-attach':
         'There is no catalogue here, so the group would state what a machine has to hold rather than name one, and raise an alarm.',
     };
-    return `${bounds} ${provider[mode] ?? ''} Writing one is not on this screen yet — \`flui scaling apply -f\` takes the same object as a file.`;
+    return `${bounds} ${provider[mode] ?? ''} Writing one is not on this screen yet: \`flui scaling apply -f\` takes the same object as a file.`;
   }
 }

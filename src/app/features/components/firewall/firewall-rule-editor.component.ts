@@ -1,7 +1,21 @@
-import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
-
-import { FormsModule } from '@angular/forms';
+import { Component, Input, Output, EventEmitter, signal, computed, inject } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideShield } from '@ng-icons/lucide';
 import { FirewallRuleFormData, validateFirewallRule } from '../../model/firewall-v2.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FirewallRuleForm, RuleFieldChange } from './firewall-rule-form';
+import { ruleCidrs, ruleDirection, rulePort, ruleProtocol, ruleSummary } from './firewall-format';
+
+const RULE_ACTIONS: MenuAction[] = [
+  { id: 'edit', label: 'Edit rule' },
+  { id: 'delete', label: 'Delete rule', danger: true, separatorBefore: true },
+];
 
 /**
  * Firewall Rule Editor Component
@@ -9,12 +23,20 @@ import { FirewallRuleFormData, validateFirewallRule } from '../../model/firewall
  */
 @Component({
   selector: 'app-firewall-rule-editor',
-  standalone: true,
-  imports: [FormsModule],
+  imports: [FlPanel, FlTable, FlAlert, FlEmptyState, FlButton, FlActionsMenu, FirewallRuleForm],
+  providers: [provideIcons({ lucideShield })],
+  host: { class: 'fl-stack' },
   templateUrl: './firewall-rule-editor.component.html',
-  styleUrls: ['./firewall-rule-editor.component.scss'],
 })
 export class FirewallRuleEditorComponent {
+  private readonly confirmService = inject(ConfirmService);
+
+  protected readonly ruleActions = RULE_ACTIONS;
+  protected readonly direction = ruleDirection;
+  protected readonly protocol = ruleProtocol;
+  protected readonly port = rulePort;
+  protected readonly cidrs = ruleCidrs;
+
   @Input() set initialRules(rules: FirewallRuleFormData[] | null) {
     if (rules) {
       this.rules.set([...rules]);
@@ -24,12 +46,10 @@ export class FirewallRuleEditorComponent {
   @Output() save = new EventEmitter<FirewallRuleFormData[]>();
   @Output() cancelled = new EventEmitter<void>();
 
-  // State
   rules = signal<FirewallRuleFormData[]>([]);
   editingIndex = signal<number | null>(null);
   showAddForm = signal(false);
 
-  // Form for new/editing rule
   editForm = signal<FirewallRuleFormData>({
     description: '',
     direction: 'in',
@@ -39,25 +59,20 @@ export class FirewallRuleEditorComponent {
     destinationIps: [],
   });
 
-  // Validation
   validationErrors = signal<string[]>([]);
   sourceIpsText = signal('');
   destinationIpsText = signal('');
 
-  // IP Detection
   detectedIp = signal<string | null>(null);
   detectingIp = signal(false);
+  notice = signal<string | null>(null);
 
-  // Computed
   hasChanges = computed(() => {
     return this.rules().length > 0 || this.showAddForm() || this.editingIndex() !== null;
   });
 
   isFormValid = computed(() => {
-    // Create a temporary form with parsed IPs for validation
     const form = { ...this.editForm() };
-
-    // Parse IPs from text fields
     if (form.direction === 'in' && this.sourceIpsText()) {
       form.sourceIps = this.sourceIpsText()
         .split(',')
@@ -76,18 +91,12 @@ export class FirewallRuleEditorComponent {
     return errors.length === 0;
   });
 
-  /**
-   * Start adding a new rule
-   */
   startAddRule() {
     this.resetForm();
     this.showAddForm.set(true);
     this.editingIndex.set(null);
   }
 
-  /**
-   * Start editing an existing rule
-   */
   startEditRule(index: number) {
     const rule = this.rules()[index];
     this.editForm.set({
@@ -95,8 +104,6 @@ export class FirewallRuleEditorComponent {
       sourceIps: rule.sourceIps ? [...rule.sourceIps] : [],
       destinationIps: rule.destinationIps ? [...rule.destinationIps] : [],
     });
-
-    // Set IPs as text for editing
     if (rule.sourceIps && rule.sourceIps.length > 0) {
       this.sourceIpsText.set(rule.sourceIps.join(', '));
     }
@@ -108,20 +115,33 @@ export class FirewallRuleEditorComponent {
     this.showAddForm.set(true);
   }
 
-  /**
-   * Delete a rule
-   */
-  deleteRule(index: number) {
-    if (confirm('Are you sure you want to delete this rule?')) {
+  onRuleAction(index: number, action: string) {
+    if (action === 'edit') this.startEditRule(index);
+    if (action === 'delete') void this.deleteRule(index);
+  }
+
+  onField(change: RuleFieldChange) {
+    this.updateField(change.field, change.value);
+  }
+
+  setIpsText(text: string) {
+    if (this.editForm().direction === 'in') this.sourceIpsText.set(text);
+    else this.destinationIpsText.set(text);
+  }
+
+  async deleteRule(index: number) {
+    const ok = await this.confirmService.confirm({
+      title: 'Delete this rule?',
+      body: `${this.rules()[index]?.description || 'The rule'} is removed from the rules you are editing.`,
+      confirmLabel: 'Delete rule',
+      destructive: true,
+    });
+    if (ok) {
       this.rules.update((rules) => rules.filter((_, i) => i !== index));
     }
   }
 
-  /**
-   * Save the current form (add or update)
-   */
   saveRule() {
-    // Parse IPs from text
     const form = this.editForm();
 
     if (form.direction === 'in' && this.sourceIpsText()) {
@@ -137,8 +157,6 @@ export class FirewallRuleEditorComponent {
         .map((ip) => ip.trim())
         .filter((ip) => ip.length > 0);
     }
-
-    // Validate
     const errors = validateFirewallRule(form);
     if (errors.length > 0) {
       this.validationErrors.set(errors);
@@ -147,10 +165,8 @@ export class FirewallRuleEditorComponent {
 
     const editIndex = this.editingIndex();
     if (editIndex === null) {
-      // Add new rule
       this.rules.update((rules) => [...rules, { ...form }]);
     } else {
-      // Update existing rule
       this.rules.update((rules) => {
         const newRules = [...rules];
         newRules[editIndex] = { ...form };
@@ -161,18 +177,12 @@ export class FirewallRuleEditorComponent {
     this.cancelEdit();
   }
 
-  /**
-   * Cancel editing/adding
-   */
   cancelEdit() {
     this.showAddForm.set(false);
     this.editingIndex.set(null);
     this.resetForm();
   }
 
-  /**
-   * Reset the edit form
-   */
   private resetForm() {
     this.editForm.set({
       description: '',
@@ -187,105 +197,69 @@ export class FirewallRuleEditorComponent {
     this.validationErrors.set([]);
   }
 
-  /**
-   * Update form field
-   */
   updateField<K extends keyof FirewallRuleFormData>(field: K, value: FirewallRuleFormData[K]) {
     this.editForm.update((form) => ({ ...form, [field]: value }));
-
-    // Clear validation errors when user makes changes
     this.validationErrors.set([]);
   }
 
-  /**
-   * Save all rules
-   */
   saveAllRules() {
     this.save.emit(this.rules());
   }
 
-  /**
-   * Cancel all changes
-   */
-  cancelAllChanges() {
-    if (this.hasChanges() && !confirm('Are you sure? All unsaved changes will be lost.')) {
-      return;
+  async cancelAllChanges() {
+    if (this.hasChanges()) {
+      const ok = await this.confirmService.confirm({
+        title: 'Discard unsaved changes?',
+        body: 'All unsaved changes are lost.',
+        confirmLabel: 'Discard changes',
+        destructive: true,
+      });
+      if (!ok) return;
     }
     this.cancelled.emit();
   }
 
-  /**
-   * Get rule summary for display
-   */
   getRuleSummary(rule: FirewallRuleFormData): string {
-    const dir = rule.direction === 'in' ? 'Inbound' : 'Outbound';
-    const proto = rule.protocol.toUpperCase();
-    const port = rule.port ? `:${rule.port}` : '';
-
-    let ips = '';
-    if (rule.direction === 'in' && rule.sourceIps && rule.sourceIps.length > 0) {
-      ips = ` from ${rule.sourceIps.join(', ')}`;
-    } else if (rule.direction === 'out' && rule.destinationIps && rule.destinationIps.length > 0) {
-      ips = ` to ${rule.destinationIps.join(', ')}`;
-    }
-
-    return `${dir} • ${proto}${port}${ips}`;
+    return ruleSummary(rule);
   }
 
-  /**
-   * Detect current user's public IP address
-   */
   async detectCurrentIp() {
     this.detectingIp.set(true);
     try {
-      // Use a public IP detection service
       const response = await fetch('https://api.ipify.org?format=json');
       const data = await response.json();
       if (data.ip) {
         this.detectedIp.set(data.ip);
-        // Auto-apply with /32 (single IP)
         this.setIpPreset(`${data.ip}/32`);
       }
     } catch (error) {
       console.error('Failed to detect IP:', error);
-      alert('Failed to detect your IP address. Please enter it manually.');
+      this.notice.set('Enter it manually.');
     } finally {
       this.detectingIp.set(false);
     }
   }
 
-  /**
-   * Set IP preset (helper for quick IP entry)
-   */
   setIpPreset(preset: string) {
     const direction = this.editForm().direction;
 
     if (direction === 'in') {
-      // Append to existing source IPs or replace
       const current = this.sourceIpsText();
       if (current && current.trim().length > 0) {
-        // Append
         this.sourceIpsText.set(`${current}, ${preset}`);
       } else {
-        // Replace
         this.sourceIpsText.set(preset);
       }
     } else {
-      // Append to existing destination IPs or replace
       const current = this.destinationIpsText();
       if (current && current.trim().length > 0) {
-        // Append
         this.destinationIpsText.set(`${current}, ${preset}`);
       } else {
-        // Replace
         this.destinationIpsText.set(preset);
       }
     }
   }
 
-  /**
-   * Clear IP field
-   */
   clearIpField() {
     const direction = this.editForm().direction;
     if (direction === 'in') {
@@ -295,9 +269,6 @@ export class FirewallRuleEditorComponent {
     }
   }
 
-  /**
-   * Get current IP text based on direction
-   */
   getCurrentIpText(): string {
     const direction = this.editForm().direction;
     return direction === 'in' ? this.sourceIpsText() : this.destinationIpsText();

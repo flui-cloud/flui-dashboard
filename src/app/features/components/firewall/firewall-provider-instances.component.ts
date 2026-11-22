@@ -1,423 +1,241 @@
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-  viewChild,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideSearch,
-  lucideFilter,
-  lucideTrash2,
-  lucideExternalLink,
-  lucideRefreshCw,
-  lucideTriangleAlert,
-  lucideArrowLeft,
-} from '@ng-icons/lucide';
-
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw, lucideSearch, lucideShield } from '@ng-icons/lucide';
 import { FirewallService } from '../../service/firewall.service';
 import { ProvidersService } from '../../service/providers.service';
 import { ProviderFirewallExtended, ProviderFirewallFilterState } from '../../model/firewall.models';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
-import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
-import {
-  HlmCardDirective,
-  HlmCardHeaderDirective,
-  HlmCardTitleDirective,
-  HlmCardContentDirective,
-} from '@spartan-ng/ui-card-helm';
 import { ProviderBadgeComponent } from './provider-badge.component';
 import { UsageStatusBadgeComponent } from './usage-status-badge.component';
-import { BrnSelectModule } from '@spartan-ng/brain/select';
-import { HlmSelectModule } from '@spartan-ng/ui-select-helm';
-import {
-  DeleteConfirmationDialogComponent,
-  DeleteConfirmationData,
-} from '../../../shared/components/delete-confirmation-dialog.component';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlMetric, FlMetricStrip } from '../../../ui/patterns/metric-strip';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlTag } from '../../../ui/primitives/tag';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+
+const BREADCRUMB: Crumb[] = [
+  { label: 'Cluster firewalls', link: '/infrastructure/firewall/clusters' },
+  { label: 'Provider firewalls' },
+];
 
 @Component({
   selector: 'app-firewall-provider-instances',
-  standalone: true,
   imports: [
     FormsModule,
     RouterLink,
-    NgIcon,
-    HlmButtonDirective,
-    HlmInputDirective,
-    HlmBadgeDirective,
-    HlmCardDirective,
-    HlmCardHeaderDirective,
-    HlmCardTitleDirective,
-    HlmCardContentDirective,
     ProviderBadgeComponent,
     UsageStatusBadgeComponent,
-    BrnSelectModule,
-    HlmSelectModule,
-    DeleteConfirmationDialogComponent,
+    FlPageHeader,
+    FlPanel,
+    FlTable,
+    FlAlert,
+    FlMetricStrip,
+    FlMetric,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    FlTag,
+    FlActionsMenu,
   ],
-  providers: [
-    provideIcons({
-      lucideSearch,
-      lucideFilter,
-      lucideTrash2,
-      lucideExternalLink,
-      lucideRefreshCw,
-      lucideTriangleAlert,
-      lucideArrowLeft,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideRefreshCw, lucideSearch, lucideShield })],
   template: `
-    <div class="container mx-auto p-6 space-y-6">
-      <!-- Back link -->
-      <a
-        routerLink="/infrastructure/firewall/clusters"
-        class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+    <div class="fl-page">
+      <fl-page-header
+        [title]="'Provider firewalls (' + stats().total + ')'"
+        [breadcrumb]="breadcrumb"
       >
-        <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        Back to Cluster Firewalls
-      </a>
+        <span headerMeta>Firewalls as each cloud provider reports them</span>
+        <ng-container headerActions>
+          <button
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
+            [disabled]="firewallService.loadingProviderFirewalls()"
+            (click)="refresh()"
+          >
+            <fl-icon name="lucideRefreshCw" />
+          </button>
+        </ng-container>
+      </fl-page-header>
 
-      <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold tracking-tight">Provider Firewalls</h1>
-          <p class="text-muted-foreground mt-1">Manage firewalls created on cloud providers</p>
-        </div>
-        <button hlmBtn (click)="refresh()" [disabled]="firewallService.loadingProviderFirewalls()">
-          <ng-icon
-            name="lucideRefreshCw"
-            class="mr-2 h-4 w-4"
-            [class.animate-spin]="firewallService.loadingProviderFirewalls()"
-          />
-          Refresh
-        </button>
-      </div>
+      <fl-alert tone="warning" title="For emergencies only">
+        Change firewalls on the provider only in an emergency. Cluster firewalls keep the desired
+        state, detect drift and reconcile it.
+      </fl-alert>
 
-      <!-- Warning Message -->
-      <div class="rounded-lg bg-yellow-50 border-2 border-yellow-300 p-4 flex items-start gap-3">
-        <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-yellow-700 mt-0.5" />
-        <div class="flex-1">
-          <h3 class="font-semibold text-yellow-800">⚠️ Emergency Use Only</h3>
-          <p class="text-sm text-yellow-700 mt-1">
-            Direct provider firewall management should only be used for emergency situations. For
-            normal firewall operations, please use the <strong>Cluster Firewalls</strong> section
-            which provides desired-state management with drift detection and reconciliation.
-          </p>
-        </div>
-      </div>
-
-      <!-- Error Message -->
       @if (firewallService.providerFirewallsErrorMessage()) {
-        <div class="rounded-lg bg-destructive/15 p-4 flex items-start gap-3">
-          <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-destructive mt-0.5" />
-          <div class="flex-1">
-            <h3 class="font-semibold text-destructive">Error loading firewalls</h3>
-            <p class="text-sm text-destructive/90 mt-1">
-              {{ firewallService.providerFirewallsErrorMessage() }}
-            </p>
-          </div>
-        </div>
+        <fl-alert tone="error" title="Could not load the provider firewalls">
+          {{ firewallService.providerFirewallsErrorMessage() }}
+        </fl-alert>
       }
 
-      <!-- Stats Cards -->
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div hlmCard>
-          <div hlmCardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 hlmCardTitle class="text-sm font-medium">Total Firewalls</h3>
-          </div>
-          <div hlmCardContent>
-            <div class="text-2xl font-bold">{{ stats().total }}</div>
-            <p class="text-xs text-muted-foreground">Across all providers</p>
-          </div>
-        </div>
+      @if (notice()) {
+        <fl-alert tone="error" title="Could not delete the firewall">{{ notice() }}</fl-alert>
+      }
 
-        <div hlmCard>
-          <div hlmCardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 hlmCardTitle class="text-sm font-medium">In Use</h3>
-          </div>
-          <div hlmCardContent>
-            <div class="text-2xl font-bold text-green-600">
-              {{ stats().inUse }}
-            </div>
-            <p class="text-xs text-muted-foreground">Attached to clusters</p>
-          </div>
-        </div>
+      <fl-metric-strip>
+        <fl-metric label="Firewalls" [value]="stats().total" caption="Across all providers" />
+        <fl-metric label="In use" [value]="stats().inUse" caption="Attached to clusters" />
+        <fl-metric label="Unused" [value]="stats().unused" caption="Can be deleted" />
+        <fl-metric
+          label="Providers"
+          [value]="providersWithCount().length"
+          [caption]="providersCaption()"
+        />
+      </fl-metric-strip>
 
-        <div hlmCard>
-          <div hlmCardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 hlmCardTitle class="text-sm font-medium">Unused</h3>
-          </div>
-          <div hlmCardContent>
-            <div class="text-2xl font-bold text-orange-600">
-              {{ stats().unused }}
-            </div>
-            <p class="text-xs text-muted-foreground">Available for deletion</p>
-          </div>
-        </div>
-
-        <div hlmCard>
-          <div hlmCardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 hlmCardTitle class="text-sm font-medium">Providers</h3>
-          </div>
-          <div hlmCardContent>
-            <div class="space-y-1">
-              @for (provider of providersWithCount(); track provider.name) {
-                <div class="flex items-center justify-between text-sm">
-                  <span class="capitalize">{{ provider.name }}</span>
-                  <span class="font-semibold">{{ provider.count }}</span>
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filters -->
-      <div hlmCard>
-        <div hlmCardContent class="pt-6">
-          <div class="grid gap-4 md:grid-cols-3">
-            <!-- Search -->
-            <div class="relative">
-              <ng-icon
-                name="lucideSearch"
-                class="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground"
-              />
+      <fl-panel [flush]="true">
+        <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+          <div class="fl-toolbar__group">
+            <label class="fl-input">
+              <fl-icon name="lucideSearch" [size]="14" />
+              <span class="fl-sr">Search firewalls</span>
               <input
-                hlmInput
-                type="text"
-                placeholder="Search firewalls..."
-                [(ngModel)]="filters.search"
-                class="pl-8"
+                type="search"
+                placeholder="Search by name, ID or cluster"
+                [ngModel]="filters().search"
+                (ngModelChange)="setFilter('search', $event)"
               />
-            </div>
-
-            <!-- Provider Filter -->
-            <div class="relative">
+            </label>
+            <span class="fl-select-wrap">
               <select
-                [(ngModel)]="filters.provider"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 appearance-none"
+                class="fl-select fl-select--sm"
+                aria-label="Provider"
+                [ngModel]="filters().provider"
+                (ngModelChange)="setFilter('provider', $event)"
               >
-                <option value="ALL">All Providers</option>
+                <option value="ALL">Provider: All</option>
                 @for (p of availableProviders(); track p.id) {
                   <option [value]="p.id">{{ p.displayName }}</option>
                 }
               </select>
-              <ng-icon
-                name="lucideFilter"
-                class="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
-              />
-            </div>
-
-            <!-- Usage Filter -->
-            <div class="relative">
+            </span>
+            <span class="fl-select-wrap">
               <select
-                [(ngModel)]="filters.inUse"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 appearance-none"
+                class="fl-select fl-select--sm"
+                aria-label="Usage"
+                [ngModel]="filters().inUse"
+                (ngModelChange)="setFilter('inUse', $event)"
               >
-                <option [ngValue]="'ALL'">All Status</option>
-                <option [ngValue]="true">In Use</option>
+                <option [ngValue]="'ALL'">Usage: All</option>
+                <option [ngValue]="true">In use</option>
                 <option [ngValue]="false">Unused</option>
               </select>
-              <ng-icon
-                name="lucideFilter"
-                class="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
-              />
-            </div>
+            </span>
+          </div>
+          <div class="fl-toolbar__group">
+            <span class="fl-toolbar__info">
+              {{ filteredFirewalls().length }}
+              {{ filteredFirewalls().length === 1 ? 'firewall' : 'firewalls' }}
+            </span>
           </div>
         </div>
-      </div>
 
-      <!-- Firewalls Table -->
-      <div hlmCard>
-        <div hlmCardContent class="p-0">
-          @if (firewallService.loadingProviderFirewalls()) {
-            <div class="p-12 text-center">
-              <ng-icon
-                name="lucideRefreshCw"
-                class="h-8 w-8 animate-spin mx-auto text-muted-foreground"
-              />
-              <p class="mt-4 text-sm text-muted-foreground">Loading provider firewalls...</p>
-            </div>
-          } @else if (filteredFirewalls().length === 0) {
-            <div class="p-12 text-center">
-              <ng-icon name="lucideTriangleAlert" class="h-12 w-12 mx-auto text-muted-foreground" />
-              <p class="mt-4 text-lg font-semibold">No firewalls found</p>
-              <p class="text-sm text-muted-foreground">
-                @if (hasActiveFilters()) {
-                  Try adjusting your filters
-                } @else {
-                  No firewalls have been created on any provider
-                }
-              </p>
-            </div>
-          } @else {
-            <div class="overflow-x-auto">
-              <table class="w-full">
-                <thead class="border-b bg-muted/50">
+        @if (firewallService.loadingProviderFirewalls()) {
+          <fl-loading-state [rows]="5" />
+        } @else if (filteredFirewalls().length === 0) {
+          <fl-empty-state
+            icon="lucideShield"
+            title="No firewalls found"
+            [body]="
+              hasActiveFilters()
+                ? 'Nothing matches these filters.'
+                : 'No firewall has been created on any provider.'
+            "
+          />
+        } @else {
+          <div class="fl-table-wrap">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Provider</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Cluster</th>
+                  <th scope="col" class="is-num">Servers</th>
+                  <th scope="col" class="is-num">Rules</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (firewall of filteredFirewalls(); track firewall.id) {
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Provider
-                    </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Cluster
-                    </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Servers
-                    </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Rules
-                    </th>
-                    <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y">
-                  @for (firewall of filteredFirewalls(); track firewall.id) {
-                    <tr class="hover:bg-muted/50 transition-colors">
-                      <!-- Name -->
-                      <td class="px-4 py-3">
-                        <div class="flex items-center gap-2">
-                          <div>
-                            <div class="font-medium">{{ firewall.name }}</div>
-                            <div class="text-xs text-muted-foreground">{{ firewall.id }}</div>
-                          </div>
-                          @if (isObservabilityFirewall(firewall)) {
-                            <span
-                              hlmBadge
-                              variant="outline"
-                              class="text-xs bg-purple-50 text-purple-700 border-purple-200"
-                            >
-                              Control
-                            </span>
-                          }
-                        </div>
-                      </td>
-
-                      <!-- Provider -->
-                      <td class="px-4 py-3">
-                        <app-provider-badge [provider]="firewall.provider" />
-                      </td>
-
-                      <!-- Status -->
-                      <td class="px-4 py-3">
-                        <app-usage-status-badge
-                          [inUse]="isObservabilityFirewall(firewall) ? true : firewall.inUse"
-                        />
-                      </td>
-
-                      <!-- Cluster -->
-                      <td class="px-4 py-3">
-                        @if (firewall.clusterId) {
-                          <a
-                            [routerLink]="['/cluster', firewall.clusterId]"
-                            class="text-primary hover:underline flex items-center gap-1"
-                          >
-                            {{ firewall.clusterName || firewall.clusterId }}
-                            <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-                          </a>
-                        } @else {
-                          <span class="text-muted-foreground text-sm">—</span>
-                        }
-                      </td>
-
-                      <!-- Servers -->
-                      <td class="px-4 py-3">
-                        <span hlmBadge variant="secondary">
-                          {{ firewall.appliedServers.length }} servers
-                        </span>
-                      </td>
-
-                      <!-- Rules -->
-                      <td class="px-4 py-3">
-                        <span class="text-sm text-muted-foreground">
-                          {{ firewall.rules.length }} rules
-                        </span>
-                      </td>
-
-                      <!-- Actions -->
-                      <td class="px-4 py-3 text-right">
+                    <td class="fl-cell-name">
+                      <span class="fl-row">
+                        <span class="font-medium">{{ firewall.name }}</span>
                         @if (isObservabilityFirewall(firewall)) {
-                          <button
-                            hlmBtn
-                            variant="ghost"
-                            size="sm"
-                            disabled
-                            class="text-muted-foreground cursor-not-allowed"
-                            title="Control-cluster firewalls are managed automatically and cannot be deleted"
-                          >
-                            <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                          </button>
-                        } @else {
-                          <button
-                            hlmBtn
-                            variant="ghost"
-                            size="sm"
-                            (click)="deleteFirewall(firewall)"
-                            [disabled]="firewall.inUse || deleting() === firewall.id"
-                            class="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            [title]="
-                              firewall.inUse
-                                ? 'Cannot delete a firewall that is currently in use'
-                                : 'Delete firewall'
-                            "
-                          >
-                            <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                          </button>
+                          <fl-tag>control</fl-tag>
                         }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-        </div>
-      </div>
+                      </span>
+                      <span class="block fl-mono fl-muted">{{ firewall.id }}</span>
+                    </td>
+                    <td><app-provider-badge [provider]="firewall.provider" /></td>
+                    <td>
+                      <app-usage-status-badge
+                        [inUse]="isObservabilityFirewall(firewall) ? true : firewall.inUse"
+                      />
+                    </td>
+                    <td>
+                      @if (firewall.clusterId) {
+                        <a class="fl-link" [routerLink]="['/cluster', firewall.clusterId]">
+                          {{ firewall.clusterName || firewall.clusterId }}
+                        </a>
+                      } @else {
+                        <span class="fl-muted">—</span>
+                      }
+                    </td>
+                    <td class="is-num">{{ firewall.appliedServers.length }}</td>
+                    <td class="is-num">{{ firewall.rules.length }}</td>
+                    <td class="is-fit">
+                      <fl-actions-menu
+                        label="Firewall actions"
+                        [compact]="true"
+                        [items]="actionsFor(firewall)"
+                        [attr.title]="deleteHint(firewall)"
+                        (action)="onAction(firewall, $event)"
+                      />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </fl-panel>
     </div>
-
-    <!-- Delete Confirmation Modal -->
-    <app-delete-confirmation-dialog
-      (confirmed)="confirmDelete()"
-      (cancelled)="cancelDelete()"
-      [deleting]="deleting() !== null"
-    />
   `,
 })
 export class FirewallProviderInstancesComponent {
-  readonly deleteDialog = viewChild.required(DeleteConfirmationDialogComponent);
-
   firewallService = inject(FirewallService);
   private readonly providersService = inject(ProvidersService);
+  private readonly confirmService = inject(ConfirmService);
+
+  protected readonly breadcrumb = BREADCRUMB;
 
   readonly availableProviders = computed(() => this.providersService.availableProviders());
 
-  filters: ProviderFirewallFilterState = {
+  filters = signal<ProviderFirewallFilterState>({
     search: '',
     provider: 'ALL',
     inUse: 'ALL',
-  };
+  });
 
   deleting = signal<string | null>(null);
+  notice = signal<string | null>(null);
   private firewallToDelete: ProviderFirewallExtended | null = null;
 
   constructor() {
     this.providersService.loadProviders();
-    // Load provider firewalls on init
     effect(
       () => {
         this.firewallService.loadProviderFirewalls();
@@ -433,12 +251,18 @@ export class FirewallProviderInstancesComponent {
     return Object.entries(byProvider).map(([name, count]) => ({ name, count }));
   });
 
+  providersCaption = computed(
+    () =>
+      this.providersWithCount()
+        .map((p) => `${p.name} ${p.count}`)
+        .join(', ') || undefined,
+  );
+
   filteredFirewalls = computed(() => {
-    const currentFilters = this.filters;
+    const currentFilters = this.filters();
     const all = this.firewallService.allProviderFirewalls();
 
     return all.filter((fw) => {
-      // Search filter
       if (currentFilters.search) {
         const searchLower = currentFilters.search.toLowerCase();
         const matchesName = fw.name.toLowerCase().includes(searchLower);
@@ -449,12 +273,10 @@ export class FirewallProviderInstancesComponent {
         }
       }
 
-      // Provider filter
       if (currentFilters.provider !== 'ALL' && fw.provider !== currentFilters.provider) {
         return false;
       }
 
-      // Usage filter
       if (currentFilters.inUse !== 'ALL' && fw.inUse !== currentFilters.inUse) {
         return false;
       }
@@ -464,13 +286,46 @@ export class FirewallProviderInstancesComponent {
   });
 
   hasActiveFilters = computed(() => {
-    const currentFilters = this.filters;
+    const currentFilters = this.filters();
     return (
       currentFilters.search !== '' ||
       currentFilters.provider !== 'ALL' ||
       currentFilters.inUse !== 'ALL'
     );
   });
+
+  setFilter<K extends keyof ProviderFirewallFilterState>(
+    field: K,
+    value: ProviderFirewallFilterState[K],
+  ): void {
+    this.filters.update((current) => ({ ...current, [field]: value }));
+  }
+
+  actionsFor(firewall: ProviderFirewallExtended): MenuAction[] {
+    return [
+      {
+        id: 'delete',
+        label: 'Delete firewall',
+        danger: true,
+        disabled:
+          this.isObservabilityFirewall(firewall) ||
+          firewall.inUse ||
+          this.deleting() === firewall.id,
+      },
+    ];
+  }
+
+  deleteHint(firewall: ProviderFirewallExtended): string | null {
+    if (this.isObservabilityFirewall(firewall)) {
+      return 'Control-cluster firewalls are managed automatically and cannot be deleted';
+    }
+    if (firewall.inUse) return 'A firewall in use cannot be deleted';
+    return null;
+  }
+
+  onAction(firewall: ProviderFirewallExtended, action: string): void {
+    if (action === 'delete') void this.deleteFirewall(firewall);
+  }
 
   async refresh(): Promise<void> {
     await this.firewallService.loadProviderFirewalls();
@@ -483,30 +338,29 @@ export class FirewallProviderInstancesComponent {
     );
   }
 
-  deleteFirewall(firewall: ProviderFirewallExtended): void {
+  async deleteFirewall(firewall: ProviderFirewallExtended): Promise<void> {
     if (this.isObservabilityFirewall(firewall)) {
-      alert('Control-cluster firewalls are managed automatically and cannot be deleted manually.');
+      this.notice.set(
+        'Control-cluster firewalls are managed automatically and cannot be deleted manually.',
+      );
       return;
     }
 
     if (firewall.inUse) {
-      alert('Cannot delete a firewall that is currently in use. Detach it from the cluster first.');
+      this.notice.set('A firewall in use cannot be deleted. Detach it from the cluster first.');
       return;
     }
 
     this.firewallToDelete = firewall;
-
-    const deleteData: DeleteConfirmationData = {
-      title: 'Delete Provider Firewall',
-      description: 'You are about to delete this firewall from the cloud provider.',
-      itemName: firewall.name,
-      itemDescription: `Provider: ${firewall.provider.charAt(0).toUpperCase() + firewall.provider.slice(1)} | Rules: ${firewall.rules.length} | Servers: ${firewall.appliedServers.length}`,
-      warningMessage:
-        'This action cannot be undone. The firewall will be permanently deleted from the provider.',
-      confirmButtonText: 'Delete Firewall',
-    };
-
-    this.deleteDialog().open(deleteData);
+    const provider = firewall.provider.charAt(0).toUpperCase() + firewall.provider.slice(1);
+    const ok = await this.confirmService.confirm({
+      title: `Delete ${firewall.name}?`,
+      body: `The firewall is deleted from ${provider} with its ${firewall.rules.length} rules and ${firewall.appliedServers.length} servers. This cannot be undone.`,
+      confirmLabel: 'Delete firewall',
+      destructive: true,
+    });
+    if (ok) await this.confirmDelete();
+    else this.cancelDelete();
   }
 
   async confirmDelete(): Promise<void> {
@@ -516,17 +370,14 @@ export class FirewallProviderInstancesComponent {
 
     const firewall = this.firewallToDelete;
     this.deleting.set(firewall.id);
+    this.notice.set(null);
 
     try {
       await this.firewallService.deleteProviderFirewall(firewall.provider, firewall.id);
-      // Success - close dialog and reset state
-      this.deleteDialog().close();
       this.firewallToDelete = null;
-    } catch (error: any) {
-      const errorMessage =
-        error?.error?.message || error?.message || 'An unexpected error occurred';
-      alert(`Failed to delete firewall: ${errorMessage}`);
-      this.deleteDialog().close();
+    } catch (error: unknown) {
+      const e = error as { error?: { message?: string }; message?: string } | null;
+      this.notice.set(e?.error?.message || e?.message || 'An unexpected error occurred.');
     } finally {
       this.deleting.set(null);
     }

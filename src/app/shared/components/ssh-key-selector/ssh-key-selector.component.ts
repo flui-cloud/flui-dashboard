@@ -1,24 +1,23 @@
-import {
-  Component,
-  OnInit,
-  input,
-  output,
-  signal,
-  inject,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { Component, OnInit, computed, input, output, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideKey,
-  lucidePlus,
-  lucideLoader,
-  lucideCircleAlert,
-  lucideCheck,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideKey, lucidePlus } from '@ng-icons/lucide';
 import { ProviderWizardService } from '../../services/provider-wizard.service';
 import { SSHKeyDto } from '../../../core/api/model/models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
+
+const ALL_PROVIDERS = [
+  { id: 'hetzner', label: 'Hetzner' },
+  { id: 'contabo', label: 'Contabo' },
+  { id: 'scaleway', label: 'Scaleway' },
+];
 
 /**
  * SSH Key Selector Component
@@ -30,215 +29,167 @@ import { SSHKeyDto } from '../../../core/api/model/models';
  */
 @Component({
   selector: 'app-ssh-key-selector',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideKey,
-      lucidePlus,
-      lucideLoader,
-      lucideCircleAlert,
-      lucideCheck,
-    }),
+  imports: [
+    FormsModule,
+    FlPanel,
+    FlAlert,
+    FlField,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
   ],
+  providers: [provideIcons({ lucideKey, lucidePlus })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-6">
-      <!-- Description -->
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2"> SSH Key (Optional) </label>
-        <p class="text-sm text-slate-500">
-          Choose an SSH key for secure access to your resources. You can skip this step and add it
-          later.
+    <fl-panel title="SSH key (optional)">
+      <div class="flex flex-col gap-4">
+        <p class="text-fl-body-sm text-fl-ink-muted">
+          Choose a key for secure access to your servers. You can skip this step and add one later.
         </p>
-      </div>
 
-      <!-- Loading State -->
-      @if (wizardService.isSshKeyLoading()) {
-        <div class="flex items-center justify-center py-12">
-          <ng-icon name="lucideLoader" size="32" class="animate-spin text-blue-500"></ng-icon>
-        </div>
-      }
+        @if (wizardService.isSshKeyLoading()) {
+          <fl-loading-state [rows]="3" />
+        } @else if (wizardService.sshKeyError()) {
+          <fl-alert tone="error" title="Could not load the SSH keys">{{
+            wizardService.sshKeyError()
+          }}</fl-alert>
+        } @else {
+          <fieldset class="fl-fieldset">
+            <legend class="fl-sr">SSH key</legend>
+            <label class="fl-radiocard">
+              <input
+                type="radio"
+                name="ssh-key-choice"
+                [checked]="selectedKeyId() === undefined"
+                (change)="selectKey(undefined)"
+              />
+              <span class="fl-radiocard__text">
+                <span class="fl-radiocard__title">No SSH key</span>
+                <span class="fl-radiocard__desc">Skip SSH key configuration</span>
+              </span>
+            </label>
+            @for (key of wizardService.sshKeysData(); track key.id) {
+              <label class="fl-radiocard">
+                <input
+                  type="radio"
+                  name="ssh-key-choice"
+                  [checked]="selectedKeyId() === key.id"
+                  (change)="selectKey(key.id)"
+                />
+                <span class="fl-radiocard__text min-w-0">
+                  <span class="fl-radiocard__title">{{ key.name }}</span>
+                  <span class="fl-radiocard__desc">
+                    <span class="fl-mono">{{ key.type }}</span> · {{ formatDate(key.createdAt) }}
+                  </span>
+                  <span class="fl-row">
+                    @for (p of getProviderBadges(key); track p.id) {
+                      <fl-status
+                        [tone]="p.available ? 'success' : 'neutral'"
+                        [label]="p.label"
+                        [title]="p.available ? 'Synced' : 'Not synced'"
+                      />
+                    }
+                  </span>
+                </span>
+              </label>
+            }
+          </fieldset>
 
-      <!-- Error State -->
-      @if (wizardService.sshKeyError() && !wizardService.isSshKeyLoading()) {
-        <div class="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
-          <ng-icon name="lucideCircleAlert" size="20"></ng-icon>
-          <span>{{ wizardService.sshKeyError() }}</span>
-        </div>
-      }
-
-      <!-- SSH Keys List -->
-      @if (!wizardService.isSshKeyLoading() && !wizardService.sshKeyError()) {
-        <div>
-          <!-- No SSH Key Option -->
-          <div
-            (click)="selectKey(undefined)"
-            [class]="getKeyCardClass(undefined)"
-            class="p-4 mb-3 border-2 rounded-lg cursor-pointer transition-all"
-          >
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-slate-100 rounded-lg">
-                <ng-icon name="lucideKey" size="20" class="text-slate-500"></ng-icon>
-              </div>
-              <div>
-                <h3 class="font-semibold text-slate-900">No SSH Key</h3>
-                <p class="text-sm text-slate-500">Skip SSH key configuration</p>
-              </div>
-            </div>
-          </div>
-          <!-- Existing SSH Keys -->
-          @for (key of wizardService.sshKeysData(); track key) {
-            <div
-              (click)="selectKey(key.id)"
-              [class]="getKeyCardClass(key.id)"
-              class="p-4 mb-3 border-2 rounded-lg cursor-pointer transition-all"
-            >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                  <div class="p-2 bg-green-100 rounded-lg flex-shrink-0">
-                    <ng-icon name="lucideKey" size="20" class="text-green-600"></ng-icon>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-slate-900">{{ key.name }}</h3>
-                    <p class="text-sm text-slate-500">
-                      {{ key.type }} · {{ formatDate(key.createdAt) }}
-                    </p>
-                    <!-- Provider availability badges -->
-                    <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                      @for (p of getProviderBadges(key); track p.id) {
-                        <span
-                          [class]="
-                            p.available
-                              ? 'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800'
-                              : 'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500'
-                          "
-                        >
-                          {{ p.label }}
-                        </span>
-                      }
-                    </div>
-                  </div>
-                </div>
-                @if (selectedKeyId() === key.id) {
-                  <ng-icon
-                    name="lucideCheck"
-                    size="24"
-                    class="text-blue-600 flex-shrink-0 ml-2"
-                  ></ng-icon>
-                }
-              </div>
-            </div>
-          }
-          <!-- Empty State -->
           @if (wizardService.sshKeysData().length === 0) {
-            <div class="text-center py-8 text-slate-500">
-              <ng-icon name="lucideKey" size="48" class="mx-auto mb-3 opacity-30"></ng-icon>
-              <p>No SSH keys found. Create your first key below.</p>
-            </div>
+            <fl-empty-state
+              icon="lucideKey"
+              [compact]="true"
+              title="No SSH keys yet"
+              body="Create your first key below."
+            />
           }
-          <!-- Create New SSH Key -->
-          <div class="mt-6 pt-6 border-t border-slate-200">
+
+          <div class="flex flex-col gap-4 border-t border-fl-border pt-4">
             @if (!showCreateForm()) {
-              <button
-                (click)="showCreateForm.set(true)"
-                class="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                <ng-icon name="lucidePlus" size="20"></ng-icon>
-                <span>Create New SSH Key</span>
-              </button>
-            }
-            <!-- Create Form -->
-            @if (showCreateForm()) {
-              <div class="space-y-4">
-                <h3 class="font-semibold text-slate-900">Create New SSH Key</h3>
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">
-                    Key Name <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    [(ngModel)]="newKeyName"
-                    placeholder="e.g., production-key"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">
-                    User Name <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    [(ngModel)]="newKeyUserName"
-                    placeholder="e.g., admin"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <!-- Create Error -->
-                @if (createError()) {
-                  <div
-                    class="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm"
-                  >
-                    <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
-                    <span>{{ createError() }}</span>
+              <div>
+                <button flButton type="button" (click)="showCreateForm.set(true)">
+                  <fl-icon name="lucidePlus" />
+                  Create SSH key
+                </button>
+              </div>
+            } @else {
+              <div class="fl-grid-2">
+                <fl-field label="Key name" for="ssh-selector-name">
+                  <div class="fl-input fl-input--lg">
+                    <input
+                      id="ssh-selector-name"
+                      type="text"
+                      placeholder="production-key"
+                      autocomplete="off"
+                      [ngModel]="newKeyName()"
+                      (ngModelChange)="newKeyName.set($event)"
+                    />
                   </div>
-                }
-                <div class="flex items-center gap-3">
-                  <button
-                    (click)="createKey()"
-                    [disabled]="!canCreateKey() || isCreating()"
-                    [class]="getCreateButtonClass()"
-                    class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all"
-                  >
-                    @if (isCreating()) {
-                      <ng-icon name="lucideLoader" size="16" class="animate-spin"></ng-icon>
-                    }
-                    @if (!isCreating()) {
-                      <ng-icon name="lucidePlus" size="16"></ng-icon>
-                    }
-                    <span>{{ isCreating() ? 'Creating...' : 'Create Key' }}</span>
-                  </button>
-                  <button
-                    (click)="cancelCreate()"
-                    [disabled]="isCreating()"
-                    class="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                </fl-field>
+                <fl-field label="User name" for="ssh-selector-user">
+                  <div class="fl-input fl-input--lg">
+                    <input
+                      id="ssh-selector-user"
+                      type="text"
+                      placeholder="admin"
+                      autocomplete="off"
+                      [ngModel]="newKeyUserName()"
+                      (ngModelChange)="newKeyUserName.set($event)"
+                    />
+                  </div>
+                </fl-field>
+              </div>
+              @if (createError()) {
+                <fl-alert tone="error" title="Key not created">{{ createError() }}</fl-alert>
+              }
+              <div class="fl-row">
+                <button
+                  flButton
+                  type="button"
+                  [disabled]="!canCreate() || isCreating()"
+                  (click)="createKey()"
+                >
+                  @if (isCreating()) {
+                    <fl-spinner label="Creating" />
+                    Creating…
+                  } @else {
+                    Create key
+                  }
+                </button>
+                <button
+                  flButton="ghost"
+                  type="button"
+                  [disabled]="isCreating()"
+                  (click)="cancelCreate()"
+                >
+                  Cancel
+                </button>
               </div>
             }
           </div>
-        </div>
-      }
-    </div>
+        }
+      </div>
+    </fl-panel>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [],
 })
 export class SshKeySelectorComponent implements OnInit {
   readonly wizardService = inject(ProviderWizardService);
 
-  // === Inputs ===
   readonly selectedKeyId = input<string | undefined>(undefined);
-
-  // === Outputs ===
   readonly keySelected = output<string | undefined>();
 
-  // === State ===
   readonly showCreateForm = signal<boolean>(false);
   readonly isCreating = signal<boolean>(false);
   readonly createError = signal<string | null>(null);
-  newKeyName = '';
-  newKeyUserName = '';
+  readonly newKeyName = signal('');
+  readonly newKeyUserName = signal('');
 
-  // All known providers for badge display
-  private readonly ALL_PROVIDERS = [
-    { id: 'hetzner', label: 'Hetzner' },
-    { id: 'contabo', label: 'Contabo' },
-    { id: 'scaleway', label: 'Scaleway' },
-  ];
-
-  // === Lifecycle ===
+  protected readonly canCreate = computed(
+    () => this.newKeyName().trim().length > 0 && this.newKeyUserName().trim().length > 0,
+  );
 
   ngOnInit(): void {
     void (async () => {
@@ -250,8 +201,6 @@ export class SshKeySelectorComponent implements OnInit {
     })();
   }
 
-  // === Methods ===
-
   selectKey(keyId: string | undefined): void {
     this.keySelected.emit(keyId);
   }
@@ -262,7 +211,7 @@ export class SshKeySelectorComponent implements OnInit {
    */
   getProviderBadges(key: SSHKeyDto): { id: string; label: string; available: boolean }[] {
     const mappings = key.providerKeyMappings as Record<string, string> | undefined;
-    return this.ALL_PROVIDERS.map((p) => ({
+    return ALL_PROVIDERS.map((p) => ({
       id: p.id,
       label: p.label,
       available: !!mappings?.[p.id],
@@ -271,61 +220,39 @@ export class SshKeySelectorComponent implements OnInit {
 
   async createKey(): Promise<void> {
     if (!this.canCreateKey()) return;
-
     this.isCreating.set(true);
     this.createError.set(null);
-
     try {
-      const newKey = await this.wizardService.createSshKey(this.newKeyName, this.newKeyUserName);
-
-      // Reset form
-      this.newKeyName = '';
-      this.newKeyUserName = '';
+      const newKey = await this.wizardService.createSshKey(
+        this.newKeyName(),
+        this.newKeyUserName(),
+      );
+      this.newKeyName.set('');
+      this.newKeyUserName.set('');
       this.showCreateForm.set(false);
-
-      // Auto-select the new key
       this.selectKey(newKey.id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create SSH key:', error);
-      this.createError.set(error?.message || 'Failed to create SSH key. Please try again.');
+      const message = (error as { message?: string } | null)?.message;
+      this.createError.set(message || 'Failed to create SSH key. Please try again.');
     } finally {
       this.isCreating.set(false);
     }
   }
 
   cancelCreate(): void {
-    this.newKeyName = '';
-    this.newKeyUserName = '';
+    this.newKeyName.set('');
+    this.newKeyUserName.set('');
     this.showCreateForm.set(false);
     this.createError.set(null);
   }
 
   canCreateKey(): boolean {
-    return this.newKeyName.trim().length > 0 && this.newKeyUserName.trim().length > 0;
+    return this.canCreate();
   }
 
   formatDate(date: string | undefined): string {
     if (!date) return 'Unknown';
     return new Date(date).toLocaleDateString();
-  }
-
-  // === Styling Methods ===
-
-  getKeyCardClass(keyId: string | undefined): string {
-    const isSelected = this.selectedKeyId() === keyId;
-
-    if (isSelected) {
-      return 'border-blue-500 bg-blue-50';
-    }
-
-    return 'border-slate-200 hover:border-blue-300 hover:bg-slate-50';
-  }
-
-  getCreateButtonClass(): string {
-    if (!this.canCreateKey() || this.isCreating()) {
-      return 'bg-slate-300 text-slate-500 cursor-not-allowed';
-    }
-
-    return 'bg-green-600 text-white hover:bg-green-700';
   }
 }

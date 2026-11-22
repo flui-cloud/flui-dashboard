@@ -1,25 +1,44 @@
-import {
-  Component,
-  Input,
-  signal,
-  computed,
-  input,
-  output,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
-import { FormsModule } from '@angular/forms';
+import { Component, Input, signal, computed, inject, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideShield } from '@ng-icons/lucide';
 import { FirewallRuleFormData, validateFirewallRule } from '../../model/firewall-v2.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FirewallRuleForm, RuleFieldChange } from './firewall-rule-form';
+import { ruleCidrs, ruleDirection, rulePort, ruleProtocol } from './firewall-format';
+
+export interface EditorNotice {
+  readonly title: string;
+  readonly body: string;
+}
 
 @Component({
   selector: 'app-firewall-inline-rule-editor',
-  standalone: true,
-  imports: [FormsModule],
+  imports: [
+    FlPanel,
+    FlTable,
+    FlAlert,
+    FlEmptyState,
+    FlStatus,
+    FlTag,
+    FlButton,
+    FlActionsMenu,
+    FirewallRuleForm,
+  ],
+  providers: [provideIcons({ lucideShield })],
+  host: { class: 'fl-stack' },
   templateUrl: './firewall-inline-rule-editor.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrls: ['./firewall-inline-rule-editor.component.scss'],
 })
 export class FirewallInlineRuleEditorComponent {
+  private readonly confirmService = inject(ConfirmService);
+
   @Input() set initialRules(rules: FirewallRuleFormData[] | null) {
     if (rules) {
       this.originalRules.set([...rules]);
@@ -54,6 +73,12 @@ export class FirewallInlineRuleEditorComponent {
   destinationIpsText = signal('');
 
   detectingIp = signal(false);
+  notice = signal<EditorNotice | null>(null);
+
+  protected readonly direction = ruleDirection;
+  protected readonly protocol = ruleProtocol;
+  protected readonly port = rulePort;
+  protected readonly cidrs = ruleCidrs;
 
   isDirty = computed(() => {
     return JSON.stringify(this.originalRules()) !== JSON.stringify(this.workingRules());
@@ -248,27 +273,72 @@ export class FirewallInlineRuleEditorComponent {
     return '';
   }
 
-  deleteRule(index: number) {
+  ruleActions(rule: FirewallRuleFormData): MenuAction[] {
+    if (this.isManagedSshRule(rule)) return [];
+    const actions: MenuAction[] = [{ id: 'edit', label: 'Edit rule' }];
+    if (!this.isRequiredIngress(rule)) {
+      actions.push({ id: 'delete', label: 'Delete rule', danger: true, separatorBefore: true });
+    }
+    return actions;
+  }
+
+  onRuleAction(index: number, action: string) {
+    if (action === 'edit') this.expandRule(index);
+    if (action === 'delete') void this.deleteRule(index);
+  }
+
+  async deleteRule(index: number) {
     const rule = this.workingRules()[index];
     if (rule && this.isRequiredIngress(rule)) {
       const why =
         rule.port === '443'
           ? 'the dashboard, API and apps over HTTPS (Traefik)'
-          : 'ACME HTTP-01 cert renewal and the HTTP→HTTPS redirect';
-      alert(
-        `Port ${rule.port} can't be removed — it serves ${why}. ` +
-          `Removing it would lock you out of the cluster. ` +
-          `You can restrict its source IPs instead (edit the rule).`,
-      );
+          : 'ACME HTTP-01 certificate renewal and the HTTP to HTTPS redirect';
+      this.notice.set({
+        title: `Port ${rule.port} cannot be removed`,
+        body:
+          `It serves ${why}. Removing it would lock you out of the cluster. ` +
+          `You can restrict its source IPs instead.`,
+      });
       return;
     }
-    if (confirm('Delete this firewall rule?')) {
+    const ok = await this.confirmService.confirm({
+      title: 'Delete this rule?',
+      body: `${rule?.description || 'The rule'} is removed from the rules you are editing. Nothing changes on the firewall until you save.`,
+      confirmLabel: 'Delete rule',
+      destructive: true,
+    });
+    if (ok) {
       this.workingRules.update((rules) => rules.filter((_, i) => i !== index));
 
       if (this.expandedIndex() === index) {
         this.expandedIndex.set(null);
       }
     }
+  }
+
+  onRuleField(index: number, change: RuleFieldChange) {
+    this.updateRuleField(index, change.field, change.value);
+    if (change.field === 'direction') this.resetIpsText();
+  }
+
+  onNewRuleField(change: RuleFieldChange) {
+    this.updateNewRuleField(change.field, change.value);
+    if (change.field === 'direction') this.resetIpsText();
+  }
+
+  setIpsText(direction: FirewallRuleFormData['direction'] | undefined, text: string) {
+    if (direction === 'in') this.sourceIpsText.set(text);
+    else this.destinationIpsText.set(text);
+  }
+
+  ipsTextFor(direction: FirewallRuleFormData['direction'] | undefined): string {
+    return direction === 'in' ? this.sourceIpsText() : this.destinationIpsText();
+  }
+
+  private resetIpsText() {
+    this.sourceIpsText.set('');
+    this.destinationIpsText.set('');
   }
 
   updateRuleField<K extends keyof FirewallRuleFormData>(
@@ -297,30 +367,45 @@ export class FirewallInlineRuleEditorComponent {
       (port) => !rules.some((r) => r.direction === 'in' && r.protocol === 'tcp' && r.port === port),
     );
     if (missing.length > 0) {
-      alert(
-        `Can't save: inbound TCP ${missing.join(' and ')} must stay open — ` +
-          `443 serves the dashboard/API/apps over HTTPS and 80 serves ACME HTTP-01 ` +
-          `cert renewal + the HTTP→HTTPS redirect. Removing them would make the ` +
-          `cluster unreachable. You can restrict the source IPs, but the ports must ` +
-          `stay present.`,
-      );
+      this.notice.set({
+        title: 'Cannot save these rules',
+        body:
+          `Inbound TCP ${missing.join(' and ')} must stay open. ` +
+          `443 serves the dashboard, API and apps over HTTPS, and 80 serves ACME HTTP-01 ` +
+          `certificate renewal and the HTTP to HTTPS redirect. Without them the cluster is ` +
+          `unreachable. You can restrict their source IPs, but the ports must stay.`,
+      });
       return;
     }
+    this.notice.set(null);
     this.save.emit(rules);
   }
 
-  discardAllChanges() {
-    if (confirm('Discard all unsaved changes?')) {
+  async discardAllChanges() {
+    const ok = await this.confirmService.confirm({
+      title: 'Discard all changes?',
+      body: 'The rules go back to the last saved version.',
+      confirmLabel: 'Discard changes',
+      destructive: true,
+    });
+    if (ok) {
       this.workingRules.set([...this.originalRules()]);
       this.expandedIndex.set(null);
       this.isAddingNew.set(false);
       this.ruleErrors.set(new Map());
+      this.notice.set(null);
     }
   }
 
-  cancelEditing() {
-    if (this.isDirty() && !confirm('You have unsaved changes. Discard them?')) {
-      return;
+  async cancelEditing() {
+    if (this.isDirty()) {
+      const ok = await this.confirmService.confirm({
+        title: 'Discard unsaved changes?',
+        body: 'You have changes that are not saved. They are lost if you leave the editor.',
+        confirmLabel: 'Discard changes',
+        destructive: true,
+      });
+      if (!ok) return;
     }
     this.cancelled.emit();
   }
@@ -335,7 +420,10 @@ export class FirewallInlineRuleEditorComponent {
       }
     } catch (error) {
       console.error('Failed to detect IP:', error);
-      alert('Failed to detect your IP address. Please enter it manually.');
+      this.notice.set({
+        title: 'Could not detect your IP address',
+        body: 'Enter it manually.',
+      });
     } finally {
       this.detectingIp.set(false);
     }
@@ -372,20 +460,5 @@ export class FirewallInlineRuleEditorComponent {
       .split(',')
       .map((ip) => ip.trim())
       .filter((ip) => ip.length > 0);
-  }
-
-  getRuleSummary(rule: FirewallRuleFormData): string {
-    const dir = rule.direction === 'in' ? 'Inbound' : 'Outbound';
-    const proto = rule.protocol.toUpperCase();
-    const port = rule.port ? `:${rule.port}` : '';
-
-    let ips = '';
-    if (rule.direction === 'in' && rule.sourceIps && rule.sourceIps.length > 0) {
-      ips = ` • from ${rule.sourceIps.join(', ')}`;
-    } else if (rule.direction === 'out' && rule.destinationIps && rule.destinationIps.length > 0) {
-      ips = ` • to ${rule.destinationIps.join(', ')}`;
-    }
-
-    return `${dir} • ${proto}${port}${ips}`;
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom, map } from 'rxjs';
@@ -13,29 +13,38 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { RemovalPreview, SectionGroup } from '../../model/scaling-section.models';
 import { RemovalPreviewNoteComponent } from './removal-preview-note.component';
 import { ScalingCostDraft, WriteScalingGroup } from '../../model/scaling-group.models';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-scaling-group-tab',
-  standalone: true,
   imports: [
     RouterLink,
     GroupSettingsTableComponent,
     GroupCostComponent,
     RemovalPreviewNoteComponent,
+    FlAlert,
+    FlPanel,
+    FlEmptyState,
+    FlButton,
+    FlSpinner,
   ],
-  host: { class: 'block' },
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'fl-stack' },
   template: `
     @if (draft(); as d) {
-      <section class="space-y-3" data-testid="group-tab">
-        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 class="text-label m-0">Configuration</h2>
-          <a [routerLink]="['/cluster', d.group().clusterId, 'scaling']" class="card-link">
-            Open this cluster's scaling →
+      <div class="fl-stack" data-testid="group-tab">
+        <app-group-settings-table [draft]="d">
+          <a
+            settingsActions
+            class="fl-link text-fl-body-sm"
+            [routerLink]="['/cluster', d.group().clusterId, 'scaling']"
+          >
+            Open this cluster's scaling
           </a>
-        </div>
-
-        <app-group-settings-table [draft]="d" />
+        </app-group-settings-table>
 
         @if (d.hasCatalogue()) {
           <app-group-cost
@@ -46,100 +55,101 @@ import { ScalingCostDraft, WriteScalingGroup } from '../../model/scaling-group.m
           />
         }
 
-        <div
-          class="card-surface flex flex-wrap items-start justify-between gap-4 p-4"
-          data-testid="group-save"
-        >
-          <div class="flex max-w-prose flex-col gap-2">
-            <p class="m-0 text-[13px] leading-relaxed text-foreground">
-              {{ consequence(d).sentence }}
-            </p>
-            @if (removalFor(d); as preview) {
-              <app-removal-preview-note [preview]="preview" />
-            }
-          </div>
-
-          <div class="flex shrink-0 items-center gap-2">
+        <fl-panel data-testid="group-save">
+          <div class="flex flex-col gap-4">
             @if (problem(d); as message) {
-              <span class="text-xs text-red-600" data-testid="group-save-error">
+              <fl-alert tone="error" title="Cannot save this group" data-testid="group-save-error">
                 {{ message }}
+              </fl-alert>
+            }
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div class="flex max-w-prose flex-col gap-2">
+                <p class="m-0 text-fl-body-sm">{{ consequence(d).sentence }}</p>
+                @if (removalFor(d); as preview) {
+                  <app-removal-preview-note [preview]="preview" />
+                }
+              </div>
+              <div class="flex shrink-0 items-center gap-2">
+                @if (removalFor(d)) {
+                  <button
+                    flButton="ghost"
+                    type="button"
+                    [disabled]="saving()"
+                    (click)="removal.set(null)"
+                    data-testid="group-save-cancel"
+                  >
+                    Cancel
+                  </button>
+                }
+                <button
+                  flButton="primary"
+                  type="button"
+                  (click)="save(d)"
+                  [disabled]="!!problem(d) || saving() || !changed(d)"
+                  data-testid="group-save-button"
+                >
+                  @if (saving()) {
+                    <fl-spinner label="Saving" />
+                  }
+                  {{ saveLabel(d) }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </fl-panel>
+
+        <fl-panel title="Remove this group" data-testid="group-remove">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            @if (!confirmRemove()) {
+              <p class="m-0 max-w-prose text-fl-body-sm text-fl-ink-muted">{{ removeNote() }}</p>
+              <button
+                flButton="danger"
+                size="sm"
+                type="button"
+                [disabled]="!removable()"
+                [title]="removeNote()"
+                data-testid="group-remove-button"
+                (click)="confirmRemove.set(true)"
+              >
+                Remove this group
+              </button>
+            } @else {
+              <p class="m-0 max-w-prose text-fl-body-sm">
+                Remove {{ d.group().name }} and its decision log? No node is removed.
+              </p>
+              <span class="inline-flex items-center gap-2">
+                <button
+                  flButton="ghost"
+                  size="sm"
+                  type="button"
+                  [disabled]="removing()"
+                  (click)="confirmRemove.set(false)"
+                >
+                  Cancel
+                </button>
+                <button
+                  flButton="danger"
+                  size="sm"
+                  type="button"
+                  [disabled]="removing()"
+                  data-testid="group-remove-confirm"
+                  (click)="remove(d)"
+                >
+                  {{ removing() ? 'Removing…' : 'Remove' }}
+                </button>
               </span>
             }
-            @if (removalFor(d)) {
-              <button
-                type="button"
-                class="min-h-11 rounded-lg px-3 text-[13px] text-muted-foreground hover:text-foreground"
-                [disabled]="saving()"
-                (click)="removal.set(null)"
-                data-testid="group-save-cancel"
-              >
-                Cancel
-              </button>
-            }
-            <button
-              type="button"
-              (click)="save(d)"
-              [disabled]="!!problem(d) || saving() || !changed(d)"
-              class="min-h-11 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
-              data-testid="group-save-button"
-            >
-              {{ saveLabel(d) }}
-            </button>
           </div>
-        </div>
-
-        <div
-          class="flex flex-wrap items-center justify-between gap-3 px-1 text-[12px] text-sub"
-          data-testid="group-remove"
-        >
-          <span>{{ removeNote() }}</span>
-          @if (!confirmRemove()) {
-            <button
-              type="button"
-              class="rounded-md border border-border px-2.5 py-1 font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-              [disabled]="!removable()"
-              [title]="removeNote()"
-              data-testid="group-remove-button"
-              (click)="confirmRemove.set(true)"
-            >
-              Remove this group
-            </button>
-          } @else {
-            <span class="inline-flex items-center gap-2">
-              Remove {{ d.group().name }} and its decision log? No node is removed.
-              <button
-                type="button"
-                class="rounded-md bg-destructive px-2.5 py-1 font-medium text-destructive-foreground disabled:opacity-50"
-                [disabled]="removing()"
-                data-testid="group-remove-confirm"
-                (click)="remove(d)"
-              >
-                {{ removing() ? 'Removing…' : 'Remove' }}
-              </button>
-              <button
-                type="button"
-                class="text-muted-foreground"
-                [disabled]="removing()"
-                (click)="confirmRemove.set(false)"
-              >
-                Cancel
-              </button>
-            </span>
-          }
-        </div>
-      </section>
+        </fl-panel>
+      </div>
     } @else {
-      <section class="card-surface p-6" data-testid="group-tab-unknown">
-        <h2 class="m-0 text-base font-medium text-foreground">No such scaling group</h2>
-        <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
-          Nothing is configured under
-          <span class="font-mono text-foreground">{{ groupId() ?? 'no id' }}</span>. A group that
-          was removed, or a link that outlived it.
-        </p>
-        <a routerLink="/scaling" class="card-link" data-testid="back-to-scaling">
-          Back to every cluster
-        </a>
-      </section>
+      <fl-panel data-testid="group-tab-unknown">
+        <fl-empty-state title="No such scaling group" [body]="unknownBody()">
+          <a flButton size="sm" routerLink="/scaling" data-testid="back-to-scaling">
+            Back to every cluster
+          </a>
+        </fl-empty-state>
+      </fl-panel>
     }
   `,
 })
@@ -200,14 +210,17 @@ export class ScalingGroupTabComponent {
 
   protected readonly draft = computed<GroupDraft | null>(() => this.drafts.draft(this.groupId()));
 
+  protected readonly unknownBody = computed(
+    () =>
+      `Nothing is configured under ${this.groupId() ?? 'this ID'}. A group that was removed, or a link that outlived it.`,
+  );
+
   /**
    * What this group will do once saved, in the same words the cluster page
    * uses. A change to what a cluster may spend unattended meets no action
    * cycle when it comes from a browser, so the sentence is the consent.
    */
   protected consequence(draft: GroupDraft) {
-    // This page does not know how many nodes the cluster has right now, so the
-    // sentence speaks in the ceiling rather than inventing a number of them.
     return consequenceOf(bodyOf(draft.group()));
   }
 
@@ -250,7 +263,7 @@ export class ScalingGroupTabComponent {
   /** The preview, only while the limits on screen are still the ones it was read for. */
   protected removalFor(draft: GroupDraft): RemovalPreview | null {
     const shown = this.removal();
-    return shown && shown.key === boundsKey(draft) ? shown.preview : null;
+    return shown?.key === boundsKey(draft) ? shown.preview : null;
   }
 
   /** Reads what the limits on screen would give back; true when there is something to show first. */
@@ -266,7 +279,6 @@ export class ScalingGroupTabComponent {
       this.removal.set({ key: boundsKey(draft), preview });
       return true;
     } catch {
-      // Without a preview the save still goes through: the group checks again before it removes anything.
       return false;
     }
   }

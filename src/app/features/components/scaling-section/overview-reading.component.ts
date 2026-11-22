@@ -1,19 +1,20 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
+import { FlStatus } from '../../../ui/primitives/status';
 import { Reading } from './overview-format';
 
 @Component({
   selector: 'app-overview-reading',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlStatus],
+  host: { class: 'inline-flex flex-col items-end gap-0.5' },
   template: `
-    <span
-      class="whitespace-nowrap tabular-nums"
-      [class]="reading().attention ? 'status-degraded font-medium' : 'text-foreground'"
-      >{{ reading().value }}
-      @if (reading().sub; as sub) {
-        <span class="ml-1.5 text-xs font-normal text-muted-foreground">{{ sub }}</span>
-      }
-    </span>
+    @if (reading().attention) {
+      <fl-status tone="warning" class="fl-mono" [label]="reading().value" />
+    } @else {
+      <span class="fl-mono fl-num">{{ reading().value }}</span>
+    }
+    @if (reading().sub; as sub) {
+      <span class="text-fl-caption text-fl-ink-muted">{{ sub }}</span>
+    }
   `,
 })
 export class OverviewReadingComponent {

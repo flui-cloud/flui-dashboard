@@ -1,53 +1,53 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePause, lucideRotateCcw, lucideTriangleAlert } from '@ng-icons/lucide';
 import { ScalingApiService } from '../../service/scaling-api.service';
-import {
-  lucideBell,
-  lucideCircleAlert,
-  lucideCircleCheck,
-  lucideLoader,
-  lucidePause,
-  lucideRotateCcw,
-} from '@ng-icons/lucide';
 import { PurchaseLogComponent } from './purchase-log.component';
 import { ScalingNowGiveBackComponent } from './now-give-back.component';
 import { ClusterScalingRow, SectionGroup } from '../../model/scaling-section.models';
 import { ScalingGroupStore } from './scaling-group.store';
 import { ago, eurMonth } from './now-format';
 import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlMetricStrip } from '../../../ui/patterns/metric-strip';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 interface StatCard {
   id: string;
   label: string;
   value: string;
   caption: string;
+  warn?: boolean;
 }
+
+type PurchaseState = 'buying' | 'joined' | 'failed';
+
+const PURCHASE_STATUS: Record<PurchaseState, { tone: StatusTone; label: string }> = {
+  buying: { tone: 'progress', label: 'Adding a node' },
+  joined: { tone: 'success', label: 'Node joined' },
+  failed: { tone: 'error', label: 'Node not added' },
+};
 
 @Component({
   selector: 'app-scaling-now-summary',
-  standalone: true,
   imports: [
-    NgIcon,
-    HlmButtonDirective,
+    FlAlert,
+    FlButton,
+    FlIcon,
+    FlMetricStrip,
+    FlPanel,
+    FlStatus,
     SectionFailureComponent,
     SectionSkeletonComponent,
     PurchaseLogComponent,
     ScalingNowGiveBackComponent,
   ],
-  providers: [
-    provideIcons({
-      lucideBell,
-      lucideCircleAlert,
-      lucideCircleCheck,
-      lucideLoader,
-      lucidePause,
-      lucideRotateCcw,
-    }),
-  ],
-  host: { class: 'block' },
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideIcons({ lucidePause, lucideRotateCcw, lucideTriangleAlert })],
+  host: { class: 'fl-stack' },
   template: `
     @if (loading()) {
       <app-section-skeleton
@@ -59,153 +59,126 @@ interface StatCard {
     } @else if (failed()) {
       <app-section-failure [message]="failed() ?? ''" testid="strip" (retry)="store.reload()" />
     } @else {
-      <div class="space-y-3">
-        <dl class="m-0 grid grid-cols-2 gap-3 xl:grid-cols-4" data-testid="strip">
-          @for (card of cards(); track card.id) {
-            <div
-              class="rounded-lg border border-border bg-card px-4 py-3"
-              [attr.data-testid]="'tile-' + card.id"
-            >
-              <dt class="text-label">{{ card.label }}</dt>
-              <dd class="m-0">
-                <span
-                  class="block text-2xl font-bold tabular-nums text-foreground"
-                  [attr.data-testid]="'tile-value-' + card.id"
-                >
-                  {{ card.value }}
-                </span>
-                @if (card.caption) {
-                  <span
-                    class="mt-0.5 block text-[12px] text-muted-foreground"
-                    [attr.data-testid]="'tile-note-' + card.id"
-                  >
-                    {{ card.caption }}
-                  </span>
-                }
-              </dd>
-            </div>
-          }
-        </dl>
-
-        @if (group().purchase; as purchase) {
+      <fl-metric-strip data-testid="strip">
+        @for (card of cards(); track card.id) {
           <div
-            class="rounded-lg border px-3 py-2 text-sm"
-            [class]="purchaseClass(purchase.state)"
-            data-testid="purchase-progress"
+            class="fl-metric"
+            role="listitem"
+            [class.fl-metric--warning]="card.warn"
+            [attr.data-testid]="'tile-' + card.id"
           >
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <ng-icon
-                [name]="
-                  purchase.state === 'buying'
-                    ? 'lucideLoader'
-                    : purchase.state === 'joined'
-                      ? 'lucideCircleCheck'
-                      : 'lucideCircleAlert'
-                "
-                class="h-4 w-4 shrink-0"
-                [class.animate-spin]="purchase.state === 'buying'"
-              />
-              <span class="min-w-0 flex-1 text-foreground">
-                {{ purchase.says }}
-                @if (purchase.state === 'joined' && purchase.finishedAt) {
-                  <span class="text-muted-foreground">
-                    · joined at {{ clock(purchase.finishedAt) }}</span
-                  >
-                }
+            <span class="fl-metric__label">{{ card.label }}</span>
+            <span class="fl-metric__value" [attr.data-testid]="'tile-value-' + card.id">
+              @if (card.warn) {
+                <fl-icon name="lucideTriangleAlert" />
+              }
+              {{ card.value }}
+            </span>
+            @if (card.caption) {
+              <span class="fl-metric__caption" [attr.data-testid]="'tile-note-' + card.id">
+                {{ card.caption }}
               </span>
-              <app-purchase-log [operationId]="purchase.operationId" />
-            </div>
-            @if (purchase.state === 'buying') {
-              <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-primary/15">
-                <div
-                  class="h-1 rounded-full bg-primary transition-all"
-                  [style.width.%]="purchase.progress"
-                ></div>
-              </div>
             }
           </div>
         }
+      </fl-metric-strip>
 
-        <p
-          class="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-border bg-card px-3 py-2 text-sm"
-          data-testid="state-line"
-        >
-          <ng-icon
-            [name]="pending() ? 'lucideCircleAlert' : 'lucideCircleCheck'"
-            class="h-4 w-4 shrink-0 translate-y-0.5"
-            [class]="pending() ? 'text-amber-500' : 'text-muted-foreground'"
-          />
-          <span class="text-foreground">{{ state() }}</span>
-        </p>
-
-        @if (group().purchaseHeld; as hold) {
-          <div
-            class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-amber-500/40 bg-amber-500/[0.06] px-3 py-2 text-sm"
-            data-testid="purchase-held"
-          >
-            <ng-icon name="lucideBell" class="h-4 w-4 shrink-0 text-amber-500" />
-            <div class="min-w-0 flex-1">
-              @if (hold.until) {
-                <p class="m-0 text-foreground">
-                  The machine was sold out {{ heldAge() }} ago and nothing was created. Flui reads
-                  availability again at {{ clockOf(hold.until) }}.
-                </p>
-              } @else {
-                <p class="m-0 text-foreground">
-                  A node failed to be added {{ heldAge() }} ago — nothing more is added until you
-                  try again.
-                </p>
-              }
-              @if (hold.error) {
-                <p class="m-0 break-words text-[13px] text-muted-foreground">
-                  {{ hold.error }}
-                </p>
-              }
-              @if (retryError()) {
-                <p class="m-0 text-[13px] text-red-600">
-                  {{ retryError() }}
-                </p>
-              }
+      @if (group().purchase; as purchase) {
+        <fl-panel title="Node purchase" data-testid="purchase-progress">
+          <div class="flex flex-col gap-3">
+            <div class="fl-row">
+              <fl-status
+                [tone]="purchaseStatus(purchase.state).tone"
+                [label]="purchaseStatus(purchase.state).label"
+              />
+              <span class="text-fl-body-sm text-fl-ink">
+                {{ purchase.says }}
+                @if (purchase.state === 'joined' && purchase.finishedAt) {
+                  <span class="text-fl-ink-muted"
+                    >, joined at {{ clock(purchase.finishedAt) }}</span
+                  >
+                }
+              </span>
             </div>
-            <button
-              hlmBtn
-              size="sm"
-              variant="outline"
-              [disabled]="retrying()"
-              (click)="retry()"
-              data-testid="retry-purchase"
-            >
-              <ng-icon name="lucideRotateCcw" class="mr-1.5 h-3.5 w-3.5" />
-              {{ retrying() ? 'Asking…' : 'Try again' }}
-            </button>
+            @if (purchase.state === 'buying') {
+              <span
+                class="fl-bar"
+                role="progressbar"
+                aria-label="Node purchase progress"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                [attr.aria-valuenow]="purchase.progress"
+                ><span [style.width.%]="purchase.progress"></span
+              ></span>
+            }
+            <app-purchase-log [operationId]="purchase.operationId" />
           </div>
-        } @else if (giveBack(); as back) {
-          <app-scaling-now-give-back [group]="group()" [alarm]="back.alarm" [age]="back.age" />
-        } @else if (alarm(); as open) {
-          <p
-            class="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-amber-500/40 bg-amber-500/[0.06] px-3 py-2 text-sm"
-            data-testid="open-alarm"
-          >
-            <ng-icon name="lucideBell" class="h-4 w-4 shrink-0 translate-y-0.5 text-amber-500" />
-            <span class="text-foreground"
-              >Alarm open {{ open.age }}
-              @if (!preview()?.blocked) {
-                — {{ open.asks }}
-              }
-            </span>
-          </p>
-        }
+        </fl-panel>
+      }
 
-        @if (held(); as reason) {
-          <p
-            class="m-0 flex flex-wrap items-baseline gap-x-2 text-[13px] text-muted-foreground"
-            data-testid="opportunity-held"
+      <fl-alert
+        [tone]="pending() ? 'warning' : 'info'"
+        [title]="pending() ? 'Something has nowhere to run' : 'Current state'"
+        data-testid="state-line"
+      >
+        {{ state() }}
+      </fl-alert>
+
+      @if (group().purchaseHeld; as hold) {
+        <fl-alert
+          tone="warning"
+          [title]="hold.until ? 'Machine sold out' : 'Adding a node failed'"
+          data-testid="purchase-held"
+        >
+          @if (hold.until) {
+            <span class="block">
+              The machine was sold out {{ heldAge() }} ago and nothing was created. Flui reads
+              availability again at {{ clockOf(hold.until) }}.
+            </span>
+          } @else {
+            <span class="block">
+              A node failed to be added {{ heldAge() }} ago. Nothing more is added until you try
+              again.
+            </span>
+          }
+          @if (hold.error) {
+            <span class="mt-1 block break-words fl-mono">{{ hold.error }}</span>
+          }
+          @if (retryError()) {
+            <span class="mt-1 block text-fl-danger">{{ retryError() }}</span>
+          }
+          <button
+            alertActions
+            flButton
+            size="sm"
+            type="button"
+            [disabled]="retrying()"
+            (click)="retry()"
+            data-testid="retry-purchase"
           >
-            <ng-icon name="lucidePause" class="h-3.5 w-3.5 shrink-0 translate-y-0.5" />
-            <span>Opportunity held — {{ reason }}</span>
-          </p>
-        }
-      </div>
+            <fl-icon name="lucideRotateCcw" [size]="14" />
+            {{ retrying() ? 'Asking…' : 'Try again' }}
+          </button>
+        </fl-alert>
+      } @else if (giveBack(); as back) {
+        <app-scaling-now-give-back [group]="group()" [alarm]="back.alarm" [age]="back.age" />
+      } @else if (alarm(); as open) {
+        <fl-alert tone="warning" [title]="'Alarm open ' + open.age" data-testid="open-alarm">
+          @if (!preview()?.blocked) {
+            {{ open.asks }}
+          }
+        </fl-alert>
+      }
+
+      @if (held(); as reason) {
+        <p
+          class="m-0 flex items-center gap-2 text-fl-body-sm text-fl-ink-muted"
+          data-testid="opportunity-held"
+        >
+          <fl-icon name="lucidePause" [size]="14" />
+          <span>Opportunity held: {{ reason }}</span>
+        </p>
+      }
     }
   `,
 })
@@ -340,6 +313,7 @@ export class ScalingNowSummaryComponent {
       label: 'Spend',
       value: eurMonth(row.monthlyEur),
       caption: `${floor}${against}`,
+      warn: cap !== null && row.monthlyEur > cap,
     };
   }
 
@@ -369,6 +343,7 @@ export class ScalingNowSummaryComponent {
       label: 'Nowhere to run',
       value: counted === null || unasked ? '—' : `${counted}`,
       caption: unasked ? 'the cluster could not be asked' : waiting,
+      warn: !unasked && (counted ?? 0) > 0,
     };
   }
 
@@ -382,13 +357,12 @@ export class ScalingNowSummaryComponent {
       label: 'Standing orders',
       value: `${orders.length}`,
       caption: orders.length === 0 ? '' : blockedCaption,
+      warn: blocked > 0,
     };
   }
 
-  protected purchaseClass(state: 'buying' | 'joined' | 'failed'): string {
-    if (state === 'buying') return 'border-primary/40 bg-primary/[0.05]';
-    if (state === 'joined') return 'border-green-500/40 bg-green-500/[0.06]';
-    return 'border-red-500/40 bg-red-500/[0.06]';
+  protected purchaseStatus(state: PurchaseState): { tone: StatusTone; label: string } {
+    return PURCHASE_STATUS[state];
   }
 
   protected clock(at: Date): string {
@@ -398,32 +372,45 @@ export class ScalingNowSummaryComponent {
   protected readonly state = computed(() => {
     const group = this.group();
     if (group.purchase?.state === 'buying') {
-      return this.pending()
-        ? `${this.pending()!.app} waits for the ${group.purchase.shape ?? 'node'} on its way.`
-        : 'A node is on its way.';
+      return this.buyingState(group.purchase.shape);
     }
-    const stuck = this.pending();
-    const chosen = this.preview()?.chosen ?? null;
     const fleet = this.row()?.nodes ?? null;
+    const floor = group.bounds.min;
+    const belowFloor = fleet !== null && fleet < floor;
+    const under = belowFloor
+      ? ` The fleet is also ${fleet} where the floor is ${floor}, and the floor is held now rather than approached.`
+      : '';
+    const stuck = this.pending();
+    if (!stuck) {
+      return this.idleState(belowFloor, fleet, floor, under);
+    }
+    return this.stuckState(`${stuck.app} has nowhere to run`, under);
+  });
 
-    const under =
-      fleet !== null && fleet < group.bounds.min
-        ? ` The fleet is also ${fleet} where the floor is ${group.bounds.min}, and the floor is held now rather than approached.`
-        : '';
+  private buyingState(shape: string | null | undefined): string {
+    const pending = this.pending();
+    return pending
+      ? `${pending.app} waits for the ${shape ?? 'node'} on its way.`
+      : 'A node is on its way.';
+  }
 
-    if (!stuck && this.unasked()) {
+  private idleState(
+    belowFloor: boolean,
+    fleet: number | null,
+    floor: number,
+    under: string,
+  ): string {
+    if (this.unasked()) {
       return `The cluster could not be asked whether anything is waiting, so Flui cannot say that everything is running.${under}`;
     }
-
-    if (!stuck) {
-      if (fleet !== null && fleet < group.bounds.min) {
-        return `Everything is running, but the fleet is ${fleet} where the floor is ${group.bounds.min}. The floor is held immediately, so this is already an alarm.`;
-      }
-      return 'Everything is running. Nothing for Flui to do.';
+    if (belowFloor) {
+      return `Everything is running, but the fleet is ${fleet} where the floor is ${floor}. The floor is held immediately, so this is already an alarm.`;
     }
+    return 'Everything is running. Nothing for Flui to do.';
+  }
 
-    const since = `${stuck.app} has nowhere to run`;
-
+  private stuckState(since: string, under: string): string {
+    const chosen = this.preview()?.chosen ?? null;
     if (!chosen) {
       const blocked = this.preview()?.blocked?.headline;
       return blocked
@@ -437,5 +424,5 @@ export class ScalingNowSummaryComponent {
       return `${since} — a ${chosen.shape} in ${chosen.region} would fit, and this group is set to tell you rather than add it.${under}`;
     }
     return `${since} — Flui would add a ${chosen.shape} in ${chosen.region}.${under}`;
-  });
+  }
 }

@@ -73,7 +73,7 @@ describe('the Costs page', () => {
     const fixture = TestBed.createComponent(CostsComponent);
     fixture.detectChanges();
     const amounts = Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll('td.tabular-nums'),
+      (fixture.nativeElement as HTMLElement).querySelectorAll('td.is-num'),
     ).map((cell) => cell.textContent!.trim());
     return { text: fixture.nativeElement.textContent as string, load, amounts };
   };

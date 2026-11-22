@@ -1,58 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideRotateCw, lucideUnplug } from '@ng-icons/lucide';
+import { Component, computed, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRotateCw } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 @Component({
   selector: 'app-section-skeleton',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlLoadingState],
   host: { class: 'block' },
   template: `
-    @switch (variant()) {
-      @case ('cards') {
-        <dl
-          class="m-0 grid grid-cols-2 gap-3 xl:grid-cols-4"
-          [attr.data-testid]="'skeleton-' + testid()"
-          aria-hidden="true"
-        >
-          @for (card of slots(); track card) {
-            <div class="rounded-lg border border-border bg-card px-4 py-3">
-              <div class="skeleton h-3 w-16"></div>
-              <div class="skeleton mt-2 h-7 w-12"></div>
-              <div class="skeleton mt-2 h-3 w-28"></div>
-            </div>
-          }
-        </dl>
-      }
-      @case ('table') {
-        <div
-          class="card-surface px-4 py-3"
-          [attr.data-testid]="'skeleton-' + testid()"
-          aria-hidden="true"
-        >
-          <div class="flex gap-4 border-b border-border pb-2">
-            @for (head of [1, 2, 3, 4]; track head) {
-              <div class="skeleton h-3 flex-1"></div>
-            }
-          </div>
-          @for (row of slots(); track row) {
-            <div class="flex gap-4 border-b border-border/50 py-3 last:border-0">
-              @for (cell of [1, 2, 3, 4]; track cell) {
-                <div class="skeleton h-4 flex-1"></div>
-              }
-            </div>
-          }
-        </div>
-      }
-      @default {
-        <div class="space-y-2" [attr.data-testid]="'skeleton-' + testid()" aria-hidden="true">
-          @for (line of slots(); track line) {
-            <div class="skeleton h-4" [class]="line === 1 ? 'w-2/3' : 'w-full'"></div>
-          }
-        </div>
-      }
-    }
-    <span class="sr-only">Loading {{ label() }}</span>
+    <fl-loading-state [rows]="rows()" [attr.data-testid]="'skeleton-' + testid()" />
+    <span class="fl-sr">Loading {{ label() }}</span>
   `,
 })
 export class SectionSkeletonComponent {
@@ -61,42 +21,32 @@ export class SectionSkeletonComponent {
   readonly label = input('');
   readonly testid = input('block');
 
-  protected readonly slots = computed(() =>
-    Array.from({ length: this.count() }, (_, index) => index + 1),
+  protected readonly rows = computed(() =>
+    this.variant() === 'table' ? this.count() + 1 : this.count(),
   );
 }
 
 @Component({
   selector: 'app-section-failure',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideRotateCw, lucideUnplug })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlAlert, FlButton, FlIcon],
+  providers: [provideIcons({ lucideRotateCw })],
   host: { class: 'block' },
   template: `
-    <div
-      class="card-surface flex flex-wrap items-start gap-x-3 gap-y-2 px-4 py-3"
-      role="alert"
-      [attr.data-testid]="'failure-' + testid()"
-    >
-      <ng-icon name="lucideUnplug" class="h-4 w-4 shrink-0 translate-y-0.5 text-muted-foreground" />
-      <p class="m-0 min-w-0 flex-1 max-w-prose text-sm text-foreground">
-        {{ message() }}
-        <span class="mt-0.5 block text-[13px] text-muted-foreground">
-          Nothing on the cluster changed because this did not load — what is missing here is the
-          reading, not the fleet.
-        </span>
-      </p>
+    <fl-alert tone="error" title="Could not load" [attr.data-testid]="'failure-' + testid()">
+      <span class="block">{{ message() }}</span>
+      <span class="block">Nothing on the cluster changed. Only the reading is missing.</span>
       <button
+        alertActions
+        flButton
+        size="sm"
         type="button"
-        class="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         [attr.data-testid]="'retry-' + testid()"
         (click)="retry.emit()"
       >
-        <ng-icon name="lucideRotateCw" class="h-4 w-4" />
+        <fl-icon name="lucideRotateCw" [size]="14" />
         Try again
       </button>
-    </div>
+    </fl-alert>
   `,
 })
 export class SectionFailureComponent {

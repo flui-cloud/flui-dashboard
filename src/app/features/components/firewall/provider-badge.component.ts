@@ -1,41 +1,28 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { ProviderMarkComponent } from '../../../shared/components/provider-mark.component';
+
+const NAMES: Record<string, string> = {
+  hetzner: 'Hetzner',
+  contabo: 'Contabo',
+  scaleway: 'Scaleway',
+  aws: 'AWS',
+  digitalocean: 'DigitalOcean',
+  gcp: 'Google Cloud',
+  google: 'Google Cloud',
+  azure: 'Azure',
+};
 
 @Component({
   selector: 'app-provider-badge',
-  standalone: true,
   imports: [ProviderMarkComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'fl-row' },
   template: `
-    <div class="inline-flex items-center gap-1.5">
-      <app-provider-mark [name]="displayName()" [size]="16" />
-      <span class="text-sm font-medium capitalize">{{ displayName() }}</span>
-    </div>
+    <app-provider-mark [name]="displayName()" [size]="16" />
+    <span>{{ displayName() }}</span>
   `,
 })
 export class ProviderBadgeComponent {
   provider = input.required<string>();
 
-  displayName(): string {
-    const p = this.provider().toLowerCase();
-    switch (p) {
-      case 'hetzner':
-        return 'Hetzner';
-      case 'contabo':
-        return 'Contabo';
-      case 'scaleway':
-        return 'Scaleway';
-      case 'aws':
-        return 'AWS';
-      case 'digitalocean':
-        return 'DigitalOcean';
-      case 'gcp':
-      case 'google':
-        return 'Google Cloud';
-      case 'azure':
-        return 'Azure';
-      default:
-        return this.provider();
-    }
-  }
+  readonly displayName = computed(() => NAMES[this.provider().toLowerCase()] ?? this.provider());
 }

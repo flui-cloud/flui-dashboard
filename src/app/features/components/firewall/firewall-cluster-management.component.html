@@ -1,213 +1,193 @@
-<div class="p-6 space-y-6">
-  <div class="flex items-center justify-between gap-4">
-    <div>
-      <h1 class="m-0 text-2xl font-semibold text-foreground">Cluster Firewalls</h1>
-      <p class="m-0 mt-1 text-sm text-muted-foreground">Firewall rules for your clusters</p>
-    </div>
-    <div class="flex items-center gap-3">
+<div class="fl-page">
+  <fl-page-header [title]="'Cluster firewalls (' + total() + ')'">
+    <span headerMeta>Firewall rules for your clusters</span>
+    <ng-container headerActions>
       <a
+        flButton="ghost"
         appReadOnlySection="firewall"
         routerLink="/infrastructure/firewall/provider-firewalls"
-        class="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-        title="Inspect raw firewalls on each provider — debug only"
+        title="Inspect the raw firewalls on each provider, for debugging only"
       >
         Debug on provider
       </a>
       <button
-        (click)="refresh()"
+        flButton
+        type="button"
+        [iconOnly]="true"
+        aria-label="Refresh"
         [disabled]="loading()"
-        class="h-9 px-4 rounded-md bg-primary text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        (click)="refresh()"
       >
-        @if (loading()) {
-          <span>Loading...</span>
-        } @else {
-          <span>Refresh</span>
-        }
+        <fl-icon name="lucideRefreshCw" />
       </button>
-    </div>
-  </div>
+    </ng-container>
+  </fl-page-header>
 
-  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
-    @for (tile of tiles(); track tile.label) {
-      <app-stat-tile [data]="tile" />
+  <fl-metric-strip>
+    @for (metric of metrics(); track metric.label) {
+      <fl-metric
+        [label]="metric.label"
+        [value]="metric.value"
+        [caption]="metric.caption"
+        [tone]="metric.tone"
+      />
     }
-  </div>
-
-  <div class="flex flex-col md:flex-row gap-3">
-    <label for="firewall-search" class="sr-only">Search firewalls</label>
-    <input
-      id="firewall-search"
-      type="text"
-      [ngModel]="searchQuery()"
-      (ngModelChange)="onSearchChange($event)"
-      placeholder="Search by cluster or firewall ID..."
-      class="flex-1 h-9 px-3 rounded-md border border-input bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-    />
-    <label for="firewall-status" class="sr-only">Status</label>
-    <select
-      id="firewall-status"
-      [ngModel]="selectedStatus()"
-      (ngModelChange)="onStatusFilterChange($event)"
-      class="h-9 px-3 rounded-md border border-input bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-    >
-      @for (option of statusOptions; track option.value) {
-        <option [ngValue]="option.value">{{ option.label }}</option>
-      }
-    </select>
-    <label for="firewall-coverage" class="sr-only">Coverage</label>
-    <select
-      id="firewall-coverage"
-      [ngModel]="selectedCoverage()"
-      (ngModelChange)="onCoverageFilterChange($event)"
-      class="h-9 px-3 rounded-md border border-input bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-    >
-      @for (option of coverageOptions; track option.value) {
-        <option [ngValue]="option.value">{{ option.label }}</option>
-      }
-    </select>
-  </div>
+  </fl-metric-strip>
 
   @if (error()) {
-    <div class="card-surface px-4 py-3 border-destructive/40">
-      <p class="m-0 text-sm text-destructive">{{ error() }}</p>
-    </div>
+    <fl-alert tone="error" title="Could not load the firewalls">{{ error() }}</fl-alert>
   }
 
-  <section class="card-surface overflow-hidden">
+  <fl-panel [flush]="true">
+    <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+      <div class="fl-toolbar__group">
+        <label class="fl-input">
+          <fl-icon name="lucideSearch" [size]="14" />
+          <span class="fl-sr">Search firewalls</span>
+          <input
+            id="firewall-search"
+            type="search"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchChange($event)"
+            placeholder="Search by cluster or firewall ID"
+          />
+        </label>
+        <span class="fl-select-wrap">
+          <label class="fl-sr" for="firewall-status">Status</label>
+          <select
+            id="firewall-status"
+            class="fl-select fl-select--sm"
+            [ngModel]="selectedStatus()"
+            (ngModelChange)="onStatusFilterChange($event)"
+          >
+            @for (option of statusOptions; track option.value) {
+              <option [ngValue]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </span>
+        <span class="fl-select-wrap">
+          <label class="fl-sr" for="firewall-coverage">Coverage</label>
+          <select
+            id="firewall-coverage"
+            class="fl-select fl-select--sm"
+            [ngModel]="selectedCoverage()"
+            (ngModelChange)="onCoverageFilterChange($event)"
+          >
+            @for (option of coverageOptions; track option.value) {
+              <option [ngValue]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </span>
+      </div>
+      <div class="fl-toolbar__group">
+        <span class="fl-toolbar__info">
+          {{ firewalls().length }} {{ firewalls().length === 1 ? 'firewall' : 'firewalls' }}
+        </span>
+      </div>
+    </div>
+
     @if (loading() && firewalls().length === 0) {
-      <p class="m-0 px-5 py-12 text-center text-sm text-muted-foreground">Loading firewalls...</p>
+      <fl-loading-state [rows]="5" />
     } @else if (firewalls().length === 0) {
-      <p class="m-0 px-5 py-12 text-center text-sm text-muted-foreground">No firewalls found</p>
+      <fl-empty-state
+        icon="lucideShield"
+        title="No firewalls found"
+        [body]="
+          total() > 0
+            ? 'Nothing matches these filters.'
+            : 'Firewalls appear here once a cluster has one.'
+        "
+      />
     } @else {
-      @for (firewall of firewalls(); track firewall.id) {
-        <div
-          class="relative px-5 py-4 border-t border-border first:border-t-0 hover:bg-muted/40 transition-colors cursor-pointer"
-        >
-          <a
-            [routerLink]="['/infrastructure/firewall', firewall.id]"
-            class="absolute inset-0"
-            [attr.aria-label]="
-              'View firewall for ' + (firewall.clusterInfo?.clusterName || firewall.clusterId)
-            "
-          ></a>
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex-1 min-w-0 space-y-1.5">
-              <div class="flex items-center gap-x-3 gap-y-1 flex-wrap">
-                <h3 class="m-0 text-sm font-semibold text-foreground">
-                  {{ firewall.clusterInfo?.clusterName || firewall.clusterId }}
-                </h3>
-                <span
-                  class="inline-flex items-center gap-1.5 text-xs font-medium"
-                  [class]="statusTextClass(firewall.reconciliationStatus)"
-                >
-                  <span
-                    class="h-1.5 w-1.5 rounded-full"
-                    [class]="statusDotClass(firewall.reconciliationStatus)"
-                  ></span>
-                  {{ statusLabel(firewall.reconciliationStatus) }}
-                </span>
-                <span
-                  class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-                >
-                  @if (coverageDotClass(firewall.coverageStatus); as dot) {
-                    <span class="h-1.5 w-1.5 rounded-full" [class]="dot"></span>
-                  }
-                  {{ getCoverageLabel(firewall.coverageStatus) }}
-                </span>
-              </div>
-
-              <div
-                class="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-muted-foreground"
-              >
-                <span class="font-mono">{{ firewall.id }}</span>
-                <span>{{ driftMessage(firewall.hasDrift, firewall.reconciliationStatus) }}</span>
-              </div>
-
-              @if (firewall.clusterInfo) {
-                <div class="flex items-center gap-4 text-xs text-muted-foreground">
-                  <div class="flex items-center gap-2">
-                    <span>Nodes</span>
-                    <div class="flex items-center gap-1">
-                      @for (node of firewall.clusterInfo.nodes; track node.nodeId) {
-                        <span
-                          [title]="node.serverName + ' (' + node.nodeType + ') — ' + node.status"
-                          [class]="getNodeDotClass(node.status)"
-                        ></span>
-                      }
-                    </div>
-                    <span class="text-foreground tabular-nums">
-                      {{ firewall.clusterInfo.readyNodes }}/{{
-                        firewall.clusterInfo.totalNodes
-                      }}
-                      ready
+      <div class="fl-table-wrap">
+        <table flTable density="dense">
+          <thead>
+            <tr>
+              <th scope="col">Cluster</th>
+              <th scope="col">Status</th>
+              <th scope="col">Coverage</th>
+              <th scope="col">Cluster state</th>
+              <th scope="col" class="is-num">Nodes ready</th>
+              <th scope="col" class="is-num">Rules</th>
+              <th scope="col">Provider ID</th>
+              <th scope="col">Last reconciled</th>
+              <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (firewall of firewalls(); track firewall.id) {
+              <tr>
+                <td class="fl-cell-name">
+                  <a
+                    class="fl-link"
+                    [routerLink]="['/infrastructure/firewall', firewall.id]"
+                    [attr.aria-label]="
+                      'View firewall for ' +
+                      (firewall.clusterInfo?.clusterName || firewall.clusterId)
+                    "
+                    >{{ firewall.clusterInfo?.clusterName || firewall.clusterId }}</a
+                  >
+                  <span class="block fl-mono fl-muted">{{ firewall.id }}</span>
+                </td>
+                <td class="whitespace-normal">
+                  <fl-status
+                    [tone]="statusOf(firewall).tone"
+                    [label]="statusOf(firewall).label"
+                    [attr.title]="driftMessage(firewall.hasDrift, firewall.reconciliationStatus)"
+                  />
+                  @if (firewall.errorMessage) {
+                    <span class="block text-fl-caption text-fl-ink-muted">
+                      {{ firewall.errorMessage }}
                     </span>
-                  </div>
-                  <span>
-                    Cluster
-                    <span
-                      class="font-medium"
-                      [class]="getClusterStatusClass(firewall.clusterInfo.clusterStatus)"
-                      >{{ firewall.clusterInfo.clusterStatus }}</span
-                    >
-                  </span>
-                </div>
-              }
-
-              @if (firewall.coverageStatus === 'ORPHANED') {
-                <p class="m-0 flex items-start gap-1.5 text-xs text-muted-foreground">
-                  <span class="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-destructive"></span>
-                  This firewall is no longer protecting any active cluster nodes. Consider deleting
-                  it.
-                </p>
-              }
-
-              @if (firewall.coverageStatus === 'PARTIAL') {
-                <p class="m-0 flex items-start gap-1.5 text-xs text-muted-foreground">
-                  <span class="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"></span>
-                  Some nodes are not ready —
-                  {{
-                    firewall.clusterInfo?.totalNodes! - firewall.clusterInfo?.readyNodes!
-                  }}
-                  node(s) need attention.
-                </p>
-              }
-
-              <div class="flex items-center gap-4 flex-wrap text-xs text-muted-foreground">
-                <span>Rules {{ firewall.desiredRules.length || 0 }}</span>
-                @if (firewall.providerFirewallId) {
-                  <span>Provider ID {{ firewall.providerFirewallId | maskId }}</span>
-                }
-                <span>Last reconciled {{ formatDate(firewall.lastReconciliationAt) }}</span>
-              </div>
-
-              @if (firewall.errorMessage) {
-                <p
-                  class="m-0 mt-1 rounded-md bg-destructive/10 px-2 py-1.5 text-xs text-destructive"
-                >
-                  {{ firewall.errorMessage }}
-                </p>
-              }
-            </div>
-
-            <div class="relative z-10 flex items-center gap-2">
-              @if (firewall.hasDrift || firewall.reconciliationStatus === 'ERROR') {
-                <button
-                  appReadOnlySection="firewall"
-                  (click)="reconcileFirewall(firewall.id, $event)"
-                  [disabled]="isReconciling(firewall.id)"
-                  class="h-8 px-3 rounded-md bg-primary text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                >
-                  @if (isReconciling(firewall.id)) {
-                    <span>Reconciling...</span>
-                  } @else {
-                    <span>Reconcile</span>
                   }
-                </button>
-              }
-            </div>
-          </div>
-        </div>
-      }
+                </td>
+                <td class="whitespace-normal">
+                  <fl-status
+                    [tone]="coverageOf(firewall.coverageStatus).tone"
+                    [label]="coverageOf(firewall.coverageStatus).label"
+                  />
+                  @if (coverageNote(firewall); as note) {
+                    <span class="block text-fl-caption text-fl-ink-muted">{{ note }}</span>
+                  }
+                </td>
+                <td>
+                  @if (firewall.clusterInfo; as info) {
+                    <fl-status
+                      [tone]="clusterOf(info.clusterStatus).tone"
+                      [label]="clusterOf(info.clusterStatus).label"
+                    />
+                  } @else {
+                    <span class="fl-muted">—</span>
+                  }
+                </td>
+                <td class="is-num" [attr.title]="nodesTitle(firewall) || null">
+                  @if (firewall.clusterInfo; as info) {
+                    {{ info.readyNodes }}/{{ info.totalNodes }}
+                  } @else {
+                    —
+                  }
+                </td>
+                <td class="is-num">{{ firewall.desiredRules.length || 0 }}</td>
+                <td class="fl-mono">
+                  {{ firewall.providerFirewallId ? (firewall.providerFirewallId | maskId) : '—' }}
+                </td>
+                <td>{{ formatDate(firewall.lastReconciliationAt) }}</td>
+                <td class="is-fit">
+                  @if (canReconcile(firewall)) {
+                    <fl-actions-menu
+                      appReadOnlySection="firewall"
+                      label="Firewall actions"
+                      [compact]="true"
+                      [items]="isReconciling(firewall.id) ? reconcilingActions : reconcileActions"
+                      (action)="onRowAction(firewall, $event)"
+                    />
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
-  </section>
+  </fl-panel>
 </div>
