@@ -1,37 +1,33 @@
 import {
-  nodeStatusDot as dot,
+  nodeStatusTone as tone,
   buildOverviewNodeRows,
   findNodeMetrics,
 } from './cluster-overview-nodes';
 import { InstanceWithLabels } from '../../model/instance.models';
 import { ServerMetricsState } from '../../service/cluster-monitoring.service';
 
-describe('cluster overview — a node dot says what Flui knows', () => {
+describe('cluster overview — a node status says what Flui knows', () => {
   it('is healthy only when the node actually joined', () => {
-    expect(dot('ready')).toBe('dot-healthy');
+    expect(tone('ready')).toBe('success');
   });
 
   it('shows a node that never joined as a problem', () => {
-    // The case this exists for: the server is up, the bootstrap failed, and the
-    // provider still calls it running.
-    expect(dot('error')).toBe('dot-degraded');
+    expect(tone('error')).toBe('error');
   });
 
-  it('shows work in progress as pending, not as health', () => {
-    expect(dot('creating')).toBe('dot-pending');
-    expect(dot('joining')).toBe('dot-pending');
-    expect(dot('deleting')).toBe('dot-pending');
+  it('shows work in progress as progress, not as health', () => {
+    expect(tone('creating')).toBe('progress');
+    expect(tone('joining')).toBe('progress');
+    expect(tone('deleting')).toBe('progress');
   });
 
   it('never calls a provider status healthy', () => {
-    // `running` describes the machine, and a machine can be running with
-    // nothing on it.
-    expect(dot('running')).not.toBe('dot-healthy');
+    expect(tone('running')).not.toBe('success');
   });
 
   it('promises nothing about a value it does not recognise', () => {
-    expect(dot(undefined)).toBe('dot-pending');
-    expect(dot('something-new')).toBe('dot-pending');
+    expect(tone(undefined)).toBe('neutral');
+    expect(tone('something-new')).toBe('neutral');
   });
 });
 
@@ -88,7 +84,7 @@ describe('cluster overview — node rows', () => {
       node({ id: `n${i}`, name: `node-${i}`, role: i === 5 ? 'master' : 'worker' }),
     );
     const rows = buildOverviewNodeRows(nodes, []);
-    expect(rows.length).toBe(6);
+    expect(rows).toHaveSize(6);
     expect(rows[0].role).toBe('master');
   });
 

@@ -1,33 +1,8 @@
-import { ClusterHaCardComponent } from './cluster-ha-card.component';
-import {
-  Component,
-  inject,
-  signal,
-  computed,
-  OnInit,
-  OnDestroy,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideCircleCheck,
-  lucideGlobe,
-  lucideKey,
-  lucideShield,
-  lucideShieldPlus,
-  lucideArrowRight,
-  lucideCheckCircle,
-  lucideAlertCircle,
-  lucidePackage,
-  lucideNetwork,
-  lucideArchive,
-} from '@ng-icons/lucide';
 import { PlatformComponentsService } from '../../service/platform-components.service';
 import { PlatformComponentResponseDto } from '../../../core/api/model/platformComponentResponseDto';
-
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterMonitoringService } from '../../service/cluster-monitoring.service';
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
@@ -36,7 +11,7 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
 import { FirewallV2Service } from '../../service/firewall-v2.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { BackupService } from '../../service/backup.service';
-import { ProviderType } from '../../model/cluster.models';
+import { isControlClusterType } from '../../model/cluster.models';
 import { BackupPolicy } from '../../model/backup.models';
 import { AutoscaleWarningBannerComponent } from './autoscale-warning-banner.component';
 import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
@@ -45,41 +20,50 @@ import { ClusterMaintenanceCardComponent } from '../maintenance/cluster-maintena
 import { ClusterEgressLineComponent } from '../egress/cluster-egress-line.component';
 import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { ClusterHaCardComponent } from './cluster-ha-card.component';
 import { ClusterOverviewNodesCardComponent } from './cluster-overview-nodes-card.component';
-import { meterBarClass } from './cluster-overview-nodes';
+import {
+  dnsState,
+  formatAge,
+  formatRelative,
+  healthState,
+  plural,
+  providerLabel,
+  syncState,
+} from './cluster-overview-view';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'cluster-overview-tab',
-  standalone: true,
   imports: [
+    DatePipe,
     MaskIdPipe,
+    RouterModule,
     ClusterOverviewNodesCardComponent,
     ClusterHaCardComponent,
     ClusterMaintenanceCardComponent,
     ClusterEgressLineComponent,
-    RouterModule,
-    NgIconComponent,
     AutoscaleWarningBannerComponent,
     AttachVNetDialogComponent,
     EnableBackupsModalComponent,
+    FlAlert,
+    FlButton,
+    FlCopyId,
+    FlKeyValue,
+    FlKvItem,
+    FlLoadingState,
+    FlPanel,
+    FlStatus,
+    FlUsageBar,
   ],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideCircleCheck,
-      lucideGlobe,
-      lucideKey,
-      lucideShield,
-      lucideShieldPlus,
-      lucideArrowRight,
-      lucideCheckCircle,
-      lucideAlertCircle,
-      lucidePackage,
-      lucideNetwork,
-      lucideArchive,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'fl-stack' },
   templateUrl: './cluster-overview-tab.component.html',
 })
 export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
@@ -135,7 +119,7 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
     const id = this.cluster()?.id;
     if (id) this.router.navigate(['/cluster', id, 'nodes']);
   }
-  syncStatus = signal<any>(null);
+  syncStatus = signal<unknown>(null);
 
   readonly cpuPercent = computed(() =>
     Number.parseFloat(String(this.monitoring.clusterStats()[0]?.value ?? '0')),
@@ -143,20 +127,6 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
   readonly memPercent = computed(() =>
     Number.parseFloat(String(this.monitoring.clusterStats()[1]?.value ?? '0')),
   );
-
-  readonly healthDotColor = computed(() => {
-    const s = this.monitoring.healthStatus();
-    if (s === 'HEALTHY') return 'dot-healthy';
-    if (s === 'DEGRADED') return 'dot-degraded';
-    return 'dot-error';
-  });
-
-  readonly healthTextColor = computed(() => {
-    const s = this.monitoring.healthStatus();
-    if (s === 'HEALTHY') return 'status-healthy';
-    if (s === 'DEGRADED') return 'status-degraded';
-    return 'status-error';
-  });
 
   readonly previewVarSets = computed(() => this.variablesService.sets().slice(0, 3));
 
@@ -191,7 +161,7 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
       this.monitoring.startPolling();
       const c = this.cluster();
       if (c?.id) {
-        const calls: Promise<any>[] = [
+        const calls: Promise<unknown>[] = [
           this.clusterService.reconcileClusterStatus(c.id, false),
           this.dnsZoneService.loadAssignment(c.id),
           this.dnsZoneService.loadIssuers(c.id),
@@ -216,65 +186,17 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
     this.monitoring.stopPolling();
   }
 
-  getProviderLabel(provider?: ProviderType): string {
-    switch (provider) {
-      case ProviderType.HETZNER:
-        return 'Hetzner';
-      case ProviderType.CONTABO:
-        return 'Contabo';
-      case ProviderType.SCALEWAY:
-        return 'Scaleway';
-      case ProviderType.OVH:
-        return 'OVH';
-      default:
-        return 'Unknown';
-    }
-  }
+  protected readonly providerLabel = providerLabel;
+  protected readonly isControl = isControlClusterType;
+  protected readonly healthState = healthState;
+  protected readonly syncState = syncState;
+  protected readonly dnsState = dnsState;
+  protected readonly formatAge = formatAge;
+  protected readonly formatRelative = formatRelative;
+  protected readonly plural = plural;
 
-  formatDate(date?: Date): string {
-    if (!date) return 'N/A';
-    const now = new Date();
-    const target = new Date(date);
-    const diffDays = Math.floor((now.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return target.toLocaleDateString();
-  }
-
-  formatRelative(iso: string): string {
-    const diffMs = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diffMs / 60000);
-    if (mins < 1) return 'just now';
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-  }
-
-  metricColor(value: number, warn: number, danger: number): string {
-    if (value >= danger) return 'status-error';
-    if (value >= warn) return 'status-degraded';
-    return 'status-healthy';
-  }
-
-  progressBarColor(value: number, warn: number, danger: number): string {
-    return meterBarClass(value, warn, danger);
-  }
-
-  reconciliationClass(): string {
-    const status = this.dnsZoneService.reconciliationStatus();
-    if (status === 'IN_SYNC') return 'status-healthy';
-    if (status === 'DRIFT' || status === 'ERROR') return 'status-degraded';
-    return 'status-pending';
-  }
-
-  firewallStatusColor(status: string): string {
-    if (status === 'IN_SYNC') return 'status-healthy';
-    if (status === 'DRIFT') return 'status-degraded';
-    if (status === 'ERROR') return 'status-error';
-    return 'status-pending';
+  protected sentence(value: string | null | undefined): string {
+    if (!value) return '—';
+    return value.charAt(0).toUpperCase() + value.slice(1);
   }
 }

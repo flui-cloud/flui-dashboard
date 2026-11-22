@@ -1,172 +1,113 @@
-import {
-  Component,
-  inject,
-  signal,
-  computed,
-  OnInit,
-  viewChild,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideShieldCheck,
-  lucideLoader,
-  lucideAlertCircle,
-  lucideCheckCircle,
-  lucideCircle,
-  lucideAlertTriangle,
-} from '@ng-icons/lucide';
 import { AuthzInstallService } from '../../service/authz-install.service';
 import { ClusterService } from '../../service/cluster.service';
 import { AuthzInstallResponseDto } from '../../../core/api/model/authzInstallResponseDto';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { ConfirmService } from '../../../ui/overlays/confirm';
 
 @Component({
   selector: 'app-cluster-security-tab',
-  standalone: true,
-  imports: [NgIconComponent, ConfirmationDialogComponent],
-  providers: [
-    provideIcons({
-      lucideShieldCheck,
-      lucideLoader,
-      lucideAlertCircle,
-      lucideCheckCircle,
-      lucideCircle,
-      lucideAlertTriangle,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlKeyValue, FlKvItem, FlAlert, FlStatus, FlButton, FlSpinner],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-6 max-w-2xl">
-      <!-- Main panel -->
-      <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-blue-600" />
-            <h3 class="text-sm font-semibold text-gray-900">
-              Internal app protection (flui-authz)
-            </h3>
-          </div>
-          <!-- Status badge -->
-          @if (statusLabel(); as label) {
-            <span
-              class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
-              [class]="statusBadgeClass()"
-            >
-              <span class="w-1.5 h-1.5 rounded-full inline-block" [class]="statusDotClass()"></span>
-              {{ label }}
-            </span>
-          }
-        </div>
+    <fl-panel title="Internal app protection">
+      <ng-container panelActions>
+        @if (statusLabel(); as label) {
+          <fl-status [tone]="statusTone()" [label]="label" />
+        }
+      </ng-container>
 
-        <p class="text-sm text-gray-600">
+      <div class="flex flex-col gap-4">
+        <p class="m-0 text-fl-body-sm text-fl-ink-secondary">
           Checks the Flui sign-in on this cluster for internal apps and for routes that require one.
           The control cluster does not need it.
         </p>
 
-        <!-- Installed date -->
-        @if (authzService.install()?.installedAt) {
-          <p class="text-xs text-gray-500">
-            Installed {{ formatDate(authzService.install()!.installedAt!) }}
-          </p>
-        }
+        <fl-key-value>
+          <fl-kv-item key="Component" [mono]="true">flui-authz</fl-kv-item>
+          @if (authzService.install()?.installedAt; as installedAt) {
+            <fl-kv-item key="Installed">{{ formatDate(installedAt) }}</fl-kv-item>
+          }
+        </fl-key-value>
 
-        <!-- Progress bar during install/uninstall -->
         @if (authzService.installing()) {
-          <div class="space-y-1.5">
-            <div class="flex justify-between text-xs text-gray-500">
-              <span>{{ authzService.progressStep() || 'Working...' }}</span>
-              <span>{{ authzService.progress() }}%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-1.5">
-              <div
-                class="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
-                [style.width.%]="authzService.progress()"
-              ></div>
-            </div>
+          <div class="fl-row">
+            <fl-status tone="progress" [label]="authzService.progressStep() || 'Working'" />
+            <span class="fl-num text-fl-body-sm text-fl-ink-muted">
+              {{ authzService.progress() }}%
+            </span>
           </div>
         }
 
-        <!-- Error message -->
         @if (authzService.error()) {
-          <div
-            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700"
-          >
-            <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{{ authzService.error() }}</span>
-          </div>
+          <fl-alert tone="error" title="Request failed">{{ authzService.error() }}</fl-alert>
         }
 
-        <!-- FAILED error message from DTO -->
         @if (authzService.install()?.status === 'FAILED' && authzService.install()?.errorMessage) {
-          <div
-            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700"
-          >
-            <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{{ authzService.install()!.errorMessage }}</span>
-          </div>
+          <fl-alert tone="error" title="Installation failed">
+            {{ authzService.install()!.errorMessage }}
+          </fl-alert>
         }
 
-        <!-- Actions -->
-        <div class="flex items-center gap-3 pt-1">
-          @if (showInstallButton()) {
-            <button
-              (click)="onInstall()"
-              [disabled]="authzService.installing() || authzService.loading()"
-              class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              @if (authzService.installing()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                Installing...
-              } @else {
-                Install
-              }
-            </button>
-          }
-          @if (showRetryButton()) {
-            <button
-              (click)="onInstall()"
-              [disabled]="authzService.installing()"
-              class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              @if (authzService.installing()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                Retrying...
-              } @else {
-                Retry
-              }
-            </button>
-          }
-          @if (showUninstallButton()) {
-            <button
-              (click)="uninstallDialog.open()"
-              [disabled]="authzService.installing()"
-              class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Uninstall
-            </button>
-          }
-        </div>
+        @if (showInstallButton() || showRetryButton() || showUninstallButton()) {
+          <div class="fl-row">
+            @if (showInstallButton()) {
+              <button
+                flButton="primary"
+                type="button"
+                [disabled]="authzService.installing() || authzService.loading()"
+                (click)="onInstall()"
+              >
+                @if (authzService.installing()) {
+                  <fl-spinner label="Installing" />
+                  Installing…
+                } @else {
+                  Install
+                }
+              </button>
+            }
+            @if (showRetryButton()) {
+              <button
+                flButton="primary"
+                type="button"
+                [disabled]="authzService.installing()"
+                (click)="onInstall()"
+              >
+                @if (authzService.installing()) {
+                  <fl-spinner label="Retrying" />
+                  Retrying…
+                } @else {
+                  Retry
+                }
+              </button>
+            }
+            @if (showUninstallButton()) {
+              <button
+                flButton
+                type="button"
+                [disabled]="authzService.installing()"
+                (click)="confirmUninstall()"
+              >
+                Uninstall
+              </button>
+            }
+          </div>
+        }
       </div>
-    </div>
-
-    <app-confirmation-dialog
-      #uninstallDialog
-      title="Remove flui-authz"
-      message="Remove flui-authz from this cluster? Internal apps will fall back to the legacy external ForwardAuth proxy. No data is lost."
-      confirmText="Remove"
-      variant="danger"
-      (confirmed)="onUninstall()"
-    />
+    </fl-panel>
   `,
 })
 export class ClusterSecurityTabComponent implements OnInit {
   protected authzService = inject(AuthzInstallService);
   private readonly route = inject(ActivatedRoute);
   private readonly clusterService = inject(ClusterService);
-
-  readonly uninstallDialog = viewChild.required<ConfirmationDialogComponent>('uninstallDialog');
+  private readonly confirmService = inject(ConfirmService);
 
   private readonly clusterId = signal('');
 
@@ -175,27 +116,18 @@ export class ClusterSecurityTabComponent implements OnInit {
   protected statusLabel = computed(() => {
     const s = this.authzService.install()?.status;
     if (!s || s === this.Status.Uninstalled) return 'Not installed';
-    if (s === this.Status.Pending || s === this.Status.Installing) return 'Installing...';
+    if (s === this.Status.Pending || s === this.Status.Installing) return 'Installing';
     if (s === this.Status.Running) return 'Active';
     if (s === this.Status.Failed) return 'Failed';
     return null;
   });
 
-  protected statusBadgeClass = computed(() => {
+  protected statusTone = computed<StatusTone>(() => {
     const s = this.authzService.install()?.status;
-    if (s === this.Status.Running) return 'bg-green-100 text-green-700';
-    if (s === this.Status.Failed) return 'bg-red-100 text-red-700';
-    if (s === this.Status.Pending || s === this.Status.Installing)
-      return 'bg-amber-100 text-amber-700';
-    return 'bg-gray-100 text-gray-600';
-  });
-
-  protected statusDotClass = computed(() => {
-    const s = this.authzService.install()?.status;
-    if (s === this.Status.Running) return 'bg-green-500';
-    if (s === this.Status.Failed) return 'bg-red-500';
-    if (s === this.Status.Pending || s === this.Status.Installing) return 'bg-amber-500';
-    return 'bg-gray-400';
+    if (s === this.Status.Running) return 'success';
+    if (s === this.Status.Failed) return 'error';
+    if (s === this.Status.Pending || s === this.Status.Installing) return 'progress';
+    return 'neutral';
   });
 
   protected showInstallButton = computed(() => {
@@ -227,12 +159,20 @@ export class ClusterSecurityTabComponent implements OnInit {
     await this.authzService.installAuthz(id);
   }
 
+  protected async confirmUninstall(): Promise<void> {
+    const ok = await this.confirmService.confirm({
+      title: 'Remove flui-authz',
+      body: 'Remove flui-authz from this cluster? Internal apps fall back to the legacy external ForwardAuth proxy. No data is lost.',
+      confirmLabel: 'Remove',
+      destructive: true,
+    });
+    if (ok) await this.onUninstall();
+  }
+
   protected async onUninstall(): Promise<void> {
     const install = this.authzService.install();
     if (!install) return;
-    this.uninstallDialog().setProcessing(true);
     await this.authzService.uninstallAuthz(install.id);
-    this.uninstallDialog().close();
   }
 
   protected formatDate(iso: string): string {

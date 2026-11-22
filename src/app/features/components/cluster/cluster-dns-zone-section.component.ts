@@ -11,16 +11,13 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
-  lucideGlobe,
-  lucideRefreshCw,
-  lucideLoader,
-  lucideCheckCircle,
-  lucideAlertCircle,
-  lucidePlusCircle,
   lucideArrowUpCircle,
   lucideExternalLink,
+  lucideGlobe,
+  lucidePlus,
+  lucideRefreshCw,
 } from '@ng-icons/lucide';
 import { ClusterDnsZoneResponseDto } from '../../../core/api/model/clusterDnsZoneResponseDto';
 import { DnsZoneResponseDto } from '../../../core/api/model/dnsZoneResponseDto';
@@ -42,23 +39,45 @@ import {
   ClusterWildcard,
 } from '../../service/cluster-dns-zone.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { StateView, sentenceCase, toneOfColor } from '../dns/endpoint-format';
 
 @Component({
   selector: 'app-cluster-dns-zone-section',
-  standalone: true,
-  imports: [FormsModule, RouterLink, NgIconComponent, CanDirective, ClusterIssuerSetupComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    CanDirective,
+    ClusterIssuerSetupComponent,
+    FlAlert,
+    FlField,
+    FlKeyValue,
+    FlKvItem,
+    FlPanel,
+    FlEmptyState,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    FlTag,
+  ],
   providers: [
     provideIcons({
-      lucideGlobe,
-      lucideRefreshCw,
-      lucideLoader,
-      lucideCheckCircle,
-      lucideAlertCircle,
-      lucidePlusCircle,
       lucideArrowUpCircle,
       lucideExternalLink,
+      lucideGlobe,
+      lucidePlus,
+      lucideRefreshCw,
     }),
   ],
+  host: { class: 'fl-stack' },
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './cluster-dns-zone-section.component.html',
 })
@@ -152,13 +171,13 @@ export class ClusterDnsZoneSectionComponent {
     );
   }
 
-  protected cardClass(a: ClusterDnsZoneResponseDto): string {
-    return this.isBusy(a) ? 'bg-blue-50 border-blue-200' : 'border-border';
-  }
-
-  protected badgeClass(a: ClusterDnsZoneResponseDto): string {
-    if (this.isBusy(a)) return 'bg-blue-100 text-blue-700';
-    return this.getStatusClass(a.reconciliationStatus);
+  protected zoneStatus(a: ClusterDnsZoneResponseDto): StateView {
+    if (this.isBusy(a)) return { tone: 'progress', label: 'Reconciling', title: null };
+    return {
+      tone: toneOfColor(getReconciliationBadgeColor(a.reconciliationStatus)),
+      label: sentenceCase(getReconciliationBadgeLabel(a.reconciliationStatus)),
+      title: null,
+    };
   }
 
   protected assigningZoneName = computed(
@@ -180,25 +199,9 @@ export class ClusterDnsZoneSectionComponent {
     return getZoneDisplayName(zone.zoneName, zone.dnsProvider);
   }
 
-  protected getStatusLabel(status: string): string {
-    return getReconciliationBadgeLabel(status);
-  }
-
-  protected getStatusClass(status: string): string {
-    const color = getReconciliationBadgeColor(status);
-    const map: Record<string, string> = {
-      green: 'bg-green-100 text-green-700',
-      yellow: 'bg-yellow-100 text-yellow-700',
-      blue: 'bg-blue-100 text-blue-700',
-      red: 'bg-red-100 text-red-700',
-      gray: 'bg-muted text-muted-foreground',
-    };
-    return map[color] ?? map['gray'];
-  }
-
   protected certLabel(provider: string | undefined | null): string {
     if (provider === CertificateProvider.LETS_ENCRYPT) return "Let's Encrypt";
-    if (provider === CertificateProvider.LETS_ENCRYPT_STAGING) return "Let's Encrypt Staging";
+    if (provider === CertificateProvider.LETS_ENCRYPT_STAGING) return "Let's Encrypt staging";
     return provider ?? '';
   }
 

@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   effect,
@@ -9,11 +8,15 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideMinus, lucidePlus } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ClusterScalingRow, RemovalPreview } from '../../model/scaling-section.models';
 import { ScalingApiService } from '../../service/scaling-api.service';
 import { RemovalPreviewNoteComponent } from '../scaling-section/removal-preview-note.component';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 const MAX_FLEET_NODES = 20;
 
@@ -31,156 +34,124 @@ type Step =
  */
 @Component({
   selector: 'app-scaling-fleet-tile',
-  standalone: true,
-  imports: [RemovalPreviewNoteComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RemovalPreviewNoteComponent, FlButton, FlIcon],
+  providers: [provideIcons({ lucideMinus, lucidePlus })],
+  host: { class: 'fl-metric', role: 'listitem', 'data-testid': 'tile-fleet' },
   template: `
-    <div class="card-surface p-4 flex flex-col gap-2 h-full" data-testid="tile-fleet">
-      <div class="text-[10px] font-semibold uppercase tracking-wider text-sub">Nodes</div>
+    <span class="fl-metric__label">Nodes</span>
+    <span class="fl-metric__value">
+      <button
+        flButton
+        size="sm"
+        type="button"
+        [iconOnly]="true"
+        (click)="ask(lowerTo())"
+        [disabled]="!canRemove() || busy()"
+        [title]="removeTooltip()"
+        aria-label="One node fewer"
+        data-testid="tile-fleet-minus"
+      >
+        <fl-icon name="lucideMinus" />
+      </button>
+      <span class="min-w-7 text-center" data-testid="tile-value-fleet">{{ nodes() }}</span>
+      <button
+        flButton
+        size="sm"
+        type="button"
+        [iconOnly]="true"
+        (click)="ask(nodes() + 1)"
+        [disabled]="!canAdd() || busy()"
+        [title]="addTooltip()"
+        aria-label="One node more"
+        data-testid="tile-fleet-plus"
+      >
+        <fl-icon name="lucidePlus" />
+      </button>
+    </span>
 
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          (click)="ask(lowerTo())"
-          [disabled]="!canRemove() || busy()"
-          [title]="removeTooltip()"
-          aria-label="One node fewer"
-          data-testid="tile-fleet-minus"
-          class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <span aria-hidden="true" class="text-base leading-none">&minus;</span>
-        </button>
-
-        <span
-          class="text-2xl font-semibold tracking-tight text-foreground min-w-7 text-center"
-          data-testid="tile-value-fleet"
-        >
-          {{ nodes() }}
+    @switch (step().kind) {
+      @case ('confirm') {
+        <div class="flex flex-col gap-2 text-fl-body-sm" data-testid="tile-fleet-confirm">
+          <span>{{ confirmText() }}</span>
+          @if (removal(); as preview) {
+            <app-removal-preview-note [preview]="preview" />
+          } @else if (removalLoading()) {
+            <span class="text-fl-ink-muted">Checking which node would go and what runs on it…</span>
+          }
+          <span class="fl-row">
+            <button
+              flButton
+              size="sm"
+              type="button"
+              [disabled]="busy()"
+              (click)="moveFloor()"
+              data-testid="tile-fleet-confirm-yes"
+            >
+              {{ busy() ? 'Saving…' : 'Confirm' }}
+            </button>
+            <button flButton="ghost" size="sm" type="button" [disabled]="busy()" (click)="reset()">
+              Cancel
+            </button>
+          </span>
+        </div>
+      }
+      @case ('buy') {
+        <div class="flex flex-col gap-2 text-fl-body-sm" data-testid="tile-fleet-buy">
+          <span
+            >Add one {{ buyStep()?.shape }} in {{ buyStep()?.region }}{{ buyStep()?.price }}? The
+            group stays manual.</span
+          >
+          <span class="fl-row">
+            <button
+              flButton
+              size="sm"
+              type="button"
+              [disabled]="busy()"
+              (click)="buy()"
+              data-testid="tile-fleet-buy-yes"
+            >
+              {{ busy() ? 'Adding…' : 'Add' }}
+            </button>
+            <button flButton="ghost" size="sm" type="button" [disabled]="busy()" (click)="later()">
+              Later
+            </button>
+          </span>
+        </div>
+      }
+      @case ('give-back') {
+        <div class="flex flex-col gap-2 text-fl-body-sm" data-testid="tile-fleet-give-back">
+          <span
+            >Drain and delete {{ giveBackStep()?.node }}? Its work moves to the nodes that
+            stay.</span
+          >
+          <span class="fl-row">
+            <button
+              flButton="danger"
+              size="sm"
+              type="button"
+              [disabled]="busy()"
+              (click)="giveBack()"
+              data-testid="tile-fleet-give-back-yes"
+            >
+              {{ busy() ? 'Removing…' : 'Remove' }}
+            </button>
+            <button flButton="ghost" size="sm" type="button" [disabled]="busy()" (click)="later()">
+              Later
+            </button>
+          </span>
+        </div>
+      }
+      @case ('waiting') {
+        <span class="text-fl-body-sm text-fl-ink-muted" data-testid="tile-fleet-waiting">
+          {{ waitingText() }}
         </span>
-
-        <button
-          type="button"
-          (click)="ask(nodes() + 1)"
-          [disabled]="!canAdd() || busy()"
-          [title]="addTooltip()"
-          aria-label="One node more"
-          data-testid="tile-fleet-plus"
-          class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <span aria-hidden="true" class="text-base leading-none">+</span>
-        </button>
-      </div>
-
-      @switch (step().kind) {
-        @case ('confirm') {
-          <div
-            class="flex flex-col gap-1.5 text-[11px] leading-relaxed"
-            data-testid="tile-fleet-confirm"
-          >
-            <span>{{ confirmText() }}</span>
-            @if (removal(); as preview) {
-              <app-removal-preview-note [preview]="preview" />
-            } @else if (removalLoading()) {
-              <span class="text-sub">Checking which node would go and what runs on it…</span>
-            }
-            <span class="flex gap-2">
-              <button
-                type="button"
-                class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50"
-                [disabled]="busy()"
-                (click)="moveFloor()"
-                data-testid="tile-fleet-confirm-yes"
-              >
-                {{ busy() ? 'Saving…' : 'Confirm' }}
-              </button>
-              <button
-                type="button"
-                class="text-muted-foreground"
-                [disabled]="busy()"
-                (click)="reset()"
-              >
-                Cancel
-              </button>
-            </span>
-          </div>
-        }
-        @case ('buy') {
-          <div
-            class="flex flex-col gap-1.5 text-[11px] leading-relaxed"
-            data-testid="tile-fleet-buy"
-          >
-            <span
-              >Add one {{ buyStep()?.shape }} in {{ buyStep()?.region }}{{ buyStep()?.price }}? The
-              group stays manual.</span
-            >
-            <span class="flex gap-2">
-              <button
-                type="button"
-                class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50"
-                [disabled]="busy()"
-                (click)="buy()"
-                data-testid="tile-fleet-buy-yes"
-              >
-                {{ busy() ? 'Adding…' : 'Add' }}
-              </button>
-              <button
-                type="button"
-                class="text-muted-foreground"
-                [disabled]="busy()"
-                (click)="later()"
-              >
-                Later
-              </button>
-            </span>
-          </div>
-        }
-        @case ('give-back') {
-          <div
-            class="flex flex-col gap-1.5 text-[11px] leading-relaxed"
-            data-testid="tile-fleet-give-back"
-          >
-            <span
-              >Drain and delete {{ giveBackStep()?.node }}? Its work moves to the nodes that
-              stay.</span
-            >
-            <span class="flex gap-2">
-              <button
-                type="button"
-                class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50"
-                [disabled]="busy()"
-                (click)="giveBack()"
-                data-testid="tile-fleet-give-back-yes"
-              >
-                {{ busy() ? 'Removing…' : 'Remove' }}
-              </button>
-              <button
-                type="button"
-                class="text-muted-foreground"
-                [disabled]="busy()"
-                (click)="later()"
-              >
-                Later
-              </button>
-            </span>
-          </div>
-        }
-        @case ('waiting') {
-          <p class="m-0 text-[11px] leading-relaxed text-sub" data-testid="tile-fleet-waiting">
-            {{ waitingText() }}
-          </p>
-        }
       }
+    }
 
-      <p class="m-0 mt-auto text-[11px] leading-relaxed text-sub">{{ note() }}</p>
-    </div>
+    @if (note()) {
+      <span class="fl-metric__caption">{{ note() }}</span>
+    }
   `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `,
-  ],
 })
 export class ScalingFleetTileComponent {
   private readonly api = inject(ScalingApiService);
@@ -245,18 +216,19 @@ export class ScalingFleetTileComponent {
         this.step.set({ kind: 'give-back', node: preview.giveBack.node });
       }
     } catch {
-      // Nothing to re-offer when the preview cannot be read; the Now tab still has it.
+      return;
     }
   }
 
   protected readonly addTooltip = computed(() => this.tooltip('One node more'));
-  protected readonly removeTooltip = computed(() =>
-    this.lowerTo() < 1
-      ? 'Only the master is left: it cannot be removed'
-      : this.tooltip(
-          this.lowerTo() === this.nodes() ? 'Back to the nodes the cluster has' : 'One node fewer',
-        ),
-  );
+  protected readonly removeTooltip = computed(() => {
+    if (this.lowerTo() < 1) {
+      return 'Only the master is left: it cannot be removed';
+    }
+    return this.tooltip(
+      this.lowerTo() === this.nodes() ? 'Back to the nodes the cluster has' : 'One node fewer',
+    );
+  });
 
   protected readonly buyStep = computed(() => {
     const s = this.step();
@@ -315,7 +287,7 @@ export class ScalingFleetTileComponent {
       const s = this.step();
       if (s.kind === 'confirm' && s.to === to) this.removal.set(preview);
     } catch {
-      // The confirmation still stands on its own words; the group checks again before it removes anything.
+      return;
     } finally {
       this.removalLoading.set(false);
     }
@@ -433,7 +405,6 @@ export class ScalingFleetTileComponent {
   }
 }
 
-/** An hourly price keeps the precision providers quote it with, up to 4 decimals. */
 function formatHourly(eur: number): string {
   return Number(eur.toFixed(4)).toString();
 }

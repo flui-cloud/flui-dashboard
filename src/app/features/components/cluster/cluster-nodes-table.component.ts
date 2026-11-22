@@ -1,21 +1,16 @@
-import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
-import { MeterBarComponent, NODE_SERIES_COLORS } from '../../../shared/components/charts';
+import { Component, computed, inject } from '@angular/core';
 import {
   ClusterMonitoringService,
   ServerMetricsState,
 } from '../../service/cluster-monitoring.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
-import {
-  formatBytes,
-  formatPercent,
-  formatRate,
-  formatUptime,
-} from '../../../shared/utils/metric-format';
+import { formatBytes, formatRate, formatUptime } from '../../../shared/utils/metric-format';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
 
 interface NodeRow {
   state: ServerMetricsState;
-  /** The swatch tying this row to its line in the charts — absent once the charts stop drawing one line per node. */
-  color: string | null;
   cpuCaption: string;
   memoryCaption: string;
   diskCaption: string;
@@ -24,105 +19,72 @@ interface NodeRow {
   uptime: string;
 }
 
-/**
- * One row per node, with the three saturating resources as tracks rather than
- * gauges: the same readings in a fifth of the height, and with room for the
- * autoscaling thresholds drawn on the track itself.
- */
 @Component({
   selector: 'app-cluster-nodes-table',
-  standalone: true,
-  imports: [MeterBarComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlTable, FlUsageBar],
+  host: { class: 'block' },
   template: `
-    <div class="card-surface">
-      <div class="flex items-center justify-between gap-4 px-5 pt-4 pb-3">
-        <h3 class="text-sm font-semibold text-foreground">Nodes</h3>
-        <span class="text-[11px] text-sub">{{ summary() }}</span>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full min-w-[880px] text-left">
+    <fl-panel title="Nodes" [count]="rows().length || null" [flush]="true">
+      <span panelActions class="text-fl-caption text-fl-ink-muted">{{ summary() }}</span>
+      <div class="fl-table-wrap">
+        <table flTable density="dense">
           <thead>
-            <tr class="text-[10px] font-semibold uppercase tracking-wider text-sub">
-              <th scope="col" class="px-5 pb-2 font-semibold">Node</th>
-              <th scope="col" class="px-3 pb-2 font-semibold w-[168px]">CPU</th>
-              <th scope="col" class="px-3 pb-2 font-semibold w-[168px]">Memory</th>
-              <th scope="col" class="px-3 pb-2 font-semibold w-[168px]">Disk</th>
-              <th scope="col" class="px-3 pb-2 font-semibold">Load 1 / 5 / 15</th>
-              <th scope="col" class="px-3 pb-2 font-semibold">Network in / out</th>
-              <th scope="col" class="px-5 pb-2 font-semibold">Uptime</th>
+            <tr>
+              <th scope="col">Node</th>
+              <th scope="col">CPU</th>
+              <th scope="col">Memory</th>
+              <th scope="col">Disk</th>
+              <th scope="col" class="is-num">Load 1 / 5 / 15</th>
+              <th scope="col" class="is-num">Network in / out</th>
+              <th scope="col" class="is-num">Uptime</th>
             </tr>
           </thead>
           <tbody>
             @for (row of rows(); track row.state.serverId) {
-              <tr class="border-t border-border align-middle">
-                <td class="px-5 py-3">
-                  <div class="flex items-center gap-2.5">
-                    @if (row.color) {
-                      <span
-                        class="h-2 w-2 rounded-sm shrink-0"
-                        [style.background-color]="row.color"
-                      ></span>
-                    }
-                    <div class="flex flex-col min-w-0">
-                      <span class="text-sm font-medium text-foreground truncate">{{
-                        row.state.serverId
-                      }}</span>
-                      <span class="text-[10px] text-sub truncate">{{ row.state.instance }}</span>
-                    </div>
-                  </div>
+              <tr>
+                <td>
+                  <span class="fl-mono block">{{ row.state.serverId }}</span>
+                  <span class="fl-mono block text-fl-caption text-fl-ink-muted">{{
+                    row.state.instance
+                  }}</span>
                 </td>
-                <td class="px-3 py-3">
-                  <app-meter-bar
-                    [value]="row.state.cpu.current"
-                    [label]="percent(row.state.cpu.current)"
-                    [caption]="row.cpuCaption"
-                    [color]="meterColor"
-                    [config]="{ warning: warnCpu(), danger: dangerCpu() }"
+                <td>
+                  <fl-usage-bar
+                    [percent]="row.state.cpu.current"
+                    [label]="'CPU in use on ' + row.state.serverId"
+                    [aside]="row.cpuCaption"
+                    [warnAt]="warnCpu()"
+                    [criticalAt]="dangerCpu()"
                   />
                 </td>
-                <td class="px-3 py-3">
-                  <app-meter-bar
-                    [value]="row.state.memory.current"
-                    [label]="percent(row.state.memory.current)"
-                    [caption]="row.memoryCaption"
-                    [color]="meterColor"
-                    [config]="{ warning: warnMemory(), danger: dangerMemory() }"
+                <td>
+                  <fl-usage-bar
+                    [percent]="row.state.memory.current"
+                    [label]="'Memory in use on ' + row.state.serverId"
+                    [aside]="row.memoryCaption"
+                    [warnAt]="warnMemory()"
+                    [criticalAt]="dangerMemory()"
                   />
                 </td>
-                <td class="px-3 py-3">
-                  <app-meter-bar
-                    [value]="row.state.disk.current"
-                    [label]="percent(row.state.disk.current)"
-                    [caption]="row.diskCaption"
-                    [color]="meterColor"
-                    [config]="{ warning: 80, danger: 95 }"
+                <td>
+                  <fl-usage-bar
+                    [percent]="row.state.disk.current"
+                    [label]="'Disk in use on ' + row.state.serverId"
+                    [aside]="row.diskCaption"
+                    [warnAt]="80"
+                    [criticalAt]="95"
                   />
                 </td>
-                <td class="px-3 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
-                  {{ row.load }}
-                </td>
-                <td class="px-3 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
-                  {{ row.network }}
-                </td>
-                <td class="px-5 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
-                  {{ row.uptime }}
-                </td>
+                <td class="is-num fl-mono">{{ row.load }}</td>
+                <td class="is-num fl-mono">{{ row.network }}</td>
+                <td class="is-num fl-mono">{{ row.uptime }}</td>
               </tr>
             }
           </tbody>
         </table>
       </div>
-    </div>
+    </fl-panel>
   `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `,
-  ],
 })
 export class ClusterNodesTableComponent {
   private readonly monitoring = inject(ClusterMonitoringService);
@@ -135,9 +97,8 @@ export class ClusterNodesTableComponent {
   readonly dangerMemory = computed(() => this.thresholds()?.dangerMemoryPct ?? 90);
 
   readonly rows = computed<NodeRow[]>(() =>
-    this.monitoring.servers().map((state, index) => ({
+    this.monitoring.servers().map((state) => ({
       state,
-      color: this.swatch(index),
       cpuCaption: state.cpu.cores ? `${state.cpu.cores} vCPU` : '',
       memoryCaption: `${formatBytes(state.memory.used)} / ${formatBytes(state.memory.total)}`,
       diskCaption: `${formatBytes(state.disk.used)} / ${formatBytes(state.disk.total)}`,
@@ -155,27 +116,6 @@ export class ClusterNodesTableComponent {
     const cores = servers.reduce((sum, s) => sum + (s.cpu.cores ?? 0), 0);
     const memory = servers.reduce((sum, s) => sum + s.memory.total, 0);
     const disk = servers.reduce((sum, s) => sum + s.disk.total, 0);
-    const nodes = `${servers.length} ${servers.length === 1 ? 'node' : 'nodes'}`;
-    return `${nodes} · ${cores} vCPU · ${formatBytes(memory)} · ${formatBytes(disk)} disk`;
+    return `${cores} vCPU · ${formatBytes(memory)} memory · ${formatBytes(disk)} disk`;
   });
-
-  /**
-   * One hue for every meter. The series palette means "which node" in the
-   * charts, so spending it per metric here made memory teal in one place and
-   * blue in the other; the thresholds carry the state, not the colour.
-   */
-  readonly meterColor = NODE_SERIES_COLORS[0];
-
-  seriesColor(index: number): string {
-    return NODE_SERIES_COLORS[index];
-  }
-
-  /** Only rows the charts actually name get a swatch; a recycled colour would lie. */
-  private swatch(index: number): string | null {
-    return index < NODE_SERIES_COLORS.length ? NODE_SERIES_COLORS[index] : null;
-  }
-
-  percent(value: number): string {
-    return formatPercent(value);
-  }
 }

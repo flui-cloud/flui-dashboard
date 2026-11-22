@@ -1,55 +1,64 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideHardDrive } from '@ng-icons/lucide';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { DiskSpace, NodeDisksService, NodeDisksView } from '../../service/node-disks.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-cluster-node-disks-card',
-  standalone: true,
-  imports: [NgIconComponent],
-  providers: [provideIcons({ lucideHardDrive })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, FlTable, FlAlert, FlStatus],
+  host: { class: 'block' },
   template: `
     @if (view(); as v) {
-      <div class="card-inner p-4" data-testid="node-disks-card">
-        <span class="flex items-center gap-2">
-          <ng-icon name="lucideHardDrive" class="h-4 w-4 text-slate-600" />
-          <span class="text-label">Space on the nodes</span>
-        </span>
-        <div class="mt-3 overflow-x-auto">
-          <table class="w-full text-sm">
+      <fl-panel
+        title="Space on the nodes"
+        [count]="v.nodes.length"
+        [flush]="true"
+        data-testid="node-disks-card"
+      >
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
             <thead>
-              <tr class="border-b border-border text-left text-muted-foreground">
-                <th class="py-2 font-normal">Node</th>
-                <th class="py-2 font-normal">Location</th>
-                <th class="py-2 font-normal">Disk</th>
-                <th class="py-2 font-normal">Copies of replicated volumes</th>
+              <tr>
+                <th scope="col">Node</th>
+                <th scope="col">Location</th>
+                <th scope="col">Disk</th>
+                <th scope="col">Copies of replicated volumes</th>
               </tr>
             </thead>
             <tbody>
               @for (n of v.nodes; track n.node) {
-                <tr class="border-b border-border/50 last:border-0">
-                  <td class="py-2 font-mono text-xs">{{ n.node }}</td>
-                  <td class="py-2 text-xs text-muted-foreground">
-                    {{ n.zone ?? '—' }}
+                <tr>
+                  <td class="fl-mono">{{ n.node }}</td>
+                  <td class="text-fl-ink-muted">{{ n.zone ?? '—' }}</td>
+                  <td>
+                    @if (n.disk) {
+                      <fl-status [tone]="tone(n.disk, 3)" [label]="label(n.disk)" />
+                    } @else {
+                      <span class="text-fl-ink-muted">—</span>
+                    }
                   </td>
-                  <td class="py-2 text-xs" [class]="tone(n.disk, 3)">
-                    {{ label(n.disk) }}
-                  </td>
-                  <td class="py-2 text-xs" [class]="tone(n.copies, 2)">
-                    {{ label(n.copies) }}
+                  <td>
+                    @if (n.copies) {
+                      <fl-status [tone]="tone(n.copies, 2)" [label]="label(n.copies)" />
+                    } @else {
+                      <span class="text-fl-ink-muted">—</span>
+                    }
                   </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
-        @for (w of v.warnings; track w) {
-          <p class="m-0 mt-2 text-xs text-amber-700">
-            {{ w }}
-          </p>
+        @if (v.warnings.length) {
+          <div class="flex flex-col gap-2 border-t border-fl-border p-4">
+            @for (w of v.warnings; track w) {
+              <fl-alert tone="warning" title="Running short of space">{{ w }}</fl-alert>
+            }
+          </div>
         }
-      </div>
+      </fl-panel>
     }
   `,
 })
@@ -63,10 +72,8 @@ export class ClusterNodeDisksCardComponent {
     return s ? `${s.freeGiB} of ${s.totalGiB} GiB free` : '—';
   }
 
-  /** The same threshold the API warns at: under 15% or a few GiB free. */
-  tone(s: DiskSpace | null, floorGiB: number): string {
-    if (!s) return 'text-muted-foreground';
-    return s.freeGiB < floorGiB || s.freeGiB < s.totalGiB * 0.15 ? 'text-amber-700' : '';
+  tone(s: DiskSpace, floorGiB: number): StatusTone {
+    return s.freeGiB < floorGiB || s.freeGiB < s.totalGiB * 0.15 ? 'warning' : 'success';
   }
 
   constructor() {

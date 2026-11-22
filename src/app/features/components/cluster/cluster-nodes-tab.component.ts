@@ -1,189 +1,195 @@
-import {
-  Component,
-  computed,
-  inject,
-  OnInit,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { RouterLink } from '@angular/router';
-import {
-  lucideServer,
-  lucideRefreshCw,
-  lucideLoader,
-  lucideCircleAlert,
-  lucidePlus,
-  lucideTrash,
-  lucideMoveVertical,
-} from '@ng-icons/lucide';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlus, lucideRefreshCw, lucideServer } from '@ng-icons/lucide';
 
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
+import { ClusterMonitoringService } from '../../service/cluster-monitoring.service';
 import { ClusterStatus, ClusterType } from '../../model/cluster.models';
-import { InstanceWithLabels, getClusterInfo, getClusterNodeId } from '../../model/instance.models';
-import { InstanceRowComponent } from '../compute/instance-row.component';
+import { InstanceWithLabels, getClusterNodeId } from '../../model/instance.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlEmptyState, FlErrorState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlActionsMenu } from '../../../ui/overlays/actions-menu';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 import { RemoveWorkerDialogComponent } from './remove-worker-dialog.component';
 import { ResizeNodeDialogComponent } from './resize-node-dialog.component';
 import { ByosConnectNodeDialogComponent } from './byos-connect-node-dialog.component';
-
-interface NodeRowMeta {
-  node: InstanceWithLabels;
-  isMaster: boolean;
-  isBusy: boolean;
-  removeDisabled: boolean;
-  removeReason: string | null;
-}
+import { NodeRow, buildNodeRows, isMasterNode } from './cluster-nodes-rows';
 
 @Component({
   selector: 'cluster-nodes-tab',
-  standalone: true,
   imports: [
-    NgIconComponent,
-    InstanceRowComponent,
     RouterLink,
+    FlPanel,
+    FlTable,
+    FlUsageBar,
+    FlCopyId,
+    FlEmptyState,
+    FlErrorState,
+    FlLoadingState,
+    FlActionsMenu,
+    FlButton,
+    FlIcon,
+    FlStatus,
     RemoveWorkerDialogComponent,
     ResizeNodeDialogComponent,
     ByosConnectNodeDialogComponent,
   ],
-  providers: [
-    provideIcons({
-      lucideServer,
-      lucideRefreshCw,
-      lucideLoader,
-      lucideCircleAlert,
-      lucidePlus,
-      lucideTrash,
-      lucideMoveVertical,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucidePlus, lucideRefreshCw, lucideServer })],
+  host: { class: 'fl-stack' },
   template: `
     @if (cluster(); as clusterData) {
-      <div class="card-surface p-6">
-        <div class="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <div class="flex items-center gap-3">
-            <span class="text-sm text-sub">
-              {{ clusterNodes().length }} of {{ clusterData.nodeCount || 0 }} node(s)
-            </span>
-          </div>
-          <div class="flex items-center gap-2">
+      <fl-panel title="Nodes" [count]="clusterNodes().length" [flush]="true">
+        <div panelActions class="fl-row">
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
+            title="Refresh"
+            [disabled]="nodesIsLoading()"
+            (click)="refreshNodes()"
+          >
+            <fl-icon name="lucideRefreshCw" [size]="14" />
+          </button>
+          @if (isByos()) {
             <button
-              (click)="refreshNodes()"
-              [disabled]="nodesIsLoading()"
-              title="Refresh"
-              class="inline-flex items-center p-1.5 border border-border rounded-md text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              flButton="primary"
+              size="sm"
+              type="button"
+              [disabled]="!canAddWorker()"
+              [title]="addWorkerTooltip()"
+              (click)="openAddWorker()"
             >
-              <ng-icon
-                name="lucideRefreshCw"
-                class="h-3.5 w-3.5"
-                [class.animate-spin]="nodesIsLoading()"
-              />
+              <fl-icon name="lucidePlus" [size]="14" />
+              Connect node
             </button>
-            @if (isByos()) {
-              <button
-                type="button"
-                (click)="openAddWorker()"
-                [disabled]="!canAddWorker()"
-                [title]="addWorkerTooltip()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-                Connect node
-              </button>
-            } @else {
-              <a
-                routerLink="../scaling"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-border text-foreground hover:bg-muted"
-                data-testid="nodes-change-on-scaling"
-                title="Nodes change through the cluster's scaling group: + and − on the Scaling tab."
-              >
-                Change nodes on the Scaling tab
-              </a>
-            }
-          </div>
+          } @else {
+            <a
+              flButton
+              size="sm"
+              routerLink="../scaling"
+              data-testid="nodes-change-on-scaling"
+              title="Nodes change through the cluster's scaling group: + and − on the Scaling tab."
+            >
+              Change nodes on the Scaling tab
+            </a>
+          }
         </div>
 
+        <p class="m-0 border-b border-fl-border px-4 py-3 text-fl-body-sm text-fl-ink-muted">
+          {{ clusterNodes().length }} of {{ clusterData.nodeCount || 0 }}
+          {{ (clusterData.nodeCount || 0) === 1 ? 'node' : 'nodes' }}
+        </p>
+
         @if (nodesIsLoading() && clusterNodes().length === 0) {
-          <div class="flex flex-col gap-2">
-            @for (i of [1, 2, 3, 4]; track i) {
-              <div class="flex items-center gap-3 p-3 rounded-lg border border-border">
-                <div class="h-8 w-8 rounded-full skeleton flex-shrink-0"></div>
-                <div class="flex-1 space-y-1.5">
-                  <div class="skeleton h-4 w-48"></div>
-                  <div class="skeleton h-3 w-32"></div>
-                </div>
-                <div class="skeleton h-5 w-16"></div>
-              </div>
-            }
-          </div>
-        }
-
-        @if (nodesError() && !nodesIsLoading() && clusterNodes().length === 0) {
-          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div class="flex items-center gap-3">
-              <ng-icon name="lucideCircleAlert" class="h-5 w-5 status-error" />
-              <div class="flex-1">
-                <p class="text-sm font-medium text-red-900">Failed to load nodes</p>
-                <p class="text-sm text-red-700 mt-1">{{ nodesError() }}</p>
-              </div>
-            </div>
-          </div>
-        }
-
-        @if (!nodesIsLoading() && clusterNodes().length === 0 && !nodesError()) {
-          <div class="text-center py-12">
-            <ng-icon name="lucideServer" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-            <p class="text-sm font-semibold text-foreground">No nodes found</p>
-            <p class="text-sm text-sub mt-1">This cluster doesn't have any nodes yet.</p>
-          </div>
-        }
-
-        @if (clusterNodes().length > 0) {
-          <div class="flex flex-col gap-2">
-            @for (row of nodeRows(); track row.node.id) {
-              <div class="space-y-1">
-                <app-instance-row [instance]="row.node" />
-                @if (canResize()) {
-                  <div class="flex justify-end px-2">
-                    <button
-                      type="button"
-                      (click)="resizeTarget.set(row.node)"
-                      title="Move this node to another machine type"
-                      class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-border hover:bg-muted transition-colors text-muted-foreground"
-                      data-testid="node-resize"
-                    >
-                      <ng-icon name="lucideMoveVertical" class="h-3 w-3" />
-                      Resize
-                    </button>
-                  </div>
+          <fl-loading-state [rows]="4" />
+        } @else if (nodesError() && clusterNodes().length === 0) {
+          <fl-error-state
+            title="Could not load nodes"
+            [reason]="nodesError()"
+            [compact]="true"
+            (retry)="refreshNodes()"
+          />
+        } @else if (clusterNodes().length === 0) {
+          <fl-empty-state
+            icon="lucideServer"
+            title="No nodes yet"
+            body="This cluster does not have any nodes yet."
+            [compact]="true"
+          />
+        } @else {
+          <div class="fl-table-wrap">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">State</th>
+                  <th scope="col">Size</th>
+                  <th scope="col">CPU</th>
+                  <th scope="col">Memory</th>
+                  <th scope="col">IP address</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of nodeRows(); track row.node.id) {
+                  <tr>
+                    <td>
+                      <span class="fl-mono block">{{ row.name }}</span>
+                      @if (row.altName) {
+                        <span class="fl-mono block text-fl-caption text-fl-ink-muted">{{
+                          row.altName
+                        }}</span>
+                      }
+                    </td>
+                    <td class="text-fl-ink-muted">{{ row.role }}</td>
+                    <td><fl-status [tone]="row.tone" [label]="row.stateLabel" /></td>
+                    <td class="fl-mono">{{ row.size }}</td>
+                    <td>
+                      @if (row.cpu !== null) {
+                        <fl-usage-bar
+                          [percent]="row.cpu"
+                          [label]="'CPU in use on ' + row.name"
+                          [aside]="row.cpuAside"
+                          [warnAt]="70"
+                        />
+                      } @else {
+                        <span class="fl-num text-fl-ink-muted">{{ row.cpuAside || '—' }}</span>
+                      }
+                    </td>
+                    <td>
+                      @if (row.memory !== null) {
+                        <fl-usage-bar
+                          [percent]="row.memory"
+                          [label]="'Memory in use on ' + row.name"
+                          [aside]="row.memoryAside"
+                          [warnAt]="75"
+                        />
+                      } @else {
+                        <span class="fl-num text-fl-ink-muted">{{ row.memoryAside }}</span>
+                      }
+                    </td>
+                    <td>
+                      @if (row.ip) {
+                        <fl-copy-id [value]="row.ip" label="IP address" />
+                      } @else {
+                        <span class="text-fl-ink-muted">—</span>
+                      }
+                    </td>
+                    <td class="is-fit">
+                      @if (row.menu.length) {
+                        <fl-actions-menu
+                          [compact]="true"
+                          [label]="'Actions for ' + row.name"
+                          [items]="row.menu"
+                          [attr.data-testid]="canResize() ? 'node-resize' : null"
+                          [attr.title]="row.menuTitle"
+                          (action)="onAction(row, $event)"
+                        />
+                      }
+                    </td>
+                  </tr>
                 }
-                @if (!row.isMaster && isByos()) {
-                  <div class="flex justify-end px-2">
-                    <button
-                      type="button"
-                      (click)="openRemoveWorker(row.node)"
-                      [disabled]="row.removeDisabled"
-                      [title]="row.removeReason ?? 'Remove this worker from the cluster'"
-                      class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground disabled:hover:border-border text-muted-foreground"
-                    >
-                      <ng-icon name="lucideTrash" class="h-3 w-3" />
-                      Remove
-                    </button>
-                  </div>
-                }
-              </div>
-            }
+              </tbody>
+            </table>
           </div>
         }
-      </div>
+      </fl-panel>
     }
 
     @if (showByosDialog() && cluster()?.id; as cid) {
       <app-byos-connect-node-dialog
         [clusterId]="cid"
-        [masterIp]="$safeNavigationMigration(cluster()?.masterIpAddress)"
+        [masterIp]="cluster()?.masterIpAddress ?? undefined"
         (closed)="showByosDialog.set(false); refreshNodes()"
       />
     }
@@ -212,6 +218,8 @@ interface NodeRowMeta {
 export class ClusterNodesTabComponent implements OnInit {
   private readonly clusterService = inject(ClusterService);
   private readonly autoscaleService = inject(ClusterAutoscaleService);
+  private readonly monitoring = inject(ClusterMonitoringService);
+  private readonly router = inject(Router);
 
   cluster = this.clusterService.cluster;
   clusterNodes = this.clusterService.nodes;
@@ -221,40 +229,22 @@ export class ClusterNodesTabComponent implements OnInit {
   protected showByosDialog = signal<boolean>(false);
   protected removeTarget = signal<InstanceWithLabels | null>(null);
   protected resizeTarget = signal<InstanceWithLabels | null>(null);
-  /**
-   * Workload clusters only: a node of the control cluster hosts this page and
-   * the API that would resize it, so that stays with `flui env scale-node`.
-   */
   protected canResize = computed(
     () => !this.isByos() && this.cluster()?.clusterType === ClusterType.WORKLOAD,
   );
 
   protected isByos = computed(() => this.clusterService.isByosCluster());
 
-  protected nodeRows = computed<NodeRowMeta[]>(() => {
-    const nodes = this.clusterNodes();
-    const workerNodes = nodes.filter((n) => !this.isMasterNode(n));
-    const minNodes = this.cluster()?.minNodes;
-    const atMin = minNodes != null && workerNodes.length <= minNodes;
-
-    return nodes.map((node) => {
-      const isMaster = this.isMasterNode(node);
-      const status = (node.status || '').toString().toLowerCase();
-      const isBusy = status === 'deleting' || status === 'error';
-      let removeDisabled = isMaster || isBusy;
-      let removeReason: string | null = null;
-      if (isMaster) removeReason = 'The master node cannot be removed from this view.';
-      else if (isBusy) removeReason = `Worker is in '${status}' state.`;
-      else if (atMin) {
-        removeDisabled = true;
-        removeReason = `Removing this worker would violate minNodes=${minNodes}.`;
-      }
-      return { node, isMaster, isBusy, removeDisabled, removeReason };
-    });
-  });
+  protected nodeRows = computed<NodeRow[]>(() =>
+    buildNodeRows(this.clusterNodes(), this.monitoring.servers(), {
+      canResize: this.canResize(),
+      isByos: this.isByos(),
+      minNodes: this.cluster()?.minNodes,
+    }),
+  );
 
   protected workerCount = computed(
-    () => this.clusterNodes().filter((n) => !this.isMasterNode(n)).length,
+    () => this.clusterNodes().filter((n) => !isMasterNode(n)).length,
   );
 
   protected maxNodes = computed<number | null>(() => {
@@ -313,12 +303,19 @@ export class ClusterNodesTabComponent implements OnInit {
     this.removeTarget.set(node);
   }
 
-  resolveNodeId(node: InstanceWithLabels): string {
-    return getClusterNodeId(node) ?? '';
+  protected onAction(row: NodeRow, action: string): void {
+    if (action === 'resize') this.resizeTarget.set(row.node);
+    else if (action === 'remove' && !row.removeDisabled) this.openRemoveWorker(row.node);
+    else if (action === 'details') {
+      void this.router.navigate([
+        '/infrastructure/compute',
+        row.node.provider,
+        row.node.providerId,
+      ]);
+    }
   }
 
-  private isMasterNode(node: InstanceWithLabels): boolean {
-    const info = getClusterInfo(node);
-    return info?.nodeType === 'master';
+  resolveNodeId(node: InstanceWithLabels): string {
+    return getClusterNodeId(node) ?? '';
   }
 }

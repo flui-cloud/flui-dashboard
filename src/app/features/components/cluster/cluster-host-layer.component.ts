@@ -1,19 +1,13 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideServer } from '@ng-icons/lucide';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 
 import { FirewallResponseDto } from '../../../core/api/model/models';
 import { PermissionService } from '../../../core/services/permission.service';
 import { FirewallV2Service } from '../../service/firewall-v2.service';
 import { HostFirewallLayer, HostFirewallLayerState } from '../../model/firewall-v2.models';
+import { AlertTone, FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 const STATE_LABEL: Record<HostFirewallLayerState, string> = {
   'not-applicable': 'Not offered',
@@ -25,31 +19,42 @@ const STATE_LABEL: Record<HostFirewallLayerState, string> = {
   removing: 'Turning off',
 };
 
-const STATE_TONE: Record<HostFirewallLayerState, string> = {
-  'not-applicable': 'bg-muted text-sub',
-  off: 'bg-muted text-sub',
-  pending: 'bg-blue-100 text-blue-800',
-  applied: 'bg-green-100 text-green-800',
-  blocked: 'bg-amber-100 text-amber-800',
-  failed: 'bg-red-100 text-red-800',
-  removing: 'bg-blue-100 text-blue-800',
+const STATE_TONE: Record<HostFirewallLayerState, StatusTone> = {
+  'not-applicable': 'neutral',
+  off: 'neutral',
+  pending: 'progress',
+  applied: 'success',
+  blocked: 'warning',
+  failed: 'error',
+  removing: 'progress',
+};
+
+const REASON_TITLE: Partial<Record<HostFirewallLayerState, string>> = {
+  blocked: 'Waiting to apply',
+  failed: 'Not applied',
+  removing: 'Turning off',
 };
 
 @Component({
   selector: 'cluster-host-layer',
-  standalone: true,
-  imports: [NgIconComponent],
-  providers: [provideIcons({ lucideLoader, lucideServer })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlStatus, FlAlert, FlButton, FlSpinner],
+  host: { class: 'block' },
   template: `
-    <div class="card-inner p-4 space-y-2" data-testid="host-layer">
-      <div class="flex items-center gap-2">
-        <ng-icon name="lucideServer" class="h-4 w-4 text-blue-600" />
-        <span class="text-label">Firewall on each node</span>
-        <span class="text-xs px-2 py-0.5 rounded-full {{ tone() }}" data-testid="host-layer-state">
-          {{ stateLabel() }}
-        </span>
+    <section
+      class="flex flex-col gap-3 border-t border-fl-border-subtle pt-4 text-fl-body-sm"
+      aria-label="Firewall on each node"
+      data-testid="host-layer"
+    >
+      <div class="flex flex-wrap items-center gap-2">
+        <h3 class="m-0 text-fl-body font-semibold">Firewall on each node</h3>
+        <fl-status data-testid="host-layer-state" [tone]="tone()" [label]="stateLabel()" />
+        <span class="flex-1"></span>
+        @if (saving()) {
+          <fl-spinner label="Saving" />
+        }
         <button
+          flButton
+          size="sm"
           type="button"
           role="switch"
           data-testid="host-layer-toggle"
@@ -61,56 +66,43 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
           "
           [disabled]="saving() || !canManage()"
           (click)="toggle()"
-          class="ml-auto relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 {{
-            layer().enabled ? 'bg-blue-600' : 'bg-muted-foreground/30'
-          }}"
         >
-          <span
-            class="inline-block h-4 w-4 rounded-full bg-background transition-transform {{
-              layer().enabled ? 'translate-x-4' : 'translate-x-0.5'
-            }}"
-          ></span>
+          {{ layer().enabled ? 'Turn off' : 'Turn on' }}
         </button>
-        @if (saving()) {
-          <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin text-sub" />
-        }
       </div>
 
       @if (layer().state === 'applied' && layer().appliedNodes) {
-        <p class="text-xs text-sub" data-testid="host-layer-nodes">
+        <p class="m-0" data-testid="host-layer-nodes">
           Applied to {{ layer().appliedNodes }} node{{ layer().appliedNodes === 1 ? '' : 's' }}.
         </p>
       }
 
       @if (showReason()) {
-        <p
-          class="text-sm {{ layer().state === 'failed' ? 'text-red-600' : 'text-amber-700' }}"
-          data-testid="host-layer-reason"
-        >
+        <fl-alert [tone]="reasonTone()" [title]="reasonTitle()" data-testid="host-layer-reason">
           {{ reasonText() }}
-        </p>
+        </fl-alert>
       }
 
       @if (error()) {
-        <p class="text-sm text-red-600" data-testid="host-layer-error">
+        <fl-alert tone="error" title="Could not change it" data-testid="host-layer-error">
           {{ error() }}
-        </p>
+        </fl-alert>
       }
 
-      <p class="text-xs text-sub" data-testid="host-layer-independent">
+      <p class="m-0 text-fl-ink-muted" data-testid="host-layer-independent">
         A problem here never changes the status of the cluster firewall.
       </p>
 
       <button
         type="button"
-        class="text-xs text-blue-600 hover:underline"
+        class="fl-link self-start"
         data-testid="host-layer-more"
         (click)="showMore.set(!showMore())"
       >
         {{ showMore() ? 'Less' : 'What is this?' }}
       </button>
       @if (showMore()) {
-        <p class="text-sm text-sub" data-testid="host-layer-explanation">
+        <p class="m-0 text-fl-ink-muted" data-testid="host-layer-explanation">
           The cluster firewall is kept by your provider and covers the servers it is attached to.
           When this is on, each node also applies the same rules itself, so a node that ends up
           outside the provider firewall still refuses what the cluster does not open, including
@@ -119,7 +111,7 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
           the cluster's private network, and tells you why here.
         </p>
       }
-    </div>
+    </section>
   `,
 })
 export class ClusterHostLayerComponent {
@@ -137,6 +129,12 @@ export class ClusterHostLayerComponent {
   readonly canManage = computed(() => this.permissions.can('cluster:manage'));
   readonly stateLabel = computed(() => STATE_LABEL[this.layer().state] ?? this.layer().state);
   readonly tone = computed(() => STATE_TONE[this.layer().state] ?? STATE_TONE.off);
+  readonly reasonTone = computed<AlertTone>(() => {
+    const state = this.layer().state;
+    if (state === 'failed') return 'error';
+    return state === 'removing' ? 'info' : 'warning';
+  });
+  readonly reasonTitle = computed(() => REASON_TITLE[this.layer().state] ?? 'Waiting to apply');
   readonly showReason = computed(() => {
     const state = this.layer().state;
     return state === 'blocked' || state === 'failed' || state === 'removing';
@@ -156,9 +154,10 @@ export class ClusterHostLayerComponent {
     try {
       const firewall = await this.firewalls.setHostLayer(this.clusterId(), !this.layer().enabled);
       this.changed.emit(firewall);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { error?: { message?: string }; message?: string } | null;
       this.error.set(
-        err?.error?.message || err?.message || 'Could not change the firewall on each node.',
+        e?.error?.message || e?.message || 'Could not change the firewall on each node.',
       );
     } finally {
       this.saving.set(false);

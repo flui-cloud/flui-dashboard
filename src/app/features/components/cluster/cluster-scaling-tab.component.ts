@@ -1,17 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideCircleCheck } from '@ng-icons/lucide';
 
 import { ClusterScalingRow } from '../../model/scaling-section.models';
 import { ScalingApiService } from '../../service/scaling-api.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 import { loadedOf } from '../scaling-section/section-reading';
-import {
-  SectionFailureComponent,
-  SectionSkeletonComponent,
-} from '../scaling-section/section-states.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlMetricStrip } from '../../../ui/patterns/metric-strip';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlErrorState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
 import { ScalingTileComponent } from './scaling-tile.component';
 import { ScalingFleetTileComponent } from './scaling-fleet-tile.component';
 import { ScalingGrowthCardComponent } from './scaling-growth-card.component';
@@ -21,11 +20,14 @@ import { ScalingGroupFormComponent } from './scaling-group-form.component';
 
 @Component({
   selector: 'cluster-scaling-tab',
-  standalone: true,
   imports: [
-    NgIcon,
-    SectionFailureComponent,
-    SectionSkeletonComponent,
+    FlAlert,
+    FlPanel,
+    FlMetricStrip,
+    FlErrorState,
+    FlLoadingState,
+    FlEmptyState,
+    FlStatus,
     ScalingTileComponent,
     ScalingFleetTileComponent,
     ScalingGrowthCardComponent,
@@ -33,107 +35,104 @@ import { ScalingGroupFormComponent } from './scaling-group-form.component';
     ScalingLimitsDialogComponent,
     ScalingGroupFormComponent,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideCircleCheck })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'fl-stack', 'data-testid': 'cluster-scaling-tab' },
   template: `
-    <div class="space-y-4" data-testid="cluster-scaling-tab">
-      @if (loading()) {
-        <app-section-skeleton
-          variant="cards"
-          [count]="4"
-          label="this cluster's scaling"
-          testid="cluster-scaling"
-        />
-      } @else if (failed(); as message) {
-        <app-section-failure
-          [message]="message"
-          testid="cluster-scaling"
+    @if (loading()) {
+      <fl-panel title="Scaling">
+        <fl-loading-state [rows]="4" data-testid="skeleton-cluster-scaling" />
+      </fl-panel>
+    } @else if (failed(); as message) {
+      <fl-panel title="Scaling">
+        <fl-error-state
+          title="Could not load scaling"
+          [reason]="message"
+          [compact]="true"
+          data-testid="failure-cluster-scaling"
           (retry)="rowRes.reload()"
         />
-      } @else if (row(); as row) {
-        <div class="flex items-baseline gap-2.5">
-          <h2 class="m-0 text-xl font-semibold tracking-tight text-foreground">Scaling</h2>
-          <span class="font-mono text-[13px] text-muted-foreground" data-testid="subject">
-            {{ row.clusterName }} · {{ row.capability.provider }}
-          </span>
-        </div>
+      </fl-panel>
+    } @else if (row(); as row) {
+      @if (row.needsPerson) {
+        <fl-alert tone="warning" title="Needs your attention" data-testid="state-line">
+          {{ stateLine() }}
+        </fl-alert>
+      }
 
-        <div
-          class="flex items-start gap-2.5 rounded-lg border px-3.5 py-3"
-          [class]="row.needsPerson ? 'border-amber-200 bg-amber-50' : 'border-border bg-card'"
-          data-testid="state-line"
-        >
-          <ng-icon
-            [name]="row.needsPerson ? 'lucideCircleAlert' : 'lucideCircleCheck'"
-            class="h-4 w-4 shrink-0 translate-y-0.5"
-            [class]="row.needsPerson ? 'text-amber-600' : 'text-green-600'"
-          />
-          <span class="text-[13px] leading-relaxed text-foreground">{{ stateLine() }}</span>
+      <fl-panel title="Current state">
+        <span panelActions class="fl-mono text-fl-ink-muted" data-testid="subject">
+          {{ row.clusterName }} · {{ row.capability.provider }}
+        </span>
+        <div class="flex flex-col gap-4">
+          @if (!row.needsPerson) {
+            <p class="m-0 flex flex-wrap items-center gap-2" data-testid="state-line">
+              <fl-status
+                [tone]="row.groupCount === 0 ? 'neutral' : 'success'"
+                [label]="row.groupCount === 0 ? 'Not set up' : 'Within limits'"
+              />
+              <span class="text-fl-body-sm text-fl-ink-secondary">{{ stateLine() }}</span>
+            </p>
+          }
+          <fl-metric-strip>
+            <app-scaling-fleet-tile [note]="limitsNote()" [row]="row" (changed)="onGroupSaved()" />
+            <app-scaling-tile
+              label="Pressure"
+              testid="pressure"
+              [value]="pressure().value"
+              [unit]="pressure().unit"
+              [note]="pressure().note"
+              [attention]="pressure().attention"
+            />
+            <app-scaling-tile
+              label="Waiting"
+              testid="waiting"
+              [value]="waiting().value"
+              unit="apps"
+              [note]="waiting().note"
+              [attention]="waiting().attention"
+            />
+            <app-scaling-tile
+              label="Spend"
+              testid="spend"
+              [value]="spend().value"
+              [unit]="spend().unit"
+              [note]="spend().note"
+            />
+          </fl-metric-strip>
         </div>
+      </fl-panel>
 
-        <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
-          <app-scaling-fleet-tile [note]="limitsNote()" [row]="row" (changed)="onGroupSaved()" />
-          <app-scaling-tile
-            label="Pressure"
-            testid="pressure"
-            [value]="pressure().value"
-            [unit]="pressure().unit"
-            [note]="pressure().note"
-            [attention]="pressure().attention"
-          />
-          <app-scaling-tile
-            label="Waiting"
-            testid="waiting"
-            [value]="waiting().value"
-            unit="apps"
-            [note]="waiting().note"
-            [attention]="waiting().attention"
-          />
-          <app-scaling-tile
-            label="Spend"
-            testid="spend"
-            [value]="spend().value"
-            [unit]="spend().unit"
-            [note]="spend().note"
-          />
-        </div>
+      <app-scaling-growth-card
+        [row]="row"
+        (editLimits)="editingLimits.set(true)"
+        (setUp)="editingGroup.set(true)"
+      />
 
-        <app-scaling-growth-card
-          [row]="row"
-          (editLimits)="editingLimits.set(true)"
-          (setUp)="editingGroup.set(true)"
+      <app-scaling-decisions-table [decisions]="decisions()" [groupId]="row.groupId" />
+
+      @if (editingLimits() && clusterId(); as cid) {
+        <app-scaling-limits-dialog [clusterId]="cid" (closed)="editingLimits.set(false)" />
+      }
+
+      @if (editingGroup() && clusterId(); as cid) {
+        <app-scaling-group-form
+          [clusterId]="cid"
+          [existing]="group()"
+          [currentNodes]="row.nodes"
+          (saved)="onGroupSaved()"
+          (closed)="editingGroup.set(false)"
         />
-
-        <app-scaling-decisions-table [decisions]="decisions()" [groupId]="row.groupId" />
-
-        @if (editingLimits() && clusterId(); as cid) {
-          <app-scaling-limits-dialog [clusterId]="cid" (closed)="editingLimits.set(false)" />
-        }
-
-        @if (editingGroup() && clusterId(); as cid) {
-          <app-scaling-group-form
-            [clusterId]="cid"
-            [existing]="group()"
-            [currentNodes]="row.nodes"
-            (saved)="onGroupSaved()"
-            (closed)="editingGroup.set(false)"
-          />
-        }
-      } @else {
-        <p class="m-0 text-sm text-muted-foreground" data-testid="no-such-cluster">
-          The API has no scaling row for this cluster. Either it is gone, or this build does not
-          serve the route.
-        </p>
       }
-    </div>
+    } @else {
+      <fl-panel title="Scaling">
+        <fl-empty-state
+          [compact]="true"
+          title="No scaling for this cluster"
+          body="The API has no scaling row for this cluster. Either it is gone, or this build does not serve the route."
+          data-testid="no-such-cluster"
+        />
+      </fl-panel>
+    }
   `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `,
-  ],
 })
 export class ClusterScalingTabComponent {
   private readonly api = inject(ScalingApiService);

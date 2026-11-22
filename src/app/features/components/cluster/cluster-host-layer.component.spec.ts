@@ -28,14 +28,12 @@ describe('the firewall on each node', () => {
       ? jasmine
           .createSpy('setHostLayer')
           .and.rejectWith({ error: { message: 'Not offered on this cluster' } })
-      : jasmine
-          .createSpy('setHostLayer')
-          .and.callFake((_id: string, enabled: boolean) =>
-            Promise.resolve({
-              id: 'fw-1',
-              hostLayer: layer({ enabled, state: enabled ? 'pending' : 'off' }),
-            }),
-          );
+      : jasmine.createSpy('setHostLayer').and.callFake((_id: string, enabled: boolean) =>
+          Promise.resolve({
+            id: 'fw-1',
+            hostLayer: layer({ enabled, state: enabled ? 'pending' : 'off' }),
+          }),
+        );
 
     await TestBed.configureTestingModule({
       imports: [ClusterHostLayerComponent],

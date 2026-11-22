@@ -1,177 +1,150 @@
-import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 
 import { Router } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideNetwork,
-  lucideGlobe,
-  lucideExternalLink,
-  lucideLoader,
-  lucidePlus,
-  lucideInfo,
-  lucideShieldCheck,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink, lucideNetwork, lucidePlus } from '@ng-icons/lucide';
 
 import { ClusterService } from '../../service/cluster.service';
 import { VNetService } from '../../service/vnet.service';
-import { VNetInfo } from '../../model/vnet.models';
+import { VNetInfo, VNetStatus } from '../../model/vnet.models';
 import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+
+const VNET_STATUS: Record<VNetStatus, { tone: StatusTone; label: string }> = {
+  [VNetStatus.PENDING]: { tone: 'progress', label: 'Creating' },
+  [VNetStatus.ACTIVE]: { tone: 'success', label: 'Active' },
+  [VNetStatus.FAILED]: { tone: 'error', label: 'Failed' },
+  [VNetStatus.DELETING]: { tone: 'progress', label: 'Deleting' },
+  [VNetStatus.DELETED]: { tone: 'neutral', label: 'Deleted' },
+};
 
 @Component({
   selector: 'cluster-network-tab',
-  standalone: true,
-  imports: [NgIconComponent, AttachVNetDialogComponent],
-  providers: [
-    provideIcons({
-      lucideNetwork,
-      lucideGlobe,
-      lucideExternalLink,
-      lucideLoader,
-      lucidePlus,
-      lucideInfo,
-      lucideShieldCheck,
-    }),
+  imports: [
+    AttachVNetDialogComponent,
+    FlPanel,
+    FlTable,
+    FlKeyValue,
+    FlKvItem,
+    FlAlert,
+    FlEmptyState,
+    FlLoadingState,
+    FlStatus,
+    FlButton,
+    FlIcon,
+    FlSpinner,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideExternalLink, lucideNetwork, lucidePlus })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="card-surface p-6">
-      <div class="flex items-center justify-end mb-6">
+    @if (isByos() && clusterVNet()) {
+      <fl-alert tone="info" title="Registered, self-hosted">
+        Flui does not provision this network. It is the private network your nodes already share:
+        Flui registers its range, opens it in the host firewall for node-to-node traffic and checks
+        that each node belongs to it.
+      </fl-alert>
+    }
+
+    <fl-panel title="Private network">
+      <ng-container panelActions>
         @if (!isByos()) {
-          <button
-            (click)="navigateToVNetManagement()"
-            class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted transition-colors"
-          >
-            <span>Manage VNets</span>
-            <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
+          <button flButton size="sm" type="button" (click)="navigateToVNetManagement()">
+            Manage networks
+            <fl-icon name="lucideExternalLink" [size]="14" />
           </button>
         }
-      </div>
-
-      @if (isByos() && clusterVNet()) {
-        <div
-          class="card-inner border border-blue-200 bg-blue-50 rounded-lg p-3 mb-4 flex items-start gap-2.5"
-        >
-          <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <span
-              class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-fl-sm bg-fl-surface text-blue-700 border"
-            >
-              Registered (self-hosted)
-            </span>
-            <p class="text-sm text-sub mt-1">
-              Flui doesn't provision this network — it's the private network your nodes already
-              share. Flui registers its CIDR (the host firewall opens it for node-to-node traffic)
-              and validates that each node belongs to it.
-            </p>
-          </div>
-        </div>
-      }
+      </ng-container>
 
       @if (isLoading()) {
-        <div class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @for (i of [1, 2]; track i) {
-              <div class="card-inner p-4 space-y-3">
-                <div class="flex items-center gap-2">
-                  <div class="skeleton h-4 w-4"></div>
-                  <div class="skeleton h-3 w-20"></div>
-                </div>
-                <div class="skeleton h-7 w-40"></div>
-              </div>
-            }
-          </div>
-          <div class="space-y-2">
-            <div class="skeleton h-4 w-16"></div>
-            @for (i of [1, 2]; track i) {
-              <div class="skeleton h-12 rounded-lg"></div>
-            }
-          </div>
-        </div>
-      } @else if (clusterVNet()) {
-        <div class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="card-inner p-4">
-              <div class="flex items-center gap-2 mb-2">
-                <ng-icon name="lucideNetwork" class="h-4 w-4 text-blue-600" />
-                <span class="text-label">VNet Name</span>
-              </div>
-              <p class="text-lg font-bold text-value">{{ clusterVNet()!.name }}</p>
-            </div>
-
-            <div class="card-inner p-4">
-              <div class="flex items-center gap-2 mb-2">
-                <ng-icon name="lucideGlobe" class="h-4 w-4 text-purple-600" />
-                <span class="text-label">IP Range</span>
-              </div>
-              <p class="text-lg font-mono font-bold text-value">{{ clusterVNet()!.ipRange }}</p>
-            </div>
-          </div>
-
-          @if (clusterVNet()!.subnets && clusterVNet()!.subnets.length > 0) {
-            <div class="mt-4">
-              <h3 class="text-sm font-semibold text-foreground mb-3">Subnets</h3>
-              <div class="space-y-2">
-                @for (subnet of clusterVNet()!.subnets; track subnet.id) {
-                  <div class="card-inner p-3">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-3">
-                        <span class="font-mono text-sm text-value">{{ subnet.ipRange }}</span>
-                      </div>
-                      @if (subnet.attachedServerIds.length > 0) {
-                        <span class="text-xs text-sub">
-                          {{ subnet.attachedServerIds.length }} server(s) attached
-                        </span>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        </div>
+        <fl-loading-state [rows]="3" />
+      } @else if (clusterVNet(); as vnet) {
+        <fl-key-value>
+          <fl-kv-item key="Name">{{ vnet.name }}</fl-kv-item>
+          <fl-kv-item key="IP range" [mono]="true">{{ vnet.ipRange }}</fl-kv-item>
+          <fl-kv-item key="Status">
+            <fl-status [tone]="statusOf(vnet).tone" [label]="statusOf(vnet).label" />
+          </fl-kv-item>
+          <fl-kv-item key="Subnets">{{ vnet.subnets?.length ?? 0 }}</fl-kv-item>
+        </fl-key-value>
       } @else if (isByos()) {
-        <div class="text-center py-8">
-          <ng-icon name="lucideNetwork" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-          <p class="text-sm text-sub">No private network registered yet.</p>
-          <p class="text-xs text-sub mt-1 max-w-md mx-auto">
-            Flui registers the private network your nodes share (it isn't provisioned). Register it
-            to open the host firewall for node-to-node traffic and enable multi-node scaling.
-          </p>
+        <fl-empty-state
+          icon="lucideNetwork"
+          title="No private network registered"
+          body="Flui registers the private network your nodes share, it does not provision it. Register it to open the host firewall for node-to-node traffic and allow scaling to more nodes."
+        >
           <button
-            (click)="registerByosNetwork()"
+            flButton="primary"
+            type="button"
             [disabled]="registering()"
-            class="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            (click)="registerByosNetwork()"
           >
             @if (registering()) {
-              <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+              <fl-spinner label="Registering" />
             } @else {
-              <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
+              <fl-icon name="lucidePlus" />
             }
-            <span>Register private network</span>
+            Register private network
           </button>
-          @if (registerError()) {
-            <p class="text-xs status-error mt-2">{{ registerError() }}</p>
-          }
-        </div>
+        </fl-empty-state>
+        @if (registerError()) {
+          <fl-alert tone="error" title="Could not register the network">
+            {{ registerError() }}
+          </fl-alert>
+        }
       } @else {
-        <div class="text-center py-8">
-          <ng-icon name="lucideNetwork" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-          <p class="text-sm text-sub">No network configuration found for this cluster.</p>
+        <fl-empty-state
+          icon="lucideNetwork"
+          title="No private network"
+          [body]="
+            canAttach()
+              ? 'Attach a network to enable private networking and autoscaling.'
+              : 'This cluster has no network configuration.'
+          "
+        >
           @if (canAttach()) {
-            <p class="text-xs text-sub mt-1">
-              Attach a VNet to enable private networking and autoscaling.
-            </p>
-            <button
-              (click)="openAttachVNet()"
-              class="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-            >
-              <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-              <span>Attach VNet</span>
+            <button flButton="primary" type="button" (click)="openAttachVNet()">
+              <fl-icon name="lucidePlus" />
+              Attach network
             </button>
           }
-        </div>
+        </fl-empty-state>
       }
-    </div>
+    </fl-panel>
+
+    @if (!isLoading() && clusterVNet()?.subnets?.length) {
+      <fl-panel title="Subnets" [count]="clusterVNet()!.subnets.length" [flush]="true">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">IP range</th>
+                <th scope="col">Zone</th>
+                <th scope="col">Gateway</th>
+                <th scope="col" class="is-num">Servers attached</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (subnet of clusterVNet()!.subnets; track subnet.id) {
+                <tr>
+                  <td class="fl-mono">{{ subnet.ipRange }}</td>
+                  <td>{{ subnet.networkZone || '—' }}</td>
+                  <td class="fl-mono">{{ subnet.gateway || '—' }}</td>
+                  <td class="is-num">{{ subnet.attachedServerIds.length }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </fl-panel>
+    }
 
     @if (showAttachDialog() && clusterId(); as cid) {
       <app-attach-vnet-dialog
@@ -198,6 +171,10 @@ export class ClusterNetworkTabComponent implements OnInit {
   clusterProvider = (): string => this.clusterService.cluster()?.provider ?? '';
   isByos = (): boolean => this.clusterService.isByosCluster();
   canAttach = (): boolean => !this.isByos() && !!this.clusterId() && !!this.clusterProvider();
+
+  statusOf(vnet: VNetInfo): { tone: StatusTone; label: string } {
+    return VNET_STATUS[vnet.status] ?? { tone: 'neutral', label: vnet.status ?? 'Unknown' };
+  }
 
   async registerByosNetwork(): Promise<void> {
     const clusterId = this.clusterId();

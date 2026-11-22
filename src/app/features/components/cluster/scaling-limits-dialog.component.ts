@@ -1,13 +1,11 @@
-import {
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 
 /**
@@ -19,89 +17,69 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
  */
 @Component({
   selector: 'app-scaling-limits-dialog',
-  standalone: true,
-  imports: [FormsModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  host: { '(document:keydown.escape)': 'close()' },
+  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon],
+  providers: [provideIcons({ lucideX })],
+  host: { class: 'contents', '(document:keydown.escape)': 'close()' },
   template: `
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4"
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       (click)="close()"
     >
       <div
+        class="fl-dialog"
         role="dialog"
         aria-modal="true"
-        aria-label="Node limits"
+        aria-labelledby="scaling-limits-title"
         (click)="$event.stopPropagation()"
-        class="card-surface w-full max-w-md p-6 flex flex-col gap-5"
         data-testid="limits-dialog"
       >
-        <div class="flex flex-col gap-1">
-          <h3 class="m-0 text-lg font-semibold text-foreground">Node limits</h3>
-          <p class="m-0 text-sm text-sub">
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="scaling-limits-title">Node limits</h2>
+          <button type="button" class="fl-dialog__close" aria-label="Close" (click)="close()">
+            <fl-icon name="lucideX" />
+          </button>
+        </header>
+
+        <div class="fl-dialog__body">
+          <p class="m-0 text-fl-ink-muted">
             Flui will not take this cluster outside these, and neither will the buttons on the page.
           </p>
+          <div class="grid grid-cols-2 gap-3">
+            <fl-field label="Floor" for="floor">
+              <div class="fl-input fl-input--lg">
+                <input id="floor" type="number" min="1" class="fl-mono" [(ngModel)]="floor" />
+              </div>
+            </fl-field>
+            <fl-field label="Ceiling" for="ceiling">
+              <div class="fl-input fl-input--lg">
+                <input id="ceiling" type="number" min="1" class="fl-mono" [(ngModel)]="ceiling" />
+              </div>
+            </fl-field>
+          </div>
+          <p class="m-0 text-fl-caption text-fl-ink-muted">
+            Counted across every node, master included: the number shown on the page.
+          </p>
+          @if (problem(); as message) {
+            <fl-alert tone="error" title="Cannot save these limits" data-testid="limits-error">
+              {{ message }}
+            </fl-alert>
+          }
         </div>
 
-        <div class="flex items-end gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label for="floor" class="text-xs font-semibold text-foreground">Floor</label>
-            <input
-              id="floor"
-              type="number"
-              min="1"
-              [(ngModel)]="floor"
-              class="h-11 w-28 rounded-lg border border-border bg-card px-3 font-mono text-sm text-foreground"
-            />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="ceiling" class="text-xs font-semibold text-foreground">Ceiling</label>
-            <input
-              id="ceiling"
-              type="number"
-              min="1"
-              [(ngModel)]="ceiling"
-              class="h-11 w-28 rounded-lg border border-border bg-card px-3 font-mono text-sm text-foreground"
-            />
-          </div>
-          <p class="m-0 pb-3 text-[11px] leading-relaxed text-sub">
-            Counted across every node, master included — the number shown on the page.
-          </p>
-        </div>
-
-        @if (problem(); as message) {
-          <p class="m-0 text-sm text-red-600" data-testid="limits-error">
-            {{ message }}
-          </p>
-        }
-
-        <div class="flex gap-2">
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" (click)="close()">Cancel</button>
           <button
+            flButton="primary"
             type="button"
             (click)="save()"
             [disabled]="!!problem() || saving()"
-            class="min-h-11 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {{ saving() ? 'Saving…' : 'Save' }}
           </button>
-          <button
-            type="button"
-            (click)="close()"
-            class="min-h-11 rounded-lg border border-border bg-card px-4 text-[13px] font-semibold text-foreground transition-colors hover:bg-muted"
-          >
-            Cancel
-          </button>
-        </div>
+        </footer>
       </div>
     </div>
   `,
-  styles: [
-    `
-      :host {
-        display: contents;
-      }
-    `,
-  ],
 })
 export class ScalingLimitsDialogComponent {
   private readonly autoscale = inject(ClusterAutoscaleService);

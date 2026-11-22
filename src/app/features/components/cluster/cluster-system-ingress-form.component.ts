@@ -1,133 +1,108 @@
-import { Component, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideSettings2,
-  lucideLoader,
-  lucideCheckCircle,
-  lucideAlertCircle,
-  lucideChevronDown,
-  lucideChevronUp,
-} from '@ng-icons/lucide';
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
 import { ConfigureSystemIngressDto } from '../../../core/api/model/configureSystemIngressDto';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlField } from '../../../ui/patterns/field';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-cluster-system-ingress-form',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideSettings2,
-      lucideLoader,
-      lucideCheckCircle,
-      lucideAlertCircle,
-      lucideChevronDown,
-      lucideChevronUp,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FormsModule, FlPanel, FlField, FlAlert, FlStatus, FlButton, FlSpinner],
   template: `
-    <div class="space-y-3">
-      <!-- Header toggle -->
-      <div class="flex items-center justify-between">
-        <div>
-          <h3 class="text-sm font-semibold text-foreground">System Ingress</h3>
-          <p class="text-xs text-sub mt-0.5">
-            Configure ingress routes for the Flui API and web app domains.
-          </p>
-        </div>
+    <fl-panel title="System ingress">
+      <ng-container panelActions>
         <button
+          flButton="ghost"
+          size="sm"
+          type="button"
+          [attr.aria-expanded]="showForm()"
           (click)="toggleForm()"
-          class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
         >
-          <ng-icon name="lucideSettings2" class="h-3.5 w-3.5" />
           {{ showForm() ? 'Hide' : 'Configure' }}
-          <ng-icon [name]="showForm() ? 'lucideChevronUp' : 'lucideChevronDown'" class="h-3 w-3" />
         </button>
-      </div>
+      </ng-container>
 
-      @if (showForm()) {
-        <div class="border border-border rounded-lg p-4 space-y-4 card-inner">
-          <div class="grid grid-cols-2 gap-3">
-            <div class="space-y-1">
-              <label class="text-xs font-medium text-foreground">
-                API Domain <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                [(ngModel)]="form.apiDomain"
-                [placeholder]="'api.' + (zoneName() || 'example.com')"
-                class="w-full px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div class="space-y-1">
-              <label class="text-xs font-medium text-foreground">
-                App Domain <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                [(ngModel)]="form.appDomain"
-                [placeholder]="'app.' + (zoneName() || 'example.com')"
-                class="w-full px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+      <div class="flex flex-col gap-4">
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+          Ingress routes for the Flui API and web app domains.
+        </p>
+
+        @if (showForm()) {
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <fl-field label="API domain" for="system-ingress-api">
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="system-ingress-api"
+                  type="text"
+                  class="fl-mono"
+                  required
+                  [(ngModel)]="apiDomain"
+                  [placeholder]="'api.' + (zoneName() || 'example.com')"
+                />
+              </div>
+            </fl-field>
+            <fl-field label="App domain" for="system-ingress-app">
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="system-ingress-app"
+                  type="text"
+                  class="fl-mono"
+                  required
+                  [(ngModel)]="appDomain"
+                  [placeholder]="'app.' + (zoneName() || 'example.com')"
+                />
+              </div>
+            </fl-field>
           </div>
 
-          <div class="space-y-1">
-            <label class="text-xs font-medium text-foreground">Certificate Issuer</label>
-            <select
-              [(ngModel)]="form.issuer"
-              class="w-full px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="lets_encrypt_staging">Let's Encrypt Staging</option>
-              <option value="lets_encrypt">Let's Encrypt Production</option>
-            </select>
-          </div>
+          <fl-field label="Certificate issuer" for="system-ingress-issuer">
+            <span class="fl-select-wrap">
+              <select id="system-ingress-issuer" class="fl-select" [(ngModel)]="issuer">
+                <option value="lets_encrypt_staging">Let's Encrypt staging</option>
+                <option value="lets_encrypt">Let's Encrypt production</option>
+              </select>
+            </span>
+          </fl-field>
 
           @if (error()) {
-            <div
-              class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
-            >
-              <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
+            <fl-alert tone="error" title="Could not configure system ingress">
               {{ error() }}
-            </div>
+            </fl-alert>
           }
 
-          @if (success()) {
-            <div
-              class="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700"
-            >
-              <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5 flex-shrink-0" />
-              System ingress configured successfully.
-            </div>
-          }
-
-          <div class="flex items-center gap-2">
+          <div class="fl-row">
             <button
+              flButton="primary"
+              type="button"
+              [disabled]="saving() || !apiDomain().trim() || !appDomain().trim()"
               (click)="submit()"
-              [disabled]="saving() || !form.apiDomain.trim() || !form.appDomain.trim()"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               @if (saving()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+                <fl-spinner label="Applying" />
                 Applying…
               } @else {
-                <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5" />
                 Apply
               }
             </button>
             <button
-              (click)="showForm.set(false)"
+              flButton="ghost"
+              type="button"
               [disabled]="saving()"
-              class="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              (click)="showForm.set(false)"
             >
               Cancel
             </button>
+            @if (success()) {
+              <fl-status tone="success" label="System ingress configured" />
+            }
           </div>
-        </div>
-      }
-    </div>
+        }
+      </div>
+    </fl-panel>
   `,
 })
 export class ClusterSystemIngressFormComponent {
@@ -141,23 +116,19 @@ export class ClusterSystemIngressFormComponent {
   protected error = signal<string | null>(null);
   protected success = signal(false);
 
-  protected form: {
-    apiDomain: string;
-    appDomain: string;
-    issuer: ConfigureSystemIngressDto.IssuerEnum;
-  } = {
-    apiDomain: '',
-    appDomain: '',
-    issuer: ConfigureSystemIngressDto.IssuerEnum.LetsEncryptStaging,
-  };
+  protected apiDomain = signal('');
+  protected appDomain = signal('');
+  protected issuer = signal<ConfigureSystemIngressDto.IssuerEnum>(
+    ConfigureSystemIngressDto.IssuerEnum.LetsEncryptStaging,
+  );
 
   protected toggleForm(): void {
     this.showForm.update((v) => !v);
   }
 
   protected async submit(): Promise<void> {
-    const apiDomain = this.form.apiDomain.trim();
-    const appDomain = this.form.appDomain.trim();
+    const apiDomain = this.apiDomain().trim();
+    const appDomain = this.appDomain().trim();
     if (!apiDomain || !appDomain) return;
 
     this.saving.set(true);
@@ -167,7 +138,7 @@ export class ClusterSystemIngressFormComponent {
     const ok = await this.dnsZoneService.configureSystemIngress(this.clusterId(), {
       apiDomain,
       appDomain,
-      issuer: this.form.issuer,
+      issuer: this.issuer(),
     });
 
     this.saving.set(false);

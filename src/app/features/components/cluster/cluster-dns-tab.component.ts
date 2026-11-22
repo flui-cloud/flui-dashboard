@@ -7,17 +7,10 @@ import {
   Injector,
   afterNextRender,
   viewChild,
-  ChangeDetectionStrategy,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideGlobe,
-  lucideLoader,
-  lucidePlusCircle,
-  lucideRefreshCw,
-  lucideAlertCircle,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlus, lucideRefreshCw } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
@@ -36,139 +29,116 @@ import { CreateAppEndpointDto } from '../../../core/api/model/createAppEndpointD
 import { UpdateAppEndpointDto } from '../../../core/api/model/updateAppEndpointDto';
 import { hasPublicEndpoint } from '../../model/app-exposure';
 import { ToastService } from '../../../shared/services/toast.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-cluster-dns-tab',
-  standalone: true,
   imports: [
-    NgIconComponent,
     DnsEndpointsListComponent,
     ClusterDnsZoneSectionComponent,
     ClusterEndpointFormComponent,
     ClusterCertificateIssuersComponent,
     ClusterSystemIngressFormComponent,
     ConfirmationDialogComponent,
+    FlAlert,
+    FlPanel,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    FlSpinner,
   ],
-  providers: [
-    provideIcons({
-      lucideGlobe,
-      lucideLoader,
-      lucidePlusCircle,
-      lucideRefreshCw,
-      lucideAlertCircle,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucidePlus, lucideRefreshCw })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="card-surface p-6 space-y-6">
-      @if (isLoading()) {
-        <div class="space-y-6">
-          <!-- Zone section skeleton -->
-          <div class="space-y-3">
-            <div class="skeleton h-4 w-28"></div>
-            <div class="border border-border rounded-lg p-4 space-y-3">
-              <div class="skeleton h-9 w-full"></div>
-              <div class="skeleton h-9 w-28"></div>
-            </div>
-          </div>
-          <!-- Issuers section skeleton -->
-          <div class="border-t border-border pt-6 space-y-3">
-            <div class="skeleton h-4 w-36"></div>
-            <div class="flex gap-2">
-              @for (i of [1, 2]; track i) {
-                <div class="skeleton h-16 flex-1"></div>
-              }
-            </div>
-          </div>
-          <!-- Endpoints section skeleton -->
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="skeleton h-4 w-28"></div>
-              <div class="skeleton h-6 w-24"></div>
-            </div>
-            @for (i of [1, 2, 3]; track i) {
-              <div class="skeleton h-12 rounded-lg"></div>
-            }
-          </div>
-        </div>
-      } @else {
-        <!-- Error banners -->
-        @if (clusterDnsZoneService.error()) {
-          <div
-            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
-          >
-            <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{{ clusterDnsZoneService.error() }}</span>
-          </div>
-        }
-        @if (appEndpointsService.error()) {
-          <div
-            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
-          >
-            <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{{ appEndpointsService.error() }}</span>
-          </div>
-        }
+    @if (isLoading()) {
+      <fl-panel title="DNS zones">
+        <fl-loading-state [rows]="3" />
+      </fl-panel>
+      <fl-panel title="Endpoints">
+        <fl-loading-state [rows]="3" />
+      </fl-panel>
+    } @else {
+      @if (clusterDnsZoneService.error(); as error) {
+        <fl-alert tone="error" title="DNS zone request failed">{{ error }}</fl-alert>
+      }
+      @if (appEndpointsService.error(); as error) {
+        <fl-alert tone="error" title="Endpoints request failed">{{ error }}</fl-alert>
+      }
 
-        <!-- Section 1: DNS Zone + Issuer setup (STEP 1-4) -->
-        <app-cluster-dns-zone-section
-          #zoneSection
-          [assignments]="clusterDnsZoneService.assignments()"
-          [availableZones]="dnsZonesService.zones()"
+      <app-cluster-dns-zone-section
+        #zoneSection
+        [assignments]="clusterDnsZoneService.assignments()"
+        [availableZones]="dnsZonesService.zones()"
+        [clusterId]="clusterId()"
+        [wildcardIssuersReady]="clusterDnsZoneService.wildcardIssuersReady()"
+        [assigning]="assigningZone()"
+        [reconcilingId]="reconcilingZoneId()"
+        (assignZone)="onAssignZone($event)"
+        (removeZone)="onRemoveZone($event)"
+        (reconcile)="onReconcileZone($event)"
+        (issuersReadyChange)="onIssuersReadyChange($event)"
+      />
+
+      <app-cluster-certificate-issuers #issuersSection [clusterId]="clusterId()" />
+
+      @if (clusterDnsZoneService.issuersReady() && clusterDnsZoneService.hasAssignment()) {
+        <app-cluster-system-ingress-form
           [clusterId]="clusterId()"
-          [wildcardIssuersReady]="clusterDnsZoneService.wildcardIssuersReady()"
-          [assigning]="assigningZone()"
-          [reconcilingId]="reconcilingZoneId()"
-          (assignZone)="onAssignZone($event)"
-          (removeZone)="onRemoveZone($event)"
-          (reconcile)="onReconcileZone($event)"
-          (issuersReadyChange)="onIssuersReadyChange($event)"
+          [zoneName]="clusterDnsZoneService.assignment()?.dnsZone?.zoneName ?? ''"
         />
+      }
 
-        <!-- Section 2: Certificate Issuers -->
-        <div class="border-t border-border pt-6">
-          <app-cluster-certificate-issuers #issuersSection [clusterId]="clusterId()" />
-        </div>
+      <fl-panel title="Endpoints" [count]="appEndpointsService.endpoints().length" [flush]="true">
+        <ng-container panelActions>
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh endpoints"
+            [disabled]="refreshingEndpoints()"
+            (click)="refreshEndpoints()"
+          >
+            @if (refreshingEndpoints()) {
+              <fl-spinner label="Refreshing endpoints" />
+            } @else {
+              <fl-icon name="lucideRefreshCw" />
+            }
+          </button>
+          <button flButton size="sm" type="button" (click)="toggleAddForm()">
+            <fl-icon name="lucidePlus" />
+            Add endpoint
+          </button>
+        </ng-container>
+        <app-dns-endpoints-list
+          [endpoints]="appEndpointsService.endpoints()"
+          [reconcilingId]="reconcilingId()"
+          (editAction)="editEndpoint($event)"
+          (reconcileAction)="reconcileEndpoint($event)"
+          (deleteAction)="deleteEndpoint($event)"
+        />
+      </fl-panel>
+    }
 
-        <!-- Section 2.5: System Ingress (visible once issuers are ready) -->
-        @if (clusterDnsZoneService.issuersReady() && clusterDnsZoneService.hasAssignment()) {
-          <div class="border-t border-border pt-6">
-            <app-cluster-system-ingress-form
-              [clusterId]="clusterId()"
-              [zoneName]="clusterDnsZoneService.assignment()?.dnsZone?.zoneName ?? ''"
-            />
-          </div>
-        }
-
-        <!-- Section 3: App Endpoints -->
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-foreground">App Endpoints</h3>
-            <div class="flex items-center gap-2">
-              <button
-                (click)="toggleAddForm()"
-                class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-              >
-                <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
-                Add Endpoint
-              </button>
-              <button
-                (click)="refreshEndpoints()"
-                [disabled]="refreshingEndpoints()"
-                class="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-colors"
-                title="Refresh endpoints"
-              >
-                <ng-icon
-                  name="lucideRefreshCw"
-                  class="h-3.5 w-3.5"
-                  [class.animate-spin]="refreshingEndpoints()"
-                />
-              </button>
-            </div>
-          </div>
-
-          <!-- Add/Edit form -->
-          @if (showEndpointForm()) {
+    @if (showEndpointForm()) {
+      <div
+        class="fl-backdrop fixed inset-0 z-50 overflow-y-auto"
+        (click)="closeEndpointForm()"
+        (keydown.escape)="closeEndpointForm()"
+      >
+        <div class="flex min-h-full items-center justify-center p-4 py-10">
+          <div
+            class="w-full max-w-2xl rounded-fl-lg border border-fl-border bg-fl-surface"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-label]="editingEndpoint() ? 'Edit endpoint' : 'New endpoint'"
+            (click)="$event.stopPropagation()"
+          >
             <app-cluster-endpoint-form
               [clusterId]="clusterId()"
               [assignments]="clusterDnsZoneService.assignments()"
@@ -182,23 +152,14 @@ import { ToastService } from '../../../shared/services/toast.service';
               (configureIssuers)="onConfigureIssuers()"
               (configureWildcardIssuers)="onConfigureWildcardIssuers()"
             />
-          }
-
-          <!-- Endpoints list with inline actions -->
-          <app-dns-endpoints-list
-            [endpoints]="appEndpointsService.endpoints()"
-            [reconcilingId]="reconcilingId()"
-            (editAction)="editEndpoint($event)"
-            (reconcileAction)="reconcileEndpoint($event)"
-            (deleteAction)="deleteEndpoint($event)"
-          />
+          </div>
         </div>
-      }
-    </div>
+      </div>
+    }
 
     <app-confirmation-dialog
       #deleteEndpointDialog
-      title="Delete Endpoint"
+      title="Delete endpoint"
       [message]="
         endpointToDelete()
           ? 'Delete endpoint ' + endpointToDelete()!.fqdn + '? This cannot be undone.'
@@ -297,8 +258,6 @@ export class ClusterDnsTabComponent implements OnInit {
   }
 
   protected onIssuersReadyChange(ready: boolean): void {
-    // Keep service signals in sync so other parts of the tab (endpoint form,
-    // system ingress, zone reconciliation badges) react
     if (ready) {
       this.clusterDnsZoneService.loadIssuers(this.clusterId());
       this.clusterDnsZoneService.loadAssignment(this.clusterId());

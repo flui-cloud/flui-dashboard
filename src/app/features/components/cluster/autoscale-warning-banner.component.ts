@@ -1,55 +1,38 @@
-import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideTriangleAlert, lucideCircleAlert, lucideZap, lucidePlus } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlus, lucideZap } from '@ng-icons/lucide';
 import { AutoscaleStatus } from '../../model/autoscale.models';
+import { AlertTone, FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 @Component({
   selector: 'app-autoscale-warning-banner',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideTriangleAlert, lucideCircleAlert, lucideZap, lucidePlus })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlAlert, FlButton, FlIcon],
+  providers: [provideIcons({ lucideZap, lucidePlus })],
+  host: { class: 'contents' },
   template: `
     @if (visible()) {
-      <div class="flex items-start gap-3 rounded-lg border p-3" [class]="containerClass()">
-        <ng-icon [name]="iconName()" class="h-5 w-5 flex-shrink-0 mt-0.5" [class]="iconClass()" />
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium" [class]="titleClass()">
-            {{ title() }}
-          </p>
-          @if (status()?.warningMessage; as msg) {
-            <p class="text-xs mt-0.5" [class]="messageClass()">{{ msg }}</p>
-          }
-          @if (showActions()) {
-            <div class="flex flex-wrap items-center gap-2 mt-2">
-              @if (showConfigure()) {
-                <button
-                  type="button"
-                  (click)="configure.emit()"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border bg-background hover:bg-muted transition-colors"
-                  [class]="actionBorderClass()"
-                >
-                  <ng-icon name="lucideZap" class="h-3.5 w-3.5" />
-                  {{
-                    status()?.autoscalingEnabled ? 'Manage autoscaling' : 'Configure autoscaling'
-                  }}
-                </button>
-              }
-              @if (showAddWorker()) {
-                <button
-                  type="button"
-                  (click)="addWorker.emit()"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
-                >
-                  <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-                  Add a node
-                </button>
-              }
-            </div>
-          }
-        </div>
-      </div>
+      <fl-alert [tone]="tone()" [title]="title()">
+        {{ status()?.warningMessage }}
+        @if (showActions()) {
+          <ng-container alertActions>
+            @if (showConfigure()) {
+              <button flButton size="sm" type="button" (click)="configure.emit()">
+                <fl-icon name="lucideZap" [size]="14" />
+                {{ status()?.autoscalingEnabled ? 'Manage autoscaling' : 'Configure autoscaling' }}
+              </button>
+            }
+            @if (showAddWorker()) {
+              <button flButton size="sm" type="button" (click)="addWorker.emit()">
+                <fl-icon name="lucidePlus" [size]="14" />
+                Add a node
+              </button>
+            }
+          </ng-container>
+        }
+      </fl-alert>
     }
   `,
 })
@@ -70,41 +53,17 @@ export class AutoscaleWarningBannerComponent {
     if (!s) return '';
     if (s.warning === 'DANGER_NEEDS_SCALE') {
       return s.actuation === 'automatic'
-        ? 'Critical pressure — a node should be on its way'
-        : 'Critical pressure — add a worker or raise the ceiling now';
+        ? 'Critical pressure: a node should be on its way'
+        : 'Critical pressure: add a worker or raise the ceiling now';
     }
     if (s.warning === 'WARN_NEEDS_AUTOSCALE') {
-      return 'Cluster under sustained pressure — it will not grow on its own';
+      return 'Cluster under sustained pressure: it will not grow on its own';
     }
     return '';
   });
 
-  readonly iconName = computed(() =>
-    this.status()?.warning === 'DANGER_NEEDS_SCALE' ? 'lucideCircleAlert' : 'lucideTriangleAlert',
-  );
-
-  readonly containerClass = computed(() =>
-    this.status()?.warning === 'DANGER_NEEDS_SCALE'
-      ? 'border-red-200 bg-red-50'
-      : 'border-yellow-200 bg-yellow-50',
-  );
-
-  readonly iconClass = computed(() =>
-    this.status()?.warning === 'DANGER_NEEDS_SCALE' ? 'text-red-600' : 'text-yellow-600',
-  );
-
-  readonly titleClass = computed(() =>
-    this.status()?.warning === 'DANGER_NEEDS_SCALE' ? 'text-red-900' : 'text-yellow-900',
-  );
-
-  readonly messageClass = computed(() =>
-    this.status()?.warning === 'DANGER_NEEDS_SCALE' ? 'text-red-800' : 'text-yellow-800',
-  );
-
-  readonly actionBorderClass = computed(() =>
-    this.status()?.warning === 'DANGER_NEEDS_SCALE'
-      ? 'border-red-300 text-red-700'
-      : 'border-yellow-300 text-yellow-800',
+  readonly tone = computed<AlertTone>(() =>
+    this.status()?.warning === 'DANGER_NEEDS_SCALE' ? 'error' : 'warning',
   );
 
   readonly showConfigure = computed(() => true);

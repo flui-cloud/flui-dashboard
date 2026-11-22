@@ -1,363 +1,331 @@
-<div class="space-y-3">
-  <div class="flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <h3 class="text-sm font-semibold text-gray-900">DNS Zones</h3>
-      <a
-        routerLink="/infrastructure/domains"
-        class="inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-blue-600 transition-colors"
-        title="Manage DNS zones"
-      >
-        <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-        Manage
-      </a>
-    </div>
-  </div>
-
-  @if (assignments().length === 0 && !showAssignForm() && !assigning()) {
-    <div class="p-4 border border-dashed border-border rounded-lg text-center">
-      <ng-icon name="lucideGlobe" class="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-      <p class="text-sm text-sub">No DNS zone assigned</p>
-      <button
-        (click)="showAssignForm.set(true)"
-        class="mt-2 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
-      >
-        <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
-        Assign DNS Zone
+<fl-panel title="DNS zones" [count]="assignments().length">
+  <ng-container panelActions>
+    <a flButton="ghost" size="sm" routerLink="/infrastructure/domains" title="Manage DNS zones">
+      <fl-icon name="lucideExternalLink" />
+      Manage zones
+    </a>
+    @if (
+      assignments().length > 0 && !showAssignForm() && !assigning() && unassignedZones().length > 0
+    ) {
+      <button flButton size="sm" type="button" (click)="showAssignForm.set(true)">
+        <fl-icon name="lucidePlus" />
+        Assign another zone
       </button>
-    </div>
+    }
+  </ng-container>
+
+  @if (assignments().length === 0 && !assigning()) {
+    <fl-empty-state
+      icon="lucideGlobe"
+      [compact]="true"
+      title="No DNS zone assigned"
+      body="Assign a zone so Flui manages DNS records and certificates for this cluster."
+    >
+      @if (!showAssignForm()) {
+        <button flButton size="sm" type="button" (click)="showAssignForm.set(true)">
+          <fl-icon name="lucidePlus" />
+          Assign DNS zone
+        </button>
+      }
+    </fl-empty-state>
   }
 
-  @for (a of assignments(); track a.id) {
-    <!-- Zone info card -->
-    <div class="border rounded-lg overflow-hidden" [class]="cardClass(a)">
-      <div class="p-4 space-y-2">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <ng-icon
-              [name]="isBusy(a) ? 'lucideLoader' : 'lucideGlobe'"
-              class="h-4 w-4 text-blue-500"
-              [class.animate-spin]="isBusy(a)"
-            />
-            <span class="text-sm font-medium text-foreground font-mono">
-              {{ a.dnsZone.zoneName }}
-            </span>
-            <span class="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-              {{ a.dnsZone.dnsProvider }}
-            </span>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="text-xs px-2 py-0.5 rounded font-medium" [class]="badgeClass(a)">
-              {{ isBusy(a) ? 'Reconciling...' : getStatusLabel(a.reconciliationStatus) }}
-            </span>
+  <div class="flex flex-col gap-5">
+    @for (a of assignments(); track a.id; let first = $first) {
+      @let status = zoneStatus(a);
+      <section
+        class="flex flex-col gap-4"
+        [class.border-t]="!first"
+        [class.border-fl-border-subtle]="!first"
+        [class.pt-5]="!first"
+        [attr.aria-label]="a.dnsZone.zoneName"
+      >
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <fl-key-value class="min-w-0 flex-1">
+            <fl-kv-item key="Zone" [mono]="true">{{ a.dnsZone.zoneName }}</fl-kv-item>
+            <fl-kv-item key="Provider">{{ a.dnsZone.dnsProvider }}</fl-kv-item>
+            <fl-kv-item key="Status">
+              <fl-status [tone]="status.tone" [label]="status.label" />
+            </fl-kv-item>
+            @if (a.certificateProvider) {
+              <fl-kv-item key="Certificate">
+                <span class="flex flex-col gap-1">
+                  <span>
+                    {{ certLabel(a.certificateProvider) }}
+                    @if (a.wildcardCertificate) {
+                      <fl-tag>Wildcard</fl-tag>
+                    }
+                  </span>
+                  @if (wildcardPending(a)) {
+                    <fl-status tone="warning" label="Issuers not configured" />
+                  }
+                </span>
+              </fl-kv-item>
+            }
+            @if (a.acmeEmail) {
+              <fl-kv-item key="ACME email">{{ a.acmeEmail }}</fl-kv-item>
+            }
+            @if (wildcardOf(a); as w) {
+              @if (w.status !== 'unavailable') {
+                <fl-kv-item key="Wildcard record">
+                  <span class="flex flex-col gap-1">
+                    <span class="fl-mono">{{ w.hostnamePattern }}</span>
+                    @switch (w.status) {
+                      @case ('published') {
+                        <fl-status tone="success" label="Published" />
+                      }
+                      @case ('absent') {
+                        <fl-status tone="neutral" label="One record per app" />
+                      }
+                      @case ('foreign') {
+                        <fl-status tone="warning" [label]="'Points at ' + w.actualValue" />
+                      }
+                      @case ('unknown') {
+                        <fl-status tone="neutral" label="Provider unreachable" />
+                      }
+                    }
+                  </span>
+                </fl-kv-item>
+              }
+            }
+            @if (a.lastReconciliationAt) {
+              <fl-kv-item key="Last reconciled">{{
+                timeSince(a.lastReconciliationAt!)
+              }}</fl-kv-item>
+            }
+          </fl-key-value>
+
+          <div class="flex flex-wrap items-center gap-2">
+            @if (canReconcile(a)) {
+              <button flButton size="sm" type="button" (click)="reconcile.emit(a.id)">
+                <fl-icon name="lucideRefreshCw" />
+                Reconcile now
+              </button>
+            }
             <button
               *fluiCan="'cluster:manage'"
+              flButton="ghost"
+              size="sm"
+              type="button"
               data-testid="zone-remove"
-              (click)="removeConfirmId.set(a.id)"
               [disabled]="removeConfirmId() === a.id || isBusy(a)"
-              class="text-xs text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+              (click)="removeConfirmId.set(a.id)"
             >
               Remove
             </button>
           </div>
         </div>
 
-        @if (a.certificateProvider) {
-          <div class="flex items-center gap-1.5 text-xs text-sub">
-            @if (wildcardPending(a)) {
-              <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 text-amber-500" />
-            } @else {
-              <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5 text-green-500" />
-            }
-            TLS: {{ certLabel(a.certificateProvider) }}
-            @if (a.wildcardCertificate) {
-              <span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-xs">wildcard</span>
-            }
-            @if (a.acmeEmail) {
-              &bull; {{ a.acmeEmail }}
-            }
-            @if (wildcardPending(a)) {
-              <span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-xs"
-                >issuers not configured</span
-              >
-            }
-          </div>
-        }
-
-        @if (wildcardOf(a); as w) {
-          @if (w.status !== 'unavailable') {
-            <div class="flex items-center gap-1.5 text-xs text-sub flex-wrap">
-              @if (w.status === 'published') {
-                <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5 text-green-500" />
-              } @else {
-                <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 text-amber-500" />
-              }
-              DNS: {{ w.hostnamePattern }}
-              @switch (w.status) {
-                @case ('published') {
-                  <span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">wildcard</span>
-                }
-                @case ('absent') {
-                  <span class="text-muted-foreground">
-                    &bull; one record per app — each waits to propagate
-                  </span>
-                  <button
-                    (click)="publishWildcard(a)"
-                    [disabled]="publishingId() === a.id"
-                    class="text-blue-600 hover:underline disabled:opacity-50"
-                  >
-                    {{ publishingId() === a.id ? 'Publishing…' : 'Publish wildcard' }}
-                  </button>
-                }
-                @case ('foreign') {
-                  <span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
-                    points at {{ w.actualValue }}
-                  </span>
-                  <span class="text-muted-foreground">
-                    &bull; left as it is; apps keep their own records
-                  </span>
-                }
-                @case ('unknown') {
-                  <span class="text-muted-foreground">&bull; provider unreachable</span>
-                }
-              }
-            </div>
-          }
-        }
-
-        @if (a.lastReconciliationAt) {
-          <div class="text-xs text-muted-foreground">
-            Last reconciled: {{ timeSince(a.lastReconciliationAt!) }}
-          </div>
+        @if (isBusy(a)) {
+          <fl-status tone="progress" label="Applying DNS-01 credentials and wildcard issuers" />
         }
 
         @if (a.errorMessage) {
-          <div class="flex items-start gap-1.5 text-xs text-red-600">
-            <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-            {{ a.errorMessage }}
-          </div>
+          <fl-alert tone="error" title="Reconciliation failed">{{ a.errorMessage }}</fl-alert>
         }
 
-        @if (canReconcile(a)) {
-          <button
-            (click)="reconcile.emit(a.id)"
-            class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-          >
-            <ng-icon name="lucideRefreshCw" class="h-3 w-3" />
-            Reconcile now
-          </button>
+        @if (wildcardOf(a); as w) {
+          @if (w.status === 'absent') {
+            <fl-alert tone="info" title="No wildcard DNS record">
+              Each app gets its own record and waits for it to propagate.
+              <button
+                alertActions
+                flButton
+                size="sm"
+                type="button"
+                [disabled]="publishingId() === a.id"
+                (click)="publishWildcard(a)"
+              >
+                {{ publishingId() === a.id ? 'Publishing…' : 'Publish wildcard' }}
+              </button>
+            </fl-alert>
+          } @else if (w.status === 'foreign') {
+            <fl-alert tone="warning" title="Wildcard record points elsewhere">
+              Flui leaves it as it is; apps keep their own records.
+            </fl-alert>
+          }
         }
 
-        @if (isBusy(a)) {
-          <p class="text-xs text-blue-600">Applying DNS-01 credentials and wildcard issuers...</p>
-        }
-
-        <!-- Switch to production when staging is active and issuers are ready -->
         @if (a.certificateProvider === certProviders.LETS_ENCRYPT_STAGING && localIssuersReady()) {
-          <div class="pt-1.5 border-t border-border mt-1">
+          <fl-alert tone="info" title="Staging certificates">
+            Issuers are ready. Switch to production certificates that browsers trust.
             <button
+              alertActions
+              flButton
+              size="sm"
+              type="button"
               (click)="openDnsIssuerSetupForm()"
-              class="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
             >
-              <ng-icon name="lucideArrowUpCircle" class="h-3.5 w-3.5" />
+              <fl-icon name="lucideArrowUpCircle" />
               Switch to production Let's Encrypt
             </button>
-          </div>
+          </fl-alert>
         }
 
-        <!-- Inline remove confirmation -->
         @if (removeConfirmId() === a.id) {
-          <div
-            data-testid="zone-remove-confirm"
-            class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs"
-          >
-            <span class="text-red-700 flex-1"
-              >Remove DNS zone {{ a.dnsZone.zoneName }}? Endpoints on this zone will lose DNS
-              management.</span
-            >
-            <button
-              (click)="executeRemove(a.id)"
-              class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium"
-            >
-              Remove
-            </button>
-            <button
-              (click)="removeConfirmId.set(null)"
-              class="px-2 py-1 text-muted-foreground hover:text-foreground text-xs"
-            >
-              Cancel
-            </button>
-          </div>
+          <fl-alert tone="error" title="Remove this DNS zone?" data-testid="zone-remove-confirm">
+            Endpoints on {{ a.dnsZone.zoneName }} lose DNS management.
+            <ng-container alertActions>
+              <button flButton="danger" size="sm" type="button" (click)="executeRemove(a.id)">
+                Remove
+              </button>
+              <button flButton="ghost" size="sm" type="button" (click)="removeConfirmId.set(null)">
+                Cancel
+              </button>
+            </ng-container>
+          </fl-alert>
         }
-      </div>
-      @if (isBusy(a)) {
-        <div class="h-1 w-full bg-blue-100 overflow-hidden">
-          <div class="h-1 w-1/3 bg-blue-500 rounded-full animate-indeterminate"></div>
-        </div>
-      }
-    </div>
-  }
+      </section>
+    }
 
-  <!-- Pending card: the assign POST applies cluster state, so it is not instantaneous -->
-  @if (assigning()) {
-    <div class="border rounded-lg overflow-hidden bg-blue-50 border-blue-200">
-      <div class="p-4 space-y-2">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <ng-icon name="lucideLoader" class="h-4 w-4 text-blue-500 animate-spin" />
-            <span class="text-sm font-medium text-foreground font-mono">{{
-              assigningZoneName()
-            }}</span>
-          </div>
-          <span class="text-xs px-2 py-0.5 rounded font-medium bg-blue-100 text-blue-700">
-            Assigning...
-          </span>
-        </div>
-        <p class="text-xs text-blue-600">Applying DNS-01 credentials and wildcard issuers...</p>
-      </div>
-      <div class="h-1 w-full bg-blue-100 overflow-hidden">
-        <div class="h-1 w-1/3 bg-blue-500 rounded-full animate-indeterminate"></div>
-      </div>
-    </div>
-  }
+    @if (assigning()) {
+      <section
+        class="flex flex-col gap-3"
+        [class.border-t]="assignments().length > 0"
+        [class.border-fl-border-subtle]="assignments().length > 0"
+        [class.pt-5]="assignments().length > 0"
+        aria-label="Assigning zone"
+      >
+        <fl-key-value>
+          <fl-kv-item key="Zone" [mono]="true">{{ assigningZoneName() }}</fl-kv-item>
+          <fl-kv-item key="Status"><fl-status tone="progress" label="Assigning" /></fl-kv-item>
+        </fl-key-value>
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+          Applying DNS-01 credentials and wildcard issuers.
+        </p>
+      </section>
+    }
 
-  @if (assignments().length > 0 && acmeResolvers(); as r) {
-    <div class="flex items-center gap-1.5 text-xs text-sub flex-wrap" data-testid="acme-resolvers">
-      @if (r.pinned) {
-        <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5 text-green-500" />
-        Certificates: names checked through public resolvers
-      } @else {
-        <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 text-amber-500" />
-        <span
-          >Certificates: names checked through the cluster's own resolver &bull; a new name can wait
-          up to an hour</span
-        >
-        <button
-          *fluiCan="'app:write'"
-          (click)="pinAcmeResolvers()"
-          [disabled]="pinningResolvers()"
-          class="text-blue-600 hover:underline disabled:opacity-50"
-          data-testid="acme-resolvers-pin"
-        >
-          {{ pinningResolvers() ? 'Setting…' : 'Use public resolvers' }}
-        </button>
-      }
-    </div>
-  }
-
-  @if (
-    assignments().length > 0 && !showAssignForm() && !assigning() && unassignedZones().length > 0
-  ) {
-    <button
-      (click)="showAssignForm.set(true)"
-      class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-    >
-      <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
-      Assign another zone
-    </button>
-  }
-
-  @if (showAssignForm()) {
-    <div class="border border-border rounded-lg p-4 space-y-3">
-      <div>
-        <label class="block text-xs font-medium text-muted-foreground mb-1">DNS Zone</label>
-        @if (unassignedZones().length === 0) {
-          <p class="text-sm text-sub">
-            No registered zones available.
-            <a routerLink="/infrastructure/domains/register" class="text-blue-600 hover:underline"
-              >Register one first.</a
-            >
-          </p>
+    @if (assignments().length > 0 && acmeResolvers(); as r) {
+      <div
+        class="flex flex-wrap items-center gap-2 border-t border-fl-border-subtle pt-4"
+        data-testid="acme-resolvers"
+      >
+        @if (r.pinned) {
+          <fl-status tone="success" label="Certificate names checked through public resolvers" />
         } @else {
-          <select
-            [(ngModel)]="assignForm.dnsZoneId"
-            class="w-full px-3 py-2 border border-border rounded-md bg-background text-sm text-foreground"
+          <fl-status
+            tone="warning"
+            label="Certificate names checked through the cluster resolver"
+          />
+          <span class="text-fl-body-sm text-fl-ink-muted">A new name can wait up to an hour.</span>
+          <button
+            *fluiCan="'app:write'"
+            flButton
+            size="sm"
+            type="button"
+            data-testid="acme-resolvers-pin"
+            [disabled]="pinningResolvers()"
+            (click)="pinAcmeResolvers()"
           >
-            <option value="">Select zone...</option>
-            @for (zone of unassignedZones(); track zone.id) {
-              <option [value]="zone.id">{{ getZoneDisplay(zone) }}</option>
-            }
-          </select>
+            {{ pinningResolvers() ? 'Setting…' : 'Use public resolvers' }}
+          </button>
         }
       </div>
+    }
+  </div>
+</fl-panel>
 
-      <!-- TLS setup — wildcard first -->
-      <div class="space-y-2">
-        <label class="block text-xs font-medium text-muted-foreground">TLS Certificate</label>
-        <label class="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-          <input type="checkbox" [(ngModel)]="assignForm.enableTls" class="rounded" />
+@if (showAssignForm()) {
+  <fl-panel title="Assign a DNS zone">
+    <div class="flex flex-col gap-4">
+      @if (unassignedZones().length === 0) {
+        <fl-empty-state
+          [compact]="true"
+          title="No registered zones available"
+          body="Register a zone before assigning it to this cluster."
+        >
+          <a flButton size="sm" routerLink="/infrastructure/domains/register">Register a zone</a>
+        </fl-empty-state>
+      } @else {
+        <fl-field label="DNS zone" for="assign-zone">
+          <span class="fl-select-wrap">
+            <select
+              id="assign-zone"
+              class="fl-select"
+              aria-labelledby="assign-zone-label"
+              [(ngModel)]="assignForm.dnsZoneId"
+            >
+              <option value="">Select a zone</option>
+              @for (zone of unassignedZones(); track zone.id) {
+                <option [value]="zone.id">{{ getZoneDisplay(zone) }}</option>
+              }
+            </select>
+          </span>
+        </fl-field>
+      }
+
+      <fieldset class="fl-fieldset">
+        <legend>TLS certificate</legend>
+        <label class="fl-check">
+          <input type="checkbox" [(ngModel)]="assignForm.enableTls" />
           Enable Let's Encrypt TLS
         </label>
         @if (assignForm.enableTls) {
-          <div class="ml-6 space-y-3">
-            <label class="flex items-start gap-2 text-xs text-foreground cursor-pointer">
-              <input
-                type="checkbox"
-                [(ngModel)]="assignForm.wildcardCertificate"
-                class="rounded mt-0.5"
-              />
-              <div>
-                <span class="font-medium">Wildcard certificate (recommended)</span>
-                <p class="text-xs text-sub mt-0.5">
-                  Uses DNS-01 challenge to cover all subdomains (*.zone). Requires Hetzner DNS.
-                </p>
-              </div>
-            </label>
-            <div>
-              <label class="block text-xs font-medium text-muted-foreground mb-1">Provider</label>
+          <label class="fl-check items-start">
+            <input type="checkbox" [(ngModel)]="assignForm.wildcardCertificate" />
+            <span class="flex flex-col gap-0.5">
+              Wildcard certificate (recommended)
+              <span class="text-fl-caption text-fl-ink-muted">
+                Uses the DNS-01 challenge to cover every subdomain of the zone. Requires Hetzner
+                DNS.
+              </span>
+            </span>
+          </label>
+          <fl-field
+            label="Provider"
+            for="assign-provider"
+            hint="Start with staging, which has no rate limits. Switch to production once verified."
+          >
+            <span class="fl-select-wrap">
               <select
+                id="assign-provider"
+                class="fl-select"
+                aria-labelledby="assign-provider-label"
                 [(ngModel)]="assignForm.certificateProvider"
-                class="w-full px-3 py-2 border border-border rounded-md bg-background text-sm text-foreground"
               >
                 <option [value]="certProviders.LETS_ENCRYPT_STAGING">
-                  Let's Encrypt Staging (start here)
+                  Let's Encrypt staging (start here)
                 </option>
-                <option [value]="certProviders.LETS_ENCRYPT">Let's Encrypt Production</option>
+                <option [value]="certProviders.LETS_ENCRYPT">Let's Encrypt production</option>
               </select>
-              <p class="text-xs text-muted-foreground mt-0.5">
-                Use staging first — no rate limits. Switch to production when verified.
-              </p>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-muted-foreground mb-1">ACME Email</label>
+            </span>
+          </fl-field>
+          <fl-field label="ACME email" for="assign-acme-email">
+            <div class="fl-input fl-input--lg">
               <input
+                id="assign-acme-email"
                 type="email"
-                [(ngModel)]="assignForm.acmeEmail"
+                aria-label="ACME email"
                 placeholder="admin@example.com"
-                class="w-full px-3 py-2 border border-border rounded-md bg-background text-sm text-foreground"
+                [(ngModel)]="assignForm.acmeEmail"
               />
             </div>
-          </div>
+          </fl-field>
         }
-      </div>
+      </fieldset>
 
-      <div class="flex gap-2 justify-end">
+      <div class="flex justify-end gap-2">
+        <button flButton="ghost" type="button" (click)="showAssignForm.set(false)">Cancel</button>
         <button
-          (click)="showAssignForm.set(false)"
-          class="px-3 py-1.5 text-xs border border-border rounded-md text-foreground hover:bg-muted transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          (click)="submitAssign()"
+          flButton="primary"
+          type="button"
           [disabled]="!assignForm.dnsZoneId"
-          class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          (click)="submitAssign()"
         >
           Assign
         </button>
       </div>
     </div>
-  }
+  </fl-panel>
+}
 
-  <!-- STEP 3+4: Issuer setup inline — shown whenever a wildcard zone is assigned -->
-  @if (hasWildcardAssignment() && clusterId()) {
-    <div class="border border-border rounded-lg p-4 card-inner">
-      <app-cluster-issuer-setup
-        #dnsIssuerSetup
-        [clusterId]="clusterId()!"
-        [openFormOnInit]="justAssigned()"
-        [fallbackAcmeEmail]="wildcardAcmeEmail()"
-        (issuersReadyChange)="onIssuersReadyChange($event)"
-      />
-    </div>
-  }
-</div>
+@if (hasWildcardAssignment() && clusterId()) {
+  <app-cluster-issuer-setup
+    #dnsIssuerSetup
+    [clusterId]="clusterId()!"
+    [openFormOnInit]="justAssigned()"
+    [fallbackAcmeEmail]="wildcardAcmeEmail()"
+    (issuersReadyChange)="onIssuersReadyChange($event)"
+  />
+}

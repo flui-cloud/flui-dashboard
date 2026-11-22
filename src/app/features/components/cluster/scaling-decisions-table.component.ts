@@ -1,7 +1,9 @@
-import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { ScalingDecision } from '../../model/scaling-group.models';
-
-type Tone = 'acted' | 'alerted' | 'quiet';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 interface DecisionRow {
   id: string;
@@ -9,7 +11,7 @@ interface DecisionRow {
   saw: string;
   did: string;
   outcome: string;
-  tone: Tone;
+  tone: StatusTone;
 }
 
 /**
@@ -19,56 +21,47 @@ interface DecisionRow {
  */
 @Component({
   selector: 'app-scaling-decisions-table',
-  standalone: true,
-  imports: [],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlTable, FlEmptyState, FlStatus],
+  host: { class: 'block' },
   template: `
-    <div class="card-surface" data-testid="decisions">
-      <div class="flex items-baseline justify-between gap-4 px-5 pt-4 pb-3">
-        <h3 class="m-0 text-sm font-semibold text-foreground">What Flui decided</h3>
-        @if (groupId(); as id) {
-          <a
-            [href]="'/scaling/' + id + '/history'"
-            class="text-xs font-semibold text-primary hover:underline"
-          >
-            Full history →
-          </a>
-        }
-      </div>
+    <fl-panel
+      title="What Flui decided"
+      [count]="rows().length || null"
+      [flush]="true"
+      data-testid="decisions"
+    >
+      @if (groupId(); as id) {
+        <a panelActions [href]="'/scaling/' + id + '/history'" class="fl-link text-fl-body-sm">
+          Full history
+        </a>
+      }
 
       @if (rows().length === 0) {
-        <p class="m-0 px-5 pb-5 text-sm text-sub">
-          Nothing decided yet. Flui writes a line here every time it looks at this cluster.
-        </p>
+        <fl-empty-state
+          [compact]="true"
+          title="Nothing decided yet"
+          body="Flui writes a line here every time it looks at this cluster."
+        />
       } @else {
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-[720px] text-left">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
             <thead>
-              <tr class="text-[10px] font-semibold uppercase tracking-wider text-sub">
-                <th scope="col" class="px-5 pb-2 font-semibold w-[96px]">When</th>
-                <th scope="col" class="px-3 pb-2 font-semibold">What Flui saw</th>
-                <th scope="col" class="px-5 pb-2 font-semibold w-[280px]">What happened</th>
+              <tr>
+                <th scope="col" class="is-fit">When</th>
+                <th scope="col">What Flui saw</th>
+                <th scope="col">What happened</th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track row.id) {
-                <tr class="border-t border-border align-middle">
-                  <td class="px-5 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
-                    {{ row.when }}
-                  </td>
-                  <td class="px-3 py-3 text-[13px] text-foreground">
-                    {{ row.saw }}
-                  </td>
-                  <td class="px-5 py-3">
-                    <div class="flex items-center gap-2">
-                      <span
-                        class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                        [class]="badge(row.tone)"
-                      >
-                        {{ row.outcome.replaceAll('-', ' ') }}
-                      </span>
-                      <span class="text-xs text-muted-foreground">{{ row.did }}</span>
-                    </div>
+                <tr>
+                  <td class="fl-mono fl-num text-fl-ink-muted">{{ row.when }}</td>
+                  <td class="whitespace-normal">{{ row.saw }}</td>
+                  <td class="whitespace-normal">
+                    <span class="flex flex-wrap items-center gap-2">
+                      <fl-status [tone]="row.tone" [label]="row.outcome" />
+                      <span class="text-fl-ink-muted">{{ row.did }}</span>
+                    </span>
                   </td>
                 </tr>
               }
@@ -76,15 +69,8 @@ interface DecisionRow {
           </table>
         </div>
       }
-    </div>
+    </fl-panel>
   `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `,
-  ],
 })
 export class ScalingDecisionsTableComponent {
   readonly decisions = input<ScalingDecision[]>([]);
@@ -98,23 +84,12 @@ export class ScalingDecisionsTableComponent {
         when: this.clock(d.at),
         saw: d.saw,
         did: d.did,
-        outcome: d.outcome,
+        outcome: outcomeLabel(d.outcome),
         tone: this.toneOf(d.outcome),
       })),
   );
 
-  badge(tone: Tone): string {
-    switch (tone) {
-      case 'acted':
-        return 'bg-green-100 text-green-800';
-      case 'alerted':
-        return 'bg-amber-100 text-amber-800';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  }
-
-  private toneOf(outcome: ScalingDecision['outcome']): Tone {
+  private toneOf(outcome: ScalingDecision['outcome']): StatusTone {
     if (
       outcome === 'added' ||
       outcome === 'replaced' ||
@@ -122,8 +97,8 @@ export class ScalingDecisionsTableComponent {
       outcome === 'node-joined' ||
       outcome === 'node-removed'
     )
-      return 'acted';
-    return outcome === 'alerted' || outcome === 'purchase-failed' ? 'alerted' : 'quiet';
+      return 'success';
+    return outcome === 'alerted' || outcome === 'purchase-failed' ? 'warning' : 'neutral';
   }
 
   private clock(iso: string): string {
@@ -132,4 +107,9 @@ export class ScalingDecisionsTableComponent {
       ? '—'
       : `${at.getHours().toString().padStart(2, '0')}:${at.getMinutes().toString().padStart(2, '0')}`;
   }
+}
+
+function outcomeLabel(outcome: string): string {
+  const words = outcome.replaceAll('-', ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }

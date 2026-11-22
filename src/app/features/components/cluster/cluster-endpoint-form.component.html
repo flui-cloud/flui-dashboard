@@ -1,0 +1,324 @@
+<header class="fl-dialog__header">
+  <h2 class="fl-dialog__title">{{ endpoint() ? 'Edit endpoint' : 'New endpoint' }}</h2>
+  <button type="button" class="fl-dialog__close" aria-label="Close" (click)="cancelled.emit()">
+    <fl-icon name="lucideX" />
+  </button>
+</header>
+
+<div class="fl-dialog__body">
+  <div class="flex flex-col gap-5">
+    @if (applications().length > 0) {
+      @if (endpoint()) {
+        <div class="fl-field">
+          <span class="fl-field__label">Application</span>
+          <span>{{ selectedAppName() }}</span>
+          <span class="fl-field__hint">Cannot be changed.</span>
+        </div>
+      } @else {
+        <fl-field label="Application" for="endpoint-application">
+          <span class="fl-select-wrap">
+            <select
+              id="endpoint-application"
+              class="fl-select"
+              aria-labelledby="endpoint-application-label"
+              [(ngModel)]="form.applicationId"
+              (ngModelChange)="onAppChange($event)"
+            >
+              <option value="">Select an application</option>
+              @for (app of applications(); track app.id) {
+                <option [value]="app.id">{{ app.name }}</option>
+              }
+            </select>
+          </span>
+        </fl-field>
+      }
+    }
+
+    <app-endpoint-choice-group
+      legend="Endpoint type"
+      [options]="typeOptions()"
+      [value]="endpointType()"
+      (valueChange)="onEndpointTypeChange($event)"
+    >
+      @if (endpointType() === 'internal' && !internalHostingAvailable()) {
+        <fl-alert tone="warning" title="Internal endpoints are not available on this cluster">
+          Missing: {{ internalHostingMissingLabel() }}.
+          <button
+            alertActions
+            flButton
+            size="sm"
+            type="button"
+            (click)="configureInternalHosting.emit()"
+          >
+            Configure now
+          </button>
+        </fl-alert>
+      }
+      @if (endpointType() === 'internal' && internalHostingAvailable() && !authzReady()) {
+        <fl-alert tone="warning" title="Auth proxy not running">
+          Internal endpoints need the Flui auth proxy installed and running on this cluster.
+          <button
+            alertActions
+            flButton
+            size="sm"
+            type="button"
+            [disabled]="authzInstalling()"
+            (click)="installAuthz.emit()"
+          >
+            @if (authzInstalling()) {
+              <fl-spinner label="Installing" />
+              Installing…
+            } @else {
+              Install auth proxy
+            }
+          </button>
+        </fl-alert>
+      }
+    </app-endpoint-choice-group>
+
+    @if (endpointType() === 'public') {
+      <app-endpoint-choice-group
+        legend="Hostname source"
+        [options]="hostnameOptions()"
+        [value]="form.hostnameMode"
+        (valueChange)="onHostnameModeChange($event)"
+      />
+
+      @if (form.hostnameMode === 'ip') {
+        @if (masterIp() && ipSlugEditing()) {
+          <fl-field
+            label="Public address"
+            for="endpoint-ip-slug"
+            [error]="ipSlugError()"
+            [hint]="
+              'Edit only the app name. Leave it empty to use the default (' +
+              (currentSlug() || 'app') +
+              ').'
+            "
+          >
+            <div class="fl-input fl-input--lg">
+              <input
+                id="endpoint-ip-slug"
+                type="text"
+                aria-label="Public address"
+                class="fl-mono"
+                [(ngModel)]="form.ipSlugOverride"
+                (ngModelChange)="onIpSlugChange()"
+                [placeholder]="currentSlug() || 'app'"
+              />
+              <span class="fl-mono whitespace-nowrap">.{{ ipDashed() }}.nip.io</span>
+            </div>
+          </fl-field>
+        } @else if (masterIp()) {
+          <div class="fl-field">
+            <span class="fl-field__label">Public address</span>
+            <span class="flex items-center gap-2">
+              <span class="fl-mono break-all">{{ ipFqdnPreview() }}</span>
+              <button
+                flButton="ghost"
+                size="sm"
+                type="button"
+                [iconOnly]="true"
+                aria-label="Edit app name"
+                title="Edit app name"
+                (click)="ipSlugEditing.set(true)"
+              >
+                <fl-icon name="lucidePencil" />
+              </button>
+            </span>
+            <span class="fl-field__hint">
+              Generated from the cluster IP. Includes a free Let's Encrypt certificate.
+            </span>
+          </div>
+        } @else {
+          <fl-alert tone="warning" title="Cluster IP not ready yet">
+            Wait until the cluster finishes setting up, then come back here.
+          </fl-alert>
+        }
+      }
+
+      @if (form.hostnameMode === 'domain') {
+        @if (effectiveAssignment()) {
+          <fl-field
+            label="Domain"
+            for="endpoint-subdomain"
+            [error]="subdomainError()"
+            [hint]="
+              form.subdomainPrefix.trim() ? '' : 'Required, or generate it from the app slug.'
+            "
+          >
+            <div class="flex gap-2">
+              <div class="fl-input fl-input--lg min-w-0 flex-1">
+                <input
+                  id="endpoint-subdomain"
+                  type="text"
+                  aria-label="Domain"
+                  class="fl-mono"
+                  [(ngModel)]="form.subdomainPrefix"
+                  (ngModelChange)="onSubdomainChange()"
+                  [placeholder]="subdomainPlaceholder()"
+                />
+                @if (assignments().length <= 1) {
+                  <span class="fl-mono whitespace-nowrap">.{{ zoneSuffix() }}</span>
+                }
+              </div>
+              @if (assignments().length > 1) {
+                <span class="fl-select-wrap w-48 shrink-0">
+                  <label class="fl-sr" for="endpoint-zone">DNS zone</label>
+                  <select
+                    id="endpoint-zone"
+                    class="fl-select fl-mono"
+                    title="Choose the DNS zone for this endpoint"
+                    [ngModel]="$safeNavigationMigration(selectedAssignment()?.id)"
+                    (ngModelChange)="onZoneSelect($event)"
+                  >
+                    @for (a of assignments(); track a.id) {
+                      <option [value]="a.id">.{{ a.dnsZone.zoneName }}</option>
+                    }
+                  </select>
+                </span>
+              }
+              <ng-container *ngTemplateOutlet="wand" />
+            </div>
+          </fl-field>
+        } @else {
+          <fl-field label="Domain" for="endpoint-fqdn" [error]="fqdnError()">
+            <div class="flex gap-2">
+              <div class="fl-input fl-input--lg min-w-0 flex-1">
+                <input
+                  id="endpoint-fqdn"
+                  type="text"
+                  aria-label="Domain"
+                  class="fl-mono"
+                  [(ngModel)]="form.fqdn"
+                  (ngModelChange)="onFqdnChange()"
+                  [placeholder]="fqdnPlaceholder()"
+                />
+              </div>
+              <ng-container *ngTemplateOutlet="wand" />
+            </div>
+          </fl-field>
+          @if (masterIp() && form.fqdn.trim() && !fqdnError()) {
+            @if (dnsChecking()) {
+              <fl-status tone="progress" label="Verifying DNS" />
+            } @else if (dnsResult(); as result) {
+              @if (result.ok) {
+                <fl-status tone="success" [label]="'Resolves correctly to ' + masterIp()" />
+              } @else {
+                <fl-status tone="error" [label]="dnsMismatch(result)" />
+              }
+            }
+          }
+        }
+
+        @if (assignment() && endpointType() === 'public') {
+          <div>
+            <button flButton="ghost" size="sm" type="button" (click)="toggleByodOverride()">
+              {{ byodToggleLabel() }}
+            </button>
+          </div>
+        }
+
+        @if (!effectiveAssignment()) {
+          <fl-alert tone="warning" title="No DNS zone, manual setup needed">
+            Create an A record at your DNS provider pointing the domain above to the cluster IP.
+            @if (masterIp()) {
+              <fl-copy-id alertActions [value]="masterIp()" label="IP address" />
+            } @else {
+              The cluster IP is not available yet.
+            }
+          </fl-alert>
+        }
+
+        <app-endpoint-choice-group
+          legend="Certificate"
+          [options]="challengeOptions()"
+          [value]="form.certChallenge"
+          (valueChange)="onCertChallengeChange($event)"
+        >
+          @if (wildcardIssuersMissing()) {
+            <fl-alert tone="warning" title="Wildcard issuers not ready on this cluster">
+              The zone supports wildcards, but its DNS-01 issuers are not configured in cert-manager
+              yet.
+              <button
+                alertActions
+                flButton
+                size="sm"
+                type="button"
+                (click)="configureWildcardIssuers.emit()"
+              >
+                Configure wildcard issuers
+              </button>
+            </fl-alert>
+          }
+        </app-endpoint-choice-group>
+      }
+
+      <app-endpoint-certificate-options
+        [(certificateRequired)]="form.certificateRequired"
+        [(promoteToProd)]="promoteToProd"
+        [zoned]="!!effectiveAssignment()"
+        [issuersReady]="issuersReady()"
+        [editMode]="isEditMode()"
+        [certificateMode]="certificateMode"
+        [stagingCert]="isStagingCert()"
+        [stagingValid]="stagingCertValid()"
+        [prodCert]="isProdCert()"
+        (configureIssuers)="configureIssuers.emit()"
+      />
+    }
+
+    @if (endpointType() === 'internal') {
+      @if (assignment(); as zone) {
+        <fl-field
+          label="Internal URL"
+          for="endpoint-internal"
+          [error]="subdomainError()"
+          hint="Reachable only through the Flui auth proxy. The cluster wildcard issuer provides the TLS certificate."
+        >
+          <div class="flex gap-2">
+            <div class="fl-input fl-input--lg min-w-0 flex-1">
+              <input
+                id="endpoint-internal"
+                type="text"
+                aria-label="Internal URL"
+                class="fl-mono"
+                [(ngModel)]="form.subdomainPrefix"
+                (ngModelChange)="onSubdomainChange()"
+                [placeholder]="subdomainPlaceholder()"
+                [disabled]="isEditMode()"
+              />
+              <span class="fl-mono whitespace-nowrap">.internal.{{ zone.dnsZone.zoneName }}</span>
+            </div>
+            <ng-container *ngTemplateOutlet="wand; context: { $implicit: isEditMode() }" />
+          </div>
+        </fl-field>
+      } @else {
+        <fl-alert tone="warning" title="No DNS zone assigned">
+          Internal endpoints need a managed DNS zone with a wildcard certificate on the cluster.
+        </fl-alert>
+      }
+    }
+  </div>
+</div>
+
+<footer class="fl-dialog__footer">
+  <button flButton="ghost" type="button" (click)="cancelled.emit()">Cancel</button>
+  <button flButton="primary" type="button" [disabled]="!isValid()" (click)="submit()">
+    {{ endpoint() ? 'Save changes' : 'Create endpoint' }}
+  </button>
+</footer>
+
+<ng-template #wand let-locked>
+  <button
+    flButton
+    type="button"
+    [iconOnly]="true"
+    aria-label="Generate from app slug"
+    title="Generate from app slug"
+    [disabled]="!currentSlug() || locked"
+    (click)="autoGenerate()"
+  >
+    <fl-icon name="lucideWand2" />
+  </button>
+</ng-template>

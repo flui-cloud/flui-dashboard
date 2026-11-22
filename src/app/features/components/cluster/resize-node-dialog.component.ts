@@ -1,139 +1,146 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import {
   NodeResizePreview,
   NodeResizeService,
   ResizeCandidate,
 } from '../../service/node-resize.service';
 import { NodeDisksService } from '../../service/node-disks.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-resize-node-dialog',
-  standalone: true,
-  imports: [FormsModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, FlAlert, FlField, FlLoadingState, FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideX })],
   template: `
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       (click)="closed.emit()"
     >
       <div
-        class="card-surface w-full max-w-lg p-5"
+        class="fl-dialog"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="resize-node-title"
         (click)="$event.stopPropagation()"
         data-testid="resize-node-dialog"
       >
-        <h3 class="m-0 text-base font-semibold">Resize {{ nodeName() }}</h3>
-        @if (preview(); as p) {
-          <p class="m-0 mt-1 text-xs text-muted-foreground">
-            Now {{ p.node.currentServerType }}. The node is off for about {{ minutes(p) }} minutes
-            while the provider changes its type.
-          </p>
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="resize-node-title">Resize {{ nodeName() }}</h2>
+          <button type="button" class="fl-dialog__close" aria-label="Close" (click)="closed.emit()">
+            <fl-icon name="lucideX" />
+          </button>
+        </header>
+        <div class="fl-dialog__body">
+          @if (preview(); as p) {
+            <p class="m-0 text-fl-ink-muted">
+              Now <span class="fl-mono">{{ p.node.currentServerType }}</span>. The node is off for
+              about {{ minutes(p) }} minutes while the provider changes its type.
+            </p>
 
-          <label class="mt-4 block text-xs font-medium" for="resize-type"> Machine type </label>
-          <select
-            id="resize-type"
-            class="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-            [ngModel]="target()"
-            (ngModelChange)="target.set($event)"
-            data-testid="resize-type"
-          >
-            @for (c of choices(); track c.name) {
-              <option [value]="c.name">{{ label(c) }}</option>
-            }
-          </select>
-
-          @if (provider() === 'hetzner') {
-            <label class="mt-3 flex items-start gap-2 text-xs">
-              <input
-                type="checkbox"
-                class="mt-0.5"
-                [ngModel]="upgradeDisk()"
-                (ngModelChange)="upgradeDisk.set($event)"
-                data-testid="resize-upgrade-disk"
-              />
-              <span>
-                Also grow the disk to the size of the new type. It cannot be undone: the node can
-                never move back to a smaller type.
+            <fl-field label="Machine type" for="resize-type">
+              <span class="fl-select-wrap">
+                <select
+                  id="resize-type"
+                  class="fl-select"
+                  [ngModel]="target()"
+                  (ngModelChange)="target.set($event)"
+                  data-testid="resize-type"
+                >
+                  @for (c of choices(); track c.name) {
+                    <option [value]="c.name">{{ label(c) }}</option>
+                  }
+                </select>
               </span>
-            </label>
-          }
+            </fl-field>
 
-          @if (copiesTotal() !== null) {
-            <label class="mt-3 block text-xs font-medium" for="resize-copies">
-              Space for copies of replicated volumes (GiB, now
-              {{ copiesTotal() }})
-            </label>
-            <input
-              id="resize-copies"
-              type="number"
-              class="mt-1 w-32 rounded-md border border-border bg-background px-2 py-1 text-sm"
-              [min]="copiesTotal()"
-              [ngModel]="copiesGiB()"
-              (ngModelChange)="copiesGiB.set($event)"
-              data-testid="resize-copies"
-            />
-          }
+            @if (provider() === 'hetzner') {
+              <label class="fl-check items-start">
+                <input
+                  type="checkbox"
+                  [ngModel]="upgradeDisk()"
+                  (ngModelChange)="upgradeDisk.set($event)"
+                  data-testid="resize-upgrade-disk"
+                />
+                <span>
+                  Also grow the disk to the size of the new type. It cannot be undone: the node can
+                  never move back to a smaller type.
+                </span>
+              </label>
+            }
 
-          @if (p.affectedDedicatedApps.length) {
-            <p class="m-0 mt-3 text-xs text-amber-700">
-              Stops while the node is off:
-              {{ slugs(p) }}
-            </p>
-          }
-          @for (s of p.highAvailability?.switchovers ?? []; track s.cluster) {
-            <p class="m-0 mt-2 text-xs text-muted-foreground">
-              The primary of {{ s.cluster }} moves to {{ s.target }} first; writes pause for a few
-              seconds.
-            </p>
-          }
-          @if (p.highAvailability?.refusal) {
-            <p class="m-0 mt-3 text-xs text-destructive" data-testid="resize-refusal">
-              {{ p.highAvailability?.refusal }}
-            </p>
-          }
-        } @else if (!error()) {
-          <p class="m-0 mt-3 text-xs text-muted-foreground">Reading the node…</p>
-        }
-        @if (error()) {
-          <p class="m-0 mt-3 text-xs text-destructive">{{ error() }}</p>
-        }
-        @if (done()) {
-          <p class="m-0 mt-3 text-xs text-muted-foreground" data-testid="resize-done">
-            {{ done() }}
-          </p>
-        }
+            @if (copiesTotal() !== null) {
+              <fl-field
+                [label]="'Space for copies of replicated volumes (GiB, now ' + copiesTotal() + ')'"
+                for="resize-copies"
+              >
+                <span class="fl-input fl-input--lg w-32">
+                  <input
+                    id="resize-copies"
+                    type="number"
+                    [min]="copiesTotal()"
+                    [ngModel]="copiesGiB()"
+                    (ngModelChange)="copiesGiB.set($event)"
+                    data-testid="resize-copies"
+                  />
+                </span>
+              </fl-field>
+            }
 
-        <div class="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
-            (click)="closed.emit()"
-          >
+            @if (p.affectedDedicatedApps.length) {
+              <fl-alert tone="warning" title="Downtime">
+                Stops while the node is off: {{ slugs(p) }}
+              </fl-alert>
+            }
+            @for (s of p.highAvailability?.switchovers ?? []; track s.cluster) {
+              <p class="m-0 text-fl-ink-muted">
+                The primary of {{ s.cluster }} moves to {{ s.target }} first; writes pause for a few
+                seconds.
+              </p>
+            }
+            @if (p.highAvailability?.refusal) {
+              <fl-alert tone="error" title="Cannot resize now" data-testid="resize-refusal">
+                {{ p.highAvailability?.refusal }}
+              </fl-alert>
+            }
+          } @else if (!error()) {
+            <fl-loading-state [rows]="3" />
+          }
+          @if (error()) {
+            <fl-alert tone="error" title="Resize failed">{{ error() }}</fl-alert>
+          }
+          @if (done()) {
+            <fl-alert tone="info" title="Resize queued" data-testid="resize-done">
+              {{ done() }}
+            </fl-alert>
+          }
+        </div>
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" (click)="closed.emit()">
             {{ done() ? 'Close' : 'Cancel' }}
           </button>
           @if (!done()) {
             <button
+              flButton="primary"
               type="button"
-              class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
               [disabled]="!canResize()"
               (click)="resize()"
               data-testid="resize-confirm"
             >
+              @if (busy()) {
+                <fl-spinner label="Queuing" />
+              }
               {{ busy() ? 'Queuing…' : 'Resize' }}
             </button>
           }
-        </div>
+        </footer>
       </div>
     </div>
   `,

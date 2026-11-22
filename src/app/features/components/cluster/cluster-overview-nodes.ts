@@ -1,5 +1,6 @@
 import { InstanceWithLabels, getClusterInfo, getClusterNodeId } from '../../model/instance.models';
 import { ServerMetricsState } from '../../service/cluster-monitoring.service';
+import type { StatusTone } from '../../../ui/primitives/status';
 
 export const OVERVIEW_NODE_LIMIT = 6;
 
@@ -14,7 +15,7 @@ export interface OverviewNodeRow {
   memory: number | null;
   statusLabel: string | null;
   failed: boolean;
-  dot: string;
+  tone: StatusTone;
   link: string[] | null;
 }
 
@@ -24,21 +25,19 @@ export interface OverviewNodeRow {
  * describe the server at the provider. A node whose bootstrap failed is still
  * `running` there, so a provider status must never read as healthy.
  */
-export function nodeStatusDot(status?: string): string {
+export function nodeStatusTone(status?: string): StatusTone {
   switch (status?.toLowerCase()) {
     case 'ready':
-      return 'dot-healthy';
+      return 'success';
     case 'error':
-      return 'dot-degraded';
+      return 'error';
+    case 'creating':
+    case 'joining':
+    case 'deleting':
+      return 'progress';
     default:
-      return 'dot-pending';
+      return 'neutral';
   }
-}
-
-export function meterBarClass(value: number, warn: number, danger: number): string {
-  if (value >= danger) return 'bg-red-500';
-  if (value >= warn) return 'bg-orange-400';
-  return 'bg-green-500';
 }
 
 export function findNodeMetrics(
@@ -100,7 +99,7 @@ export function buildOverviewNodeRow(
     memory: metrics ? metrics.memory.current : null,
     statusLabel: failed ? 'never joined' : status,
     failed,
-    dot: nodeStatusDot(status ?? undefined),
+    tone: nodeStatusTone(status ?? undefined),
     link: linkOf(node),
   };
 }

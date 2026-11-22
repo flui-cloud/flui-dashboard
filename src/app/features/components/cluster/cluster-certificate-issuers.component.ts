@@ -8,20 +8,10 @@ import {
   effect,
   OnInit,
   OnDestroy,
-  ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideShieldCheck,
-  lucideShieldAlert,
-  lucideShieldOff,
-  lucideLoader,
-  lucideCheckCircle,
-  lucideAlertCircle,
-  lucideSettings2,
-  lucideTrash2,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideShieldOff } from '@ng-icons/lucide';
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
 import {
   ClusterIssuerWebSocketService,
@@ -31,264 +21,206 @@ import {
 } from '../../service/cluster-issuer-websocket.service';
 import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../../../core/api/model/clusterDnsZoneControllerGetIssuers200ResponseInner';
 import { CanDirective } from '../../../core/directives/can.directive';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
 type Issuer = ClusterDnsZoneControllerGetIssuers200ResponseInner;
 const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverTypeEnum;
 
 @Component({
   selector: 'app-cluster-certificate-issuers',
-  standalone: true,
-  imports: [NgIconComponent, FormsModule, CanDirective],
-  providers: [
-    provideIcons({
-      lucideShieldCheck,
-      lucideShieldAlert,
-      lucideShieldOff,
-      lucideLoader,
-      lucideCheckCircle,
-      lucideAlertCircle,
-      lucideSettings2,
-      lucideTrash2,
-    }),
+  imports: [
+    FormsModule,
+    CanDirective,
+    FlAlert,
+    FlField,
+    FlPanel,
+    FlEmptyState,
+    FlLoadingState,
+    FlTable,
+    FlButton,
+    FlSpinner,
+    FlStatus,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideShieldOff })],
+  host: { id: 'standard-certificate-issuers', class: 'fl-stack' },
   template: `
-    <div id="standard-certificate-issuers" class="space-y-4">
-      <div>
-        <h3 class="text-sm font-semibold text-gray-900">Standard Certificate Issuers (HTTP-01)</h3>
-        <p class="text-xs text-sub mt-0.5">Manage certificates for standard domains.</p>
-      </div>
-
-      @if (loading() && httpIssuers().length === 0) {
-        <div class="flex items-center gap-2 py-3 text-sm text-gray-500">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-          Loading standard certificate issuers...
-        </div>
-      } @else if (httpIssuers().length > 0) {
-        <div class="grid gap-2">
-          @for (issuer of httpIssuers(); track issuer.name) {
-            <div
-              class="rounded-lg border overflow-hidden"
-              [class]="
-                issuer.ready ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'
-              "
-            >
-              <div class="flex items-center justify-between px-3 py-2.5">
-                <div class="flex items-center gap-2.5">
-                  <ng-icon
-                    [name]="
-                      configuring()
-                        ? 'lucideLoader'
-                        : issuer.ready
-                          ? 'lucideShieldCheck'
-                          : 'lucideShieldAlert'
-                    "
-                    class="h-4 w-4 flex-shrink-0"
-                    [class]="
-                      configuring()
-                        ? 'animate-spin text-blue-500'
-                        : issuer.ready
-                          ? 'text-green-600'
-                          : 'text-amber-500'
-                    "
-                  />
-                  <div>
-                    <p class="text-xs font-medium font-mono text-gray-900">
-                      {{ issuer.name }}
-                    </p>
-                    @if (issuer.email) {
-                      <p class="text-xs text-gray-500">{{ issuer.email }}</p>
-                    }
-                  </div>
-                </div>
-                <span
-                  class="text-xs font-medium px-2 py-0.5 rounded-full"
-                  [class]="
-                    configuring()
-                      ? 'bg-blue-100 text-blue-700'
-                      : issuer.ready
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-amber-100 text-amber-700'
-                  "
-                >
-                  {{ configuring() ? 'Configuring...' : issuer.ready ? 'Ready' : 'Not Ready' }}
-                </span>
-              </div>
-              @if (configuring()) {
-                <div class="h-1 w-full bg-blue-100 overflow-hidden">
-                  <div class="h-1 w-1/3 bg-blue-500 rounded-full animate-indeterminate"></div>
-                </div>
-              }
-            </div>
-          }
-        </div>
-
-        @if (configuring()) {
-          <p class="text-xs text-blue-600">
-            Applying manifests to the cluster and waiting for cert-manager...
-          </p>
-        }
-
+    <fl-panel
+      title="Standard certificate issuers (HTTP-01)"
+      [count]="httpIssuers().length || null"
+      [flush]="true"
+    >
+      <ng-container panelActions>
         @if (!configuring()) {
-          <div class="flex items-center gap-3">
-            <button
-              (click)="toggleForm()"
-              [disabled]="deleting()"
-              class="text-xs text-blue-600 hover:underline inline-flex items-center gap-1 disabled:opacity-50"
-            >
-              <ng-icon name="lucideSettings2" class="h-3 w-3" />
-              Reconfigure standard issuers
-            </button>
+          @if (httpIssuers().length > 0) {
             <button
               *fluiCan="'cluster:manage'"
+              flButton="ghost"
+              size="sm"
+              type="button"
               data-testid="http-issuers-delete"
-              (click)="deleteConfirm.set(true)"
               [disabled]="deleting()"
-              class="text-xs text-red-600 hover:underline inline-flex items-center gap-1 disabled:opacity-50"
+              (click)="deleteConfirm.set(true)"
             >
-              <ng-icon name="lucideTrash2" class="h-3 w-3" />
-              Delete standard issuers
+              Delete
             </button>
-          </div>
+          }
+          @if (!loading() || httpIssuers().length > 0) {
+            <button flButton size="sm" type="button" [disabled]="deleting()" (click)="toggleForm()">
+              {{ httpIssuers().length > 0 ? 'Reconfigure' : 'Configure' }}
+            </button>
+          }
+        }
+      </ng-container>
+
+      @if (loading() && httpIssuers().length === 0) {
+        <fl-loading-state [rows]="2" />
+      } @else if (httpIssuers().length > 0 || configuring()) {
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Issuer</th>
+                <th scope="col">ACME email</th>
+                <th scope="col" class="is-fit">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (httpIssuers().length > 0) {
+                @for (issuer of httpIssuers(); track issuer.name) {
+                  <tr>
+                    <td class="fl-mono">{{ issuer.name }}</td>
+                    <td class="text-fl-ink-secondary">{{ issuer.email || '—' }}</td>
+                    <td class="is-fit">
+                      @if (configuring()) {
+                        <fl-status tone="progress" label="Configuring" />
+                      } @else {
+                        <fl-status
+                          [tone]="issuer.ready ? 'success' : 'warning'"
+                          [label]="issuer.ready ? 'Ready' : 'Not ready'"
+                        />
+                      }
+                    </td>
+                  </tr>
+                }
+              } @else {
+                @for (name of pendingIssuerNames; track name) {
+                  <tr>
+                    <td class="fl-mono">{{ name }}</td>
+                    <td class="text-fl-ink-muted">—</td>
+                    <td class="is-fit"><fl-status tone="progress" label="Configuring" /></td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (configuring()) {
+          <p
+            class="m-0 border-t border-fl-border-subtle px-4 py-3 text-fl-body-sm text-fl-ink-muted"
+          >
+            Applying manifests to the cluster and waiting for cert-manager.
+          </p>
         }
       } @else {
-        @if (configuring()) {
-          <div class="grid gap-2">
-            @for (name of pendingIssuerNames; track name) {
-              <div class="rounded-lg border border-blue-200 bg-blue-50 overflow-hidden">
-                <div class="flex items-center justify-between px-3 py-2.5">
-                  <div class="flex items-center gap-2.5">
-                    <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-blue-500" />
-                    <p class="text-xs font-medium font-mono text-gray-900">
-                      {{ name }}
-                    </p>
-                  </div>
-                  <span
-                    class="text-xs font-medium px-2 py-0.5 rounded-fl-sm bg-fl-surface text-blue-700 border"
-                  >
-                    Configuring...
-                  </span>
-                </div>
-                <div class="h-1 w-full bg-blue-100 overflow-hidden">
-                  <div class="h-1 w-1/3 bg-blue-500 rounded-full animate-indeterminate"></div>
-                </div>
-              </div>
-            }
-          </div>
-          <p class="text-xs text-blue-600">
-            Applying manifests to the cluster and waiting for cert-manager...
-          </p>
-        } @else {
-          <div class="flex items-start gap-3 p-3 card-inner border border-border rounded-lg">
-            <ng-icon
-              name="lucideShieldOff"
-              class="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5"
-            />
-            <div class="flex-1 min-w-0">
-              <p class="text-xs font-medium text-foreground">
-                No standard certificate issuers configured
-              </p>
-              <p class="text-xs text-sub mt-0.5">
-                Configure standard issuers to enable certificates for your domains.
-              </p>
-            </div>
-          </div>
-          <button
-            (click)="toggleForm()"
-            class="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
-          >
-            <ng-icon name="lucideSettings2" class="h-3 w-3" />
-            Configure standard issuers
-          </button>
-        }
+        <fl-empty-state
+          icon="lucideShieldOff"
+          [compact]="true"
+          title="No standard certificate issuers"
+          body="Configure standard issuers to enable certificates for your domains."
+        />
       }
 
-      @if (deleteConfirm()) {
-        <div class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
-          <span class="text-red-700 flex-1">Delete standard issuers (staging + production)?</span>
-          <button
-            (click)="deleteHttpIssuers()"
-            [disabled]="deleting()"
-            class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium disabled:opacity-50"
-          >
-            @if (deleting()) {
-              Deleting...
-            } @else {
-              Delete
-            }
-          </button>
-          <button
-            (click)="deleteConfirm.set(false)"
-            [disabled]="deleting()"
-            class="px-2 py-1 text-muted-foreground hover:text-foreground text-xs disabled:opacity-50"
-          >
-            Cancel
-          </button>
-        </div>
-      }
-
-      @if (deleteError()) {
-        <div
-          class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
-        >
-          <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
-          {{ deleteError() }}
-        </div>
-      }
-
-      @if (showForm()) {
-        <div class="border border-border rounded-lg p-4 space-y-4 card-inner">
-          <p class="text-xs font-semibold text-foreground">Configure Standard Issuers</p>
-
-          <div class="space-y-1">
-            <label class="text-xs font-medium text-foreground">
-              ACME Email <span class="text-red-500">*</span>
-            </label>
-            <input
-              type="email"
-              [(ngModel)]="formEmail"
-              placeholder="admin@example.com"
-              class="w-full px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p class="text-xs text-sub">
-              Used for Let's Encrypt registration and expiry notifications.
-            </p>
-          </div>
-
-          @if (formError()) {
-            <div
-              class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
-            >
-              <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
-              {{ formError() }}
-            </div>
+      @if (deleteConfirm() || deleteError() || showForm()) {
+        <div class="flex flex-col gap-4 border-t border-fl-border p-4">
+          @if (deleteConfirm()) {
+            <fl-alert tone="error" title="Delete the standard issuers?">
+              Both the staging and the production issuer are removed.
+              <ng-container alertActions>
+                <button
+                  flButton="danger"
+                  size="sm"
+                  type="button"
+                  [disabled]="deleting()"
+                  (click)="deleteHttpIssuers()"
+                >
+                  @if (deleting()) {
+                    <fl-spinner label="Deleting" />
+                    Deleting…
+                  } @else {
+                    Delete
+                  }
+                </button>
+                <button
+                  flButton="ghost"
+                  size="sm"
+                  type="button"
+                  [disabled]="deleting()"
+                  (click)="deleteConfirm.set(false)"
+                >
+                  Cancel
+                </button>
+              </ng-container>
+            </fl-alert>
           }
 
-          <div class="flex items-center gap-2">
-            <button
-              (click)="submitForm()"
-              [disabled]="saving() || !formEmail.trim()"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              @if (saving()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                Applying...
-              } @else {
-                <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5" />
-                Apply Configuration
+          @if (deleteError()) {
+            <fl-alert tone="error" title="Could not delete the issuers">{{
+              deleteError()
+            }}</fl-alert>
+          }
+
+          @if (showForm()) {
+            <div class="flex flex-col gap-4">
+              <fl-field
+                label="ACME email"
+                for="http-issuers-email"
+                hint="Used for Let's Encrypt registration and expiry notices."
+              >
+                <div class="fl-input fl-input--lg">
+                  <input
+                    id="http-issuers-email"
+                    type="email"
+                    placeholder="admin@example.com"
+                    [ngModel]="formEmail()"
+                    (ngModelChange)="formEmail.set($event)"
+                  />
+                </div>
+              </fl-field>
+
+              @if (formError()) {
+                <fl-alert tone="error" title="Configuration failed">{{ formError() }}</fl-alert>
               }
-            </button>
-            <button
-              (click)="toggleForm()"
-              [disabled]="saving()"
-              class="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          </div>
+
+              <div class="flex justify-end gap-2">
+                <button flButton="ghost" type="button" [disabled]="saving()" (click)="toggleForm()">
+                  Cancel
+                </button>
+                <button
+                  flButton="primary"
+                  type="button"
+                  [disabled]="saving() || !formEmail().trim()"
+                  (click)="submitForm()"
+                >
+                  @if (saving()) {
+                    <fl-spinner label="Applying" />
+                    Applying…
+                  } @else {
+                    Apply configuration
+                  }
+                </button>
+              </div>
+            </div>
+          }
         </div>
       }
-    </div>
+    </fl-panel>
   `,
 })
 export class ClusterCertificateIssuersComponent implements OnInit, OnDestroy {
@@ -305,7 +237,7 @@ export class ClusterCertificateIssuersComponent implements OnInit, OnDestroy {
   protected showForm = signal(false);
   protected deleteConfirm = signal(false);
   protected saving = signal(false);
-  protected formEmail = '';
+  protected formEmail = signal('');
   protected formError = signal<string | null>(null);
   protected deleteError = signal<string | null>(null);
 
@@ -352,7 +284,7 @@ export class ClusterCertificateIssuersComponent implements OnInit, OnDestroy {
 
   openForm(): void {
     const existing = this.httpIssuers().find((i) => i.email);
-    this.formEmail = existing?.email ?? '';
+    this.formEmail.set(existing?.email ?? '');
     this.formError.set(null);
     this.deleteError.set(null);
     this.showForm.set(true);
@@ -361,7 +293,7 @@ export class ClusterCertificateIssuersComponent implements OnInit, OnDestroy {
 
   protected toggleForm(): void {
     const existing = this.httpIssuers().find((i) => i.email);
-    this.formEmail = existing?.email ?? '';
+    this.formEmail.set(existing?.email ?? '');
     this.formError.set(null);
     this.deleteError.set(null);
     this.deleteConfirm.set(false);
@@ -369,7 +301,7 @@ export class ClusterCertificateIssuersComponent implements OnInit, OnDestroy {
   }
 
   protected async submitForm(): Promise<void> {
-    const email = this.formEmail.trim();
+    const email = this.formEmail().trim();
     if (!email) return;
     const id = this.clusterId();
 

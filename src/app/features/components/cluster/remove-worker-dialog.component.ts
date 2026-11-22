@@ -1,211 +1,128 @@
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideX,
-  lucideTrash,
-  lucideLoader,
-  lucideCircleCheck,
-  lucideCircleAlert,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideTrash, lucideX } from '@ng-icons/lucide';
 
 import { ClusterWorkersService } from '../../service/cluster-workers.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { OperationWarning, WorkerError } from '../../model/worker-operation.models';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-remove-worker-dialog',
-  standalone: true,
-  imports: [FormsModule, NgIcon],
-  providers: [
-    provideIcons({
-      lucideX,
-      lucideTrash,
-      lucideLoader,
-      lucideCircleCheck,
-      lucideCircleAlert,
-      lucideTriangleAlert,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FormsModule, FlAlert, FlUsageBar, FlButton, FlIcon, FlSpinner, FlStatus],
+  providers: [provideIcons({ lucideX, lucideTrash })],
   template: `
-    <div class="fixed inset-0 z-50 bg-background/80" (click)="onCancel()">
+    <div
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      (click)="onCancel()"
+    >
       <div
-        class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4"
+        class="fl-dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="remove-worker-title"
+        (click)="$event.stopPropagation()"
       >
-        <div class="card-surface p-5 space-y-4" (click)="$event.stopPropagation()">
-          <div class="flex items-start justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="h-9 w-9 rounded-full bg-destructive/10 flex items-center justify-center">
-                <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <h2 class="text-lg font-semibold text-foreground">Remove worker</h2>
-                <p class="text-xs text-muted-foreground mt-0.5">
-                  {{ subtitle() }}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              (click)="onCancel()"
-              class="text-muted-foreground hover:text-foreground p-1 rounded"
-            >
-              <ng-icon name="lucideX" class="h-4 w-4" />
-            </button>
-          </div>
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="remove-worker-title">Remove worker</h2>
+          <button type="button" class="fl-dialog__close" aria-label="Close" (click)="onCancel()">
+            <fl-icon name="lucideX" />
+          </button>
+        </header>
 
-          @if (phase() === 'configure') {
-            <div class="rounded-md bg-muted px-3 py-2 text-sm">
-              <p class="text-xs text-muted-foreground">You are about to remove:</p>
-              <p class="font-mono font-semibold text-foreground mt-0.5">{{ workerName() }}</p>
-            </div>
-
-            <div
-              class="rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800"
-            >
-              <p class="font-medium">This action cannot be undone.</p>
-              <p class="mt-0.5">
+        @if (phase() === 'configure') {
+          <div class="fl-dialog__body">
+            <p class="m-0 text-fl-ink-muted">{{ subtitle() }}</p>
+            <p class="m-0">
+              You are about to remove <span class="fl-mono">{{ workerName() }}</span>.
+            </p>
+            <fl-alert tone="warning" title="This action cannot be undone.">
+              <span class="block">
                 Apps will be moved to other nodes when possible. Apps with strict availability rules
                 may be stopped without a graceful shutdown.
-              </p>
+              </span>
               @if (isByos()) {
-                <p class="mt-1">
-                  Flui drains the node and uninstalls k3s over SSH. The server itself stays — it's
-                  yours — so you can repurpose or reconnect it later.
-                </p>
+                <span class="mt-1 block">
+                  Flui drains the node and uninstalls k3s over SSH. The server itself stays, it is
+                  yours, so you can repurpose or reconnect it later.
+                </span>
               }
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="text-xs text-muted-foreground">
-                Type <span class="font-mono text-foreground">{{ workerName() }}</span> to confirm:
+            </fl-alert>
+            <div class="fl-field">
+              <label class="fl-field__label" for="remove-worker-confirm">
+                Type <span class="fl-mono">{{ workerName() }}</span> to confirm
               </label>
-              <input
-                type="text"
-                [ngModel]="typed()"
-                (ngModelChange)="typed.set($event)"
-                class="w-full h-9 px-3 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:border-primary"
-                placeholder="Worker name"
-                autofocus
-              />
+              <span class="fl-input fl-input--lg">
+                <input
+                  id="remove-worker-confirm"
+                  type="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Worker name"
+                  autofocus
+                  [ngModel]="typed()"
+                  (ngModelChange)="typed.set($event)"
+                />
+              </span>
             </div>
-
             @if (submitError(); as err) {
-              <div
-                class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800"
-              >
-                {{ err.message }}
-              </div>
+              <fl-alert tone="error" title="Could not remove the worker">{{
+                err.message
+              }}</fl-alert>
             }
-
-            <div class="flex justify-end gap-2 pt-1">
-              <button
-                type="button"
-                (click)="onCancel()"
-                [disabled]="submitting()"
-                class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                (click)="onSubmit()"
-                [disabled]="!canSubmit()"
-                class="px-3 py-1.5 text-sm rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 inline-flex items-center gap-1.5"
-              >
-                @if (submitting()) {
-                  <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                  Starting…
-                } @else {
-                  <ng-icon name="lucideTrash" class="h-3.5 w-3.5" />
-                  Remove worker
-                }
-              </button>
-            </div>
-          }
-
-          @if (phase() === 'tracking' && tracking(); as t) {
-            <div class="space-y-3">
-              <div class="flex items-center gap-2">
-                @if (t.status === 'completed') {
-                  <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-green-600" />
-                  <p class="text-sm font-medium text-foreground">Worker removed.</p>
-                } @else if (t.status === 'failed') {
-                  <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600" />
-                  <p class="text-sm font-medium text-foreground">Remove worker failed.</p>
-                } @else {
-                  <ng-icon name="lucideLoader" class="h-5 w-5 text-blue-600 animate-spin" />
-                  <p class="text-sm font-medium text-foreground">
-                    Freeing up the node and removing it…
-                  </p>
-                }
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                  <span>
-                    @if (t.status === 'completed') {
-                      Done
-                    } @else if (t.status === 'failed') {
-                      Stopped
-                    } @else if (t.totalSteps > 0) {
-                      Step {{ t.currentStepIndex + 1 }}/{{ t.totalSteps }}
-                    } @else {
-                      Starting…
-                    }
-                  </span>
-                  <span class="tabular-nums">{{ t.progress }}%</span>
-                </div>
-                <div class="h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    class="h-full transition-all"
-                    [class]="
-                      t.status === 'failed'
-                        ? 'bg-red-500'
-                        : t.status === 'completed'
-                          ? 'bg-green-500'
-                          : 'bg-blue-500'
-                    "
-                    [style.width.%]="t.progress"
-                  ></div>
-                </div>
-                @if (t.stepDescription) {
-                  <p class="text-xs text-muted-foreground mt-1.5">{{ t.stepDescription }}</p>
-                }
-              </div>
-
-              @if (t.status === 'failed' && t.error) {
-                <div
-                  class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800"
-                >
-                  {{ t.error }}
-                </div>
+          </div>
+          <footer class="fl-dialog__footer">
+            <button flButton="ghost" type="button" [disabled]="submitting()" (click)="onCancel()">
+              Cancel
+            </button>
+            <button flButton="danger" type="button" [disabled]="!canSubmit()" (click)="onSubmit()">
+              @if (submitting()) {
+                <fl-spinner label="Starting" />
+                Starting…
+              } @else {
+                <fl-icon name="lucideTrash" [size]="14" />
+                Remove worker
               }
+            </button>
+          </footer>
+        }
 
-              <div class="flex justify-end pt-1">
-                <button
-                  type="button"
-                  (click)="onCloseTracking()"
-                  class="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted"
-                >
-                  {{ t.status === 'in_progress' ? 'Run in background' : 'Close' }}
-                </button>
-              </div>
-            </div>
-          }
-        </div>
+        @if (phase() === 'tracking' && tracking(); as t) {
+          <div class="fl-dialog__body">
+            @if (t.status === 'completed') {
+              <fl-status tone="success" label="Worker removed." />
+            } @else if (t.status === 'failed') {
+              <fl-status tone="error" label="Remove worker failed." />
+            } @else {
+              <fl-status tone="progress" label="Freeing up the node and removing it…" />
+            }
+            <fl-usage-bar
+              [percent]="t.progress"
+              label="Progress"
+              [aside]="stepLabel()"
+              [warnAt]="101"
+              [criticalAt]="101"
+            />
+            @if (t.stepDescription) {
+              <p class="m-0 text-fl-body-sm text-fl-ink-muted">{{ t.stepDescription }}</p>
+            }
+            @if (t.status === 'failed' && t.error) {
+              <fl-alert tone="error" title="Removal stopped">{{ t.error }}</fl-alert>
+            }
+          </div>
+          <footer class="fl-dialog__footer">
+            <button flButton type="button" (click)="onCloseTracking()">
+              {{ t.status === 'in_progress' ? 'Run in background' : 'Close' }}
+            </button>
+          </footer>
+        }
       </div>
     </div>
   `,
@@ -223,7 +140,7 @@ export class RemoveWorkerDialogComponent {
 
   protected subtitle = computed(() =>
     this.isByos()
-      ? 'Drains apps and uninstalls k3s over SSH. The server stays — Flui never owned it.'
+      ? 'Drains apps and uninstalls k3s over SSH. The server stays: Flui never owned it.'
       : 'Moves apps off the node and removes it from the provider.',
   );
 
@@ -251,6 +168,14 @@ export class RemoveWorkerDialogComponent {
         error: null,
       }
     );
+  });
+
+  protected stepLabel = computed(() => {
+    const t = this.tracking();
+    if (t.status === 'completed') return 'Done';
+    if (t.status === 'failed') return 'Stopped';
+    if (t.totalSteps > 0) return `Step ${t.currentStepIndex + 1}/${t.totalSteps}`;
+    return 'Starting…';
   });
 
   protected canSubmit = computed(

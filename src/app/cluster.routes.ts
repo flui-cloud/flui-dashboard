@@ -37,6 +37,7 @@ export const clusterRoutes: Routes = [
         (m) => m.ClusterDashboardComponent,
       ),
     title: 'Cluster Details - flui.cloud',
+    data: { focus: true },
     children: [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
       {

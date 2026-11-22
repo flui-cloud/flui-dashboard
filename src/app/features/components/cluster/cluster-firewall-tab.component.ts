@@ -1,358 +1,252 @@
-import {
-  Component,
-  computed,
-  inject,
-  signal,
-  OnInit,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideShield,
-  lucideCalendar,
-  lucideExternalLink,
-  lucideLoader,
-  lucideSettings,
-  lucideCheck,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink, lucideShield } from '@ng-icons/lucide';
 
 import { ClusterService } from '../../service/cluster.service';
 import { ProvidersService } from '../../service/providers.service';
 import { FirewallV2Service } from '../../service/firewall-v2.service';
 import { FirewallResponseDto } from '../../../core/api/model/models';
-import { ReconciliationStatusBadgeComponent } from '../firewall/reconciliation-status-badge.component';
-import { DriftIndicatorComponent } from '../firewall/drift-indicator.component';
 import { ClusterHostLayerComponent } from './cluster-host-layer.component';
 import { hostLayerOf } from '../../model/firewall-v2.models';
 import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.component';
+import { ClusterFirewallRules } from './cluster-firewall-rules';
+import {
+  canReconcile,
+  driftState,
+  reconciliationState,
+  timeSince,
+} from './cluster-firewall-format';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlField } from '../../../ui/patterns/field';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'cluster-firewall-tab',
-  standalone: true,
   imports: [
     FormsModule,
-    NgIconComponent,
-    ReconciliationStatusBadgeComponent,
-    DriftIndicatorComponent,
     ClusterHostLayerComponent,
     ClusterEgressCardComponent,
+    ClusterFirewallRules,
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlField,
+    FlAlert,
+    FlEmptyState,
+    FlLoadingState,
+    FlStatus,
+    FlButton,
+    FlIcon,
+    FlSpinner,
   ],
-  providers: [
-    provideIcons({
-      lucideShield,
-      lucideCalendar,
-      lucideExternalLink,
-      lucideLoader,
-      lucideSettings,
-      lucideCheck,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideExternalLink, lucideShield })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-4">
-      <div class="card-surface p-6">
-        <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
-          <div class="min-w-0">
-            <h3 class="m-0 text-sm font-semibold text-foreground">Machines</h3>
-            <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
-              Traffic to and from the cluster's servers. It covers everything on them, the platform
-              included.
-            </p>
-          </div>
-          @if (clusterFirewall()) {
-            <button
-              (click)="navigateToFirewallManagement()"
-              class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted transition-colors disabled:opacity-50"
-            >
-              <span>View & Manage Rules</span>
-              <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-            </button>
-          } @else if (isHostFirewall() && !isLoading()) {
-            <button
-              (click)="enableHostFirewall()"
-              [disabled]="enabling()"
-              class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted transition-colors disabled:opacity-50"
-            >
-              @if (enabling()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                <span>Enabling…</span>
-              } @else {
-                <ng-icon name="lucideShield" class="h-3.5 w-3.5" />
-                <span>Enable host firewall</span>
-              }
-            </button>
-          }
-        </div>
-
-        @if (isHostFirewall()) {
-          <div class="card-inner p-4 mb-4">
-            <button
-              type="button"
-              (click)="showSshSettings.set(!showSshSettings())"
-              class="flex items-center gap-2 w-full text-left"
-            >
-              <ng-icon name="lucideSettings" class="h-4 w-4 text-blue-600" />
-              <span class="text-label">SSH connection</span>
-              <span class="ml-auto text-xs text-blue-600 hover:underline">
-                {{ showSshSettings() ? 'Hide' : 'Configure' }}
-              </span>
-            </button>
-            @if (showSshSettings()) {
-              <div class="mt-3 space-y-3">
-                <p class="text-sm text-sub">
-                  Flui applies this host's firewall over SSH. Set how to reach the node. Leave
-                  <span class="font-mono">Host</span> empty to use the node's IP address.
-                </p>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <label class="block">
-                    <span class="text-xs text-sub">Host (optional)</span>
-                    <input
-                      [(ngModel)]="sshHost"
-                      placeholder="node IP / hostname"
-                      class="mt-1 w-full text-sm bg-background border border-border rounded-md px-2 py-1.5 font-mono"
-                    />
-                  </label>
-                  <label class="block">
-                    <span class="text-xs text-sub">Port</span>
-                    <input
-                      [(ngModel)]="sshPort"
-                      type="number"
-                      min="1"
-                      max="65535"
-                      class="mt-1 w-full text-sm bg-background border border-border rounded-md px-2 py-1.5 font-mono"
-                    />
-                  </label>
-                  <label class="block">
-                    <span class="text-xs text-sub">User</span>
-                    <input
-                      [(ngModel)]="sshUser"
-                      placeholder="root"
-                      class="mt-1 w-full text-sm bg-background border border-border rounded-md px-2 py-1.5 font-mono"
-                    />
-                  </label>
-                </div>
-                <div class="flex items-center gap-3">
-                  <button
-                    type="button"
-                    (click)="saveSshTarget()"
-                    [disabled]="savingSsh()"
-                    class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted transition-colors disabled:opacity-50"
-                  >
-                    @if (savingSsh()) {
-                      <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                      <span>Saving…</span>
-                    } @else {
-                      <span>Save & apply</span>
-                    }
-                  </button>
-                  @if (sshSaved()) {
-                    <span class="inline-flex items-center gap-1 text-xs text-green-600">
-                      <ng-icon name="lucideCheck" class="h-3.5 w-3.5" /> Saved
-                    </span>
-                  }
-                  @if (sshError()) {
-                    <span class="text-xs text-red-600">{{ sshError() }}</span>
-                  }
-                </div>
-              </div>
+    <fl-panel title="Machines">
+      <ng-container panelActions>
+        @if (clusterFirewall()) {
+          <button flButton size="sm" type="button" (click)="navigateToFirewallManagement()">
+            Manage rules
+            <fl-icon name="lucideExternalLink" [size]="14" />
+          </button>
+        } @else if (isHostFirewall() && !isLoading()) {
+          <button
+            flButton="primary"
+            size="sm"
+            type="button"
+            [disabled]="enabling()"
+            (click)="enableHostFirewall()"
+          >
+            @if (enabling()) {
+              <fl-spinner label="Enabling" />
+              Enabling…
+            } @else {
+              <fl-icon name="lucideShield" [size]="14" />
+              Enable host firewall
             }
-          </div>
+          </button>
         }
+      </ng-container>
+
+      <div class="flex flex-col gap-4">
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+          Traffic to and from the cluster's servers. It covers everything on them, the platform
+          included.
+        </p>
 
         @if (isLoading()) {
-          <div class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="card-inner p-4 space-y-3">
-                <div class="skeleton h-3 w-16"></div>
-                <div class="skeleton h-6 w-24"></div>
-              </div>
-              <div class="card-inner p-4 space-y-3">
-                <div class="skeleton h-3 w-28"></div>
-                <div class="skeleton h-7 w-32"></div>
-              </div>
-            </div>
-            <div class="rounded-lg border border-border overflow-hidden">
-              <div class="skeleton h-9 border-b border-border"></div>
-              @for (i of [1, 2, 3, 4, 5]; track i) {
-                <div class="flex items-center gap-3 px-3 py-2.5 border-b border-border">
-                  <div class="skeleton h-4 flex-1"></div>
-                  <div class="skeleton h-5 w-12"></div>
-                  <div class="skeleton h-4 w-12"></div>
-                  <div class="skeleton h-4 w-10"></div>
-                  <div class="skeleton h-4 w-28"></div>
-                </div>
-              }
-            </div>
-          </div>
-        } @else if (clusterFirewall()) {
-          <div class="space-y-4">
-            @if (isHostFirewall()) {
-              <p class="text-xs text-sub">
-                Host firewall (nftables over SSH). SSH :22 stays always-open (CA-protected); ports
-                80 &amp; 443 are required and can't be removed (only IP-allowlisted); the machines'
-                outbound traffic is not restricted.
-              </p>
+          <fl-loading-state [rows]="3" />
+        } @else if (clusterFirewall(); as fw) {
+          @if (isHostFirewall()) {
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+              Host firewall, nftables over SSH. SSH on port 22 always stays open and is protected by
+              CA certificates. Ports 80 and 443 are required and can only be IP-allowlisted.
+              Outbound traffic from the machines is not restricted.
+            </p>
+          }
+          <fl-key-value>
+            <fl-kv-item key="Status">
+              <span class="fl-row">
+                <fl-status [tone]="reconciliation().tone" [label]="reconciliation().label" />
+                @if (canReconcile(fw.reconciliationStatus)) {
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    [disabled]="reconciling()"
+                    (click)="reconcileFirewall()"
+                  >
+                    {{ reconciling() ? 'Reconciling…' : 'Reconcile' }}
+                  </button>
+                }
+              </span>
+            </fl-kv-item>
+            <fl-kv-item key="Last reconciled">
+              {{ getTimeSinceReconciliation(fw.lastReconciliationAt) }}
+            </fl-kv-item>
+            @if (fw.reconciliationStatus) {
+              <fl-kv-item key="Provider state">
+                <fl-status [tone]="drift().tone" [label]="drift().label" />
+              </fl-kv-item>
             }
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="card-inner p-4">
-                <div class="flex items-center gap-2 mb-2">
-                  <ng-icon name="lucideShield" class="h-4 w-4 text-blue-600" />
-                  <span class="text-label">Status</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <app-reconciliation-status-badge
-                    [status]="clusterFirewall()!.reconciliationStatus!"
-                  />
-                  @if (
-                    clusterFirewall()!.reconciliationStatus === 'DRIFT' ||
-                    clusterFirewall()!.reconciliationStatus === 'PENDING' ||
-                    clusterFirewall()!.reconciliationStatus === 'ERROR'
-                  ) {
-                    <button
-                      (click)="reconcileFirewall()"
-                      [disabled]="reconciling()"
-                      class="text-xs text-blue-600 hover:underline disabled:opacity-50"
-                    >
-                      {{ reconciling() ? 'Reconciling…' : 'Reconcile' }}
-                    </button>
-                  }
-                </div>
-              </div>
+          </fl-key-value>
 
-              <div class="card-inner p-4">
-                <div class="flex items-center gap-2 mb-2">
-                  <ng-icon name="lucideCalendar" class="h-4 w-4 text-purple-600" />
-                  <span class="text-label">Last Reconciled</span>
-                </div>
-                <p class="text-lg font-bold text-value">
-                  {{ getTimeSinceReconciliation(clusterFirewall()!.lastReconciliationAt) }}
-                </p>
-              </div>
-            </div>
-
-            @if (hostLayer()?.applicable && clusterId()) {
-              <cluster-host-layer
-                [clusterId]="clusterId()!"
-                [layer]="hostLayer()!"
-                (changed)="clusterFirewall.set($event)"
-              />
-            }
-
-            @if (clusterFirewall()!.reconciliationStatus) {
-              <app-drift-indicator
-                [hasDrift]="clusterFirewall()!.hasDrift"
-                [status]="clusterFirewall()!.reconciliationStatus!"
-                [desiredHash]="clusterFirewall()!.desiredHash"
-                [lastAppliedHash]="clusterFirewall()!.lastAppliedHash"
-              />
-            }
-
-            @if (
-              clusterFirewall()!.lastAppliedRules && clusterFirewall()!.lastAppliedRules!.length > 0
-            ) {
-              <div class="mt-4">
-                <h3 class="text-sm font-semibold text-foreground mb-3">
-                  Applied Rules ({{ clusterFirewall()!.lastAppliedRules!.length }})
-                </h3>
-                <div class="card-inner rounded-lg overflow-hidden">
-                  <table class="w-full text-sm">
-                    <thead class="bg-muted border-b border-border">
-                      <tr>
-                        <th class="px-3 py-2 text-left text-label">Description</th>
-                        <th class="px-3 py-2 text-center text-label">Direction</th>
-                        <th class="px-3 py-2 text-left text-label">Protocol</th>
-                        <th class="px-3 py-2 text-left text-label">Port</th>
-                        <th class="px-3 py-2 text-left text-label">IPs</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-border">
-                      @for (rule of clusterFirewall()!.lastAppliedRules; track $index) {
-                        <tr class="hover:bg-muted/50 transition-colors">
-                          <td class="px-3 py-2 text-value font-medium">
-                            {{ $any(rule).description }}
-                          </td>
-                          <td class="px-3 py-2 text-center">
-                            <span
-                              class="text-xs px-2 py-1 rounded-full {{
-                                $any(rule).direction === 'in'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-blue-100 text-blue-800'
-                              }}"
-                            >
-                              {{ $any(rule).direction === 'in' ? '→ In' : '← Out' }}
-                            </span>
-                          </td>
-                          <td class="px-3 py-2 text-foreground font-mono">
-                            {{ $any(rule).protocol?.toUpperCase() }}
-                          </td>
-                          <td class="px-3 py-2 text-foreground font-mono">
-                            {{ $any(rule).port || '-' }}
-                          </td>
-                          <td class="px-3 py-2 text-sub text-xs font-mono">
-                            @if ($any(rule).direction === 'in' && $any(rule).sourceIps) {
-                              <span
-                                >{{ $any(rule).sourceIps.slice(0, 2).join(', ')
-                                }}{{ $any(rule).sourceIps.length > 2 ? '...' : '' }}</span
-                              >
-                            } @else if (
-                              $any(rule).direction === 'out' && $any(rule).destinationIps
-                            ) {
-                              <span
-                                >{{ $any(rule).destinationIps.slice(0, 2).join(', ')
-                                }}{{ $any(rule).destinationIps.length > 2 ? '...' : '' }}</span
-                              >
-                            }
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            } @else {
-              <div class="text-center py-6 card-inner rounded-lg">
-                <p class="text-sm text-sub">No firewall rules configured</p>
-              </div>
-            }
-          </div>
+          @if (hostLayer()?.applicable && clusterId()) {
+            <cluster-host-layer
+              [clusterId]="clusterId()!"
+              [layer]="hostLayer()!"
+              (changed)="clusterFirewall.set($event)"
+            />
+          }
         } @else if (isHostFirewall()) {
-          <div class="card-inner p-4 space-y-2">
-            <div class="flex items-center gap-2">
-              <ng-icon name="lucideShield" class="h-4 w-4 text-blue-600" />
-              <span class="text-label">Host firewall (nftables)</span>
-            </div>
-            <p class="text-sm text-sub">
-              This server's firewall is enforced on the host with nftables over SSH — there is no
-              cloud-edge firewall to manage here. Enabling generates a default ruleset and applies
-              it on the node; you can then edit the rules.
+          <p class="m-0 text-fl-body-sm text-fl-ink-secondary">
+            This server's firewall is enforced on the host with nftables over SSH. There is no
+            cloud-edge firewall to manage here. Enabling generates a default ruleset and applies it
+            on the node, then you can edit the rules.
+          </p>
+          @if (firewallCap()?.supportsSshAllowlist === false) {
+            <p class="m-0 text-fl-body-sm text-fl-ink-secondary">
+              SSH on port 22 stays open and is protected by short-lived CA certificates.
+              IP-allowlisting port 22 is disabled so you cannot lock yourself out, as there is no
+              out-of-band recovery channel. Allowlisting still applies to other ports.
             </p>
-            @if (firewallCap()?.supportsSshAllowlist === false) {
-              <p class="text-sm text-sub">
-                SSH (port 22) stays open and is protected by short-lived CA certificates.
-                IP-allowlisting port 22 is disabled to avoid locking yourself out (there is no
-                out-of-band recovery channel). Allowlisting still applies to other ports.
-              </p>
-            }
-            <p class="text-sm text-sub">
-              Ports 80 and 443 must stay open (HTTPS ingress + ACME cert renewal) and can't be
-              removed — only IP-allowlisted. The machines' outbound traffic is not restricted.
-            </p>
-            @if (enableError()) {
-              <p class="text-sm text-red-600">{{ enableError() }}</p>
-            }
-          </div>
+          }
+          <p class="m-0 text-fl-body-sm text-fl-ink-secondary">
+            Ports 80 and 443 must stay open for HTTPS ingress and certificate renewal. They can be
+            IP-allowlisted but not removed. Outbound traffic from the machines is not restricted.
+          </p>
+          @if (enableError()) {
+            <fl-alert tone="error" title="Could not enable the firewall">
+              {{ enableError() }}
+            </fl-alert>
+          }
         } @else {
-          <div class="text-center py-8">
-            <ng-icon name="lucideShield" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-            <p class="text-sm text-sub">No firewall configuration found for this cluster.</p>
-          </div>
+          <fl-empty-state
+            icon="lucideShield"
+            title="No firewall"
+            body="This cluster has no firewall configuration."
+            [compact]="true"
+          />
         }
       </div>
-      <app-cluster-egress-card class="block" [clusterId]="clusterId()" />
-    </div>
+    </fl-panel>
+
+    @if (isHostFirewall()) {
+      <fl-panel title="SSH connection">
+        <ng-container panelActions>
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [attr.aria-expanded]="showSshSettings()"
+            (click)="showSshSettings.set(!showSshSettings())"
+          >
+            {{ showSshSettings() ? 'Hide' : 'Configure' }}
+          </button>
+        </ng-container>
+
+        <div class="flex flex-col gap-4">
+          <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+            Flui applies this host's firewall over SSH. Leave the host empty to use the node's IP
+            address.
+          </p>
+          @if (showSshSettings()) {
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <fl-field label="Host" for="ssh-target-host" hint="Optional">
+                <div class="fl-input fl-input--lg">
+                  <input
+                    id="ssh-target-host"
+                    class="fl-mono"
+                    placeholder="Node IP or hostname"
+                    [(ngModel)]="sshHost"
+                  />
+                </div>
+              </fl-field>
+              <fl-field label="Port" for="ssh-target-port">
+                <div class="fl-input fl-input--lg">
+                  <input
+                    id="ssh-target-port"
+                    class="fl-mono"
+                    type="number"
+                    min="1"
+                    max="65535"
+                    [(ngModel)]="sshPort"
+                  />
+                </div>
+              </fl-field>
+              <fl-field label="User" for="ssh-target-user">
+                <div class="fl-input fl-input--lg">
+                  <input
+                    id="ssh-target-user"
+                    class="fl-mono"
+                    placeholder="root"
+                    [(ngModel)]="sshUser"
+                  />
+                </div>
+              </fl-field>
+            </div>
+            @if (sshError()) {
+              <fl-alert tone="error" title="Could not save the SSH connection">
+                {{ sshError() }}
+              </fl-alert>
+            }
+            <div class="fl-row">
+              <button
+                [flButton]="clusterFirewall() ? 'primary' : 'secondary'"
+                type="button"
+                [disabled]="savingSsh()"
+                (click)="saveSshTarget()"
+              >
+                @if (savingSsh()) {
+                  <fl-spinner label="Saving" />
+                  Saving…
+                } @else {
+                  Save and apply
+                }
+              </button>
+              @if (sshSaved()) {
+                <fl-status tone="success" label="Saved" />
+              }
+            </div>
+          }
+        </div>
+      </fl-panel>
+    }
+
+    @if (!isLoading() && clusterFirewall(); as fw) {
+      <app-cluster-firewall-rules [rules]="fw.lastAppliedRules ?? []" />
+    }
+
+    <app-cluster-egress-card class="block" [clusterId]="clusterId()" />
   `,
 })
 export class ClusterFirewallTabComponent implements OnInit {
@@ -368,12 +262,14 @@ export class ClusterFirewallTabComponent implements OnInit {
   reconciling = signal<boolean>(false);
 
   showSshSettings = signal<boolean>(false);
-  sshHost = '';
-  sshPort = '22';
-  sshUser = 'root';
+  sshHost = signal('');
+  sshPort = signal('22');
+  sshUser = signal('root');
   savingSsh = signal<boolean>(false);
   sshSaved = signal<boolean>(false);
   sshError = signal<string | null>(null);
+
+  protected readonly canReconcile = canReconcile;
 
   readonly firewallCap = computed(() => {
     const provider = this.clusterService.cluster()?.provider;
@@ -384,6 +280,13 @@ export class ClusterFirewallTabComponent implements OnInit {
   readonly hostLayer = computed(() => hostLayerOf(this.clusterFirewall()));
   readonly clusterId = computed(() => this.clusterService.cluster()?.id ?? null);
   readonly isHostFirewall = computed(() => this.firewallCap()?.backend === 'host-nftables');
+  readonly reconciliation = computed(() =>
+    reconciliationState(this.clusterFirewall()?.reconciliationStatus),
+  );
+  readonly drift = computed(() => {
+    const fw = this.clusterFirewall();
+    return driftState(!!fw?.hasDrift, fw?.reconciliationStatus);
+  });
 
   ngOnInit(): void {
     void (async () => {
@@ -436,11 +339,11 @@ export class ClusterFirewallTabComponent implements OnInit {
     this.sshSaved.set(false);
     this.sshError.set(null);
     try {
-      const port = Number(this.sshPort) || 22;
+      const port = Number(this.sshPort()) || 22;
       await this.clusterService.updateSshTarget(cluster.id, {
-        host: this.sshHost.trim() || undefined,
+        host: this.sshHost().trim() || undefined,
         port,
-        user: this.sshUser.trim() || 'root',
+        user: this.sshUser().trim() || 'root',
       });
       this.sshSaved.set(true);
       if (this.clusterFirewall()?.id) {
@@ -481,22 +384,6 @@ export class ClusterFirewallTabComponent implements OnInit {
   }
 
   getTimeSinceReconciliation(timestamp?: string): string {
-    if (!timestamp) return 'Never';
-    const now = new Date();
-    const reconciled = new Date(timestamp);
-    const diffInMs = now.getTime() - reconciled.getTime();
-    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes === 1) return '1 minute ago';
-    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
-
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours === 1) return '1 hour ago';
-    if (diffInHours < 24) return `${diffInHours} hours ago`;
-
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays === 1) return '1 day ago';
-    return `${diffInDays} days ago`;
+    return timeSince(timestamp);
   }
 }

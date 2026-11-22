@@ -1,14 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideCrown, lucidePlug, lucideShieldAlert, lucideShieldCheck } from '@ng-icons/lucide';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCrown, lucidePlug } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import {
   ClusterHaMissingRole,
@@ -16,7 +8,16 @@ import {
   ClusterHaView,
   ClusterHaZone,
 } from '../../service/cluster-ha.service';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlAlert, AlertTone } from '../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlErrorState } from '../../../ui/patterns/states';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
 
 const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
   server: 'a server',
@@ -24,183 +25,199 @@ const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
 };
 
 interface ZoneCard extends ClusterHaZone {
-  missing: Array<{ role: ClusterHaMissingRole['role']; label: string }>;
+  missing: Array<{ role: ClusterHaMissingRole['role']; label: string; why: string }>;
 }
 
 @Component({
   selector: 'app-cluster-ha-tab',
-  standalone: true,
-  imports: [NgIconComponent, ConfirmationDialogComponent],
-  providers: [
-    provideIcons({
-      lucideCrown,
-      lucidePlug,
-      lucideShieldAlert,
-      lucideShieldCheck,
-    }),
+  imports: [
+    FlPanel,
+    FlTable,
+    FlAlert,
+    FlKeyValue,
+    FlKvItem,
+    FlErrorState,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    FlTag,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideIcons({ lucideCrown, lucidePlug })],
+  host: { class: 'fl-stack' },
   template: `
     @if (view(); as v) {
-      <div class="space-y-4" data-testid="cluster-ha-tab">
-        <div class="card-surface p-4">
-          <div class="flex items-center gap-2">
-            <ng-icon
-              [name]="v.level === 'three-locations' ? 'lucideShieldCheck' : 'lucideShieldAlert'"
-              class="h-4 w-4"
-              [class]="v.level === 'three-locations' ? 'text-emerald-600' : 'text-muted-foreground'"
-            />
-            <span class="text-sm font-medium">{{ headline() }}</span>
+      <div class="fl-stack" data-testid="cluster-ha-tab">
+        <fl-panel title="Availability">
+          <div class="flex flex-col gap-4">
+            <fl-status [tone]="modeTone()" [label]="headline()" />
+            <fl-key-value>
+              <fl-kv-item key="Region">
+                {{ v.region || '—' }}
+                @if (v.region && v.topology && !v.topology.validated) {
+                  <span class="block text-fl-caption text-fl-ink-muted"
+                    >Forced: Flui has not validated this region</span
+                  >
+                }
+              </fl-kv-item>
+              <fl-kv-item key="Servers"
+                ><span class="fl-num"
+                  >{{ v.servers.ready }} of {{ v.servers.count }} ready</span
+                ></fl-kv-item
+              >
+              <fl-kv-item key="Locations">{{
+                v.servers.zones.length ? v.servers.zones.join(', ') : '—'
+              }}</fl-kv-item>
+              @if (leader()) {
+                <fl-kv-item key="Leads the cluster" [mono]="true">{{ leader() }}</fl-kv-item>
+              }
+              @if (reachedThrough()) {
+                <fl-kv-item key="Flui connects through" [mono]="true">{{
+                  reachedThrough()
+                }}</fl-kv-item>
+              }
+            </fl-key-value>
+            @for (w of v.warnings; track w) {
+              <fl-alert tone="warning" title="Availability at risk">{{ w }}</fl-alert>
+            }
+            <div>
+              <button
+                flButton="ghost"
+                size="sm"
+                type="button"
+                [attr.aria-expanded]="open()"
+                (click)="open.set(!open())"
+              >
+                {{ open() ? 'Hide' : 'What it survives' }}
+              </button>
+            </div>
+            @if (open()) {
+              <ul class="m-0 flex list-none flex-col gap-2 p-0" data-testid="ha-survives">
+                @for (s of v.survives; track s) {
+                  <li><fl-status tone="success" [label]="'Survives ' + s" /></li>
+                }
+                @for (s of v.doesNotSurvive; track s) {
+                  <li><fl-status tone="neutral" [label]="'Does not survive ' + s" /></li>
+                }
+                @if (others().length) {
+                  <li class="text-fl-body-sm text-fl-ink-muted">
+                    If {{ reachedThrough() }} is lost, Flui moves to {{ others().join(', ') }}.
+                  </li>
+                }
+              </ul>
+            }
           </div>
-          @if (v.region) {
-            <p class="m-0 mt-1 text-xs text-muted-foreground">
-              {{ v.region
-              }}{{
-                v.topology && !v.topology.validated
-                  ? ', forced: Flui has not validated this region'
-                  : ''
-              }}
-            </p>
-          }
-          @for (w of v.warnings; track w) {
-            <p class="m-0 mt-1 text-xs text-amber-700">
-              {{ w }}
-            </p>
-          }
-          <button
-            type="button"
-            class="mt-3 text-xs text-primary hover:underline"
-            (click)="open.set(!open())"
-          >
-            {{ open() ? 'Hide' : 'What it survives' }}
-          </button>
-          @if (open()) {
-            <ul class="m-0 mt-2 list-none space-y-1 p-0 text-xs" data-testid="ha-survives">
-              @for (s of v.survives; track s) {
-                <li class="text-emerald-700">Survives {{ s }}</li>
-              }
-              @for (s of v.doesNotSurvive; track s) {
-                <li class="text-muted-foreground">Does not survive {{ s }}</li>
-              }
-              @if (others().length) {
-                <li class="text-muted-foreground">
-                  If {{ reachedThrough() }} is lost, Flui moves to {{ others().join(', ') }}.
-                </li>
-              }
-            </ul>
-          }
-        </div>
+        </fl-panel>
 
         @if (zones().length) {
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div class="fl-grid-3">
             @for (z of zones(); track z.zone) {
-              <div class="card-surface p-4" [attr.data-testid]="'ha-zone-' + z.zone">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium">{{ z.zone }}</span>
-                  <span
-                    class="rounded px-1.5 py-0.5 text-[11px] font-medium"
-                    [class]="
-                      z.role === 'data'
-                        ? 'bg-sky-100 text-sky-800'
-                        : 'bg-muted text-muted-foreground'
-                    "
-                  >
-                    {{ z.role === 'data' ? 'Data' : 'Vote only' }}
-                  </span>
-                </div>
-                <ul class="m-0 mt-3 list-none space-y-1.5 p-0 text-xs">
-                  @for (s of z.servers; track s) {
-                    <li class="flex items-center gap-1.5">
-                      <span>{{ s }}</span>
-                      @if (s === leader()) {
-                        <span
-                          class="inline-flex items-center gap-0.5 text-amber-700"
-                          title="Leads the cluster"
-                        >
-                          <ng-icon name="lucideCrown" class="h-3 w-3" /> leads
-                        </span>
-                      }
-                      @if (s === reachedThrough()) {
-                        <span
-                          class="inline-flex items-center gap-0.5 text-primary"
-                          title="Flui reaches the cluster through this server"
-                        >
-                          <ng-icon name="lucidePlug" class="h-3 w-3" /> Flui
-                        </span>
-                      }
-                    </li>
-                  }
+              <fl-panel [title]="z.zone" [attr.data-testid]="'ha-zone-' + z.zone">
+                <fl-tag panelActions>{{ z.role === 'data' ? 'Data' : 'Vote only' }}</fl-tag>
+                <div class="flex flex-col gap-3 text-fl-body-sm">
+                  <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
+                    @for (s of z.servers; track s) {
+                      <li class="fl-row">
+                        <span class="fl-mono">{{ s }}</span>
+                        @if (s === leader()) {
+                          <span class="fl-row text-fl-ink-muted" title="Leads the cluster">
+                            <fl-icon name="lucideCrown" [size]="13" /> leads
+                          </span>
+                        }
+                        @if (s === reachedThrough()) {
+                          <span
+                            class="fl-row text-fl-ink-muted"
+                            title="Flui reaches the cluster through this server"
+                          >
+                            <fl-icon name="lucidePlug" [size]="13" /> Flui
+                          </span>
+                        }
+                      </li>
+                    }
+                  </ul>
                   @if (z.role === 'data') {
-                    <li class="text-muted-foreground">
+                    <p class="m-0 text-fl-ink-muted">
                       Copies of data on
                       {{ z.dataHosts.length ? z.dataHosts.join(', ') : 'no node yet' }}
-                    </li>
+                    </p>
                   }
                   @for (m of z.missing; track m.role) {
-                    <li class="flex items-center justify-between gap-2 text-amber-700">
-                      <span>Needs {{ m.label }}</span>
+                    <fl-alert tone="warning" [title]="'Needs ' + m.label">
+                      {{ m.why }}
                       <button
+                        alertActions
+                        flButton
+                        size="sm"
                         type="button"
-                        class="rounded-md border px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-muted"
+                        [disabled]="adding()"
                         [attr.data-testid]="'ha-add-' + m.role + '-' + z.zone"
                         (click)="ask(m.role, z.zone)"
                       >
                         Add
                       </button>
-                    </li>
+                    </fl-alert>
                   }
-                </ul>
-              </div>
+                </div>
+              </fl-panel>
             }
           </div>
         }
 
         @if (trips().length) {
-          <div class="card-surface p-4" data-testid="ha-round-trips">
-            <div class="flex items-center justify-between">
-              <span class="text-label">Between locations</span>
-              <span class="text-xs text-muted-foreground">{{ measured() }}</span>
+          <fl-panel
+            title="Between locations"
+            [count]="trips().length"
+            [flush]="true"
+            data-testid="ha-round-trips"
+          >
+            <span panelActions class="text-fl-caption text-fl-ink-muted">{{ measured() }}</span>
+            <div class="fl-table-wrap">
+              <table flTable density="dense">
+                <thead>
+                  <tr>
+                    <th scope="col">Locations</th>
+                    <th scope="col" class="is-num">Round trip</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (t of trips(); track t.from + t.to) {
+                    <tr>
+                      <td class="fl-mono">{{ t.from }} ↔ {{ t.to }}</td>
+                      <td class="is-num">
+                        {{ t.ms === null ? 'no answer' : t.ms.toFixed(1) + ' ms' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             </div>
-            <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-              @for (t of trips(); track t.from + t.to) {
-                <div class="text-sm">
-                  <span class="text-muted-foreground">{{ t.from }} ↔ {{ t.to }}</span>
-                  <span class="ml-2 font-medium tabular-nums">
-                    {{ t.ms === null ? 'no answer' : t.ms.toFixed(1) + ' ms' }}
-                  </span>
-                </div>
-              }
-            </div>
-            <p class="m-0 mt-2 text-xs text-muted-foreground">
+            <p class="m-0 border-t border-fl-border px-4 py-3 text-fl-caption text-fl-ink-muted">
               A write that waits for a copy takes at least this long.
             </p>
-          </div>
+          </fl-panel>
         }
 
         @if (notice()) {
-          <p class="m-0 text-xs text-muted-foreground" data-testid="ha-add-notice">
+          <fl-alert [tone]="noticeTone()" [title]="noticeTitle()" data-testid="ha-add-notice">
             {{ notice() }}
-          </p>
+          </fl-alert>
         }
       </div>
-      <app-confirmation-dialog
-        [title]="'Add ' + (pending()?.label ?? '') + ' in ' + (pending()?.zone ?? '')"
-        message="Flui buys a machine in this location and joins it to the cluster with its role. It is billed from then on, and scaling never removes it."
-        confirmText="Add it"
-        cancelText="Not now"
-        variant="info"
-        (confirmed)="add()"
-      />
     } @else if (failed()) {
-      <div class="card-surface p-4 text-sm text-muted-foreground">
-        Flui could not read this cluster's nodes right now.
-      </div>
+      <fl-panel title="Availability">
+        <fl-error-state
+          title="Could not load availability"
+          reason="Flui could not read this cluster's nodes right now"
+          [compact]="true"
+          (retry)="retry()"
+        />
+      </fl-panel>
     }
   `,
 })
 export class ClusterHaTabComponent {
   private readonly clusters = inject(ClusterService);
   private readonly ha = inject(ClusterHaService);
+  private readonly confirm = inject(ConfirmService);
 
   readonly clusterId = computed(() => this.clusters.cluster()?.id ?? null);
   readonly view = signal<ClusterHaView | null>(null);
@@ -215,13 +232,18 @@ export class ClusterHaTabComponent {
     return 'Standard: does not survive the loss of a location';
   });
 
+  readonly modeTone = computed<StatusTone>(() => {
+    const v = this.view();
+    return v && !v.unsupported && v.level === 'three-locations' ? 'success' : 'neutral';
+  });
+
   readonly zones = computed<ZoneCard[]>(() => {
     const v = this.view();
     return (v?.topology?.zones ?? []).map((z) => ({
       ...z,
       missing: v!.missing
         .filter((m) => m.zone === z.zone)
-        .map((m) => ({ role: m.role, label: ROLE[m.role] })),
+        .map((m) => ({ role: m.role, label: ROLE[m.role], why: m.why })),
     }));
   });
 
@@ -239,36 +261,53 @@ export class ClusterHaTabComponent {
     return minutes < 1 ? 'measured just now' : `measured ${minutes} min ago`;
   });
 
-  readonly dialog = viewChild(ConfirmationDialogComponent);
   readonly pending = signal<{
     role: ClusterHaMissingRole['role'];
     zone: string;
     label: string;
   } | null>(null);
   readonly notice = signal<string | null>(null);
+  readonly noticeTone = signal<AlertTone>('info');
+  readonly noticeTitle = computed(() =>
+    this.noticeTone() === 'error' ? 'Could not add the node' : 'Node on its way',
+  );
+  readonly adding = signal(false);
 
-  ask(role: ClusterHaMissingRole['role'], zone: string): void {
-    this.pending.set({ role, zone, label: ROLE[role] });
-    this.dialog()?.open();
+  async ask(role: ClusterHaMissingRole['role'], zone: string): Promise<void> {
+    const label = ROLE[role];
+    this.pending.set({ role, zone, label });
+    const ok = await this.confirm.confirm({
+      title: `Add ${label} in ${zone}`,
+      body: 'Flui buys a machine in this location and joins it to the cluster with its role. It is billed from then on, and scaling never removes it.',
+      confirmLabel: 'Add it',
+    });
+    if (ok) this.add();
   }
 
   add(): void {
     const id = this.clusterId();
     const p = this.pending();
     if (!id || !p) return;
-    this.dialog()?.setProcessing(true);
+    this.adding.set(true);
     this.ha.addNode(id, p.role, p.zone).subscribe({
       next: () => {
-        this.dialog()?.close();
+        this.adding.set(false);
+        this.noticeTone.set('info');
         this.notice.set(
           `Adding ${p.label} in ${p.zone}. It joins in a few minutes; this page shows it once it has.`,
         );
       },
       error: (e: { error?: { message?: string } }) => {
-        this.dialog()?.close();
+        this.adding.set(false);
+        this.noticeTone.set('error');
         this.notice.set(e?.error?.message ?? 'The request was refused.');
       },
     });
+  }
+
+  retry(): void {
+    const id = this.clusterId();
+    if (id) this.load(id);
   }
 
   constructor() {

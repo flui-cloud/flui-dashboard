@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideRefreshCw, lucideActivity } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterMonitoringService } from '../../service/cluster-monitoring.service';
@@ -15,12 +15,32 @@ import { ClusterMetricsSummaryComponent } from './cluster-metrics-summary.compon
 import { ClusterMetricsGridComponent } from './cluster-metrics-grid.component';
 import { ClusterNodesTableComponent } from './cluster-nodes-table.component';
 import { ClusterAppsTableComponent } from './cluster-apps-table.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlSegmented, SegmentOption } from '../../../ui/patterns/filter-bar';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+
+const RANGES: readonly SegmentOption<MetricsRange>[] = [
+  { value: '1h', label: '1h' },
+  { value: '3h', label: '3h' },
+  { value: '6h', label: '6h' },
+  { value: '1d', label: '24h' },
+];
 
 @Component({
   selector: 'cluster-monitoring-tab',
-  standalone: true,
   imports: [
-    NgIconComponent,
+    FlAlert,
+    FlButton,
+    FlEmptyState,
+    FlIcon,
+    FlLoadingState,
+    FlPanel,
+    FlSegmented,
+    FlStatus,
     AutoscaleWarningBannerComponent,
     ClusterMetricsSummaryComponent,
     ClusterMetricsGridComponent,
@@ -28,15 +48,8 @@ import { ClusterAppsTableComponent } from './cluster-apps-table.component';
     ClusterAppsTableComponent,
   ],
   providers: [provideIcons({ lucideRefreshCw, lucideActivity })],
+  host: { class: 'fl-stack' },
   templateUrl: './cluster-monitoring-tab.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `,
-  ],
 })
 export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
   readonly clusterService = inject(ClusterService);
@@ -53,14 +66,18 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
   readonly canRetry = this.monitoring.canRetry;
   readonly autoscaleStatus = this.autoscaleService.status;
 
-  readonly ranges: { value: MetricsRange; label: string }[] = [
-    { value: '1h', label: '1h' },
-    { value: '3h', label: '3h' },
-    { value: '6h', label: '6h' },
-    { value: '1d', label: '24h' },
-  ];
+  readonly ranges = RANGES;
 
-  /** Keeps the stored window reaching the present; the live figures poll separately. */
+  protected readonly liveTone = computed<StatusTone>(() => {
+    if (this.pollingPaused()) return 'neutral';
+    return this.isLoading() ? 'progress' : 'success';
+  });
+
+  protected readonly liveLabel = computed(() => {
+    if (this.pollingPaused()) return 'Auto-refresh paused';
+    return this.isLoading() ? 'Refreshing' : 'Live';
+  });
+
   private historyTimer?: number;
 
   ngOnInit(): void {
@@ -74,6 +91,11 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
     this.clearHistoryRefresh();
   }
 
+  protected onRangeChange(value: string): void {
+    const range = RANGES.find((r) => r.value === value);
+    if (range) this.setRange(range.value);
+  }
+
   setRange(range: MetricsRange): void {
     this.history.setRange(range);
     void this.loadHistory();
@@ -84,13 +106,11 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
     await Promise.all([this.monitoring.refreshMetrics(), this.loadWindowed()]);
   }
 
-  /** Adding a node is answered in one place now; this only points at it. */
   goToScaling(): void {
     const id = this.clusterService.cluster()?.id;
     if (id) void this.router.navigate(['/cluster', id, 'scaling']);
   }
 
-  /** Everything that depends on the selected window, not on the 5s poll. */
   private async loadWindowed(): Promise<void> {
     const clusterId = this.clusterService.cluster()?.id;
     if (!clusterId) return;

@@ -57,6 +57,6 @@ describe('deleting the standard issuers of a cluster', () => {
 
   it('still shows the issuers themselves, which are only a read', async () => {
     await mount(false);
-    expect(fixture.nativeElement.textContent).toContain('Standard Certificate Issuers');
+    expect(fixture.nativeElement.textContent).toContain('Standard certificate issuers');
   });
 });

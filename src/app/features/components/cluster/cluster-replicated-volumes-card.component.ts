@@ -1,93 +1,81 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideCopy } from '@ng-icons/lucide';
 import {
   ReplicatedVolumesService,
   ReplicatedVolumesView,
 } from '../../service/replicated-volumes.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 const and = (names: string[]) =>
   names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
 
 @Component({
   selector: 'app-cluster-replicated-volumes-card',
-  standalone: true,
-  imports: [NgIconComponent],
-  providers: [provideIcons({ lucideCopy })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, FlAlert, FlButton, FlSpinner, FlStatus],
+  host: { class: 'block' },
   template: `
     @if (view(); as v) {
-      <div class="card-inner p-4" data-testid="replicated-volumes-card">
-        <div class="flex items-center justify-between gap-4">
-          <span class="flex items-center gap-2">
-            <ng-icon name="lucideCopy" class="h-4 w-4 text-sky-600" />
-            <span class="text-label">Replicated volumes</span>
-          </span>
-          <span
-            class="text-xs font-medium"
-            [class]="v.enabled ? 'text-emerald-600' : 'text-muted-foreground'"
-          >
-            {{ v.operation ? 'Being enabled' : v.enabled ? 'On' : 'Off' }}
-          </span>
-        </div>
-        <p class="m-0 mt-2 text-sm">{{ headline() }}</p>
-        @for (w of v.warnings; track w) {
-          <p class="m-0 mt-1 text-xs text-amber-700">
-            {{ w }}
-          </p>
-        }
-        @if (error()) {
-          <p class="m-0 mt-1 text-xs text-destructive">{{ error() }}</p>
-        }
-        <div class="mt-3 flex items-center gap-3">
-          <button
-            type="button"
-            class="text-xs text-primary hover:underline"
-            (click)="open.set(!open())"
-          >
-            {{ open() ? 'Hide details' : 'Details' }}
-          </button>
-          @if (canEnable()) {
+      <fl-panel title="Replicated volumes" data-testid="replicated-volumes-card">
+        <fl-status panelActions [tone]="state().tone" [label]="state().label" />
+        <div class="flex flex-col gap-3">
+          <p class="m-0 text-fl-body-sm">{{ headline() }}</p>
+          @for (w of v.warnings; track w) {
+            <fl-alert tone="warning" title="Check the copies">{{ w }}</fl-alert>
+          }
+          @if (error()) {
+            <fl-alert tone="error" title="Could not enable">{{ error() }}</fl-alert>
+          }
+          <div class="fl-row">
             <button
+              flButton="ghost"
+              size="sm"
               type="button"
-              class="text-xs px-2.5 py-1 rounded-md border border-border hover:bg-muted disabled:opacity-50"
-              data-testid="replicated-volumes-enable"
-              [disabled]="busy()"
-              (click)="enable()"
+              [attr.aria-expanded]="open()"
+              (click)="open.set(!open())"
             >
-              {{ confirming() ? 'Confirm: set aside 20 GiB on each node' : 'Enable' }}
+              {{ open() ? 'Hide details' : 'Details' }}
             </button>
+            @if (canEnable()) {
+              <button
+                [flButton]="confirming() ? 'primary' : ''"
+                size="sm"
+                type="button"
+                data-testid="replicated-volumes-enable"
+                [disabled]="busy()"
+                (click)="enable()"
+              >
+                @if (busy()) {
+                  <fl-spinner label="Enabling" />
+                }
+                {{ confirming() ? 'Confirm: set aside 20 GiB on each node' : 'Enable' }}
+              </button>
+            }
+          </div>
+          @if (open()) {
+            <ul
+              class="m-0 flex list-disc flex-col gap-1 pl-5 text-fl-body-sm text-fl-ink-muted"
+              data-testid="replicated-volumes-details"
+            >
+              <li>
+                An application asks for it with
+                <span class="fl-mono">replicated: true</span> on a volume in flui.yaml, and moves to
+                another copy only if every volume it mounts is replicated.
+              </li>
+              @if (voteLine()) {
+                <li>{{ voteLine() }}</li>
+              }
+              @if (copyLine()) {
+                <li>{{ copyLine() }}</li>
+              }
+              <li>Volumes that already exist do not change.</li>
+            </ul>
           }
         </div>
-        @if (open()) {
-          <ul
-            class="mt-2 space-y-1 text-xs text-muted-foreground"
-            data-testid="replicated-volumes-details"
-          >
-            <li>
-              An application asks for it with
-              <span class="font-mono">replicated: true</span> on a volume in flui.yaml, and moves to
-              another copy only if every volume it mounts is replicated.
-            </li>
-            @if (voteLine()) {
-              <li>{{ voteLine() }}</li>
-            }
-            @if (copyLine()) {
-              <li>{{ copyLine() }}</li>
-            }
-            <li>Volumes that already exist do not change.</li>
-          </ul>
-        }
-      </div>
+      </fl-panel>
     }
   `,
 })
@@ -100,6 +88,13 @@ export class ClusterReplicatedVolumesCardComponent {
   readonly confirming = signal(false);
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
+
+  readonly state = computed<{ tone: StatusTone; label: string }>(() => {
+    const v = this.view();
+    if (v?.operation) return { tone: 'progress', label: 'Being enabled' };
+    if (v?.enabled) return { tone: 'success', label: 'On' };
+    return { tone: 'neutral', label: 'Off' };
+  });
 
   readonly canEnable = computed(() => {
     const v = this.view();

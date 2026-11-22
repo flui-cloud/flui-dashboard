@@ -1,142 +1,135 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { Component, computed, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideServer } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideServer } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterMonitoringService } from '../../service/cluster-monitoring.service';
-import { ArchitectureBadgeComponent } from '../../../shared/components/architecture-badge.component';
-import {
-  OVERVIEW_NODE_LIMIT,
-  buildOverviewNodeRows,
-  meterBarClass,
-} from './cluster-overview-nodes';
+import { architectureLabel } from '../../../shared/components/architecture-badge.component';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { OVERVIEW_NODE_LIMIT, buildOverviewNodeRows } from './cluster-overview-nodes';
 
 @Component({
   selector: 'app-cluster-overview-nodes-card',
   host: { class: 'block' },
-  standalone: true,
-  imports: [RouterModule, NgIconComponent, NgTemplateOutlet, ArchitectureBadgeComponent],
-  providers: [provideIcons({ lucideArrowRight, lucideServer })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [
+    RouterModule,
+    FlPanel,
+    FlTable,
+    FlUsageBar,
+    FlEmptyState,
+    FlLoadingState,
+    FlStatus,
+    FlTag,
+  ],
+  providers: [provideIcons({ lucideServer })],
   template: `
-    <div class="card-surface p-4" data-testid="cluster-overview-nodes">
-      <div class="flex items-center justify-between gap-3 mb-3">
-        <div class="flex items-center gap-2">
-          <div class="flex items-center gap-1.5 text-label">
-            <ng-icon name="lucideServer" class="h-3.5 w-3.5" />
-            Nodes
-          </div>
-          <span class="text-sm font-bold text-foreground tabular-nums">{{ total() }}</span>
-          @if (cluster()?.autoScalingEnabled) {
-            <span class="hidden sm:inline text-sub"
-              >· Auto-scale {{ cluster()?.minNodes }}–{{ cluster()?.maxNodes }}</span
-            >
-          }
-        </div>
-        <a
-          [routerLink]="['../nodes']"
-          class="flex items-center gap-1 text-xs text-primary hover:underline"
-        >
-          View all nodes <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-        </a>
-      </div>
+    <fl-panel
+      title="Nodes"
+      [count]="total()"
+      [flush]="rows().length > 0"
+      data-testid="cluster-overview-nodes"
+    >
+      <ng-container panelActions>
+        @if (cluster()?.autoScalingEnabled) {
+          <span class="fl-toolbar__info"
+            >Autoscale {{ cluster()?.minNodes }} to {{ cluster()?.maxNodes }}</span
+          >
+        }
+        <a [routerLink]="['../nodes']" class="fl-link text-fl-body-sm">View all nodes</a>
+      </ng-container>
 
       @if (clusterService.nodesIsLoading() && rows().length === 0) {
-        <div class="space-y-1.5">
-          @for (i of [1, 2, 3]; track i) {
-            <div class="skeleton h-9"></div>
-          }
-        </div>
+        <fl-loading-state [rows]="3" />
       } @else if (rows().length === 0) {
-        <p class="text-sub">No nodes loaded</p>
+        <fl-empty-state [compact]="true" icon="lucideServer" title="No nodes loaded" />
       } @else {
-        <div
-          class="hidden sm:grid grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_7.5rem_7.5rem_6.5rem] gap-x-4 px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sub"
-        >
-          <span>Node</span>
-          <span>Type · Location</span>
-          <span>CPU</span>
-          <span>Memory</span>
-          <span class="text-right">Status</span>
-        </div>
-        <div class="space-y-1">
-          @for (row of rows(); track row.id) {
-            @if (row.link) {
-              <a [routerLink]="row.link" class="block card-inner hover:bg-muted transition-colors">
-                <ng-container *ngTemplateOutlet="rowBody; context: { $implicit: row }" />
-              </a>
-            } @else {
-              <div class="card-inner">
-                <ng-container *ngTemplateOutlet="rowBody; context: { $implicit: row }" />
-              </div>
-            }
-          }
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Node</th>
+                <th scope="col">Type · location</th>
+                <th scope="col">CPU</th>
+                <th scope="col">Memory</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.id) {
+                <tr>
+                  <td>
+                    <span class="flex min-w-0 items-center gap-2">
+                      @if (row.link) {
+                        <a
+                          [routerLink]="row.link"
+                          class="fl-link fl-mono truncate"
+                          [title]="row.name"
+                          >{{ row.name }}</a
+                        >
+                      } @else {
+                        <span class="fl-mono truncate" [title]="row.name">{{ row.name }}</span>
+                      }
+                      @if (row.role) {
+                        <fl-tag>{{ row.role }}</fl-tag>
+                      }
+                      @if (arch(row.architecture); as label) {
+                        <fl-tag
+                          data-testid="architecture-badge"
+                          [attr.title]="'CPU architecture: ' + label"
+                          >{{ label }}</fl-tag
+                        >
+                      }
+                    </span>
+                  </td>
+                  <td class="text-fl-ink-muted">{{ meta(row.serverType, row.location) }}</td>
+                  <td>
+                    @if (row.cpu === null) {
+                      <span class="text-fl-ink-muted">—</span>
+                    } @else {
+                      <fl-usage-bar
+                        [percent]="row.cpu"
+                        [label]="row.name + ' CPU'"
+                        [warnAt]="70"
+                        [criticalAt]="90"
+                      />
+                    }
+                  </td>
+                  <td>
+                    @if (row.memory === null) {
+                      <span class="text-fl-ink-muted">—</span>
+                    } @else {
+                      <fl-usage-bar
+                        [percent]="row.memory"
+                        [label]="row.name + ' memory'"
+                        [warnAt]="75"
+                        [criticalAt]="90"
+                      />
+                    }
+                  </td>
+                  <td>
+                    @if (row.statusLabel) {
+                      <fl-status [tone]="row.tone" [label]="sentence(row.statusLabel)" />
+                    } @else {
+                      <span class="text-fl-ink-muted">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
         @if (hiddenCount() > 0) {
-          <a [routerLink]="['../nodes']" class="card-link">
-            +{{ hiddenCount() }} more <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-          </a>
+          <p class="m-0 border-t border-fl-border-subtle px-4 py-3 text-fl-body-sm">
+            <a [routerLink]="['../nodes']" class="fl-link">{{ hiddenCount() }} more nodes</a>
+          </p>
         }
       }
-    </div>
-
-    <ng-template #rowBody let-row>
-      <div
-        class="grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_7.5rem_7.5rem_6.5rem] items-center gap-x-4 gap-y-0.5 px-2 py-1.5 text-xs"
-      >
-        <div class="flex items-center gap-2 min-w-0">
-          <span class="h-1.5 w-1.5 rounded-full flex-shrink-0" [class]="row.dot"></span>
-          <span class="text-value truncate" [title]="row.name">{{ row.name }}</span>
-          @if (row.role) {
-            <span
-              class="flex-shrink-0 rounded border border-border px-1.5 py-px text-[10px] uppercase tracking-wide text-muted-foreground"
-              >{{ row.role }}</span
-            >
-          }
-          <app-architecture-badge class="flex-shrink-0" [architecture]="row.architecture" />
-        </div>
-        <div class="hidden sm:block text-sub truncate">
-          {{ meta(row.serverType, row.location) }}
-        </div>
-        <div class="hidden sm:block">
-          <ng-container
-            *ngTemplateOutlet="meter; context: { $implicit: row.cpu, warn: 70, danger: 90 }"
-          />
-        </div>
-        <div class="hidden sm:block">
-          <ng-container
-            *ngTemplateOutlet="meter; context: { $implicit: row.memory, warn: 75, danger: 90 }"
-          />
-        </div>
-        <div
-          class="text-right truncate capitalize"
-          [class]="row.failed ? 'text-red-600' : 'text-sub'"
-        >
-          {{ row.statusLabel ?? '—' }}
-        </div>
-        <div class="col-span-2 sm:hidden pl-3.5 text-sub truncate">
-          {{ meta(row.serverType, row.location) }}
-        </div>
-      </div>
-    </ng-template>
-
-    <ng-template #meter let-value let-warn="warn" let-danger="danger">
-      @if (value === null) {
-        <span class="text-sub">—</span>
-      } @else {
-        <div class="flex items-center gap-2">
-          <div class="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-            <div
-              class="h-full rounded-full"
-              [class]="barClass(value, warn, danger)"
-              [style.width.%]="value"
-            ></div>
-          </div>
-          <span class="w-8 text-right tabular-nums text-foreground">{{ value.toFixed(0) }}%</span>
-        </div>
-      }
-    </ng-template>
+    </fl-panel>
   `,
 })
 export class ClusterOverviewNodesCardComponent {
@@ -154,11 +147,13 @@ export class ClusterOverviewNodesCardComponent {
     Math.max(0, this.clusterService.nodes().length - OVERVIEW_NODE_LIMIT),
   );
 
+  protected readonly arch = architectureLabel;
+
   meta(serverType: string | null, location: string | null): string {
     return [serverType, location].filter(Boolean).join(' · ') || '—';
   }
 
-  barClass(value: number, warn: number, danger: number): string {
-    return meterBarClass(value, warn, danger);
+  sentence(value: string): string {
+    return value.charAt(0).toUpperCase() + value.slice(1);
   }
 }

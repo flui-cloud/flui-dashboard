@@ -1,16 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideShieldCheck, lucideShieldAlert } from '@ng-icons/lucide';
 import { ClusterHaService, ClusterHaView } from '../../service/cluster-ha.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlStatus } from '../../../ui/primitives/status';
 
 const LEVEL: Record<ClusterHaView['level'], string> = {
   standard: 'Standard',
@@ -24,68 +17,51 @@ const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
 
 @Component({
   selector: 'app-cluster-ha-card',
-  standalone: true,
-  imports: [NgIconComponent, RouterLink],
-  providers: [provideIcons({ lucideShieldCheck, lucideShieldAlert })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, FlPanel, FlStatus, FlAlert],
+  host: { class: 'block' },
   template: `
     @if (view(); as v) {
-      <div class="card-surface p-4 flex flex-col h-full" data-testid="cluster-ha-card">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-1.5 text-label">
-            <ng-icon
-              [name]="v.level === 'standard' ? 'lucideShieldAlert' : 'lucideShieldCheck'"
-              class="h-3.5 w-3.5"
-            />
-            High availability
+      <fl-panel title="High availability" class="h-full" data-testid="cluster-ha-card">
+        <fl-status
+          panelActions
+          [tone]="v.level === 'standard' ? 'neutral' : 'success'"
+          [label]="levelLabel()"
+        />
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-col gap-1">
+            <p class="m-0 text-fl-body">{{ headline() }}</p>
+            @if (v.topology) {
+              <p class="m-0 fl-mono text-fl-ink-muted" data-testid="cluster-ha-zones">
+                {{ zonesLine() }}
+              </p>
+            }
           </div>
-          <span
-            class="text-xs font-medium"
-            [class]="v.level === 'standard' ? 'text-muted-foreground' : 'text-emerald-600'"
-          >
-            {{ levelLabel() }}
-          </span>
+          @for (w of v.warnings; track w) {
+            <fl-alert tone="warning" [title]="w" />
+          }
+          <div class="flex flex-wrap items-center gap-4 text-fl-body-sm">
+            <button type="button" class="fl-link" (click)="open.set(!open())">
+              {{ open() ? 'Hide details' : 'What it survives' }}
+            </button>
+            <a routerLink="../availability" class="fl-link" data-testid="cluster-ha-open-tab"
+              >Locations and timings</a
+            >
+          </div>
+          @if (open()) {
+            <ul class="m-0 flex list-none flex-col gap-1.5 p-0" data-testid="cluster-ha-details">
+              @for (s of v.survives; track s) {
+                <li><fl-status tone="success" [label]="'Survives ' + s" /></li>
+              }
+              @for (s of v.doesNotSurvive; track s) {
+                <li><fl-status tone="neutral" [label]="'Does not survive ' + s" /></li>
+              }
+              @for (m of v.missing; track m.role + m.zone) {
+                <li class="text-fl-body-sm text-fl-ink-muted">{{ m.why }}</li>
+              }
+            </ul>
+          }
         </div>
-        <p class="m-0 text-sm">{{ headline() }}</p>
-        @if (v.topology) {
-          <p class="m-0 mt-1 text-xs text-muted-foreground" data-testid="cluster-ha-zones">
-            {{ zonesLine() }}
-          </p>
-        }
-        @for (w of v.warnings; track w) {
-          <p class="m-0 mt-1 text-xs text-amber-700">
-            {{ w }}
-          </p>
-        }
-        <div class="mt-3 flex items-center gap-4">
-          <button
-            type="button"
-            class="text-xs text-primary hover:underline"
-            (click)="open.set(!open())"
-          >
-            {{ open() ? 'Hide details' : 'What it survives' }}
-          </button>
-          <a
-            routerLink="../availability"
-            class="text-xs text-primary hover:underline"
-            data-testid="cluster-ha-open-tab"
-            >Locations and timings</a
-          >
-        </div>
-        @if (open()) {
-          <ul class="mt-2 space-y-1 text-xs" data-testid="cluster-ha-details">
-            @for (s of v.survives; track s) {
-              <li class="text-emerald-700">Survives {{ s }}</li>
-            }
-            @for (s of v.doesNotSurvive; track s) {
-              <li class="text-muted-foreground">Does not survive {{ s }}</li>
-            }
-            @for (m of v.missing; track m.role + m.zone) {
-              <li class="text-muted-foreground">{{ m.why }}</li>
-            }
-          </ul>
-        }
-      </div>
+      </fl-panel>
     }
   `,
 })

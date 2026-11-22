@@ -119,3 +119,11 @@ export function groupNodes(nodes: NodeMtd[]): NodeGroups {
     removedNet: removed.reduce((sum, n) => sum + Number.parseFloat(n.costNet || '0'), 0),
   };
 }
+
+export function billingDate(isoString: string): string {
+  return new Date(isoString).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}

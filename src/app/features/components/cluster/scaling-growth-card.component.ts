@@ -1,91 +1,117 @@
-import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { ClusterScalingRow } from '../../model/scaling-section.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
 
-/**
- * The sentence that says what will happen to this cluster without anyone
- * watching, and the controls that change it. One paragraph, then buttons —
- * the long version lives behind them, not on the page.
- */
 @Component({
   selector: 'app-scaling-growth-card',
-  standalone: true,
-  imports: [],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlStatus, FlUsageBar, FlButton],
+  host: { class: 'block' },
   template: `
-    <div class="card-surface p-5 flex flex-col gap-3" data-testid="growth-card">
-      <div class="flex flex-wrap items-center gap-2">
-        <h3 class="m-0 text-sm font-semibold text-foreground">How this cluster grows</h3>
+    <fl-panel title="How this cluster grows" data-testid="growth-card">
+      <div panelActions class="fl-row">
         @if (row()?.mode; as mode) {
-          <span
-            class="rounded-md px-2 py-0.5 text-xs font-semibold"
-            [class]="mode.attention ? 'bg-amber-100 text-amber-900' : 'bg-primary/10 text-primary'"
+          <fl-status
+            [tone]="mode.attention ? 'warning' : 'neutral'"
+            [label]="mode.label"
             data-testid="growth-mode"
-            >{{ mode.label }}</span
-          >
+          />
         }
-      </div>
-
-      <p
-        class="m-0 max-w-[62ch] text-sm leading-relaxed text-foreground"
-        data-testid="growth-sentence"
-      >
-        {{ sentence() }}
-      </p>
-
-      <div class="flex flex-wrap items-center gap-2">
         @if (row()?.groupCount === 0) {
           <button
+            flButton
+            size="sm"
+            type="button"
+            (click)="editLimits.emit()"
+            data-testid="edit-limits"
+          >
+            Edit limits
+          </button>
+          <button
+            flButton="primary"
+            size="sm"
             type="button"
             (click)="setUp.emit()"
-            class="min-h-11 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground"
             data-testid="set-up-scaling"
           >
             Set up scaling
           </button>
         } @else {
           <button
+            flButton
+            size="sm"
             type="button"
             (click)="setUp.emit()"
-            class="min-h-11 rounded-lg border border-border bg-card px-4 text-[13px] font-semibold text-foreground transition-colors hover:bg-muted"
             data-testid="edit-scaling"
           >
             Edit
           </button>
         }
-        @if (row()?.groupCount === 0) {
-          <button
-            type="button"
-            (click)="editLimits.emit()"
-            class="min-h-11 rounded-lg border border-border bg-card px-4 text-[13px] font-semibold text-foreground transition-colors hover:bg-muted"
-            data-testid="edit-limits"
-          >
-            Edit limits
-          </button>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <p class="m-0 max-w-prose text-fl-body" data-testid="growth-sentence">{{ sentence() }}</p>
+
+        @if (nodeUse() || spendUse()) {
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            @if (nodeUse(); as use) {
+              <section class="flex flex-col gap-2" aria-label="Nodes against the ceiling">
+                <h3 class="m-0 text-fl-body-sm font-semibold">Nodes against the ceiling</h3>
+                <fl-usage-bar
+                  [percent]="use.percent"
+                  label="Nodes against the ceiling"
+                  [aside]="use.aside"
+                  [criticalAt]="100"
+                />
+              </section>
+            }
+            @if (spendUse(); as use) {
+              <section class="flex flex-col gap-2" aria-label="Spend against the ceiling">
+                <h3 class="m-0 text-fl-body-sm font-semibold">Spend against the ceiling</h3>
+                <fl-usage-bar
+                  [percent]="use.percent"
+                  label="Spend against the ceiling"
+                  [aside]="use.aside"
+                />
+              </section>
+            }
+          </div>
         }
 
         @if (row()?.groupId; as groupId) {
-          <a
-            [href]="'/scaling/' + groupId + '/market'"
-            class="ml-1 text-[13px] font-semibold text-primary hover:underline"
-          >
-            What it would add →
+          <a [href]="'/scaling/' + groupId + '/market'" class="fl-link self-start text-fl-body-sm">
+            What it would add
           </a>
         }
       </div>
-    </div>
+    </fl-panel>
   `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `,
-  ],
 })
 export class ScalingGrowthCardComponent {
   readonly row = input.required<ClusterScalingRow | null>();
   readonly editLimits = output<void>();
   readonly setUp = output<void>();
+
+  protected readonly nodeUse = computed(() => {
+    const row = this.row();
+    const max = row?.bounds?.max;
+    if (!row || !max) return null;
+    return {
+      percent: (row.nodes / max) * 100,
+      aside: `${row.nodes} of ${max} ${max === 1 ? 'node' : 'nodes'}`,
+    };
+  });
+
+  protected readonly spendUse = computed(() => {
+    const row = this.row();
+    if (row?.monthlyEur == null || !row.monthlyCap) return null;
+    return {
+      percent: (row.monthlyEur / row.monthlyCap) * 100,
+      aside: `€${row.monthlyEur.toFixed(2)} of €${row.monthlyCap.toFixed(0)} a month`,
+    };
+  });
 
   readonly sentence = computed(() => {
     const row = this.row();

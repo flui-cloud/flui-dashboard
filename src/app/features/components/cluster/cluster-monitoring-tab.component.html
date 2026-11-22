@@ -1,114 +1,71 @@
-<div class="space-y-5">
-  <!-- Header: identity, freshness, window -->
-  <div class="flex flex-wrap items-start justify-between gap-4">
-    <div>
-      <h2 class="text-xl font-semibold text-foreground">Monitoring</h2>
-      <div class="flex items-center gap-2 mt-1">
-        <p class="text-sm text-sub">
-          @if (pollingPaused()) {
-            <span class="text-orange-600 font-medium">Auto-refresh paused</span>
-          } @else {
-            Live values every 5 seconds · history over the {{ history.rangeLabel() }}
-          }
-        </p>
-        @if (!pollingPaused() && !isLoading()) {
-          <span class="inline-flex h-2 w-2 rounded-full bg-green-500"></span>
-        }
-      </div>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <div class="inline-flex p-0.5 gap-0.5 bg-muted rounded-lg">
-        @for (range of ranges; track range.value) {
-          <button
-            type="button"
-            (click)="setRange(range.value)"
-            [attr.aria-pressed]="history.range() === range.value"
-            class="px-3 py-1 rounded-md text-xs font-semibold transition-colors"
-            [class]="
-              history.range() === range.value
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            "
-          >
-            {{ range.label }}
-          </button>
-        }
-      </div>
-      <button
-        type="button"
-        (click)="refresh()"
-        [disabled]="isLoading() || (pollingPaused() && !canRetry())"
-        [title]="pollingPaused() ? 'Retry' : 'Refresh'"
-        [attr.aria-label]="pollingPaused() ? 'Retry' : 'Refresh'"
-        class="inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        [class]="
-          pollingPaused() && canRetry()
-            ? 'border-orange-300 text-orange-600 hover:bg-orange-50'
-            : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
-        "
+<div class="flex flex-wrap items-center justify-between gap-3" data-testid="monitoring-toolbar">
+  <div class="fl-row">
+    <fl-status [tone]="liveTone()" [label]="liveLabel()" />
+    @if (!pollingPaused()) {
+      <span class="fl-toolbar__info"
+        >Values every 5 seconds · history over the {{ history.rangeLabel() }}</span
       >
-        <ng-icon name="lucideRefreshCw" [class.animate-spin]="isLoading()" class="h-3.5 w-3.5" />
-      </button>
-    </div>
+    }
   </div>
-
-  <app-autoscale-warning-banner
-    [status]="autoscaleStatus()"
-    (configure)="goToScaling()"
-    (addWorker)="goToScaling()"
-  />
-
-  @if (error()) {
-    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-      <p class="text-red-700">{{ error() }}</p>
-    </div>
-  }
-
-  @if (servers().length > 0) {
-    <app-cluster-metrics-summary />
-  }
-
-  @if (history.hasData()) {
-    <app-cluster-metrics-grid />
-  } @else if (history.isLoading()) {
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-      @for (i of [1, 2, 3, 4]; track i) {
-        <div class="card-surface p-4 space-y-3">
-          <div class="skeleton h-4 w-32"></div>
-          <div class="skeleton h-[190px]"></div>
-        </div>
-      }
-    </div>
-  } @else if (history.error()) {
-    <div class="card-surface p-6">
-      <p class="text-sm text-sub">{{ history.error() }}</p>
-    </div>
-  }
-
-  @if (servers().length > 0) {
-    <app-cluster-nodes-table />
-    <app-cluster-apps-table />
-  }
-
-  @if (servers().length === 0 && !isLoading() && !error()) {
-    <div class="card-surface p-12">
-      <div class="text-center">
-        <ng-icon name="lucideActivity" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-        <p class="text-foreground font-medium">No metrics received from this cluster yet</p>
-        <p class="text-sub text-sm mt-1 max-w-md mx-auto">
-          A new cluster starts sending them within a few minutes; a cluster on another provider than
-          the control sends them through the Flui network. This page keeps checking.
-        </p>
-      </div>
-    </div>
-  }
-
-  @if (isLoading() && servers().length === 0) {
-    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
-      @for (i of [1, 2, 3, 4, 5]; track i) {
-        <div class="skeleton card-surface h-[104px]"></div>
-      }
-    </div>
-  }
+  <div class="fl-row">
+    <fl-segmented
+      label="Time range"
+      [options]="ranges"
+      [value]="history.range()"
+      (valueChange)="onRangeChange($event)"
+    />
+    <button
+      flButton
+      size="sm"
+      type="button"
+      [iconOnly]="true"
+      (click)="refresh()"
+      [disabled]="isLoading() || (pollingPaused() && !canRetry())"
+      [title]="pollingPaused() ? 'Retry' : 'Refresh'"
+      [attr.aria-label]="pollingPaused() ? 'Retry' : 'Refresh'"
+    >
+      <fl-icon name="lucideRefreshCw" [size]="14" [class.animate-spin]="isLoading()" />
+    </button>
+  </div>
 </div>
+
+<app-autoscale-warning-banner
+  [status]="autoscaleStatus()"
+  (configure)="goToScaling()"
+  (addWorker)="goToScaling()"
+/>
+
+@if (error()) {
+  <fl-alert tone="error" title="Metrics could not be read">{{ error() }}</fl-alert>
+}
+
+@if (servers().length > 0) {
+  <app-cluster-metrics-summary />
+}
+
+@if (history.hasData()) {
+  <app-cluster-metrics-grid />
+} @else if (history.isLoading()) {
+  <fl-panel title="History"><fl-loading-state [rows]="4" /></fl-panel>
+} @else if (history.error()) {
+  <fl-alert tone="warning" title="History could not be read">{{ history.error() }}</fl-alert>
+}
+
+@if (servers().length > 0) {
+  <app-cluster-nodes-table />
+  <app-cluster-apps-table />
+}
+
+@if (servers().length === 0 && !isLoading() && !error()) {
+  <fl-panel>
+    <fl-empty-state
+      icon="lucideActivity"
+      title="No metrics received from this cluster yet"
+      body="A new cluster starts sending them within a few minutes; a cluster on another provider than the control sends them through the Flui network. This page keeps checking."
+    />
+  </fl-panel>
+}
+
+@if (isLoading() && servers().length === 0) {
+  <fl-panel title="Metrics"><fl-loading-state [rows]="4" /></fl-panel>
+}

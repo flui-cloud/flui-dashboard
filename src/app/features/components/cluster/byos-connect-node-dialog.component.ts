@@ -1,28 +1,26 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   inject,
   input,
   output,
   signal,
   OnInit,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideX,
-  lucideCopy,
-  lucideCheck,
-  lucideServer,
-  lucideTerminal,
-  lucideLoader,
-  lucideCircleAlert,
-  lucideShieldCheck,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCheck, lucideCopy, lucideX } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { VNetService } from '../../service/vnet.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
 interface IssuedToken {
   command: string;
@@ -34,171 +32,130 @@ interface IssuedToken {
 
 @Component({
   selector: 'app-byos-connect-node-dialog',
-  standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
-  providers: [
-    provideIcons({
-      lucideX,
-      lucideCopy,
-      lucideCheck,
-      lucideServer,
-      lucideTerminal,
-      lucideLoader,
-      lucideCircleAlert,
-      lucideShieldCheck,
-    }),
+  imports: [
+    DatePipe,
+    FormsModule,
+    FlAlert,
+    FlField,
+    FlKeyValue,
+    FlKvItem,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
   ],
+  providers: [provideIcons({ lucideX, lucideCopy, lucideCheck })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="fixed inset-0 z-50 bg-background/80" (click)="closed.emit()">
+    <div
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      (click)="closed.emit()"
+    >
       <div
-        class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
+        class="fl-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="byos-connect-title"
+        (click)="$event.stopPropagation()"
       >
-        <div class="card-surface p-5 space-y-4" (click)="$event.stopPropagation()">
-          <div class="flex items-start justify-between">
-            <div class="flex items-start gap-3">
-              <span
-                class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary"
-              >
-                <ng-icon name="lucideServer" class="h-5 w-5" />
-              </span>
-              <div>
-                <h2 class="text-lg font-semibold text-foreground">Connect a worker node</h2>
-                <p class="text-xs text-muted-foreground mt-0.5">
-                  Self-hosted clusters don't provision servers — point Flui at a Linux box you
-                  already own and it installs over SSH.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              (click)="closed.emit()"
-              class="text-muted-foreground hover:text-foreground p-1 rounded"
-            >
-              <ng-icon name="lucideX" class="h-4 w-4" />
-            </button>
-          </div>
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="byos-connect-title">Connect a worker node</h2>
+          <button type="button" class="fl-dialog__close" aria-label="Close" (click)="closed.emit()">
+            <fl-icon name="lucideX" />
+          </button>
+        </header>
 
-          @if (!result()) {
-            <div class="space-y-3">
-              <div class="space-y-1">
-                <label class="text-sm font-medium text-foreground"
-                  >Master address (node reaches k3s API here)</label
-                >
+        @if (!result()) {
+          <div class="fl-dialog__body">
+            <p class="m-0 text-fl-ink-muted">
+              Self-hosted clusters do not provision servers. Point Flui at a Linux box you already
+              own and it installs over SSH.
+            </p>
+            <fl-field label="Master address (node reaches k3s API here)" for="byos-master-ip">
+              <span class="fl-input fl-input--lg">
                 <input
+                  id="byos-master-ip"
                   type="text"
-                  [(ngModel)]="formMasterIp"
                   placeholder="10.0.0.11"
-                  class="w-full px-3 py-1.5 text-sm rounded-md border border-border bg-background"
+                  [(ngModel)]="formMasterIp"
                 />
+              </span>
+            </fl-field>
+            @if (registeredNetwork()) {
+              <div class="fl-field">
+                <span class="fl-field__label">Private network</span>
+                <span class="fl-row">
+                  <span class="fl-mono">{{ registeredNetwork() }}</span>
+                  <fl-status tone="success" label="Registered" />
+                </span>
+                <span class="fl-field__hint">
+                  The new node joins this cluster's private network. Manage it from the Network tab.
+                </span>
               </div>
-              @if (registeredNetwork()) {
-                <div class="space-y-1">
-                  <label class="text-sm font-medium text-foreground">Private network</label>
-                  <div
-                    class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border bg-muted/40"
-                  >
-                    <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-blue-600" />
-                    <span class="font-mono text-foreground">{{ registeredNetwork() }}</span>
-                    <span class="text-xs text-muted-foreground">registered</span>
-                  </div>
-                  <p class="text-xs text-muted-foreground">
-                    The new node joins this cluster's private network. Manage it from the Network
-                    tab.
-                  </p>
-                </div>
-              } @else {
-                <div class="space-y-1">
-                  <label class="text-sm font-medium text-foreground"
-                    >Private network CIDR (nodes share it)</label
-                  >
+            } @else {
+              <fl-field
+                label="Private network CIDR (nodes share it)"
+                for="byos-node-network"
+                hint="The host firewall allows this network for node-to-node k3s traffic. Use the private subnet your nodes share (not the public internet)."
+              >
+                <span class="fl-input fl-input--lg">
                   <input
+                    id="byos-node-network"
                     type="text"
-                    [(ngModel)]="formNodeNetwork"
                     placeholder="10.0.0.0/24"
-                    class="w-full px-3 py-1.5 text-sm rounded-md border border-border bg-background"
+                    [(ngModel)]="formNodeNetwork"
                   />
-                  <p class="text-xs text-muted-foreground">
-                    The host firewall allows this network for node-to-node k3s traffic. Use the
-                    private subnet your nodes share (not the public internet).
-                  </p>
-                </div>
-              }
-              @if (error()) {
-                <div class="flex items-center gap-2 text-sm status-error">
-                  <ng-icon name="lucideCircleAlert" class="h-4 w-4" /> {{ error() }}
-                </div>
-              }
-            </div>
-            <div class="flex justify-end gap-2">
-              <button
-                type="button"
-                (click)="closed.emit()"
-                class="px-3 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                (click)="generate()"
-                [disabled]="generating() || !formMasterIp"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                @if (generating()) {
-                  <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                }
-                Generate join command
-              </button>
-            </div>
-          } @else {
-            <ol class="text-sm text-foreground/90 space-y-1.5 list-decimal list-inside">
-              <li>On the new host (a clean Linux box, 2GB+ RAM), run as root:</li>
-            </ol>
-            <div class="relative">
-              <pre
-                class="text-xs bg-muted rounded-md p-3 pr-10 overflow-x-auto font-mono whitespace-pre-wrap break-all"
-                >{{ result()!.command }}</pre>
-              <button
-                type="button"
-                (click)="copy()"
-                title="Copy command"
-                class="absolute top-2 right-2 inline-flex items-center justify-center h-7 w-7 rounded border border-border bg-background hover:bg-muted"
-              >
-                <ng-icon
-                  [name]="copied() ? 'lucideCheck' : 'lucideCopy'"
-                  class="h-3.5 w-3.5"
-                  [class.text-green-600]="copied()"
-                />
-              </button>
-            </div>
-            <div
-              class="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1"
+                </span>
+              </fl-field>
+            }
+            @if (error()) {
+              <fl-alert tone="error" title="Could not generate the command">{{ error() }}</fl-alert>
+            }
+          </div>
+          <footer class="fl-dialog__footer">
+            <button flButton="ghost" type="button" (click)="closed.emit()">Cancel</button>
+            <button
+              flButton="primary"
+              type="button"
+              [disabled]="generating() || !formMasterIp"
+              (click)="generate()"
             >
-              <div>
-                Node name: <span class="font-mono text-foreground">{{ result()!.serverName }}</span>
-              </div>
-              <div>
-                Reaches master at
-                <span class="font-mono text-foreground">{{ result()!.masterIp }}:6443</span> ·
-                firewall allows
-                <span class="font-mono text-foreground">{{ result()!.nodeNetwork || 'n/a' }}</span>
-              </div>
-              <div>
-                Single-use · expires {{ result()!.expiresAt | date: 'short' }}. The node appears in
-                this list once it joins.
-              </div>
-            </div>
-            <div class="flex justify-end">
-              <button
-                type="button"
-                (click)="closed.emit()"
-                class="px-3 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted"
-              >
-                Done
+              @if (generating()) {
+                <fl-spinner label="Generating" />
+              }
+              Generate join command
+            </button>
+          </footer>
+        } @else {
+          <div class="fl-dialog__body">
+            <p class="m-0">On the new host (a clean Linux box, 2GB+ RAM), run as root:</p>
+            <pre
+              class="fl-mono m-0 overflow-x-auto whitespace-pre-wrap break-all rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3"
+              >{{ result()!.command }}</pre>
+            <div>
+              <button flButton size="sm" type="button" (click)="copy()">
+                <fl-icon [name]="copied() ? 'lucideCheck' : 'lucideCopy'" [size]="14" />
+                {{ copied() ? 'Copied' : 'Copy command' }}
               </button>
             </div>
-          }
-        </div>
+            <fl-key-value class="fl-kv--compact">
+              <fl-kv-item key="Node name" [mono]="true">{{ result()!.serverName }}</fl-kv-item>
+              <fl-kv-item key="Reaches master at" [mono]="true"
+                >{{ result()!.masterIp }}:6443</fl-kv-item
+              >
+              <fl-kv-item key="Firewall allows" [mono]="true">{{
+                result()!.nodeNetwork || 'n/a'
+              }}</fl-kv-item>
+              <fl-kv-item key="Expires">{{ result()!.expiresAt | date: 'short' }}</fl-kv-item>
+            </fl-key-value>
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+              Single-use. The node appears in this list once it joins.
+            </p>
+          </div>
+          <footer class="fl-dialog__footer">
+            <button flButton type="button" (click)="closed.emit()">Done</button>
+          </footer>
+        }
       </div>
     </div>
   `,
@@ -251,7 +208,8 @@ export class ByosConnectNodeDialogComponent implements OnInit {
         nodeNetwork: this.formNodeNetwork.trim() || undefined,
       });
       this.result.set(res);
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { error?: { message?: string }; message?: string } | null;
       this.error.set(e?.error?.message || e?.message || 'Failed to generate join command');
     } finally {
       this.generating.set(false);

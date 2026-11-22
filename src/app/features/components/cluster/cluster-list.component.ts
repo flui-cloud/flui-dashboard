@@ -1,45 +1,31 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  signal,
-  computed,
-  effect,
-  inject,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
-import { Router } from '@angular/router';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideRefreshCw,
-  lucideSearch,
-  lucideServer,
-  lucideTrash2,
-  lucideEye,
-  lucideX,
-  lucideCircleAlert,
-  lucideLoader,
-  lucidePlus,
-  lucideMapPin,
-  lucideTag,
-  lucideZap,
-  lucideCalendar,
-  lucideCloud,
-  lucideCircleCheck,
-  lucideCircle,
-  lucidePause,
-  lucidePlay,
-  lucideInfo,
-} from '@ng-icons/lucide';
-
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlus, lucideRefreshCw, lucideSearch } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { ProvidersService } from '../../service/providers.service';
-import { ClusterInfo, ClusterStatus, ClusterType, ProviderType } from '../../model/cluster.models';
+import {
+  ClusterInfo,
+  ClusterStatus,
+  isControlClusterType,
+  ProviderType,
+} from '../../model/cluster.models';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { CanDirective } from '../../../core/directives/can.directive';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { CLUSTER_STATUS, statusToneOf } from '../dashboard/home-state';
+import { ClusterDeleteDialog } from './cluster-delete-dialog';
 import {
   ClusterListSurfaceInput,
   ClusterListSurfaceRevision,
@@ -54,404 +40,235 @@ interface FilterState {
   region: string;
 }
 
+const STATUS_FILTERS = [
+  ClusterStatus.ACTIVE,
+  ClusterStatus.CREATING,
+  ClusterStatus.SCALING,
+  ClusterStatus.UPDATING,
+  ClusterStatus.STOPPED,
+  ClusterStatus.ERROR,
+].map((value) => ({ value, label: CLUSTER_STATUS[value]?.label ?? value }));
+
 @Component({
   selector: 'cluster-list',
-  standalone: true,
-  imports: [ReadOnlySectionDirective, CanDirective, FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideRefreshCw,
-      lucideSearch,
-      lucideServer,
-      lucideTrash2,
-      lucideEye,
-      lucideX,
-      lucideCircleAlert,
-      lucideLoader,
-      lucidePlus,
-      lucideMapPin,
-      lucideTag,
-      lucideZap,
-      lucideCalendar,
-      lucideCloud,
-      lucideCircleCheck,
-      lucideCircle,
-      lucidePause,
-      lucidePlay,
-      lucideInfo,
-    }),
+  imports: [
+    ReadOnlySectionDirective,
+    CanDirective,
+    FormsModule,
+    RouterLink,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlTable,
+    FlEmptyState,
+    FlLoadingState,
+    FlActionsMenu,
+    FlStatus,
+    FlTag,
+    FlButton,
+    FlIcon,
+    ClusterDeleteDialog,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucidePlus, lucideRefreshCw, lucideSearch })],
   template: `
-    <div class="space-y-6 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold text-foreground">Clusters</h1>
-          <p class="mt-2 text-sm text-sub">Manage your clusters across multiple providers</p>
-        </div>
-        <div class="flex items-center gap-3">
+    <div class="fl-page">
+      <fl-page-header [title]="'Clusters (' + allClusters().length + ')'">
+        <span headerMeta>Kubernetes clusters across your providers</span>
+        <ng-container headerActions>
           <button
-            (click)="refreshClusters()"
-            [disabled]="isLoading()"
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
             title="Refresh"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="isLoading()"
+            (click)="refreshClusters()"
           >
-            <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
+            <fl-icon name="lucideRefreshCw" />
           </button>
           <button
+            flButton="primary"
+            type="button"
             [appReadOnlySection]="CLUSTER_SECTION_KEYS"
+            data-testid="cluster-create"
             (click)="createNewCluster()"
-            title="Create a new cluster"
-            class="inline-flex items-center gap-2 px-3.5 py-2 bg-blue-600 text-white border border-transparent rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
           >
-            <ng-icon name="lucidePlus" class="h-4 w-4" />
-            <span>Create Cluster</span>
+            <fl-icon name="lucidePlus" />
+            Create cluster
           </button>
-        </div>
-      </div>
-
-      <div class="card-inner border border-border rounded-lg p-4">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div class="relative">
-            <ng-icon
-              name="lucideSearch"
-              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
-            />
-            <input
-              type="text"
-              [ngModel]="filtersState().search"
-              (ngModelChange)="updateFilter('search', $event)"
-              placeholder="Search clusters..."
-              class="w-full h-9 pl-10 pr-3 border border-border rounded-md bg-background text-sm text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
-            />
-          </div>
-
-          <select
-            [ngModel]="filtersState().provider"
-            (ngModelChange)="updateFilter('provider', $event)"
-            class="h-9 px-3 border border-border rounded-md bg-background text-sm text-foreground focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 appearance-none"
-          >
-            <option value="">All Providers</option>
-            @for (p of availableProviders(); track p.id) {
-              <option [value]="p.id">{{ p.displayName }}</option>
-            }
-          </select>
-
-          <select
-            [ngModel]="filtersState().status"
-            (ngModelChange)="updateFilter('status', $event)"
-            class="h-9 px-3 border border-border rounded-md bg-background text-sm text-foreground focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
-          >
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="creating">Creating</option>
-            <option value="scaling">Scaling</option>
-            <option value="updating">Updating</option>
-            <option value="error">Error</option>
-          </select>
-
-          <input
-            type="text"
-            [ngModel]="filtersState().region"
-            (ngModelChange)="updateFilter('region', $event)"
-            placeholder="Filter by region..."
-            class="h-9 px-3 border border-gray-200 rounded-md bg-white text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
-          />
-        </div>
-
-        @if (activeFiltersCount() > 0) {
-          <div class="mt-3 flex items-center justify-between">
-            <span class="text-sm text-sub"> {{ activeFiltersCount() }} filter(s) active </span>
-            <button
-              (click)="clearFilters()"
-              class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Clear all
-            </button>
-          </div>
-        }
-      </div>
-
-      @if (isLoading()) {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          @for (i of [1, 2, 3]; track i) {
-            <div class="card-surface overflow-hidden">
-              <div class="p-6 space-y-4">
-                <div class="flex items-start justify-between">
-                  <div class="skeleton h-6 w-36"></div>
-                  <div class="skeleton h-5 w-16 ml-2"></div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="skeleton h-4 w-4"></div>
-                  <div class="skeleton h-4 w-20"></div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <div class="skeleton h-3 w-24"></div>
-                  <div class="skeleton h-3 w-16"></div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <div class="skeleton h-3 w-16"></div>
-                  <div class="skeleton h-3 w-20"></div>
-                </div>
-              </div>
-              <div class="px-6 pb-6 flex items-center gap-3">
-                <div class="skeleton h-10 flex-1"></div>
-                <div class="skeleton h-10 w-10"></div>
-                <div class="skeleton h-10 w-10"></div>
-              </div>
-            </div>
-          }
-        </div>
-      }
+        </ng-container>
+      </fl-page-header>
 
       @if (errorMessage() && !isLoading()) {
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div class="flex items-center gap-3">
-            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600" />
-            <div class="flex-1">
-              <p class="text-sm font-medium text-red-900">Failed to load clusters</p>
-              <p class="text-sm text-red-700 mt-1">{{ errorMessage() }}</p>
-            </div>
+        <fl-alert tone="error" title="Could not load the clusters">{{ errorMessage() }}</fl-alert>
+      }
+
+      <fl-panel [flush]="true">
+        <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+          <div class="fl-toolbar__group">
+            <label class="fl-input">
+              <fl-icon name="lucideSearch" [size]="14" />
+              <span class="fl-sr">Search</span>
+              <input
+                type="search"
+                placeholder="Search by name"
+                aria-label="Search clusters"
+                [ngModel]="filtersState().search"
+                (ngModelChange)="updateFilter('search', $event)"
+              />
+            </label>
+            <span class="fl-select-wrap">
+              <select
+                class="fl-select fl-select--sm"
+                aria-label="Provider"
+                [ngModel]="filtersState().provider"
+                (ngModelChange)="updateFilter('provider', $event)"
+              >
+                <option value="">Provider: All</option>
+                @for (p of availableProviders(); track p.id) {
+                  <option [value]="p.id">{{ p.displayName }}</option>
+                }
+              </select>
+            </span>
+            <span class="fl-select-wrap">
+              <select
+                class="fl-select fl-select--sm"
+                aria-label="Status"
+                [ngModel]="filtersState().status"
+                (ngModelChange)="updateFilter('status', $event)"
+              >
+                <option value="">Status: All</option>
+                @for (o of statusOptions; track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
+              </select>
+            </span>
+            <label class="fl-input">
+              <span class="fl-sr">Region</span>
+              <input
+                type="search"
+                placeholder="Region"
+                aria-label="Filter by region"
+                [ngModel]="filtersState().region"
+                (ngModelChange)="updateFilter('region', $event)"
+              />
+            </label>
+          </div>
+          <div class="fl-toolbar__group">
+            <span class="fl-toolbar__info"
+              >{{ filteredClusters().length }}
+              {{ filteredClusters().length === 1 ? 'cluster' : 'clusters' }}</span
+            >
           </div>
         </div>
-      }
 
-      @if (!isLoading() && !errorMessage()) {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          @for (cluster of filteredClusters(); track cluster.id) {
-            <div class="relative card-surface overflow-hidden">
-              @if (cluster.status === ClusterStatus.DELETING) {
-                <div
-                  class="absolute inset-0 bg-background/70 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-lg"
-                >
-                  <ng-icon name="lucideLoader" class="h-8 w-8 text-muted-foreground animate-spin" />
-                  <span class="text-sm font-medium text-muted-foreground">
-                    Deleting
-                    @if (deletionProgress()[cluster.id!] !== undefined) {
-                      <span>{{ deletionProgress()[cluster.id!] }}%</span>
-                    }
-                    …
-                  </span>
-                </div>
-              }
-
-              <div class="p-6">
-                <div class="flex items-start justify-between mb-3">
-                  <h3 class="text-xl font-bold text-foreground truncate flex-1">
-                    {{ cluster.name }}
-                  </h3>
-                  <span
-                    [class]="getStatusBadgeClass(cluster.status)"
-                    class="flex items-center gap-1 ml-2 flex-shrink-0"
-                  >
-                    <ng-icon
-                      [name]="getStatusIcon(cluster.status)"
-                      class="h-3 w-3"
-                      [class.animate-spin]="
-                        cluster.status === ClusterStatus.CREATING ||
-                        cluster.status === ClusterStatus.SCALING ||
-                        cluster.status === ClusterStatus.UPDATING ||
-                        cluster.status === ClusterStatus.DELETING
-                      "
-                    />
-                    {{ getStatusLabel(cluster.status) }}
-                    @if (
-                      cluster.status === ClusterStatus.DELETING &&
-                      deletionProgress()[cluster.id!] !== undefined
-                    ) {
-                      <span class="opacity-75 text-xs">{{ deletionProgress()[cluster.id!] }}%</span>
-                    }
-                  </span>
-                </div>
-
-                <div class="flex items-center gap-2 text-muted-foreground mb-4">
-                  <ng-icon [name]="getProviderIcon(cluster.provider)" class="h-4 w-4" />
-                  <span class="text-sm font-medium">{{ getProviderLabel(cluster.provider) }}</span>
-                </div>
-
-                <div class="flex items-center flex-wrap gap-3 text-sm text-sub mb-2">
-                  <span class="flex items-center gap-1">
-                    <ng-icon name="lucideMapPin" class="h-4 w-4" />
-                    {{ cluster.region }}
-                  </span>
-                  <span class="text-border">•</span>
-                  <span class="flex items-center gap-1">
-                    <ng-icon name="lucideServer" class="h-4 w-4" />
-                    {{ cluster.nodeCount }} nodes
-                  </span>
-                  @if (cluster.autoScalingEnabled) {
-                    <span class="text-border">•</span>
-                    <span class="flex items-center gap-1 text-purple-600">
-                      <ng-icon name="lucideZap" class="h-4 w-4" />
-                      Auto
-                    </span>
-                  }
-                </div>
-
-                <div class="flex items-center flex-wrap gap-3 text-sm text-sub">
-                  <span class="flex items-center gap-1">
-                    <ng-icon name="lucideTag" class="h-4 w-4" />
-                    {{ cluster.version || 'N/A' }}
-                  </span>
-                  @if (cluster.createdAt) {
-                    <span class="text-border">•</span>
-                    <span class="flex items-center gap-1">
-                      <ng-icon name="lucideCalendar" class="h-4 w-4" />
-                      {{ formatDate(cluster.createdAt) }}
-                    </span>
-                  }
-                </div>
-              </div>
-
-              <div class="px-6 pb-6 flex items-center gap-3">
-                <button
-                  (click)="viewCluster(cluster.id!)"
-                  [disabled]="cluster.status === ClusterStatus.DELETING"
-                  class="flex-1 flex items-center justify-center gap-2 h-10 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                >
-                  <ng-icon name="lucideEye" class="h-4 w-4" />
-                  View
-                </button>
-                <button
-                  *fluiCan="'cluster:destroy'"
-                  [appReadOnlySection]="CLUSTER_SECTION_KEYS"
-                  (click)="confirmDelete(cluster)"
-                  [disabled]="
-                    cluster.status === ClusterStatus.DELETING ||
-                    cluster.clusterType === ClusterType.CONTROL ||
-                    cluster.clusterType === ClusterType.OBSERVABILITY
-                  "
-                  class="h-10 w-10 inline-flex items-center justify-center border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  [title]="
-                    cluster.clusterType === ClusterType.CONTROL ||
-                    cluster.clusterType === ClusterType.OBSERVABILITY
-                      ? 'Control cluster can only be managed via CLI'
-                      : 'Delete Cluster'
-                  "
-                >
-                  <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          }
-
-          @if (filteredClusters().length > 0) {
-            <div
-              [appReadOnlySection]="CLUSTER_SECTION_KEYS"
-              (click)="createNewCluster()"
-              class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
-            >
-              <div
-                class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 group-hover:bg-blue-50 transition-colors"
+        @if (isLoading() && allClusters().length === 0) {
+          <fl-loading-state [rows]="4" />
+        } @else if (filteredClusters().length === 0) {
+          <fl-empty-state
+            [title]="activeFiltersCount() > 0 ? 'No matching clusters' : 'No clusters yet'"
+            [body]="
+              activeFiltersCount() > 0
+                ? 'Nothing matches these filters.'
+                : 'Create a cluster on one of your providers to start deploying.'
+            "
+          >
+            @if (activeFiltersCount() > 0) {
+              <button flButton size="sm" type="button" (click)="clearFilters()">
+                Clear filters
+              </button>
+            } @else {
+              <button
+                flButton="primary"
+                size="sm"
+                type="button"
+                [appReadOnlySection]="CLUSTER_SECTION_KEYS"
+                (click)="createNewCluster()"
               >
-                <ng-icon
-                  name="lucidePlus"
-                  class="h-10 w-10 text-muted-foreground group-hover:text-blue-600 transition-colors"
-                />
-              </div>
-
-              <h3
-                class="text-lg font-semibold text-foreground mb-2 group-hover:text-blue-600 transition-colors"
-              >
-                Create New Cluster
-              </h3>
-
-              <p class="text-sm text-sub text-center max-w-xs">
-                Click to configure and deploy a new cluster
-              </p>
-            </div>
-          }
-
-          @if (filteredClusters().length === 0) {
-            <div class="col-span-full flex flex-col items-center justify-center py-12">
-              <ng-icon name="lucideServer" class="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 class="text-lg font-semibold text-foreground mb-2">No clusters found</h3>
-              <p class="text-sm text-sub mb-6">
-                @if (activeFiltersCount() > 0) {
-                  Try adjusting your filters or clear them to see all clusters
-                } @else {
-                  Get started by creating your first cluster
+                Create cluster
+              </button>
+            }
+          </fl-empty-state>
+        } @else {
+          <div class="fl-table-wrap">
+            <table flTable density="dense" data-testid="cluster-table">
+              <thead>
+                <tr>
+                  <th scope="col">Cluster</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Provider</th>
+                  <th scope="col">Region</th>
+                  <th scope="col" class="is-num">Nodes</th>
+                  <th scope="col">Version</th>
+                  <th scope="col" class="is-num">Created</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (cluster of filteredClusters(); track cluster.id) {
+                  @let st = statusOf(cluster);
+                  @let deleting = cluster.status === ClusterStatus.DELETING;
+                  <tr [attr.data-testid]="'cluster-row-' + cluster.id">
+                    <td class="fl-cell-name">
+                      @if (deleting) {
+                        <span>{{ cluster.name }}</span>
+                      } @else {
+                        <a class="fl-link" [routerLink]="['/cluster', cluster.id]">{{
+                          cluster.name
+                        }}</a>
+                      }
+                      @if (managedByCli(cluster)) {
+                        <fl-tag class="ml-2">{{
+                          cluster.clusterType === 'observability' ? 'observability' : 'control'
+                        }}</fl-tag>
+                      }
+                    </td>
+                    <td>
+                      <fl-status
+                        [tone]="st.tone"
+                        [label]="
+                          deletionProgress()[cluster.id!] !== undefined
+                            ? st.label + ' ' + deletionProgress()[cluster.id!] + '%'
+                            : st.label
+                        "
+                      />
+                    </td>
+                    <td>{{ getProviderLabel(cluster.provider) }}</td>
+                    <td class="fl-mono">{{ cluster.region || '—' }}</td>
+                    <td class="is-num">{{ cluster.nodeCount ?? '—' }}</td>
+                    <td class="fl-mono">{{ cluster.version || '—' }}</td>
+                    <td class="is-num">
+                      {{ cluster.createdAt ? formatDate(cluster.createdAt) : '—' }}
+                    </td>
+                    <td class="is-fit">
+                      <fl-actions-menu
+                        *fluiCan="'cluster:destroy'"
+                        label="Cluster actions"
+                        [compact]="true"
+                        [items]="rowActions"
+                        [appReadOnlySection]="CLUSTER_SECTION_KEYS"
+                        [class.hidden]="deleting || managedByCli(cluster)"
+                        [attr.data-testid]="'cluster-actions-' + cluster.id"
+                        (action)="confirmDelete(cluster)"
+                      />
+                    </td>
+                  </tr>
                 }
-              </p>
-              @if (activeFiltersCount() > 0) {
-                <button
-                  (click)="clearFilters()"
-                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              } @else {
-                <button
-                  (click)="createNewCluster()"
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <ng-icon name="lucidePlus" class="h-4 w-4" />
-                  Create Your First Cluster
-                </button>
-              }
-            </div>
-          }
-        </div>
-      }
-
-      @if (filteredClusters().length > 0) {
-        <div class="text-center text-sm text-sub">
-          Showing {{ filteredClusters().length }} of {{ allClusters().length }} cluster(s)
-        </div>
-      }
+              </tbody>
+            </table>
+          </div>
+        }
+      </fl-panel>
     </div>
 
     @if (showDeleteModal()) {
-      <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="card-surface rounded-lg max-w-md w-full p-6">
-          <div class="flex items-start gap-4">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <ng-icon name="lucideCircleAlert" class="h-6 w-6 text-red-600" />
-              </div>
-            </div>
-            <div class="flex-1">
-              <h3 class="text-lg font-semibold text-foreground mb-2">Delete Cluster</h3>
-              <p class="text-sm text-sub mb-4">
-                Are you sure you want to delete <strong>{{ clusterToDelete()?.name }}</strong>? This
-                action cannot be undone and will permanently remove all cluster resources.
-              </p>
-
-              <label class="flex items-center gap-2 mb-4 cursor-pointer">
-                <input
-                  type="checkbox"
-                  [(ngModel)]="forceDelete"
-                  class="rounded border-border text-blue-600 focus:ring-blue-500"
-                />
-                <span class="text-sm text-foreground"> Force delete (skip cleanup) </span>
-              </label>
-
-              <div class="flex items-center gap-3">
-                <button
-                  (click)="cancelDelete()"
-                  [disabled]="isDeleting()"
-                  class="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  (click)="executeDelete()"
-                  [disabled]="isDeleting()"
-                  class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                >
-                  @if (isDeleting()) {
-                    <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                    Deleting...
-                  } @else {
-                    <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                    Delete Cluster
-                  }
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <app-cluster-delete-dialog
+        [name]="clusterToDelete()?.name ?? 'cluster'"
+        [deleting]="isDeleting()"
+        [(force)]="forceDelete"
+        (cancelled)="cancelDelete()"
+        (confirmed)="executeDelete()"
+      />
     }
   `,
 })
@@ -464,7 +281,24 @@ export class ClusterListComponent implements OnInit, OnDestroy {
   readonly availableProviders = computed(() => this.providersService.availableProviders());
 
   ClusterStatus = ClusterStatus;
-  ClusterType = ClusterType;
+
+  protected readonly statusOptions = STATUS_FILTERS;
+
+  protected readonly rowActions: MenuAction[] = [
+    { id: 'delete', label: 'Delete cluster', danger: true },
+  ];
+
+  protected statusOf(cluster: ClusterInfo): { label: string; tone: StatusTone } {
+    const s = CLUSTER_STATUS[cluster.status];
+    return {
+      label: s?.label ?? cluster.status ?? 'Unknown',
+      tone: statusToneOf(s?.tone ?? 'muted'),
+    };
+  }
+
+  protected managedByCli(cluster: ClusterInfo): boolean {
+    return isControlClusterType(cluster.clusterType);
+  }
 
   protected readonly CLUSTER_SECTION_KEYS = ['clusters', 'cluster'] as const;
 
@@ -476,7 +310,7 @@ export class ClusterListComponent implements OnInit, OnDestroy {
   });
   showDeleteModal = signal<boolean>(false);
   clusterToDelete = signal<ClusterInfo | null>(null);
-  forceDelete = false;
+  protected readonly forceDelete = signal(false);
   isDeleting = signal<boolean>(false);
 
   allClusters = this.clusterService.clusters;
@@ -589,14 +423,14 @@ export class ClusterListComponent implements OnInit, OnDestroy {
 
   confirmDelete(cluster: ClusterInfo) {
     this.clusterToDelete.set(cluster);
-    this.forceDelete = false;
+    this.forceDelete.set(false);
     this.showDeleteModal.set(true);
   }
 
   cancelDelete() {
     this.showDeleteModal.set(false);
     this.clusterToDelete.set(null);
-    this.forceDelete = false;
+    this.forceDelete.set(false);
   }
 
   async executeDelete() {
@@ -606,10 +440,10 @@ export class ClusterListComponent implements OnInit, OnDestroy {
     this.isDeleting.set(true);
 
     try {
-      await this.clusterService.deleteCluster(cluster.id, this.forceDelete);
+      await this.clusterService.deleteCluster(cluster.id, this.forceDelete());
       this.showDeleteModal.set(false);
       this.clusterToDelete.set(null);
-      this.forceDelete = false;
+      this.forceDelete.set(false);
     } catch (error) {
       console.error('Failed to delete cluster:', error);
     } finally {
@@ -619,55 +453,6 @@ export class ClusterListComponent implements OnInit, OnDestroy {
 
   createNewCluster() {
     this.router.navigate(['/cluster/new']);
-  }
-
-  getStatusBadgeClass(status?: ClusterStatus): string {
-    const baseClasses = 'text-xs px-2 py-1 rounded font-medium';
-
-    switch (status) {
-      case ClusterStatus.ACTIVE:
-        return `${baseClasses} bg-green-100 text-green-800`;
-      case ClusterStatus.CREATING:
-        return `${baseClasses} bg-blue-100 text-blue-800`;
-      case ClusterStatus.SCALING:
-      case ClusterStatus.UPDATING:
-      case ClusterStatus.STOPPING:
-      case ClusterStatus.STARTING:
-        return `${baseClasses} bg-yellow-100 text-yellow-800`;
-      case ClusterStatus.STOPPED:
-        return `${baseClasses} bg-gray-100 text-gray-800`;
-      case ClusterStatus.ERROR:
-        return `${baseClasses} bg-red-100 text-red-800`;
-      case ClusterStatus.DELETING:
-        return `${baseClasses} bg-gray-100 text-gray-800`;
-      default:
-        return `${baseClasses} bg-gray-100 text-gray-800`;
-    }
-  }
-
-  getStatusLabel(status?: ClusterStatus): string {
-    switch (status) {
-      case ClusterStatus.ACTIVE:
-        return 'Active';
-      case ClusterStatus.CREATING:
-        return 'Creating';
-      case ClusterStatus.SCALING:
-        return 'Scaling';
-      case ClusterStatus.UPDATING:
-        return 'Updating';
-      case ClusterStatus.ERROR:
-        return 'Error';
-      case ClusterStatus.DELETING:
-        return 'Deleting';
-      case ClusterStatus.STOPPED:
-        return 'Stopped';
-      case ClusterStatus.STOPPING:
-        return 'Stopping...';
-      case ClusterStatus.STARTING:
-        return 'Starting...';
-      default:
-        return 'Unknown';
-    }
   }
 
   getProviderLabel(provider?: ProviderType): string {
@@ -686,33 +471,5 @@ export class ClusterListComponent implements OnInit, OnDestroy {
     if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
     if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
     return new Date(date).toLocaleDateString();
-  }
-
-  getProviderIcon(provider?: ProviderType): string {
-    return 'lucideCloud';
-  }
-
-  getStatusIcon(status?: ClusterStatus): string {
-    switch (status) {
-      case ClusterStatus.ACTIVE:
-        return 'lucideCircleCheck';
-      case ClusterStatus.CREATING:
-        return 'lucideLoader';
-      case ClusterStatus.SCALING:
-      case ClusterStatus.UPDATING:
-        return 'lucideLoader';
-      case ClusterStatus.STOPPING:
-        return 'lucidePause';
-      case ClusterStatus.STARTING:
-        return 'lucidePlay';
-      case ClusterStatus.STOPPED:
-        return 'lucideCircle';
-      case ClusterStatus.ERROR:
-        return 'lucideCircleAlert';
-      case ClusterStatus.DELETING:
-        return 'lucideCircle';
-      default:
-        return 'lucideCircle';
-    }
   }
 }

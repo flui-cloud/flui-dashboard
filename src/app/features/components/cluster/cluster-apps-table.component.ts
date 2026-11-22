@@ -1,8 +1,13 @@
-import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { MeterBarComponent, NODE_SERIES_COLORS } from '../../../shared/components/charts';
 import { ClusterAppsMetricsService } from '../../service/cluster-apps-metrics.service';
 import { formatBytes } from '../../../shared/utils/metric-format';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlStatus } from '../../../ui/primitives/status';
 
 /**
  * What the cluster is actually running for. Ranked by CPU in use, so a node
@@ -10,75 +15,91 @@ import { formatBytes } from '../../../shared/utils/metric-format';
  */
 @Component({
   selector: 'app-cluster-apps-table',
-  standalone: true,
-  imports: [MeterBarComponent, RouterLink],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [RouterLink, FlPanel, FlTable, FlUsageBar, FlStatus, FlEmptyState, FlAlert],
+  host: { class: 'block' },
   template: `
-    <div class="card-surface">
-      <div class="flex items-center justify-between gap-4 px-5 pt-4 pb-3">
-        <h3 class="text-sm font-semibold text-foreground">What is using the cluster</h3>
-        <a
-          routerLink="/apps/applications"
-          class="text-[11px] font-semibold text-primary hover:underline"
-        >
-          All applications →
-        </a>
-      </div>
+    <fl-panel
+      title="What is using the cluster"
+      [count]="apps().length || null"
+      [flush]="apps().length > 0"
+      data-testid="cluster-apps-table"
+    >
+      <a panelActions routerLink="/apps/applications" class="fl-link text-fl-body-sm"
+        >All applications</a
+      >
 
       @if (apps().length === 0) {
-        <p class="px-5 pb-5 text-sm text-sub">
-          {{ service.error() ?? 'No application on this cluster reports usage yet.' }}
-        </p>
+        @if (service.error(); as error) {
+          <fl-alert tone="warning" title="Usage could not be read">{{ error }}</fl-alert>
+        } @else {
+          <fl-empty-state
+            [compact]="true"
+            title="No usage reported yet"
+            body="No application on this cluster reports usage yet."
+          />
+        }
       } @else {
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-[760px] text-left">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
             <thead>
-              <tr class="text-[10px] font-semibold uppercase tracking-wider text-sub">
-                <th scope="col" class="px-5 pb-2 font-semibold">Application</th>
-                <th scope="col" class="px-3 pb-2 font-semibold w-[200px]">CPU</th>
-                <th scope="col" class="px-3 pb-2 font-semibold w-[200px]">Memory</th>
-                <th scope="col" class="px-3 pb-2 font-semibold">Replicas</th>
-                <th scope="col" class="px-5 pb-2 font-semibold">Restarts 1h</th>
+              <tr>
+                <th scope="col">Application</th>
+                <th scope="col">CPU</th>
+                <th scope="col">Memory</th>
+                <th scope="col" class="is-num">Replicas</th>
+                <th scope="col" class="is-num">Restarts 1h</th>
               </tr>
             </thead>
             <tbody>
               @for (app of apps(); track app.appId) {
-                <tr class="border-t border-border align-middle">
-                  <td class="px-5 py-3">
-                    <div class="flex flex-col min-w-0">
-                      <span class="text-sm font-medium text-foreground truncate">{{
-                        app.name
-                      }}</span>
-                      <span class="text-[10px] text-sub truncate">{{ app.namespace }}</span>
+                <tr>
+                  <td class="fl-cell-name">
+                    <div class="flex min-w-0 flex-col">
+                      <span class="truncate">{{ app.name }}</span>
+                      <span class="fl-mono truncate text-fl-ink-muted">{{ app.namespace }}</span>
                     </div>
                   </td>
-                  <td class="px-3 py-3">
-                    <app-meter-bar
-                      [value]="app.cpuPercent ?? 0"
-                      [label]="cores(app.cpuCores)"
-                      [caption]="share(app.cpuPercent)"
-                      [color]="meterColor"
-                    />
+                  <td>
+                    @if (app.cpuPercent === null) {
+                      <span class="flex flex-col">
+                        <span class="fl-num">{{ cores(app.cpuCores) }}</span>
+                        <span class="text-fl-caption text-fl-ink-muted">No limit set</span>
+                      </span>
+                    } @else {
+                      <fl-usage-bar
+                        [percent]="app.cpuPercent"
+                        [label]="app.name + ' CPU of its limit'"
+                        [aside]="cores(app.cpuCores)"
+                      />
+                    }
                   </td>
-                  <td class="px-3 py-3">
-                    <app-meter-bar
-                      [value]="app.memoryPercent ?? 0"
-                      [label]="bytes(app.memoryBytes)"
-                      [caption]="share(app.memoryPercent)"
-                      [color]="meterColor"
-                    />
+                  <td>
+                    @if (app.memoryPercent === null) {
+                      <span class="flex flex-col">
+                        <span class="fl-num">{{ bytes(app.memoryBytes) }}</span>
+                        <span class="text-fl-caption text-fl-ink-muted">No limit set</span>
+                      </span>
+                    } @else {
+                      <fl-usage-bar
+                        [percent]="app.memoryPercent"
+                        [label]="app.name + ' memory of its limit'"
+                        [aside]="bytes(app.memoryBytes)"
+                      />
+                    }
                   </td>
-                  <td
-                    class="px-3 py-3 font-mono text-xs"
-                    [class]="app.replicasDegraded ? 'text-amber-600' : 'text-muted-foreground'"
-                  >
-                    {{ app.replicas }}
+                  <td class="is-num">
+                    @if (app.replicasDegraded) {
+                      <fl-status tone="warning" [label]="app.replicas" />
+                    } @else {
+                      <span class="fl-mono">{{ app.replicas }}</span>
+                    }
                   </td>
-                  <td
-                    class="px-5 py-3 font-mono text-xs"
-                    [class]="app.restarts > 2 ? 'text-amber-600' : 'text-muted-foreground'"
-                  >
-                    {{ app.restarts }}
+                  <td class="is-num">
+                    @if (app.restarts > 2) {
+                      <fl-status tone="warning" [label]="'' + app.restarts" />
+                    } @else {
+                      <span class="fl-mono">{{ app.restarts }}</span>
+                    }
                   </td>
                 </tr>
               }
@@ -86,22 +107,12 @@ import { formatBytes } from '../../../shared/utils/metric-format';
           </table>
         </div>
       }
-    </div>
+    </fl-panel>
   `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `,
-  ],
 })
 export class ClusterAppsTableComponent {
   readonly service = inject(ClusterAppsMetricsService);
   readonly apps = computed(() => this.service.topConsumers());
-
-  /** One hue, as in the nodes table: the palette means node identity elsewhere. */
-  readonly meterColor = NODE_SERIES_COLORS[0];
 
   cores(value: number | null): string {
     return value == null ? '—' : `${value.toFixed(2)} cores`;
@@ -109,10 +120,5 @@ export class ClusterAppsTableComponent {
 
   bytes(value: number | null): string {
     return formatBytes(value);
-  }
-
-  /** Utilisation against the app's own limit — blank when no limit is declared. */
-  share(percent: number | null): string {
-    return percent == null ? 'no limit set' : `${percent.toFixed(0)}% of limit`;
   }
 }

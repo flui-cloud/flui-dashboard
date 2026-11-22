@@ -8,21 +8,10 @@ import {
   effect,
   OnDestroy,
   OnInit,
-  ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideShieldCheck,
-  lucideShieldAlert,
-  lucideShieldOff,
-  lucideLoader,
-  lucideCheckCircle,
-  lucideAlertCircle,
-  lucideWifi,
-  lucideDna,
-  lucideTrash2,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideShieldOff } from '@ng-icons/lucide';
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
 import {
   ClusterIssuerWebSocketService,
@@ -32,267 +21,215 @@ import {
 } from '../../service/cluster-issuer-websocket.service';
 import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../../../core/api/model/clusterDnsZoneControllerGetIssuers200ResponseInner';
 import { CanDirective } from '../../../core/directives/can.directive';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 type Issuer = ClusterDnsZoneControllerGetIssuers200ResponseInner;
 const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverTypeEnum;
 
 @Component({
   selector: 'app-cluster-issuer-setup',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent, CanDirective],
-  providers: [
-    provideIcons({
-      lucideShieldCheck,
-      lucideShieldAlert,
-      lucideShieldOff,
-      lucideLoader,
-      lucideCheckCircle,
-      lucideAlertCircle,
-      lucideWifi,
-      lucideDna,
-      lucideTrash2,
-    }),
+  imports: [
+    FormsModule,
+    CanDirective,
+    FlAlert,
+    FlField,
+    FlPanel,
+    FlEmptyState,
+    FlTable,
+    FlButton,
+    FlSpinner,
+    FlStatus,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideShieldOff })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-3">
-      <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-foreground">Wildcard Certificate Issuers (DNS-01)</p>
-          <p class="text-xs text-sub mt-0.5">Manage certificates for wildcard domains.</p>
-        </div>
+    <fl-panel title="Wildcard certificate issuers (DNS-01)" [flush]="true">
+      <ng-container panelActions>
         @if (allDns01Ready()) {
-          <span class="text-xs text-green-700 font-medium"> DNS-01 Ready </span>
+          <fl-status tone="success" label="DNS-01 ready" />
         } @else if (hasHttp01()) {
-          <span class="text-xs text-red-700 font-medium"> Action required </span>
+          <fl-status tone="error" label="Action required" />
         }
-      </div>
+        @if (dnsIssuers().length > 0 && !configuring() && !showForm()) {
+          <button
+            *fluiCan="'cluster:manage'"
+            flButton="ghost"
+            size="sm"
+            type="button"
+            data-testid="dns-issuers-delete"
+            [disabled]="deleting()"
+            (click)="deleteConfirm.set(true)"
+          >
+            Delete
+          </button>
+        }
+        @if (displayIssuers().length > 0 && !configuring() && !showForm()) {
+          <button flButton size="sm" type="button" [disabled]="deleting()" (click)="openForm()">
+            Reconfigure
+          </button>
+        }
+      </ng-container>
 
-      <!-- Warning: issuers are http01 and must be reconfigured for wildcard -->
-      @if (hasHttp01() && !configuring() && !showForm()) {
-        <div class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <ng-icon name="lucideAlertCircle" class="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-medium text-red-800">
-              Current issuers do not support wildcard certificates
-            </p>
-            <p class="text-xs text-red-700 mt-0.5">
-              Update issuer configuration to enable wildcard certificates for your domains.
-            </p>
-            <button
-              (click)="openForm()"
-              class="mt-1.5 text-xs text-red-700 font-medium hover:underline"
-            >
-              Reconfigure wildcard issuers ->
-            </button>
-          </div>
-        </div>
-      }
-
-      <!-- Issuers list -->
-      @if (dnsIssuers().length > 0 || configuring()) {
-        <div class="grid gap-2">
-          @for (issuer of displayIssuers(); track issuer.name) {
-            <div class="rounded-lg border overflow-hidden" [class]="cardClass(issuer)">
-              <div class="flex items-center justify-between px-3 py-2.5">
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <ng-icon
-                    [name]="
-                      configuring()
-                        ? 'lucideLoader'
-                        : issuer.ready
-                          ? 'lucideShieldCheck'
-                          : 'lucideShieldAlert'
-                    "
-                    class="h-4 w-4 flex-shrink-0"
-                    [class]="
-                      configuring()
-                        ? 'animate-spin text-blue-500'
-                        : issuer.ready
-                          ? 'text-green-600'
-                          : 'text-amber-500'
-                    "
-                  />
-                  <div class="min-w-0">
-                    <p class="text-xs font-medium font-mono text-foreground">{{ issuer.name }}</p>
-                    @if (issuer.email && !configuring()) {
-                      <p class="text-xs text-sub truncate">{{ issuer.email }}</p>
-                    }
-                    @if (issuer.message && !configuring()) {
-                      <p class="text-xs text-muted-foreground truncate" [title]="issuer.message">
-                        {{ issuer.message }}
-                      </p>
-                    }
-                  </div>
-                </div>
-                <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                  <!-- Solver type badge -->
-                  @if (!configuring() && issuer.solverType) {
-                    <span
-                      class="text-xs px-1.5 py-0.5 rounded font-mono font-medium"
-                      [class]="
-                        issuer.solverType === 'dns01'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-orange-100 text-orange-700'
-                      "
-                    >
-                      {{ issuer.solverType }}
+      @if (displayIssuers().length > 0) {
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Issuer</th>
+                <th scope="col">Solver</th>
+                <th scope="col" class="is-fit">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (issuer of displayIssuers(); track issuer.name) {
+                <tr>
+                  <td class="whitespace-normal">
+                    <span class="flex min-w-0 flex-col">
+                      <span class="fl-mono">{{ issuer.name }}</span>
+                      @if (issuer.email && !configuring()) {
+                        <span class="text-fl-caption text-fl-ink-muted">{{ issuer.email }}</span>
+                      }
+                      @if (issuer.message && !configuring()) {
+                        <span class="text-fl-caption text-fl-ink-muted" [title]="issuer.message">{{
+                          issuer.message
+                        }}</span>
+                      }
                     </span>
-                  }
-                  <!-- Ready badge -->
-                  <span
-                    class="text-xs font-medium px-2 py-0.5 rounded-full"
-                    [class]="badgeClass(issuer)"
-                  >
-                    {{ configuring() ? 'Configuring...' : issuer.ready ? 'Ready' : 'Not Ready' }}
-                  </span>
-                </div>
-              </div>
-              @if (configuring()) {
-                <div class="h-1 w-full bg-blue-100 overflow-hidden">
-                  <div class="h-1 w-1/3 bg-blue-500 rounded-full animate-indeterminate"></div>
-                </div>
+                  </td>
+                  <td class="fl-mono">{{ configuring() ? '—' : issuer.solverType || '—' }}</td>
+                  <td class="is-fit">
+                    <fl-status [tone]="issuerTone(issuer)" [label]="issuerLabel(issuer)" />
+                  </td>
+                </tr>
               }
-            </div>
-          }
+            </tbody>
+          </table>
         </div>
-
-        @if (configuring()) {
-          <p class="text-xs text-blue-600">
-            Applying manifests - waiting for cert-manager to register with Let's Encrypt...
-          </p>
-        }
-
-        @if (configureError()) {
-          <div
-            class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
-          >
-            <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
-            {{ configureError() }}
-          </div>
-        }
-
-        @if (!configuring() && !showForm()) {
-          <div class="flex items-center gap-3">
-            <button
-              (click)="openForm()"
-              [disabled]="deleting()"
-              class="text-xs text-blue-600 hover:underline disabled:opacity-50"
-            >
-              Reconfigure wildcard issuers
-            </button>
-            @if (dnsIssuers().length > 0) {
-              <button
-                *fluiCan="'cluster:manage'"
-                data-testid="dns-issuers-delete"
-                (click)="deleteConfirm.set(true)"
-                [disabled]="deleting()"
-                class="text-xs text-red-600 hover:underline disabled:opacity-50 inline-flex items-center gap-1"
-              >
-                <ng-icon name="lucideTrash2" class="h-3 w-3" />
-                Delete wildcard issuers
-              </button>
-            }
-          </div>
-        }
-
-        @if (deleteConfirm()) {
-          <div class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
-            <span class="text-red-700 flex-1">Delete wildcard issuers (staging + production)?</span>
-            <button
-              (click)="deleteDnsIssuers()"
-              [disabled]="deleting()"
-              class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium disabled:opacity-50"
-            >
-              @if (deleting()) {
-                Deleting...
-              } @else {
-                Delete
-              }
-            </button>
-            <button
-              (click)="deleteConfirm.set(false)"
-              [disabled]="deleting()"
-              class="px-2 py-1 text-muted-foreground hover:text-foreground text-xs disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          </div>
-        }
-
-        @if (deleteError()) {
-          <div
-            class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
-          >
-            <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
-            {{ deleteError() }}
-          </div>
-        }
       } @else {
-        <div class="flex items-start gap-3 p-3 card-inner border border-border rounded-lg">
-          <ng-icon
-            name="lucideShieldOff"
-            class="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5"
-          />
-          <p class="text-xs text-sub">
-            No wildcard certificate issuers configured yet. Enter an ACME email to continue.
-          </p>
-        </div>
+        <fl-empty-state
+          icon="lucideShieldOff"
+          [compact]="true"
+          title="No wildcard certificate issuers"
+          body="Enter an ACME email to configure them."
+        />
       }
 
-      <!-- ACME email form -->
-      @if (showForm()) {
-        <div class="border border-border rounded-lg p-3 space-y-3 card-inner">
-          <div class="space-y-1">
-            <label class="text-xs font-medium text-foreground">
-              ACME Email <span class="text-red-500">*</span>
-            </label>
-            <input
-              type="email"
-              [(ngModel)]="formEmail"
-              placeholder="admin@example.com"
-              class="w-full px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+      @if (
+        configuring() ||
+        configureError() ||
+        deleteConfirm() ||
+        deleteError() ||
+        showForm() ||
+        (hasHttp01() && !configuring())
+      ) {
+        <div class="flex flex-col gap-4 border-t border-fl-border p-4">
+          @if (configuring()) {
+            <fl-status
+              tone="progress"
+              label="Applying manifests, waiting for cert-manager to register with Let's Encrypt"
             />
-            <p class="text-xs text-sub">
-              Used for Let's Encrypt registration and expiry notifications.
-            </p>
-          </div>
-
-          @if (formError()) {
-            <div
-              class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
-            >
-              <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
-              {{ formError() }}
-            </div>
           }
 
-          <div class="flex items-center gap-2">
-            <button
-              (click)="submitForm()"
-              [disabled]="saving() || !formEmail.trim()"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          @if (hasHttp01() && !configuring() && !showForm()) {
+            <fl-alert tone="error" title="Current issuers do not support wildcard certificates">
+              Update the issuer configuration to enable wildcard certificates for your domains.
+              <button alertActions flButton size="sm" type="button" (click)="openForm()">
+                Reconfigure wildcard issuers
+              </button>
+            </fl-alert>
+          }
+
+          @if (configureError()) {
+            <fl-alert tone="error" title="Configuration failed">{{ configureError() }}</fl-alert>
+          }
+
+          @if (deleteConfirm()) {
+            <fl-alert tone="error" title="Delete the wildcard issuers?">
+              Both the staging and the production issuer are removed.
+              <ng-container alertActions>
+                <button
+                  flButton="danger"
+                  size="sm"
+                  type="button"
+                  [disabled]="deleting()"
+                  (click)="deleteDnsIssuers()"
+                >
+                  @if (deleting()) {
+                    <fl-spinner label="Deleting" />
+                    Deleting…
+                  } @else {
+                    Delete
+                  }
+                </button>
+                <button
+                  flButton="ghost"
+                  size="sm"
+                  type="button"
+                  [disabled]="deleting()"
+                  (click)="deleteConfirm.set(false)"
+                >
+                  Cancel
+                </button>
+              </ng-container>
+            </fl-alert>
+          }
+
+          @if (deleteError()) {
+            <fl-alert tone="error" title="Could not delete the issuers">{{
+              deleteError()
+            }}</fl-alert>
+          }
+
+          @if (showForm()) {
+            <fl-field
+              label="ACME email"
+              for="dns-issuers-email"
+              hint="Used for Let's Encrypt registration and expiry notices."
             >
-              @if (saving()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                Applying...
-              } @else {
-                <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5" />
-                Configure Wildcard Issuers
-              }
-            </button>
-            <button
-              (click)="closeForm()"
-              [disabled]="saving()"
-              class="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          </div>
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="dns-issuers-email"
+                  type="email"
+                  placeholder="admin@example.com"
+                  [ngModel]="formEmail()"
+                  (ngModelChange)="formEmail.set($event)"
+                />
+              </div>
+            </fl-field>
+
+            @if (formError()) {
+              <fl-alert tone="error" title="Configuration failed">{{ formError() }}</fl-alert>
+            }
+
+            <div class="flex justify-end gap-2">
+              <button flButton="ghost" type="button" [disabled]="saving()" (click)="closeForm()">
+                Cancel
+              </button>
+              <button
+                flButton="primary"
+                type="button"
+                [disabled]="saving() || !formEmail().trim()"
+                (click)="submitForm()"
+              >
+                @if (saving()) {
+                  <fl-spinner label="Applying" />
+                  Applying…
+                } @else {
+                  Configure wildcard issuers
+                }
+              </button>
+            </div>
+          }
         </div>
       }
-    </div>
+    </fl-panel>
   `,
 })
 export class ClusterIssuerSetupComponent implements OnInit, OnDestroy {
@@ -316,7 +253,7 @@ export class ClusterIssuerSetupComponent implements OnInit, OnDestroy {
   protected saving = signal(false);
   protected deleting = signal(false);
   protected deleteConfirm = signal(false);
-  protected formEmail = '';
+  protected formEmail = signal('');
   protected formError = signal<string | null>(null);
   protected configureError = signal<string | null>(null);
   protected deleteError = signal<string | null>(null);
@@ -375,11 +312,9 @@ export class ClusterIssuerSetupComponent implements OnInit, OnDestroy {
         loaded.some((i) => i.ready && i.solverType === SolverType.Dns01),
       );
 
-      // Pre-fill email
       const existingEmail = loaded.find((i) => this.isDnsIssuer(i) && i.email)?.email;
-      this.formEmail = existingEmail ?? this.fallbackAcmeEmail();
+      this.formEmail.set(existingEmail ?? this.fallbackAcmeEmail());
 
-      // Open form when: explicitly requested (new assignment), no issuers yet, or issuers are http01
       const needsConfigure =
         !loaded.some((i) => this.isDnsIssuer(i)) ||
         loaded.some((i) => !this.isDnsIssuer(i) && i.solverType === SolverType.Http01);
@@ -396,7 +331,7 @@ export class ClusterIssuerSetupComponent implements OnInit, OnDestroy {
 
   openForm(): void {
     const existing = this.dnsIssuers().find((i) => i.email);
-    this.formEmail = existing?.email ?? this.fallbackAcmeEmail();
+    this.formEmail.set(existing?.email ?? this.fallbackAcmeEmail());
     this.formError.set(null);
     this.deleteError.set(null);
     this.showForm.set(true);
@@ -408,7 +343,7 @@ export class ClusterIssuerSetupComponent implements OnInit, OnDestroy {
   }
 
   protected async submitForm(): Promise<void> {
-    const email = this.formEmail.trim();
+    const email = this.formEmail().trim();
     if (!email) return;
     const id = this.clusterId();
 
@@ -489,17 +424,15 @@ export class ClusterIssuerSetupComponent implements OnInit, OnDestroy {
     this.deleting.set(false);
   }
 
-  protected cardClass(issuer: Issuer): string {
-    if (this.configuring()) return 'bg-blue-50 border-blue-200';
-    if (!issuer.ready) return 'bg-amber-50 border-amber-200';
-    if (issuer.solverType === SolverType.Http01) return 'bg-orange-50 border-orange-200';
-    return 'bg-green-50 border-green-200';
+  protected issuerTone(issuer: Issuer): StatusTone {
+    if (this.configuring()) return 'progress';
+    if (!issuer.ready) return 'warning';
+    if (issuer.solverType === SolverType.Http01) return 'warning';
+    return 'success';
   }
 
-  protected badgeClass(issuer: Issuer): string {
-    if (this.configuring()) return 'bg-blue-100 text-blue-700';
-    if (!issuer.ready) return 'bg-amber-100 text-amber-700';
-    if (issuer.solverType === SolverType.Http01) return 'bg-orange-100 text-orange-700';
-    return 'bg-green-100 text-green-700';
+  protected issuerLabel(issuer: Issuer): string {
+    if (this.configuring()) return 'Configuring';
+    return issuer.ready ? 'Ready' : 'Not ready';
   }
 }

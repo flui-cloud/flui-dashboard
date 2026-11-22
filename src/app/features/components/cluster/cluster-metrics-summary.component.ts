@@ -1,16 +1,18 @@
-import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
-import {
-  StatTileComponent,
-  StatTileData,
-  NODE_SERIES_COLORS,
-} from '../../../shared/components/charts';
+import { Component, computed, inject } from '@angular/core';
 import { ClusterMonitoringService } from '../../service/cluster-monitoring.service';
 import { ClusterMetricsHistoryService } from '../../service/cluster-metrics-history.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 import { formatBytes, formatDelta, formatRate } from '../../../shared/utils/metric-format';
+import { FlMetric, FlMetricStrip } from '../../../ui/patterns/metric-strip';
 
-/** A change in a percentage reading wears the same sign as the reading above it. */
 const points = (value: number) => `${value.toFixed(1)}%`;
+
+interface ClusterHeadline {
+  readonly label: string;
+  readonly value: string;
+  readonly caption: string;
+  readonly hint: string | null;
+}
 
 /**
  * The five figures that give the pulse of a cluster before any chart is read:
@@ -19,23 +21,20 @@ const points = (value: number) => `${value.toFixed(1)}%`;
  */
 @Component({
   selector: 'app-cluster-metrics-summary',
-  standalone: true,
-  imports: [StatTileComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlMetricStrip, FlMetric],
+  host: { class: 'block' },
   template: `
-    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+    <fl-metric-strip data-testid="cluster-metrics-summary">
       @for (tile of tiles(); track tile.label) {
-        <app-stat-tile [data]="tile" [sparkWidth]="112" />
+        <fl-metric
+          [attr.title]="tile.hint"
+          [label]="tile.label"
+          [value]="tile.value"
+          [caption]="tile.caption"
+        />
       }
-    </div>
+    </fl-metric-strip>
   `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `,
-  ],
 })
 export class ClusterMetricsSummaryComponent {
   private readonly monitoring = inject(ClusterMonitoringService);
@@ -44,13 +43,11 @@ export class ClusterMetricsSummaryComponent {
 
   private readonly servers = this.monitoring.servers;
 
-  readonly tiles = computed<StatTileData[]>(() => {
+  readonly tiles = computed<ClusterHeadline[]>(() => {
     const servers = this.servers();
     if (servers.length === 0) return [];
 
     const trends = this.history.averages();
-    // A delta is only offered while the stored window still reaches the present;
-    // otherwise it would compare a live reading against a window that stopped.
     const fresh = this.history.isFresh();
     const avg = (pick: (s: (typeof servers)[number]) => number) =>
       servers.reduce((sum, s) => sum + pick(s), 0) / servers.length;
@@ -69,51 +66,46 @@ export class ClusterMetricsSummaryComponent {
 
     return [
       this.tile({
-        label: 'Avg CPU',
+        label: 'Average CPU',
         value: cpu.toFixed(1),
         unit: '%',
         spark: trends.cpu,
-        color: NODE_SERIES_COLORS[0],
-        footnote: `threshold ${thresholds?.warnCpuPct ?? 70}%`,
+        footnote: `Threshold ${thresholds?.warnCpuPct ?? 70}%`,
         current: fresh ? cpu : null,
         formatChange: points,
       }),
       this.tile({
-        label: 'Avg memory',
+        label: 'Average memory',
         value: memory.toFixed(1),
         unit: '%',
         spark: trends.memory,
-        color: NODE_SERIES_COLORS[1],
         footnote: this.usedOfTotal(servers.map((s) => [s.memory.used, s.memory.total])),
         current: fresh ? memory : null,
         formatChange: points,
       }),
       this.tile({
-        label: 'Avg disk',
+        label: 'Average disk',
         value: disk.toFixed(1),
         unit: '%',
         spark: trends.disk,
-        color: NODE_SERIES_COLORS[2],
         footnote: this.usedOfTotal(servers.map((s) => [s.disk.used, s.disk.total])),
         current: fresh ? disk : null,
         formatChange: points,
       }),
       this.tile({
         label: 'Load per core',
-        value: loadCores ? (runQueue / loadCores).toFixed(2) : '\u2014',
+        value: loadCores ? (runQueue / loadCores).toFixed(2) : '—',
         spark: [],
-        color: NODE_SERIES_COLORS[3],
         footnote: loadCores
-          ? `${runQueue.toFixed(2)} run queue \u00b7 ${loadCores} cores`
-          : 'not reported',
+          ? `${runQueue.toFixed(2)} run queue · ${loadCores} cores`
+          : 'Not reported',
         current: null,
       }),
       this.tile({
         label: 'Network',
         value: formatRate(network),
         spark: trends.network,
-        color: NODE_SERIES_COLORS[0],
-        footnote: `${formatRate(netIn)} in \u00b7 ${formatRate(netOut)} out`,
+        footnote: `${formatRate(netIn)} in · ${formatRate(netOut)} out`,
         current: fresh ? network : null,
         formatChange: formatRate,
       }),
@@ -125,28 +117,21 @@ export class ClusterMetricsSummaryComponent {
     value: string;
     unit?: string;
     spark: number[];
-    color: string;
     footnote: string;
-    /** The live reading behind `value`, or null when there is nothing current to compare. */
     current: number | null;
     formatChange?: (value: number) => string;
-  }): StatTileData {
-    const base: StatTileData = {
-      label: spec.label,
-      value: spec.value,
-      unit: spec.unit ?? '',
-      spark: spec.spark,
-      color: spec.color,
-      footnote: spec.footnote,
-    };
-    if (spec.current == null) return base;
-
+  }): ClusterHeadline {
+    const value = `${spec.value}${spec.unit ?? ''}`;
+    if (spec.current == null) {
+      return { label: spec.label, value, caption: spec.footnote, hint: null };
+    }
     const delta = formatDelta(spec.current, spec.spark, spec.formatChange);
+    if (!delta.text) return { label: spec.label, value, caption: spec.footnote, hint: null };
     return {
-      ...base,
-      delta: delta.text,
-      deltaTone: delta.tone,
-      deltaHint: `vs the typical value over the ${this.history.rangeLabel()}`,
+      label: spec.label,
+      value,
+      caption: `${spec.footnote} · ${delta.text}`,
+      hint: `${delta.text} vs the typical value over the ${this.history.rangeLabel()}`,
     };
   }
 

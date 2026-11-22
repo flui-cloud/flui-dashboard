@@ -1,173 +1,135 @@
-import {
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideX,
-  lucideNetwork,
-  lucideRefreshCw,
-  lucideCircleAlert,
-  lucideCircleCheck,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { VNetService } from '../../service/vnet.service';
 import { VNetInfo, VNetStatus } from '../../model/vnet.models';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-attach-vnet-dialog',
-  standalone: true,
-  imports: [FormsModule, NgIcon],
-  providers: [
-    provideIcons({
-      lucideX,
-      lucideNetwork,
-      lucideRefreshCw,
-      lucideCircleAlert,
-      lucideCircleCheck,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FormsModule, FlAlert, FlField, FlLoadingState, FlButton, FlIcon, FlSpinner, FlStatus],
+  providers: [provideIcons({ lucideX })],
   template: `
     <div
-      class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       (click)="onBackdrop($event)"
     >
       <div
-        class="bg-card border border-border rounded-fl-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
+        class="fl-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="attach-vnet-title"
         (click)="$event.stopPropagation()"
       >
-        <div class="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h3 class="text-base font-semibold text-foreground flex items-center gap-2">
-            <ng-icon name="lucideNetwork" class="h-5 w-5 text-blue-500" />
-            Attach VNet
-          </h3>
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="attach-vnet-title">Attach network</h2>
           <button
             type="button"
-            (click)="close()"
+            class="fl-dialog__close"
+            aria-label="Close"
             [disabled]="running()"
-            class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40"
+            (click)="close()"
           >
-            <ng-icon name="lucideX" class="h-4 w-4" />
+            <fl-icon name="lucideX" />
           </button>
-        </div>
+        </header>
 
-        <div class="px-5 py-4 space-y-4">
+        <div class="fl-dialog__body">
           @if (loadingVNets()) {
-            <div class="flex items-center gap-2 text-sm text-sub">
-              <ng-icon name="lucideRefreshCw" class="h-4 w-4 animate-spin" />
-              Loading VNets...
-            </div>
+            <fl-loading-state [rows]="2" />
           } @else if (availableVNets().length === 0) {
-            <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-              No VNets available for provider <strong>{{ provider() }}</strong>. Create a VNet
-              first.
-            </div>
+            <fl-alert tone="warning" title="No networks available">
+              There is no active network for <span class="fl-mono">{{ provider() }}</span>. Create
+              one first.
+            </fl-alert>
           } @else {
-            <div>
-              <label class="text-sm font-medium block mb-1.5">VNet</label>
-              <select
-                [(ngModel)]="selectedVNetId"
-                (ngModelChange)="onVNetChange()"
-                [disabled]="running()"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option [ngValue]="null" disabled>Select a VNet…</option>
-                @for (v of availableVNets(); track v.id) {
-                  <option [ngValue]="v.id">{{ v.name }} ({{ v.ipRange }})</option>
-                }
-              </select>
-            </div>
+            <fl-field label="Network" for="attach-vnet-network">
+              <span class="fl-select-wrap">
+                <select
+                  id="attach-vnet-network"
+                  class="fl-select"
+                  [(ngModel)]="selectedVNetId"
+                  (ngModelChange)="onVNetChange()"
+                  [disabled]="running()"
+                >
+                  <option [ngValue]="null" disabled>Select a network</option>
+                  @for (v of availableVNets(); track v.id) {
+                    <option [ngValue]="v.id">{{ v.name }} ({{ v.ipRange }})</option>
+                  }
+                </select>
+              </span>
+            </fl-field>
 
-            <div>
-              <label class="text-sm font-medium block mb-1.5">Subnet</label>
-              <select
-                [(ngModel)]="selectedSubnetId"
-                [disabled]="running() || !selectedVNetId() || subnets().length === 0"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option [ngValue]="null">Auto (first available subnet)</option>
-                @for (s of subnets(); track s.id) {
-                  <option [ngValue]="s.id">{{ s.ipRange }}</option>
-                }
-              </select>
-            </div>
+            <fl-field label="Subnet" for="attach-vnet-subnet">
+              <span class="fl-select-wrap">
+                <select
+                  id="attach-vnet-subnet"
+                  class="fl-select"
+                  [(ngModel)]="selectedSubnetId"
+                  [disabled]="running() || !selectedVNetId() || subnets().length === 0"
+                >
+                  <option [ngValue]="null">Automatic (first available subnet)</option>
+                  @for (s of subnets(); track s.id) {
+                    <option [ngValue]="s.id">{{ s.ipRange }}</option>
+                  }
+                </select>
+              </span>
+            </fl-field>
 
-            <div class="flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="auto-assign-ip"
-                [(ngModel)]="autoAssignIp"
-                [disabled]="running()"
-                class="h-4 w-4 mt-1 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <div class="flex-1">
-                <label for="auto-assign-ip" class="text-sm font-medium text-foreground">
-                  Auto-assign private IPs
-                </label>
-                <p class="text-xs text-sub mt-0.5">
-                  Let the provider assign a private IP from the subnet to each node.
-                </p>
-              </div>
+            <div class="flex flex-col gap-1">
+              <label class="fl-check" for="auto-assign-ip">
+                <input
+                  type="checkbox"
+                  id="auto-assign-ip"
+                  [(ngModel)]="autoAssignIp"
+                  [disabled]="running()"
+                />
+                Assign private IPs automatically
+              </label>
+              <span class="text-fl-body-sm text-fl-ink-muted">
+                The provider gives each node a private IP from the subnet.
+              </span>
             </div>
           }
 
           @if (running()) {
-            <div class="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-              <div class="flex items-center justify-between text-xs text-sub">
-                <span>{{ progressMessage() || 'Working…' }}</span>
-                @if (totalSteps() > 0) {
-                  <span>Step {{ currentStep() + 1 }}/{{ totalSteps() }}</span>
-                }
-              </div>
-              <div class="h-1.5 w-full rounded-full bg-border overflow-hidden">
-                <div
-                  class="h-full bg-blue-500 transition-all"
-                  [style.width.%]="progressPct()"
-                ></div>
-              </div>
+            <div class="fl-row">
+              <fl-status tone="progress" [label]="progressMessage() || 'Working'" />
+              @if (totalSteps() > 0) {
+                <span class="fl-num text-fl-body-sm text-fl-ink-muted">
+                  Step {{ currentStep() + 1 }} of {{ totalSteps() }}
+                </span>
+              }
             </div>
           }
 
           @if (errorMessage(); as err) {
-            <div class="rounded-lg border border-red-200 bg-red-50 p-3 flex items-start gap-2">
-              <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-              <p class="text-xs text-red-900">{{ err }}</p>
-            </div>
+            <fl-alert tone="error" title="Could not attach the network">{{ err }}</fl-alert>
           }
         </div>
 
-        <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-border">
-          <button
-            type="button"
-            (click)="close()"
-            [disabled]="running()"
-            class="px-3 py-1.5 text-sm border border-border rounded hover:bg-muted disabled:opacity-40"
-          >
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" [disabled]="running()" (click)="close()">
             Cancel
           </button>
-          <button
-            type="button"
-            (click)="submit()"
-            [disabled]="!canSubmit()"
-            class="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          <button flButton="primary" type="button" [disabled]="!canSubmit()" (click)="submit()">
             @if (running()) {
-              <ng-icon name="lucideRefreshCw" class="h-4 w-4 animate-spin" />
+              <fl-spinner label="Attaching" />
               Attaching…
             } @else {
               Attach
             }
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   `,
@@ -213,9 +175,7 @@ export class AttachVNetDialogComponent implements OnInit {
       this.clusterService.clearAttachVNetState();
       this.loadingVNets.set(true);
       try {
-        await this.vnetService.loadVNets(this.provider());
-      } catch {
-        // VNetService already records error; we'll show empty state.
+        await this.vnetService.loadVNets(this.provider()).catch(() => undefined);
       } finally {
         this.loadingVNets.set(false);
       }
@@ -245,12 +205,12 @@ export class AttachVNetDialogComponent implements OnInit {
       autoAssignIp: this.autoAssignIp(),
     });
 
-    try {
-      await done;
-      this.attached.emit();
-      this.close();
-    } catch {
-      // error already in attachVNetError signal
-    }
+    const attached = await done.then(
+      () => true,
+      () => false,
+    );
+    if (!attached) return;
+    this.attached.emit();
+    this.close();
   }
 }

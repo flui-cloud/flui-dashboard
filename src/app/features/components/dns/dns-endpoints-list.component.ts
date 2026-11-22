@@ -1,392 +1,206 @@
-import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideExternalLink,
-  lucideLock,
-  lucideLockOpen,
-  lucideAlertTriangle,
-  lucideCopy,
-  lucideCheck,
-  lucideShieldCheck,
-  lucideShieldAlert,
-  lucideFileText,
-  lucideX,
-  lucideDownload,
-  lucidePencil,
-  lucideTrash2,
-  lucideRefreshCw,
-} from '@ng-icons/lucide';
+import { Component, input, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideFileText, lucideGlobe } from '@ng-icons/lucide';
 import { AppEndpointResponseDto } from '../../../core/api/model/appEndpointResponseDto';
 import { CanDirective } from '../../../core/directives/can.directive';
+import { buildEndpointUrl, isEndpointManaged } from '../../model/dns.models';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { EndpointErrorDialog } from './endpoint-error-dialog';
 import {
-  buildEndpointUrl,
-  getReconciliationBadgeColor,
-  getReconciliationBadgeLabel,
-  getCertificateBadgeColor,
-  getCertificateBadgeLabel,
-  isEndpointManaged,
-} from '../../model/dns.models';
+  CertificatePhase,
+  ParsedError,
+  StateView,
+  buildEndpointError,
+  certificateLabel,
+  dnsState,
+  hasDetails,
+  modeLabel,
+  modeTitle,
+  phaseOf,
+  technicalOf,
+  tlsState,
+} from './endpoint-format';
 
-interface ErrorCause {
-  reason: string;
-  message: string;
-  field?: string;
-}
-
-interface ParsedError {
-  title: string;
-  httpCode: string | null;
-  certMessage: string | null;
-  k8sMessage: string | null;
-  causes: ErrorCause[];
-  rawJson: string;
-}
-
-interface CertificatePhase {
-  step: 'none' | 'publishing' | 'issuing' | 'issued' | 'failed';
-  label: string;
-  detail: string | null;
-  technical: string | null;
-}
+const ENDPOINT_ACTIONS: MenuAction[] = [{ id: 'delete', label: 'Delete endpoint', danger: true }];
 
 @Component({
   selector: 'app-dns-endpoints-list',
-  standalone: true,
-  imports: [NgIconComponent, CanDirective],
-  providers: [
-    provideIcons({
-      lucideExternalLink,
-      lucideLock,
-      lucideLockOpen,
-      lucideAlertTriangle,
-      lucideCopy,
-      lucideCheck,
-      lucideShieldCheck,
-      lucideShieldAlert,
-      lucideFileText,
-      lucideX,
-      lucideDownload,
-      lucidePencil,
-      lucideTrash2,
-      lucideRefreshCw,
-    }),
+  imports: [
+    CanDirective,
+    FlActionsMenu,
+    FlCopyId,
+    FlEmptyState,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
+    FlTag,
+    EndpointErrorDialog,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideFileText, lucideGlobe })],
+  host: { class: 'block' },
   template: `
     @if (endpoints().length > 0) {
-      <div class="space-y-2">
-        @for (ep of endpoints(); track ep.id) {
-          <div class="rounded-lg border border-gray-200 overflow-hidden">
-            <!-- Main row -->
-            <div class="flex items-center justify-between gap-4 px-4 py-3 bg-gray-50">
-              <div class="flex items-center gap-3 min-w-0">
-                <ng-icon
-                  [name]="ep.tlsEnabled ? 'lucideLock' : 'lucideLockOpen'"
-                  class="h-4 w-4 flex-shrink-0"
-                  [class]="ep.tlsEnabled ? 'text-green-600' : 'text-gray-400'"
-                />
-                <div class="min-w-0">
-                  <a
-                    [href]="getUrl(ep.fqdn, ep.tlsEnabled)"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-sm font-medium text-blue-600 hover:underline truncate block"
-                  >
-                    {{ ep.fqdn }}
-                  </a>
-                  <span class="text-xs text-gray-500">
-                    {{ ep.serviceName }} &middot; {{ ep.k8sNamespace }}
-                  </span>
-                  @if (phaseOf(ep); as phase) {
-                    @if (phase.step !== 'issued' && phase.step !== 'none' && phase.detail) {
+      <div class="fl-table-wrap">
+        <table flTable density="dense">
+          <thead>
+            <tr>
+              <th scope="col">Hostname</th>
+              <th scope="col">Target</th>
+              <th scope="col">Record</th>
+              <th scope="col">DNS</th>
+              <th scope="col">TLS</th>
+              <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ep of endpoints(); track ep.id) {
+              @let phase = phaseOf(ep);
+              @let dns = dnsOf(ep);
+              @let tls = tlsOf(ep);
+              <tr>
+                <td class="whitespace-normal">
+                  <div class="flex min-w-0 flex-col gap-1">
+                    <a
+                      class="fl-link fl-mono break-all"
+                      [href]="getUrl(ep.fqdn, ep.tlsEnabled)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      >{{ ep.fqdn }}</a
+                    >
+                    <span class="flex flex-wrap items-center gap-1">
+                      <fl-tag [attr.title]="modeTitle(ep)">{{ modeLabel(ep) }}</fl-tag>
+                      @if (ep.endpointType === 'internal') {
+                        <fl-tag
+                          title="Reachable only from the Flui dashboard through the auth proxy"
+                          >Internal</fl-tag
+                        >
+                      }
+                      @if (
+                        ep.certificateRequired && ep.certificateProvider === 'lets_encrypt_staging'
+                      ) {
+                        <fl-tag title="Let's Encrypt staging, not trusted by browsers"
+                          >Staging</fl-tag
+                        >
+                      }
+                    </span>
+                    @if (
+                      phase && phase.step !== 'issued' && phase.step !== 'none' && phase.detail
+                    ) {
                       <span
-                        class="block text-xs"
-                        [class]="phase.step === 'failed' ? 'text-red-600' : 'text-gray-500'"
+                        class="text-fl-caption text-fl-ink-muted"
                         data-testid="endpoint-cert-detail"
                         >{{ phase.detail }}</span
                       >
                     }
-                  }
-                </div>
-              </div>
-              <div class="flex items-center gap-2 flex-shrink-0">
-                <!-- Hostname mode + cert challenge -->
-                <span
-                  class="text-xs px-2 py-0.5 rounded font-medium inline-flex items-center gap-1"
-                  [class]="getModeBadgeClass(ep.hostnameMode)"
-                  [title]="getModeBadgeTitle(ep.hostnameMode, ep.certChallenge)"
-                >
-                  {{ getModeBadgeLabel(ep.hostnameMode, ep.certChallenge) }}
-                </span>
-                <!-- Internal endpoint marker — everything else below follows the standard flow. -->
-                @if (ep.endpointType === 'internal') {
-                  <span
-                    class="text-xs px-2 py-0.5 rounded font-medium bg-blue-100 text-blue-700 inline-flex items-center gap-1"
-                    title="Internal app — reachable only from the Flui dashboard via ForwardAuth"
-                  >
-                    <ng-icon name="lucideLock" class="h-3 w-3" />
-                    Internal
+                  </div>
+                </td>
+                <td>
+                  <span class="flex flex-col">
+                    <span class="fl-mono">{{ ep.serviceName }}</span>
+                    <span class="text-fl-caption text-fl-ink-muted">{{ ep.k8sNamespace }}</span>
                   </span>
-                }
-                <!-- Certificate status badge -->
-                @if (ep.certificateRequired) {
-                  <span
-                    class="text-xs px-2 py-0.5 rounded font-medium inline-flex items-center gap-1"
-                    [class]="getCertClass(ep.certificateStatus ?? null)"
-                  >
-                    @if (certPollingId() === ep.id) {
-                      <ng-icon name="lucideRefreshCw" class="h-3 w-3 animate-spin" />
-                    } @else {
-                      <ng-icon
-                        [name]="
-                          isCertOk(ep.certificateStatus) ? 'lucideShieldCheck' : 'lucideShieldAlert'
-                        "
-                        class="h-3 w-3"
+                </td>
+                <td class="fl-mono">{{ ep.dnsRecordType }}</td>
+                <td><fl-status [tone]="dns.tone" [label]="dns.label" /></td>
+                <td>
+                  <fl-status [tone]="tls.tone" [label]="tls.label" [attr.title]="tls.title" />
+                </td>
+                <td class="is-fit">
+                  <div class="flex items-center justify-end gap-1">
+                    @if (hasDetails(ep)) {
+                      <button
+                        flButton="ghost"
+                        size="sm"
+                        type="button"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'View details for ' + ep.fqdn"
+                        title="View details"
+                        (click)="openError(ep)"
+                      >
+                        <fl-icon name="lucideFileText" />
+                      </button>
+                    }
+                    @if (writable()) {
+                      <button
+                        flButton="ghost"
+                        size="sm"
+                        type="button"
+                        title="Edit endpoint"
+                        (click)="editAction.emit(ep)"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        flButton="ghost"
+                        size="sm"
+                        type="button"
+                        title="Sync endpoint"
+                        [disabled]="reconcilingId() === ep.id"
+                        (click)="reconcileAction.emit(ep)"
+                      >
+                        @if (reconcilingId() === ep.id) {
+                          <fl-spinner label="Syncing" />
+                        }
+                        Sync
+                      </button>
+                      <fl-actions-menu
+                        *fluiCan="'app:write'"
+                        [attr.data-testid]="'endpoint-delete-' + ep.id"
+                        [label]="'Actions for ' + ep.fqdn"
+                        [compact]="true"
+                        [items]="endpointActions"
+                        (action)="deleteAction.emit(ep)"
                       />
                     }
-                    {{ certBadgeLabel(ep) }}
-                  </span>
-                  @if (ep.certificateProvider === 'lets_encrypt_staging') {
-                    <span
-                      class="text-xs px-2 py-0.5 rounded font-medium bg-yellow-100 text-yellow-700"
-                    >
-                      Staging
-                    </span>
-                  }
-                }
-                <!-- Reconciliation status badge (shown only when not in sync) -->
-                @if (ep.reconciliationStatus !== 'IN_SYNC') {
-                  <span
-                    class="text-xs px-2 py-0.5 rounded font-medium"
-                    [class]="getStatusClass(ep.reconciliationStatus)"
-                  >
-                    {{ getStatusLabel(ep.reconciliationStatus) }}
-                  </span>
-                }
-                <!-- Error/cert detail button: only when there's an error or cert is not valid -->
-                @if (ep.errorMessage || (technicalOf(ep) && ep.certificateStatus !== 'valid')) {
-                  <button
-                    type="button"
-                    (click)="openError(ep)"
-                    title="View details"
-                    class="p-1 rounded transition-colors"
-                    [class]="
-                      ep.errorMessage || phaseOf(ep)?.step === 'failed'
-                        ? 'text-red-400 hover:text-red-600'
-                        : 'text-gray-400 hover:text-gray-600'
-                    "
-                  >
-                    <ng-icon name="lucideFileText" class="h-3.5 w-3.5" />
-                  </button>
-                }
-                <span class="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-700 font-mono">
-                  {{ ep.dnsRecordType }}
-                </span>
-                <a
-                  [href]="getUrl(ep.fqdn, ep.tlsEnabled)"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-gray-400 hover:text-blue-600 transition-colors"
-                >
-                  <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-                </a>
-                @if (writable()) {
-                  <!-- Divider + inline action buttons -->
-                  <span class="w-px h-3.5 bg-gray-300"></span>
-                  <button
-                    type="button"
-                    (click)="editAction.emit(ep)"
-                    class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 transition-colors"
-                    title="Edit endpoint"
-                  >
-                    <ng-icon name="lucidePencil" class="h-3 w-3" />
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    (click)="reconcileAction.emit(ep)"
-                    [disabled]="reconcilingId() === ep.id"
-                    class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 transition-colors disabled:opacity-50"
-                    title="Reconcile endpoint"
-                  >
-                    <ng-icon
-                      name="lucideRefreshCw"
-                      class="h-3 w-3"
-                      [class.animate-spin]="reconcilingId() === ep.id"
-                    />
-                    Sync
-                  </button>
-                }
-                @if (writable()) {
-                  <button
-                    *fluiCan="'app:write'"
-                    type="button"
-                    [attr.data-testid]="'endpoint-delete-' + ep.id"
-                    (click)="deleteAction.emit(ep)"
-                    class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors"
-                    title="Delete endpoint"
-                  >
-                    <ng-icon name="lucideTrash2" class="h-3 w-3" />
-                    Delete
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- BYOD DNS instruction row -->
-            @if (!isManaged(ep) && ep.dnsRecordValue) {
-              <div
-                class="flex items-center justify-between gap-3 px-3 py-2 bg-amber-50 border-t border-amber-200"
-              >
-                <div class="flex items-center gap-2 min-w-0">
-                  <ng-icon
-                    name="lucideAlertTriangle"
-                    class="h-3.5 w-3.5 flex-shrink-0 text-amber-500"
-                  />
-                  <p class="text-xs text-amber-800">
-                    Create an <strong>A record</strong> pointing
-                    <span class="font-mono">{{ ep.fqdn }}</span>
-                    →
-                    <span class="font-mono">{{ ep.dnsRecordValue }}</span>
-                    in your DNS provider
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  (click)="copyDnsValue(ep.id, ep.dnsRecordValue)"
-                  [title]="isCopied(ep.id) ? 'Copied!' : 'Copy IP'"
-                  class="flex-shrink-0 p-1 rounded text-amber-500 hover:text-amber-700 transition-colors"
-                >
-                  <ng-icon
-                    [name]="isCopied(ep.id) ? 'lucideCheck' : 'lucideCopy'"
-                    class="h-3.5 w-3.5"
-                  />
-                </button>
-              </div>
+                  </div>
+                </td>
+              </tr>
+              @if (!isManaged(ep) && ep.dnsRecordValue) {
+                <tr>
+                  <td colspan="6" class="whitespace-normal">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <fl-status tone="warning" label="DNS record needed" />
+                      <span>
+                        Create an A record for <span class="fl-mono">{{ ep.fqdn }}</span> pointing
+                        to
+                      </span>
+                      <fl-copy-id [value]="ep.dnsRecordValue" label="IP address" />
+                      <span>in your DNS provider.</span>
+                    </div>
+                  </td>
+                </tr>
+              }
             }
-          </div>
-        }
+          </tbody>
+        </table>
       </div>
     } @else {
-      <p class="text-sm text-gray-500 text-center py-4">No endpoints configured</p>
+      <fl-empty-state
+        icon="lucideGlobe"
+        [compact]="true"
+        title="No endpoints yet"
+        body="Add an endpoint to publish an application on a hostname."
+      />
     }
 
-    <!-- Error detail modal -->
-    @if (activeError()) {
-      <div
-        class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-        (click)="closeError()"
-      >
-        <div
-          class="bg-white border border-gray-200 rounded-lg w-full max-w-lg flex flex-col max-h-[70vh]"
-          (click)="$event.stopPropagation()"
-        >
-          <!-- Header -->
-          <div
-            class="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0"
-          >
-            <div class="flex items-center gap-2">
-              <ng-icon name="lucideFileText" class="h-4 w-4 text-red-500" />
-              <span class="text-sm font-semibold text-gray-900">{{ activeError()!.title }}</span>
-              @if (activeError()!.httpCode) {
-                <span class="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-mono">
-                  HTTP {{ activeError()!.httpCode }}
-                </span>
-              }
-            </div>
-            <div class="flex items-center gap-1">
-              @if (activeError()!.rawJson) {
-                <button
-                  type="button"
-                  (click)="downloadError()"
-                  title="Download full JSON"
-                  class="p-1.5 rounded text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <ng-icon name="lucideDownload" class="h-4 w-4" />
-                </button>
-              }
-              <button
-                type="button"
-                (click)="closeError()"
-                class="p-1.5 rounded text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <ng-icon name="lucideX" class="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <!-- Body -->
-          <div class="overflow-y-auto p-4 space-y-4 flex-1">
-            <!-- Certificate error message -->
-            @if (activeError()!.certMessage) {
-              <div>
-                <div class="flex items-center justify-between mb-1.5">
-                  <p class="text-xs font-medium text-gray-500">Certificate Error</p>
-                  <button
-                    type="button"
-                    (click)="copyCertMessage(activeError()!.certMessage!)"
-                    [title]="certMessageCopied() ? 'Copied!' : 'Copy message'"
-                    class="p-1 rounded text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <ng-icon
-                      [name]="certMessageCopied() ? 'lucideCheck' : 'lucideCopy'"
-                      class="h-3.5 w-3.5"
-                    />
-                  </button>
-                </div>
-                <div class="rounded-md border border-red-200 bg-red-50 px-3 py-2">
-                  <p class="text-xs text-red-700 break-all font-mono leading-relaxed">
-                    {{ activeError()!.certMessage }}
-                  </p>
-                </div>
-              </div>
-            }
-
-            <!-- Reconciliation error: k8s message -->
-            @if (activeError()!.k8sMessage) {
-              <div>
-                <p class="text-xs font-medium text-gray-500 mb-1.5">Message</p>
-                <p class="text-sm text-gray-800">
-                  {{ activeError()!.k8sMessage }}
-                </p>
-              </div>
-            }
-
-            <!-- Causes list -->
-            @if (activeError()!.causes.length > 0) {
-              <div>
-                <p class="text-xs font-medium text-gray-500 mb-1.5">Causes</p>
-                <div class="space-y-2">
-                  @for (cause of activeError()!.causes; track $index) {
-                    <div class="rounded-md border border-red-200 bg-red-50 px-3 py-2 space-y-0.5">
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs font-mono font-medium text-red-700">{{
-                          cause.reason
-                        }}</span>
-                        @if (cause.field) {
-                          <span class="text-xs font-mono text-gray-500">· {{ cause.field }}</span>
-                        }
-                      </div>
-                      <p class="text-xs text-gray-700">{{ cause.message }}</p>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-            <!-- Fallback: raw -->
-            @if (
-              !activeError()!.certMessage &&
-              !activeError()!.k8sMessage &&
-              activeError()!.causes.length === 0
-            ) {
-              <pre
-                class="text-xs font-mono bg-gray-50 border border-gray-200 rounded p-3 overflow-x-auto whitespace-pre-wrap break-all text-gray-700"
-                >{{ activeError()!.rawJson }}</pre>
-            }
-          </div>
-        </div>
-      </div>
+    @if (activeError(); as error) {
+      <app-endpoint-error-dialog
+        [error]="error"
+        [messageCopied]="certMessageCopied()"
+        (closed)="closeError()"
+        (download)="downloadError()"
+        (copyMessage)="copyCertMessage($event)"
+      />
     }
   `,
 })
@@ -411,7 +225,10 @@ export class DnsEndpointsListComponent {
   reconcileAction = output<AppEndpointResponseDto>();
   deleteAction = output<AppEndpointResponseDto>();
 
-  private readonly copiedIds = signal<Set<string>>(new Set());
+  protected readonly endpointActions = ENDPOINT_ACTIONS;
+  protected readonly hasDetails = hasDetails;
+  protected readonly modeLabel = modeLabel;
+  protected readonly modeTitle = modeTitle;
   protected activeError = signal<ParsedError | null>(null);
   private readonly activeEndpointId = signal<string | null>(null);
   protected certMessageCopied = signal(false);
@@ -424,26 +241,9 @@ export class DnsEndpointsListComponent {
     return isEndpointManaged(ep.clusterDnsZoneId);
   }
 
-  isCopied(id: string): boolean {
-    return this.copiedIds().has(id);
-  }
-
-  copyDnsValue(id: string, value: string): void {
-    navigator.clipboard.writeText(value).then(() => {
-      this.copiedIds.update((s) => new Set([...s, id]));
-      setTimeout(() => {
-        this.copiedIds.update((s) => {
-          const n = new Set(s);
-          n.delete(id);
-          return n;
-        });
-      }, 2000);
-    });
-  }
-
   openError(ep: AppEndpointResponseDto): void {
     this.activeEndpointId.set(ep.id);
-    this.activeError.set(this.buildError(ep));
+    this.activeError.set(buildEndpointError(ep));
   }
 
   closeError(): void {
@@ -471,129 +271,24 @@ export class DnsEndpointsListComponent {
     URL.revokeObjectURL(url);
   }
 
-  private buildError(ep: AppEndpointResponseDto): ParsedError {
-    const hasCert = !!this.technicalOf(ep);
-    const hasReconcile = !!ep.errorMessage;
-
-    let title = 'Error Details';
-    if (hasCert && !hasReconcile) title = 'Certificate Error';
-    else if (hasReconcile && !hasCert) title = 'Reconciliation Error';
-
-    const reconcilePart = hasReconcile ? this.parseReconcileError(ep.errorMessage!) : null;
-
-    return {
-      title,
-      httpCode: reconcilePart?.httpCode ?? null,
-      certMessage: this.technicalOf(ep),
-      k8sMessage: reconcilePart?.k8sMessage ?? null,
-      causes: reconcilePart?.causes ?? [],
-      rawJson: reconcilePart?.rawJson ?? '',
-    };
-  }
-
-  private parseReconcileError(raw: string): Omit<ParsedError, 'title' | 'certMessage'> {
-    const bodyMatch = /Body:\s*"([\s\S]+?)"(?:\s*\nHeaders:|$)/.exec(raw);
-    const httpCodeMatch = /HTTP-Code:\s*(\d+)/.exec(raw);
-
-    let k8sMessage: string | null = null;
-    let causes: ErrorCause[] = [];
-    let rawJson = raw;
-
-    if (bodyMatch) {
-      try {
-        const unescaped = bodyMatch[1]
-          .replaceAll(String.raw`\"`, '"')
-          .replaceAll(String.raw`\n`, '\n')
-          .replaceAll(String.raw`\\`, '\\');
-        const parsed = JSON.parse(unescaped);
-        rawJson = JSON.stringify(parsed, null, 2);
-        k8sMessage = parsed.message ?? null;
-        if (Array.isArray(parsed.details?.causes)) {
-          causes = parsed.details.causes.map((c: any) => ({
-            reason: c.reason ?? '',
-            message: c.message ?? '',
-            field: c.field ?? undefined,
-          }));
-        }
-      } catch {
-        // keep rawJson = raw
-      }
-    }
-
-    return { httpCode: httpCodeMatch ? httpCodeMatch[1] : null, k8sMessage, causes, rawJson };
-  }
-
-  getStatusLabel(status: string): string {
-    return getReconciliationBadgeLabel(status);
-  }
-
-  getStatusClass(status: string): string {
-    return this.colorToClass(getReconciliationBadgeColor(status));
-  }
-
   certBadgeLabel(ep: AppEndpointResponseDto): string {
-    const phase = this.phaseOf(ep);
-    return phase && phase.step !== 'issued'
-      ? phase.label
-      : this.getCertLabel(ep.certificateStatus ?? null);
+    return certificateLabel(ep);
   }
 
   phaseOf(ep: AppEndpointResponseDto): CertificatePhase | null {
-    return (
-      (ep as AppEndpointResponseDto & { certificatePhase?: CertificatePhase }).certificatePhase ??
-      null
-    );
+    return phaseOf(ep);
   }
 
   /** The raw message, kept behind the details button; Flui's own sentences are shown in the row. */
   technicalOf(ep: AppEndpointResponseDto): string | null {
-    const phase = this.phaseOf(ep);
-    return phase ? phase.technical : (ep.certificateMessage ?? null);
+    return technicalOf(ep);
   }
 
-  getCertLabel(status: string | null): string {
-    return getCertificateBadgeLabel(status);
+  protected dnsOf(ep: AppEndpointResponseDto): StateView {
+    return dnsState(ep);
   }
 
-  getCertClass(status: string | null): string {
-    return this.colorToClass(getCertificateBadgeColor(status));
-  }
-
-  isCertOk(status: string | undefined): boolean {
-    return status === 'valid';
-  }
-
-  getModeBadgeLabel(
-    hostnameMode: string | undefined | null,
-    certChallenge: string | undefined | null,
-  ): string {
-    if (hostnameMode === 'ip') return 'Test address';
-    if (certChallenge === 'dns-01') return 'Domain · Wildcard';
-    return 'Domain';
-  }
-
-  getModeBadgeClass(hostnameMode: string | undefined | null): string {
-    return hostnameMode === 'ip' ? this.colorToClass('gray') : this.colorToClass('blue');
-  }
-
-  getModeBadgeTitle(
-    hostnameMode: string | undefined | null,
-    certChallenge: string | undefined | null,
-  ): string {
-    if (hostnameMode === 'ip') return 'Auto-generated test address — works without DNS setup';
-    if (certChallenge === 'dns-01')
-      return 'Custom domain with a wildcard certificate covering the cluster zone';
-    return 'Custom domain with a single-domain certificate';
-  }
-
-  private colorToClass(color: string): string {
-    const map: Record<string, string> = {
-      green: 'bg-green-100 text-green-700',
-      yellow: 'bg-yellow-100 text-yellow-700',
-      blue: 'bg-blue-100 text-blue-700',
-      red: 'bg-red-100 text-red-700',
-      gray: 'bg-gray-100 text-gray-700',
-    };
-    return map[color] ?? map['gray'];
+  protected tlsOf(ep: AppEndpointResponseDto): StateView {
+    return tlsState(ep, this.certPollingId() === ep.id);
   }
 }
