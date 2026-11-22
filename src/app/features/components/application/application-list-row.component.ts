@@ -1,179 +1,110 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { NODE_SERIES_COLORS } from '../../../shared/components/charts';
-import { Tone } from '../dashboard/home-state';
+import { Component, input, output } from '@angular/core';
+import { Tone, statusToneOf } from '../dashboard/home-state';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
 import { ListRow } from './applications-list-rows';
-import { ProjectBadgeComponent } from '../projects/project-badge.component';
-
-export const LIST_COLUMNS = 'minmax(0,2.4fr) 1.3fr 0.6fr 0.7fr 1fr 0.9fr 0.8fr';
-
-const DOT: Record<Tone, string> = {
-  ok: 'bg-green-500',
-  info: 'bg-primary',
-  warn: 'bg-amber-500',
-  danger: 'bg-destructive',
-  muted: 'bg-muted-foreground/50',
-};
-
-const TEXT: Record<Tone, string> = {
-  ok: 'text-green-700',
-  info: 'text-primary',
-  warn: 'text-amber-700',
-  danger: 'text-destructive',
-  muted: 'text-muted-foreground',
-};
 
 @Component({
-  selector: 'app-application-list-row',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ProjectBadgeComponent],
-  host: { class: 'contents' },
+  selector: 'tr[app-application-list-row]',
+  imports: [FlStatus, FlTag, FlUsageBar],
+  host: {
+    '[attr.data-testid]': "'app-row-' + row().id",
+    '[class.is-attention]': "row().tone === 'danger'",
+    '(click)': 'open.emit(row().id)',
+  },
   template: `
     @let r = row();
-    <div
-      role="link"
-      tabindex="0"
-      (click)="open.emit(r.id)"
-      (keydown.enter)="open.emit(r.id)"
-      class="flex flex-wrap md:grid gap-x-3.5 gap-y-2 items-center px-5 py-3.5 border-t border-border cursor-pointer hover:bg-muted/40 transition-colors"
-      [class]="r.tone === 'danger' ? 'bg-destructive/5' : ''"
-      [style.grid-template-columns]="columns"
-      [attr.data-testid]="'app-row-' + r.id"
-    >
-      <div class="flex items-start gap-3 min-w-0 w-full md:w-auto">
-        <span
-          class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
-          [class]="dot(r.tone)"
-          [title]="r.statusLabel"
-        ></span>
-        <div class="flex min-w-0 flex-col gap-0.5">
-          <div class="flex min-w-0 flex-wrap items-center gap-1.5">
-            <span class="truncate text-sm font-semibold text-foreground">{{ r.name }}</span>
-            @if (r.bundle) {
-              <span class="rounded px-1.5 py-0.5 text-[11px] font-medium chip-purple">{{
-                r.bundle
-              }}</span>
-            }
-            @if (r.tool) {
-              <span
-                class="rounded border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground"
-                data-testid="app-row-tool"
-                >Tool</span
+    <td class="whitespace-normal">
+      <div class="fl-cell-name flex flex-col gap-0.5">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            class="fl-link text-left"
+            (click)="$event.stopPropagation(); open.emit(r.id)"
+          >
+            {{ r.name }}
+          </button>
+          @if (r.bundle) {
+            <fl-tag>{{ r.bundle }}</fl-tag>
+          }
+          @if (r.tool) {
+            <fl-tag data-testid="app-row-tool">tool</fl-tag>
+          }
+          @if (r.partOf; as bundle) {
+            <span class="text-fl-caption text-fl-ink-muted" data-testid="app-row-part-of">
+              part of
+              <button
+                type="button"
+                class="fl-link"
+                (click)="$event.stopPropagation(); open.emit(bundle.id)"
               >
-            }
-            @if (r.partOf; as bundle) {
-              <span class="text-xs text-muted-foreground" data-testid="app-row-part-of">
-                part of
-                <button
-                  type="button"
-                  (click)="$event.stopPropagation(); open.emit(bundle.id)"
-                  (keydown.enter)="$event.stopPropagation()"
-                  class="font-medium text-primary hover:underline"
-                >
-                  {{ bundle.name }}
-                </button>
-              </span>
-            }
-            @if (r.project) {
-              <app-project-badge [project]="r.project" />
-            }
-          </div>
-          @if (r.subtitle.href) {
-            <a
-              [href]="r.subtitle.href"
-              target="_blank"
-              rel="noopener noreferrer"
-              (click)="$event.stopPropagation()"
-              class="truncate font-mono text-xs text-primary hover:underline"
-              data-testid="app-row-endpoint"
-              >{{ r.subtitle.text }}</a
-            >
-          } @else {
-            <span
-              class="truncate font-mono text-xs"
-              [class]="text(r.subtitle.tone)"
-              [title]="r.subtitle.text"
-              data-testid="app-row-subtitle"
-              >{{ r.subtitle.text }}</span
-            >
+                {{ bundle.name }}
+              </button>
+            </span>
           }
         </div>
-      </div>
-
-      <div class="flex min-w-0 items-center gap-2" [title]="r.cluster.provider">
-        <span class="icon-chip icon-chip-sm chip-brand text-[10px] font-bold">{{
-          r.cluster.chip
-        }}</span>
-        <span class="truncate text-sm text-foreground">{{ r.cluster.name }}</span>
-      </div>
-
-      <span
-        class="text-sm font-semibold tabular-nums"
-        [class]="text(r.ready.tone)"
-        [title]="r.ready.title"
-        data-testid="app-row-ready"
-        >{{ r.ready.text }}</span
-      >
-
-      <span class="text-xs text-muted-foreground" data-testid="app-row-origin">{{ r.origin }}</span>
-
-      <div
-        class="flex min-w-[6rem] flex-col gap-1.5"
-        [title]="r.usageTitle"
-        data-testid="app-row-usage"
-      >
-        @if (r.cpu === null && r.memory === null) {
-          <span class="text-xs text-muted-foreground">—</span>
+        @if (r.subtitle.href) {
+          <a
+            [href]="r.subtitle.href"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="fl-mono truncate text-fl-ink-muted hover:text-fl-accent"
+            data-testid="app-row-endpoint"
+            (click)="$event.stopPropagation()"
+            >{{ r.subtitle.text }}</a
+          >
         } @else {
-          <div class="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              class="h-full rounded-full"
-              [style.background]="cpuColor"
-              [style.width.%]="bar(r.cpu)"
-            ></div>
-          </div>
-          <div class="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              class="h-full rounded-full"
-              [style.background]="memoryColor"
-              [style.width.%]="bar(r.memory)"
-            ></div>
-          </div>
+          <span
+            class="fl-mono truncate text-fl-ink-muted"
+            [title]="r.subtitle.text"
+            data-testid="app-row-subtitle"
+            >{{ r.subtitle.text }}</span
+          >
         }
       </div>
-
-      <span
-        class="text-xs font-semibold"
-        [class]="text(r.backup.tone)"
-        [title]="r.backup.title"
-        data-testid="app-row-backup"
-        >{{ r.backup.label }}</span
-      >
-
-      <span class="text-xs text-muted-foreground md:text-right" [title]="r.released.title">{{
-        r.released.text
-      }}</span>
-    </div>
+    </td>
+    <td><fl-status [tone]="tone(r.tone)" [label]="r.statusLabel" /></td>
+    <td [title]="r.cluster.provider">
+      <span class="fl-cell-clip">{{ r.cluster.name }}</span>
+    </td>
+    <td>{{ r.project?.name ?? '—' }}</td>
+    <td class="is-num" [title]="r.ready.title" data-testid="app-row-ready">{{ r.ready.text }}</td>
+    <td data-testid="app-row-origin">{{ r.origin }}</td>
+    <td [title]="r.usageTitle" data-testid="app-row-usage">
+      @if (r.cpu === null && r.memory === null) {
+        <span class="text-fl-ink-muted">—</span>
+      } @else {
+        <div class="flex flex-col gap-2">
+          <fl-usage-bar [percent]="bar(r.cpu)" aside="CPU" [label]="r.name + ' CPU of the limit'" />
+          <fl-usage-bar
+            [percent]="bar(r.memory)"
+            aside="Memory"
+            [label]="r.name + ' memory of the limit'"
+          />
+        </div>
+      }
+    </td>
+    <td [title]="r.backup.title" data-testid="app-row-backup">
+      @if (r.backup.label === '—') {
+        <span class="text-fl-ink-muted">—</span>
+      } @else {
+        <fl-status [tone]="tone(r.backup.tone)" [label]="r.backup.label" />
+      }
+    </td>
+    <td class="is-num" [title]="r.released.title">{{ r.released.text }}</td>
   `,
 })
 export class ApplicationListRowComponent {
   readonly row = input.required<ListRow>();
   readonly open = output<string>();
 
-  protected readonly columns = LIST_COLUMNS;
-  protected readonly cpuColor = NODE_SERIES_COLORS[0];
-  protected readonly memoryColor = NODE_SERIES_COLORS[1];
-
-  protected dot(tone: Tone): string {
-    return DOT[tone];
-  }
-
-  protected text(tone: Tone): string {
-    return TEXT[tone];
+  protected tone(tone: Tone): StatusTone {
+    return statusToneOf(tone);
   }
 
   protected bar(v: number | null): number {
     if (v == null) return 0;
-    return Math.max(2, Math.min(100, v));
+    return Math.min(100, Math.max(0, v));
   }
 }

@@ -1,3 +1,4 @@
+import type { StatusTone } from '../../../ui/primitives/status';
 import { StatTileData, NODE_SERIES_COLORS } from '../../../shared/components/charts';
 import { formatDelta, formatRate } from '../../../shared/utils/metric-format';
 import { ClusterInfo, ClusterStatus, isControlClusterType } from '../../model/cluster.models';
@@ -114,6 +115,18 @@ export function relativeTime(date: Date | string | null | undefined, now = Date.
 }
 
 export type Tone = 'ok' | 'info' | 'warn' | 'danger' | 'muted';
+
+const STATUS_OF_TONE: Record<Tone, StatusTone> = {
+  ok: 'success',
+  info: 'progress',
+  warn: 'warning',
+  danger: 'error',
+  muted: 'neutral',
+};
+
+export function statusToneOf(tone: Tone): StatusTone {
+  return STATUS_OF_TONE[tone];
+}
 
 export const CLUSTER_STATUS: Record<string, { label: string; tone: Tone }> = {
   [ClusterStatus.ACTIVE]: { label: 'Active', tone: 'ok' },

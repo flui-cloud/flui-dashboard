@@ -19,7 +19,7 @@ const LIST_COPY: Record<WorkloadList, ListCopy> = {
     many: 'applications',
   },
   data: {
-    title: 'Data',
+    title: 'Data stores',
     emptyTitle: 'No data stores yet',
     emptySubtitle: 'Databases, caches, queues and object stores you add appear here',
     one: 'data store',

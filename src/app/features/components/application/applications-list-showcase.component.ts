@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { ApplicationListRowComponent } from './application-list-row.component';
+import { Component, input, output } from '@angular/core';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTag } from '../../../ui/primitives/tag';
+import { ApplicationsListTableComponent } from './applications-list-table.component';
 import { ListRow } from './applications-list-rows';
 
 export const READ_ONLY_DEMO_SHOWCASE_NOTE =
@@ -15,31 +17,19 @@ export function showcaseNote(apiWhy: string, readOnlyDemo: boolean): string {
 
 @Component({
   selector: 'app-applications-list-showcase',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ApplicationListRowComponent],
-  host: { class: 'block' },
+  imports: [FlPanel, FlTag, ApplicationsListTableComponent],
   template: `
-    <div class="space-y-2">
-      <div class="flex items-baseline gap-2">
-        <h2 class="text-sm font-semibold text-foreground">In the showcase</h2>
-        @if (readOnly()) {
-          <span
-            class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-          >
-            read-only
-          </span>
-        }
-      </div>
-      @if (why()) {
-        <p class="text-xs text-muted-foreground">{{ why() }}</p>
+    <fl-panel title="In the showcase" [count]="rows().length" [flush]="true">
+      @if (readOnly()) {
+        <fl-tag panelActions>read-only</fl-tag>
       }
-      <section class="card-surface overflow-hidden">
-        @for (row of rows(); track row.id) {
-          <app-application-list-row [row]="row" (open)="open.emit($event)" />
-        }
-      </section>
-    </div>
+      @if (why()) {
+        <p class="border-b border-fl-border-subtle px-4 py-3 text-fl-body-sm text-fl-ink-muted">
+          {{ why() }}
+        </p>
+      }
+      <app-applications-list-table [rows]="rows()" (open)="open.emit($event)" />
+    </fl-panel>
   `,
 })
 export class ApplicationsListShowcaseComponent {

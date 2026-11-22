@@ -1,17 +1,14 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideLoader, lucidePackage, lucideRefreshCw } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw } from '@ng-icons/lucide';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { ApplicationService } from '../../service/application.service';
 import { ClusterService } from '../../service/cluster.service';
 import { ProvidersService } from '../../service/providers.service';
@@ -65,96 +62,83 @@ import { AddScope, AddWorkloadMenuComponent } from './add-workload-menu.componen
 
 @Component({
   selector: 'app-applications-list',
-  standalone: true,
   imports: [
-    NgIconComponent,
     ApplicationsListToolbarComponent,
     ApplicationsListTableComponent,
     ApplicationsListShowcaseComponent,
     AddWorkloadMenuComponent,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlButton,
+    FlIcon,
+    FlLoadingState,
+    FlEmptyState,
   ],
-  providers: [provideIcons({ lucideRefreshCw, lucidePackage, lucideLoader, lucideCircleAlert })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideRefreshCw })],
   template: `
-    <div class="space-y-5 p-6">
-      <div class="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 class="text-2xl font-bold text-foreground">{{ pageTitle() }}</h1>
-          <p class="mt-1 text-sm text-muted-foreground" data-testid="apps-summary">
-            {{ summary() }}
-          </p>
-        </div>
-        <div class="flex items-center gap-3">
-          @if (isBackgroundRefreshing()) {
-            <span class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-              <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
-              Syncing...
-            </span>
-          }
+    <div class="fl-page">
+      <fl-page-header [title]="pageTitle() + ' (' + listOwnGroups().length + ')'">
+        <span headerMeta data-testid="apps-summary">{{ summary() }}</span>
+        @if (isBackgroundRefreshing()) {
+          <span headerMeta class="text-fl-ink-muted">Syncing…</span>
+        }
+        <ng-container headerActions>
           <button
-            (click)="refreshApplications()"
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
             [disabled]="isLoading()"
-            class="inline-flex items-center gap-2 px-3 py-2 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 text-sm"
+            (click)="refreshApplications()"
           >
-            <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
-            Refresh
+            <fl-icon name="lucideRefreshCw" />
           </button>
           @if (addScope(); as scope) {
             <app-add-workload-menu [scope]="scope" />
           }
-        </div>
-      </div>
-
-      <app-applications-list-toolbar
-        [filters]="filtersState()"
-        [counts]="counts()"
-        [typeOptions]="typeOptions()"
-        [backupKnown]="coverageById() !== null"
-        [clusterOptions]="clusterOptions()"
-        [projectOptions]="projectOptions()"
-        (filterChange)="updateFilter($event.field, $event.value)"
-      />
+        </ng-container>
+      </fl-page-header>
 
       @if (errorMessage() && !isLoading()) {
-        <div
-          class="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3"
-        >
-          <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-destructive" />
-          <p class="text-sm text-foreground">{{ errorMessage() }}</p>
-        </div>
+        <fl-alert tone="error" title="Could not load the list">{{ errorMessage() }}</fl-alert>
       }
 
-      @if (isInitialLoading()) {
-        <div class="flex flex-col gap-1">
-          @for (i of skeletonRows; track i) {
-            <div class="skeleton h-14"></div>
-          }
-        </div>
-      } @else if (ownRows().length === 0) {
-        <div class="flex flex-col items-center justify-center py-16">
-          <ng-icon name="lucidePackage" class="h-12 w-12 text-muted-foreground/50 mb-3" />
-          <p class="text-sm font-medium text-foreground mb-1">{{ emptyTitle() }}</p>
-          <p class="text-xs text-muted-foreground mb-4">
+      <fl-panel [flush]="true">
+        <app-applications-list-toolbar
+          panelToolbar
+          [filters]="filtersState()"
+          [counts]="counts()"
+          [typeOptions]="typeOptions()"
+          [backupKnown]="coverageById() !== null"
+          [clusterOptions]="clusterOptions()"
+          [projectOptions]="projectOptions()"
+          [resultCount]="ownRows().length"
+          (filterChange)="updateFilter($event.field, $event.value)"
+        />
+        @if (isInitialLoading()) {
+          <fl-loading-state [rows]="5" />
+        } @else if (ownRows().length === 0) {
+          <fl-empty-state
+            [title]="emptyTitle()"
+            [body]="activeFiltersCount() > 0 ? 'Nothing matches these filters.' : emptySubtitle()"
+          >
             @if (activeFiltersCount() > 0) {
-              Nothing matches these filters.
-              <button type="button" (click)="clearFilters()" class="text-primary hover:underline">
+              <button flButton size="sm" type="button" (click)="clearFilters()">
                 Clear filters
               </button>
-            } @else {
-              {{ emptySubtitle() }}
+            } @else if (addScope(); as scope) {
+              <app-add-workload-menu [scope]="scope" />
             }
-          </p>
-          @if (activeFiltersCount() === 0 && addScope(); as scope) {
-            <app-add-workload-menu [scope]="scope" />
-          }
-        </div>
-      } @else {
-        <app-applications-list-table
-          [rows]="ownRows()"
-          [nameHeader]="list() === 'data' ? 'Data store' : 'Application'"
-          (open)="openRecap($event)"
-        />
-      }
+          </fl-empty-state>
+        } @else {
+          <app-applications-list-table
+            [rows]="ownRows()"
+            [nameHeader]="list() === 'data' ? 'Data store' : 'Application'"
+            (open)="openRecap($event)"
+          />
+        }
+      </fl-panel>
 
       @if (showcaseRows().length > 0) {
         <app-applications-list-showcase
@@ -179,8 +163,6 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   private readonly currentSurface = inject(CurrentSurfaceService);
   private readonly sandbox = inject(SandboxService);
   private readonly installPrompt = inject(InstallPromptService);
-
-  readonly skeletonRows = [1, 2, 3, 4, 5];
 
   readonly list = signal<WorkloadList>(
     isWorkloadList(this.route.snapshot.data['list'])

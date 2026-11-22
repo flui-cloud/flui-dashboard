@@ -14,7 +14,7 @@ export const WORKLOAD_LIST_ROUTE: Record<WorkloadList, string> = {
 
 export const WORKLOAD_LIST_LABEL: Record<WorkloadList, string> = {
   applications: 'Applications',
-  data: 'Data',
+  data: 'Data stores',
   system: 'System',
 };
 

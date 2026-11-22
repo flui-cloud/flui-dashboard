@@ -9,7 +9,7 @@ import {
 
 describe('applications list kind', () => {
   it('words the title and the empty state per list', () => {
-    expect(listCopy('data').title).toBe('Data');
+    expect(listCopy('data').title).toBe('Data stores');
     expect(listCopy('data').emptyTitle).toBe('No data stores yet');
     expect(listCopy('applications').emptyTitle).toBe('No applications yet');
     expect(listCopy('system').title).toBe('System');

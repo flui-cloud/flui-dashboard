@@ -15,17 +15,9 @@ import { PermissionService } from '../../../core/services/permission.service';
 import { AutoscaleWarningLevel } from '../../model/autoscale.models';
 import { ClusterStatus } from '../../model/cluster.models';
 import { ApplicationCategoryEnum } from '../../model/application.models';
-import { ClusterRow, ClusterRowApps, Tone, clusterRow } from './home-state';
+import { ClusterRow, ClusterRowApps, clusterRow, statusToneOf } from './home-state';
 
 const MAX_ROWS = 6;
-
-const STATUS_TONE: Record<Tone, StatusTone> = {
-  ok: 'success',
-  info: 'progress',
-  warn: 'warning',
-  danger: 'error',
-  muted: 'neutral',
-};
 
 @Component({
   selector: 'app-dashboard-clusters-table',
@@ -196,7 +188,7 @@ export class DashboardClustersTableComponent {
   }
 
   protected toneOf(row: ClusterRow): StatusTone {
-    return STATUS_TONE[row.status.tone];
+    return statusToneOf(row.status.tone);
   }
 
   protected percentOf(value: string): number {

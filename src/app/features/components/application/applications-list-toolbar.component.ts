@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { lucideSearch } from '@ng-icons/lucide';
 import { ListFilters, ListView } from './applications-list-rows';
 import { WorkloadType } from '../../model/workload-list';
@@ -10,7 +11,6 @@ export type FilterChange = {
 }[keyof ListFilters];
 
 const VIEWS: { key: ListView; label: string }[] = [
-  { key: 'all', label: 'All' },
   { key: 'running', label: 'Running' },
   { key: 'attention', label: 'Needs attention' },
   { key: 'no_backup', label: 'No backup' },
@@ -18,27 +18,28 @@ const VIEWS: { key: ListView; label: string }[] = [
 
 @Component({
   selector: 'app-applications-list-toolbar',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIconComponent],
+  imports: [FormsModule, FlIcon],
   providers: [provideIcons({ lucideSearch })],
-  host: { class: 'block' },
+  host: { class: 'fl-toolbar', role: 'toolbar', 'aria-label': 'Filters' },
   template: `
-    <div class="flex flex-col gap-2.5 lg:flex-row lg:items-center">
+    <div class="fl-toolbar__group">
+      <label class="fl-input">
+        <fl-icon name="lucideSearch" [size]="14" />
+        <span class="fl-sr">Search</span>
+        <input
+          type="search"
+          [ngModel]="filters().search"
+          (ngModelChange)="change('search', $event)"
+          placeholder="Search by name, domain or image"
+          aria-label="Search applications"
+        />
+      </label>
       @if (typeOptions().length > 0) {
-        <div
-          class="inline-flex flex-wrap gap-0.5 rounded-lg bg-muted p-0.5"
-          role="tablist"
-          aria-label="Type"
-          data-testid="apps-types"
-        >
+        <div class="fl-segmented" role="group" aria-label="Type" data-testid="apps-types">
           <button
             type="button"
-            role="tab"
-            [attr.aria-selected]="filters().type === ''"
+            [attr.aria-pressed]="filters().type === ''"
             (click)="change('type', '')"
-            class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-            [class]="typeClass('')"
             data-testid="apps-type-all"
           >
             All
@@ -46,11 +47,8 @@ const VIEWS: { key: ListView; label: string }[] = [
           @for (t of typeOptions(); track t.key) {
             <button
               type="button"
-              role="tab"
-              [attr.aria-selected]="filters().type === t.key"
+              [attr.aria-pressed]="filters().type === t.key"
               (click)="change('type', t.key)"
-              class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-              [class]="typeClass(t.key)"
               [attr.data-testid]="'apps-type-' + t.key"
             >
               {{ t.label }}
@@ -58,66 +56,55 @@ const VIEWS: { key: ListView; label: string }[] = [
           }
         </div>
       }
-      <div
-        class="inline-flex flex-wrap gap-0.5 rounded-lg bg-muted p-0.5"
-        role="tablist"
-        data-testid="apps-views"
-      >
+      <span class="fl-select-wrap">
+        <select
+          class="fl-select fl-select--sm"
+          [ngModel]="filters().cluster"
+          (ngModelChange)="change('cluster', $event)"
+          aria-label="Cluster"
+        >
+          <option value="">Cluster: All</option>
+          @for (cluster of clusterOptions(); track cluster.id) {
+            <option [value]="cluster.id">{{ cluster.name }}</option>
+          }
+        </select>
+      </span>
+      @if (projectOptions().length > 0) {
+        <span class="fl-select-wrap">
+          <select
+            class="fl-select fl-select--sm"
+            [ngModel]="filters().project"
+            (ngModelChange)="change('project', $event)"
+            aria-label="Project"
+          >
+            <option value="">Project: All</option>
+            @for (project of projectOptions(); track project.id) {
+              <option [value]="project.id">{{ project.name }}</option>
+            }
+          </select>
+        </span>
+      }
+      <div class="fl-row" role="group" aria-label="Quick filters" data-testid="apps-views">
         @for (v of views; track v.key) {
           <button
             type="button"
-            role="tab"
-            [attr.aria-selected]="filters().view === v.key"
-            (click)="change('view', v.key)"
-            class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-            [class]="viewClass(v.key)"
+            class="fl-chip"
+            [attr.aria-pressed]="filters().view === v.key"
+            (click)="toggleView(v.key)"
             [attr.data-testid]="'apps-view-' + v.key"
           >
             {{ v.label }}
             @if (countFor(v.key); as n) {
-              <span class="ml-1 tabular-nums">{{ n }}</span>
+              <span class="fl-chip__count">({{ n }})</span>
             }
           </button>
         }
       </div>
-      <div class="relative flex-1">
-        <ng-icon
-          name="lucideSearch"
-          class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-        />
-        <input
-          type="text"
-          [ngModel]="filters().search"
-          (ngModelChange)="change('search', $event)"
-          placeholder="Search by name, domain or image"
-          aria-label="Search applications"
-          class="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
-        />
-      </div>
-      <select
-        [ngModel]="filters().cluster"
-        (ngModelChange)="change('cluster', $event)"
-        aria-label="Cluster"
-        class="px-3 py-2 border border-border rounded-lg bg-background text-sm text-foreground"
+    </div>
+    <div class="fl-toolbar__group">
+      <span class="fl-toolbar__info"
+        >{{ resultCount() }} {{ resultCount() === 1 ? 'item' : 'items' }}</span
       >
-        <option value="">Cluster: all</option>
-        @for (cluster of clusterOptions(); track cluster.id) {
-          <option [value]="cluster.id">{{ cluster.name }}</option>
-        }
-      </select>
-      @if (projectOptions().length > 0) {
-        <select
-          [ngModel]="filters().project"
-          (ngModelChange)="change('project', $event)"
-          aria-label="Project"
-          class="px-3 py-2 border border-border rounded-lg bg-background text-sm text-foreground"
-        >
-          <option value="">Project: all</option>
-          @for (project of projectOptions(); track project.id) {
-            <option [value]="project.id">{{ project.name }}</option>
-          }
-        </select>
-      }
     </div>
   `,
 })
@@ -128,6 +115,7 @@ export class ApplicationsListToolbarComponent {
   readonly backupKnown = input(true);
   readonly clusterOptions = input.required<{ id: string; name: string }[]>();
   readonly projectOptions = input.required<{ id: string; name: string }[]>();
+  readonly resultCount = input(0);
   readonly filterChange = output<FilterChange>();
 
   protected readonly views = VIEWS;
@@ -141,18 +129,7 @@ export class ApplicationsListToolbarComponent {
     return this.counts()[view];
   }
 
-  protected typeClass(type: string): string {
-    return this.filters().type === type
-      ? 'bg-background text-foreground'
-      : 'text-muted-foreground hover:text-foreground';
-  }
-
-  protected viewClass(view: ListView): string {
-    if (this.filters().view === view) return 'bg-background text-foreground';
-    if (view === 'attention' && this.counts().attention > 0)
-      return 'text-destructive hover:text-foreground';
-    if (view === 'no_backup' && this.counts().no_backup > 0)
-      return 'text-amber-700 hover:text-foreground';
-    return 'text-muted-foreground hover:text-foreground';
+  protected toggleView(view: ListView): void {
+    this.change('view', this.filters().view === view ? 'all' : view);
   }
 }

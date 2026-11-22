@@ -32,7 +32,7 @@ describe('app recap header', () => {
     expect(backLink(null, 'data')).toBe('/apps/data');
     expect(backLink(null, 'applications')).toBe('/apps/applications');
     expect(backLink('catalog', 'data')).toBe('/apps/catalog');
-    expect(backLabel(null, 'data')).toBe('Back to data');
+    expect(backLabel(null, 'data')).toBe('Back to data stores');
     expect(backLabel('catalog', 'applications')).toBe('Back to catalog');
   });
 

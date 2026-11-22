@@ -59,3 +59,19 @@
 .fl-level--trace {
   color: var(--fl-ink-muted);
 }
+.fl-table .fl-cell-name {
+  max-width: 300px;
+  min-width: 200px;
+}
+.fl-table .fl-cell-clip {
+  display: block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fl-table .fl-usage {
+  min-width: 96px;
+}
+.fl-toolbar .fl-input {
+  min-width: 260px;
+}
