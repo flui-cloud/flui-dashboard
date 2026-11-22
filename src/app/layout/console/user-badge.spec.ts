@@ -12,7 +12,10 @@ describe('userBadge', () => {
   });
 
   it('shows a visitor without their placeholder email', () => {
-    const badge = userBadge({ name: '', email: 'visitor-123@visitors.invalid' }, { masked: false, visitor: true });
+    const badge = userBadge(
+      { name: '', email: 'visitor-123@visitors.invalid' },
+      { masked: false, visitor: true },
+    );
     expect(badge).toEqual({ name: 'Visitor', email: '', initials: 'V' });
   });
 
@@ -21,6 +24,10 @@ describe('userBadge', () => {
   });
 
   it('copes with no profile yet', () => {
-    expect(userBadge(null, { masked: false, visitor: false })).toEqual({ name: 'User', email: '', initials: '' });
+    expect(userBadge(null, { masked: false, visitor: false })).toEqual({
+      name: 'User',
+      email: '',
+      initials: '',
+    });
   });
 });

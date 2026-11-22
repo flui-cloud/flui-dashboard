@@ -5,10 +5,11 @@ import { KitActions } from './kit-actions';
 import { KitData } from './kit-data';
 import { KitFlows } from './kit-flows';
 import { KitFoundations } from './kit-foundations';
+import { KitFrame } from './kit-frame';
 
 @Component({
   selector: 'fl-kit-page',
-  imports: [FlPageHeader, FlStatus, KitFoundations, KitActions, KitData, KitFlows],
+  imports: [FlPageHeader, FlStatus, KitFoundations, KitActions, KitData, KitFlows, KitFrame],
   host: { class: 'block min-h-screen bg-fl-page-bg text-fl-ink' },
   template: `
     <main class="fl-page mx-auto max-w-screen-xl">
@@ -19,7 +20,8 @@ import { KitFoundations } from './kit-foundations';
         <fl-status headerStatus tone="success" label="Ready" />
         <span headerMeta>Components of src/app/ui rendered with real Angular code</span>
       </fl-page-header>
-        <fl-kit-data />
+      <fl-kit-frame />
+      <fl-kit-data />
       <fl-kit-actions />
       <fl-kit-flows />
       <fl-kit-foundations />

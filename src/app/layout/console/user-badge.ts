@@ -1,4 +1,4 @@
-import { UserProfile } from '../../../core/services/auth.service';
+import { UserProfile } from '../../core/services/auth.service';
 
 export interface UserBadge {
   name: string;
@@ -6,7 +6,7 @@ export interface UserBadge {
   initials: string;
 }
 
-/** What the sidebar shows for the person signed in; a visitor's placeholder email never shows. */
+/** What the top bar shows for the person signed in; a visitor's placeholder email never shows. */
 export function userBadge(
   user: Pick<UserProfile, 'name' | 'email'> | null,
   state: { masked: boolean; visitor: boolean },

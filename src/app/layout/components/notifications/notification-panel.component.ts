@@ -23,61 +23,43 @@ import { NotificationItemComponent } from './notification-item.component';
   providers: [provideIcons({ lucideBell, lucideCheck })],
   template: `
     <div class="relative">
-      <!-- Bell button -->
       <button
+        type="button"
+        class="fl-topbar__icon"
+        [attr.aria-label]="triggerLabel()"
+        [attr.aria-expanded]="isOpen()"
         (click)="togglePanel($event)"
-        class="relative p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        [title]="notifService.unreadCount() + ' unread notifications'"
       >
-        <ng-icon name="lucideBell" class="!h-4 !w-4" />
+        <ng-icon name="lucideBell" size="17px" />
         @if (notifService.unreadCount() > 0) {
-          <span
-            class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold leading-4 text-center bg-red-500 text-white"
-          >
-            {{ badgeLabel() }}
-          </span>
+          <span class="fl-topbar__dot"></span>
         }
       </button>
 
-      <!-- Dropdown panel -->
       @if (isOpen()) {
-        <div
-          class="absolute right-0 top-full mt-1 w-80 z-50 rounded-lg border border-border bg-popover shadow-xl overflow-hidden animate-slide-in-from-top"
-          (click)="$event.stopPropagation()"
-        >
-          <!-- Panel header -->
-          <div class="flex items-center justify-between px-3 py-2.5 border-b border-border">
-            <span class="text-sm font-semibold text-foreground">Notifications</span>
-            <div class="flex items-center gap-3">
+        <div class="fl-popover" role="dialog" aria-label="Notifications" (click)="$event.stopPropagation()">
+          <div class="fl-popover__header">
+            <span class="fl-popover__title">Notifications</span>
+            <div class="flex items-center gap-1">
               @if (notifService.unreadCount() > 0) {
-                <button
-                  (click)="notifService.markAllRead()"
-                  class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ng-icon name="lucideCheck" class="!h-3 !w-3" />
+                <button type="button" class="fl-btn fl-btn--ghost fl-btn--sm" (click)="notifService.markAllRead()">
+                  <ng-icon name="lucideCheck" />
                   Mark all read
                 </button>
               }
               @if (notifService.notifications().length > 0) {
-                <button
-                  (click)="notifService.clear()"
-                  class="text-xs text-muted-foreground hover:text-destructive transition-colors"
-                >
+                <button type="button" class="fl-btn fl-btn--ghost fl-btn--sm" (click)="notifService.clear()">
                   Clear all
                 </button>
               }
             </div>
           </div>
 
-          <!-- Notification list -->
-          <div class="max-h-[420px] overflow-y-auto divide-y divide-border/50">
+          <div class="fl-popover__body">
             @if (notifService.notifications().length === 0) {
-              <div class="flex flex-col items-center justify-center py-10 px-4 text-center gap-2">
-                <ng-icon name="lucideBell" class="!h-8 !w-8 text-muted-foreground opacity-30" />
-                <p class="text-sm font-medium text-muted-foreground">No notifications</p>
-                <p class="text-xs text-muted-foreground">
-                  Events from deployments and clusters will appear here.
-                </p>
+              <div class="fl-state fl-state--compact">
+                <p class="fl-state__title">No notifications</p>
+                <p class="fl-state__body">Events from deployments and clusters appear here.</p>
               </div>
             } @else {
               @for (notif of notifService.notifications(); track notif.id) {
@@ -94,15 +76,12 @@ import { NotificationItemComponent } from './notification-item.component';
             }
           </div>
 
-          <!-- Footer count -->
           @if (notifService.notifications().length > 0) {
-            <div class="px-3 py-2 border-t border-border/50 text-center">
-              <span class="text-[11px] text-muted-foreground">
-                {{ notifService.notifications().length }} notification{{ notifService.notifications().length !== 1 ? 's' : '' }}
-                @if (notifService.unreadCount() > 0) {
-                  · {{ notifService.unreadCount() }} unread
-                }
-              </span>
+            <div class="fl-popover__footer">
+              {{ notifService.notifications().length }} notification{{ notifService.notifications().length !== 1 ? 's' : '' }}
+              @if (notifService.unreadCount() > 0) {
+                · {{ notifService.unreadCount() }} unread
+              }
             </div>
           }
         </div>
@@ -117,9 +96,9 @@ export class NotificationPanelComponent {
   protected isOpen = signal(false);
   protected expandedId = signal<string | null>(null);
 
-  protected readonly badgeLabel = computed(() => {
+  protected readonly triggerLabel = computed(() => {
     const count = this.notifService.unreadCount();
-    return count > 99 ? '99+' : String(count);
+    return count > 0 ? `Notifications, ${count} unread` : 'Notifications';
   });
 
   @HostListener('document:click')

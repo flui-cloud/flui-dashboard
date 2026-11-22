@@ -67,9 +67,6 @@
       ],
       "@spartan-ng/helm/popover": [
         "./libs/ui/popover/src/index.ts"
-      ],
-      "@dawit-io/spartan-sidebar": [
-        "./libs/ui/ui-sidebar/src/public-api.ts"
       ]
     }
   },

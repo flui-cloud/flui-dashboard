@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { SHOW_SYSTEM_APPS_KEY } from '../../layout/components/sidebar/sidebar-nav.config';
-import { SystemAppsPreference } from './system-apps-preference.service';
+import { SHOW_SYSTEM_APPS_KEY, SystemAppsPreference } from './system-apps-preference.service';
 
 describe('SystemAppsPreference', () => {
   const fresh = () => {

@@ -6,7 +6,7 @@ import { AppConfigService } from '../../core/services/app-config.service';
 import { AuthService } from '../../core/services/auth.service';
 import { MaskModeService } from '../../core/services/mask-mode.service';
 import { SandboxService } from '../../core/services/sandbox.service';
-import { SHOW_SYSTEM_APPS_KEY } from '../../layout/components/sidebar/sidebar-nav.config';
+import { SHOW_SYSTEM_APPS_KEY } from '../../core/services/system-apps-preference.service';
 
 describe('TopologyDashboardService stream', () => {
   const masked = signal(false);

@@ -1,5 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { SHOW_SYSTEM_APPS_KEY } from '../../layout/components/sidebar/sidebar-nav.config';
+
+export const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
 
 /**
  * Whether the apps Flui itself runs are shown. One setting for the sidebar and

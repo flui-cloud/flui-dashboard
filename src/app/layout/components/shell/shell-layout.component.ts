@@ -1,28 +1,43 @@
-import { Component, HostBinding, inject, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map, take } from 'rxjs';
-import {
-  SidebarVariant,
-  CollapsibleMode,
-  BrnSidebarService,
-  BrnSidebarSearchService,
-  BrnSidebarPinService,
-} from '@dawit-io/spartan-sidebar-core';
-import {
-  HlmSidebarContentHeaderComponent,
-  HlmSidebarTriggerComponent,
-} from '@dawit-io/spartan-sidebar';
 import { provideIcons } from '@ng-icons/core';
-import { lucideSun, lucideMoon } from '@ng-icons/lucide';
-import { ThemeService } from '../../../core/services/theme.service';
-import { SidebarComponent } from '../sidebar/sidebar.component';
-import { HeaderComponent } from '../header/header.component';
+import {
+  lucideActivity,
+  lucideArrowLeftRight,
+  lucideBot,
+  lucideBoxes,
+  lucideChartColumn,
+  lucideCloud,
+  lucideContainer,
+  lucideDatabase,
+  lucideDownload,
+  lucideEuro,
+  lucideFileText,
+  lucideFolder,
+  lucideGitBranch,
+  lucideGithub,
+  lucideGlobe,
+  lucideHistory,
+  lucideKeyRound,
+  lucideLayers,
+  lucideLayoutGrid,
+  lucideMail,
+  lucideNetwork,
+  lucidePackage,
+  lucideServer,
+  lucideSettings,
+  lucideShield,
+  lucideStore,
+  lucideUpload,
+  lucideUsers,
+  lucideWorkflow,
+} from '@ng-icons/lucide';
 import { QuickSshOverlayComponent } from '../../../features/components/ssh/quick-ssh-overlay.component';
 import { QuickSshDockComponent } from '../../../features/components/ssh/quick-ssh-dock.component';
 import { ToastContainerComponent } from '../../../shared/components/toast-container.component';
 import { AssistantWidgetComponent } from '../../../features/components/assistant/assistant-widget.component';
-import { FluiBackdropComponent } from '../../../shared/components/flui-backdrop/flui-backdrop.component';
 import { SandboxBannerComponent } from './sandbox-banner.component';
 import { VisitorSignInDialogComponent } from './visitor-sign-in-dialog.component';
 import { InstallFluiDialogComponent } from './install-flui-dialog.component';
@@ -31,84 +46,92 @@ import { PAGE_WIDTH_CLASS, pageWidth } from './page-width';
 import { PlatformUpdateWatcherComponent } from '../../../features/components/platform-updates/platform-update-watcher.component';
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
+import { ThemeService } from '../../../core/services/theme.service';
+import { FlSidenav } from '../../../ui/frame/sidenav';
+import { CommandPaletteService } from '../../../ui/frame/command-palette';
+import { ConsoleNav } from '../../console/console-nav';
+import { ConsoleTopbar } from '../../console/console-topbar';
+
+const OWN_ASSISTANT = [
+  '/db-console',
+  '/kv-console',
+  '/doc-console',
+  '/object-store-console',
+  '/search-console',
+  '/messaging-console',
+];
 
 @Component({
   selector: 'app-shell-layout',
-  standalone: true,
   imports: [
+    RouterOutlet,
+    ConsoleTopbar,
+    FlSidenav,
     PlatformUpdateWatcherComponent,
     SandboxSectionNoticeComponent,
-    SidebarComponent,
-    HlmSidebarContentHeaderComponent,
-    HlmSidebarTriggerComponent,
-    HeaderComponent,
-    RouterOutlet,
     QuickSshOverlayComponent,
     QuickSshDockComponent,
     ToastContainerComponent,
     AssistantWidgetComponent,
-    FluiBackdropComponent,
     SandboxBannerComponent,
     VisitorSignInDialogComponent,
     InstallFluiDialogComponent,
   ],
   providers: [
-    BrnSidebarService,
-    BrnSidebarSearchService,
-    BrnSidebarPinService,
-    provideIcons({ lucideSun, lucideMoon }),
+    ConsoleNav,
+    provideIcons({
+      lucideActivity,
+      lucideArrowLeftRight,
+      lucideBot,
+      lucideBoxes,
+      lucideChartColumn,
+      lucideCloud,
+      lucideContainer,
+      lucideDatabase,
+      lucideDownload,
+      lucideEuro,
+      lucideFileText,
+      lucideFolder,
+      lucideGitBranch,
+      lucideGithub,
+      lucideGlobe,
+      lucideHistory,
+      lucideKeyRound,
+      lucideLayers,
+      lucideLayoutGrid,
+      lucideMail,
+      lucideNetwork,
+      lucidePackage,
+      lucideServer,
+      lucideSettings,
+      lucideShield,
+      lucideStore,
+      lucideUpload,
+      lucideUsers,
+      lucideWorkflow,
+    }),
   ],
-  styles: [`
-    .subtle-scroll {
-      scrollbar-width: thin;
-      scrollbar-color: transparent transparent;
-    }
-    .subtle-scroll:hover {
-      scrollbar-color: hsl(var(--muted-foreground) / 0.4) transparent;
-    }
-    .subtle-scroll::-webkit-scrollbar {
-      width: 4px;
-    }
-    .subtle-scroll::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .subtle-scroll::-webkit-scrollbar-thumb {
-      background-color: transparent;
-      border-radius: 4px;
-      box-shadow: inset 0 0 0 4px transparent;
-      transition: box-shadow 0.3s ease;
-    }
-    .subtle-scroll:hover::-webkit-scrollbar-thumb {
-      box-shadow: inset 0 0 0 4px hsl(var(--muted-foreground) / 0.4);
-    }
-  `],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'fl-shell', '(document:keydown)': 'onKeydown($event)' },
   template: `
-    <div class="flex bg-background border-gray h-screen">
-      <sidebar
-        [sidebarVariant]="sidebarVariant()"
-        [collapsibleMode]="collapsibleMode()"
-        class="h-full overflow-y-auto"
-      >
-      </sidebar>
-      <div class="flex-1 flex flex-col h-full overflow-hidden">
-        <app-sandbox-banner class="flex-shrink-0" />
-        <hlm-sidebar-content-header class="flex-shrink-0">
-          <hlm-sidebar-trigger />
-          <div class="h-3 w-[1px] bg-foreground/20 ml-2 mr-2"></div>
-          <div class="ml-auto bg-background"></div>
-          <header></header>
-        </hlm-sidebar-content-header>
-        <div class="relative flex-1 overflow-hidden">
-          <app-flui-backdrop placement="bottom-right" intensity="soft" />
-          <div class="page-outlet absolute inset-0 overflow-y-auto p-2 subtle-scroll">
-            <div class="mx-auto w-full" [class]="widthClass()">
-              <app-sandbox-section-notice />
-              <router-outlet></router-outlet>
-            </div>
-          </div>
+    <app-console-topbar
+      [navOpen]="navOpen()"
+      (menuToggle)="navOpen.set(!navOpen())"
+      (searchOpen)="openSearch()"
+    />
+    <app-sandbox-banner />
+    <div class="fl-shell__body">
+      <fl-sidenav
+        class="fl-shell__nav"
+        [class.is-open]="navOpen()"
+        [sections]="nav.sections()"
+        (navigate)="navOpen.set(false)"
+      />
+      <main class="fl-shell__main page-outlet" id="main">
+        <div class="mx-auto w-full p-2" [class]="widthClass()">
+          <app-sandbox-section-notice />
+          <router-outlet />
         </div>
-      </div>
+      </main>
     </div>
     <app-quick-ssh-overlay />
     <app-quick-ssh-dock />
@@ -116,59 +139,65 @@ import { VisitorSignInService } from '../../../core/services/visitor-sign-in.ser
     <app-visitor-sign-in-dialog />
     <app-install-flui-dialog />
     <app-platform-update-watcher />
-    <!-- Hide the global Flui assistant where a section has its own assistant
-         (e.g. the SQL console), to avoid two floating assistants competing. -->
     @if (!hideAssistant()) {
       <app-assistant-widget />
     }
   `,
 })
 export class ShellLayoutComponent {
-  protected readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
   private readonly sandbox = inject(SandboxService);
   private readonly visitorSignIn = inject(VisitorSignInService);
+  private readonly palette = inject(CommandPaletteService);
+  protected readonly nav = inject(ConsoleNav);
+  protected readonly navOpen = signal(false);
 
-  /** Recomputed on each navigation, from the route the page was reached by. */
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(() => this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
   protected readonly widthClass = toSignal(
     this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
-      map(() => PAGE_WIDTH_CLASS[pageWidth(this.router.routerState.snapshot.root, this.router.url)]),
+      map(
+        () => PAGE_WIDTH_CLASS[pageWidth(this.router.routerState.snapshot.root, this.router.url)],
+      ),
     ),
-    { initialValue: PAGE_WIDTH_CLASS[pageWidth(this.router.routerState.snapshot.root, this.router.url)] },
+    {
+      initialValue:
+        PAGE_WIDTH_CLASS[pageWidth(this.router.routerState.snapshot.root, this.router.url)],
+    },
+  );
+
+  protected readonly hideAssistant = computed(() =>
+    OWN_ASSISTANT.some((r) => this.url().includes(r)),
   );
 
   constructor() {
-    // A guest returning to an open tab has the cookie but not the session state.
+    inject(ThemeService);
+    this.nav.load();
     this.sandbox.refresh();
     this.router.events
-      .pipe(filter((e) => e instanceof NavigationEnd), take(1))
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        take(1),
+      )
       .subscribe(() => void this.visitorSignIn.handleReturn());
   }
 
-  // Routes that ship their own assistant — hide the global floating one there.
-  private static readonly OWN_ASSISTANT = [
-    '/db-console',
-    '/kv-console',
-    '/doc-console',
-    '/object-store-console',
-    '/search-console',
-    '/messaging-console',
-  ];
-  private hasOwnAssistant(url: string): boolean {
-    return ShellLayoutComponent.OWN_ASSISTANT.some((r) => url.includes(r));
+  protected onKeydown(event: KeyboardEvent): void {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      void this.openSearch();
+    }
   }
-  protected readonly hideAssistant = toSignal(
-    this.router.events.pipe(
-      filter((e) => e instanceof NavigationEnd),
-      map(() => this.hasOwnAssistant(this.router.url)),
-    ),
-    { initialValue: this.hasOwnAssistant(this.router.url) },
-  );
-  sidebarVariant = input<SidebarVariant>('sidebar');
-  collapsibleMode = input<CollapsibleMode>('icon');
 
-  @HostBinding('class.dark') get mode() {
-    return this.themeService.isDarkMode();
+  protected async openSearch(): Promise<void> {
+    const link = await this.palette.pick(this.nav.paletteEntries());
+    if (link) void this.router.navigateByUrl(link);
   }
 }
