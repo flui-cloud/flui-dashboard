@@ -1,0 +1,85 @@
+.fl-chart {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  column-gap: var(--fl-space-2);
+}
+.fl-chart__y {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 160px;
+  font-size: 11px;
+  color: var(--fl-ink-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.fl-chart__plot {
+  display: block;
+  width: 100%;
+  height: 160px;
+}
+.fl-chart__x {
+  grid-column: 2;
+  position: relative;
+  height: 16px;
+  font-size: 11px;
+  color: var(--fl-ink-muted);
+}
+.fl-chart__x span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+:is(.fl-chart, .fl-legend) .grid {
+  stroke: var(--fl-border-subtle);
+}
+:is(.fl-chart, .fl-legend) .axis {
+  stroke: var(--fl-border-button);
+}
+:is(.fl-chart, .fl-legend) .s1 {
+  stroke: var(--fl-accent);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+:is(.fl-chart, .fl-legend) .s1-area {
+  fill: var(--fl-accent);
+  fill-opacity: 0.08;
+}
+:is(.fl-chart, .fl-legend) .s2 {
+  stroke: var(--fl-ink-secondary);
+  fill: none;
+  stroke-width: 1.25;
+  stroke-dasharray: 4 2;
+  stroke-linejoin: round;
+}
+:is(.fl-chart, .fl-legend) .warn {
+  stroke: var(--fl-warning);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+:is(.fl-chart, .fl-legend) .crit {
+  stroke: var(--fl-danger);
+  stroke-width: 1.5;
+  stroke-dasharray: 1.5 2.5;
+}
+.fl-legend {
+  display: flex;
+  gap: var(--fl-space-3);
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--fl-ink-muted);
+}
+.fl-legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fl-chart__x span:first-child {
+  transform: none;
+}
+.fl-chart__x span:last-child {
+  transform: translateX(-100%);
+}

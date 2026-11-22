@@ -1,0 +1,19 @@
+.fl-btn:focus-visible,
+.fl-chip:focus-visible,
+.fl-tab:focus-visible,
+.fl-sidenav__item:focus-visible,
+.fl-segmented button:focus-visible,
+.fl-link:focus-visible,
+.fl-scope:focus-visible,
+.fl-search:focus-visible,
+.fl-topbar__icon:focus-visible,
+.fl-topbar__user:focus-visible,
+.fl-copy button:focus-visible,
+.fl-menu__item:focus-visible,
+.fl-dialog__close:focus-visible,
+.fl-toast__close:focus-visible,
+.fl-select:focus-visible,
+.fl-textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--fl-focus-ring);
+}

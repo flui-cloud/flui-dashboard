@@ -1,0 +1,53 @@
+.fl-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 1px;
+  background: var(--fl-border);
+  border: 1px solid var(--fl-border);
+  border-radius: var(--fl-radius-lg);
+  overflow: hidden;
+}
+.fl-metric {
+  background: var(--fl-surface);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--fl-ink);
+  text-decoration: none;
+}
+a.fl-metric:hover {
+  background: var(--fl-surface-hover);
+}
+.fl-metric__label {
+  font-size: 12px;
+  color: var(--fl-ink-muted);
+}
+.fl-metric__value {
+  display: flex;
+  align-items: center;
+  gap: var(--fl-space-2);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.fl-metric__value svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.fl-metric__caption {
+  font-size: 12px;
+  color: var(--fl-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.fl-metric--warning .fl-metric__value svg {
+  color: var(--fl-warning);
+}
+.fl-metric--warning .fl-metric__caption {
+  color: var(--fl-warning-text);
+}
+.fl-metric--success .fl-metric__value svg {
+  color: var(--fl-success);
+}

@@ -10,7 +10,7 @@ import { ChartTheme, ChartColorScheme, DEFAULT_CHART_COLORS } from '../component
   providedIn: 'root'
 })
 export class ChartThemeService {
-  private readonly _theme = signal<ChartTheme | 'auto'>('auto');
+  private readonly _theme = signal<ChartTheme | 'auto'>('light');
   private readonly _systemTheme = signal<ChartTheme>(this.detectSystemTheme());
 
   /** Current active theme (resolves 'auto' to actual theme) */
@@ -26,21 +26,11 @@ export class ChartThemeService {
   readonly isDarkMode = computed(() => this.currentTheme() === 'dark');
 
   constructor() {
-    // Listen for system theme changes
     if (typeof window !== 'undefined' && globalThis.window.matchMedia) {
       const darkModeQuery = globalThis.window.matchMedia('(prefers-color-scheme: dark)');
-
-      // Modern browsers
-      if (darkModeQuery.addEventListener) {
-        darkModeQuery.addEventListener('change', (e) => {
-          this._systemTheme.set(e.matches ? 'dark' : 'light');
-        });
-      } else {
-        // Legacy browsers
-        darkModeQuery.addListener((e) => {
-          this._systemTheme.set(e.matches ? 'dark' : 'light');
-        });
-      }
+      darkModeQuery.addEventListener('change', (e) => {
+        this._systemTheme.set(e.matches ? 'dark' : 'light');
+      });
     }
   }
 

@@ -1,0 +1,33 @@
+.fl-panel {
+  display: block;
+  background: var(--fl-surface);
+  border: 1px solid var(--fl-border);
+  border-radius: var(--fl-radius-lg);
+}
+.fl-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--fl-space-3);
+  flex-wrap: wrap;
+  padding: var(--fl-space-3) var(--fl-space-4);
+  border-bottom: 1px solid var(--fl-border);
+}
+.fl-panel__title {
+  margin: 0;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.fl-panel__count {
+  color: var(--fl-ink-muted);
+  font-weight: 400;
+}
+.fl-panel__actions {
+  display: flex;
+  gap: var(--fl-space-2);
+  align-items: center;
+}
+.fl-panel__body {
+  padding: var(--fl-space-4);
+}

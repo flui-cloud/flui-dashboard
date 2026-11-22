@@ -1,0 +1,12 @@
+.fl-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--fl-border);
+  border-radius: var(--fl-radius-sm);
+  background: var(--fl-surface);
+  font-size: 11.5px;
+  color: var(--fl-ink-secondary);
+  white-space: nowrap;
+}

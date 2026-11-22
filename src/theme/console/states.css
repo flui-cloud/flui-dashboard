@@ -1,0 +1,70 @@
+.fl-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--fl-space-2);
+  padding: 40px var(--fl-space-4);
+  text-align: center;
+  font-size: 13px;
+  color: var(--fl-ink-muted);
+}
+.fl-state__icon {
+  width: 20px;
+  height: 20px;
+  color: var(--fl-ink-muted);
+}
+.fl-state__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fl-ink);
+}
+.fl-state__body {
+  max-width: 440px;
+}
+.fl-state__actions {
+  display: flex;
+  gap: var(--fl-space-2);
+  margin-top: var(--fl-space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.fl-state--error .fl-state__icon {
+  color: var(--fl-danger);
+}
+.fl-state--compact {
+  padding: var(--fl-space-5) var(--fl-space-4);
+}
+.fl-skeleton {
+  display: block;
+  height: 12px;
+  border-radius: var(--fl-radius-sm);
+  background: var(--fl-track);
+}
+.fl-skeleton-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: var(--fl-space-4);
+}
+.fl-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 2px solid var(--fl-track);
+  border-top-color: var(--fl-accent);
+  border-radius: 50%;
+  animation: fl-spin 0.8s linear infinite;
+  flex: none;
+}
+@keyframes fl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fl-spinner {
+    animation-duration: 2.4s;
+  }
+}

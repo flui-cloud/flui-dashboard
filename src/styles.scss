@@ -10,90 +10,11 @@
 }
 
 :root {
-  --font-sans: "Geist", system-ui, -apple-system, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "Cascadia Code", monospace;
-
-  --background: 220 20% 97%;
-  --foreground: 220 10% 11%;
-
-  --card: 0 0% 100%;
-  --card-foreground: 220 10% 11%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 220 10% 11%;
-
-  --primary: 224 88% 54%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 220 14% 96%;
-  --secondary-foreground: 220 10% 11%;
-
-  --muted: 220 16% 96%;
-  --muted-foreground: 220 8% 39%;
-  --accent: 220 16% 96%;
-  --accent-foreground: 224 88% 54%;
-
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-
-  --border: 216 15% 94%;
-  --input: 216 15% 94%;
-  --ring: 224 88% 54%;
-
-  --brand: 224 88% 54%;
-  --brand-bright: 217 100% 65%;
-  --ok: 142 76% 36%;
-  --warn: 33 90% 40%;
-  --purple: 252 100% 68%;
-
-  // CodeMirror token colours (filter editor + mongo shell). Keys use --foreground for
-  // contrast; only values are tinted. Tuned for the light background.
   --cm-string: 160 84% 28%;
   --cm-number: 200 98% 36%;
   --cm-atom: 262 83% 53%;
   --cm-keyword: 192 91% 33%;
-
-  --radius: 0.75rem;
   color-scheme: light;
-}
-
-.dark {
-  --background: 220 36% 5%;
-  --foreground: 218 28% 92%;
-
-  --card: 218 35% 8%;
-  --card-foreground: 218 28% 92%;
-  --popover: 219 35% 9%;
-  --popover-foreground: 218 28% 92%;
-
-  --primary: 224 100% 60%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 218 30% 14%;
-  --secondary-foreground: 218 28% 92%;
-
-  --muted: 218 32% 12%;
-  --muted-foreground: 218 15% 65%;
-  --accent: 218 32% 12%;
-  --accent-foreground: 224 100% 70%;
-
-  --destructive: 0 85% 60%;
-  --destructive-foreground: 0 0% 100%;
-
-  --border: 218 30% 15%;
-  --input: 218 30% 15%;
-  --ring: 224 100% 65%;
-
-  --brand: 224 100% 60%;
-  --brand-bright: 217 100% 69%;
-  --ok: 152 67% 50%;
-  --warn: 41 94% 46%;
-  --purple: 252 100% 71%;
-
-  // Brighter token colours so values stay legible on the near-black editor background.
-  --cm-string: 158 64% 60%;
-  --cm-number: 199 95% 64%;
-  --cm-atom: 255 92% 76%;
-  --cm-keyword: 187 86% 60%;
-
-  color-scheme: dark;
 }
 
 @layer base {
@@ -107,8 +28,8 @@
 }
 
 /**
- * Semantic component utilities — use these instead of hardcoded gray-xxx dark:gray-xxx.
- * They automatically switch between light/dark using the CSS variables defined above.
+ * Legacy component utilities, kept until the pages using them move to the kit in src/app/ui.
+ * Their colors come from the legacy variables generated in src/theme/tokens.css.
  *
  * CARDS
  *   card-surface      → bg-card + border + rounded-lg          (outer card)

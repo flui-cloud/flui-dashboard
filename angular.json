@@ -37,6 +37,8 @@
               }
             ],
             "styles": [
+              "src/theme/tokens.css",
+              "src/theme/console.css",
               "src/styles.scss",
               "node_modules/xterm/css/xterm.css"
             ],
@@ -107,6 +109,8 @@
               }
             ],
             "styles": [
+              "src/theme/tokens.css",
+              "src/theme/console.css",
               "src/styles.scss"
             ],
             "scripts": [],

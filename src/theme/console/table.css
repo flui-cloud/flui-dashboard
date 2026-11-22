@@ -1,0 +1,61 @@
+.fl-table-wrap {
+  overflow-x: auto;
+}
+.fl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.fl-table th {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--fl-ink-secondary);
+  text-align: left;
+  padding: 9px var(--fl-space-4);
+  border-bottom: 1px solid var(--fl-border);
+  background: var(--fl-surface-subtle);
+  white-space: nowrap;
+}
+.fl-table td {
+  padding: 11px var(--fl-space-4);
+  border-bottom: 1px solid var(--fl-border-subtle);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.fl-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.fl-table tbody tr:hover {
+  background: var(--fl-surface-hover);
+}
+.fl-table tr.is-selected {
+  background: var(--fl-accent-row);
+}
+.fl-table .is-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.fl-table--dense td {
+  padding: 7px 14px;
+}
+.fl-table--log td {
+  font-family: var(--fl-font-mono);
+  font-size: 12.5px;
+  padding: 7px 14px;
+}
+.fl-level {
+  font-weight: 500;
+}
+.fl-level--info {
+  color: var(--fl-accent);
+}
+.fl-level--warn {
+  color: var(--fl-warning-text);
+}
+.fl-level--error {
+  color: var(--fl-danger);
+}
+.fl-level--debug,
+.fl-level--trace {
+  color: var(--fl-ink-muted);
+}

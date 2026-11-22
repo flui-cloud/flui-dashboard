@@ -1,0 +1,76 @@
+.fl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--fl-control-height);
+  box-sizing: border-box;
+  padding: 0 var(--fl-space-3);
+  border: 1px solid var(--fl-border-button);
+  border-radius: var(--fl-radius-md);
+  background: var(--fl-surface);
+  color: var(--fl-ink);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.fl-btn:hover {
+  background: var(--fl-surface-hover);
+}
+.fl-btn svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+.fl-btn--primary {
+  background: var(--fl-accent);
+  border-color: var(--fl-accent);
+  color: var(--fl-on-accent);
+  font-weight: 500;
+  padding: 0 14px;
+}
+.fl-btn--primary:hover {
+  background: var(--fl-accent-strong);
+  border-color: var(--fl-accent-strong);
+}
+.fl-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--fl-ink-secondary);
+}
+.fl-btn--ghost:hover {
+  background: var(--fl-surface-hover);
+  color: var(--fl-ink);
+}
+.fl-btn--sm {
+  height: var(--fl-control-height-sm);
+}
+.fl-btn--icon {
+  width: var(--fl-control-height);
+  padding: 0;
+}
+.fl-btn--sm.fl-btn--icon {
+  width: var(--fl-control-height-sm);
+}
+.fl-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.fl-btn--danger {
+  background: var(--fl-danger);
+  border-color: var(--fl-danger);
+  color: var(--fl-on-accent);
+  font-weight: 500;
+  padding: 0 14px;
+}
+.fl-btn--danger:hover {
+  background: var(--fl-danger);
+  border-color: var(--fl-danger);
+  filter: brightness(0.92);
+}
+.fl-btn--block {
+  width: 100%;
+}

@@ -1,0 +1,22 @@
+.fl-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fl-space-5);
+  padding: var(--fl-space-5) var(--fl-space-8) var(--fl-space-8);
+  min-width: 0;
+}
+.fl-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(480px, 100%), 1fr));
+  gap: var(--fl-space-5);
+}
+.fl-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fl-space-5);
+}
+@media (max-width: 720px) {
+  .fl-page {
+    padding: var(--fl-space-4);
+  }
+}

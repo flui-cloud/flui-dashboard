@@ -138,6 +138,8 @@ internal-docs/
 
 # ---------- Tooling residue ----------
 /tools/*
+!/tools/theme/
+!/tools/slop/
 structure.sh
 build.log
 build-output.log

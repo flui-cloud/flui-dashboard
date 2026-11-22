@@ -51,6 +51,11 @@ export const routes: Routes = [
     ? []
     : [
         {
+          path: 'kit',
+          loadComponent: () => import('./ui/kit-page/kit-page').then((m) => m.KitPage),
+          title: 'Kit - flui.cloud',
+        },
+        {
           path: 'mock/scaling-section',
           loadChildren: () =>
             import('./scaling-fixture.routes').then((m) => m.scalingFixtureRoutes),

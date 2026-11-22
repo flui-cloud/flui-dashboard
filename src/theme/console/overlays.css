@@ -1,0 +1,212 @@
+.fl-backdrop {
+  background: var(--fl-overlay);
+}
+.fl-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  box-sizing: border-box;
+  background: var(--fl-surface);
+  border: 1px solid var(--fl-border);
+  border-radius: var(--fl-radius-lg);
+  color: var(--fl-ink);
+  font-size: 13px;
+}
+.fl-dialog--wide {
+  width: min(720px, calc(100vw - 32px));
+}
+.fl-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fl-space-3);
+  padding: var(--fl-space-3) var(--fl-space-4);
+  border-bottom: 1px solid var(--fl-border);
+}
+.fl-dialog__title {
+  margin: 0;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.fl-dialog__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--fl-radius-md);
+  background: transparent;
+  color: var(--fl-ink-muted);
+  cursor: pointer;
+}
+.fl-dialog__close:hover {
+  background: var(--fl-surface-hover);
+  color: var(--fl-ink);
+}
+.fl-dialog__close svg {
+  width: 16px;
+  height: 16px;
+}
+.fl-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fl-space-3);
+  padding: var(--fl-space-4);
+  overflow-y: auto;
+  line-height: 20px;
+}
+.fl-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--fl-space-2);
+  flex-wrap: wrap;
+  padding: var(--fl-space-3) var(--fl-space-4);
+  border-top: 1px solid var(--fl-border);
+  background: var(--fl-surface-subtle);
+  border-radius: 0 0 var(--fl-radius-lg) var(--fl-radius-lg);
+}
+.fl-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 4px;
+  box-sizing: border-box;
+  background: var(--fl-surface);
+  border: 1px solid var(--fl-border);
+  border-radius: var(--fl-radius-md);
+  font-size: 13px;
+}
+.fl-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--fl-space-2);
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--fl-radius-sm);
+  background: transparent;
+  color: var(--fl-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fl-menu__item:hover,
+.fl-menu__item.cdk-menu-item:focus {
+  background: var(--fl-surface-hover);
+  outline: none;
+}
+.fl-menu__item svg {
+  width: 14px;
+  height: 14px;
+  color: var(--fl-ink-muted);
+  flex: none;
+}
+.fl-menu__item--danger,
+.fl-menu__item--danger svg {
+  color: var(--fl-danger);
+}
+.fl-menu__item[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.fl-menu__sep {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--fl-border-subtle);
+}
+.fl-toasts {
+  position: fixed;
+  right: var(--fl-space-5);
+  bottom: var(--fl-space-5);
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fl-space-2);
+  width: min(380px, calc(100vw - 32px));
+}
+.fl-toast {
+  display: flex;
+  gap: var(--fl-space-3);
+  align-items: flex-start;
+  padding: var(--fl-space-3) 14px;
+  background: var(--fl-surface);
+  border: 1px solid var(--fl-border);
+  border-radius: var(--fl-radius-lg);
+  font-size: 13px;
+  color: var(--fl-ink);
+}
+.fl-toast > .fl-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 1px;
+}
+.fl-toast--success > .fl-icon {
+  color: var(--fl-success);
+}
+.fl-toast--warning > .fl-icon {
+  color: var(--fl-warning);
+}
+.fl-toast--error {
+  border-color: var(--fl-danger-border);
+}
+.fl-toast--error > .fl-icon {
+  color: var(--fl-danger);
+}
+.fl-toast--info > .fl-icon {
+  color: var(--fl-accent);
+}
+.fl-toast__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.fl-toast__title {
+  font-weight: 600;
+}
+.fl-toast__body {
+  color: var(--fl-ink-secondary);
+}
+.fl-toast__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: var(--fl-radius-sm);
+  background: transparent;
+  color: var(--fl-ink-muted);
+  cursor: pointer;
+}
+.fl-toast__close svg {
+  width: 14px;
+  height: 14px;
+}
+a.fl-menu__item {
+  text-decoration: none;
+}
+.fl-menu__note {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--fl-ink-muted);
+}
+.fl-menu__note-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fl-ink);
+}
+.fl-menu__check {
+  display: inline-block;
+  width: 14px;
+  color: var(--fl-accent);
+}

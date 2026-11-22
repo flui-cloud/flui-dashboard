@@ -1,0 +1,126 @@
+.fl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fl-field__label {
+  font-size: 13px;
+  font-weight: 500;
+}
+.fl-field__hint {
+  font-size: 12px;
+  color: var(--fl-ink-muted);
+}
+.fl-field__error {
+  font-size: 12px;
+  color: var(--fl-danger);
+}
+.fl-radiocard {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px var(--fl-space-3);
+  border: 1px solid var(--fl-border);
+  border-radius: var(--fl-radius-lg);
+  background: var(--fl-surface);
+  cursor: pointer;
+}
+.fl-radiocard input {
+  margin: 3px 0 0;
+}
+.fl-radiocard.is-checked,
+.fl-radiocard:has(input:checked) {
+  border-color: var(--fl-accent);
+  background: var(--fl-accent-row);
+}
+.fl-radiocard__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.fl-radiocard__title {
+  font-weight: 500;
+}
+.fl-radiocard__desc {
+  color: var(--fl-ink-muted);
+}
+.fl-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fl-space-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+.fl-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.fl-fieldset legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: var(--fl-space-2);
+  padding: 0;
+}
+.fl-select {
+  height: var(--fl-control-height);
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 30px 0 10px;
+  border: 1px solid var(--fl-border-input);
+  border-radius: var(--fl-radius-md);
+  background: var(--fl-surface);
+  color: var(--fl-ink);
+  font: inherit;
+  font-size: 13px;
+  appearance: none;
+  cursor: pointer;
+}
+.fl-select-wrap {
+  position: relative;
+  display: block;
+}
+.fl-select-wrap::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  margin-top: -5px;
+  border-right: 1.5px solid var(--fl-ink-muted);
+  border-bottom: 1.5px solid var(--fl-ink-muted);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.fl-select:focus-visible {
+  outline: none;
+  border-color: var(--fl-accent);
+}
+.fl-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 80px;
+  padding: 8px 10px;
+  border: 1px solid var(--fl-border-input);
+  border-radius: var(--fl-radius-md);
+  background: var(--fl-surface);
+  color: var(--fl-ink);
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
+  resize: vertical;
+}
+.fl-textarea:focus-visible {
+  outline: none;
+  border-color: var(--fl-accent);
+}
+.fl-field.is-invalid .fl-input,
+.fl-field.is-invalid .fl-select,
+.fl-field.is-invalid .fl-textarea {
+  border-color: var(--fl-danger);
+}

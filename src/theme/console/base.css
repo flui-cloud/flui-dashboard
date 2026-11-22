@@ -1,0 +1,52 @@
+.fl-row {
+  display: flex;
+  gap: var(--fl-space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.fl-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.fl-muted {
+  color: var(--fl-ink-muted);
+}
+.fl-mono {
+  font-family: var(--fl-font-mono);
+  font-size: 12.5px;
+}
+.fl-num {
+  font-variant-numeric: tabular-nums;
+}
+.fl-link {
+  color: var(--fl-accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+.fl-link:hover {
+  color: var(--fl-accent-strong);
+  text-decoration: underline;
+}
+input[type='radio'],
+input[type='checkbox'] {
+  accent-color: var(--fl-accent);
+}
+ng-icon {
+  --ng-icon__stroke-width: 1.7;
+}
+.fl-icon {
+  display: inline-flex;
+  flex: none;
+}
+fl-remote,
+fl-wizard-steps,
+fl-line-chart {
+  display: block;
+}
+fl-status {
+  display: inline-flex;
+}

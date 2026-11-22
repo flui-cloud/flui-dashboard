@@ -1,7 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideGithub, lucideSun, lucideMoon, lucideTerminal, lucideEyeOff, lucideEye } from '@ng-icons/lucide';
-import { ThemeService } from '../../../core/services/theme.service';
+import { lucideGithub, lucideTerminal, lucideEyeOff, lucideEye } from '@ng-icons/lucide';
 import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { NotificationPanelComponent } from '../notifications/notification-panel.component';
 import { QuickSshService } from '../../../features/service/quick-ssh.service';
@@ -20,7 +19,7 @@ const MASK_MODE_TOOLTIP =
   standalone: true,
   imports: [NgIcon, NotificationPanelComponent],
   providers: [
-    provideIcons({ lucideGithub, lucideSun, lucideMoon, lucideTerminal, lucideEyeOff, lucideEye }),
+    provideIcons({ lucideGithub, lucideTerminal, lucideEyeOff, lucideEye }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
@@ -51,15 +50,6 @@ const MASK_MODE_TOOLTIP =
         <ng-icon [name]="maskMode.enabled() ? 'lucideEyeOff' : 'lucideEye'" class="h-4 w-4" />
       </button>
 
-      <button
-        (click)="themeService.toggleDarkMode()"
-        class="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        [title]="themeService.isDarkMode() ? 'Switch to light mode' : 'Switch to dark mode'">
-        <ng-icon
-          [name]="themeService.isDarkMode() ? 'lucideSun' : 'lucideMoon'"
-          class="h-4 w-4"
-        />
-      </button>
       <a
         [href]="repoUrl"
         target="_blank"
@@ -73,7 +63,6 @@ const MASK_MODE_TOOLTIP =
   `
 })
 export class HeaderComponent {
-  protected readonly themeService = inject(ThemeService);
   protected readonly maskMode = inject(MaskModeService);
   protected readonly quickSsh = inject(QuickSshService);
 

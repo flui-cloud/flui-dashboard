@@ -1,0 +1,28 @@
+.fl-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.fl-status svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+.fl-status--success {
+  color: var(--fl-success);
+}
+.fl-status--warning {
+  color: var(--fl-warning-text);
+}
+.fl-status--error {
+  color: var(--fl-danger);
+}
+.fl-status--neutral {
+  color: var(--fl-ink-muted);
+}
+.fl-status--progress {
+  color: var(--fl-accent);
+}

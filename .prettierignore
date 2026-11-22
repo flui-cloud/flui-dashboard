@@ -1,0 +1,7 @@
+dist
+coverage
+node_modules
+internal-docs
+src/app/core/api
+src/theme/tokens.css
+pnpm-lock.yaml
