@@ -54,13 +54,10 @@ import {
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (diagnosis) {
-      <div
-        class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm overflow-y-auto"
-        (click)="close()"
-      >
+      <div class="fixed inset-0 z-50 bg-background/80 overflow-y-auto" (click)="close()">
         <div class="flex min-h-screen items-start justify-center p-4">
           <div
-            class="relative w-full max-w-3xl bg-white border border-gray-200 rounded-lg shadow-xl my-8"
+            class="relative w-full max-w-3xl bg-white border border-gray-200 rounded-lg my-8"
             (click)="$event.stopPropagation()"
           >
             <!-- Header -->

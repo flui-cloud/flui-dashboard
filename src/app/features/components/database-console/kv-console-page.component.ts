@@ -82,7 +82,7 @@ const SCAN_COUNT = 100;
 
       <div class="flex h-[calc(100vh-180px)] gap-4">
         <aside
-          class="flex w-80 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card p-3"
+          class="flex w-80 shrink-0 flex-col overflow-hidden rounded-fl-lg border border-border bg-card p-3"
         >
           @if (summary(); as s) {
             <div class="mb-3 rounded-lg border border-border bg-muted/30 p-2.5">
@@ -129,8 +129,8 @@ const SCAN_COUNT = 100;
             @if (keys().length === 0 && (scanning() || conn() === 'connecting')) {
               @for (i of skeletonRows; track i) {
                 <div class="mb-1 flex items-center gap-2 px-2 py-1">
-                  <span class="h-3.5 w-10 animate-pulse rounded bg-muted"></span>
-                  <span class="h-3.5 flex-1 animate-pulse rounded bg-muted/60"></span>
+                  <span class="h-3.5 w-10 rounded bg-muted"></span>
+                  <span class="h-3.5 flex-1 rounded bg-muted/60"></span>
                 </div>
               }
             } @else {
@@ -164,7 +164,7 @@ const SCAN_COUNT = 100;
         </aside>
 
         <section
-          class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card"
+          class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-fl-lg border border-border bg-card"
         >
           <div class="flex shrink-0 items-center gap-2 border-b border-border p-2">
             <input

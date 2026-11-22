@@ -155,9 +155,6 @@ interface ShellTab {
                 </a>
               }
             </nav>
-            <div
-              class="pointer-events-none absolute bottom-0 right-0 top-0 w-10 bg-gradient-to-l from-background to-transparent"
-            ></div>
           </div>
 
           <div [appLookOnly]="sandbox.inSandbox()">

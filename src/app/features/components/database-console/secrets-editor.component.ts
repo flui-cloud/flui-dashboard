@@ -47,7 +47,7 @@ import { joinPath, parseBulk, rowsToData, toEnv, toJson } from './secrets-format
     }),
   ],
   template: `
-    <div class="min-w-0 flex-1 rounded-xl border border-border bg-card">
+    <div class="min-w-0 flex-1 rounded-fl-lg border border-border bg-card">
       @if (!s.editing()) {
         <div
           class="flex h-64 flex-col items-center justify-center gap-2 text-sm text-muted-foreground"
@@ -108,9 +108,9 @@ import { joinPath, parseBulk, rowsToData, toEnv, toJson } from './secrets-format
 
         @if (s.loadingSecret()) {
           <div class="space-y-3 p-4">
-            <div class="h-8 w-48 animate-pulse rounded-lg bg-muted/60"></div>
+            <div class="h-8 w-48 rounded-lg bg-muted/60"></div>
             @for (i of skel; track i) {
-              <div class="h-9 animate-pulse rounded-lg bg-muted/60"></div>
+              <div class="h-9 rounded-lg bg-muted/60"></div>
             }
           </div>
         } @else {

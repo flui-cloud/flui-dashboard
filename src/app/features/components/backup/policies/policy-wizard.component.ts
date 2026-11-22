@@ -310,7 +310,7 @@ interface WizardDestination {
               data-testid="destination-modal"
             >
               <div
-                class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border bg-background shadow-xl"
+                class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border bg-background"
               >
                 <app-destination-form
                   [embedded]="true"

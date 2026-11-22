@@ -180,7 +180,7 @@ import { firstValueFrom } from 'rxjs';
                       {{ repo.fullName }}
                     </span>
                     @if (repo.isImported) {
-                      <span class="flex-shrink-0 px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded-full font-medium">
+                      <span class="flex-shrink-0 text-xs text-green-700 font-medium">
                         Imported
                       </span>
                     }

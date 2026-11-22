@@ -44,13 +44,13 @@ import { AssistantToolResultComponent } from './assistant-tool-result.component'
       <div class="flex flex-col min-w-0 flex-1" [class.items-end]="message().role === 'user'">
         @if (message().role === 'user') {
           <div
-            class="md-user-bubble w-fit max-w-[78%] rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-sm shadow-sm bg-gradient-to-br from-blue-500 to-blue-700 text-white"
+            class="md-user-bubble w-fit max-w-[78%] rounded-fl-lg rounded-tr-sm px-3.5 py-2.5 text-sm bg-fl-accent text-white"
           >
             <p class="whitespace-pre-wrap break-words leading-relaxed">{{ message().content }}</p>
           </div>
         } @else {
           <div
-            class="w-fit max-w-[82%] rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-sm shadow-sm bg-muted text-foreground border border-border/50"
+            class="w-fit max-w-[82%] rounded-fl-lg rounded-tl-sm px-3.5 py-2.5 text-sm bg-muted text-foreground border border-border/50"
           >
             <markdown
               class="md leading-relaxed break-words"

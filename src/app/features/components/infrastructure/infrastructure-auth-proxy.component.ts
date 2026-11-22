@@ -57,7 +57,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
       </div>
 
       @if (clustersLoading()) {
-        <div class="h-9 w-full max-w-sm animate-pulse rounded bg-muted"></div>
+        <div class="h-9 w-full max-w-sm rounded bg-muted"></div>
       } @else if (workloadClusters().length === 0) {
         <div class="flex items-start gap-3 p-3 bg-muted/40 border border-border rounded-md text-sm">
           <ng-icon name="lucideInfo" class="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />

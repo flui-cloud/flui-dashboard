@@ -41,7 +41,7 @@ import { CatalogService } from '../../service/catalog.service';
       (click)="onBackdropClick($event)"
     >
       <div
-        class="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl"
+        class="w-full max-w-lg rounded-fl-lg border border-border bg-card p-6"
         (click)="$event.stopPropagation()"
       >
         <div class="flex items-start justify-between gap-3">
@@ -143,7 +143,7 @@ import { CatalogService } from '../../service/catalog.service';
                           </span>
                           @if (bbSlugs().length > 1 && instance.catalogSlug) {
                             <span
-                              class="rounded-full border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800"
+                              class="rounded-fl-sm border border-fl-border bg-fl-surface px-1.5 py-0.5 text-[10px] font-medium text-sky-800"
                             >
                               {{ instance.catalogSlug }}
                             </span>

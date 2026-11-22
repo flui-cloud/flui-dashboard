@@ -18,7 +18,7 @@ import { formatDate } from './snapshot-format';
       (click)="dismissed.emit()"
     >
       <div
-        class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6 space-y-4"
+        class="bg-background rounded-lg border border-border max-w-md w-full p-6 space-y-4"
         (click)="$event.stopPropagation()"
       >
         <h3 class="text-lg font-semibold">Restore whole backup</h3>

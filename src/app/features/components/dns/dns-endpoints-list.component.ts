@@ -274,11 +274,11 @@ interface CertificatePhase {
     <!-- Error detail modal -->
     @if (activeError()) {
       <div
-        class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+        class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
         (click)="closeError()"
       >
         <div
-          class="bg-white border border-gray-200 rounded-lg shadow-xl w-full max-w-lg flex flex-col max-h-[70vh]"
+          class="bg-white border border-gray-200 rounded-lg w-full max-w-lg flex flex-col max-h-[70vh]"
           (click)="$event.stopPropagation()"
         >
           <!-- Header -->

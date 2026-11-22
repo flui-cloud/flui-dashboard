@@ -174,10 +174,10 @@ const SUPPORTED_FRAMEWORKS = [
       <!-- Loading state -->
       @if (isLoading()) {
         <div class="space-y-3">
-          <div class="h-4 w-1/3 rounded bg-muted animate-pulse"></div>
+          <div class="h-4 w-1/3 rounded bg-muted"></div>
           <div class="grid grid-cols-2 gap-4">
-            <div class="h-32 rounded-lg bg-muted animate-pulse"></div>
-            <div class="h-32 rounded-lg bg-muted animate-pulse"></div>
+            <div class="h-32 rounded-lg bg-muted"></div>
+            <div class="h-32 rounded-lg bg-muted"></div>
           </div>
         </div>
       }

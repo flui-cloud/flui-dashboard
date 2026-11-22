@@ -151,7 +151,7 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
                     class="rounded px-3 py-1 text-xs font-medium transition-colors"
                     [class]="
                       !chosen(area.groups)
-                        ? 'bg-background text-foreground shadow-sm'
+                        ? 'bg-background text-foreground'
                         : 'text-muted-foreground hover:text-foreground'
                     "
                   >
@@ -169,7 +169,7 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
                       class="inline-flex items-center gap-1 rounded px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                       [class]="
                         picked().has(g.key)
-                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          ? 'bg-primary text-primary-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       "
                     >

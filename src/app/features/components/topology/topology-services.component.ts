@@ -82,7 +82,7 @@ import { ExportHeader } from './topology-view-export';
           @for (region of regions(); track region.id) {
             @if (l.nodes.get(region.id); as at) {
               <div
-                class="absolute rounded-xl border bg-muted/30 transition-opacity"
+                class="absolute rounded-fl-lg border bg-muted/30 transition-opacity"
                 [style.opacity]="dimRegion(region) ? 0.35 : 1"
                 [style.left.px]="at.x"
                 [style.top.px]="at.y"

@@ -59,7 +59,7 @@ import { ClusterListComponent } from './cluster-list.component';
             <!-- Cluster Cards Grid Skeleton -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <!-- Skeleton Card 1 -->
-              <div class="animate-pulse card-surface overflow-hidden">
+              <div class="card-surface overflow-hidden">
                 <div class="p-6 space-y-4">
                   <div class="flex items-start justify-between">
                     <div class="skeleton h-6 w-32"></div>
@@ -79,7 +79,7 @@ import { ClusterListComponent } from './cluster-list.component';
               </div>
 
               <!-- Skeleton Card 2 -->
-              <div class="animate-pulse card-surface overflow-hidden">
+              <div class="card-surface overflow-hidden">
                 <div class="p-6 space-y-4">
                   <div class="flex items-start justify-between">
                     <div class="skeleton h-6 w-32"></div>
@@ -99,7 +99,7 @@ import { ClusterListComponent } from './cluster-list.component';
               </div>
 
               <!-- Skeleton Card 3 -->
-              <div class="animate-pulse card-surface overflow-hidden">
+              <div class="card-surface overflow-hidden">
                 <div class="p-6 space-y-4">
                   <div class="flex items-start justify-between">
                     <div class="skeleton h-6 w-32"></div>
@@ -202,7 +202,7 @@ import { ClusterListComponent } from './cluster-list.component';
       <!-- Success Message Toast -->
       @if (showSuccessMessage()) {
         <div
-          class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-all z-50"
+          class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg transition-all z-50"
         >
           <div class="flex items-center space-x-2">
             <ng-icon name="lucideCheck" class="h-5 w-5" />

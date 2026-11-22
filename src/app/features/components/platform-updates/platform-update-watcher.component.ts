@@ -17,7 +17,7 @@ import { PlatformUpdateService } from '../../service/platform-update.service';
       <div
         class="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4 backdrop-blur-[2px]"
       >
-        <div class="w-full max-w-md card-surface p-6 shadow-2xl">
+        <div class="w-full max-w-md card-surface p-6">
           <div class="flex items-center gap-3">
             <div class="step-icon bg-primary/10 text-primary">
               <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />

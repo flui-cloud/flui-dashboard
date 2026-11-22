@@ -78,7 +78,7 @@ export class ExplainComponent {
       return 'mt-1.5 block max-w-prose text-[12px] leading-relaxed text-muted-foreground';
     }
     const look =
-      'z-30 block w-72 rounded-md border border-border bg-card p-3 text-[12px] leading-relaxed text-muted-foreground shadow-lg';
+      'z-30 block w-72 rounded-md border border-border bg-card p-3 text-[12px] leading-relaxed text-muted-foreground';
     if (this.escaped()) return `fixed ${look}`;
     const side = this.dropUp() ? 'bottom-full mb-1.5' : 'top-full mt-1.5';
     const edge = this.alignRight() ? 'right-0' : 'left-0';

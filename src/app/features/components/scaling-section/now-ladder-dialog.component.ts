@@ -49,7 +49,7 @@ import { LadderRow } from './ladder-rows';
         aria-modal="true"
         aria-label="If a node were needed now"
         (click)="$event.stopPropagation()"
-        class="card-surface flex w-full max-w-lg flex-col gap-5 p-6 shadow-xl"
+        class="card-surface flex w-full max-w-lg flex-col gap-5 p-6"
         data-testid="ladder-dialog"
       >
         <div class="flex items-start gap-4">

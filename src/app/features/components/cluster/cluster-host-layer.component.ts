@@ -66,7 +66,7 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
           }}"
         >
           <span
-            class="inline-block h-4 w-4 rounded-full bg-background shadow transition-transform {{
+            class="inline-block h-4 w-4 rounded-full bg-background transition-transform {{
               layer().enabled ? 'translate-x-4' : 'translate-x-0.5'
             }}"
           ></span>

@@ -415,12 +415,12 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
 
       <!-- Deploy modal with optional reason -->
       @if (deleteTarget(); as dt) {
-        <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="cancelDelete()">
+        <div class="fixed inset-0 z-50 bg-background/80" (click)="cancelDelete()">
           <div
             class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
           >
             <div
-              class="bg-white border border-gray-200 rounded-lg shadow-xl"
+              class="bg-white border border-gray-200 rounded-lg"
               (click)="$event.stopPropagation()"
             >
               <div class="flex items-start justify-between p-6 pb-4 gap-4">
@@ -528,12 +528,12 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
       }
 
       @if (deployTarget()) {
-        <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="cancelDeploy()">
+        <div class="fixed inset-0 z-50 bg-background/80" (click)="cancelDeploy()">
           <div
             class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
           >
             <div
-              class="bg-white border border-gray-200 rounded-lg shadow-xl"
+              class="bg-white border border-gray-200 rounded-lg"
               (click)="$event.stopPropagation()"
             >
               <div class="flex items-start justify-between p-6 pb-4 gap-4">

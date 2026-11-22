@@ -40,7 +40,7 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="onCancel()">
+    <div class="fixed inset-0 z-50 bg-background/80" (click)="onCancel()">
       <div
         class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4"
       >

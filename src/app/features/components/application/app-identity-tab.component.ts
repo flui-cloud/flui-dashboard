@@ -39,7 +39,10 @@ const IDENTITY_COMPONENT = 'zitadel';
       }
 
       @if (isServer()) {
-        <section class="rounded-xl border border-border bg-card p-5" data-testid="identity-people">
+        <section
+          class="rounded-fl-lg border border-border bg-card p-5"
+          data-testid="identity-people"
+        >
           <h2 class="text-base font-semibold text-foreground">People</h2>
           <p class="mt-1 text-sm text-muted-foreground">
             Who can sign in to the apps connected to this identity install.
@@ -110,7 +113,7 @@ const IDENTITY_COMPONENT = 'zitadel';
           }
         </section>
       } @else {
-        <section class="rounded-xl border border-border bg-card p-5" data-testid="identity-link">
+        <section class="rounded-fl-lg border border-border bg-card p-5" data-testid="identity-link">
           <h2 class="flex items-center gap-2 text-base font-semibold text-foreground">
             <ng-icon name="lucideKeyRound" class="h-4 w-4" /> Sign-in for this app's users
           </h2>

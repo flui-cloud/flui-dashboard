@@ -947,7 +947,7 @@ export class AppBuildProgressComponent implements OnInit, OnDestroy, AfterViewCh
       case 'failed':
         return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive';
       default:
-        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-fl-sm text-xs font-medium bg-fl-surface text-blue-800 border';
     }
   }
 

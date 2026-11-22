@@ -173,12 +173,12 @@ import { ToastService } from '../../../shared/services/toast.service';
          "Add Endpoint" action doesn't push the list down and disorient users. -->
     @if (showEndpointForm()) {
       <div
-        class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm overflow-y-auto"
+        class="fixed inset-0 z-50 bg-background/80 overflow-y-auto"
         (click)="closeEndpointForm()"
       >
         <div class="min-h-full flex items-center justify-center p-4 py-10">
           <div
-            class="w-full max-w-2xl bg-white border border-gray-200 rounded-lg shadow-xl pb-4"
+            class="w-full max-w-2xl bg-white border border-gray-200 rounded-lg pb-4"
             (click)="$event.stopPropagation()"
           >
             <app-cluster-endpoint-form

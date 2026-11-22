@@ -79,7 +79,7 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
       }
 
       @if (costs.loading() && !costs.costs()) {
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           @for (i of [1, 2, 3]; track i) {
             <div class="card-surface p-5 space-y-3">
               <div class="skeleton h-4 w-32"></div>

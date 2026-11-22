@@ -60,11 +60,7 @@ import { DependencyChoiceDto } from '../../../../core/api/model/dependencyChoice
                 alias: {{ dep.as }}
               </span>
               @if (dep.required) {
-                <span
-                  class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800"
-                >
-                  required
-                </span>
+                <span class="text-[10px] font-medium text-amber-800"> required </span>
               }
             </div>
 

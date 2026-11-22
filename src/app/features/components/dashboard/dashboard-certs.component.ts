@@ -117,9 +117,7 @@ const ALL_APP_ROWS: AppRow[] = [
               <div class="flex items-center gap-1.5">
                 <h2 class="font-semibold text-foreground">Certificates &amp; DNS</h2>
                 @if (dnsService.hasStatus() && !dnsService.isFullyConfigured()) {
-                  <span
-                    class="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse flex-shrink-0"
-                  ></span>
+                  <span class="h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0"></span>
                 }
               </div>
               <p class="text-xs text-muted-foreground" data-testid="certs-subtitle">
@@ -148,10 +146,10 @@ const ALL_APP_ROWS: AppRow[] = [
           <div class="flex flex-col gap-2.5 flex-1">
             @for (_ of [1, 2, 3]; track _) {
               <div class="flex items-center gap-2.5 py-1.5">
-                <div class="h-3 w-3 rounded-full bg-muted animate-pulse flex-shrink-0"></div>
-                <div class="flex-1 h-3 w-20 rounded bg-muted animate-pulse"></div>
-                <div class="h-3 w-16 rounded bg-muted animate-pulse"></div>
-                <div class="h-5 w-14 rounded-full bg-muted animate-pulse"></div>
+                <div class="h-3 w-3 rounded-full bg-muted flex-shrink-0"></div>
+                <div class="flex-1 h-3 w-20 rounded bg-muted"></div>
+                <div class="h-3 w-16 rounded bg-muted"></div>
+                <div class="h-5 w-14 rounded-full bg-muted"></div>
               </div>
             }
           </div>
@@ -180,7 +178,7 @@ const ALL_APP_ROWS: AppRow[] = [
               (click)="showWizard.set(true)"
               class="flex items-center gap-1.5 rounded-md bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              <ng-icon name="lucideSettings" class="h-3.5 w-3.5 animate-pulse" />
+              <ng-icon name="lucideSettings" class="h-3.5 w-3.5" />
               Set up DNS & Certificates
             </button>
           </div>

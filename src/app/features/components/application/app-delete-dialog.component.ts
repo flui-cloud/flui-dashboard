@@ -26,7 +26,7 @@ import { AppGroupView, Application } from '../../model/application.models';
   template: `
     @if (canDelete() && compact()) {
       <div
-        class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-red-300 px-4 py-3"
+        class="flex flex-wrap items-center justify-between gap-3 rounded-fl-lg border border-dashed border-red-300 px-4 py-3"
         data-testid="danger-line"
       >
         <div class="min-w-0 text-xs text-muted-foreground">
@@ -42,7 +42,7 @@ import { AppGroupView, Application } from '../../model/application.models';
         </button>
       </div>
     } @else if (canDelete()) {
-      <section class="rounded-2xl border border-red-200 bg-card p-6">
+      <section class="rounded-fl-lg border border-red-200 bg-card p-6">
         <h2 class="text-xs font-semibold uppercase tracking-wide text-red-600">Danger zone</h2>
         <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div class="min-w-0">
@@ -70,7 +70,7 @@ import { AppGroupView, Application } from '../../model/application.models';
         (click)="closeDelete()"
       >
         <div
-          class="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl"
+          class="w-full max-w-lg rounded-fl-lg border border-border bg-card p-6"
           (click)="$event.stopPropagation()"
         >
           <div class="flex items-start gap-3">

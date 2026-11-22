@@ -10,7 +10,7 @@ export interface DataTableConfig {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="mt-2 rounded-xl border border-border/50 overflow-hidden text-xs bg-background">
+    <div class="mt-2 rounded-fl-lg border border-border/50 overflow-hidden text-xs bg-background">
       <div class="flex items-center gap-2 px-3 py-2 border-b border-border/50 bg-muted/30">
         <span class="font-semibold text-foreground">{{ title() }}</span>
         <span class="text-muted-foreground">{{ data().rows.length }} items</span>

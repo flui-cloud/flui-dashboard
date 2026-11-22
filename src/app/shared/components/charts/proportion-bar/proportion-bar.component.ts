@@ -71,7 +71,7 @@ import {
             <!-- Tooltip -->
             <div
               class="bar-tooltip hidden group-hover:block absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-2
-                        px-3 py-1.5 rounded-md shadow-lg text-xs whitespace-nowrap
+                        px-3 py-1.5 rounded-md text-xs whitespace-nowrap
                         bg-popover text-popover-foreground border border-border"
             >
               <strong>{{ seg.name }}</strong><br />

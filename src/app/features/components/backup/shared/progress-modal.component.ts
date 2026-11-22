@@ -20,7 +20,7 @@ import { ActiveOperation } from '../../../model/backup.models';
     @if (op(); as o) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div
-          class="w-full max-w-md rounded-lg border border-border bg-background p-6 shadow-lg"
+          class="w-full max-w-md rounded-lg border border-border bg-background p-6"
           role="dialog"
           aria-modal="true"
         >

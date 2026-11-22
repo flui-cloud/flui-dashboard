@@ -127,7 +127,7 @@ export interface VolumeRestoreStarted {
                         {{ e.name }}
                         @if (e.consistentCopy) {
                           <span
-                            class="text-[10px] px-1.5 rounded-full bg-emerald-100 text-emerald-800"
+                            class="text-[10px] text-emerald-800"
                             title="Database file copied safely while the app ran"
                             >consistent</span
                           >

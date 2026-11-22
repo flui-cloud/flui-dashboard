@@ -61,7 +61,7 @@ export class CatalogIconComponent {
   });
 
   readonly containerClass = computed(() => {
-    const base = 'rounded-xl overflow-hidden shrink-0';
+    const base = 'rounded-fl-lg overflow-hidden shrink-0';
     switch (this.size()) {
       case 'sm':
         return `${base} h-9 w-9`;

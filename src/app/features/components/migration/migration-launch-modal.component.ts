@@ -39,7 +39,7 @@ import {
         (click)="close()"
       >
         <div
-          class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-card p-6 shadow-xl"
+          class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-card p-6"
           (click)="$event.stopPropagation()"
         >
           <div class="mb-4 flex items-start justify-between">

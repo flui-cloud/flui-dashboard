@@ -45,7 +45,7 @@ import { BbInstancePickerModalComponent } from './bb-instance-picker-modal.compo
   ],
   template: `
     @if (isClient()) {
-      <div class="rounded-xl border border-border bg-card p-5">
+      <div class="rounded-fl-lg border border-border bg-card p-5">
         <div class="flex items-center gap-2">
           <ng-icon name="lucideDatabase" class="h-4 w-4 text-primary" />
           <h3 class="text-sm font-semibold text-foreground">Connection</h3>

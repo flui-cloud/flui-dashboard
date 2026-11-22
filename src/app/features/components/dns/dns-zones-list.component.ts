@@ -98,7 +98,7 @@ import {
       }
 
       @if (dnsZonesService.loading()) {
-        <div class="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
           <div class="bg-gray-50 border-b border-gray-200 px-4 py-3 flex gap-4">
             <div class="h-3 w-32 rounded bg-gray-200"></div>
             <div class="h-3 w-20 rounded bg-gray-200"></div>

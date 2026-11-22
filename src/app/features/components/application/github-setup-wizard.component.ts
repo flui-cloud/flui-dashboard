@@ -117,10 +117,10 @@ const PAT_DEEP_LINK =
             <button
               (click)="selectMethod('pat')"
               [class]="getMethodCardClass('pat')"
-              class="relative flex flex-col items-start text-left p-5 rounded-xl border-2 transition-all duration-200 hover:shadow-md"
+              class="relative flex flex-col items-start text-left p-5 rounded-fl-lg border-2 transition-all duration-200"
             >
               <span
-                class="absolute -top-2.5 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
+                class="absolute -top-2.5 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-fl-sm text-xs font-medium bg-fl-surface text-blue-700 border"
               >
                 <ng-icon name="lucideStar" size="10" /> Recommended
               </span>
@@ -153,7 +153,7 @@ const PAT_DEEP_LINK =
             <button
               (click)="selectMethod('github_app')"
               [class]="getMethodCardClass('github_app')"
-              class="flex flex-col items-start text-left p-5 rounded-xl border-2 transition-all duration-200 hover:shadow-md"
+              class="flex flex-col items-start text-left p-5 rounded-fl-lg border-2 transition-all duration-200"
             >
               <div class="flex items-center gap-3 mb-3">
                 <div class="p-2 rounded-lg bg-slate-100">

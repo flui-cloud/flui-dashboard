@@ -403,7 +403,7 @@ import { INSTALL_FLUI_URL } from '../../../../core/utils/install-flui';
         </div>
 
         @if (loopDetected()) {
-          <div class="glass-card rounded-xl p-6 text-center space-y-3">
+          <div class="glass-card rounded-fl-lg p-6 text-center space-y-3">
             <p class="text-sm" style="color: hsl(0,80%,75%)">
               We couldn't sign you in to {{ loopHost() }}.
             </p>
@@ -416,7 +416,7 @@ import { INSTALL_FLUI_URL } from '../../../../core/utils/install-flui';
           </div>
         } @else if (visitorRefused(); as line) {
           <div
-            class="glass-card rounded-xl p-6 text-center space-y-4"
+            class="glass-card rounded-fl-lg p-6 text-center space-y-4"
             data-testid="visitor-refused"
           >
             <p class="text-sm" style="color: hsl(210,40%,85%)">{{ line }}</p>
@@ -434,7 +434,7 @@ import { INSTALL_FLUI_URL } from '../../../../core/utils/install-flui';
             </div>
           </div>
         } @else if (signedOut()) {
-          <div class="glass-card rounded-xl p-6 text-center space-y-4" data-testid="signed-out">
+          <div class="glass-card rounded-fl-lg p-6 text-center space-y-4" data-testid="signed-out">
             <p class="text-sm" style="color: hsl(210,40%,85%)">You are signed out.</p>
             <button
               type="button"
@@ -447,13 +447,13 @@ import { INSTALL_FLUI_URL } from '../../../../core/utils/install-flui';
           </div>
         } @else if (authMode() === 'oidc') {
           <div
-            class="glass-card rounded-xl p-6 text-center text-sm"
+            class="glass-card rounded-fl-lg p-6 text-center text-sm"
             style="color: hsl(210,40%,80%)"
           >
             Redirecting to authentication provider...
           </div>
         } @else {
-          <div class="glass-card rounded-xl p-7">
+          <div class="glass-card rounded-fl-lg p-7">
             <h2 class="text-base font-semibold text-white mb-5">Sign in to your account</h2>
 
             <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>

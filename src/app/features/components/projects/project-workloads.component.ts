@@ -82,7 +82,7 @@ const SELECT =
       <div class="flex items-start justify-between gap-4">
         <div class="flex items-center gap-3">
           <div
-            class="flex h-11 w-11 items-center justify-center rounded-xl bg-muted border border-border text-muted-foreground shrink-0"
+            class="flex h-11 w-11 items-center justify-center rounded-fl-lg bg-muted border border-border text-muted-foreground shrink-0"
           >
             <ng-icon name="lucideFolders" class="h-5 w-5" />
           </div>

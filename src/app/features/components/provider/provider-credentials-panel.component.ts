@@ -58,7 +58,7 @@ interface CredentialField {
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <section class="bg-card border border-border rounded-xl overflow-hidden">
+    <section class="bg-card border border-border rounded-fl-lg overflow-hidden">
       <header class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2">
         <ng-icon name="lucideKeyRound" class="h-4 w-4 text-muted-foreground" />
         <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">

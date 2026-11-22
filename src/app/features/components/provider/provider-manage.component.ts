@@ -97,11 +97,11 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
       } @else {
         <!-- Hero -->
         <div
-          class="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card via-card to-muted/30 p-6 md:p-8 mb-6"
+          class="relative overflow-hidden rounded-fl-lg border border-border bg-fl-surface p-6 md:p-8 mb-6"
         >
           <div class="flex flex-col md:flex-row md:items-center gap-5">
             <div
-              class="flex items-center justify-center h-16 w-16 rounded-xl bg-background border border-border shadow-sm shrink-0"
+              class="flex items-center justify-center h-16 w-16 rounded-fl-lg bg-background border border-border shrink-0"
             >
               <app-provider-mark [name]="provider()!.displayName" [size]="40" />
             </div>
@@ -172,7 +172,7 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
               <provider-inference-panel [providerId]="providerId()" />
 
               <!-- Health card -->
-              <section class="bg-card border border-border rounded-xl overflow-hidden">
+              <section class="bg-card border border-border rounded-fl-lg overflow-hidden">
                 <header
                   class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2"
                 >
@@ -228,7 +228,7 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
             <!-- Sidebar -->
             <aside class="space-y-6">
-              <section class="bg-card border border-border rounded-xl overflow-hidden">
+              <section class="bg-card border border-border rounded-fl-lg overflow-hidden">
                 <header class="px-6 py-4 border-b border-border bg-muted/30">
                   <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                     Quick actions
@@ -289,7 +289,7 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
               </section>
 
               <!-- Metadata -->
-              <section class="bg-card border border-border rounded-xl overflow-hidden">
+              <section class="bg-card border border-border rounded-fl-lg overflow-hidden">
                 <header class="px-6 py-4 border-b border-border bg-muted/30">
                   <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                     Metadata

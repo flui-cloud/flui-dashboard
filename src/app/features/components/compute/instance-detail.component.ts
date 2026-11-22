@@ -363,7 +363,7 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                               <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
                             </button>
                             <div
-                              class="absolute right-0 bottom-full mb-2 w-64 rounded-md border border-border bg-popover text-popover-foreground shadow-md px-3 py-2 text-xs leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50"
+                              class="absolute right-0 bottom-full mb-2 w-64 rounded-md border border-border bg-popover text-popover-foreground px-3 py-2 text-xs leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50"
                             >
                               <p class="font-semibold mb-1">Bootstrap key authentication</p>
                               <p class="text-muted-foreground">

@@ -10,7 +10,7 @@ import { AssistantDataTableComponent, DataTableConfig } from './assistant-data-t
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isSources()) {
-      <div class="mt-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2 text-xs">
+      <div class="mt-2 rounded-fl-lg border border-border/40 bg-muted/20 px-3 py-2 text-xs">
         <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
           Log sources
         </p>
@@ -19,7 +19,7 @@ import { AssistantDataTableComponent, DataTableConfig } from './assistant-data-t
             <button
               type="button"
               (click)="sendMessage.emit('Show recent logs for ' + app)"
-              class="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600 hover:bg-blue-500/20 transition-colors"
+              class="rounded-fl-sm border border-fl-border bg-fl-surface px-2 py-0.5 text-[10px] font-medium text-blue-600 hover:bg-blue-500/20 transition-colors"
             >
               {{ app }}
             </button>

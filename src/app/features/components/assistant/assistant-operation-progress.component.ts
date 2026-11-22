@@ -34,7 +34,7 @@ const TERMINAL = new Set<OperationState>(['COMPLETED', 'FAILED', 'CANCELLED']);
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div
-      class="mt-2 rounded-xl border px-3 py-2.5 text-xs"
+      class="mt-2 rounded-fl-lg border px-3 py-2.5 text-xs"
       [class]="
         succeeded()
           ? 'border-green-500/30 bg-green-500/5'
@@ -68,7 +68,7 @@ const TERMINAL = new Set<OperationState>(['COMPLETED', 'FAILED', 'CANCELLED']);
               [style.width.%]="progress()"
             ></div>
           } @else {
-            <div class="h-full w-1/3 rounded-full bg-blue-500/60 animate-pulse"></div>
+            <div class="h-full w-1/3 rounded-full bg-blue-500/60"></div>
           }
         </div>
         @if (stepLabel()) {

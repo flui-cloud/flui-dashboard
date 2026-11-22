@@ -21,7 +21,7 @@ import { consoleError } from '../database-console/search-format';
   providers: [provideIcons({ lucideMessagesSquare })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="rounded-xl border border-border bg-card p-5" data-testid="messaging">
+    <section class="rounded-fl-lg border border-border bg-card p-5" data-testid="messaging">
       <h2 class="flex items-center gap-2 text-base font-semibold text-foreground">
         <ng-icon name="lucideMessagesSquare" class="h-4 w-4" /> Messaging
       </h2>

@@ -67,7 +67,7 @@ import {
       </div>
 
       @if (clustersLoading()) {
-        <div class="animate-pulse space-y-4">
+        <div class="space-y-4">
           <div class="flex items-center gap-3">
             <div class="h-4 w-4 rounded bg-gray-200 flex-shrink-0"></div>
             <div class="h-8 w-64 rounded-md bg-gray-200"></div>

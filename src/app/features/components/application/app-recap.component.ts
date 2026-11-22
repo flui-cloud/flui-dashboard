@@ -208,7 +208,7 @@ import {
           <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
         </a>
         <div
-          class="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-8 text-center"
+          class="flex flex-col items-center gap-3 rounded-fl-lg border border-border bg-card p-8 text-center"
         >
           <ng-icon name="lucideCircleAlert" class="h-8 w-8 text-muted-foreground" />
           <p class="text-sm text-muted-foreground">Application not found.</p>

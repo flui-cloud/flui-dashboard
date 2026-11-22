@@ -24,7 +24,7 @@ import { AgentConcession, ConcessionOperation } from '../../model/agent-cycle.mo
   providers: [provideIcons({ lucideLoader, lucideTriangleAlert, lucideX })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="dismissed.emit()">
+    <div class="fixed inset-0 z-50 bg-background/80" (click)="dismissed.emit()">
       <div
         class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
       >

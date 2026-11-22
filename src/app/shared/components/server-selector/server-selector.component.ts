@@ -93,7 +93,7 @@ import { ProviderMarkComponent } from '../provider-mark.component';
             <div
               (click)="selectServer(server)"
               [class]="getServerCardClass(server)"
-              class="p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md"
+              class="p-4 border-2 rounded-lg cursor-pointer transition-all"
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3 flex-1 min-w-0">

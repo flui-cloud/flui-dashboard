@@ -87,7 +87,7 @@ export interface ChartPanelContext {
           aria-modal="true"
           [attr.aria-label]="title()"
           (click)="$event.stopPropagation()"
-          class="card-surface shadow-xl w-full max-w-6xl max-h-full overflow-y-auto p-6 flex flex-col gap-4"
+          class="card-surface w-full max-w-6xl max-h-full overflow-y-auto p-6 flex flex-col gap-4"
         >
           <div class="flex items-start justify-between gap-4">
             <div class="flex flex-col gap-1 min-w-0">

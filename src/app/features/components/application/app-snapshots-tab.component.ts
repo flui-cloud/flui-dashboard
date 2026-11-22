@@ -221,7 +221,7 @@ type StatusFilter = 'all' | SnapshotStatus;
           </div>
         </div>
       } @else if (isLoading() && snapshots().length === 0) {
-        <div class="animate-pulse space-y-2">
+        <div class="space-y-2">
           @for (i of [1, 2, 3]; track i) {
             <div class="skeleton h-12 rounded-lg"></div>
           }

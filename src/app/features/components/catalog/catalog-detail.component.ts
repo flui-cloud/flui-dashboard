@@ -83,17 +83,17 @@ import {
 
       @let app = detail();
       @if (catalog.detailLoading()) {
-        <div class="h-56 animate-pulse rounded-2xl border border-border bg-muted/30"></div>
+        <div class="h-56 rounded-fl-lg border border-border bg-muted/30"></div>
       } @else if (catalog.detailError()) {
         <div
-          class="flex flex-col items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-8 text-center"
+          class="flex flex-col items-center gap-3 rounded-fl-lg border border-destructive/40 bg-destructive/5 p-8 text-center"
         >
           <ng-icon name="lucideCircleAlert" class="h-8 w-8 text-destructive" />
           <p class="text-sm text-destructive">{{ catalog.detailError() }}</p>
         </div>
       } @else if (app) {
         <!-- Hero -->
-        <section class="rounded-2xl border border-border bg-card p-6 md:p-8">
+        <section class="rounded-fl-lg border border-border bg-card p-6 md:p-8">
           <div class="flex flex-col gap-5 md:flex-row md:items-start md:gap-6">
             <app-catalog-icon
               [slug]="app.slug"
@@ -155,7 +155,7 @@ import {
                     type="button"
                     (click)="goToInstall(app.slug)"
                     class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium
-                           text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                           text-primary-foreground transition hover:bg-primary/90"
                   >
                     <ng-icon name="lucideRocket" class="h-4 w-4" />
                     Deploy to cluster
@@ -205,7 +205,7 @@ import {
 
         <!-- Your instances -->
         @if (installedInstances().length > 0) {
-          <section class="rounded-2xl border border-border bg-card p-5">
+          <section class="rounded-fl-lg border border-border bg-card p-5">
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-2">
                 <ng-icon name="lucideCheck" class="h-4 w-4 text-emerald-600" />
@@ -215,7 +215,7 @@ import {
               </div>
               @if (updateAvailable()) {
                 <span
-                  class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800"
+                  class="inline-flex items-center text-[11px] font-medium text-amber-800"
                   title="A newer catalog version is available"
                 >
                   Update available · v{{ app.version }}
@@ -372,7 +372,7 @@ import {
                 <app-catalog-manifest-tab [slug]="app.slug" />
               }
               @case ('install') {
-                <div class="rounded-xl border border-border bg-card p-6 text-center">
+                <div class="rounded-fl-lg border border-border bg-card p-6 text-center">
                   <div
                     class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"
                   >
@@ -403,7 +403,7 @@ import {
                       type="button"
                       (click)="goToInstall(app.slug)"
                       class="mt-5 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm
-                             font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+                             font-medium text-primary-foreground hover:bg-primary/90"
                     >
                       <ng-icon name="lucideRocket" class="h-4 w-4" />
                       Deploy to cluster

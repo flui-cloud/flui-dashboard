@@ -92,22 +92,17 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
   template: `
     <div [class]="containerClasses()" [class.pointer-events-none]="!expanded()">
       @if (isFull() && expanded()) {
-        <div
-          class="absolute inset-0 bg-black/40 backdrop-blur-sm"
-          (click)="setSize('medium')"
-        ></div>
+        <div class="absolute inset-0 bg-black/40" (click)="setSize('medium')"></div>
       }
 
       <!-- Panel -->
       @if (hasOpened()) {
         <div
-          class="relative z-10 flex flex-col rounded-2xl overflow-hidden shadow-2xl shadow-black/20 border border-border/50"
+          class="relative z-10 flex flex-col rounded-fl-lg overflow-hidden shadow-black/20 border border-border/50"
           [class]="panelClasses()"
         >
           <!-- Header -->
-          <div
-            class="shrink-0 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-700"
-          >
+          <div class="shrink-0 flex items-center gap-2 px-4 py-3 bg-fl-accent">
             @if (showHistory()) {
               <button
                 type="button"
@@ -118,7 +113,9 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
               </button>
               <p class="flex-1 text-sm font-semibold text-white leading-none">Conversations</p>
             } @else {
-              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10">
+              <div
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-fl-lg bg-white/10"
+              >
                 @if (imgOk()) {
                   <img
                     src="icons/assistant.svg"
@@ -208,7 +205,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
               <div class="p-3 space-y-1">
                 @for (conv of chatService.conversations(); track conv.id) {
                   <div
-                    class="group flex items-center gap-1 rounded-xl border transition-colors hover:bg-muted/80"
+                    class="group flex items-center gap-1 rounded-fl-lg border transition-colors hover:bg-muted/80"
                     [class]="
                       conv.id === chatService.activeId()
                         ? 'bg-blue-500/10 border-blue-500/20'
@@ -323,15 +320,13 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
                       }
                       @if (chatService.streamingText()) {
                         <div
-                          class="w-fit max-w-[82%] rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-sm shadow-sm bg-muted text-foreground border border-border/50"
+                          class="w-fit max-w-[82%] rounded-fl-lg rounded-tl-sm px-3.5 py-2.5 text-sm bg-muted text-foreground border border-border/50"
                         >
                           <markdown
                             class="md leading-relaxed break-words"
                             [data]="chatService.streamingText()"
                           />
-                          <span
-                            class="inline-block w-[2px] h-3.5 align-middle bg-blue-500 animate-pulse"
-                          ></span>
+                          <span class="inline-block w-[2px] h-3.5 align-middle bg-blue-500"></span>
                         </div>
                       }
                     </div>
@@ -353,18 +348,16 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
                       }
                     </div>
                     <div
-                      class="bg-muted border border-border/50 rounded-2xl rounded-tl-sm px-4 py-3"
+                      class="bg-muted border border-border/50 rounded-fl-lg rounded-tl-sm px-4 py-3"
                     >
                       <div class="flex gap-1.5 items-center">
                         <div
-                          class="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:-0.3s]"
+                          class="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 [animation-delay:-0.3s]"
                         ></div>
                         <div
-                          class="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:-0.15s]"
+                          class="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 [animation-delay:-0.15s]"
                         ></div>
-                        <div
-                          class="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce"
-                        ></div>
+                        <div class="h-1.5 w-1.5 rounded-full bg-muted-foreground/50"></div>
                       </div>
                     </div>
                   </div>
@@ -372,7 +365,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
 
                 @if (chatService.error()) {
                   <div
-                    class="flex items-center gap-2 rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive border border-destructive/20"
+                    class="flex items-center gap-2 rounded-fl-lg bg-destructive/10 px-3 py-2 text-xs text-destructive border border-destructive/20"
                   >
                     <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 shrink-0" />
                     {{ chatService.error() }}
@@ -406,7 +399,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
           <button
             type="button"
             (click)="toggle()"
-            class="relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 pointer-events-auto bg-gradient-to-br from-blue-500 to-blue-700 shadow-blue-500/30 hover:shadow-blue-500/40 hover:shadow-xl"
+            class="relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 hover:scale-105 active:scale-95 pointer-events-auto bg-fl-accent"
           >
             <ng-icon name="lucideX" class="h-6 w-6 text-white" />
           </button>
@@ -415,7 +408,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
             type="button"
             (click)="toggle()"
             aria-label="Open Flui Assistant"
-            class="group fixed top-1/2 right-0 z-50 flex -translate-y-1/2 items-center rounded-l-xl border border-r-0 border-border bg-card py-3 pl-1.5 pr-1 opacity-40 shadow-lg shadow-black/10 transition-all duration-300 hover:pl-2.5 hover:pr-1.5 hover:opacity-100 hover:shadow-black/20 pointer-events-auto"
+            class="group fixed top-1/2 right-0 z-50 flex -translate-y-1/2 items-center rounded-l-fl-lg border border-r-0 border-border bg-card py-3 pl-1.5 pr-1 opacity-40 shadow-black/10 transition-all duration-300 hover:pl-2.5 hover:pr-1.5 hover:opacity-100 hover:shadow-black/20 pointer-events-auto"
           >
             <ng-icon
               name="lucideChevronLeft"

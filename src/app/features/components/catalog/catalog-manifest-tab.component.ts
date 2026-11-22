@@ -29,7 +29,7 @@ import { CatalogService } from '../../service/catalog.service';
   template: `
     <div class="space-y-5">
       <!-- Explainer -->
-      <div class="rounded-xl border border-border bg-card p-5">
+      <div class="rounded-fl-lg border border-border bg-card p-5">
         <div class="flex items-start gap-3">
           <div
             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
@@ -56,10 +56,10 @@ import { CatalogService } from '../../service/catalog.service';
       </div>
 
       @if (catalog.yamlLoading()) {
-        <div class="h-72 animate-pulse rounded-xl border border-border bg-muted/30"></div>
+        <div class="h-72 rounded-fl-lg border border-border bg-muted/30"></div>
       } @else if (catalog.yamlError()) {
         <div
-          class="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive"
+          class="flex items-center gap-2 rounded-fl-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive"
         >
           <ng-icon name="lucideCircleAlert" class="h-4 w-4" />
           {{ catalog.yamlError() }}
@@ -67,7 +67,7 @@ import { CatalogService } from '../../service/catalog.service';
       } @else if (yaml()) {
         <!-- Header: version + checksum + actions -->
         <div
-          class="flex flex-wrap items-center justify-between gap-3 rounded-t-xl border border-b-0 border-border bg-muted/30 px-4 py-2.5"
+          class="flex flex-wrap items-center justify-between gap-3 rounded-t-fl-lg border border-b-0 border-border bg-muted/30 px-4 py-2.5"
         >
           <div class="flex flex-wrap items-center gap-2 text-xs">
             <span class="font-mono text-foreground">{{ filename() }}</span>
@@ -103,7 +103,7 @@ import { CatalogService } from '../../service/catalog.service';
         </div>
 
         <pre
-          class="-mt-5 max-h-[600px] overflow-auto rounded-b-xl border border-border bg-card p-4 font-mono text-xs leading-relaxed text-foreground"
+          class="-mt-5 max-h-[600px] overflow-auto rounded-b-fl-lg border border-border bg-card p-4 font-mono text-xs leading-relaxed text-foreground"
         ><code>{{ yaml()!.rawYaml }}</code></pre>
       }
     </div>

@@ -106,7 +106,7 @@ interface NodeRowMeta {
         </div>
 
         @if (nodesIsLoading() && clusterNodes().length === 0) {
-          <div class="animate-pulse flex flex-col gap-2">
+          <div class="flex flex-col gap-2">
             @for (i of [1, 2, 3, 4]; track i) {
               <div class="flex items-center gap-3 p-3 rounded-lg border border-border">
                 <div class="h-8 w-8 rounded-full skeleton flex-shrink-0"></div>

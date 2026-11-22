@@ -405,7 +405,7 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
         (click)="closeExpandModal()"
       >
         <div
-          class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[80vh]"
+          class="bg-white rounded-fl-lg w-full max-w-2xl flex flex-col max-h-[80vh]"
           (click)="$event.stopPropagation()"
         >
           <!-- Modal header -->

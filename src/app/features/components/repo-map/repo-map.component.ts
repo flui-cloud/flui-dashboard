@@ -229,7 +229,7 @@ interface NeededThing {
           </div>
         } @else {
           <!-- 1. Can this be deployed? -->
-          <section class="rounded-xl border p-5" [class]="outcomeCardClasses()">
+          <section class="rounded-fl-lg border p-5" [class]="outcomeCardClasses()">
             <div class="flex items-center gap-2">
               <ng-icon [name]="outcomeIcon()" class="h-6 w-6 flex-shrink-0" />
               <h2 class="text-lg font-bold">{{ outcomeLabel() }}</h2>
@@ -241,7 +241,7 @@ interface NeededThing {
           </section>
 
           <!-- 2. What is needed from the user -->
-          <section class="bg-white border border-slate-200 rounded-xl p-5">
+          <section class="bg-white border border-slate-200 rounded-fl-lg p-5">
             <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
               <ng-icon name="lucideKey" class="h-5 w-5 text-slate-400" />
               What you need to provide
@@ -271,7 +271,7 @@ interface NeededThing {
 
           <!-- 3. What is in the way -->
           @if (obstacles().length > 0) {
-            <section class="rounded-xl border border-red-300 bg-red-50 p-5">
+            <section class="rounded-fl-lg border border-red-300 bg-red-50 p-5">
               <h2 class="text-base font-bold text-red-900 flex items-center gap-2">
                 <ng-icon name="lucideTriangleAlert" class="h-5 w-5" />
                 In the way
@@ -299,7 +299,7 @@ interface NeededThing {
           <!-- Uncertainty stays a question — never a blank field, never a green tick -->
           @if (questions(); as qs) {
             @if (qs.length > 0) {
-              <section class="rounded-xl border border-amber-200 bg-amber-50 p-5">
+              <section class="rounded-fl-lg border border-amber-200 bg-amber-50 p-5">
                 <h2 class="text-base font-bold text-amber-900 flex items-center gap-2">
                   <ng-icon name="lucideCircleHelp" class="h-5 w-5" />
                   We could not tell
@@ -331,7 +331,7 @@ interface NeededThing {
           }
 
           <!-- What would run -->
-          <section class="bg-white border border-slate-200 rounded-xl p-5">
+          <section class="bg-white border border-slate-200 rounded-fl-lg p-5">
             <h2 class="text-base font-bold text-slate-900">What would run</h2>
             <ul class="mt-3 space-y-1.5 text-sm">
               @for (u of r.map!.units; track u.id) {
@@ -366,7 +366,7 @@ interface NeededThing {
           </section>
 
           <!-- 4. The next step -->
-          <section class="bg-white border border-slate-200 rounded-xl p-5">
+          <section class="bg-white border border-slate-200 rounded-fl-lg p-5">
             @if (applied(); as done) {
               <div class="flex items-center gap-2">
                 <ng-icon
@@ -609,7 +609,7 @@ interface NeededThing {
               @if (refusal.stranded; as left) {
                 <!-- Not a red row like any other: something exists on the cluster, and only this
                      message says what. -->
-                <div class="mt-4 rounded-xl border-2 border-red-500 bg-red-50 p-4">
+                <div class="mt-4 rounded-fl-lg border-2 border-red-500 bg-red-50 p-4">
                   <div class="flex items-center gap-2">
                     <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-red-600" />
                     <h3 class="text-base font-bold text-red-900">

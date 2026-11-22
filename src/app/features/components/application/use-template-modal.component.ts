@@ -89,7 +89,7 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
       (click)="onBackdropClick($event)"
     >
       <div
-        class="bg-card border border-border rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        class="bg-card border border-border rounded-fl-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
         (click)="onCardClick($event)"
       >
         <!-- Header -->
@@ -448,7 +448,7 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
       <!-- Floating popover (fixed positioning escapes the modal card overflow) -->
       @if (openPopover() && popoverPosition(); as pos) {
         <div
-          class="fixed z-[60] w-72 -translate-x-1/2 p-3 rounded-md border border-border bg-popover text-popover-foreground shadow-xl text-xs"
+          class="fixed z-[60] w-72 -translate-x-1/2 p-3 rounded-md border border-border bg-popover text-popover-foreground text-xs"
           [style.top.px]="pos.top"
           [style.left.px]="pos.left"
           (click)="$event.stopPropagation()"

@@ -68,7 +68,7 @@ export interface WizardStep {
         </div>
 
         <!-- Step Content Card -->
-        <div class="bg-white rounded-lg shadow p-5 mb-4">
+        <div class="bg-white rounded-lg p-5 mb-4">
           <!-- Current Step Header -->
           <div class="mb-4">
             <h2 class="text-base font-semibold text-slate-900">

@@ -17,7 +17,7 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
         (click)="cancelled.emit()"
       >
         <div
-          class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6"
+          class="bg-background rounded-lg border border-border max-w-md w-full p-6"
           (click)="$event.stopPropagation()"
         >
           <div class="flex items-start justify-between mb-4">

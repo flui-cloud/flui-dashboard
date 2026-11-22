@@ -32,7 +32,7 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
   template: `
     @if (open()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-        <div class="w-full max-w-lg rounded-lg border border-border bg-background shadow-xl">
+        <div class="w-full max-w-lg rounded-lg border border-border bg-background">
           <header class="flex items-center justify-between p-5 border-b border-border">
             <div>
               <h2 class="text-lg font-semibold">Enable backups</h2>

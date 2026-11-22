@@ -154,7 +154,7 @@ const AUTO_REFRESH_MS = 5000;
                         {{ who(s) }}
                         @if (s.blocks) {
                           <span
-                            class="ml-2 text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800"
+                            class="ml-2 text-[11px] text-amber-800"
                             [attr.data-testid]="'session-blocking-' + s.pid"
                           >
                             blocking {{ s.blocks }}

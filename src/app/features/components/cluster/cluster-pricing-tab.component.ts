@@ -58,7 +58,7 @@ import {
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isLoading()) {
-      <div class="animate-pulse space-y-6">
+      <div class="space-y-6">
         <div class="card-surface p-4">
           <div class="skeleton h-5 w-48"></div>
         </div>

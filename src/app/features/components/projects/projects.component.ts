@@ -46,7 +46,7 @@ const FIELD =
       <div class="flex items-start justify-between gap-4">
         <div class="flex items-center gap-3">
           <div
-            class="flex h-11 w-11 items-center justify-center rounded-xl bg-muted border border-border text-muted-foreground shrink-0"
+            class="flex h-11 w-11 items-center justify-center rounded-fl-lg bg-muted border border-border text-muted-foreground shrink-0"
           >
             <ng-icon name="lucideFolders" class="h-5 w-5" />
           </div>
@@ -161,7 +161,7 @@ const FIELD =
 
       <div class="grid gap-4 md:grid-cols-2">
         @for (p of projects.projects(); track p.id) {
-          <div hlmCard class="border-l-4" [style.borderLeftColor]="p.color || 'transparent'">
+          <div hlmCard>
             <div hlmCardContent class="pt-5 space-y-3">
               <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">

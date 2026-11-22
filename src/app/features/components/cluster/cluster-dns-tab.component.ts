@@ -62,7 +62,7 @@ import { ToastService } from '../../../shared/services/toast.service';
   template: `
     <div class="card-surface p-6 space-y-6">
       @if (isLoading()) {
-        <div class="animate-pulse space-y-6">
+        <div class="space-y-6">
           <!-- Zone section skeleton -->
           <div class="space-y-3">
             <div class="skeleton h-4 w-28"></div>

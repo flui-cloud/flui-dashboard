@@ -254,7 +254,7 @@ import {
           @for (vnet of filteredVNets(); track vnet.id) {
             <div
               (click)="selectVNet(vnet.id)"
-              class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg hover:border-blue-300 cursor-pointer transition-all"
+              class="bg-white border border-gray-200 rounded-lg p-6 hover:border-blue-300 cursor-pointer transition-all"
             >
               <div class="flex items-start justify-between">
                 <div class="flex-1">

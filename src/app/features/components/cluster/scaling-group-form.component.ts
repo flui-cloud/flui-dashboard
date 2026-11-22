@@ -155,7 +155,7 @@ import { GroupCostComponent } from '../scaling-section/group-cost.component';
         </div>
 
         <aside
-          class="w-80 shrink-0 rounded-xl border border-border bg-muted/40 p-5"
+          class="w-80 shrink-0 rounded-fl-lg border border-border bg-muted/40 p-5"
           data-testid="consequence"
         >
           <h4 class="m-0 mb-3 text-[13px] font-semibold text-foreground">

@@ -209,15 +209,15 @@ export class ApplicationGroupRowComponent {
       case ApplicationStatusEnum.AwaitingBuild:
       case ApplicationStatusEnum.Provisioning:
       case ApplicationStatusEnum.Updating:
-        return 'bg-blue-500 animate-pulse';
+        return 'bg-blue-500';
       case ApplicationStatusEnum.Failed:
         return 'bg-red-500';
       case ApplicationStatusEnum.Degraded:
         return 'bg-orange-500';
       case ApplicationStatusEnum.WaitingForRoom:
-        return 'bg-amber-400 animate-pulse';
+        return 'bg-amber-400';
       case ApplicationStatusEnum.Deleting:
-        return 'bg-gray-400 animate-pulse';
+        return 'bg-gray-400';
       case ApplicationStatusEnum.Stopped:
       case ApplicationStatusEnum.Deleted:
         return 'bg-gray-400';

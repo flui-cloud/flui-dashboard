@@ -175,7 +175,7 @@ interface FilterState {
       @if (isLoading()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (i of [1, 2, 3]; track i) {
-            <div class="animate-pulse card-surface overflow-hidden border-l-4 border-l-border">
+            <div class="card-surface overflow-hidden">
               <div class="p-6 space-y-4">
                 <div class="flex items-start justify-between">
                   <div class="skeleton h-6 w-36"></div>
@@ -219,10 +219,7 @@ interface FilterState {
       @if (!isLoading() && !errorMessage()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (cluster of filteredClusters(); track cluster.id) {
-            <div
-              class="relative card-surface overflow-hidden hover:shadow-lg transition-all duration-300 border-l-4"
-              [class]="getStatusBorderClass(cluster.status)"
-            >
+            <div class="relative card-surface overflow-hidden">
               @if (cluster.status === ClusterStatus.DELETING) {
                 <div
                   class="absolute inset-0 bg-background/70 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-lg"
@@ -342,7 +339,7 @@ interface FilterState {
             <div
               [appReadOnlySection]="CLUSTER_SECTION_KEYS"
               (click)="createNewCluster()"
-              class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
+              class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
             >
               <div
                 class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 group-hover:bg-blue-50 transition-colors"
@@ -406,7 +403,7 @@ interface FilterState {
 
     @if (showDeleteModal()) {
       <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="card-surface rounded-lg max-w-md w-full p-6 shadow-xl">
+        <div class="card-surface rounded-lg max-w-md w-full p-6">
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0">
               <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -693,24 +690,6 @@ export class ClusterListComponent implements OnInit, OnDestroy {
 
   getProviderIcon(provider?: ProviderType): string {
     return 'lucideCloud';
-  }
-
-  getStatusBorderClass(status?: ClusterStatus): string {
-    switch (status) {
-      case ClusterStatus.ACTIVE:
-        return 'border-l-green-500';
-      case ClusterStatus.CREATING:
-        return 'border-l-blue-500';
-      case ClusterStatus.ERROR:
-        return 'border-l-red-500';
-      case ClusterStatus.SCALING:
-      case ClusterStatus.UPDATING:
-        return 'border-l-yellow-500';
-      case ClusterStatus.DELETING:
-        return 'border-l-gray-500';
-      default:
-        return 'border-l-gray-300';
-    }
   }
 
   getStatusIcon(status?: ClusterStatus): string {

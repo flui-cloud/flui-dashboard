@@ -32,7 +32,7 @@ import { Toast, ToastService } from '../services/toast.service';
     >
       @for (t of toastService.toasts(); track t.id) {
         <div
-          class="pointer-events-auto rounded-lg border shadow-lg px-3 py-2.5 flex items-start gap-2.5 animate-in slide-in-from-right duration-200"
+          class="pointer-events-auto rounded-lg border px-3 py-2.5 flex items-start gap-2.5 animate-in slide-in-from-right duration-200"
           [class]="containerClass(t)"
         >
           <ng-icon

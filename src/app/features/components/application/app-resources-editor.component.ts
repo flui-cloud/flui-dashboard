@@ -74,7 +74,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
 
       @if (restartRollout) {
         <div
-          class="bg-white rounded-xl border border-blue-300 overflow-hidden"
+          class="bg-white rounded-fl-lg border border-blue-300 overflow-hidden"
           data-testid="restart-progress"
         >
           <p class="px-5 py-3 text-xs text-blue-600 font-mono">
@@ -90,7 +90,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
       }
 
       <!-- ── Replicas card ── -->
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div class="bg-white rounded-fl-lg border border-gray-200 overflow-hidden">
         <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
           <div class="flex items-center gap-3">
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
@@ -220,7 +220,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
       <!-- ── Container Resources cards ── -->
       @if (runtime && runtime.containers.length > 0) {
         @for (container of runtime.containers; track container.name; let i = $index) {
-          <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div class="bg-white rounded-fl-lg border border-gray-200 overflow-hidden">
             <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
               <div class="flex items-center gap-2 min-w-0">
                 <ng-icon name="lucideCpu" class="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
@@ -429,7 +429,7 @@ import { ApplicationMonitoringService } from '../../service/application-monitori
           </div>
         }
       } @else if (!runtime) {
-        <div class="bg-white rounded-xl border border-gray-200 px-5 py-8 text-center">
+        <div class="bg-white rounded-fl-lg border border-gray-200 px-5 py-8 text-center">
           <p class="text-sm text-gray-400">Runtime data not available</p>
         </div>
       }

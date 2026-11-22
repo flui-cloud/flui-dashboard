@@ -54,7 +54,7 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
           <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div>
             <span
-              class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700"
+              class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-fl-sm bg-fl-surface text-blue-700 border"
             >
               Registered (self-hosted)
             </span>
@@ -68,7 +68,7 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
       }
 
       @if (isLoading()) {
-        <div class="animate-pulse space-y-4">
+        <div class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @for (i of [1, 2]; track i) {
               <div class="card-inner p-4 space-y-3">

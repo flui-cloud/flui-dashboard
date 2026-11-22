@@ -26,7 +26,7 @@ interface ActionGroup {
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div
-      class="mx-4 mb-3 rounded-xl border overflow-hidden text-sm"
+      class="mx-4 mb-3 rounded-fl-lg border overflow-hidden text-sm"
       [class]="
         isDestructive()
           ? 'border-destructive/30 bg-destructive/5'
@@ -136,11 +136,7 @@ interface ActionGroup {
             type="button"
             (click)="approve()"
             class="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95"
-            [class]="
-              isDestructive()
-                ? 'bg-destructive shadow-sm shadow-destructive/30'
-                : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-sm shadow-blue-500/30'
-            "
+            [class]="isDestructive() ? 'bg-destructive' : 'bg-fl-accent'"
           >
             <ng-icon name="lucideCheck" class="h-3 w-3" />
             {{ isDestructive() ? 'Confirm delete' : 'Approve' }}

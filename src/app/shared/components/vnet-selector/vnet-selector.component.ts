@@ -125,7 +125,7 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
             <div
               (click)="selectVNet(null)"
               [class]="getVNetCardClass(null)"
-              class="p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md"
+              class="p-4 border-2 rounded-lg cursor-pointer transition-all"
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">

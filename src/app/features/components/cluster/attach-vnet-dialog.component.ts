@@ -42,7 +42,7 @@ import { VNetInfo, VNetStatus } from '../../model/vnet.models';
       (click)="onBackdrop($event)"
     >
       <div
-        class="bg-card border border-border rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        class="bg-card border border-border rounded-fl-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
         (click)="$event.stopPropagation()"
       >
         <div class="flex items-center justify-between px-5 py-4 border-b border-border">

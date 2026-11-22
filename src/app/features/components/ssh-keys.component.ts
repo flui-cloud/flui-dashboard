@@ -122,12 +122,12 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
       @if (isLoading()) {
         <div class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="animate-pulse bg-muted rounded-lg h-20"></div>
-            <div class="animate-pulse bg-muted rounded-lg h-20"></div>
-            <div class="animate-pulse bg-muted rounded-lg h-20"></div>
-            <div class="animate-pulse bg-muted rounded-lg h-20"></div>
+            <div class="bg-muted rounded-lg h-20"></div>
+            <div class="bg-muted rounded-lg h-20"></div>
+            <div class="bg-muted rounded-lg h-20"></div>
+            <div class="bg-muted rounded-lg h-20"></div>
           </div>
-          <div class="animate-pulse">
+          <div class="">
             <div class="h-4 bg-muted rounded w-1/4 mb-4"></div>
             <div class="space-y-3">
               <div class="h-16 bg-muted rounded-lg"></div>
@@ -453,10 +453,8 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
     </div>
 
     @if (showBulkDeleteModal) {
-      <div
-        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      >
-        <div class="bg-card text-card-foreground border rounded-lg shadow-lg w-full max-w-lg">
+      <div class="fixed inset-0 bg-background/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-card text-card-foreground border rounded-lg w-full max-w-lg">
           <div class="flex items-center justify-between p-6 border-b border-border">
             <div class="flex items-center space-x-3">
               <div class="bg-destructive/10 text-destructive p-2 rounded-md">
@@ -556,10 +554,8 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
     }
 
     @if (showDeleteModal) {
-      <div
-        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      >
-        <div class="bg-card text-card-foreground border rounded-lg shadow-lg w-full max-w-lg">
+      <div class="fixed inset-0 bg-background/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-card text-card-foreground border rounded-lg w-full max-w-lg">
           <div class="flex items-center justify-between p-6 border-b border-border">
             <div class="flex items-center space-x-3">
               <div class="bg-destructive/10 text-destructive p-2 rounded-md">
@@ -670,10 +666,8 @@ type ProviderSlug = 'contabo' | 'hetzner' | 'scaleway' | 'ovh' | 'byos';
     }
 
     @if (showAddModal) {
-      <div
-        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      >
-        <div class="bg-card text-card-foreground border rounded-lg shadow-lg w-full max-w-2xl">
+      <div class="fixed inset-0 bg-background/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-card text-card-foreground border rounded-lg w-full max-w-2xl">
           <div class="flex items-center justify-between p-6 border-b border-border">
             <div>
               <h3 class="text-lg font-semibold text-foreground">Add SSH Key</h3>

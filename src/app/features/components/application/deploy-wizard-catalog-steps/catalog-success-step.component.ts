@@ -75,7 +75,7 @@ interface InternalReadiness {
         <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
           <a
             [routerLink]="['/cluster', inst.clusterId, 'scaling']"
-            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             Open scaling
           </a>
@@ -186,7 +186,7 @@ interface InternalReadiness {
               target="_blank"
               rel="noopener noreferrer"
               class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm
-                     font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+                     font-medium text-primary-foreground hover:bg-primary/90"
             >
               <ng-icon name="lucideRocket" class="h-4 w-4" />
               Open app
@@ -200,7 +200,7 @@ interface InternalReadiness {
               target="_blank"
               rel="noopener noreferrer"
               class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm
-                     font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+                     font-medium text-primary-foreground hover:bg-primary/90"
             >
               <ng-icon name="lucideRocket" class="h-4 w-4" />
               Open app
@@ -331,7 +331,7 @@ export class CatalogSuccessStepComponent implements OnDestroy {
     const primaryVisible = publicReady || internalReady;
     return primaryVisible
       ? 'inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted'
-      : 'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90';
+      : 'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90';
   });
 
   constructor() {

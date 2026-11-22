@@ -119,7 +119,7 @@ import { ObjectStoreConsoleStateService } from './object-store-console-state.ser
         (click)="s.closeShare()"
       >
         <div
-          class="w-full max-w-lg rounded-lg border border-border bg-card p-5 shadow-xl"
+          class="w-full max-w-lg rounded-lg border border-border bg-card p-5"
           (click)="$event.stopPropagation()"
         >
           <div class="mb-3 flex items-center gap-2">

@@ -91,11 +91,7 @@ const EMPTY_QUERY: DocQuery = {
               </span>
             }
             @case ('connected') {
-              <span
-                class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700"
-              >
-                Connected
-              </span>
+              <span class="inline-flex items-center gap-1 text-emerald-700"> Connected </span>
             }
             @case ('error') {
               <button

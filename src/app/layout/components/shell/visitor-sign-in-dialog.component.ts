@@ -25,7 +25,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (gate.dialogOpen()) {
-      <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="close()">
+      <div class="fixed inset-0 z-50 bg-background/80" (click)="close()">
         <div
           class="fixed left-[50%] top-[50%] z-50 w-full max-w-sm translate-x-[-50%] translate-y-[-50%] p-4"
         >
@@ -35,7 +35,7 @@ import {
             aria-modal="true"
             aria-labelledby="visitor-sign-in-title"
             tabindex="-1"
-            class="bg-white border border-gray-200 rounded-lg shadow-xl p-6 outline-none"
+            class="bg-white border border-gray-200 rounded-lg p-6 outline-none"
             (click)="$event.stopPropagation()"
           >
             <div class="flex items-start justify-between gap-4">

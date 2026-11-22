@@ -29,7 +29,7 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+      <div class="max-w-md w-full bg-white rounded-lg p-8">
         <div
           class="w-16 h-16 mx-auto rounded-full bg-slate-900 flex items-center justify-center mb-6"
         >

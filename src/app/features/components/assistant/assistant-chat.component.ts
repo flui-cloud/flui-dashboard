@@ -58,7 +58,7 @@ interface PickerOption {
             [class.justify-start]="msg.role !== 'user'"
           >
             <div
-              class="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm"
+              class="max-w-[80%] rounded-fl-lg px-4 py-2.5 text-sm"
               [class]="
                 msg.role === 'user'
                   ? 'bg-primary text-primary-foreground rounded-br-sm'
@@ -72,7 +72,7 @@ interface PickerOption {
 
         @if (chatService.sending()) {
           <div class="flex justify-start">
-            <div class="bg-muted rounded-2xl rounded-bl-sm px-4 py-3">
+            <div class="bg-muted rounded-fl-lg rounded-bl-sm px-4 py-3">
               <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           </div>

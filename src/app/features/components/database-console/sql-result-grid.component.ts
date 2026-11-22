@@ -114,7 +114,7 @@ const JSON_SNIFF_SAMPLE = 50;
       <div class="fixed inset-0 z-50 flex justify-end" (click)="closeJson()">
         <div class="absolute inset-0 bg-black/30"></div>
         <aside
-          class="relative z-10 flex h-full w-full max-w-md flex-col border-l border-border bg-card shadow-xl"
+          class="relative z-10 flex h-full w-full max-w-md flex-col border-l border-border bg-card"
           (click)="$event.stopPropagation()"
         >
           <div class="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">

@@ -164,7 +164,7 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
                     </p>
                   </div>
                   <span
-                    class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700"
+                    class="text-xs font-medium px-2 py-0.5 rounded-fl-sm bg-fl-surface text-blue-700 border"
                   >
                     Configuring...
                   </span>

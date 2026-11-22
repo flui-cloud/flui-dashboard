@@ -163,8 +163,8 @@ import {
         <div class="grid grid-cols-3 gap-3">
           @for (i of [0, 1, 2]; track i) {
             <div class="bg-white border border-gray-200 rounded-lg px-4 py-3 text-center space-y-2">
-              <div class="h-3 w-16 bg-gray-200 rounded animate-pulse mx-auto"></div>
-              <div class="h-7 w-10 bg-gray-200 rounded animate-pulse mx-auto"></div>
+              <div class="h-3 w-16 bg-gray-200 rounded mx-auto"></div>
+              <div class="h-7 w-10 bg-gray-200 rounded mx-auto"></div>
             </div>
           }
         </div>
@@ -174,24 +174,24 @@ import {
           <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <!-- Cluster header skeleton -->
             <div class="px-4 py-2.5 bg-gray-50 border-b border-gray-200">
-              <div class="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+              <div class="h-4 w-32 bg-gray-200 rounded"></div>
             </div>
 
             <!-- Row skeletons -->
             @for (r of skeletonRows(g); track r) {
               <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0">
-                <div class="h-4 w-4 bg-gray-200 rounded animate-pulse flex-shrink-0"></div>
+                <div class="h-4 w-4 bg-gray-200 rounded flex-shrink-0"></div>
                 <div class="flex-1 grid grid-cols-4 gap-3 items-center">
                   <div class="space-y-1.5">
-                    <div class="h-3.5 w-28 bg-gray-200 rounded animate-pulse"></div>
-                    <div class="h-3 w-20 bg-gray-100 rounded animate-pulse"></div>
+                    <div class="h-3.5 w-28 bg-gray-200 rounded"></div>
+                    <div class="h-3 w-20 bg-gray-100 rounded"></div>
                   </div>
                   <div class="col-span-2 flex items-center gap-2">
-                    <div class="h-5 w-16 bg-gray-200 rounded animate-pulse"></div>
-                    <div class="h-5 w-12 bg-gray-100 rounded animate-pulse"></div>
+                    <div class="h-5 w-16 bg-gray-200 rounded"></div>
+                    <div class="h-5 w-12 bg-gray-100 rounded"></div>
                   </div>
                   <div class="flex justify-end">
-                    <div class="h-3 w-16 bg-gray-100 rounded animate-pulse"></div>
+                    <div class="h-3 w-16 bg-gray-100 rounded"></div>
                   </div>
                 </div>
               </div>
@@ -321,7 +321,7 @@ import {
       <!-- Confirmation modal -->
       @if (confirmModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div class="bg-white rounded-lg max-w-sm w-full p-5 shadow-xl">
+          <div class="bg-white rounded-lg max-w-sm w-full p-5">
             <h3 class="text-base font-semibold text-gray-900 mb-2">Confirm Redeploy</h3>
             <p class="text-sm text-gray-600 mb-4">
               This will trigger a rolling restart for all workload resources of

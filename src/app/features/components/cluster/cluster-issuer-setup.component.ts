@@ -63,13 +63,9 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
           <p class="text-xs text-sub mt-0.5">Manage certificates for wildcard domains.</p>
         </div>
         @if (allDns01Ready()) {
-          <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
-            DNS-01 Ready
-          </span>
+          <span class="text-xs text-green-700 font-medium"> DNS-01 Ready </span>
         } @else if (hasHttp01()) {
-          <span class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
-            Action required
-          </span>
+          <span class="text-xs text-red-700 font-medium"> Action required </span>
         }
       </div>
 

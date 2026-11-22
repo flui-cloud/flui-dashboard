@@ -90,7 +90,7 @@ interface SectionDef {
         <div hlmCardContent class="pt-6">
           <div class="flex items-center gap-4">
             <div
-              class="flex h-16 w-16 items-center justify-center rounded-xl bg-muted border border-border text-xl font-bold text-muted-foreground select-none shrink-0"
+              class="flex h-16 w-16 items-center justify-center rounded-fl-lg bg-muted border border-border text-xl font-bold text-muted-foreground select-none shrink-0"
             >
               {{ _initials() }}
             </div>
@@ -130,9 +130,6 @@ interface SectionDef {
             </button>
           }
         </nav>
-        <div
-          class="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent"
-        ></div>
       </div>
 
       <!-- Active section -->

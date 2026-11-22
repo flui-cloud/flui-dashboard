@@ -168,7 +168,7 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
 
             @if (customRangeOpen()) {
               <div
-                class="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl w-80"
+                class="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg w-80"
               >
                 <app-log-date-range-picker
                   (rangeSelected)="onCustomRangeSelected($event)"

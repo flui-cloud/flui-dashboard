@@ -143,12 +143,12 @@ export class ApplicationsListToolbarComponent {
 
   protected typeClass(type: string): string {
     return this.filters().type === type
-      ? 'bg-background text-foreground shadow-sm'
+      ? 'bg-background text-foreground'
       : 'text-muted-foreground hover:text-foreground';
   }
 
   protected viewClass(view: ListView): string {
-    if (this.filters().view === view) return 'bg-background text-foreground shadow-sm';
+    if (this.filters().view === view) return 'bg-background text-foreground';
     if (view === 'attention' && this.counts().attention > 0)
       return 'text-destructive hover:text-foreground';
     if (view === 'no_backup' && this.counts().no_backup > 0)

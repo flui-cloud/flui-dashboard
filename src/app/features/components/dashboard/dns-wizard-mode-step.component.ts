@@ -42,7 +42,7 @@ import { DnsSetupWizardService, CertMode } from './dns-setup-wizard.service';
               </button>
               @if (activeInfo === 'wildcard') {
                 <div
-                  class="absolute right-0 top-5 z-20 w-72 rounded-lg bg-popover border border-border shadow-lg px-3 py-2.5 text-xs text-muted-foreground"
+                  class="absolute right-0 top-5 z-20 w-72 rounded-lg bg-popover border border-border px-3 py-2.5 text-xs text-muted-foreground"
                   (click)="$event.stopPropagation()"
                 >
                   Uses DNS-01 challenge — the platform adds a TXT record to your domain via your DNS
@@ -79,7 +79,7 @@ import { DnsSetupWizardService, CertMode } from './dns-setup-wizard.service';
               </button>
               @if (activeInfo === 'direct') {
                 <div
-                  class="absolute right-0 top-5 z-20 w-72 rounded-lg bg-popover border border-border shadow-lg px-3 py-2.5 text-xs text-muted-foreground"
+                  class="absolute right-0 top-5 z-20 w-72 rounded-lg bg-popover border border-border px-3 py-2.5 text-xs text-muted-foreground"
                   (click)="$event.stopPropagation()"
                 >
                   Uses HTTP-01 challenge — Let's Encrypt contacts each app directly over HTTP to

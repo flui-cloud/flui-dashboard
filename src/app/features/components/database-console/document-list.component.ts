@@ -48,7 +48,7 @@ import { JsonViewerComponent } from './json-viewer.component';
 
     @if (loading()) {
       @for (i of skeletonRows; track i) {
-        <div class="mb-2 h-16 animate-pulse rounded-lg bg-muted/50"></div>
+        <div class="mb-2 h-16 rounded-lg bg-muted/50"></div>
       }
     } @else {
       @for (doc of documents(); track $index) {

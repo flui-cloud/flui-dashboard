@@ -226,7 +226,7 @@ import type { AppLogEntryDto } from '../../service/application-logs.service';
     <!-- Logs modal -->
     @if (logsModal()) {
       <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg w-full max-w-5xl shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="bg-white rounded-lg w-full max-w-5xl flex flex-col max-h-[85vh]">
           <!-- Modal header -->
           <div
             class="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0"

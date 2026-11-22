@@ -48,7 +48,7 @@ const GRID_BOTTOM = 28;
       <!-- Loading overlay -->
       @if (loading()) {
         <div class="absolute inset-0 flex items-center justify-center bg-white/60 rounded z-20">
-          <span class="text-xs text-gray-400 animate-pulse">Loading volume…</span>
+          <span class="text-xs text-gray-400">Loading volume…</span>
         </div>
       }
 

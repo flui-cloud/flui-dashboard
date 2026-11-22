@@ -1027,9 +1027,7 @@ interface FirewallRuleDto {
                           <span class="ml-1 font-medium">{{ rule.direction }}</span>
                         </div>
                         <div class="text-right">
-                          <span
-                            class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700"
-                          >
+                          <span class="inline-flex items-center gap-1 text-xs text-amber-700">
                             Locked
                           </span>
                         </div>

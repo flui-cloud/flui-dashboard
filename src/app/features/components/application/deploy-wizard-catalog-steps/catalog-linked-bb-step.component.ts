@@ -121,7 +121,7 @@ import { CatalogReusableInstanceDto } from '../../../../core/api/model/catalogRe
                       </span>
                       @if (bbRefs().length > 1 && instance.catalogSlug) {
                         <span
-                          class="rounded-full border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800"
+                          class="rounded-fl-sm border border-fl-border bg-fl-surface px-1.5 py-0.5 text-[10px] font-medium text-sky-800"
                         >
                           {{ instance.catalogSlug }}
                         </span>

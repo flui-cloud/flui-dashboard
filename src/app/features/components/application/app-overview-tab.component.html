@@ -71,11 +71,11 @@
       </div>
     } @else if (!app.systemProtected && app.status !== 'deleted') {
       <div
-        class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-red-300 px-4 py-3"
+        class="flex flex-wrap items-center justify-between gap-3 rounded-fl-lg border border-dashed border-red-300 px-4 py-3"
         data-testid="danger-line"
       >
         @if (app.status === 'deleting') {
-          <span class="min-w-0 animate-pulse text-xs text-muted-foreground">
+          <span class="min-w-0 text-xs text-muted-foreground">
             {{ deleteStepMessage() || 'Removing application and its resources...' }}
           </span>
           <button

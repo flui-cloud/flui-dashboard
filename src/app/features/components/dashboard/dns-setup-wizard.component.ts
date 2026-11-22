@@ -65,11 +65,11 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
       class="fixed inset-0 z-50 flex items-center justify-center p-4"
       (click)="onBackdropClick($event)"
     >
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      <div class="absolute inset-0 bg-black/50"></div>
 
       <!-- Dialog -->
       <div
-        class="relative z-10 bg-card border border-border rounded-xl shadow-xl w-full max-w-2xl"
+        class="relative z-10 bg-card border border-border rounded-fl-lg w-full max-w-2xl"
         (click)="$event.stopPropagation()"
       >
         @if (showingRecap()) {
@@ -232,11 +232,11 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
           <!-- Error detail popup (Step 4) -->
           @if (wiz.activeAppError()) {
             <div
-              class="absolute inset-0 z-20 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6 rounded-xl"
+              class="absolute inset-0 z-20 bg-black/40 flex items-center justify-center p-6 rounded-fl-lg"
               (click)="wiz.closeAppError()"
             >
               <div
-                class="bg-card border border-border rounded-lg shadow-xl w-full max-w-md flex flex-col max-h-80"
+                class="bg-card border border-border rounded-lg w-full max-w-md flex flex-col max-h-80"
                 (click)="$event.stopPropagation()"
               >
                 <!-- Popup header -->

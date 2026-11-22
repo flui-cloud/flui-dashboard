@@ -276,7 +276,9 @@ import {
                         <span class="text-base font-mono font-semibold text-gray-900">
                           {{ subnet.ipRange }}
                         </span>
-                        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800">
+                        <span
+                          class="px-2 py-0.5 text-xs rounded-fl-sm bg-fl-surface text-gray-800 border"
+                        >
                           {{ subnet.attachedServerIds.length }} server(s)
                         </span>
                       </div>
@@ -399,7 +401,7 @@ import {
             (click)="cancelAddSubnet()"
           >
             <div
-              class="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl"
+              class="bg-white rounded-lg p-6 max-w-md w-full mx-4"
               (click)="$event.stopPropagation()"
             >
               <div class="flex items-center justify-between mb-5">

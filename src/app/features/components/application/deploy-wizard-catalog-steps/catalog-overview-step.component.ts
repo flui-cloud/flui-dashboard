@@ -86,7 +86,7 @@ import { CatalogIconComponent } from '../../catalog/catalog-icon.component';
         @if (catalog.listLoading()) {
           <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
             @for (_ of skeletonSlots; track $index) {
-              <div class="h-24 animate-pulse rounded-lg border border-border bg-muted/30"></div>
+              <div class="h-24 rounded-lg border border-border bg-muted/30"></div>
             }
           </div>
         } @else if (catalog.listError()) {

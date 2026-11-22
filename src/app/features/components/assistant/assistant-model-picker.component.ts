@@ -39,7 +39,7 @@ import {
         </button>
         @if (pickerOpen()) {
           <div
-            class="absolute bottom-full left-0 mb-2 w-80 max-h-[360px] overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-popover shadow-xl z-50 text-xs"
+            class="absolute bottom-full left-0 mb-2 w-80 max-h-[360px] overflow-y-auto overflow-x-hidden rounded-fl-lg border border-border bg-popover z-50 text-xs"
           >
             <button
               type="button"

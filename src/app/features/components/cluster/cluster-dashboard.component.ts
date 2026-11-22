@@ -104,7 +104,7 @@ const LOOK_ONLY_TABS = new Set(['storage', 'scaling', 'firewall', 'dns', 'variab
     <div class="space-y-6 p-6">
       <!-- Skeleton Loader -->
       @if (isLoading() && !cluster()) {
-        <div class="animate-pulse space-y-6">
+        <div class="space-y-6">
           <!-- Header skeleton -->
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -311,9 +311,6 @@ const LOOK_ONLY_TABS = new Set(['storage', 'scaling', 'firewall', 'dns', 'variab
               </a>
             }
           </nav>
-          <div
-            class="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent"
-          ></div>
         </div>
 
         <!-- Tab Content -->
@@ -326,7 +323,7 @@ const LOOK_ONLY_TABS = new Set(['storage', 'scaling', 'firewall', 'dns', 'variab
     <!-- Delete Confirmation Modal -->
     @if (showDeleteModal()) {
       <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="card-surface rounded-lg max-w-md w-full p-6 shadow-xl">
+        <div class="card-surface rounded-lg max-w-md w-full p-6">
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0">
               <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">

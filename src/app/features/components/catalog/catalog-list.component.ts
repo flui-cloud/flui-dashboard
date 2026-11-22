@@ -74,8 +74,7 @@ interface CatalogSectionGroup {
     <div class="mx-auto max-w-7xl space-y-8 p-6">
       <!-- Hero banner -->
       <section
-        class="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br
-               from-primary/10 via-primary/5 to-transparent p-8"
+        class="relative overflow-hidden rounded-fl-lg border border-border bg-fl-surface p-8"
       >
         <div class="relative flex flex-col gap-2">
           @if (backLink(); as link) {
@@ -237,12 +236,12 @@ interface CatalogSectionGroup {
         @if (catalog.listLoading()) {
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             @for (_ of skeletonSlots; track $index) {
-              <div class="h-56 animate-pulse rounded-xl border border-border bg-muted/30"></div>
+              <div class="h-56 rounded-fl-lg border border-border bg-muted/30"></div>
             }
           </div>
         } @else if (catalog.listError()) {
           <div
-            class="flex flex-col items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-8 text-center"
+            class="flex flex-col items-center gap-3 rounded-fl-lg border border-destructive/40 bg-destructive/5 p-8 text-center"
           >
             <ng-icon name="lucideCircleAlert" class="h-8 w-8 text-destructive" />
             <p class="text-sm text-destructive">{{ catalog.listError() }}</p>
@@ -258,7 +257,7 @@ interface CatalogSectionGroup {
           </div>
         } @else if (filteredApps().length === 0) {
           <div
-            class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-10 text-center"
+            class="flex flex-col items-center gap-3 rounded-fl-lg border border-dashed border-border p-10 text-center"
           >
             <ng-icon name="lucideStore" class="h-10 w-10 text-muted-foreground" />
             <div class="space-y-1">

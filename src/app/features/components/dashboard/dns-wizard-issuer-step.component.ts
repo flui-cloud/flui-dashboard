@@ -35,7 +35,7 @@ import { DashboardDnsService } from '../../service/dashboard-dns.service';
 
       @if (wiz.loadingHttpIssuer()) {
         <!-- Skeleton loader -->
-        <div class="rounded-lg border border-border px-4 py-3 space-y-2 animate-pulse">
+        <div class="rounded-lg border border-border px-4 py-3 space-y-2">
           <div class="h-3 w-40 rounded bg-muted"></div>
           <div class="h-3 w-56 rounded bg-muted"></div>
         </div>

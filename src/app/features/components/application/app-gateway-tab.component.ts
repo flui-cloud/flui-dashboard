@@ -145,7 +145,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                     <div class="flex items-center gap-1 flex-wrap">
                       @if (route.auth?.sso) {
                         <span
-                          class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700"
+                          class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-fl-sm bg-fl-surface text-blue-700 border"
                         >
                           <ng-icon name="lucideLock" class="h-3 w-3" />
                           SSO{{ route.auth?.minRole ? ' · ' + route.auth?.minRole : '' }}
@@ -153,13 +153,13 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                       }
                       @if (route.rateLimit?.average) {
                         <span
-                          class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700"
+                          class="text-xs px-2 py-0.5 rounded-fl-sm bg-fl-surface text-purple-700 border"
                         >
                           {{ route.rateLimit?.average }} req/{{ route.rateLimit?.period || '1s' }}
                         </span>
                       }
                       @if (route.allowIps?.length) {
-                        <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                        <span class="text-xs text-amber-700">
                           {{ route.allowIps?.length }} IP range(s)
                         </span>
                       }
@@ -335,9 +335,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
     <!-- Add route dialog -->
     @if (addOpen()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div
-          class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6 space-y-4"
-        >
+        <div class="bg-background rounded-lg border border-border max-w-md w-full p-6 space-y-4">
           <h3 class="text-base font-semibold">Add route</h3>
 
           <label class="block space-y-1">
@@ -400,9 +398,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
     <!-- Delete confirm -->
     @if (pendingDelete()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div
-          class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6 space-y-4"
-        >
+        <div class="bg-background rounded-lg border border-border max-w-md w-full p-6 space-y-4">
           <h3 class="text-base font-semibold">Remove route</h3>
           <p class="text-sm text-muted-foreground">
             Remove "{{ pendingDelete()?.host }}"? Its DNS record, TLS certificate and edge policies

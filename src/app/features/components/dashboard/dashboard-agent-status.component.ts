@@ -31,7 +31,7 @@ type AgentHookState = 'working' | 'idle' | 'none';
             <div class="flex items-center gap-3">
               <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
                 <span
-                  class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+                  class="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
                 ></span>
                 <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
               </span>

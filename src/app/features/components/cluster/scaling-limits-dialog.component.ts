@@ -33,7 +33,7 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
         aria-modal="true"
         aria-label="Node limits"
         (click)="$event.stopPropagation()"
-        class="card-surface w-full max-w-md p-6 shadow-xl flex flex-col gap-5"
+        class="card-surface w-full max-w-md p-6 flex flex-col gap-5"
         data-testid="limits-dialog"
       >
         <div class="flex flex-col gap-1">

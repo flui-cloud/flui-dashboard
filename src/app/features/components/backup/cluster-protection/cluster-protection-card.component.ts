@@ -199,7 +199,7 @@ const OUTCOME_TONE: Record<string, string> = {
         (click)="closeStop()"
       >
         <div
-          class="w-full max-w-md space-y-4 rounded-lg border border-border bg-background p-6 shadow-xl"
+          class="w-full max-w-md space-y-4 rounded-lg border border-border bg-background p-6"
           (click)="$event.stopPropagation()"
         >
           <h3 class="text-lg font-semibold">Stop protecting new apps?</h3>

@@ -123,7 +123,7 @@ interface TabItem {
     <!-- Error Toast -->
     @if (showErrorToast()) {
       <div
-        class="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md"
+        class="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 animate-slide-in-right max-w-md"
       >
         <div class="flex items-start gap-3">
           <ng-icon name="lucideCircleX" class="h-6 w-6 flex-shrink-0 text-red-600" />
@@ -146,7 +146,7 @@ interface TabItem {
     <div class="space-y-6 p-6">
       @if (isLoading() && !application()) {
         <!-- Skeleton loader -->
-        <div class="animate-pulse space-y-6">
+        <div class="space-y-6">
           <!-- Header skeleton -->
           <div class="flex items-start gap-4">
             <div class="mt-1 h-9 w-9 rounded-lg bg-gray-200"></div>
@@ -437,9 +437,7 @@ interface TabItem {
                 <ng-icon name="lucideSettings" class="h-4 w-4 flex-shrink-0" />
                 <span class="hidden md:inline">Advanced</span>
                 @if (diagnosesCount() > 0) {
-                  <span
-                    class="ml-0.5 text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 font-semibold tabular-nums"
-                  >
+                  <span class="ml-0.5 text-xs text-red-800 font-semibold tabular-nums">
                     {{ diagnosesCount() }}
                   </span>
                 }
@@ -448,7 +446,7 @@ interface TabItem {
               @if (advancedOpen()) {
                 <div class="fixed inset-0 z-40" (click)="advancedOpen.set(false)"></div>
                 <div
-                  class="absolute right-0 top-full mt-1 w-52 z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1"
+                  class="absolute right-0 top-full mt-1 w-52 z-50 bg-white border border-gray-200 rounded-lg py-1"
                   (click)="advancedOpen.set(false)"
                 >
                   @for (item of advancedTabs; track item.route) {
@@ -461,9 +459,7 @@ interface TabItem {
                       <ng-icon [name]="item.icon" class="h-4 w-4" />
                       <span class="flex-1">{{ item.label }}</span>
                       @if (item.route === 'diagnoses' && diagnosesCount() > 0) {
-                        <span
-                          class="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 font-semibold tabular-nums"
-                        >
+                        <span class="text-xs text-red-800 font-semibold tabular-nums">
                           {{ diagnosesCount() }}
                         </span>
                       }

@@ -70,7 +70,7 @@ type ViewMode = 'overview' | 'configure';
 
       @if (showSuccessMessage()) {
         <div
-          class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-all"
+          class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg transition-all"
         >
           <div class="flex items-center space-x-2">
             <ng-icon name="lucideCheck" class="h-5 w-5" />

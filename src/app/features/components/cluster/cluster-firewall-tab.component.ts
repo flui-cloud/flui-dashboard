@@ -163,7 +163,7 @@ import { ClusterEgressCardComponent } from '../egress/cluster-egress-card.compon
         }
 
         @if (isLoading()) {
-          <div class="animate-pulse space-y-4">
+          <div class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="card-inner p-4 space-y-3">
                 <div class="skeleton h-3 w-16"></div>

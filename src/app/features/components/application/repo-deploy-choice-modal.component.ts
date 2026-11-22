@@ -37,7 +37,7 @@ export interface RepoDeployChoiceRepo {
       (click)="closed.emit()"
     >
       <div
-        class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-xl"
+        class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden"
         (click)="$event.stopPropagation()"
       >
         <div class="flex items-start justify-between p-6 border-b border-gray-200">

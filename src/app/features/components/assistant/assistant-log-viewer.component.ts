@@ -44,7 +44,7 @@ const TIME_WINDOWS = ['15m', '1h', '6h', '24h'] as const;
   template: `
     @if (isEmpty()) {
       <div
-        class="mt-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2.5 text-xs space-y-1.5"
+        class="mt-2 rounded-fl-lg border border-border/40 bg-muted/20 px-3 py-2.5 text-xs space-y-1.5"
       >
         <p class="text-muted-foreground">
           No logs matched
@@ -62,7 +62,7 @@ const TIME_WINDOWS = ['15m', '1h', '6h', '24h'] as const;
               <button
                 type="button"
                 (click)="sendMessage.emit('Show recent logs for ' + app)"
-                class="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600 hover:bg-blue-500/20 transition-colors"
+                class="rounded-fl-sm border border-fl-border bg-fl-surface px-2 py-0.5 text-[10px] font-medium text-blue-600 hover:bg-blue-500/20 transition-colors"
               >
                 {{ app }}
               </button>
@@ -71,7 +71,7 @@ const TIME_WINDOWS = ['15m', '1h', '6h', '24h'] as const;
         }
       </div>
     } @else {
-      <div class="mt-2 rounded-xl border border-border/50 overflow-hidden text-xs bg-background">
+      <div class="mt-2 rounded-fl-lg border border-border/50 overflow-hidden text-xs bg-background">
         <div
           class="flex items-center gap-2 px-3 py-2 border-b border-border/50 bg-muted/30 flex-wrap"
         >

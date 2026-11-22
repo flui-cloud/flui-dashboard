@@ -54,7 +54,7 @@ const TODAY_PLUS_DAYS = (days: number): string => {
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       (click)="onBackdrop($event)"
     >
-      <div class="bg-white rounded-lg max-w-md w-full shadow-xl" (click)="$event.stopPropagation()">
+      <div class="bg-white rounded-lg max-w-md w-full" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between p-5 border-b border-slate-200">
           <h3 class="text-base font-semibold text-slate-900">{{ title() }}</h3>
           <button (click)="cancelled.emit()" class="text-slate-400 hover:text-slate-600">

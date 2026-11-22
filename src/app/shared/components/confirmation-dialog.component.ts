@@ -28,12 +28,12 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isOpen()) {
-      <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="onCancel()">
+      <div class="fixed inset-0 z-50 bg-background/80" (click)="onCancel()">
         <div
           class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4"
         >
           <div
-            class="bg-white border border-gray-200 rounded-lg shadow-xl"
+            class="bg-white border border-gray-200 rounded-lg"
             (click)="$event.stopPropagation()"
           >
             <!-- Header -->

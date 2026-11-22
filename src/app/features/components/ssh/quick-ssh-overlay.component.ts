@@ -52,7 +52,7 @@ const MIN_H = 280;
   template: `
     @if (sshService.isOpen()) {
       <div
-        class="fixed z-50 flex flex-col shadow-2xl rounded-xl border border-border bg-background overflow-hidden select-none"
+        class="fixed z-50 flex flex-col rounded-fl-lg border border-border bg-background overflow-hidden select-none"
         [style.width.px]="width()"
         [style.height.px]="height()"
         [style.bottom.px]="16"

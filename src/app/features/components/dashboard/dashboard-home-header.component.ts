@@ -29,7 +29,7 @@ import { accessOf } from '../../model/app-access';
             </span>
           } @else {
             <span class="inline-flex items-center gap-1.5 font-semibold text-destructive">
-              <span class="h-2 w-2 rounded-full bg-destructive animate-pulse"></span>API offline
+              <span class="h-2 w-2 rounded-full bg-destructive"></span>API offline
             </span>
           }
           @if (guest()) {
@@ -78,7 +78,7 @@ import { accessOf } from '../../model/app-access';
                 class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors"
                 [class]="
                   fleet.window() === w
-                    ? 'bg-card text-foreground shadow-sm'
+                    ? 'bg-card text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
                 "
               >

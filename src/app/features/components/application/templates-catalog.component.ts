@@ -223,7 +223,7 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
             @let meta = getMeta(template.framework);
             @let cat = getCategoryInfo(getCategory(template));
             <div
-              class="group bg-card border border-border rounded-xl overflow-hidden transition-all hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5 flex flex-col h-full"
+              class="group bg-card border border-border rounded-fl-lg overflow-hidden transition-all hover:border-primary/30 hover:-translate-y-0.5 flex flex-col h-full"
               [class.ring-2]="highlightedFramework() === template.framework"
               [class.ring-primary]="highlightedFramework() === template.framework"
             >
@@ -240,7 +240,7 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
                     <!-- Framework Icon — uses currentColor + brand-tone colorClass that adapts to dark mode -->
                     <div
                       [class]="
-                        'w-11 h-11 rounded-lg bg-background border border-border flex items-center justify-center shadow-sm shrink-0 ' +
+                        'w-11 h-11 rounded-lg bg-background border border-border flex items-center justify-center shrink-0' +
                         meta.colorClass
                       "
                       [innerHTML]="getIconSafeHtml(template.framework)"

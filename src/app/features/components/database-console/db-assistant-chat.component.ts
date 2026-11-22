@@ -186,7 +186,7 @@ interface StoredChat {
               <button
                 type="button"
                 (click)="goConnectModel()"
-                class="rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-md hover:shadow-blue-500/40"
+                class="rounded-fl-lg bg-fl-accent px-4 py-2 text-sm font-medium text-white"
               >
                 Connect a model
               </button>
@@ -246,7 +246,7 @@ interface StoredChat {
           }
           @if (pendingRun(); as p) {
             <div
-              class="overflow-hidden rounded-xl border border-amber-500/30 bg-amber-500/5 text-sm"
+              class="overflow-hidden rounded-fl-lg border border-amber-500/30 bg-amber-500/5 text-sm"
             >
               <div
                 class="flex items-center gap-2 border-b border-amber-500/20 bg-amber-500/10 px-3 py-2"
@@ -273,7 +273,7 @@ interface StoredChat {
                   <button
                     type="button"
                     (click)="confirmRun()"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-fl-warning-fill px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
                   >
                     <ng-icon name="lucidePlay" class="h-3 w-3" /> Run write
                   </button>

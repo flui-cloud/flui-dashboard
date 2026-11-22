@@ -23,7 +23,7 @@ import { InternalServiceInfoComponent } from './internal-service-info.component'
       }
 
       @if (consoleTarget(); as c) {
-        <div class="rounded-xl border border-border bg-card p-5">
+        <div class="rounded-fl-lg border border-border bg-card p-5">
           <div class="flex items-start gap-3">
             <ng-icon name="lucideDatabase" class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div class="min-w-0 flex-1">

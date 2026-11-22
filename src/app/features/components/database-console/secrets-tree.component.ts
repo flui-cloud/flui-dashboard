@@ -33,7 +33,7 @@ import { joinPath } from './secrets-format';
     }),
   ],
   template: `
-    <div class="w-full shrink-0 rounded-xl border border-border bg-card lg:w-80">
+    <div class="w-full shrink-0 rounded-fl-lg border border-border bg-card lg:w-80">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2.5">
         <ng-icon name="lucideSearch" class="h-4 w-4 shrink-0 text-muted-foreground" />
         <input
@@ -75,7 +75,7 @@ import { joinPath } from './secrets-format';
       <div class="max-h-[60vh] overflow-auto p-1.5">
         @if (s.listing() && s.entries().length === 0) {
           @for (i of skel; track i) {
-            <div class="mx-1 my-1.5 h-8 animate-pulse rounded-lg bg-muted/60"></div>
+            <div class="mx-1 my-1.5 h-8 rounded-lg bg-muted/60"></div>
           }
         } @else if (filteredEntries().length === 0) {
           <p class="px-2 py-3 text-sm text-muted-foreground">

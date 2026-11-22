@@ -206,9 +206,7 @@ import {
     <!-- Create dialog -->
     @if (createOpen()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div
-          class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6 space-y-4"
-        >
+        <div class="bg-background rounded-lg border border-border max-w-md w-full p-6 space-y-4">
           <h3 class="text-base font-semibold">
             {{ editingName() ? 'Edit scheduled job' : 'New scheduled job' }}
           </h3>
@@ -307,9 +305,7 @@ import {
     <!-- Delete confirm -->
     @if (pendingDelete()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div
-          class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6 space-y-4"
-        >
+        <div class="bg-background rounded-lg border border-border max-w-md w-full p-6 space-y-4">
           <h3 class="text-base font-semibold">Delete schedule</h3>
           <p class="text-sm text-muted-foreground">
             Delete "{{ pendingDelete()?.name }}"? Running jobs are not interrupted, but no further
@@ -338,9 +334,7 @@ import {
     <!-- Runs panel -->
     @if (runsFor()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div
-          class="bg-background rounded-lg border border-border shadow-xl max-w-2xl w-full p-6 space-y-4"
-        >
+        <div class="bg-background rounded-lg border border-border max-w-2xl w-full p-6 space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Runs · {{ runsFor()?.name }}</h3>
             <button

@@ -109,7 +109,7 @@ import {
     <!-- Success Toast -->
     @if (showSuccessToast()) {
       <div
-        class="fixed top-4 right-4 z-50 bg-card border border-border rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md"
+        class="fixed top-4 right-4 z-50 bg-card border border-border rounded-lg p-4 animate-slide-in-right max-w-md"
       >
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0">
@@ -138,7 +138,7 @@ import {
     <!-- Error Toast -->
     @if (showErrorToast()) {
       <div
-        class="fixed top-4 right-4 z-50 bg-card border border-destructive/40 rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md"
+        class="fixed top-4 right-4 z-50 bg-card border border-destructive/40 rounded-lg p-4 animate-slide-in-right max-w-md"
       >
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0">
@@ -167,7 +167,7 @@ import {
     <!-- Warning Toast -->
     @if (showWarningToast()) {
       <div
-        class="fixed top-4 right-4 z-50 bg-card border border-border rounded-lg p-4 shadow-lg animate-slide-in-right max-w-md"
+        class="fixed top-4 right-4 z-50 bg-card border border-border rounded-lg p-4 animate-slide-in-right max-w-md"
       >
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0">
@@ -226,7 +226,7 @@ import {
         }
 
         @case ('refused') {
-          <div class="bg-white border border-slate-200 rounded-xl p-12 text-center">
+          <div class="bg-white border border-slate-200 rounded-fl-lg p-12 text-center">
             <div
               class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4"
             >
@@ -241,7 +241,9 @@ import {
         }
 
         @case ('not-configured-admin') {
-          <div class="bg-white border-2 border-dashed border-slate-300 rounded-xl p-12 text-center">
+          <div
+            class="bg-white border-2 border-dashed border-slate-300 rounded-fl-lg p-12 text-center"
+          >
             <div
               class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
             >
@@ -266,7 +268,7 @@ import {
         }
 
         @case ('not-configured-user') {
-          <div class="bg-white border border-slate-200 rounded-xl p-12 text-center">
+          <div class="bg-white border border-slate-200 rounded-fl-lg p-12 text-center">
             <div
               class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4"
             >
@@ -281,7 +283,9 @@ import {
         }
 
         @case ('misconfigured-admin') {
-          <div class="bg-white border-2 border-dashed border-amber-300 rounded-xl p-12 text-center">
+          <div
+            class="bg-white border-2 border-dashed border-amber-300 rounded-fl-lg p-12 text-center"
+          >
             <div
               class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4"
             >
@@ -309,7 +313,7 @@ import {
         }
 
         @case ('misconfigured-user') {
-          <div class="bg-white border border-amber-200 rounded-xl p-12 text-center">
+          <div class="bg-white border border-amber-200 rounded-fl-lg p-12 text-center">
             <div
               class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4"
             >
@@ -324,7 +328,7 @@ import {
         }
 
         @case ('not-connected') {
-          <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div class="bg-white border border-slate-200 rounded-fl-lg overflow-hidden">
             <app-github-connect
               [authMethod]="setupStatus()!.authMethod!"
               [appSlug]="$safeNavigationMigration(setupStatus()?.appSlug)"
@@ -526,9 +530,7 @@ import {
 
             <div class="grid grid-cols-1 gap-4">
               @for (repo of allRepos(); track repo.id) {
-                <div
-                  class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow"
-                >
+                <div class="bg-white border border-gray-200 rounded-lg p-6 transition-shadow">
                   <div class="flex items-start justify-between">
                     <div class="flex-1">
                       <!-- Header -->
@@ -656,7 +658,7 @@ import {
     <!-- Import Repositories Modal -->
     @if (showImportModalFlag()) {
       <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg max-w-3xl w-full max-h-[80vh] overflow-hidden shadow-xl">
+        <div class="bg-white rounded-lg max-w-3xl w-full max-h-[80vh] overflow-hidden">
           <!-- Modal Header -->
           <div class="flex items-center justify-between p-6 border-b border-gray-200">
             <h3 class="text-xl font-semibold text-gray-900">Import Repositories from GitHub</h3>
@@ -932,7 +934,7 @@ import {
     <!-- Delete Confirmation Modal -->
     @if (showDeleteModalFlag()) {
       <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0">
               <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">

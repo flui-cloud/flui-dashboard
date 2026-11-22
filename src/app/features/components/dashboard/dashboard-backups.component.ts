@@ -51,15 +51,15 @@ const REFRESH_INTERVAL_MS = 60_000;
     @if (loading() && !status()) {
       <div class="card-surface p-5 h-full flex flex-col gap-4">
         <div class="flex items-center gap-2.5">
-          <div class="h-8 w-8 rounded-lg bg-muted animate-pulse"></div>
+          <div class="h-8 w-8 rounded-lg bg-muted"></div>
           <div class="flex-1 space-y-1.5">
-            <div class="h-3 w-24 rounded bg-muted animate-pulse"></div>
-            <div class="h-3 w-32 rounded bg-muted animate-pulse"></div>
+            <div class="h-3 w-24 rounded bg-muted"></div>
+            <div class="h-3 w-32 rounded bg-muted"></div>
           </div>
         </div>
         <div class="grid grid-cols-3 gap-2">
           @for (_ of [1, 2, 3]; track _) {
-            <div class="h-14 rounded-lg bg-muted animate-pulse"></div>
+            <div class="h-14 rounded-lg bg-muted"></div>
           }
         </div>
       </div>

@@ -9,7 +9,7 @@ import { ApplicationResponseDto } from '../../../core/api/model/models';
   imports: [RouterLink],
   template: `
     @if (components().length > 0) {
-      <section class="rounded-2xl border border-border bg-card p-6">
+      <section class="rounded-fl-lg border border-border bg-card p-6">
         <h2 class="mb-3 text-sm font-semibold text-foreground">
           Components
           <span class="ml-1 text-xs font-normal text-muted-foreground"

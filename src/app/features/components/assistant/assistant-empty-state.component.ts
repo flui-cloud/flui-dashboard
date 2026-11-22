@@ -23,7 +23,7 @@ import { RecommendedProviderDto } from '../../../core/api/model/recommendedProvi
         <button
           type="button"
           (click)="connect.emit()"
-          class="rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-blue-500/30 hover:shadow-blue-500/40 transition-all"
+          class="rounded-fl-lg bg-fl-accent px-4 py-2.5 text-sm font-medium text-white transition-all"
         >
           Connect a model
         </button>
@@ -31,7 +31,7 @@ import { RecommendedProviderDto } from '../../../core/api/model/recommendedProvi
           <button
             type="button"
             (click)="configure.emit()"
-            class="rounded-xl border border-input bg-muted/50 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+            class="rounded-fl-lg border border-input bg-muted/50 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             Configure a provider
           </button>
@@ -42,7 +42,7 @@ import { RecommendedProviderDto } from '../../../core/api/model/recommendedProvi
     @if (fullscreen()) {
       <div class="mb-8 flex flex-col items-center gap-4 text-center">
         <div
-          class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/10 border border-blue-500/20"
+          class="flex h-16 w-16 items-center justify-center rounded-fl-lg bg-blue-500/10 border border-blue-500/20"
         >
           @if (imgOk()) {
             <img
@@ -68,7 +68,7 @@ import { RecommendedProviderDto } from '../../../core/api/model/recommendedProvi
     } @else {
       <div class="flex flex-col items-center justify-center h-full py-10 gap-4 text-center">
         <div
-          class="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/10 border border-blue-500/20"
+          class="flex h-14 w-14 items-center justify-center rounded-fl-lg bg-blue-500/10 border border-blue-500/20"
         >
           @if (imgOk()) {
             <img

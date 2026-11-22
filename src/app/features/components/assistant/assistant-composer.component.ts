@@ -56,7 +56,7 @@ import { AssistantModelPickerComponent } from './assistant-model-picker.componen
         </div>
       }
       <div
-        class="rounded-2xl border border-input bg-muted/50 transition-shadow focus-within:ring-1 focus-within:ring-ring"
+        class="rounded-fl-lg border border-input bg-muted/50 transition-shadow focus-within:ring-1 focus-within:ring-ring"
       >
         <textarea
           [value]="draft()"
@@ -73,7 +73,7 @@ import { AssistantModelPickerComponent } from './assistant-model-picker.componen
             type="button"
             (click)="submit()"
             [disabled]="chatService.sending() || !draft().trim()"
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-md shadow-blue-500/30 transition-all hover:shadow-blue-500/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:scale-100"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fl-accent text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:scale-100"
           >
             <ng-icon name="lucideSend" class="h-4 w-4" />
           </button>

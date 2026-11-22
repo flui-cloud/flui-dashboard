@@ -22,8 +22,8 @@ interface Ratings {
   template: `
     <a
       [routerLink]="['/apps/catalog', app().slug]"
-      class="group block h-full rounded-xl border border-border bg-card p-5 shadow-sm transition
-             hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+      class="group block h-full rounded-fl-lg border border-border bg-card p-5 transition
+             hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/50"
     >
       <div class="flex items-start gap-4">
         <app-catalog-icon
@@ -50,7 +50,7 @@ interface Ratings {
           @if (installedCount() > 0) {
             <div class="mt-2 flex items-center gap-1.5">
               <span
-                class="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
+                class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700"
                 [attr.title]="
                   installedCount() === 1
                     ? 'Installed once'
@@ -65,7 +65,7 @@ interface Ratings {
               </span>
               @if (updateAvailable()) {
                 <span
-                  class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800"
+                  class="inline-flex items-center text-[11px] font-medium text-amber-800"
                   title="A newer version of this app is available in the catalog"
                 >
                   Update available

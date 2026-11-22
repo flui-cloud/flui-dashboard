@@ -86,13 +86,13 @@ import {
         </div>
       } @else if (errorMessage()) {
         <div
-          class="flex flex-col items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-8 text-center"
+          class="flex flex-col items-center gap-3 rounded-fl-lg border border-destructive/40 bg-destructive/5 p-8 text-center"
         >
           <ng-icon name="lucideCircleAlert" class="h-8 w-8 text-destructive" />
           <p class="text-sm text-destructive">{{ errorMessage() }}</p>
         </div>
       } @else if (inst) {
-        <section class="rounded-2xl border border-border bg-card p-6">
+        <section class="rounded-fl-lg border border-border bg-card p-6">
           <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="min-w-0">
               <h1 class="text-xl font-bold text-foreground">{{ inst.displayName }}</h1>

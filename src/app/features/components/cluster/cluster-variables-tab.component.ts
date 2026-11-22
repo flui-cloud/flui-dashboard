@@ -71,7 +71,7 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
       </div>
 
       @if (variablesService.loading() && variablesService.sets().length === 0) {
-        <div class="animate-pulse space-y-3">
+        <div class="space-y-3">
           @for (i of [1, 2, 3]; track i) {
             <div class="border border-border rounded-lg overflow-hidden">
               <div class="flex items-center justify-between px-4 py-3 card-inner">
@@ -139,7 +139,7 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
                 @if (isExpanded(set.name)) {
                   <div class="p-4 border-t border-border">
                     @if (variablesService.loading()) {
-                      <div class="animate-pulse space-y-2 py-1">
+                      <div class="space-y-2 py-1">
                         @for (i of [1, 2, 3]; track i) {
                           <div class="skeleton h-8"></div>
                         }
