@@ -77,6 +77,10 @@ export interface InstallCatalogAppDto {
      */
     authMode?: InstallCatalogAppDto.AuthModeEnum;
     /**
+     * With authMode oidc: the identity install (from GET /identity/installs) the app signs its users in with. Omitted: Flui sign-in, for your team.
+     */
+    identityInstallId?: string;
+    /**
      * Install-time feature toggles (spec.options[].key → enabled). Omitted keys fall back to the option default.
      */
     options?: { [key: string]: boolean; };

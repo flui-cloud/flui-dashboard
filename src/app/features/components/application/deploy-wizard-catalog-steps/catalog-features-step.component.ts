@@ -1,16 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideShieldCheck, lucideSlidersHorizontal } from '@ng-icons/lucide';
 import { CatalogAuthSpecDto } from '../../../../core/api/model/models';
 import { DeployWizardStateService } from '../../../service/deploy-wizard-state.service';
+import { AppIdentityService, IdentityInstall } from '../../../service/app-identity.service';
 import { catalogOptionBlocked, catalogOptionEnabled } from './catalog-options';
 
 type AuthMode = CatalogAuthSpecDto.ModesEnum;
 
 export const CATALOG_AUTH_LABELS: Record<AuthMode, string> = {
   native: 'Built-in',
-  oidc: 'Flui SSO',
+  oidc: 'Single sign-on',
   proxy: 'Proxy auth',
   none: 'No authentication',
 };
@@ -21,7 +22,7 @@ export function catalogAuthLabel(mode: string): string {
 
 const AUTH_DESCRIPTIONS: Record<AuthMode, string> = {
   native: "Use the app's own login. You manage accounts inside the app.",
-  oidc: 'Sign in with your Flui identity — single sign-on across your apps.',
+  oidc: 'Sign in through Flui for your team, or through one of your identity installs for the app’s own users.',
   proxy: "Flui's authenticating proxy gates access in front of the app.",
   none: 'No login required. Use only on trusted, internal-only networks.',
 };
@@ -67,6 +68,30 @@ const AUTH_DESCRIPTIONS: Record<AuthMode, string> = {
               </button>
             }
           </div>
+
+          @if (effectiveAuth() === 'oidc') {
+            <div class="space-y-2" data-testid="sso-who">
+              <p class="text-sm font-medium">Who signs in?</p>
+              <label class="flex items-start gap-2 text-sm">
+                <input type="radio" name="sso-who" class="mt-1" [checked]="!state.catalogIdentityInstallId()" (change)="state.catalogIdentityInstallId.set(null)" />
+                <span>
+                  <span class="font-medium">Your team</span>
+                  <span class="block text-xs text-muted-foreground">Flui sign-in: the people who use Flui.</span>
+                </span>
+              </label>
+              @for (i of identityInstalls(); track i.identityInstallId) {
+                <label class="flex items-start gap-2 text-sm" [class.opacity-50]="!i.managed">
+                  <input type="radio" name="sso-who" class="mt-1" [disabled]="!i.managed" [checked]="state.catalogIdentityInstallId() === i.identityInstallId" (change)="state.catalogIdentityInstallId.set(i.identityInstallId)" />
+                  <span>
+                    <span class="font-medium">{{ i.name }}</span>
+                    <span class="block text-xs text-muted-foreground">
+                      {{ i.managed ? 'The app’s own users, from this identity install.' : 'Reinstall it to manage it from Flui.' }}
+                    </span>
+                  </span>
+                </label>
+              }
+            </div>
+          }
         </div>
       }
 
@@ -111,6 +136,25 @@ const AUTH_DESCRIPTIONS: Record<AuthMode, string> = {
 })
 export class CatalogFeaturesStepComponent {
   protected readonly state = inject(DeployWizardStateService);
+  private readonly identity = inject(AppIdentityService);
+  protected readonly identityInstalls = signal<IdentityInstall[]>([]);
+  private identityLoaded = false;
+
+  constructor() {
+    effect(() => {
+      if (this.effectiveAuth() === 'oidc' && !this.identityLoaded) {
+        this.identityLoaded = true;
+        this.identity.installs().subscribe({
+          next: (list) => this.identityInstalls.set(list),
+          error: () => this.identityInstalls.set([]),
+        });
+      }
+    });
+  }
+
+  protected effectiveAuth(): AuthMode | null {
+    return this.state.catalogAuthMode() ?? this.state.catalogAuthDefault() ?? null;
+  }
 
   authLabel(mode: AuthMode): string {
     return CATALOG_AUTH_LABELS[mode] ?? mode;
