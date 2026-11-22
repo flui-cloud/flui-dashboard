@@ -423,9 +423,6 @@ export interface LogVolumeLevelSeries {
   series: LogVolumeBucket[];
 }
 
-/**
- * Input data for LogVolumeHistogramComponent (mirrors AppLogVolumeResponseDto)
- */
 export interface LogVolumeData {
   range_start: string;
   range_end: string;
@@ -439,27 +436,6 @@ export interface LogVolumeRangeSelection {
   start: Date;
   end: Date;
 }
-
-/**
- * Configuration for LogVolumeHistogramComponent
- */
-export interface LogVolumeHistogramConfig extends BaseChartConfig {
-  /** Show legend */
-  showLegend?: boolean;
-  /**
-   * Optional sub-range to highlight on the chart (e.g. after a brush selection).
-   * Drawn as a semi-transparent overlay via ECharts markArea.
-   */
-  highlightRange?: { start: Date; end: Date } | null;
-}
-
-export const LOG_LEVEL_COLORS: Record<string, string> = {
-  error: c('red-700'),
-  warn: c('amber-700'),
-  info: c('blue-600'),
-  debug: c('gray-500'),
-  trace: c('gray-300'),
-};
 
 /**
  * Distribution charts tell slices apart by lightness within the accent and neutral ramps, never by a

@@ -29,7 +29,6 @@ export type { ChartPanelContext } from './chart-panel/chart-panel.component';
 export { StatusTimelineComponent } from './status-timeline/status-timeline.component';
 
 // Log Volume
-export { LogVolumeHistogramComponent } from './log-volume-histogram/log-volume-histogram.component';
 
 // Demo
 export { ChartDemoComponent } from './chart-demo/chart-demo.component';
