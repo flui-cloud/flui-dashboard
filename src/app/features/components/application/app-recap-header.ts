@@ -23,8 +23,11 @@ export function backLink(from: string | null, list: WorkloadList): string {
 }
 
 export function backLabel(from: string | null, list: WorkloadList): string {
-  if (from === 'catalog') return 'Back to catalog';
-  return `Back to ${WORKLOAD_LIST_LABEL[list].toLowerCase()}`;
+  return `Back to ${listLabel(from, list).toLowerCase()}`;
+}
+
+export function listLabel(from: string | null, list: WorkloadList): string {
+  return from === 'catalog' ? 'Catalog' : WORKLOAD_LIST_LABEL[list];
 }
 
 export function kindLabel(kind: ApplicationKind | undefined): string {

@@ -220,3 +220,7 @@ export function dbLastBackup(
     tone: cov.coverage === 'protected' ? 'ok' : 'warn',
   };
 }
+
+export function dbInternalHost(app: Application, namespace: string | null | undefined): string {
+  return namespace ? `${app.slug}-svc.${namespace}.svc.cluster.local` : '';
+}

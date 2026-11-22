@@ -315,18 +315,13 @@ describe('AppRecapComponent', () => {
       expect(topology).toContain('2 of 2 components running');
       const dbCard = q('[data-testid="recap-component-db"]').textContent ?? '';
       expect(dbCard).toContain('PostgreSQL · cluster');
-      expect(dbCard).toContain('DISK');
+      expect(q('[data-testid="recap-component-db"] [aria-label="db disk"]')).not.toBeNull();
       expect(dbCard).toContain('Not backed up');
       expect(dbCard).toContain('Protect');
       expect(q('[data-testid="recap-component-umami"]').textContent).toContain(
         'Nothing to back up',
       );
-      expect(topology).not.toContain('db is reachable inside the cluster only.');
-      (q('[data-testid="recap-topology"] button[aria-expanded]') as HTMLButtonElement).click();
-      fixture.detectChanges();
-      expect(q('[data-testid="recap-topology"]').textContent).toContain(
-        'db is reachable inside the cluster only.',
-      );
+      expect(topology).toContain('db is reachable inside the cluster only.');
     });
 
     it('replaces the connect card with a Database block and lists recent activity', () => {

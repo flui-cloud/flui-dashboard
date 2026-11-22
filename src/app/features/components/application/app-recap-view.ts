@@ -337,30 +337,6 @@ export function appEventText(event: AppAuditEventSummaryDto): string {
   }
 }
 
-export const TONE_TEXT: Record<Tone, string> = {
-  ok: 'text-green-700',
-  info: 'text-primary',
-  warn: 'text-amber-700',
-  danger: 'text-destructive',
-  muted: 'text-muted-foreground',
-};
-
-export const TONE_DOT: Record<Tone, string> = {
-  ok: 'bg-green-500',
-  info: 'bg-primary',
-  warn: 'bg-amber-500',
-  danger: 'bg-destructive',
-  muted: 'bg-muted-foreground/50',
-};
-
-export const TONE_PILL: Record<Tone, string> = {
-  ok: 'chip-ok',
-  info: 'chip-brand',
-  warn: 'chip-warn',
-  danger: 'chip-danger',
-  muted: 'bg-muted text-muted-foreground',
-};
-
 export type RunState = 'running' | 'started' | 'failed';
 
 export function runLabel(state: RunState | undefined): string {

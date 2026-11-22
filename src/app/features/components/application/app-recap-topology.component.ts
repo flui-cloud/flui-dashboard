@@ -1,65 +1,78 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { ExplainComponent } from '../../../shared/components/explain.component';
-import { Tone } from '../dashboard/home-state';
+import { Component, computed, input, output } from '@angular/core';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { Tone, statusToneOf } from '../dashboard/home-state';
 import { ComponentCard, ComponentTrend } from './app-recap-bundle';
 import { AppRecapComponentCardComponent } from './app-recap-component-card.component';
-import { RunState, TONE_TEXT } from './app-recap-view';
+import { RunState } from './app-recap-view';
 import { AppAvailability } from '../../service/fleet.service';
 
 @Component({
   selector: 'app-recap-topology',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppRecapComponentCardComponent, ExplainComponent],
+  imports: [FlPanel, FlTable, FlStatus, AppRecapComponentCardComponent],
   host: { class: 'block' },
   template: `
-    <section class="flex flex-col gap-4" data-testid="recap-topology">
-      <div class="card-surface flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-4">
-        <h2 class="mr-2 font-semibold text-foreground">How it fits together</h2>
-        @if (endpointHost()) {
-          <span
-            class="max-w-[16rem] truncate rounded-full border border-dashed border-border px-2.5 py-0.5 font-mono text-xs text-foreground"
-            [title]="endpointHost() + (health().label ? ' · ' + health().label : '')"
-            >internet</span
-          >
-          <span class="text-primary" aria-hidden="true">→</span>
-        }
-        @for (c of front(); track c.app.id) {
-          <span
-            class="rounded-full border border-primary/30 px-2.5 py-0.5 text-xs font-semibold text-foreground"
-            >{{ c.role }}</span
-          >
-        }
-        @if (back().length) {
-          <span class="text-muted-foreground" aria-hidden="true">⇢</span>
-          @for (c of back(); track c.app.id) {
-            <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-foreground">{{
-              c.role
-            }}</span>
+    <fl-panel
+      title="Components"
+      [count]="cards().length"
+      [flush]="true"
+      data-testid="recap-topology"
+    >
+      <span panelActions class="text-fl-body-sm text-fl-ink-muted">{{ summary() }}</span>
+      @if (endpointHost()) {
+        <div
+          panelToolbar
+          class="fl-row border-b border-fl-border-subtle px-4 py-3 text-fl-body-sm"
+          data-testid="recap-endpoint"
+        >
+          <span class="text-fl-ink-muted">Public endpoint</span>
+          <span class="fl-mono">{{ endpointHost() }}</span>
+          @if (health().label) {
+            <fl-status [tone]="tone(health().tone)" [label]="health().label" />
           }
-        }
-        <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-          {{ summary() }}
-          @if (note()) {
-            <app-explain label="" floating>{{ note() }}</app-explain>
-          }
-        </span>
+        </div>
+      }
+      <div class="fl-table-wrap">
+        <table flTable density="dense">
+          <thead>
+            <tr>
+              <th scope="col">Component</th>
+              <th scope="col">Kind</th>
+              <th scope="col">Status</th>
+              <th scope="col">Endpoint</th>
+              <th scope="col">Replicas</th>
+              <th scope="col">CPU</th>
+              <th scope="col">Memory</th>
+              <th scope="col">Disk</th>
+              <th scope="col">If a node is lost</th>
+              <th scope="col">Backup</th>
+              <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of cards(); track c.app.id) {
+              <tr
+                app-recap-component-card
+                [card]="c"
+                [recapPath]="recapPath()"
+                [protectionLoaded]="protectionLoaded()"
+                [availability]="availability()[c.app.id] ?? null"
+                [runState]="runState()"
+                [trend]="trends()[c.app.id] ?? null"
+                [address]="c === front()[0] ? endpointHost() : ''"
+                (backUp)="backUp.emit($event)"
+              ></tr>
+            }
+          </tbody>
+        </table>
       </div>
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @for (c of cards(); track c.app.id) {
-          <app-recap-component-card
-            [card]="c"
-            [recapPath]="recapPath()"
-            [protectionLoaded]="protectionLoaded()"
-            [availability]="availability()[c.app.id] ?? null"
-            [runState]="runState()"
-            [trend]="trends()[c.app.id] ?? null"
-            [address]="c === front()[0] ? endpointHost() : ''"
-            (backUp)="backUp.emit($event)"
-          />
-        }
-      </div>
-    </section>
+      @if (note()) {
+        <p class="border-t border-fl-border-subtle px-4 py-3 text-fl-body-sm text-fl-ink-muted">
+          {{ note() }}
+        </p>
+      }
+    </fl-panel>
   `,
 })
 export class AppRecapTopologyComponent {
@@ -78,5 +91,7 @@ export class AppRecapTopologyComponent {
 
   protected readonly cards = computed(() => [...this.front(), ...this.back()]);
 
-  protected readonly text = TONE_TEXT;
+  protected tone(tone: Tone): StatusTone {
+    return statusToneOf(tone);
+  }
 }

@@ -1,25 +1,14 @@
 import { accessOf } from '../../model/app-access';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FlAlert } from '../../../ui/patterns/alert';
 import { map } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideCircleAlert,
-  lucideLoader,
-  lucideShieldAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
 import { ApplicationService } from '../../service/application.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { ClusterService } from '../../service/cluster.service';
@@ -50,6 +39,7 @@ import {
   hostnameOf,
   kindChip,
   kindLabel,
+  listLabel,
   openUrlOf,
 } from './app-recap-header';
 import { endpointHealth, routeOf } from './app-recap-view';
@@ -62,12 +52,13 @@ import {
 
 @Component({
   selector: 'app-recap',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FlAlert,
+    FlPanel,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
     RouterLink,
-    NgIcon,
     MaskIdPipe,
     AppDeleteDialogComponent,
     AppRecapActivityComponent,
@@ -75,12 +66,9 @@ import {
     AppRecapHeaderComponent,
     AppRecapTopologyComponent,
   ],
-  providers: [
-    AppRecapStore,
-    provideIcons({ lucideArrowLeft, lucideCircleAlert, lucideLoader, lucideShieldAlert }),
-  ],
+  providers: [AppRecapStore, provideIcons({ lucideCircleAlert })],
   template: `
-    <div class="mx-auto max-w-6xl space-y-5 p-6">
+    <div class="fl-page">
       @let g = group();
       @if (g) {
         @let p = primary();
@@ -90,6 +78,7 @@ import {
           [meta]="headerMeta()"
           [backLink]="backLink()"
           [backLabel]="backLabel()"
+          [listLabel]="listLabel()"
           [logsAppId]="isComposed() && p ? p.id : null"
           [manageAppId]="manageAppId()"
           [recapPath]="recapPath()"
@@ -110,70 +99,71 @@ import {
             </fl-alert>
           }
 
-          <app-recap-topology
-            [endpointHost]="endpointHost()"
-            [health]="health()"
-            [front]="topology().front"
-            [back]="topology().back"
-            [summary]="runningSummary()"
-            [note]="internalNote()"
-            [protectionLoaded]="store.protectionLoaded()"
-            [availability]="store.availability()"
-            [runState]="store.runState()"
-            [trends]="store.trends()"
-            [recapPath]="recapPath()"
-            (backUp)="store.backUpNow($event)"
-          />
-
-          <div class="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-            <div class="space-y-5">
-              @for (db of dbComponents(); track db.id) {
-                <app-recap-database
-                  [app]="db"
-                  [named]="dbComponents().length > 1"
-                  [metrics]="store.metrics()[db.id]"
-                  [protection]="store.protection()[db.id]"
-                  [connInfo]="connInfoFor(db.id)"
-                />
-              }
-            </div>
-            <app-recap-activity
-              [events]="store.events()"
-              [loaded]="store.eventsLoaded()"
-              [appId]="p.id"
+          <div class="fl-stack">
+            <app-recap-topology
+              [endpointHost]="endpointHost()"
+              [health]="health()"
+              [front]="topology().front"
+              [back]="topology().back"
+              [summary]="runningSummary()"
+              [note]="internalNote()"
+              [protectionLoaded]="store.protectionLoaded()"
+              [availability]="store.availability()"
+              [runState]="store.runState()"
+              [trends]="store.trends()"
               [recapPath]="recapPath()"
+              (backUp)="store.backUpNow($event)"
             />
-          </div>
 
-          @if (!readOnly()) {
-            <app-delete-dialog [group]="g" [primary]="p" [listRoute]="listRoute()" [compact]="true">
-              ID <span class="font-mono">{{ p.slug | maskId }}</span> · components
-              @for (c of g.components; track c.id; let last = $last) {
-                <span class="font-mono">{{ c.slug | maskId }}</span>{{ last ? '' : ', ' }}
+            <div class="fl-grid-2 items-start">
+              @if (dbComponents().length) {
+                <div class="fl-stack">
+                  @for (db of dbComponents(); track db.id) {
+                    <app-recap-database
+                      [app]="db"
+                      [named]="dbComponents().length > 1"
+                      [metrics]="store.metrics()[db.id]"
+                      [protection]="store.protection()[db.id]"
+                      [connInfo]="connInfoFor(db.id)"
+                    />
+                  }
+                </div>
               }
-            </app-delete-dialog>
-          }
+              <app-recap-activity
+                [events]="store.events()"
+                [loaded]="store.eventsLoaded()"
+                [appId]="p.id"
+                [recapPath]="recapPath()"
+              />
+            </div>
+
+            @if (!readOnly()) {
+              <app-delete-dialog
+                [group]="g"
+                [primary]="p"
+                [listRoute]="listRoute()"
+                [compact]="true"
+              >
+                ID <span class="fl-mono">{{ p.slug | maskId }}</span> · components
+                @for (c of g.components; track c.id; let last = $last) {
+                  <span class="fl-mono">{{ c.slug | maskId }}</span>{{ last ? '' : ', ' }}
+                }
+              </app-delete-dialog>
+            }
+          </div>
         }
       } @else if (loadAttempted()) {
-        <a
-          [routerLink]="backLink()"
-          [attr.aria-label]="backLabel()"
-          [title]="backLabel()"
-          class="inline-flex rounded-lg border border-border p-2 transition-colors hover:bg-muted"
-        >
-          <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        </a>
-        <div
-          class="flex flex-col items-center gap-3 rounded-fl-lg border border-border bg-card p-8 text-center"
-        >
-          <ng-icon name="lucideCircleAlert" class="h-8 w-8 text-muted-foreground" />
-          <p class="text-sm text-muted-foreground">Application not found.</p>
-        </div>
+        <fl-panel>
+          <fl-empty-state
+            icon="lucideCircleAlert"
+            title="Application not found"
+            body="It may have been deleted, or the link is out of date."
+          >
+            <a flButton [routerLink]="backLink()">{{ backLabel() }}</a>
+          </fl-empty-state>
+        </fl-panel>
       } @else {
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-          Loading…
-        </div>
+        <fl-panel><fl-loading-state [rows]="6" /></fl-panel>
       }
     </div>
   `,
@@ -217,6 +207,7 @@ export class AppRecapComponent implements OnInit, OnDestroy {
   protected readonly listRoute = computed(() => WORKLOAD_LIST_ROUTE[this.workloadList()]);
   protected readonly backLink = computed(() => backLink(this.from(), this.workloadList()));
   protected readonly backLabel = computed(() => backLabel(this.from(), this.workloadList()));
+  protected readonly listLabel = computed(() => listLabel(this.from(), this.workloadList()));
 
   protected readonly isComposed = computed(() => this.group()?.type === 'composed');
   /** One application to manage: the app itself, or a bundle's only component. */
@@ -367,8 +358,6 @@ export class AppRecapComponent implements OnInit, OnDestroy {
       void this.store.load(g, this.primary());
     });
 
-    // Connection info is fetched once per app, so a mask-mode toggle mid-visit
-    // would leave the connect card showing the host fetched under the previous state.
     let first = true;
     effect(() => {
       this.maskMode.enabled();

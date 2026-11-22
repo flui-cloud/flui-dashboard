@@ -1,53 +1,73 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import type { AppMetricsDto } from '../../../core/api/model/appMetricsDto';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { accessOf } from '../../model/app-access';
 import { Application } from '../../model/application.models';
 import { DbConnectionInfo } from '../../model/db-console.models';
-import type { AppProtection } from '../../service/fleet.service';
-import { AppDbConnectCardComponent } from './app-db-connect-card.component';
-import { dbData, dbLastBackup, dbSubtitle, roleOf } from './app-recap-bundle';
-import { TONE_TEXT } from './app-recap-view';
-import { RouterLink } from '@angular/router';
-import { accessOf } from '../../model/app-access';
 import { databaseEngineOf } from '../../model/db-engine';
+import type { AppProtection } from '../../service/fleet.service';
+import { statusToneOf } from '../dashboard/home-state';
+import { AppDbConnectCardComponent } from './app-db-connect-card.component';
+import { dbData, dbInternalHost, dbLastBackup, dbSubtitle, roleOf } from './app-recap-bundle';
 
 @Component({
   selector: 'app-recap-database',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppDbConnectCardComponent, RouterLink],
+  imports: [
+    RouterLink,
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlUsageBar,
+    FlCopyId,
+    FlButton,
+    FlStatus,
+    AppDbConnectCardComponent,
+  ],
   host: { class: 'block' },
   template: `
     @let db = app();
     @if (!readOnly() || sqlReader()) {
-      <section class="card-surface space-y-4 p-5" [attr.data-testid]="'recap-database-' + db.id">
-        <div class="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 class="font-semibold text-foreground">{{ heading() }}</h2>
-          <span class="text-xs text-muted-foreground">{{ subtitle() }}</span>
-        </div>
-        <div class="grid gap-3" [class.grid-cols-2]="!readOnly()">
-          <div class="rounded-lg bg-muted/40 px-3 py-2.5">
-            <p class="text-lg font-semibold text-foreground">{{ data().value }}</p>
-            <p class="text-label">{{ data().label }}</p>
-          </div>
+      <fl-panel [title]="heading()" [attr.data-testid]="'recap-database-' + db.id">
+        <span panelActions class="text-fl-body-sm text-fl-ink-muted">{{ subtitle() }}</span>
+        <div class="flex flex-col gap-5">
+          <fl-key-value class="fl-kv--compact">
+            <fl-kv-item [key]="data().label">{{ data().value }}</fl-kv-item>
+            @if (!readOnly()) {
+              <fl-kv-item key="Last backup">
+                <fl-status [tone]="lastBackupTone()" [label]="lastBackup().value" />
+              </fl-kv-item>
+            }
+          </fl-key-value>
+          @let percent = diskPercent();
+          @if (percent !== null) {
+            <fl-usage-bar [percent]="percent" label="Volume used" aside="of the volume" />
+          }
           @if (!readOnly()) {
-            <div class="rounded-lg bg-muted/40 px-3 py-2.5">
-              <p class="text-lg font-semibold" [class]="text[lastBackup().tone]">
-                {{ lastBackup().value }}
-              </p>
-              <p class="text-label">Last backup</p>
-            </div>
+            @if (connInfo(); as ci) {
+              <div class="flex flex-col gap-2">
+                <span class="text-fl-caption text-fl-ink-muted">Connection</span>
+                <fl-key-value class="fl-kv--compact">
+                  <fl-kv-item key="Internal host">
+                    <fl-copy-id [value]="internalHost()" label="internal host" />
+                  </fl-kv-item>
+                  <fl-kv-item key="Port" [mono]="true">{{ ci.remotePort }}</fl-kv-item>
+                  <fl-kv-item key="Database" [mono]="true">{{ ci.database }}</fl-kv-item>
+                  <fl-kv-item key="User" [mono]="true">{{ ci.user }}</fl-kv-item>
+                </fl-key-value>
+              </div>
+            }
+            <app-db-connect-card [app]="db" [connInfo]="connInfo()" variant="block" />
+          } @else {
+            <a flButton class="w-fit" [routerLink]="['/db-console', db.id]">Open SQL console</a>
           }
         </div>
-        @if (!readOnly()) {
-          <app-db-connect-card [app]="db" [connInfo]="connInfo()" variant="block" />
-        } @else if (sqlReader()) {
-          <a
-            [routerLink]="['/db-console', db.id]"
-            class="inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >Open SQL Console</a
-          >
-        }
-      </section>
+      </fl-panel>
     }
   `,
 })
@@ -64,7 +84,15 @@ export class AppRecapDatabaseComponent {
   protected readonly subtitle = computed(() => dbSubtitle(this.app()));
   protected readonly data = computed(() => dbData(this.metrics()));
   protected readonly lastBackup = computed(() => dbLastBackup(this.protection()));
-  protected readonly text = TONE_TEXT;
+  protected readonly lastBackupTone = computed<StatusTone>(() =>
+    statusToneOf(this.lastBackup().tone),
+  );
+  protected readonly diskPercent = computed(
+    () => this.metrics()?.volume?.utilization_percent ?? null,
+  );
+  protected readonly internalHost = computed(() =>
+    dbInternalHost(this.app(), this.connInfo()?.namespace),
+  );
   /** A reader gets no backup posture and no connection details. */
   protected readonly readOnly = computed(() => !!accessOf(this.app())?.readOnly);
   /** Postgres only: the console a reader may open runs as a role that can only SELECT. */
