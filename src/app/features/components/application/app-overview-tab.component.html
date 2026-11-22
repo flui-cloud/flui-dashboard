@@ -15,6 +15,10 @@
 
     <app-database-ha-card #haCard class="block" [app]="app" />
 
+    <app-udp-ports-card class="block" [app]="app" />
+
+    <app-db-import-card class="block" [app]="app" />
+
     @if (app.persistenceScope === "dedicated" && !haCard.active()) {
       <div
         class="flex items-start gap-3 rounded-lg border border-indigo-200 bg-indigo-50/70 px-4 py-2.5 dark:border-indigo-900 dark:bg-indigo-950/30"

@@ -34,6 +34,8 @@ import { AppOverviewSummaryComponent } from './app-overview-summary.component';
 import { AppRecapActivityComponent } from './app-recap-activity.component';
 import { recentEvents } from './app-recap-bundle';
 import { DatabaseHaCardComponent } from './database-ha-card.component';
+import { AppUdpPortsCardComponent } from './app-udp-ports-card.component';
+import { DbImportCardComponent } from './db-import-card.component';
 
 @Component({
   selector: 'app-overview-tab',
@@ -51,6 +53,8 @@ import { DatabaseHaCardComponent } from './database-ha-card.component';
     AppOverviewSummaryComponent,
     AppRecapActivityComponent,
     DatabaseHaCardComponent,
+    AppUdpPortsCardComponent,
+    DbImportCardComponent,
   ],
   providers: [provideIcons({ lucidePin, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.Eager,
