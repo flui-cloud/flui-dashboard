@@ -29,7 +29,7 @@ src/app/ui/               the kit in Angular, selector prefix `fl-`
   patterns/               panel, table, metric-strip, page-header, tabs, key-value,
                           usage-bar, alert, filter-bar, forms, wizard, chart, states
   overlays/               dialog, confirm, actions menu, toast
-  frame/                  top bar, side navigation, shell (wave 1)
+  frame/                  top bar, side navigation, resource menu, command palette
   kit-page/               the /kit reference route, development builds only
 src/app/core/state/       remote data, polling, persisted preferences
 src/app/layout/console/   the console frame wired to the app: menu structure, top bar menus
@@ -56,7 +56,11 @@ src/app/features/<domain>/
 - **Copy:** English, following the kit's Words section. One wording per state, everywhere.
 - **Comments:** none in source. Rationale goes in commit messages and docs.
 
-## 4. State
+## 4. Resource pages
+
+A resource with more than 6 sections (application, data store, cluster) uses the resource menu: `fl-resource-nav` beside the content, sections grouped by task, the console navigation hidden behind the menu button. The route that hosts it declares `data: { focus: true }`; the shell reads it and hides the side navigation. Fewer sections: `fl-tabs`. See the kit README, Sections of a resource.
+
+## 5. State
 
 Signals, no state library.
 
@@ -69,7 +73,7 @@ Signals, no state library.
 - **Browser storage** only for per-user conveniences (a remembered tab, a filter), through `core/state`, never for data the API owns.
 - Large services (`ApplicationService` and similar) are split when their pages are migrated, not in a separate refactor.
 
-## 5. Tooling
+## 6. Tooling
 
 | Command       | Checks                                                                                                                                                                                                                                                     |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -80,7 +84,7 @@ Signals, no state library.
 
 `/kit` (development builds only) renders every kit component with real Angular code. It is where a kit change is reviewed before a page uses it.
 
-## 6. Revamp waves
+## 7. Revamp waves
 
 | Wave | Scope                                                                                   |
 | ---- | --------------------------------------------------------------------------------------- |

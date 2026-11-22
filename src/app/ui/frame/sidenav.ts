@@ -27,7 +27,11 @@ export interface NavSection {
   selector: 'fl-sidenav',
   imports: [NgTemplateOutlet, RouterLink, RouterLinkActive, FlIcon, FlTag],
   providers: [provideIcons({ lucideTriangleAlert })],
-  host: { class: 'fl-sidenav', role: 'navigation', 'aria-label': 'Console' },
+  host: {
+    class: 'fl-sidenav',
+    role: 'navigation',
+    'aria-label': 'Console',
+  },
   template: `
     @for (section of sections(); track section.label ?? '') {
       @if (section.label) {

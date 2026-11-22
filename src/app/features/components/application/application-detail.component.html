@@ -1,0 +1,106 @@
+@if (showErrorToast()) {
+  <div class="fl-toasts">
+    <fl-toast
+      tone="error"
+      title="Application not found"
+      [body]="errorToastMessage()"
+      (dismiss)="showErrorToast.set(false)"
+    />
+  </div>
+}
+
+<div class="fl-page">
+  @if (isLoading() && !application()) {
+    <fl-panel><fl-loading-state [rows]="6" /></fl-panel>
+  }
+
+  @if (application(); as app) {
+    <fl-page-header [title]="title() ?? app.name" [breadcrumb]="breadcrumb()">
+      <fl-status
+        headerStatus
+        [tone]="statusOf(app.status)"
+        [label]="getStatusDisplayLabel(app.status)"
+      />
+      @if (!access()?.showcase) {
+        <fl-tag headerStatus>{{ getCategoryDisplayLabel(app.category) | lowercase }}</fl-tag>
+      }
+      @if (app.id) {
+        <fl-copy-id
+          headerMeta
+          [value]="app.id"
+          [display]="app.id | maskId"
+          label="application ID"
+        />
+      }
+      <ng-container headerActions>
+        @if (!access()?.readOnly) {
+          @let pending = runtimeService.runtime()?.restartPending;
+          <button
+            [flButton]="pending ? 'primary' : 'secondary'"
+            type="button"
+            data-testid="app-restart"
+            [disabled]="runtimeService.savingRestart() || !canRestart(app.status) || !!restartOff()"
+            [title]="
+              restartOff() ??
+              (pending
+                ? 'Saved changes the running pods do not have yet: ' +
+                  (pending.changes.join(', ') || 'variables')
+                : 'Rolling restart')
+            "
+            (click)="onRollingRestart(app.id)"
+          >
+            @if (pending) {
+              Restart to apply{{
+                pending.changes.length
+                  ? ' (' +
+                    pending.changes.length +
+                    (pending.changes.length === 1 ? ' change)' : ' changes)')
+                  : ''
+              }}
+            } @else {
+              Restart
+            }
+          </button>
+        }
+      </ng-container>
+    </fl-page-header>
+
+    @if (app.status === 'deleted') {
+      <fl-alert title="Deleted"
+        >This application has been deleted and is no longer active.</fl-alert
+      >
+    }
+    @if (app.status === 'failed' && app.reconciliationError) {
+      <fl-alert tone="error" title="Deploy failed">
+        <span class="whitespace-pre-wrap break-words">{{ app.reconciliationError }}</span>
+      </fl-alert>
+    }
+    @if (runtimeService.runtime()?.waitingForRoom; as wait) {
+      <fl-alert tone="warning" title="Waiting for room" data-testid="replicas-waiting">
+        {{ wait.replicas }} waiting for a node with room. {{ wait.says }}
+        <a alertActions class="fl-link" routerLink="/scaling">Open scaling</a>
+      </fl-alert>
+    }
+    @if (access(); as acc) {
+      @if (acc.showcase) {
+        <fl-alert [title]="acc.readOnly ? 'A Flui project, read-only' : 'A Flui project'">
+          We run this one ourselves and leave it on display.
+          @if (acc.readOnly) {
+            Everything else you can see in this instance is only yours.
+          }
+        </fl-alert>
+      } @else if (acc.readOnly) {
+        <fl-alert title="Read-only">You have read-only access to this application.</fl-alert>
+      }
+    }
+
+    <div class="fl-resource">
+      <fl-resource-nav label="Application sections" [groups]="sections()" />
+      <div class="fl-stack">
+        <fl-panel>
+          <router-outlet />
+        </fl-panel>
+      </div>
+    </div>
+  }
+</div>

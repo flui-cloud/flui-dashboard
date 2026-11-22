@@ -53,6 +53,7 @@ export const appsRoutes: Routes = [
             (m) => m.ApplicationDetailComponent,
           ),
         title: 'Application Details - flui.cloud',
+        data: { focus: true },
         children: [
           { path: '', redirectTo: 'overview', pathMatch: 'full' },
           {

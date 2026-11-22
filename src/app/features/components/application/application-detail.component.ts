@@ -1,49 +1,23 @@
-import { ExplainComponent } from '../../../shared/components/explain.component';
-import {
-  Component,
-  OnDestroy,
-  inject,
-  signal,
-  computed,
-  effect,
-  untracked,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnDestroy, inject, signal, computed, effect, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { Router, ActivatedRoute, RouterModule, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideKeyRound,
-  lucideMessagesSquare,
-  lucideArrowLeft,
-  lucideLayoutDashboard,
-  lucideChartArea,
-  lucideFileText,
-  lucideHistory,
-  lucideSettings,
-  lucideCpu,
-  lucideGlobe,
-  lucideCircleX,
-  lucideCircleAlert,
-  lucideX,
-  lucideCopy,
-  lucideCheck,
-  lucideRotateCcw,
-  lucideLoader,
-  lucideHammer,
-  lucideRocket,
-  lucideCamera,
-  lucideShieldCheck,
-  lucideClock,
-  lucideNetwork,
-  lucidePlug,
-  lucideShieldAlert,
-  lucideBug,
-  lucideChevronDown,
-  lucideActivity,
-} from '@ng-icons/lucide';
+import { LowerCasePipe } from '@angular/common';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlResourceNav } from '../../../ui/frame/resource-nav';
+import { FlToast } from '../../../ui/overlays/toast';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { FlButton } from '../../../ui/primitives/button';
+import { appDetailNav } from './app-detail-sections';
+import { statusTone } from './applications-list-rows';
+import { statusToneOf } from '../dashboard/home-state';
 
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationMonitoringService } from '../../service/application-monitoring.service';
@@ -56,15 +30,17 @@ import {
   getStatusLabel,
   getCategoryLabel,
   getReconciliationLabel,
-  getStatusBadgeClass,
-  getCategoryBadgeClass,
-  getReconciliationBadgeClass,
   availabilityOf,
 } from '../../model/application.models';
 import { isActionAvailable } from '../../model/app-status-actions';
 import { isBuildingBlock } from '../../model/app-exposure';
 import { databaseEngineOf } from '../../model/db-engine';
-import { WORKLOAD_LIST_ROUTE, WorkloadList, workloadListOf } from '../../model/workload-list';
+import {
+  WORKLOAD_LIST_LABEL,
+  WORKLOAD_LIST_ROUTE,
+  WorkloadList,
+  workloadListOf,
+} from '../../model/workload-list';
 import { accessOf, allowsTab } from '../../model/app-access';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
@@ -79,406 +55,29 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 interface TabItem {
   label: string;
   route: string;
-  icon: string;
+  icon?: string;
 }
 
 @Component({
   selector: 'app-application-detail',
-  standalone: true,
-  imports: [MaskIdPipe, RouterModule, NgIconComponent, ExplainComponent],
-  providers: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideLayoutDashboard,
-      lucideChartArea,
-      lucideFileText,
-      lucideHistory,
-      lucideSettings,
-      lucideCpu,
-      lucideGlobe,
-      lucideCircleX,
-      lucideCircleAlert,
-      lucideX,
-      lucideCopy,
-      lucideCheck,
-      lucideRotateCcw,
-      lucideLoader,
-      lucideHammer,
-      lucideRocket,
-      lucideCamera,
-      lucideShieldCheck,
-      lucideClock,
-      lucideNetwork,
-      lucideKeyRound,
-      lucideMessagesSquare,
-      lucidePlug,
-      lucideShieldAlert,
-      lucideBug,
-      lucideChevronDown,
-      lucideActivity,
-    }),
+  imports: [
+    LowerCasePipe,
+    MaskIdPipe,
+    RouterModule,
+    FlPageHeader,
+    FlStatus,
+    FlTag,
+    FlCopyId,
+    FlButton,
+    FlAlert,
+    FlResourceNav,
+    FlPanel,
+    FlLoadingState,
+    FlToast,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <!-- Error Toast -->
-    @if (showErrorToast()) {
-      <div
-        class="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 animate-slide-in-right max-w-md"
-      >
-        <div class="flex items-start gap-3">
-          <ng-icon name="lucideCircleX" class="h-6 w-6 flex-shrink-0 text-red-600" />
-          <div class="flex-1">
-            <h3 class="text-sm font-semibold text-red-900">Application not found</h3>
-            <p class="text-sm text-red-700 mt-1">
-              {{ errorToastMessage() }}
-            </p>
-          </div>
-          <button
-            (click)="showErrorToast.set(false)"
-            class="flex-shrink-0 text-red-600 hover:text-red-800"
-          >
-            <ng-icon name="lucideX" class="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-    }
-
-    <div class="space-y-6 p-6">
-      @if (isLoading() && !application()) {
-        <!-- Skeleton loader -->
-        <div class="space-y-6">
-          <!-- Header skeleton -->
-          <div class="flex items-start gap-4">
-            <div class="mt-1 h-9 w-9 rounded-lg bg-gray-200"></div>
-            <div class="space-y-2">
-              <div class="flex items-center gap-3">
-                <div class="h-8 w-48 rounded bg-gray-200"></div>
-                <div class="h-5 w-16 rounded bg-gray-200"></div>
-              </div>
-              <div class="h-4 w-32 rounded bg-gray-200"></div>
-              <div class="flex gap-2">
-                <div class="h-6 w-20 rounded-full bg-gray-200"></div>
-              </div>
-            </div>
-          </div>
-          <!-- Stats skeleton -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            @for (i of [1, 2, 3, 4]; track i) {
-              <div class="bg-white border rounded-lg p-4 space-y-2">
-                <div class="h-3 w-16 rounded bg-gray-200"></div>
-                <div class="h-6 w-24 rounded bg-gray-200"></div>
-              </div>
-            }
-          </div>
-          <!-- Tab skeleton -->
-          <div class="bg-white border rounded-lg">
-            <div class="border-b border-gray-200 flex gap-1 px-2">
-              @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-                <div class="h-10 w-24 my-2 rounded bg-gray-200"></div>
-              }
-            </div>
-            <div class="p-6 space-y-3">
-              <div class="h-4 w-3/4 rounded bg-gray-200"></div>
-              <div class="h-4 w-1/2 rounded bg-gray-200"></div>
-              <div class="h-4 w-2/3 rounded bg-gray-200"></div>
-              <div class="h-64">
-                <div class="h-4 w-3/4 rounded bg-gray-200"></div>
-                <div class="h-4 w-1/2 rounded bg-gray-200"></div>
-                <div class="h-4 w-2/3 rounded bg-gray-200"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
-
-      @if (application(); as app) {
-        <!-- Header -->
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex items-start gap-4">
-            <button
-              (click)="backToList()"
-              class="mt-1 p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <ng-icon name="lucideArrowLeft" class="h-5 w-5" />
-            </button>
-            <div>
-              <div class="flex items-center gap-3">
-                <h1 class="text-3xl font-bold text-gray-900">
-                  {{ title() ?? app.name }}
-                </h1>
-                @if (!access()?.showcase) {
-                  <span [class]="getBadgeCategory(app.category)">
-                    {{ getCategoryDisplayLabel(app.category) }}
-                  </span>
-                }
-              </div>
-              <div class="flex items-center gap-3 mt-2">
-                <span [class]="getBadgeStatus(app.status)">
-                  {{ getStatusDisplayLabel(app.status) }}
-                </span>
-                @if (app.id) {
-                  <div class="flex items-center gap-1">
-                    <span class="font-mono text-xs text-gray-400">{{ app.id | maskId }}</span>
-                    <button
-                      (click)="copyId(app.id)"
-                      class="p-0.5 rounded hover:bg-gray-100 transition-colors"
-                      [title]="copiedId() ? 'Copied!' : 'Copy ID'"
-                    >
-                      @if (copiedId()) {
-                        <ng-icon name="lucideCheck" class="h-3 w-3 text-green-500" />
-                      } @else {
-                        <ng-icon name="lucideCopy" class="h-3 w-3 text-gray-400" />
-                      }
-                    </button>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-
-          <!-- Quick actions toolbar -->
-          <div class="flex items-center gap-1 mt-1 flex-shrink-0">
-            @if (!access()?.readOnly) {
-              @let pending = runtimeService.runtime()?.restartPending;
-              <button
-                (click)="onRollingRestart(app.id)"
-                [disabled]="
-                  runtimeService.savingRestart() || !canRestart(app.status) || !!restartOff()
-                "
-                [class]="
-                  pending
-                    ? 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
-                    : 'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
-                "
-                [title]="
-                  restartOff() ??
-                  (pending
-                    ? 'Saved changes the running pods do not have yet: ' +
-                      (pending.changes.join(', ') || 'variables')
-                    : 'Rolling restart')
-                "
-                data-testid="app-restart"
-              >
-                @if (runtimeService.savingRestart()) {
-                  <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                } @else {
-                  <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
-                }
-                @if (pending) {
-                  Restart to apply{{
-                    pending.changes.length
-                      ? ' — ' +
-                        pending.changes.length +
-                        (pending.changes.length === 1 ? ' change' : ' changes')
-                      : ''
-                  }}
-                } @else {
-                  Restart
-                }
-              </button>
-            }
-          </div>
-        </div>
-
-        <!-- Deleted notice -->
-        @if (app.status === 'deleted') {
-          <div
-            class="flex items-center gap-3 px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500"
-          >
-            <ng-icon name="lucideCircleX" class="h-4 w-4 flex-shrink-0" />
-            This application has been deleted and is no longer active.
-          </div>
-        }
-
-        <!-- Reconciliation error (build/deploy failures) -->
-        @if (app.status === 'failed' && app.reconciliationError) {
-          <div
-            class="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
-          >
-            <ng-icon name="lucideCircleAlert" class="h-4 w-4 flex-shrink-0 mt-0.5" />
-            <div class="space-y-0.5 min-w-0">
-              <p class="font-medium">Deploy failed</p>
-              <p class="text-xs whitespace-pre-wrap break-words">{{ app.reconciliationError }}</p>
-            </div>
-          </div>
-        }
-
-        <!-- Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="bg-white border rounded-lg p-4">
-            <p class="text-sm text-gray-600">Replicas</p>
-            <p class="text-lg font-bold tabular-nums">
-              {{ replicaCounts().ready
-              }}<span class="text-sm font-normal text-gray-400">
-                / {{ replicaCounts().desired }}</span
-              >
-            </p>
-            @if (runtimeService.runtime()?.waitingForRoom; as wait) {
-              <a
-                routerLink="/scaling"
-                class="mt-1 block text-xs text-amber-700 hover:underline"
-                [title]="wait.says"
-                data-testid="replicas-waiting"
-                >{{ wait.replicas }} waiting for a node with room →</a
-              >
-            }
-          </div>
-          <a
-            [routerLink]="['images']"
-            class="bg-white border rounded-lg p-4 min-w-0 block hover:border-blue-300 transition-colors"
-          >
-            <p class="text-sm text-gray-600">Image</p>
-            @if (runtime()?.containers?.[0]?.image; as img) {
-              <p class="text-sm font-mono font-medium truncate" [title]="img">{{ img }}</p>
-            } @else if (app.imageRef) {
-              <p class="text-sm font-mono font-medium truncate" [title]="app.imageRef">
-                {{ app.imageRef }}
-              </p>
-            } @else {
-              <p class="text-sm text-gray-400">—</p>
-            }
-          </a>
-          <div class="bg-white border rounded-lg p-4 min-w-0">
-            <p class="text-sm text-gray-600">CPU / Memory</p>
-            @if (runtime()?.containers?.[0]; as c) {
-              <p class="text-sm font-mono font-medium">
-                {{ c.requests.cpu ?? '—' }} · {{ c.requests.memory ?? '—' }}
-              </p>
-              <p class="text-xs text-gray-400 mt-0.5">
-                limits: {{ c.limits.cpu ?? '—' }} · {{ c.limits.memory ?? '—' }}
-              </p>
-            } @else {
-              <p class="text-sm text-gray-400">—</p>
-            }
-          </div>
-          <div class="bg-white border rounded-lg p-4">
-            <p class="text-sm text-gray-600">Last Deploy</p>
-            @if (app.lastDeployedAt) {
-              <p class="text-sm font-medium">
-                {{ formatDate(app.lastDeployedAt) }}
-              </p>
-            } @else {
-              <p class="text-sm text-gray-400">—</p>
-            }
-          </div>
-        </div>
-
-        @if (access(); as acc) {
-          @if (acc.showcase) {
-            <div
-              role="note"
-              class="mb-4 inline-flex max-w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground"
-            >
-              <app-explain
-                [label]="acc.readOnly ? 'A Flui project · read-only' : 'A Flui project'"
-                labelClass="text-[13px] font-medium text-foreground"
-                floating
-              >
-                We run this one ourselves and leave it on display.
-                @if (acc.readOnly) {
-                  Everything else you can see in this instance is only yours.
-                }
-              </app-explain>
-            </div>
-          } @else if (acc.readOnly) {
-            <div
-              class="mb-4 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-foreground/80"
-            >
-              You have read-only access to this application.
-            </div>
-          }
-        }
-
-        <!-- Tab Navigation -->
-        <div class="bg-white border rounded-lg">
-          <div class="border-b border-gray-200 relative flex items-stretch">
-            <nav
-              class="flex -mb-px gap-1 overflow-x-auto scrollbar-none flex-1 min-w-0 items-stretch"
-            >
-              @for (tab of tabs(); track tab.route) {
-                @if (tabOff(tab.route); as reason) {
-                  <span
-                    [title]="reason"
-                    [attr.aria-disabled]="true"
-                    [attr.data-testid]="'tab-off-' + tab.route"
-                    class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 border-transparent whitespace-nowrap flex-shrink-0 text-gray-300 cursor-not-allowed"
-                  >
-                    <ng-icon [name]="tab.icon" class="h-4 w-4 flex-shrink-0" />
-                    <span class="hidden md:inline">{{ tab.label }}</span>
-                  </span>
-                } @else {
-                  <a
-                    [routerLink]="[tab.route]"
-                    routerLinkActive
-                    #rla="routerLinkActive"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                    [title]="tab.label"
-                    class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0"
-                    [class]="
-                      rla.isActive
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
-                    "
-                  >
-                    <ng-icon [name]="tab.icon" class="h-4 w-4 flex-shrink-0" />
-                    <span class="hidden md:inline">{{ tab.label }}</span>
-                  </a>
-                }
-              }
-            </nav>
-            <!-- Advanced dropdown (outside nav scroll so the menu isn't clipped) -->
-            <div class="relative flex items-stretch border-l border-gray-200 -mb-px">
-              <button
-                type="button"
-                (click)="toggleAdvanced(); $event.stopPropagation()"
-                title="Advanced"
-                class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 border-transparent transition-colors whitespace-nowrap flex-shrink-0 text-gray-600 hover:text-gray-900 hover:border-gray-300"
-              >
-                <ng-icon name="lucideSettings" class="h-4 w-4 flex-shrink-0" />
-                <span class="hidden md:inline">Advanced</span>
-                @if (diagnosesCount() > 0) {
-                  <span class="ml-0.5 text-xs text-red-800 font-semibold tabular-nums">
-                    {{ diagnosesCount() }}
-                  </span>
-                }
-                <ng-icon name="lucideChevronDown" class="h-3.5 w-3.5 flex-shrink-0" />
-              </button>
-              @if (advancedOpen()) {
-                <div class="fixed inset-0 z-40" (click)="advancedOpen.set(false)"></div>
-                <div
-                  class="absolute right-0 top-full mt-1 w-52 z-50 bg-white border border-gray-200 rounded-lg py-1"
-                  (click)="advancedOpen.set(false)"
-                >
-                  @for (item of advancedTabs; track item.route) {
-                    <a
-                      [routerLink]="[item.route]"
-                      routerLinkActive="bg-gray-100 text-blue-600"
-                      [routerLinkActiveOptions]="{ exact: true }"
-                      class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      <ng-icon [name]="item.icon" class="h-4 w-4" />
-                      <span class="flex-1">{{ item.label }}</span>
-                      @if (item.route === 'diagnoses' && diagnosesCount() > 0) {
-                        <span class="text-xs text-red-800 font-semibold tabular-nums">
-                          {{ diagnosesCount() }}
-                        </span>
-                      }
-                    </a>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-          <div class="p-6">
-            <router-outlet />
-          </div>
-        </div>
-      }
-    </div>
-  `,
+  templateUrl: './application-detail.component.html',
 })
 export class ApplicationDetailComponent implements OnDestroy {
-  copiedId = signal(false);
   private readonly appService = inject(ApplicationService);
   protected monitoringService = inject(ApplicationMonitoringService);
   private readonly healthChecksService = inject(AppHealthChecksService);
@@ -495,12 +94,6 @@ export class ApplicationDetailComponent implements OnDestroy {
     { label: 'Diagnoses', route: 'diagnoses', icon: 'lucideShieldAlert' },
     { label: 'Debug pods', route: 'debug-pods', icon: 'lucideBug' },
   ];
-
-  advancedOpen = signal(false);
-
-  toggleAdvanced(): void {
-    this.advancedOpen.update((v) => !v);
-  }
 
   application = this.appService.selectedApplication;
   isLoading = this.appService.loading;
@@ -656,6 +249,33 @@ export class ApplicationDetailComponent implements OnDestroy {
 
   readonly access = computed(() => accessOf(this.application()));
 
+  protected readonly sections = computed(() =>
+    appDetailNav([...this.tabs(), ...this.advancedTabs], {
+      off: (route) => this.tabOff(route),
+      diagnoses: this.diagnosesCount(),
+    }),
+  );
+
+  protected readonly breadcrumb = computed(() => {
+    const app = this.application();
+    const list = app ? workloadListOf(app) : this.lastKnownList();
+    const crumbs: Crumb[] = [{ label: WORKLOAD_LIST_LABEL[list], link: WORKLOAD_LIST_ROUTE[list] }];
+    const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+    if (returnTo) {
+      const group = this.appService
+        .applicationGroups()
+        .find((g) => g.components.some((c) => c.id === app?.id));
+      const name = this.title() ?? app?.name;
+      if (group && group.name !== name) crumbs.push({ label: group.name, link: returnTo });
+    }
+    crumbs.push({ label: this.title() ?? app?.name ?? '' });
+    return crumbs;
+  });
+
+  protected statusOf(status: string): StatusTone {
+    return statusToneOf(statusTone(status));
+  }
+
   /**
    * In the showcase an application is named after what it is part of — "Live
    * Activity", not the slug its install generated. Elsewhere the name stands.
@@ -703,15 +323,6 @@ export class ApplicationDetailComponent implements OnDestroy {
     this.currentSurface.set(null);
   }
 
-  backToList() {
-    const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
-    if (returnTo) {
-      void this.router.navigateByUrl(returnTo);
-      return;
-    }
-    this.router.navigate([this.listRouteForKind()]);
-  }
-
   private listRouteForKind(): string {
     const app = this.application();
     return WORKLOAD_LIST_ROUTE[app ? workloadListOf(app) : this.lastKnownList()];
@@ -729,35 +340,13 @@ export class ApplicationDetailComponent implements OnDestroy {
     return getReconciliationLabel(status as any);
   }
 
-  getBadgeStatus(status: ApplicationStatus): string {
-    return getStatusBadgeClass(status);
-  }
-
-  getBadgeCategory(category: string): string {
-    return getCategoryBadgeClass(category);
-  }
-
-  getBadgeReconciliation(status: string): string {
-    return getReconciliationBadgeClass(status);
-  }
-
   formatDate(iso: string): string {
     const d = new Date(iso);
     return (
-      d.toLocaleDateString('en-US', {
-        month: '2-digit',
-        day: '2-digit',
-        year: 'numeric',
-      }) +
-      ' ' +
-      d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+      d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) +
+      ', ' +
+      d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
     );
-  }
-
-  copyId(id: string): void {
-    navigator.clipboard.writeText(id);
-    this.copiedId.set(true);
-    setTimeout(() => this.copiedId.set(false), 2000);
   }
 
   /** The API's reason a tab is off in this state, or null when it is on. */

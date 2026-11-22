@@ -11,6 +11,7 @@
 @import './console/usage-bar.css';
 @import './console/page-header.css';
 @import './console/sidenav.css';
+@import './console/resource-nav.css';
 @import './console/topbar.css';
 @import './console/filter-bar.css';
 @import './console/forms.css';

@@ -34,6 +34,7 @@ import { userBadge } from './user-badge';
         topbarStart
         type="button"
         class="fl-topbar__icon fl-topbar__menu"
+        [class.fl-topbar__menu--always]="menuAlways()"
         aria-label="Menu"
         [attr.aria-expanded]="navOpen()"
         (click)="menuToggle.emit()"
@@ -146,6 +147,7 @@ export class ConsoleTopbar implements OnInit {
   protected readonly systemApps = inject(SystemAppsPreference);
 
   readonly navOpen = input(false);
+  readonly menuAlways = input(false);
   readonly menuToggle = output<void>();
   readonly searchOpen = output<void>();
 

@@ -42,7 +42,7 @@ import { SandboxBannerComponent } from './sandbox-banner.component';
 import { VisitorSignInDialogComponent } from './visitor-sign-in-dialog.component';
 import { InstallFluiDialogComponent } from './install-flui-dialog.component';
 import { SandboxSectionNoticeComponent } from './sandbox-section-notice.component';
-import { PAGE_WIDTH_CLASS, pageWidth } from './page-width';
+import { PAGE_WIDTH_CLASS, focusMode, pageWidth } from './page-width';
 import { PlatformUpdateWatcherComponent } from '../../../features/components/platform-updates/platform-update-watcher.component';
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
@@ -115,17 +115,29 @@ const OWN_ASSISTANT = [
   template: `
     <app-console-topbar
       [navOpen]="navOpen()"
+      [menuAlways]="focus()"
       (menuToggle)="navOpen.set(!navOpen())"
       (searchOpen)="openSearch()"
     />
     <app-sandbox-banner />
     <div class="fl-shell__body">
-      <fl-sidenav
-        class="fl-shell__nav"
-        [class.is-open]="navOpen()"
-        [sections]="nav.sections()"
-        (navigate)="navOpen.set(false)"
-      />
+      @if (!focus() || navOpen()) {
+        <fl-sidenav
+          class="fl-shell__nav"
+          [class.is-open]="navOpen()"
+          [class.fl-shell__nav--overlay]="focus()"
+          [sections]="nav.sections()"
+          (navigate)="navOpen.set(false)"
+        />
+      }
+      @if (navOpen()) {
+        <button
+          type="button"
+          class="fl-shell__scrim"
+          aria-label="Close menu"
+          (click)="navOpen.set(false)"
+        ></button>
+      }
       <main class="fl-shell__main page-outlet" id="main">
         <div class="mx-auto w-full p-2" [class]="widthClass()">
           <app-sandbox-section-notice />
@@ -171,6 +183,14 @@ export class ShellLayoutComponent {
       initialValue:
         PAGE_WIDTH_CLASS[pageWidth(this.router.routerState.snapshot.root, this.router.url)],
     },
+  );
+
+  protected readonly focus = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(() => focusMode(this.router.routerState.snapshot.root)),
+    ),
+    { initialValue: focusMode(this.router.routerState.snapshot.root) },
   );
 
   protected readonly hideAssistant = computed(() =>

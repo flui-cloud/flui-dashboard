@@ -10,7 +10,7 @@ import { FlIcon } from '../primitives/icon';
   providers: [provideIcons({ lucideCopy, lucideCheck })],
   host: { class: 'fl-copy' },
   template: `
-    <span class="fl-mono">{{ value() }}</span>
+    <span class="fl-mono">{{ display() ?? value() }}</span>
     <button
       type="button"
       [attr.aria-label]="copied() ? 'Copied' : 'Copy ' + label()"
@@ -25,6 +25,7 @@ export class FlCopyId {
   private readonly destroyRef = inject(DestroyRef);
   readonly value = input.required<string>();
   readonly label = input('ID');
+  readonly display = input<string | null>(null);
   protected readonly copied = signal(false);
 
   protected copy(): void {

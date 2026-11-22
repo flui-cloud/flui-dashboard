@@ -52,6 +52,16 @@ export const routes: Routes = [
           title: 'Kit - flui.cloud',
         },
         {
+          path: 'kit/resource',
+          redirectTo: 'kit/resource/overview',
+          pathMatch: 'full' as const,
+        },
+        {
+          path: 'kit/resource/:section',
+          loadComponent: () => import('./ui/kit-page/kit-resource').then((m) => m.KitResource),
+          title: 'Resource prototype - flui.cloud',
+        },
+        {
           path: 'mock/scaling-section',
           loadChildren: () =>
             import('./scaling-fixture.routes').then((m) => m.scalingFixtureRoutes),

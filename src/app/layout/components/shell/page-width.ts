@@ -29,3 +29,10 @@ export const PAGE_WIDTH_CLASS: Record<PageWidth, string> = {
   narrow: 'max-w-5xl',
   full: 'max-w-none',
 };
+
+export function focusMode(root: ActivatedRouteSnapshot | null): boolean {
+  for (let r = root; r; r = r.firstChild) {
+    if (r.data?.['focus'] === true) return true;
+  }
+  return false;
+}
