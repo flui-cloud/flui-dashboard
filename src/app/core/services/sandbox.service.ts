@@ -22,6 +22,8 @@ export interface SandboxSession {
   /** Until when the guest's applications stay if nothing else happens; each action moves it. */
   appsKeptUntil?: string | null;
   loginUrl: string;
+  /** Catalog entries a trial area may not install. Absent on an older instance. */
+  catalogExcluded?: string[];
 }
 
 export type SandboxLevel = 'full' | 'read-only' | 'stand-in' | 'closed';
@@ -135,6 +137,7 @@ export class SandboxService {
   readonly hasArea = computed(() => this._session()?.hasArea === true);
   readonly visitor = computed(() => this._session()?.visitor === true);
   readonly appsKeptUntil = computed(() => this._session()?.appsKeptUntil ?? null);
+  readonly catalogExcluded = computed(() => new Set(this._session()?.catalogExcluded ?? []));
 
   readonly urgent = computed(
     () => this.hasArea() && this._secondsRemaining() < 3600,

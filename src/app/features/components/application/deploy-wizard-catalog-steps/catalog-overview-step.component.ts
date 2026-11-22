@@ -14,6 +14,7 @@ import {
 } from '@ng-icons/lucide';
 import { DeployWizardStateService } from '../../../service/deploy-wizard-state.service';
 import { CatalogService } from '../../../service/catalog.service';
+import { SandboxService } from '../../../../core/services/sandbox.service';
 import { CatalogResponseDto } from '../../../../core/api/model/models';
 import { CatalogIconComponent } from '../../catalog/catalog-icon.component';
 
@@ -221,6 +222,7 @@ import { CatalogIconComponent } from '../../catalog/catalog-icon.component';
 export class CatalogOverviewStepComponent implements OnInit {
   protected readonly state = inject(DeployWizardStateService);
   protected readonly catalog = inject(CatalogService);
+  private readonly sandbox = inject(SandboxService);
 
   protected readonly detail = computed(() => this.state.catalogDetail());
   protected readonly query = signal('');
@@ -229,7 +231,8 @@ export class CatalogOverviewStepComponent implements OnInit {
 
   protected readonly results = computed<CatalogResponseDto[]>(() => {
     const q = this.query().trim().toLowerCase();
-    const all = this.catalog.catalog();
+    const excluded = this.sandbox.catalogExcluded();
+    const all = this.catalog.catalog().filter((app) => !excluded.has(app.slug));
     if (!q) return all;
     return all.filter((app) => {
       const haystack = [

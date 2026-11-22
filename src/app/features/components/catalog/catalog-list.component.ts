@@ -15,6 +15,7 @@ import {
   lucideArrowLeft,
 } from '@ng-icons/lucide';
 import { CatalogService } from '../../service/catalog.service';
+import { SandboxService } from '../../../core/services/sandbox.service';
 import { CatalogResponseDto } from '../../../core/api/model/models';
 import { CatalogCardComponent } from './catalog-card.component';
 import { CatalogScope, CatalogSection, SECTION_LABEL, SECTION_ORDER, catalogScopeOf, catalogSectionOf, inCatalogScope, scopeCopy } from './catalog-scope';
@@ -298,6 +299,7 @@ interface CatalogSectionGroup {
 })
 export class CatalogListComponent implements OnDestroy {
   protected readonly catalog = inject(CatalogService);
+  private readonly sandbox = inject(SandboxService);
   private readonly route = inject(ActivatedRoute);
 
   readonly appKind = toSignal(this.route.queryParamMap, {
@@ -356,8 +358,10 @@ export class CatalogListComponent implements OnDestroy {
     const category = this.activeCategory();
     const tags = this.activeTags();
     const scope = this.scope();
+    const excluded = this.sandbox.catalogExcluded();
 
     return all.filter((app) => {
+      if (excluded.has(app.slug)) return false;
       if (scope && !inCatalogScope(app, scope)) return false;
       if (category && app.category !== category) return false;
       if (tags.length > 0 && !tags.every((t) => app.tags?.includes(t))) return false;

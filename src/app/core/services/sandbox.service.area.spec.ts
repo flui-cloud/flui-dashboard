@@ -47,6 +47,28 @@ describe('SandboxService and the guest area', () => {
     expect(service.urgent()).toBeFalse();
   });
 
+  it('knows the catalog entries the trial does not install, and assumes none on an older instance', () => {
+    answer({
+      hasArea: false,
+      expiresAt: null,
+      secondsRemaining: 0,
+      ttlHours: 168,
+      loginUrl: 'https://demo.flui.cloud',
+      catalogExcluded: ['harbor', 'gitea'],
+    });
+    expect(service.catalogExcluded().has('harbor')).toBeTrue();
+    expect(service.catalogExcluded().has('umami')).toBeFalse();
+
+    answer({
+      hasArea: false,
+      expiresAt: null,
+      secondsRemaining: 0,
+      ttlHours: 168,
+      loginUrl: 'https://demo.flui.cloud',
+    });
+    expect(service.catalogExcluded().size).toBe(0);
+  });
+
   it('knows a visitor who has not signed in, and a guest who has', () => {
     answer({
       hasArea: false,

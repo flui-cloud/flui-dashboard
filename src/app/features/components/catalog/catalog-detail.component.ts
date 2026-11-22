@@ -16,6 +16,7 @@ import {
   lucideStar,
 } from '@ng-icons/lucide';
 import { CatalogService } from '../../service/catalog.service';
+import { SandboxService } from '../../../core/services/sandbox.service';
 import { CatalogIconComponent } from './catalog-icon.component';
 import { CatalogManifestTabComponent } from './catalog-manifest-tab.component';
 import { Application } from '../../model/application.models';
@@ -134,15 +135,21 @@ import {
               }
 
               <div class="flex flex-wrap items-center gap-3 pt-1">
-                <button
-                  type="button"
-                  (click)="goToInstall(app.slug)"
-                  class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium
-                         text-primary-foreground shadow-sm transition hover:bg-primary/90"
-                >
-                  <ng-icon name="lucideRocket" class="h-4 w-4" />
-                  Deploy to cluster
-                </button>
+                @if (excludedInTrial()) {
+                  <p class="w-full text-sm font-medium text-foreground" data-testid="trial-excluded">
+                    Not part of the trial. Available on your own Flui or the managed offer.
+                  </p>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="goToInstall(app.slug)"
+                    class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium
+                           text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                  >
+                    <ng-icon name="lucideRocket" class="h-4 w-4" />
+                    Deploy to cluster
+                  </button>
+                }
 
                 @if (links().website) {
                   <a
@@ -356,22 +363,31 @@ import {
                   >
                     <ng-icon name="lucideRocket" class="h-6 w-6 text-primary" />
                   </div>
-                  <h3 class="mt-3 text-base font-semibold text-foreground">
-                    Ready to deploy {{ app.name }}?
-                  </h3>
-                  <p class="mt-1 max-w-md text-sm text-muted-foreground" style="margin-inline:auto;">
-                    Flui's deploy wizard will pick up this catalog entry, pre-fill the configuration,
-                    and handle secrets, DNS and TLS for you.
-                  </p>
-                  <button
-                    type="button"
-                    (click)="goToInstall(app.slug)"
-                    class="mt-5 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm
-                           font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
-                  >
-                    <ng-icon name="lucideRocket" class="h-4 w-4" />
-                    Deploy to cluster
-                  </button>
+                  @if (excludedInTrial()) {
+                    <h3 class="mt-3 text-base font-semibold text-foreground">
+                      {{ app.name }} is not part of the trial
+                    </h3>
+                    <p class="mt-1 max-w-md text-sm text-muted-foreground" style="margin-inline:auto;">
+                      It is available on your own Flui or the managed offer.
+                    </p>
+                  } @else {
+                    <h3 class="mt-3 text-base font-semibold text-foreground">
+                      Ready to deploy {{ app.name }}?
+                    </h3>
+                    <p class="mt-1 max-w-md text-sm text-muted-foreground" style="margin-inline:auto;">
+                      Flui's deploy wizard will pick up this catalog entry, pre-fill the configuration,
+                      and handle secrets, DNS and TLS for you.
+                    </p>
+                    <button
+                      type="button"
+                      (click)="goToInstall(app.slug)"
+                      class="mt-5 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm
+                             font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+                    >
+                      <ng-icon name="lucideRocket" class="h-4 w-4" />
+                      Deploy to cluster
+                    </button>
+                  }
                 </div>
               }
             }
@@ -386,8 +402,13 @@ export class CatalogDetailComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly installPrompt = inject(InstallPromptService);
+  private readonly sandbox = inject(SandboxService);
 
   protected readonly detail = this.catalog.detail;
+  protected readonly excludedInTrial = computed(() => {
+    const slug = this.detail()?.slug;
+    return !!slug && this.sandbox.catalogExcluded().has(slug);
+  });
   protected readonly activeTab = signal<DetailTab>('description');
 
   protected readonly tabs: { key: DetailTab; label: string }[] = [
