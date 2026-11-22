@@ -76,7 +76,7 @@ describe('DashboardNeedsYouComponent', () => {
   });
 
   it('lists what the API raised, most urgent first, with a count of what asks for action', () => {
-    expect(q('needs-you-count')?.textContent?.trim()).toBe('2');
+    expect(el().querySelector('.fl-panel__count')?.textContent?.trim()).toBe('(2)');
     const rows = Array.from(
       el().querySelectorAll(
         '[data-testid^="needs-you-cluster"], [data-testid^="needs-you-credential"]',
@@ -88,18 +88,18 @@ describe('DashboardNeedsYouComponent', () => {
   });
 
   it('links an item to its path, keeping the query', () => {
-    const link = q('needs-you-credential:github_app') as HTMLAnchorElement;
+    const link = q('needs-you-credential:github_app')!.querySelector('a') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/settings?tab=github');
-    expect((q('needs-you-cluster:c-2') as HTMLElement).tagName).toBe('DIV');
+    expect(q('needs-you-cluster:c-2')!.querySelector('a')).toBeNull();
   });
 
   it('adds the DNS step when DNS is not set up, and opens the wizard from it', () => {
     needsSetup.set(true);
     fixture.detectChanges();
-    expect(q('needs-you-count')?.textContent?.trim()).toBe('3');
-    const dns = q('needs-you-dns') as HTMLButtonElement;
+    expect(el().querySelector('.fl-panel__count')?.textContent?.trim()).toBe('(3)');
+    const dns = q('needs-you-dns')!;
     expect(dns.textContent).toContain('Set up DNS & certificates');
-    dns.click();
+    (dns.querySelector('button') as HTMLButtonElement).click();
     expect(notifications.triggerAction).toHaveBeenCalledWith('open-cert-wizard');
   });
 
@@ -194,7 +194,7 @@ describe('DashboardNeedsYouComponent', () => {
     needs.set({ generatedAt: '', count: 0, items: [] });
     fixture.detectChanges();
     expect(q('needs-you-empty')).not.toBeNull();
-    expect(q('needs-you-count')).toBeNull();
+    expect(el().querySelector('.fl-panel__count')).toBeNull();
   });
 
   it('offers a retry when the read failed', () => {

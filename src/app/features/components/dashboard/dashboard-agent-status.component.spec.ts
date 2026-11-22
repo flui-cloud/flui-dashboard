@@ -36,7 +36,7 @@ describe('DashboardAgentStatusComponent', () => {
 
   it('invites connecting an agent when the read fails', async () => {
     await build(throwError(() => new Error('offline')));
-    expect(card().textContent).toContain('No agent connected yet');
+    expect(card().textContent).toContain('No agent connected');
     expect(card().textContent).toContain('Connect an agent');
   });
 });

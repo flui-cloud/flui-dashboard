@@ -95,7 +95,7 @@ describe('DashboardComponent', () => {
     await build();
     expect(q('home-fresh')).not.toBeNull();
     expect(order()[0]).toBe('app-dashboard-certs');
-    expect(order()).not.toContain('app-dashboard-workloads');
+    expect(order()).not.toContain('app-dashboard-health-strip');
     expect(fleet.loadAll).toHaveBeenCalled();
   });
 
@@ -107,36 +107,14 @@ describe('DashboardComponent', () => {
     userApps.set(0);
     await build();
     expect(q('home-control-room')).not.toBeNull();
-    const [left, right] = Array.from(q('home-columns')!.children).map((column) =>
-      Array.from(column.children).map((card) => card.tagName.toLowerCase()),
-    );
-    expect(left).toEqual([
-      'app-dashboard-clusters-table',
-      'app-dashboard-certs',
-      'app-dashboard-activity',
-    ]);
-    expect(right).toEqual([
+    expect(order()).toEqual([
+      'app-dashboard-health-strip',
       'app-dashboard-needs-you',
-      'app-dashboard-agent-status',
-      'app-dashboard-backups',
-      'app-dashboard-workloads',
-    ]);
-    const cards = Array.from(q('home-columns')!.querySelectorAll('[class*="order-"]'));
-    const readingOrder = cards
-      .map((card) => ({
-        tag: card.tagName.toLowerCase(),
-        order: Number(/order-(\d+)/.exec(card.className)![1]),
-      }))
-      .sort((a, b) => a.order - b.order)
-      .map((card) => card.tag);
-    expect(readingOrder).toEqual([
+      'app-dashboard-fleet-tiles',
       'app-dashboard-clusters-table',
-      'app-dashboard-needs-you',
-      'app-dashboard-agent-status',
-      'app-dashboard-certs',
       'app-dashboard-backups',
-      'app-dashboard-activity',
-      'app-dashboard-workloads',
+      'app-dashboard-certs',
+      'app-dashboard-agent-status',
     ]);
   });
 

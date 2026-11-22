@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { Component, computed, inject, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideRefreshCw } from '@ng-icons/lucide';
 import { DashboardService } from '../../service/dashboard.service';
 import { FLEET_WINDOWS, FleetService, FleetWindow } from '../../service/fleet.service';
@@ -8,100 +8,73 @@ import { AddWorkloadMenuComponent } from '../application/add-workload-menu.compo
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { ApplicationService } from '../../service/application.service';
 import { accessOf } from '../../model/app-access';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlSegmented } from '../../../ui/patterns/filter-bar';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 @Component({
   selector: 'app-dashboard-home-header',
-  standalone: true,
-  imports: [NgIconComponent, AddWorkloadMenuComponent],
+  imports: [AddWorkloadMenuComponent, FlPageHeader, FlStatus, FlSegmented, FlButton, FlIcon],
   providers: [provideIcons({ lucideRefreshCw })],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <header class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-      <div class="flex flex-col gap-1.5 min-w-0">
-        <h1 class="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">Home</h1>
-        <div
-          class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-muted-foreground"
-          data-testid="home-status-line"
-        >
-          @if (pulse().backendOnline) {
-            <span class="inline-flex items-center gap-1.5 font-semibold text-green-700">
-              <span class="h-2 w-2 rounded-full bg-green-500"></span>Online
-            </span>
-          } @else {
-            <span class="inline-flex items-center gap-1.5 font-semibold text-destructive">
-              <span class="h-2 w-2 rounded-full bg-destructive"></span>API offline
-            </span>
+    <fl-page-header title="Overview">
+      @if (pulse().backendOnline) {
+        <fl-status headerStatus tone="success" label="Operational" data-testid="home-status" />
+      } @else {
+        <fl-status headerStatus tone="error" label="API offline" data-testid="home-status" />
+      }
+      <span headerMeta class="contents" data-testid="home-status-line">
+        @if (guest()) {
+          <span>{{ plural(pulse().totalClusters, 'cluster') }}</span>
+          <span>{{ guestApps().showcase }} in the showcase</span>
+          @if (guestApps().own > 0) {
+            <span>{{ guestApps().own }} of yours</span>
           }
-          @if (guest()) {
-            <span class="text-border">·</span>
-            <span>{{ plural(pulse().totalClusters, 'cluster') }}</span>
-            <span class="text-border">·</span>
-            <span>{{ guestApps().showcase }} in the showcase</span>
-            @if (guestApps().own > 0) {
-              <span class="text-border">·</span>
-              <span>{{ guestApps().own }} of yours</span>
-            }
-          } @else {
-            <span class="text-border">·</span>
-            <span>{{ plural(pulse().providersConnected, 'provider') }}</span>
-            <span class="text-border">·</span>
-            <span>{{ plural(pulse().totalClusters, 'cluster') }}</span>
-            <span class="text-border">·</span>
-            <span>{{
-              fresh()
-                ? pulse().runningApps + ' system apps running'
-                : pulse().runningApps + ' running'
-            }}</span>
-          }
-          @if (pulse().activeOperations > 0) {
-            <span class="text-border">·</span>
-            <span class="font-medium text-primary" data-testid="home-operations">{{
-              plural(pulse().activeOperations, 'operation')
-            }}</span>
-          }
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
+        } @else {
+          <span>{{ plural(pulse().providersConnected, 'provider') }}</span>
+          <span>{{ plural(pulse().totalClusters, 'cluster') }}</span>
+          <span>{{
+            fresh()
+              ? pulse().runningApps + ' system apps running'
+              : pulse().runningApps + ' running'
+          }}</span>
+        }
+        @if (pulse().activeOperations > 0) {
+          <fl-status
+            tone="progress"
+            [label]="plural(pulse().activeOperations, 'operation')"
+            data-testid="home-operations"
+          />
+        }
+      </span>
+      <ng-container headerActions>
         @if (showWindow()) {
-          <div
-            class="inline-flex p-0.5 gap-0.5 bg-muted rounded-lg"
-            role="group"
-            aria-label="Metrics window"
+          <fl-segmented
+            label="Metrics window"
             data-testid="home-window"
-          >
-            @for (w of windows; track w) {
-              <button
-                type="button"
-                (click)="setWindow(w)"
-                [attr.aria-pressed]="fleet.window() === w"
-                class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors"
-                [class]="
-                  fleet.window() === w
-                    ? 'bg-card text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                "
-              >
-                {{ w }}
-              </button>
-            }
-          </div>
+            [options]="windowOptions"
+            [value]="fleet.window()"
+            (valueChange)="setWindow($event)"
+          />
         }
         <button
+          flButton
           type="button"
-          class="h-9 w-9 flex items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+          [iconOnly]="true"
           [disabled]="refreshing()"
-          (click)="refresh.emit()"
-          [title]="'Refresh · updated ' + refreshedAt()"
+          [title]="'Updated ' + refreshedAt()"
           aria-label="Refresh"
+          (click)="refresh.emit()"
         >
-          <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="refreshing()" />
+          <fl-icon name="lucideRefreshCw" />
         </button>
         @if (canDeploy()) {
           <app-add-workload-menu label="Deploy" />
         }
-      </div>
-    </header>
+      </ng-container>
+    </fl-page-header>
   `,
 })
 export class DashboardHomeHeaderComponent {
@@ -124,7 +97,7 @@ export class DashboardHomeHeaderComponent {
     return { showcase, own: groups.length - showcase };
   });
 
-  protected readonly windows = FLEET_WINDOWS;
+  protected readonly windowOptions = FLEET_WINDOWS.map((w) => ({ value: w, label: w }));
   protected readonly pulse = this.dashboard.pulseSummary;
 
   readonly showWindow = computed(() => !this.fresh() && this.fleet.metricsState() !== 'forbidden');
@@ -138,7 +111,7 @@ export class DashboardHomeHeaderComponent {
     return `${n} ${word}${n === 1 ? '' : 's'}`;
   }
 
-  protected setWindow(w: FleetWindow): void {
-    void this.fleet.setWindow(w);
+  protected setWindow(w: string): void {
+    void this.fleet.setWindow(w as FleetWindow);
   }
 }

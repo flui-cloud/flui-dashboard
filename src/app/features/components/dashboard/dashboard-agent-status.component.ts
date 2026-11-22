@@ -1,14 +1,7 @@
-import {
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideBot, lucideClock } from '@ng-icons/lucide';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlStatus } from '../../../ui/primitives/status';
 import { AgentActivityService, AgentIdentityActivityDto } from '../../../core/api';
 
 /** How long after its last recorded tool call an identity still reads as "working" rather than merely "seen". */
@@ -18,87 +11,47 @@ type AgentHookState = 'working' | 'idle' | 'none';
 
 @Component({
   selector: 'app-dashboard-agent-status',
-  standalone: true,
-  imports: [RouterLink, NgIcon],
-  providers: [provideIcons({ lucideArrowRight, lucideBot, lucideClock })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [RouterLink, FlPanel, FlStatus],
   template: `
     @if (loaded()) {
-      <section class="card-surface p-5 flex flex-col gap-3" data-testid="agent-card">
-        <h2 class="font-semibold text-foreground">Agent</h2>
+      <fl-panel title="Agents" data-testid="agent-card">
+        @if (state() !== 'none') {
+          <a panelActions routerLink="/agents" class="fl-link text-fl-body-sm">View activity</a>
+        }
         @switch (state()) {
           @case ('working') {
-            <div class="flex items-center gap-3">
-              <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
-                <span
-                  class="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
-                ></span>
-                <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-              </span>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-emerald-700">An agent is working</p>
-                <p class="text-xs text-muted-foreground truncate">
-                  {{ identityLabel(working()!) }}
-                  @if (working()!.lastTool) {
-                    · {{ working()!.lastTool }}
-                  }
-                </p>
-              </div>
+            <div class="flex flex-col gap-1">
+              <fl-status tone="progress" label="An agent is working" />
+              <p class="truncate text-fl-caption text-fl-ink-muted">
+                {{ identityLabel(working()!) }}
+                @if (working()!.lastTool) {
+                  · {{ working()!.lastTool }}
+                }
+              </p>
             </div>
-            <a
-              routerLink="/agents"
-              class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-            >
-              View activity
-              <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-            </a>
           }
           @case ('idle') {
-            <div class="flex items-center gap-3">
-              <span
-                class="flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-muted-foreground/40"
-              ></span>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium">No agent working right now</p>
-                <p class="text-xs text-muted-foreground truncate">
-                  Last seen: {{ identityLabel(mostRecent()!) }} ·
-                  {{ formatTime(mostRecent()!.lastActivityAt) }}
-                </p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3">
-              <a
-                routerLink="/agents"
-                class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            <div class="flex flex-col gap-1">
+              <fl-status tone="neutral" label="No agent working right now" />
+              <p class="truncate text-fl-caption text-fl-ink-muted">
+                Last seen: {{ identityLabel(mostRecent()!) }} ·
+                {{ formatTime(mostRecent()!.lastActivityAt) }}
+              </p>
+              <a routerLink="/settings" fragment="agent-keys" class="fl-link mt-2 text-fl-body-sm"
+                >Connect another</a
               >
-                View activity
-                <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-              </a>
-              <a
-                routerLink="/settings"
-                fragment="agent-keys"
-                class="text-xs text-muted-foreground hover:text-foreground hover:underline"
-              >
-                Connect another
-              </a>
             </div>
           }
           @case ('none') {
-            <div class="flex items-center gap-3">
-              <ng-icon name="lucideBot" class="h-6 w-6 flex-shrink-0 text-muted-foreground" />
-              <p class="flex-1 min-w-0 text-sm font-medium">No agent connected yet</p>
+            <div class="flex flex-col gap-2">
+              <p class="text-fl-body-sm text-fl-ink-muted">No agent connected.</p>
+              <a routerLink="/settings" fragment="agent-keys" class="fl-link text-fl-body-sm"
+                >Connect an agent</a
+              >
             </div>
-            <a
-              routerLink="/settings"
-              fragment="agent-keys"
-              class="self-start inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Connect an agent
-              <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-            </a>
           }
         }
-      </section>
+      </fl-panel>
     }
   `,
 })

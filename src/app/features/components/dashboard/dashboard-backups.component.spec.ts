@@ -82,7 +82,7 @@ describe('DashboardBackupsComponent', () => {
 
   it('shows the posture figures and the last backup', () => {
     const text = q('backups-card')!.textContent!.replace(/\s+/g, ' ');
-    expect(text).toContain('3/4');
+    expect(text).toContain('3 of 4');
     expect(text).toContain('Policies');
     expect(text).toContain('42');
     expect(text).toContain('Last backup');

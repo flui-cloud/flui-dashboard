@@ -20,3 +20,9 @@
     padding: var(--fl-space-4);
   }
 }
+.fl-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: var(--fl-space-5);
+  align-items: start;
+}

@@ -78,8 +78,9 @@ describe('DashboardCertsComponent', () => {
     const hero = q('certs-first-step')!;
     expect(hero.textContent).toContain('first step');
     expect(hero.textContent).toContain('DNS not configured');
-    expect(hero.textContent).toContain('Set up DNS & Certificates');
-    expect(hero.querySelectorAll('.border-b')).toHaveSize(3);
+    expect(hero.textContent).toContain('Set up DNS and certificates');
+    expect(hero.querySelectorAll('[data-testid="certs-row"]')).toHaveSize(3);
+    expect(hero.textContent).toContain('Not configured');
     expect(q('certs-card')).toBeNull();
   });
 

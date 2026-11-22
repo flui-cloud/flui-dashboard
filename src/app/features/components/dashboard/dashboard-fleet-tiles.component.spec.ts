@@ -53,7 +53,7 @@ describe('DashboardFleetTilesComponent', () => {
   });
 
   it('shows the four fleet readings', () => {
-    const tiles = q('fleet-tiles')!.querySelectorAll('app-stat-tile');
+    const tiles = q('fleet-tiles')!.querySelectorAll('[data-testid="fleet-tile"]');
     expect(tiles).toHaveSize(4);
     const text = q('fleet-tiles')!.textContent!;
     expect(text).toContain('13.7');

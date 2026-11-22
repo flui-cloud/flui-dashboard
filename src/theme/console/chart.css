@@ -83,3 +83,46 @@
 .fl-chart__x span:last-child {
   transform: translateX(-100%);
 }
+.fl-chart-compact .fl-chart {
+  grid-template-columns: minmax(0, 1fr);
+}
+.fl-chart-compact .fl-chart__y {
+  display: none;
+}
+.fl-chart-compact .fl-chart__plot {
+  height: 56px;
+}
+.fl-chart-compact .fl-chart__x {
+  grid-column: 1;
+}
+.fl-util-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: var(--fl-space-5) var(--fl-space-6);
+}
+.fl-util {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+}
+.fl-util__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--fl-space-2);
+}
+.fl-util__label {
+  font-size: 12px;
+  color: var(--fl-ink-muted);
+}
+.fl-util__value {
+  font: var(--fl-text-section-title);
+  font-variant-numeric: tabular-nums;
+}
+.fl-util__caption {
+  font-size: 12px;
+  color: var(--fl-ink-muted);
+  font-variant-numeric: tabular-nums;
+}

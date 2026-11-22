@@ -56,8 +56,8 @@ describe('DashboardHomeHeaderComponent', () => {
 
   it('states the platform at a glance', async () => {
     await build();
+    expect(q('home-status')!.textContent).toContain('Operational');
     const line = q('home-status-line')!.textContent!.replace(/\s+/g, ' ');
-    expect(line).toContain('Online');
     expect(line).toContain('3 providers');
     expect(line).toContain('4 clusters');
     expect(line).toContain('17 running');

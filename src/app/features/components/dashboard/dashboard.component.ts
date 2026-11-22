@@ -8,7 +8,7 @@ import {
   computed,
   effect,
   OnInit,
-  ChangeDetectionStrategy,
+  DestroyRef,
 } from '@angular/core';
 import { DashboardService } from '../../service/dashboard.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
@@ -22,12 +22,13 @@ import { DashboardHomeHeaderComponent } from './dashboard-home-header.component'
 import { DashboardFleetTilesComponent } from './dashboard-fleet-tiles.component';
 import { DashboardClustersTableComponent } from './dashboard-clusters-table.component';
 import { DashboardNeedsYouComponent } from './dashboard-needs-you.component';
-import { DashboardWorkloadsComponent } from './dashboard-workloads.component';
 import { DashboardCertsComponent } from './dashboard-certs.component';
-import { DashboardActivityComponent } from './dashboard-activity.component';
 import { DashboardBackupsComponent } from './dashboard-backups.component';
-import { PlatformUpdateBannerComponent } from '../platform-updates/platform-update-banner.component';
 import { DashboardAgentStatusComponent } from './dashboard-agent-status.component';
+import { DashboardHealthStrip } from './dashboard-health-strip';
+import { poll } from '../../../core/state/poll';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlPanel } from '../../../ui/patterns/panel';
 import { FleetService } from '../../service/fleet.service';
 import { ClusterService } from '../../service/cluster.service';
 import { PermissionService } from '../../../core/services/permission.service';
@@ -37,92 +38,52 @@ const FLEET_REFRESH_MS = 60_000;
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
   imports: [
     DashboardHomeHeaderComponent,
+    DashboardHealthStrip,
     DashboardFleetTilesComponent,
     DashboardClustersTableComponent,
     DashboardNeedsYouComponent,
-    DashboardWorkloadsComponent,
     DashboardCertsComponent,
-    DashboardActivityComponent,
     DashboardBackupsComponent,
-    PlatformUpdateBannerComponent,
     DashboardAgentStatusComponent,
     GuestHomeComponent,
+    FlLoadingState,
+    FlPanel,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="flex flex-col gap-4 md:gap-5 p-4 md:p-6 min-h-full">
+    <div class="fl-page">
       <app-dashboard-home-header
         [fresh]="fresh()"
         [refreshing]="refreshing()"
         (refresh)="refresh()"
       />
 
-      <app-platform-update-banner />
-
       @if (guest()) {
         <app-guest-home />
       } @else if (isInitializing()) {
-        <div class="grid grid-cols-2 xl:grid-cols-4 gap-4" data-testid="home-skeleton">
-          @for (_ of [1, 2, 3, 4]; track _) {
-            <div class="card-surface p-4 h-[112px] flex flex-col gap-3">
-              <div class="h-2.5 w-16 skeleton"></div>
-              <div class="h-6 w-20 skeleton"></div>
-              <div class="h-6 w-full skeleton"></div>
-            </div>
-          }
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
-          <div class="card-surface p-5 flex flex-col gap-3">
-            <div class="h-4 w-24 skeleton"></div>
-            @for (_ of [1, 2, 3]; track _) {
-              <div class="h-10 w-full skeleton"></div>
-            }
-          </div>
-          <div class="card-surface p-5 flex flex-col gap-3">
-            <div class="h-4 w-24 skeleton"></div>
-            <div class="h-14 w-full skeleton"></div>
-          </div>
-        </div>
+        <fl-panel data-testid="home-skeleton"><fl-loading-state [rows]="4" /></fl-panel>
       } @else if (fresh()) {
-        <div data-testid="home-fresh" class="contents">
+        <div data-testid="home-fresh" class="fl-stack">
           <app-dashboard-certs [firstStep]="true" />
           <app-dashboard-fleet-tiles [fresh]="true" />
-          <div
-            class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start"
-            data-testid="home-columns"
-          >
-            <div class="contents lg:flex lg:flex-col lg:gap-4">
-              <app-dashboard-clusters-table class="order-1" [fresh]="true" />
-              <app-dashboard-activity class="order-5" />
-            </div>
-            <div class="contents lg:flex lg:flex-col lg:gap-4">
-              <app-dashboard-needs-you class="order-2" />
-              <app-dashboard-agent-status class="order-3" />
-              <app-dashboard-backups class="order-4" />
-            </div>
+          <app-dashboard-clusters-table [fresh]="true" />
+          <div class="fl-grid-3" data-testid="home-columns">
+            <app-dashboard-needs-you />
+            <app-dashboard-agent-status />
+            <app-dashboard-backups />
           </div>
         </div>
       } @else {
-        <div data-testid="home-control-room" class="contents">
+        <div data-testid="home-control-room" class="fl-stack">
+          <app-dashboard-health-strip />
+          <app-dashboard-needs-you />
           <app-dashboard-fleet-tiles />
-          <div
-            class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start"
-            data-testid="home-columns"
-          >
-            <div class="contents lg:flex lg:flex-col lg:gap-4">
-              <app-dashboard-clusters-table class="order-1" />
-              <app-dashboard-certs class="order-4" />
-              <app-dashboard-activity class="order-6" />
-            </div>
-            <div class="contents lg:flex lg:flex-col lg:gap-4">
-              <app-dashboard-needs-you class="order-2" />
-              <app-dashboard-agent-status class="order-3" />
-              <app-dashboard-backups class="order-5" />
-              <app-dashboard-workloads class="order-7" />
-            </div>
+          <app-dashboard-clusters-table />
+          <div class="fl-grid-3" data-testid="home-columns">
+            <app-dashboard-backups />
+            <app-dashboard-certs />
+            <app-dashboard-agent-status />
           </div>
         </div>
       }
@@ -138,7 +99,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly fleet = inject(FleetService);
   private readonly clusterService = inject(ClusterService);
   private readonly permissions = inject(PermissionService);
-  private fleetTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly destroyRef = inject(DestroyRef);
 
   isInitializing = signal(true);
   refreshing = signal(false);
@@ -196,10 +157,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
         return;
       }
       void this.fleet.loadAll();
-      this.fleetTimer = setInterval(() => {
-        void this.fleet.loadMetrics();
-        void this.fleet.loadNeedsYou();
-      }, FLEET_REFRESH_MS);
+      poll(
+        () => {
+          void this.fleet.loadMetrics();
+          void this.fleet.loadNeedsYou();
+        },
+        FLEET_REFRESH_MS,
+        { destroyRef: this.destroyRef },
+      );
       await this.dashboardService.initialize();
       this.isInitializing.set(false);
     })();
@@ -215,8 +180,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.fleetTimer) clearInterval(this.fleetTimer);
-    this.fleetTimer = null;
     this.currentSurface.set(null);
   }
 }

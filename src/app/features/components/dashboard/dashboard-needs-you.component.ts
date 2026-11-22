@@ -1,19 +1,13 @@
-import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideCircleCheckBig,
-  lucideGithub,
-  lucideLoaderCircle,
-  lucideRefreshCw,
-  lucideShieldAlert,
-  lucideTriangleAlert,
-  lucideArchive,
-  lucideKeyRound,
-} from '@ng-icons/lucide';
-import { FleetService, NeedsYouItem, NeedsYouLevel } from '../../service/fleet.service';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCircleCheck } from '@ng-icons/lucide';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState, FlErrorState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FleetService, NeedsYouLevel } from '../../service/fleet.service';
 import { DashboardDnsService } from '../../service/dashboard-dns.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { CERT_ACTION_KEY } from './dashboard-certs.component';
@@ -24,7 +18,6 @@ interface Row {
   level: NeedsYouLevel;
   title: string;
   detail: string;
-  icon: string;
   spin: boolean;
   path: string | null;
   opensDnsWizard: boolean;
@@ -33,187 +26,136 @@ interface Row {
 
 const APPS_LISTED = 4;
 
-const TONE: Record<NeedsYouLevel, { box: string; icon: string }> = {
-  critical: { box: 'bg-destructive/10', icon: 'text-destructive' },
-  warning: { box: 'bg-amber-50', icon: 'text-amber-600' },
-  info: { box: 'brand-soft', icon: '' },
+const SEVERITY: Record<NeedsYouLevel, { tone: StatusTone; label: string }> = {
+  critical: { tone: 'error', label: 'Critical' },
+  warning: { tone: 'warning', label: 'Warning' },
+  info: { tone: 'neutral', label: 'Info' },
 };
-
-function iconOf(item: NeedsYouItem): { icon: string; spin: boolean } {
-  if (item.kind === 'cluster_operation') return { icon: 'lucideLoaderCircle', spin: true };
-  if (item.kind === 'apps_without_backup') return { icon: 'lucideArchive', spin: false };
-  if (item.kind === 'credential') {
-    const github = item.credential?.kind === 'github_app' || item.credential?.kind === 'github_pat';
-    return { icon: github ? 'lucideGithub' : 'lucideKeyRound', spin: false };
-  }
-  return {
-    icon: item.level === 'critical' ? 'lucideCircleAlert' : 'lucideTriangleAlert',
-    spin: false,
-  };
-}
 
 @Component({
   selector: 'app-dashboard-needs-you',
-  standalone: true,
-  imports: [RouterLink, NgIconComponent, NgTemplateOutlet],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideCircleCheckBig,
-      lucideGithub,
-      lucideLoaderCircle,
-      lucideRefreshCw,
-      lucideShieldAlert,
-      lucideTriangleAlert,
-      lucideArchive,
-      lucideKeyRound,
-    }),
+  providers: [provideIcons({ lucideCircleCheck })],
+  imports: [
+    RouterLink,
+    FlPanel,
+    FlTable,
+    FlStatus,
+    FlButton,
+    FlLoadingState,
+    FlErrorState,
+    FlEmptyState,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (fleet.needsYouState() !== 'forbidden') {
-      <section class="card-surface p-5 flex flex-col gap-3" data-testid="needs-you">
-        <div class="flex items-center justify-between">
-          <h2 class="font-semibold text-foreground">Needs you</h2>
-          @if (count() > 0) {
-            <span
-              class="rounded-full bg-destructive px-2 py-0.5 text-xs font-semibold text-destructive-foreground"
-              data-testid="needs-you-count"
-              >{{ count() }}</span
-            >
-          }
-        </div>
-
+      <fl-panel
+        title="Open issues"
+        [count]="count() > 0 ? count() : null"
+        [flush]="rows().length > 0"
+        data-testid="needs-you"
+      >
         @if (fleet.needsYouState() === 'loading' || fleet.needsYouState() === 'idle') {
-          @for (_ of [1, 2]; track _) {
-            <div class="h-14 rounded-lg skeleton"></div>
-          }
+          <fl-loading-state [rows]="2" />
         } @else if (fleet.needsYouState() === 'error' && rows().length === 0) {
-          <div
-            class="flex items-center justify-between gap-3 rounded-lg bg-muted/50 p-3"
+          <fl-error-state
+            [compact]="true"
+            title="Could not check for open issues"
             data-testid="needs-you-error"
-          >
-            <span class="text-sm text-muted-foreground">Could not check what needs you</span>
-            <button
-              type="button"
-              class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-              (click)="retry()"
-            >
-              <ng-icon name="lucideRefreshCw" class="h-3 w-3" />
-              Retry
-            </button>
-          </div>
+            (retry)="retry()"
+          />
         } @else if (rows().length === 0) {
-          <div class="flex items-center gap-2.5 py-1" data-testid="needs-you-empty">
-            <ng-icon name="lucideCircleCheckBig" class="h-4 w-4 text-green-600" />
-            <span class="text-sm text-muted-foreground">Nothing needs you right now</span>
-          </div>
+          <fl-empty-state
+            [compact]="true"
+            icon="lucideCircleCheck"
+            title="No open issues"
+            data-testid="needs-you-empty"
+          />
         } @else {
-          @for (row of rows(); track row.id) {
-            <ng-template #body>
-              <ng-icon
-                [name]="row.icon"
-                class="h-[18px] w-[18px] flex-shrink-0 mt-0.5"
-                [class]="iconTone(row)"
-                [class.animate-spin]="row.spin"
-              />
-              <div class="flex flex-col gap-0.5 min-w-0">
-                <span class="text-sm font-semibold text-foreground">{{ row.title }}</span>
-                @if (row.detail) {
-                  <span class="text-xs text-muted-foreground">{{ row.detail }}</span>
-                }
-              </div>
-            </ng-template>
-            @if (row.opensDnsWizard) {
-              <button
-                type="button"
-                class="flex gap-3 rounded-lg p-3 text-left hover:opacity-90 transition-opacity"
-                [class]="boxTone(row)"
-                (click)="openDnsWizard()"
-                [attr.data-testid]="'needs-you-' + row.id"
-              >
-                <ng-container [ngTemplateOutlet]="body" />
-              </button>
-            } @else if (row.apps.length) {
-              <div
-                class="flex flex-col gap-2 rounded-lg p-3"
-                [class]="boxTone(row)"
-                [attr.data-testid]="'needs-you-' + row.id"
-              >
-                <div class="flex gap-3">
-                  <ng-container [ngTemplateOutlet]="body" />
-                </div>
-                <ul class="flex flex-col gap-2 pl-[30px]">
-                  @for (app of row.apps; track app.id) {
-                    <li class="flex items-start justify-between gap-2 text-xs">
-                      <div class="flex min-w-0 flex-col">
-                        <a
-                          [routerLink]="app.appPath"
-                          class="truncate font-medium text-foreground hover:underline"
-                          [attr.data-testid]="'needs-you-app-' + app.id"
-                          >{{ app.name }}</a
-                        >
-                        @if (app.secondary) {
-                          <span class="truncate text-muted-foreground">{{ app.secondary }}</span>
+          <div class="fl-table-wrap">
+            <table flTable>
+              <thead>
+                <tr>
+                  <th scope="col" class="is-fit">Severity</th>
+                  <th scope="col">Issue</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Action</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rows(); track row.id) {
+                  <tr [attr.data-testid]="'needs-you-' + row.id">
+                    <td>
+                      <fl-status [tone]="severityOf(row).tone" [label]="severityOf(row).label" />
+                    </td>
+                    <td class="whitespace-normal">
+                      <div class="flex flex-col gap-0.5">
+                        <span class="font-medium">{{ row.title }}</span>
+                        @if (row.detail) {
+                          <span class="text-fl-caption text-fl-ink-muted">{{ row.detail }}</span>
                         }
-                        @if (app.why) {
-                          <span
-                            class="text-muted-foreground"
-                            [attr.data-testid]="'needs-you-why-' + app.id"
-                            >{{ app.why }}</span
-                          >
+                        @if (row.apps.length) {
+                          <ul class="mt-2 flex flex-col gap-1.5">
+                            @for (app of row.apps; track app.id) {
+                              <li class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                                <a
+                                  class="fl-link"
+                                  [routerLink]="app.appPath"
+                                  [attr.data-testid]="'needs-you-app-' + app.id"
+                                  >{{ app.name }}</a
+                                >
+                                @if (app.secondary) {
+                                  <span class="text-fl-caption text-fl-ink-muted">{{
+                                    app.secondary
+                                  }}</span>
+                                }
+                                @if (app.protectPath) {
+                                  <a
+                                    class="fl-link text-fl-caption"
+                                    [routerLink]="pathOf(app.protectPath)"
+                                    [queryParams]="queryOf(app.protectPath)"
+                                    [attr.data-testid]="'needs-you-protect-' + app.id"
+                                    >Protect</a
+                                  >
+                                } @else {
+                                  <a
+                                    class="fl-link text-fl-caption"
+                                    [routerLink]="app.backupsPath"
+                                    [attr.data-testid]="'needs-you-open-' + app.id"
+                                    >Open backups</a
+                                  >
+                                }
+                                @if (app.why) {
+                                  <span
+                                    class="basis-full text-fl-caption text-fl-ink-muted"
+                                    [attr.data-testid]="'needs-you-why-' + app.id"
+                                    >{{ app.why }}</span
+                                  >
+                                }
+                              </li>
+                            }
+                          </ul>
                         }
                       </div>
-                      @if (app.protectPath) {
+                    </td>
+                    <td class="text-right">
+                      @if (row.opensDnsWizard) {
+                        <button flButton size="sm" type="button" (click)="openDnsWizard()">
+                          Set up
+                        </button>
+                      } @else if (row.path) {
                         <a
-                          [routerLink]="pathOf(app.protectPath)"
-                          [queryParams]="queryOf(app.protectPath)"
-                          class="shrink-0 font-medium text-primary hover:underline"
-                          [attr.data-testid]="'needs-you-protect-' + app.id"
-                          >Protect</a
-                        >
-                      } @else {
-                        <a
-                          [routerLink]="app.backupsPath"
-                          class="shrink-0 font-medium text-primary hover:underline"
-                          [attr.data-testid]="'needs-you-open-' + app.id"
-                          >Open backups</a
+                          class="fl-link"
+                          [routerLink]="pathOf(row.path)"
+                          [queryParams]="queryOf(row.path)"
+                          >{{ row.apps.length ? 'Open backups' : 'Review' }}</a
                         >
                       }
-                    </li>
-                  }
-                </ul>
-                @if (row.path) {
-                  <a
-                    [routerLink]="pathOf(row.path)"
-                    [queryParams]="queryOf(row.path)"
-                    class="pl-[30px] text-xs font-medium text-primary hover:underline"
-                    >Open backups</a
-                  >
+                    </td>
+                  </tr>
                 }
-              </div>
-            } @else if (row.path) {
-              <a
-                [routerLink]="pathOf(row.path)"
-                [queryParams]="queryOf(row.path)"
-                class="flex gap-3 rounded-lg p-3 hover:opacity-90 transition-opacity"
-                [class]="boxTone(row)"
-                [attr.data-testid]="'needs-you-' + row.id"
-              >
-                <ng-container [ngTemplateOutlet]="body" />
-              </a>
-            } @else {
-              <div
-                class="flex gap-3 rounded-lg p-3"
-                [class]="boxTone(row)"
-                [attr.data-testid]="'needs-you-' + row.id"
-              >
-                <ng-container [ngTemplateOutlet]="body" />
-              </div>
-            }
-          }
+              </tbody>
+            </table>
+          </div>
         }
-      </section>
+      </fl-panel>
     }
   `,
 })
@@ -229,7 +171,6 @@ export class DashboardNeedsYouComponent {
       level: 'warning',
       title: 'Set up DNS & certificates',
       detail: 'Apps are not reachable from the internet yet',
-      icon: 'lucideShieldAlert',
       spin: false,
       path: null,
       opensDnsWizard: true,
@@ -243,7 +184,7 @@ export class DashboardNeedsYouComponent {
       level: item.level,
       title: item.title,
       detail: item.detail,
-      ...iconOf(item),
+      spin: item.kind === 'cluster_operation',
       path: item.action?.path ?? null,
       opensDnsWizard: false,
       apps: (item.applications ?? []).slice(0, APPS_LISTED).map(needsYouAppRow),
@@ -257,12 +198,9 @@ export class DashboardNeedsYouComponent {
 
   readonly count = computed(() => (this.fleet.needsYou()?.count ?? 0) + (this.dnsRow() ? 1 : 0));
 
-  protected boxTone(row: Row): string {
-    return TONE[row.level].box;
-  }
-
-  protected iconTone(row: Row): string {
-    return TONE[row.level].icon;
+  protected severityOf(row: Row): { tone: StatusTone; label: string } {
+    if (row.spin) return { tone: 'progress', label: 'In progress' };
+    return SEVERITY[row.level];
   }
 
   protected pathOf(path: string): string {

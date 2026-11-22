@@ -17,3 +17,10 @@
 .fl-kv__value {
   overflow-wrap: anywhere;
 }
+.fl-kv--compact {
+  grid-template-columns: repeat(auto-fit, minmax(min(110px, 100%), 1fr));
+  gap: var(--fl-space-3) var(--fl-space-5);
+}
+.fl-table .is-fit {
+  width: 1px;
+}

@@ -23,8 +23,9 @@ function path(points: readonly number[], max: number): string {
 
 @Component({
   selector: 'fl-line-chart',
+  host: { '[class.fl-chart-compact]': 'compact()' },
   template: `
-    <div class="fl-legend mb-2">
+    <div class="fl-legend mb-2" [hidden]="compact()">
       @for (s of series(); track s.label; let i = $index) {
         <span
           ><svg width="16" height="6" aria-hidden="true">
@@ -110,6 +111,7 @@ export class FlLineChart {
   readonly warning = input<ChartThreshold>();
   readonly critical = input<ChartThreshold>();
   readonly reading = input.required<string>();
+  readonly compact = input(false);
   protected readonly grid = [0, 25, 50, 75];
   protected readonly paths = computed(() =>
     this.series()
