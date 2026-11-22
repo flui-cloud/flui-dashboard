@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   effect,
@@ -10,16 +9,16 @@ import {
   untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideChevronRight,
-  lucideCircleAlert,
-  lucideFile,
-  lucideFolder,
-  lucideLoader,
-  lucideRotateCcw,
-  lucideX,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideChevronRight, lucideFile, lucideFolder, lucideX } from '@ng-icons/lucide';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 import { VolumeBackupsService } from '../../service/volume-backups.service';
 import {
   VolumeBackup,
@@ -44,178 +43,179 @@ export interface VolumeRestoreStarted {
 
 @Component({
   selector: 'app-volume-backup-browser',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideChevronRight,
-      lucideCircleAlert,
-      lucideFile,
-      lucideFolder,
-      lucideLoader,
-      lucideRotateCcw,
-      lucideX,
-    }),
+  imports: [
+    FormsModule,
+    FlPanel,
+    FlTable,
+    FlAlert,
+    FlField,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    FlSpinner,
   ],
+  providers: [provideIcons({ lucideChevronRight, lucideFile, lucideFolder, lucideX })],
+  host: { class: 'block' },
   template: `
-    <div class="card-inner p-4 space-y-3" data-testid="volume-backup-browser">
-      <div class="flex items-center justify-between gap-2">
-        <div class="text-sm font-medium">
-          Files in the backup of {{ formatDate(backup().createdAt ?? '') }}
-          @if (backup().volumeName) {
-            <span class="font-mono text-xs text-muted-foreground">· {{ backup().volumeName }}</span>
+    <fl-panel [title]="title()" [flush]="true" data-testid="volume-backup-browser">
+      <button
+        panelActions
+        flButton="ghost"
+        size="sm"
+        type="button"
+        [iconOnly]="true"
+        aria-label="Close"
+        (click)="closed.emit()"
+      >
+        <fl-icon name="lucideX" />
+      </button>
+
+      <div class="flex flex-col gap-3 p-4">
+        <nav class="fl-row gap-1" aria-label="Folder">
+          <button flButton="ghost" size="sm" type="button" (click)="open('')">/</button>
+          @for (c of crumbs(); track c.path) {
+            <fl-icon class="text-fl-ink-muted" name="lucideChevronRight" [size]="14" />
+            <button flButton="ghost" size="sm" type="button" class="fl-mono" (click)="open(c.path)">
+              {{ c.label }}
+            </button>
+          }
+        </nav>
+
+        @if (error(); as e) {
+          <fl-alert tone="error" title="Could not read the backup">{{ e }}</fl-alert>
+        }
+
+        <div class="max-h-80 overflow-y-auto rounded-fl-md border border-fl-border">
+          @if (loading()) {
+            <fl-loading-state [rows]="3" />
+          } @else if (!entries().length) {
+            <fl-empty-state title="Empty folder" icon="lucideFolder" [compact]="true" />
+          } @else {
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Select</span></th>
+                  <th scope="col">Name</th>
+                  <th scope="col" class="is-num">Size</th>
+                  <th scope="col" class="hidden sm:table-cell">Modified</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of entries(); track e.name) {
+                  @let full = pathOf(e);
+                  <tr [class.is-selected]="selected().has(full)">
+                    <td class="is-fit">
+                      <input
+                        type="checkbox"
+                        [checked]="selected().has(full)"
+                        (change)="toggle(full)"
+                        [attr.aria-label]="'Select ' + e.name"
+                      />
+                    </td>
+                    <td>
+                      @if (e.type === 'directory') {
+                        <button
+                          type="button"
+                          class="fl-link inline-flex items-center gap-1.5"
+                          (click)="open(full)"
+                        >
+                          <fl-icon name="lucideFolder" [size]="14" />
+                          {{ e.name }}
+                        </button>
+                      } @else {
+                        <span class="inline-flex items-center gap-1.5">
+                          <fl-icon class="text-fl-ink-muted" name="lucideFile" [size]="14" />
+                          {{ e.name }}
+                          @if (e.consistentCopy) {
+                            <span
+                              class="text-fl-caption text-fl-ink-muted"
+                              title="Database file copied safely while the app ran"
+                              >Consistent</span
+                            >
+                          }
+                        </span>
+                      }
+                    </td>
+                    <td class="is-num text-fl-ink-muted">{{ bytesOrDash(e.size) }}</td>
+                    <td class="hidden text-fl-ink-muted sm:table-cell">
+                      {{ e.modifiedAt ? formatDate(e.modifiedAt) : '' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           }
         </div>
-        <button (click)="closed.emit()" class="p-1 rounded hover:bg-muted" title="Close">
-          <ng-icon name="lucideX" class="h-4 w-4" />
-        </button>
-      </div>
 
-      <nav class="flex flex-wrap items-center gap-1 text-xs">
-        <button (click)="open('')" class="px-1.5 py-0.5 rounded hover:bg-muted font-medium">
-          /
-        </button>
-        @for (c of crumbs(); track c.path) {
-          <ng-icon name="lucideChevronRight" class="h-3 w-3 text-muted-foreground" />
-          <button (click)="open(c.path)" class="px-1.5 py-0.5 rounded hover:bg-muted font-mono">
-            {{ c.label }}
-          </button>
-        }
-      </nav>
-
-      @if (error(); as e) {
-        <p class="flex items-center gap-1.5 text-xs text-red-600">
-          <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5" /> {{ e }}
-        </p>
-      }
-
-      <div class="max-h-80 overflow-y-auto rounded-md border border-border">
-        @if (loading()) {
-          <div class="p-4 text-xs text-muted-foreground flex items-center gap-2">
-            <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-            Reading the backup…
-          </div>
-        } @else if (!entries().length) {
-          <div class="p-4 text-xs text-muted-foreground">Empty folder</div>
-        } @else {
-          <table class="w-full text-sm">
-            <tbody>
-              @for (e of entries(); track e.name) {
-                @let full = pathOf(e);
-                <tr class="border-b border-border/50 last:border-0 hover:bg-muted/30">
-                  <td class="w-8 px-3 py-1.5">
-                    <input
-                      type="checkbox"
-                      [checked]="selected().has(full)"
-                      (change)="toggle(full)"
-                      [attr.aria-label]="'Select ' + e.name"
-                    />
-                  </td>
-                  <td class="px-1 py-1.5">
-                    @if (e.type === 'directory') {
-                      <button
-                        (click)="open(full)"
-                        class="inline-flex items-center gap-1.5 hover:underline"
-                      >
-                        <ng-icon name="lucideFolder" class="h-3.5 w-3.5 text-indigo-500" />
-                        {{ e.name }}
-                      </button>
-                    } @else {
-                      <span class="inline-flex items-center gap-1.5">
-                        <ng-icon name="lucideFile" class="h-3.5 w-3.5 text-muted-foreground" />
-                        {{ e.name }}
-                        @if (e.consistentCopy) {
-                          <span
-                            class="text-[10px] text-emerald-800"
-                            title="Database file copied safely while the app ran"
-                            >consistent</span
-                          >
-                        }
-                      </span>
-                    }
-                  </td>
-                  <td
-                    class="px-3 py-1.5 text-right text-xs text-muted-foreground whitespace-nowrap"
-                  >
-                    {{ bytesOrDash(e.size) }}
-                  </td>
-                  <td
-                    class="px-3 py-1.5 text-right text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell"
-                  >
-                    {{ e.modifiedAt ? formatDate(e.modifiedAt) : '' }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-      </div>
-
-      <div class="flex flex-wrap items-end gap-3">
-        <label class="block text-xs">
-          <span class="text-muted-foreground">Restore into</span>
-          <select
-            [ngModel]="targetId()"
-            (ngModelChange)="targetId.set($event)"
-            class="mt-1 block h-8 px-2 rounded-md border border-input bg-background text-sm"
+        <div class="flex flex-wrap items-end gap-3">
+          <fl-field label="Restore into" for="browser-restore-target">
+            <span class="fl-select-wrap">
+              <select
+                id="browser-restore-target"
+                class="fl-select fl-select--sm"
+                [ngModel]="targetId()"
+                (ngModelChange)="targetId.set($event)"
+              >
+                <option value="">This app</option>
+                @for (t of targets(); track t.id) {
+                  <option [value]="t.id">{{ t.name }}</option>
+                }
+              </select>
+            </span>
+          </fl-field>
+          <fl-field label="Write them" for="browser-restore-mode">
+            <span class="fl-select-wrap">
+              <select
+                id="browser-restore-mode"
+                class="fl-select fl-select--sm"
+                [ngModel]="mode()"
+                (ngModelChange)="mode.set($event)"
+              >
+                <option value="over">Over the current files</option>
+                <option value="folder">Into a folder, keeping both</option>
+              </select>
+            </span>
+          </fl-field>
+          @if (mode() === 'folder') {
+            <fl-field label="Folder" for="browser-restore-folder">
+              <div class="fl-input w-48">
+                <input
+                  id="browser-restore-folder"
+                  class="fl-mono"
+                  [ngModel]="folder()"
+                  (ngModelChange)="folder.set($event)"
+                />
+              </div>
+            </fl-field>
+          }
+          <button
+            flButton
+            size="sm"
+            type="button"
+            (click)="restoreSelected()"
+            [disabled]="
+              !selection().length || starting() || (mode() === 'folder' && !folder().trim())
+            "
           >
-            <option value="">This app</option>
-            @for (t of targets(); track t.id) {
-              <option [value]="t.id">{{ t.name }}</option>
+            @if (starting()) {
+              <fl-spinner label="Starting" />
             }
-          </select>
-        </label>
-        <label class="block text-xs">
-          <span class="text-muted-foreground">Write them</span>
-          <select
-            [ngModel]="mode()"
-            (ngModelChange)="mode.set($event)"
-            class="mt-1 block h-8 px-2 rounded-md border border-input bg-background text-sm"
-          >
-            <option value="over">Over the current files</option>
-            <option value="folder">Into a folder, keeping both</option>
-          </select>
-        </label>
-        @if (mode() === 'folder') {
-          <label class="block text-xs">
-            <span class="text-muted-foreground">Folder</span>
-            <input
-              [ngModel]="folder()"
-              (ngModelChange)="folder.set($event)"
-              class="mt-1 block h-8 w-48 px-2 rounded-md border border-input bg-background text-sm font-mono"
-            />
-          </label>
+            Restore selected ({{ selection().length }})
+          </button>
+          <button flButton="ghost" size="sm" type="button" (click)="showHelp.set(!showHelp())">
+            {{ showHelp() ? 'Hide details' : 'Details' }}
+          </button>
+        </div>
+        @if (showHelp()) {
+          <p class="max-w-2xl text-fl-body-sm text-fl-ink-muted">
+            Selected files and folders are written into the app's volume while it runs. Nothing else
+            on the volume changes. If the app is writing to a file you restore, a database file for
+            example, stop the app first.
+          </p>
         }
-        <button
-          (click)="restoreSelected()"
-          [disabled]="
-            !selection().length || starting() || (mode() === 'folder' && !folder().trim())
-          "
-          class="inline-flex h-8 items-center gap-1.5 px-3 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          <ng-icon
-            [name]="starting() ? 'lucideLoader' : 'lucideRotateCcw'"
-            class="h-3.5 w-3.5"
-            [class.animate-spin]="starting()"
-          />
-          Restore selected ({{ selection().length }})
-        </button>
-        <button
-          (click)="showHelp.set(!showHelp())"
-          class="h-8 px-2 text-xs text-muted-foreground hover:underline"
-        >
-          {{ showHelp() ? 'Hide details' : 'Details' }}
-        </button>
       </div>
-      @if (showHelp()) {
-        <p class="text-xs text-muted-foreground max-w-2xl">
-          Selected files and folders are written into the app's volume while it runs. Nothing else
-          on the volume changes. If the app is writing to a file you restore — a database file, say
-          — stop the app first.
-        </p>
-      }
-    </div>
+    </fl-panel>
   `,
 })
 export class VolumeBackupBrowserComponent {
@@ -241,6 +241,11 @@ export class VolumeBackupBrowserComponent {
 
   protected readonly crumbs = computed(() => backupPathCrumbs(this.path()));
   protected readonly selection = computed(() => collapseSelection(this.selected()));
+  protected readonly title = computed(() => {
+    const b = this.backup();
+    const taken = `Files in the backup of ${formatDate(b.createdAt ?? '')}`;
+    return b.volumeName ? `${taken} · ${b.volumeName}` : taken;
+  });
 
   protected readonly formatDate = formatDate;
   protected readonly bytesOrDash = bytesOrDash;

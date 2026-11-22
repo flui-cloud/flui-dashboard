@@ -1,41 +1,22 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideCamera,
-  lucideCircleAlert,
-  lucideLoader,
-  lucidePlus,
-  lucideRefreshCw,
-  lucideRotateCcw,
-  lucideTrash2,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCamera, lucidePlus, lucideRefreshCw } from '@ng-icons/lucide';
 
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationSnapshotsService } from '../../service/application-snapshots.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { DbLogicalBackupComponent } from './db-logical-backup.component';
 import { DbPitrComponent } from './db-pitr.component';
 import { SnapshotCreateDialogComponent } from './snapshot-create-dialog.component';
 import { SnapshotDeleteDialogComponent } from './snapshot-delete-dialog.component';
 import { SnapshotRestoreDialogComponent } from './snapshot-restore-dialog.component';
-import {
-  formatDate,
-  kindBadgeClass,
-  kindLabel,
-  kindTooltip,
-  sizeLine,
-  sizeSubline,
-  statusClass,
-  statusLabel,
-} from './snapshot-format';
+import { SnapshotTable } from './snapshot-table';
+import { SpareVolumes } from './spare-volumes';
 import {
   ApplicationSnapshot,
   CreateSnapshotRequest,
@@ -52,319 +33,191 @@ type StatusFilter = 'all' | SnapshotStatus;
 
 @Component({
   selector: 'app-snapshots-tab',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    NgIconComponent,
+    FlPanel,
+    FlAlert,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
     DbLogicalBackupComponent,
     DbPitrComponent,
     SnapshotCreateDialogComponent,
     SnapshotDeleteDialogComponent,
     SnapshotRestoreDialogComponent,
+    SnapshotTable,
+    SpareVolumes,
     AppBackupProtectionComponent,
     AppBackupDecisionComponent,
     AppVolumeBackupsComponent,
   ],
-  providers: [
-    provideIcons({
-      lucideCamera,
-      lucidePlus,
-      lucideRefreshCw,
-      lucideTrash2,
-      lucideLoader,
-      lucideCircleAlert,
-      lucideRotateCcw,
-    }),
-  ],
+  providers: [provideIcons({ lucideCamera, lucidePlus, lucideRefreshCw })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-6">
-      <app-backup-decision
-        [appId]="appId()"
-        [protection]="protection()"
-        (changed)="backupProtection.reload()"
-        (protect)="backupProtection.startProtect()"
-      />
+    <app-backup-decision
+      [appId]="appId()"
+      [protection]="protection()"
+      (changed)="backupProtection.reload()"
+      (protect)="backupProtection.startProtect()"
+    />
 
-      <app-backup-protection
-        #backupProtection
-        [appId]="appId()"
-        [appSlug]="appService.selectedApplication()?.slug ?? ''"
-        [clusterId]="appService.selectedApplication()?.clusterId ?? ''"
-        [database]="isDatabase()"
-        [postgres]="isPostgres()"
-        [hasData]="!noVolume()"
-        (backedUp)="volumeBackups.load()"
-        (loaded)="protection.set($event)"
-      />
+    <app-backup-protection
+      #backupProtection
+      [appId]="appId()"
+      [appSlug]="appService.selectedApplication()?.slug ?? ''"
+      [clusterId]="appService.selectedApplication()?.clusterId ?? ''"
+      [database]="isDatabase()"
+      [postgres]="isPostgres()"
+      [hasData]="!noVolume()"
+      (backedUp)="volumeBackups.load()"
+      (loaded)="protection.set($event)"
+    />
 
-      @if (isDatabase()) {
-        <app-db-logical-backup [appId]="appId()" />
-        <app-db-pitr [appId]="appId()" />
-      }
+    @if (isDatabase()) {
+      <app-db-logical-backup [appId]="appId()" />
+      <app-db-pitr [appId]="appId()" />
+    }
 
-      <app-volume-backups #volumeBackups [appId]="appId()" (restoredHere)="reloadSpare()" />
+    <app-volume-backups #volumeBackups [appId]="appId()" (restoredHere)="reloadSpare()" />
 
-      <!-- Toolbar -->
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="text-lg font-semibold flex items-center gap-2">
-            <ng-icon name="lucideCamera" class="h-5 w-5 text-indigo-600" />
-            Volume copies
-          </h2>
-          <p class="text-sm text-muted-foreground mt-0.5">
-            A file copy of this app's volume, taken as it is unless the app was stopped first. These
-            live on the same disk as the app, so deleting the app deletes them too — and they cost
-            storage while they exist.
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
+    <fl-panel
+      title="Volume copies"
+      [count]="snapshots().length || null"
+      [flush]="true"
+      data-testid="volume-copies"
+    >
+      <div panelActions class="fl-row">
+        <span class="fl-select-wrap">
           <select
+            class="fl-select fl-select--sm"
+            aria-label="Status"
             [ngModel]="filter()"
             (ngModelChange)="filter.set($event)"
-            class="h-9 px-3 rounded-md border border-input bg-background text-sm"
           >
-            <option value="all">All</option>
+            <option value="all">Status: All</option>
             <option value="READY">Ready</option>
             <option value="PENDING">Pending</option>
             <option value="FAILED">Failed</option>
             <option value="DELETING">Deleting</option>
           </select>
+        </span>
+        <button
+          flButton="ghost"
+          size="sm"
+          type="button"
+          (click)="refresh()"
+          [disabled]="isLoading()"
+        >
+          <fl-icon name="lucideRefreshCw" [size]="14" />
+          Refresh
+        </button>
+        @if (snapshotCapability()?.supported) {
           <button
-            (click)="refresh()"
-            [disabled]="isLoading()"
-            class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted transition-colors disabled:opacity-50"
+            flButton
+            size="sm"
+            type="button"
+            (click)="openCreateDialog()"
+            [disabled]="!appId() || creating()"
           >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-3.5 w-3.5"
-              [class.animate-spin]="isLoading()"
-            />
-            Refresh
+            <fl-icon name="lucidePlus" [size]="14" />
+            Take a copy
           </button>
-          @if (snapshotCapability()?.supported) {
-            <button
-              (click)="openCreateDialog()"
-              [disabled]="!appId() || creating()"
-              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-              Take a copy
-            </button>
-          }
-        </div>
+        }
       </div>
 
-      @if (refusal(); as r) {
-        <div class="card-surface p-4 border border-amber-200 bg-amber-50 space-y-3">
-          <div class="flex items-start gap-3">
-            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-amber-600 mt-0.5" />
-            <p class="text-sm text-amber-800">
-              {{ r.message }}
-            </p>
-          </div>
-          <div class="flex flex-wrap gap-2 pl-8">
-            @if (r.options.includes('pause')) {
-              <button
-                (click)="retryRefused({ pause: true })"
-                [disabled]="creating()"
-                class="px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                Stop, copy and restart
-              </button>
-            }
-            @if (r.options.includes('allowInconsistent')) {
-              <button
-                (click)="retryRefused({ allowInconsistent: true })"
-                [disabled]="creating()"
-                class="px-3 py-1.5 text-xs rounded-md border border-border hover:bg-muted disabled:opacity-50"
-              >
-                Copy it as it is
-              </button>
-            }
-            <button
-              (click)="dismissRefusal()"
-              class="px-3 py-1.5 text-xs rounded-md hover:bg-muted"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      }
+      <div class="flex flex-col gap-3 p-4">
+        <p class="text-fl-body-sm text-fl-ink-muted">
+          A file copy of this app's volume, taken as it is unless the app was stopped first. Copies
+          live on the same disk as the app, so deleting the app deletes them too, and they cost
+          storage while they exist.
+        </p>
 
-      <!-- Error -->
-      @if (errorMessage()) {
-        <div class="card-surface p-4 border border-red-200 bg-red-50">
-          <div class="flex items-start gap-3">
-            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 mt-0.5" />
-            <p class="text-sm text-red-700">
-              {{ errorMessage() }}
-            </p>
-          </div>
-        </div>
-      } @else if (snapshotCapability()?.supported === false) {
-        <div class="card-surface p-4 border border-amber-200 bg-amber-50">
-          <div class="flex items-start gap-3">
-            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-amber-600 mt-0.5" />
-            <div>
-              <p class="text-sm font-medium text-amber-800">
-                {{
-                  noVolume()
-                    ? 'This application has no volume to copy'
-                    : 'Volume copies are not available on this cluster'
-                }}
-              </p>
-              <p class="text-sm text-amber-700 mt-1">
-                {{ snapshotCapability()?.reason }}
-              </p>
-            </div>
-          </div>
-        </div>
-      } @else if (isLoading() && snapshots().length === 0) {
-        <div class="space-y-2">
-          @for (i of [1, 2, 3]; track i) {
-            <div class="skeleton h-12 rounded-lg"></div>
-          }
-        </div>
-      } @else if (filtered().length === 0) {
-        <!-- Empty -->
-        <div class="card-inner p-8 text-center">
-          <ng-icon name="lucideCamera" class="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <p class="text-sm font-medium">
-            @if (filter() === 'all') {
-              No copies yet
-            } @else {
-              No copies match the selected filter
-            }
-          </p>
-          @if (filter() === 'all') {
-            <p class="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-              Take a copy to keep this volume's contents as they are now. Each copy is a full second
-              copy of the data, on the same storage the application uses.
-            </p>
-          }
-        </div>
-      } @else {
-        <div class="card-inner overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-left text-muted-foreground border-b border-border">
-                <th class="px-4 py-3 font-normal">Created</th>
-                <th class="px-4 py-3 font-normal">Volume</th>
-                <th class="px-4 py-3 font-normal">Type</th>
-                <th class="px-4 py-3 font-normal">Status</th>
-                <th class="px-4 py-3 font-normal text-right">Size</th>
-                <th class="px-4 py-3 font-normal"></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (snap of filtered(); track snap.exportId) {
-                @let st = derivedStatus(snap);
-                <tr class="border-b border-border/50 last:border-0 hover:bg-muted/30">
-                  <td class="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                    {{ formatDate(snap.createdAt) }}
-                  </td>
-                  <td class="px-4 py-3 font-mono text-xs">
-                    {{ snap.sourcePvcName || '—' }}
-                  </td>
-                  <td class="px-4 py-3">
-                    <span
-                      class="text-xs px-2 py-0.5 rounded-full"
-                      [class]="kindBadgeClass(snap)"
-                      [title]="kindTooltip(snap)"
-                    >
-                      {{ kindLabel(snap) }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="text-xs flex items-center gap-1.5" [class]="statusClass(st)">
-                      @if (st === 'PENDING' || st === 'DELETING') {
-                        <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
-                      }
-                      {{ statusLabel(snap) }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3 text-right whitespace-nowrap">
-                    <div class="text-sm">{{ sizeLine(snap) }}</div>
-                    @if (sizeSubline(snap); as sub) {
-                      <div class="text-[11px] text-muted-foreground">
-                        {{ sub }}
-                      </div>
-                    }
-                  </td>
-                  <td class="px-4 py-3 text-right">
-                    <div class="inline-flex items-center gap-1">
-                      <button
-                        (click)="confirmRestore(snap)"
-                        [disabled]="!snap.ready || st === 'DELETING' || isRestoring(snap.exportId)"
-                        class="p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors disabled:opacity-50"
-                        title="Restore snapshot"
-                      >
-                        @if (isRestoring(snap.exportId)) {
-                          <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                        } @else {
-                          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
-                        }
-                      </button>
-                      <button
-                        (click)="confirmDelete(snap)"
-                        [disabled]="st === 'DELETING' || isDeleting(snap.exportId)"
-                        class="p-1.5 rounded hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
-                        title="Delete snapshot"
-                      >
-                        <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+        @if (refusal(); as r) {
+          <fl-alert tone="warning" title="Copy not taken">
+            {{ r.message }}
+            <ng-container alertActions>
+              @if (r.options.includes('pause')) {
+                <button
+                  flButton
+                  size="sm"
+                  type="button"
+                  (click)="retryRefused({ pause: true })"
+                  [disabled]="creating()"
+                >
+                  Stop, copy and restart
+                </button>
               }
-            </tbody>
-          </table>
-        </div>
-      }
+              @if (r.options.includes('allowInconsistent')) {
+                <button
+                  flButton
+                  size="sm"
+                  type="button"
+                  (click)="retryRefused({ allowInconsistent: true })"
+                  [disabled]="creating()"
+                >
+                  Copy it as it is
+                </button>
+              }
+              <button flButton="ghost" size="sm" type="button" (click)="dismissRefusal()">
+                Cancel
+              </button>
+            </ng-container>
+          </fl-alert>
+        }
 
-      @if (spare().length) {
-        <div class="space-y-2">
-          <h3 class="text-sm font-semibold">Restored and previous volumes</h3>
-          <p class="text-xs text-muted-foreground">
-            Full volumes this application does not run on, paid for while they exist.
-          </p>
-          <div class="card-inner divide-y divide-border/50">
-            @for (v of spare(); track v.name) {
-              <div class="flex items-center justify-between gap-3 px-4 py-2 text-sm">
-                <div class="min-w-0">
-                  <div class="font-mono text-xs truncate">{{ v.name }}</div>
-                  <div class="text-xs text-muted-foreground">
-                    {{
-                      v.kind === 'previous'
-                        ? 'What the application used before a restore'
-                        : 'Restored from a copy, never put in use'
-                    }}
-                    · {{ v.size || '—' }} · {{ formatDate(v.createdAt ?? '') }}
-                  </div>
-                </div>
-                <div class="flex shrink-0 gap-2">
-                  <button
-                    (click)="useSpare(v)"
-                    [disabled]="v.inUse || restoring()"
-                    class="px-2.5 py-1 text-xs rounded-md border border-border hover:bg-muted disabled:opacity-50"
-                  >
-                    Use this
-                  </button>
-                  <button
-                    (click)="deleteSpare(v.name)"
-                    [disabled]="v.inUse"
-                    class="px-2.5 py-1 text-xs rounded-md text-red-600 hover:bg-red-50 disabled:opacity-50"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
+        @if (errorMessage()) {
+          <fl-alert tone="error" title="Request failed">{{ errorMessage() }}</fl-alert>
+        } @else if (snapshotCapability()?.supported === false) {
+          <fl-alert
+            [tone]="noVolume() ? 'info' : 'warning'"
+            [title]="
+              noVolume()
+                ? 'This application has no volume to copy'
+                : 'Volume copies are not available on this cluster'
+            "
+          >
+            {{ snapshotCapability()?.reason }}
+          </fl-alert>
+        }
+      </div>
+
+      @if (!errorMessage() && snapshotCapability()?.supported !== false) {
+        @if (isLoading() && snapshots().length === 0) {
+          <fl-loading-state [rows]="3" />
+        } @else if (filtered().length === 0) {
+          <fl-empty-state
+            class="border-t border-fl-border"
+            icon="lucideCamera"
+            [compact]="true"
+            [title]="filter() === 'all' ? 'No copies yet' : 'No copies match the selected filter'"
+            [body]="
+              filter() === 'all'
+                ? 'Take a copy to keep this volume as it is now. Each copy is a full second copy of the data, on the same storage the application uses.'
+                : undefined
+            "
+          />
+        } @else {
+          <app-snapshot-table
+            class="border-t border-fl-border"
+            [snapshots]="filtered()"
+            [restoringId]="restoringSnapshotId()"
+            [deletingId]="deletingId()"
+            (restore)="confirmRestore($event)"
+            (remove)="confirmDelete($event)"
+          />
+        }
       }
-    </div>
+    </fl-panel>
+
+    @if (spare().length) {
+      <app-spare-volumes
+        [volumes]="spare()"
+        [restoring]="restoring()"
+        (use)="useSpare($event)"
+        (remove)="deleteSpare($event)"
+      />
+    }
 
     <app-snapshot-create-dialog
       [open]="createOpen()"
@@ -427,16 +280,6 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
   readonly pendingRestore = signal<ApplicationSnapshot | null>(null);
   readonly restoring = signal(false);
   readonly restoringSnapshotId = signal<string | null>(null);
-
-  protected readonly formatDate = formatDate;
-  protected readonly kindLabel = kindLabel;
-  protected readonly kindTooltip = kindTooltip;
-  protected readonly kindBadgeClass = kindBadgeClass;
-  protected readonly statusLabel = statusLabel;
-  protected readonly sizeLine = sizeLine;
-  protected readonly sizeSubline = sizeSubline;
-  protected readonly statusClass = statusClass;
-  protected readonly derivedStatus = snapshotStatus;
 
   readonly filtered = computed(() => {
     const f = this.filter();

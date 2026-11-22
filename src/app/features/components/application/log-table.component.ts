@@ -1,19 +1,29 @@
-import { Component, input, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, signal, computed } from '@angular/core';
 
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideRefreshCw,
-  lucideChevronDown,
-  lucideChevronRight,
-  lucideAlertCircle,
-  lucideActivity,
-  lucideCopy,
-  lucideCheck,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideChevronDown, lucideChevronRight, lucideCopy, lucideCheck } from '@ng-icons/lucide';
 
 import type { AppLogEntryDto } from '../../service/application-logs.service';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 const PAGE_SIZE = 50;
+
+const LEVEL_CLASSES: Record<string, string> = {
+  error: 'fl-level fl-level--error',
+  warn: 'fl-level fl-level--warn',
+  warning: 'fl-level fl-level--warn',
+  info: 'fl-level fl-level--info',
+  debug: 'fl-level fl-level--debug',
+  trace: 'fl-level fl-level--trace',
+};
+
+const ROW_BUTTON =
+  'inline-flex flex-none rounded-fl-sm text-fl-ink-muted hover:text-fl-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-fl-accent';
 
 /**
  * Reusable paginated log table.
@@ -26,235 +36,208 @@ const PAGE_SIZE = 50;
 @Component({
   selector: 'app-log-table',
   standalone: true,
-  imports: [NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideRefreshCw,
-      lucideChevronDown,
-      lucideChevronRight,
-      lucideAlertCircle,
-      lucideActivity,
-      lucideCopy,
-      lucideCheck,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlTable, FlEmptyState, FlLoadingState, FlAlert, FlKeyValue, FlKvItem, FlButton, FlIcon],
+  providers: [provideIcons({ lucideChevronDown, lucideChevronRight, lucideCopy, lucideCheck })],
+  host: { class: 'block' },
   template: `
-    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white">
-      <!-- Header -->
-      <div
-        class="grid grid-cols-[130px_64px_1fr_90px_80px] border-b border-gray-200 bg-gray-50 px-3 py-2"
-      >
-        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider"
-          >Timestamp</span
-        >
-        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Level</span>
-        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider"
-          >Message</span
-        >
-        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Pod</span>
-        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Stream</span>
+    @if (loading()) {
+      <fl-loading-state [rows]="6" />
+    } @else if (error()) {
+      <div class="p-4">
+        <fl-alert tone="error" title="Could not load logs">{{ error() }}</fl-alert>
       </div>
-
-      <!-- Loading state -->
-      @if (loading()) {
-        <div class="flex items-center justify-center py-16">
-          <ng-icon name="lucideRefreshCw" class="h-5 w-5 animate-spin text-blue-500" />
-        </div>
-
-        <!-- Error state -->
-      } @else if (error()) {
-        <div class="flex flex-col items-center justify-center py-12 gap-2 text-red-500">
-          <ng-icon name="lucideAlertCircle" class="h-7 w-7" />
-          <span class="text-sm">{{ error() }}</span>
-        </div>
-
-        <!-- Empty state -->
-      } @else if (pagedEntries().length === 0) {
-        <div class="flex flex-col items-center justify-center py-14 gap-2 text-gray-400">
-          <ng-icon name="lucideActivity" class="h-7 w-7" />
-          <span class="text-sm">No log entries</span>
-        </div>
-
-        <!-- Rows -->
-      } @else {
-        @for (entry of pagedEntries(); track entry.timestamp + entry.message) {
-          <div
-            class="group border-b border-gray-100 last:border-0 hover:bg-gray-50/60 transition-colors"
-          >
-            <!-- Main row -->
-            <div
-              class="grid grid-cols-[130px_64px_1fr_90px_80px] items-start px-3 py-1.5 cursor-pointer"
-              (click)="toggleExpand(entry)"
-            >
-              <span
-                class="text-[11px] font-mono text-gray-500 leading-5 truncate"
-                [title]="entry.timestamp"
-              >
-                {{ formatTimestamp(entry.timestamp) }}
-              </span>
-              <span>
-                <span
-                  class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
-                  [class]="getLevelBadge(entry.level)"
-                >
-                  {{ (entry.level ?? 'UNK').toUpperCase() }}
-                </span>
-              </span>
-              <span
-                class="text-[11px] text-gray-800 font-mono leading-5 flex items-start gap-1.5 min-w-0"
-              >
-                <ng-icon
-                  [name]="isExpanded(entry) ? 'lucideChevronDown' : 'lucideChevronRight'"
-                  class="h-3.5 w-3.5 mt-px flex-shrink-0 text-gray-400"
-                />
-                <span class="truncate flex-1 min-w-0">{{ entry.message }}</span>
-                <button
-                  class="flex-shrink-0 ml-1 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all"
-                  [title]="isCopied(entry) ? 'Copied!' : 'Copy message'"
-                  (click)="copyMessage($event, entry)"
-                >
-                  <ng-icon
-                    [name]="isCopied(entry) ? 'lucideCheck' : 'lucideCopy'"
-                    [class]="isCopied(entry) ? 'h-3 w-3 text-green-500' : 'h-3 w-3 text-gray-400'"
-                  />
-                </button>
-              </span>
-              <span class="text-[11px] font-mono text-gray-500 truncate leading-5 pl-2">
-                {{ shortPodName(entry.pod) }}
-              </span>
-              <span class="text-[11px] font-mono text-gray-500 truncate leading-5 pl-2">
-                {{ entry.stream ?? '-' }}
-              </span>
-            </div>
-
-            <!-- Expanded detail -->
-            @if (isExpanded(entry)) {
-              <div
-                class="mx-3 mb-2 rounded bg-gray-50 border border-gray-200 p-3 text-xs font-mono select-text cursor-text"
-              >
-                <div class="grid grid-cols-[140px_1fr] gap-y-1.5 gap-x-3">
-                  <span class="text-gray-400">timestamp</span>
-                  <span class="text-gray-800">{{ entry.timestamp }}</span>
-
-                  <span class="text-gray-400">level</span>
-                  <span [class]="getLevelText(entry.level)">{{ entry.level ?? 'unknown' }}</span>
-
-                  <span class="text-gray-400">message</span>
-                  <span class="flex items-start gap-1.5 group/msg">
-                    <span class="text-gray-800 break-all whitespace-pre-wrap flex-1">{{
-                      entry.message
-                    }}</span>
+    } @else if (pagedEntries().length === 0) {
+      <fl-empty-state title="No log entries" />
+    } @else {
+      <div class="fl-table-wrap">
+        <table flTable density="log">
+          <thead>
+            <tr>
+              <th scope="col" class="is-fit">Time</th>
+              <th scope="col" class="is-fit">Level</th>
+              <th scope="col">Message</th>
+              <th scope="col" class="is-fit">Pod</th>
+              <th scope="col" class="is-fit">Stream</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of pagedEntries(); track entry.timestamp + entry.message) {
+              <tr class="group cursor-pointer" (click)="toggleExpand(entry)">
+                <td class="text-fl-ink-muted" [title]="entry.timestamp">
+                  {{ formatTimestamp(entry.timestamp) }}
+                </td>
+                <td>
+                  <span [class]="levelClass(entry.level)">{{
+                    (entry.level ?? 'unk').toUpperCase()
+                  }}</span>
+                </td>
+                <td class="w-full max-w-0">
+                  <div class="flex min-w-0 items-center gap-2">
                     <button
-                      class="flex-shrink-0 mt-0.5 p-0.5 rounded opacity-0 group-hover/msg:opacity-100 hover:bg-gray-200 transition-all"
-                      [title]="isCopied(entry) ? 'Copied!' : 'Copy message'"
-                      (click)="copyMessage($event, entry)"
+                      type="button"
+                      [class]="rowButton"
+                      aria-label="Expand entry"
+                      [attr.aria-expanded]="isExpanded(entry)"
+                      (click)="onExpandClick($event, entry)"
                     >
-                      <ng-icon
-                        [name]="isCopied(entry) ? 'lucideCheck' : 'lucideCopy'"
-                        [class]="
-                          isCopied(entry) ? 'h-3 w-3 text-green-500' : 'h-3 w-3 text-gray-400'
-                        "
+                      <fl-icon
+                        [name]="isExpanded(entry) ? 'lucideChevronDown' : 'lucideChevronRight'"
+                        [size]="14"
                       />
                     </button>
-                  </span>
-
-                  @if (entry.namespace) {
-                    <span class="text-gray-400">namespace</span>
-                    <span class="text-gray-800">{{ entry.namespace }}</span>
-                  }
-                  @if (entry.pod) {
-                    <span class="text-gray-400">pod</span>
-                    <span class="text-gray-800">{{ entry.pod }}</span>
-                  }
-                  @if (entry.container) {
-                    <span class="text-gray-400">container</span>
-                    <span class="text-gray-800">{{ entry.container }}</span>
-                  }
-                  @if (entry.hostname) {
-                    <span class="text-gray-400">hostname</span>
-                    <span class="text-gray-800">{{ entry.hostname }}</span>
-                  }
-                  @if (entry.server_type) {
-                    <span class="text-gray-400">server_type</span>
-                    <span class="text-gray-800">{{ entry.server_type }}</span>
-                  }
-                  @if (entry.server_id) {
-                    <span class="text-gray-400">server_id</span>
-                    <span class="text-blue-600">{{ entry.server_id }}</span>
-                  }
-                  @if (entry.stream) {
-                    <span class="text-gray-400">stream</span>
-                    <span class="text-gray-800">{{ entry.stream }}</span>
-                  }
-                  @if (entry.metadata) {
-                    <span class="text-gray-400 col-span-2 mt-1 border-t border-gray-200 pt-1.5"
-                      >metadata</span
+                    <span class="min-w-0 flex-1 truncate text-fl-ink">{{ entry.message }}</span>
+                    <button
+                      type="button"
+                      [class]="
+                        rowButton + ' opacity-0 focus-visible:opacity-100 group-hover:opacity-100'
+                      "
+                      [attr.aria-label]="isCopied(entry) ? 'Copied' : 'Copy message'"
+                      [title]="isCopied(entry) ? 'Copied' : 'Copy message'"
+                      (click)="copyMessage($event, entry)"
                     >
-                    @for (kv of metaEntries(entry.metadata); track kv[0]) {
-                      @if (kv[1] !== null && kv[1] !== '') {
-                        <span class="text-gray-400 pl-2">{{ kv[0] }}</span>
-                        <span class="text-gray-700">{{ kv[1] }}</span>
+                      <fl-icon
+                        [name]="isCopied(entry) ? 'lucideCheck' : 'lucideCopy'"
+                        [size]="13"
+                      />
+                    </button>
+                  </div>
+                </td>
+                <td class="text-fl-ink-muted" [title]="entry.pod ?? ''">
+                  <span class="fl-cell-clip">{{ shortPodName(entry.pod) }}</span>
+                </td>
+                <td class="text-fl-ink-muted">{{ entry.stream ?? '-' }}</td>
+              </tr>
+              @if (isExpanded(entry)) {
+                <tr class="bg-fl-surface-subtle">
+                  <td colspan="5" class="cursor-text select-text whitespace-normal">
+                    <div class="flex flex-col gap-3 py-1">
+                      <div class="flex items-start gap-2">
+                        <pre class="m-0 min-w-0 flex-1 whitespace-pre-wrap break-all text-fl-ink">{{
+                          entry.message
+                        }}</pre>
+                        <button
+                          type="button"
+                          [class]="rowButton"
+                          [attr.aria-label]="isCopied(entry) ? 'Copied' : 'Copy message'"
+                          [title]="isCopied(entry) ? 'Copied' : 'Copy message'"
+                          (click)="copyMessage($event, entry)"
+                        >
+                          <fl-icon
+                            [name]="isCopied(entry) ? 'lucideCheck' : 'lucideCopy'"
+                            [size]="13"
+                          />
+                        </button>
+                      </div>
+                      <fl-key-value class="fl-kv--compact">
+                        <fl-kv-item key="Timestamp" [mono]="true">{{ entry.timestamp }}</fl-kv-item>
+                        <fl-kv-item key="Level">
+                          <span [class]="levelClass(entry.level)">{{
+                            entry.level ?? 'unknown'
+                          }}</span>
+                        </fl-kv-item>
+                        @if (entry.namespace) {
+                          <fl-kv-item key="Namespace" [mono]="true">{{
+                            entry.namespace
+                          }}</fl-kv-item>
+                        }
+                        @if (entry.pod) {
+                          <fl-kv-item key="Pod" [mono]="true">{{ entry.pod }}</fl-kv-item>
+                        }
+                        @if (entry.container) {
+                          <fl-kv-item key="Container" [mono]="true">{{
+                            entry.container
+                          }}</fl-kv-item>
+                        }
+                        @if (entry.hostname) {
+                          <fl-kv-item key="Hostname" [mono]="true">{{ entry.hostname }}</fl-kv-item>
+                        }
+                        @if (entry.server_type) {
+                          <fl-kv-item key="Server type" [mono]="true">{{
+                            entry.server_type
+                          }}</fl-kv-item>
+                        }
+                        @if (entry.server_id) {
+                          <fl-kv-item key="Server ID" [mono]="true">{{
+                            entry.server_id
+                          }}</fl-kv-item>
+                        }
+                        @if (entry.stream) {
+                          <fl-kv-item key="Stream" [mono]="true">{{ entry.stream }}</fl-kv-item>
+                        }
+                      </fl-key-value>
+                      @if (entry.metadata) {
+                        <div class="flex flex-col gap-2 border-t border-fl-border-subtle pt-3">
+                          <span class="text-fl-caption text-fl-ink-muted">Metadata</span>
+                          <fl-key-value class="fl-kv--compact">
+                            @for (kv of metaEntries(entry.metadata); track kv[0]) {
+                              @if (kv[1] !== null && kv[1] !== '') {
+                                <fl-kv-item [key]="kv[0]" [mono]="true">{{ kv[1] }}</fl-kv-item>
+                              }
+                            }
+                          </fl-key-value>
+                        </div>
                       }
-                    }
-                  }
-                </div>
-              </div>
+                    </div>
+                  </td>
+                </tr>
+              }
             }
-          </div>
-        }
-      }
+          </tbody>
+        </table>
+      </div>
+    }
 
-      <!-- Pagination -->
-      @if (totalPages() > 1) {
-        <div
-          class="flex items-center justify-between px-4 py-2.5 border-t border-gray-200 bg-gray-50"
+    @if (totalPages() > 1) {
+      <nav
+        class="flex flex-wrap items-center justify-between gap-3 border-t border-fl-border px-4 py-2"
+        aria-label="Pagination"
+      >
+        <span class="fl-toolbar__info"
+          >Page {{ currentPage() }} of {{ totalPages() }} · {{ entries().length }} entries</span
         >
-          <span class="text-xs text-gray-500">
-            Page {{ currentPage() }} of {{ totalPages() }} &nbsp;·&nbsp;
-            {{ entries().length }} entries
-          </span>
-          <div class="flex items-center gap-1">
+        <div class="fl-row">
+          <button
+            flButton
+            size="sm"
+            type="button"
+            (click)="goToPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+          >
+            Previous
+          </button>
+          @for (p of visiblePages(); track p) {
             <button
-              (click)="goToPage(currentPage() - 1)"
-              [disabled]="currentPage() === 1"
-              class="px-2.5 py-1 text-xs rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-100 transition-colors"
+              [flButton]="p === currentPage() ? 'primary' : 'ghost'"
+              size="sm"
+              type="button"
+              [attr.aria-current]="p === currentPage() ? 'page' : null"
+              (click)="goToPage(p)"
             >
-              Previous
+              {{ p }}
             </button>
-            @for (p of visiblePages(); track p) {
-              <button
-                (click)="goToPage(p)"
-                class="px-2.5 py-1 text-xs rounded border transition-colors"
-                [class]="
-                  p === currentPage()
-                    ? 'border-blue-500 bg-blue-500 text-white'
-                    : 'border-gray-200 hover:bg-gray-100 text-gray-700'
-                "
-              >
-                {{ p }}
-              </button>
-            }
-            <button
-              (click)="goToPage(currentPage() + 1)"
-              [disabled]="currentPage() === totalPages()"
-              class="px-2.5 py-1 text-xs rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-100 transition-colors"
-            >
-              Next
-            </button>
-          </div>
+          }
+          <button
+            flButton
+            size="sm"
+            type="button"
+            (click)="goToPage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+          >
+            Next
+          </button>
         </div>
-      }
-    </div>
+      </nav>
+    }
   `,
 })
 export class LogTableComponent {
   /** Log entries to display. Changing this resets to page 1. */
   readonly entries = input.required<AppLogEntryDto[]>();
-  /** Show a loading spinner instead of rows. */
   readonly loading = input(false);
   /** Show an error message instead of rows. */
   readonly error = input<string | null>(null);
+
+  protected readonly rowButton = ROW_BUTTON;
 
   private readonly _currentPage = signal(1);
   private readonly _expandedKeys = signal<Set<string>>(new Set());
@@ -292,6 +275,11 @@ export class LogTableComponent {
     });
   }
 
+  protected onExpandClick(event: MouseEvent, entry: AppLogEntryDto): void {
+    event.stopPropagation();
+    this.toggleExpand(entry);
+  }
+
   isExpanded(entry: AppLogEntryDto): boolean {
     return this._expandedKeys().has(entry.timestamp + entry.message);
   }
@@ -306,7 +294,7 @@ export class LogTableComponent {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed.message === 'string') return parsed.message;
     } catch {
-      /* not JSON */
+      return raw;
     }
     return raw;
   }
@@ -330,18 +318,16 @@ export class LogTableComponent {
   }
 
   formatTimestamp(iso: string): string {
-    try {
-      return new Date(iso).toLocaleTimeString('en-US', {
-        month: 'short',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      });
-    } catch {
-      return iso;
-    }
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    const time = date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    return `${day} ${time}`;
   }
 
   shortPodName(pod: string | undefined): string {
@@ -353,37 +339,7 @@ export class LogTableComponent {
     return Object.entries(meta as Record<string, unknown>);
   }
 
-  getLevelBadge(level: string | undefined): string {
-    switch ((level ?? '').toLowerCase()) {
-      case 'error':
-        return 'bg-red-100 text-red-700';
-      case 'warn':
-        return 'bg-amber-100 text-amber-700';
-      case 'info':
-        return 'bg-blue-100 text-blue-700';
-      case 'debug':
-        return 'bg-gray-100 text-gray-600';
-      case 'trace':
-        return 'bg-purple-100 text-purple-700';
-      default:
-        return 'bg-gray-100 text-gray-500';
-    }
-  }
-
-  getLevelText(level: string | undefined): string {
-    switch ((level ?? '').toLowerCase()) {
-      case 'error':
-        return 'text-red-600';
-      case 'warn':
-        return 'text-amber-600';
-      case 'info':
-        return 'text-blue-600';
-      case 'debug':
-        return 'text-gray-600';
-      case 'trace':
-        return 'text-purple-600';
-      default:
-        return 'text-gray-600';
-    }
+  protected levelClass(level: string | undefined): string {
+    return LEVEL_CLASSES[(level ?? '').toLowerCase()] ?? 'fl-level fl-level--debug';
   }
 }

@@ -1,118 +1,82 @@
-import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
-
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideGitBranch,
-  lucideClock,
-  lucideExternalLink,
-  lucideRocket,
-  lucideLoader,
-} from '@ng-icons/lucide';
+import { Component, computed, input, output } from '@angular/core';
+import { formatDate } from '@angular/common';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink } from '@ng-icons/lucide';
 import { AppBuildResponseDto } from '../../../../core/api/model/appBuildResponseDto';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlSpinner } from '../../../../ui/primitives/spinner';
+import { FlTag } from '../../../../ui/primitives/tag';
 import { AppBuildProviderBadgeComponent } from './app-build-provider-badge.component';
 import { AppBuildStatusBadgeComponent } from './app-build-status-badge.component';
 import { formatDuration, formatRelativeDate, truncateImageRef } from './build-format.utils';
 
 @Component({
-  selector: 'app-build-row',
+  selector: 'tr[app-build-row]',
   standalone: true,
-  imports: [NgIcon, AppBuildProviderBadgeComponent, AppBuildStatusBadgeComponent],
-  providers: [
-    provideIcons({ lucideGitBranch, lucideClock, lucideExternalLink, lucideRocket, lucideLoader }),
+  imports: [
+    AppBuildProviderBadgeComponent,
+    AppBuildStatusBadgeComponent,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlTag,
   ],
-  host: { class: 'contents' },
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideExternalLink })],
   template: `
-    <tr class="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-      <td class="px-4 py-3">
-        <div class="flex items-center gap-2 flex-wrap">
-          <app-build-provider-badge [provider]="build().provider" />
+    @let b = build();
+    <td>
+      @if (b.commitSha) {
+        <span class="fl-mono" [title]="b.commitSha">{{ b.commitSha.substring(0, 7) }}</span>
+      } @else {
+        <span class="fl-muted">—</span>
+      }
+    </td>
+    <td><app-build-status-badge [status]="b.status" /></td>
+    <td>
+      <span class="fl-cell-clip" [title]="b.branch">{{ b.branch }}</span>
+    </td>
+    <td><app-build-provider-badge [provider]="b.provider" /></td>
+    <td>
+      @if (b.status === 'COMPLETED' && b.imageRef) {
+        <div class="flex items-center gap-2">
+          <span class="fl-mono fl-cell-clip" [title]="b.imageRef">{{ truncate(b.imageRef) }}</span>
           @if (isReadyToRelease()) {
-            <span
-              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
-            >
-              Ready to release
-            </span>
+            <fl-tag>Ready to release</fl-tag>
           }
         </div>
-      </td>
-      <td class="px-4 py-3">
-        <app-build-status-badge [status]="build().status" />
-      </td>
-      <td class="px-4 py-3">
-        <div class="flex items-center gap-1.5 text-xs">
-          <ng-icon name="lucideGitBranch" class="h-3.5 w-3.5 text-muted-foreground" />
-          {{ build().branch }}
-        </div>
-      </td>
-      <td class="px-4 py-3">
-        @if (build().commitSha) {
-          <code class="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{{
-            build().commitSha!.substring(0, 7)
-          }}</code>
-        } @else {
-          <span class="text-muted-foreground">—</span>
-        }
-      </td>
-      <td class="px-4 py-3">
-        @if (build().status === 'COMPLETED' && build().imageRef) {
-          <span
-            class="font-mono text-xs text-muted-foreground truncate max-w-[160px] inline-block align-middle"
-            [title]="build().imageRef!"
+      } @else {
+        <span class="fl-muted">—</span>
+      }
+    </td>
+    <td class="is-num">{{ duration() }}</td>
+    <td class="is-num" [title]="absoluteStarted()">{{ relativeStarted() }}</td>
+    <td class="is-fit">
+      <div class="flex items-center justify-end gap-2">
+        @if (canRelease()) {
+          <button
+            flButton
+            size="sm"
+            type="button"
+            (click)="deploy.emit(b)"
+            [disabled]="deploying()"
           >
-            {{ truncate(build().imageRef!) }}
-          </span>
-        } @else {
-          <span class="text-muted-foreground text-xs">—</span>
+            @if (deploying()) {
+              <fl-spinner label="Releasing" />
+            }
+            Release
+          </button>
         }
-      </td>
-      <td class="px-4 py-3">
-        <div class="flex items-center gap-1 text-xs text-muted-foreground">
-          <ng-icon name="lucideClock" class="h-3.5 w-3.5" />
-          {{ duration() }}
-        </div>
-      </td>
-      <td class="px-4 py-3 text-xs text-muted-foreground">
-        {{ relativeStarted() }}
-      </td>
-      <td class="px-4 py-3 text-right">
-        <div class="inline-flex items-center gap-2">
-          @if (canRelease()) {
-            <button
-              (click)="deploy.emit(build())"
-              [disabled]="deploying()"
-              class="inline-flex items-center text-xs text-primary hover:text-primary/80 disabled:opacity-50 transition-colors"
-            >
-              @if (deploying()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 mr-1 animate-spin" />
-              } @else {
-                <ng-icon name="lucideRocket" class="h-3.5 w-3.5 mr-1" />
-              }
-              Release
-            </button>
-          }
-          @if (build().provider === 'GITHUB_ACTIONS' && build().externalUrl) {
-            <a
-              [href]="build().externalUrl"
-              target="_blank"
-              rel="noopener"
-              class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 mr-1" />
-              View on GitHub
-            </a>
-          } @else {
-            <button
-              (click)="view.emit(build())"
-              class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 mr-1" />
-              View
-            </button>
-          }
-        </div>
-      </td>
-    </tr>
+        @if (b.provider === 'GITHUB_ACTIONS' && b.externalUrl) {
+          <a flButton="ghost" size="sm" [href]="b.externalUrl" target="_blank" rel="noopener">
+            View on GitHub
+            <fl-icon name="lucideExternalLink" [size]="14" />
+          </a>
+        } @else {
+          <button flButton="ghost" size="sm" type="button" (click)="view.emit(b)">View</button>
+        }
+      </div>
+    </td>
   `,
 })
 export class AppBuildRowComponent {
@@ -126,6 +90,7 @@ export class AppBuildRowComponent {
 
   duration = computed(() => formatDuration(this.build().startedAt, this.build().completedAt));
   relativeStarted = computed(() => formatRelativeDate(this.build().createdAt));
+  absoluteStarted = computed(() => formatDate(this.build().createdAt, 'd MMM y, HH:mm', 'en-US'));
   canRelease = computed(() => this.build().status === 'COMPLETED' && !!this.build().imageRef);
   isReadyToRelease = computed(() => {
     const ref = this.build().imageRef;

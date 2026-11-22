@@ -1,99 +1,69 @@
-import { Component, computed, effect, inject, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, effect, inject, input } from '@angular/core';
 
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideBell,
-  lucideCircleCheck,
-  lucideCircleAlert,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCircleCheck } from '@ng-icons/lucide';
 import { ApplicationAlertsService } from '../../service/application-alerts.service';
 import { AlertEvent } from '../../model/alert.models';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-alerts-section',
   standalone: true,
-  imports: [NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideBell,
-      lucideCircleCheck,
-      lucideCircleAlert,
-      lucideTriangleAlert,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlTable, FlStatus, FlAlert, FlEmptyState, FlLoadingState],
+  providers: [provideIcons({ lucideCircleCheck })],
+  host: { class: 'block' },
   template: `
-    <div class="space-y-4">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <ng-icon name="lucideBell" class="text-sub" size="20" />
-            Alerts
-            @if (firing() > 0) {
-              <span
-                class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-sub"
-              >
-                <span class="h-1.5 w-1.5 rounded-full bg-destructive"></span>
-                {{ firing() }} firing
-              </span>
-            }
-          </h3>
-          <p class="text-sm text-gray-500">
-            One row per episode — repeats update the row, they do not stack
-          </p>
-        </div>
+    <fl-panel title="Alerts" [count]="rows().length || null" [flush]="true">
+      <div panelActions class="fl-row">
+        @if (firing() > 0) {
+          <fl-status tone="error" [label]="firing() + ' firing'" />
+        }
+        <span class="fl-toolbar__info">One row per episode; repeats update it</span>
       </div>
-
       @if (alerts.error(); as err) {
-        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {{ err }}
+        <div class="fl-panel__body">
+          <fl-alert tone="error" title="Alerts could not be read">{{ err }}</fl-alert>
         </div>
       } @else if (alerts.loading() && rows().length === 0) {
-        <div
-          class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500"
-        >
-          Loading alerts…
-        </div>
+        <fl-loading-state [rows]="3" />
       } @else if (rows().length === 0) {
-        <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
-          <ng-icon name="lucideCircleCheck" class="text-sub mx-auto mb-2" size="24" />
-          <p class="text-sm font-medium text-gray-700">No alerts on record</p>
-          <p class="text-sm text-gray-500 mt-1">
-            Nothing has fired for this application. Absence of alerts is not the same as a health
-            check — see Traffic for a live read.
-          </p>
-        </div>
+        <fl-empty-state
+          icon="lucideCircleCheck"
+          title="No alerts on record"
+          body="Nothing has fired for this application. No alerts is not the same as a health check: see Traffic for a live read."
+          [compact]="true"
+        />
       } @else {
-        <ul class="space-y-2">
-          @for (alert of rows(); track alert.id) {
-            <li class="rounded-lg border p-3 flex items-start gap-3" [class]="rowClass(alert)">
-              <ng-icon
-                [name]="rowIcon(alert)"
-                [class]="rowIconClass(alert)"
-                class="shrink-0 mt-0.5"
-                size="18"
-              />
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-sm font-semibold text-gray-900">
-                    {{ alert.alertname }}
-                  </span>
-                  <span [class]="badgeClass(alert)">{{ statusLabel(alert) }}</span>
-                  <span [class]="severityClass(alert)">{{ alert.severity }}</span>
-                </div>
-                <p class="text-sm text-gray-600 mt-0.5">
-                  {{ alert.summary }}
-                </p>
-                <p class="text-xs text-gray-500 mt-1">
-                  {{ timing(alert) }}
-                </p>
-              </div>
-            </li>
-          }
-        </ul>
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Alert</th>
+                <th scope="col">Status</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Summary</th>
+                <th scope="col">When</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (alert of rows(); track alert.id) {
+                <tr>
+                  <td class="font-medium">{{ alert.alertname }}</td>
+                  <td><fl-status [tone]="tone(alert)" [label]="statusLabel(alert)" /></td>
+                  <td class="fl-muted">{{ alert.severity }}</td>
+                  <td class="whitespace-normal">{{ alert.summary }}</td>
+                  <td class="fl-muted fl-num whitespace-normal">{{ timing(alert) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
-    </div>
+    </fl-panel>
   `,
 })
 export class AppAlertsSectionComponent {
@@ -114,31 +84,14 @@ export class AppAlertsSectionComponent {
     });
   }
 
-  protected rowClass(_alert: AlertEvent): string {
-    return 'border-border bg-card';
-  }
-
-  protected rowIcon(alert: AlertEvent): string {
-    if (alert.status === 'resolved') return 'lucideCircleCheck';
-    return alert.severity === 'critical' ? 'lucideCircleAlert' : 'lucideTriangleAlert';
-  }
-
-  protected rowIconClass(alert: AlertEvent): string {
-    if (alert.status === 'resolved') return 'text-sub';
-    return alert.severity === 'critical' ? 'text-red-500' : 'text-amber-500';
-  }
-
-  protected badgeClass(_alert: AlertEvent): string {
-    return 'inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-sub';
-  }
-
-  protected severityClass(_alert: AlertEvent): string {
-    return 'inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-xs text-sub';
+  protected tone(alert: AlertEvent): StatusTone {
+    if (alert.status === 'resolved') return 'neutral';
+    return alert.severity === 'critical' ? 'error' : 'warning';
   }
 
   protected statusLabel(alert: AlertEvent): string {
-    if (alert.status === 'firing') return 'firing';
-    return alert.resolved_by === 'timeout' ? 'resolved*' : 'resolved';
+    if (alert.status === 'firing') return 'Firing';
+    return alert.resolved_by === 'timeout' ? 'Resolved*' : 'Resolved';
   }
 
   protected timing(alert: AlertEvent): string {

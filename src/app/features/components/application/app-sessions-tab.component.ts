@@ -1,21 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  computed,
-  effect,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideBan,
-  lucideCircleAlert,
-  lucideLoader,
-  lucideRefreshCw,
-  lucideUnplug,
-} from '@ng-icons/lucide';
+import { Component, DestroyRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import {
   DbPooledClient,
@@ -27,14 +13,23 @@ import {
 import { accessOf } from '../../model/app-access';
 import { databaseEngineOf } from '../../model/db-engine';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
-import { DisclosureComponent } from '../../../shared/components/disclosure.component';
 import { consoleError } from '../database-console/search-format';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { SessionsPooler } from './sessions-pooler';
 import {
   PendingAction,
   confirmCopy,
   formatAge,
   orderByBlocker,
-  pooledClientWho,
   poolerSummary,
   stateLabel,
   stateTone,
@@ -45,206 +40,235 @@ import {
 
 const AUTO_REFRESH_MS = 5000;
 
+const TONE: Record<ReturnType<typeof stateTone>, StatusTone> = {
+  running: 'success',
+  waiting: 'warning',
+  held: 'warning',
+  idle: 'neutral',
+};
+
+const INDENT = ['', 'pl-8', 'pl-12', 'pl-16'];
+
 @Component({
   selector: 'app-sessions-tab',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIconComponent, ConfirmationDialogComponent, DisclosureComponent],
-  providers: [
-    provideIcons({ lucideBan, lucideCircleAlert, lucideLoader, lucideRefreshCw, lucideUnplug }),
+  imports: [
+    DatePipe,
+    ConfirmationDialogComponent,
+    SessionsPooler,
+    FlPanel,
+    FlTable,
+    FlAlert,
+    FlKeyValue,
+    FlKvItem,
+    FlEmptyState,
+    FlStatus,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlActionsMenu,
   ],
+  providers: [provideIcons({ lucideRefreshCw })],
+  host: { class: 'fl-stack', 'data-testid': 'sessions-tab' },
   template: `
-    <div class="space-y-4" data-testid="sessions-tab">
-      @if (!supported()) {
-        <p class="text-sm text-muted-foreground" data-testid="sessions-unsupported">
-          Active sessions are shown for managed PostgreSQL databases.
-        </p>
-      } @else if (!dataAccess()) {
-        <p class="text-sm text-muted-foreground">
-          Your access to this database does not include its data.
-        </p>
-      } @else {
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <p class="text-sm font-medium" data-testid="sessions-summary">
-            {{ info() ? summary() : 'Reading sessions…' }}
-          </p>
-          <div class="flex items-center gap-3">
-            <label class="inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                [checked]="showIdle()"
-                (change)="toggleIdle()"
-                data-testid="sessions-show-idle"
-              />
-              Show idle
-            </label>
-            <label class="inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                [checked]="autoRefresh()"
-                (change)="autoRefresh.set(!autoRefresh())"
-                data-testid="sessions-auto-refresh"
-              />
-              Every 5 s
-            </label>
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted"
-              (click)="refresh()"
-              [disabled]="loading()"
-              data-testid="sessions-refresh"
-            >
-              <ng-icon
-                [name]="loading() ? 'lucideLoader' : 'lucideRefreshCw'"
-                class="h-4 w-4"
-                [class.animate-spin]="loading()"
-              />
-              Refresh
-            </button>
-          </div>
-        </div>
-
-        @if (error()) {
-          <div
-            class="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700"
-            data-testid="sessions-error"
+    @if (!supported()) {
+      <fl-panel title="Sessions">
+        <fl-empty-state
+          [compact]="true"
+          title="Not available"
+          body="Active sessions are shown for managed PostgreSQL databases."
+          data-testid="sessions-unsupported"
+        />
+      </fl-panel>
+    } @else if (!dataAccess()) {
+      <fl-panel title="Sessions">
+        <fl-empty-state
+          [compact]="true"
+          title="No data access"
+          body="Your access to this database does not include its data."
+        />
+      </fl-panel>
+    } @else {
+      <fl-panel title="Sessions">
+        <div panelActions class="flex flex-wrap items-center gap-3">
+          <label class="fl-check">
+            <input
+              type="checkbox"
+              [checked]="showIdle()"
+              (change)="toggleIdle()"
+              data-testid="sessions-show-idle"
+            />
+            Show idle
+          </label>
+          <label class="fl-check">
+            <input
+              type="checkbox"
+              [checked]="autoRefresh()"
+              (change)="autoRefresh.set(!autoRefresh())"
+              data-testid="sessions-auto-refresh"
+            />
+            Every 5 s
+          </label>
+          <button
+            flButton
+            size="sm"
+            type="button"
+            (click)="refresh()"
+            [disabled]="loading()"
+            data-testid="sessions-refresh"
           >
-            <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5 shrink-0" />
-            <span>{{ error() }}</span>
-          </div>
-        }
-        @if (notice()) {
-          <p class="text-sm text-emerald-700" data-testid="sessions-notice">
-            {{ notice() }}
-          </p>
-        }
-
-        @if (info(); as i) {
-          @if (!rows().length) {
-            <p class="text-sm text-muted-foreground" data-testid="sessions-empty">
-              No session is doing anything right now.
+            @if (loading()) {
+              <fl-spinner label="Refreshing" />
+            } @else {
+              <fl-icon name="lucideRefreshCw" />
+            }
+            Refresh
+          </button>
+        </div>
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            @if (info(); as i) {
+              <fl-status
+                [tone]="i.counts.blocked ? 'warning' : 'success'"
+                [label]="i.counts.blocked ? 'Sessions blocked' : 'Healthy'"
+              />
+            }
+            <p class="text-fl-body-sm text-fl-ink-secondary" data-testid="sessions-summary">
+              {{ info() ? summary() : 'Reading sessions…' }}
             </p>
+          </div>
+          @if (error()) {
+            <fl-alert tone="error" title="Could not read sessions" data-testid="sessions-error">{{
+              error()
+            }}</fl-alert>
+          }
+          @if (notice()) {
+            <fl-status tone="success" [label]="notice()!" data-testid="sessions-notice" />
+          }
+          @if (info(); as i) {
+            <p class="text-fl-caption text-fl-ink-muted">
+              Values in queries are hidden. Read at
+              <time class="fl-num" [attr.datetime]="i.capturedAt" [title]="i.capturedAt">{{
+                i.capturedAt | date: 'mediumTime'
+              }}</time>.
+            </p>
+          }
+        </div>
+      </fl-panel>
+
+      @if (info(); as i) {
+        <fl-panel title="Connections" [count]="rows().length" [flush]="true">
+          @if (!rows().length) {
+            <fl-empty-state
+              [compact]="true"
+              title="No active sessions"
+              body="No session is doing anything right now."
+              data-testid="sessions-empty"
+            />
           } @else {
-            <div class="card-inner overflow-x-auto">
-              <table class="w-full text-sm">
+            <div class="fl-table-wrap">
+              <table flTable density="dense">
                 <thead>
-                  <tr class="text-left text-muted-foreground border-b border-border">
-                    <th class="px-4 py-3 font-normal">Who</th>
-                    <th class="px-4 py-3 font-normal">State</th>
-                    <th class="px-4 py-3 font-normal">For</th>
-                    <th class="px-4 py-3 font-normal">Query</th>
-                    <th class="px-4 py-3 font-normal"></th>
+                  <tr>
+                    <th scope="col">Who</th>
+                    <th scope="col">State</th>
+                    <th scope="col" class="is-num">For</th>
+                    <th scope="col">Query</th>
+                    <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (row of rows(); track row.session.pid) {
                     @let s = row.session;
                     <tr
-                      class="border-b border-border/50 last:border-0 hover:bg-muted/30 cursor-pointer"
+                      class="cursor-pointer"
+                      [class.is-selected]="expanded() === s.pid"
                       [attr.data-testid]="'session-' + s.pid"
                       (click)="toggle(s.pid)"
                     >
-                      <td
-                        class="px-4 py-3 whitespace-nowrap"
-                        [style.padding-left.rem]="1 + row.depth * 1.25"
-                      >
+                      <td [class]="indent(row.depth)">
                         @if (row.depth) {
-                          <span class="text-muted-foreground mr-1">└</span>
+                          <span class="mr-1 text-fl-ink-muted" aria-hidden="true">└</span>
                         }
                         {{ who(s) }}
                         @if (s.blocks) {
-                          <span
-                            class="ml-2 text-[11px] text-amber-800"
+                          <fl-status
+                            class="ml-2"
+                            tone="warning"
+                            [label]="'Blocking ' + s.blocks"
                             [attr.data-testid]="'session-blocking-' + s.pid"
-                          >
-                            blocking {{ s.blocks }}
-                          </span>
+                          />
                         }
                       </td>
-                      <td class="px-4 py-3 whitespace-nowrap">
-                        <span class="text-xs px-2 py-0.5 rounded-full" [class]="toneClass(s)">
-                          {{ state(s) }}
-                        </span>
-                      </td>
-                      <td class="px-4 py-3 whitespace-nowrap tabular-nums text-muted-foreground">
+                      <td><fl-status [tone]="toneOf(s)" [label]="stateText(s)" /></td>
+                      <td class="is-num text-fl-ink-muted">
                         {{ age(s.xactAgeMs ?? s.stateAgeMs) }}
                       </td>
-                      <td
-                        class="px-4 py-3 font-mono text-xs max-w-[28rem] truncate"
-                        [title]="s.query"
-                      >
+                      <td class="fl-mono max-w-md truncate" [title]="s.query">
                         {{ s.query || '—' }}
                       </td>
-                      <td
-                        class="px-4 py-3 text-right whitespace-nowrap"
-                        (click)="$event.stopPropagation()"
-                      >
-                        <button
-                          type="button"
-                          class="p-1.5 rounded hover:bg-muted transition-colors disabled:opacity-40"
-                          [disabled]="!s.actions.cancel || busy() === s.pid"
-                          [title]="
-                            s.actions.cancel
-                              ? 'Cancel query'
-                              : (s.actions.reason ?? 'Not available')
-                          "
-                          [attr.data-testid]="'session-cancel-' + s.pid"
-                          (click)="ask(s, 'cancel')"
-                        >
-                          <ng-icon name="lucideBan" class="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          class="p-1.5 rounded hover:bg-red-50 text-red-600 transition-colors disabled:opacity-40"
-                          [disabled]="!s.actions.terminate || busy() === s.pid"
-                          [title]="
-                            s.actions.terminate
-                              ? 'Close session'
-                              : (s.actions.reason ?? 'Not available')
-                          "
-                          [attr.data-testid]="'session-terminate-' + s.pid"
-                          (click)="ask(s, 'terminate')"
-                        >
-                          <ng-icon name="lucideUnplug" class="h-3.5 w-3.5" />
-                        </button>
+                      <td class="is-fit" (click)="$event.stopPropagation()">
+                        <div class="flex items-center justify-end gap-1">
+                          <button
+                            flButton
+                            size="sm"
+                            type="button"
+                            [disabled]="!s.actions.cancel || busy() === s.pid"
+                            [title]="
+                              s.actions.cancel
+                                ? 'Cancel query'
+                                : (s.actions.reason ?? 'Not available')
+                            "
+                            [attr.data-testid]="'session-cancel-' + s.pid"
+                            (click)="ask(s, 'cancel')"
+                          >
+                            Cancel query
+                          </button>
+                          <fl-actions-menu
+                            label="Session actions"
+                            [compact]="true"
+                            [items]="actionsFor(s)"
+                            [attr.title]="s.actions.terminate ? null : s.actions.reason"
+                            [attr.data-testid]="'session-actions-' + s.pid"
+                            (action)="ask(s, 'terminate')"
+                          />
+                        </div>
                       </td>
                     </tr>
                     @if (expanded() === s.pid) {
-                      <tr
-                        class="border-b border-border/50 bg-muted/20"
-                        [attr.data-testid]="'session-detail-' + s.pid"
-                      >
-                        <td colspan="5" class="px-4 py-3">
-                          <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-xs">
-                            <dt class="text-muted-foreground">Session</dt>
-                            <dd class="font-mono">{{ s.pid }}</dd>
-                            <dt class="text-muted-foreground">User · database</dt>
-                            <dd>{{ s.user }} · {{ s.database }}</dd>
+                      <tr [attr.data-testid]="'session-detail-' + s.pid">
+                        <td colspan="5" class="whitespace-normal">
+                          <fl-key-value class="fl-kv--compact py-2">
+                            <fl-kv-item key="Session" [mono]="true">{{ s.pid }}</fl-kv-item>
+                            <fl-kv-item key="User · database" [mono]="true"
+                              >{{ s.user }} · {{ s.database }}</fl-kv-item
+                            >
                             @if (s.applicationName) {
-                              <dt class="text-muted-foreground">Application name</dt>
-                              <dd>{{ s.applicationName }}</dd>
+                              <fl-kv-item key="Application name">{{
+                                s.applicationName
+                              }}</fl-kv-item>
                             }
                             @if (s.clientAddr) {
-                              <dt class="text-muted-foreground">Address</dt>
-                              <dd class="font-mono">{{ s.clientAddr }}</dd>
+                              <fl-kv-item key="Address" [mono]="true">{{
+                                s.clientAddr
+                              }}</fl-kv-item>
                             }
                             @if (waiting(s); as w) {
-                              <dt class="text-muted-foreground">Waiting on</dt>
-                              <dd>{{ w }}</dd>
+                              <fl-kv-item key="Waiting on">{{ w }}</fl-kv-item>
                             }
-                            <dt class="text-muted-foreground">Transaction open</dt>
-                            <dd>{{ age(s.xactAgeMs) }}{{ s.writing ? ' · has written' : '' }}</dd>
-                            <dt class="text-muted-foreground">Statement running</dt>
-                            <dd>{{ age(s.queryAgeMs) }}</dd>
+                            <fl-kv-item key="Transaction open"
+                              >{{ age(s.xactAgeMs)
+                              }}{{ s.writing ? ' · has written' : '' }}</fl-kv-item
+                            >
+                            <fl-kv-item key="Statement running">{{ age(s.queryAgeMs) }}</fl-kv-item>
                             @if (s.actions.reason) {
-                              <dt class="text-muted-foreground">Actions</dt>
-                              <dd>{{ s.actions.reason }}</dd>
+                              <fl-kv-item key="Actions">{{ s.actions.reason }}</fl-kv-item>
                             }
-                            <dt class="text-muted-foreground">Query</dt>
-                            <dd class="font-mono whitespace-pre-wrap break-all">
-                              {{ s.query || '—' }}
-                            </dd>
-                          </dl>
+                            <fl-kv-item class="col-span-full" key="Query" [mono]="true">
+                              <span class="whitespace-pre-wrap break-all">{{
+                                s.query || '—'
+                              }}</span>
+                            </fl-kv-item>
+                          </fl-key-value>
                         </td>
                       </tr>
                     }
@@ -253,85 +277,25 @@ const AUTO_REFRESH_MS = 5000;
               </table>
             </div>
             @if (i.truncated) {
-              <p class="text-xs text-amber-600">More sessions exist than are listed.</p>
+              <p
+                class="border-t border-fl-border-subtle px-4 py-3 text-fl-body-sm text-fl-ink-muted"
+              >
+                More sessions exist than are listed.
+              </p>
             }
           }
+        </fl-panel>
 
-          @if (i.pooler; as p) {
-            <app-disclosure label="Pooler" [summary]="poolerLine()" testid="sessions-pooler">
-              <table class="w-full text-xs">
-                <thead>
-                  <tr class="text-left text-muted-foreground">
-                    <th class="py-1 font-normal">Pool</th>
-                    <th class="py-1 font-normal text-right">Clients</th>
-                    <th class="py-1 font-normal text-right">Waiting</th>
-                    <th class="py-1 font-normal text-right">Servers</th>
-                    <th class="py-1 font-normal text-right">Longest wait</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (pool of p.pools; track pool.pod + pool.database + pool.user) {
-                    <tr>
-                      <td class="py-1">{{ pool.database }} · {{ pool.user }}</td>
-                      <td class="py-1 text-right tabular-nums">{{ pool.clientsActive }}</td>
-                      <td class="py-1 text-right tabular-nums">{{ pool.clientsWaiting }}</td>
-                      <td class="py-1 text-right tabular-nums">
-                        {{ pool.serversActive }} / {{ pool.serversActive + pool.serversIdle }}
-                      </td>
-                      <td class="py-1 text-right tabular-nums">{{ age(pool.maxWaitMs) }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-              @if (p.reason) {
-                <p class="mt-2 text-xs text-amber-600" data-testid="sessions-pooler-reason">
-                  {{ p.reason }}
-                </p>
-              }
-              @if (p.clients.length) {
-                <table class="mt-3 w-full text-xs">
-                  <thead>
-                    <tr class="text-left text-muted-foreground">
-                      <th class="py-1 font-normal">Pooled client</th>
-                      <th class="py-1 font-normal">State</th>
-                      <th class="py-1 font-normal text-right">Waiting</th>
-                      <th class="py-1 font-normal text-right">Session</th>
-                      <th class="py-1 font-normal"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (c of p.clients; track c.pod + ':' + c.id) {
-                      <tr [attr.data-testid]="'pooled-client-' + c.id">
-                        <td class="py-1">{{ clientWho(c) }}</td>
-                        <td class="py-1">{{ c.state }}</td>
-                        <td class="py-1 text-right tabular-nums">
-                          {{ c.waitMs ? age(c.waitMs) : '—' }}
-                        </td>
-                        <td class="py-1 text-right tabular-nums">{{ c.serverPid ?? '—' }}</td>
-                        <td class="py-1 text-right">
-                          <button
-                            type="button"
-                            class="px-2 py-0.5 rounded text-red-600 hover:bg-red-50 disabled:opacity-40"
-                            [disabled]="!c.canClose || busyClient() === c.pod + ':' + c.id"
-                            [attr.data-testid]="'pooled-client-close-' + c.id"
-                            (click)="askClient(c)"
-                          >
-                            Close
-                          </button>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              }
-            </app-disclosure>
-          }
-          <p class="text-[11px] text-muted-foreground">
-            Values in queries are hidden. Read at {{ i.capturedAt }}.
-          </p>
+        @if (i.pooler; as p) {
+          <app-sessions-pooler
+            [pooler]="p"
+            [summary]="poolerLine()"
+            [busyClient]="busyClient()"
+            (closeClient)="askClient($event)"
+          />
         }
       }
-    </div>
+    }
 
     <app-confirmation-dialog
       [title]="copy()?.title ?? ''"
@@ -472,18 +436,28 @@ export class AppSessionsTabComponent {
   state = stateLabel;
   age = formatAge;
   waiting = waitingOn;
-  clientWho = pooledClientWho;
 
-  toneClass(s: DbSession): string {
-    switch (stateTone(s)) {
-      case 'running':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'waiting':
-        return 'bg-amber-100 text-amber-800';
-      case 'held':
-        return 'bg-indigo-100 text-indigo-800';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
+  toneOf(s: DbSession): StatusTone {
+    return TONE[stateTone(s)];
+  }
+
+  stateText(s: DbSession): string {
+    const label = stateLabel(s);
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  indent(depth: number): string {
+    return INDENT[Math.min(depth, INDENT.length - 1)];
+  }
+
+  actionsFor(s: DbSession): MenuAction[] {
+    return [
+      {
+        id: 'terminate',
+        label: 'Close session',
+        danger: true,
+        disabled: !s.actions.terminate || this.busy() === s.pid,
+      },
+    ];
   }
 }

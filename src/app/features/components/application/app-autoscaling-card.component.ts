@@ -9,6 +9,13 @@ import {
   untracked,
 } from '@angular/core';
 import { ToastService } from '../../../shared/services/toast.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
+
+let nextId = 0;
 import { AppAutoscaling, AppRuntimeService } from '../../service/app-runtime.service';
 
 /**
@@ -19,96 +26,137 @@ import { AppAutoscaling, AppRuntimeService } from '../../service/app-runtime.ser
 @Component({
   selector: 'app-autoscaling-card',
   standalone: true,
+  imports: [FlAlert, FlField, FlPanel, FlButton, FlStatus],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="card-surface p-4 space-y-3" data-testid="autoscaling-card">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-          >Autoscaling</span
-        >
+    <fl-panel title="Autoscaling" [flush]="true" data-testid="autoscaling-card">
+      <ng-container panelActions>
         @if (current(); as c) {
-          <span class="text-xs text-sub" data-testid="autoscaling-state">
-            {{
+          <fl-status
+            data-testid="autoscaling-state"
+            [tone]="c.enabled ? (c.running === false ? 'warning' : 'success') : 'neutral'"
+            [label]="
               c.enabled
                 ? c.running === false
-                  ? 'On — not running on the cluster yet'
+                  ? 'On, not running on the cluster yet'
                   : 'On'
-                : 'Off — fixed count'
-            }}
-          </span>
-        }
-      </div>
-
-      @if (failed()) {
-        <p class="m-0 text-sm text-sub">{{ failed() }}</p>
-      } @else if (current()) {
-        <label class="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            [checked]="enabled()"
-            (change)="enabled.set($any($event.target).checked)"
-            data-testid="autoscaling-enabled"
-            [disabled]="fromManifest()"
+                : 'Off, fixed count'
+            "
           />
-          Follow the load
-        </label>
-
-        @if (enabled()) {
-          <div class="flex flex-wrap items-end gap-3 text-sm">
-            <label class="flex flex-col gap-1">
-              <span class="text-xs text-sub">Min</span>
-              <input
-                type="number"
-                min="1"
-                max="20"
-                class="w-20 rounded-md border border-border bg-background px-2 py-1"
-                [value]="min()"
-                (input)="min.set(+$any($event.target).value)"
-                [disabled]="fromManifest()"
-                data-testid="autoscaling-min"
-              />
-            </label>
-            <label class="flex flex-col gap-1">
-              <span class="text-xs text-sub">Max</span>
-              <input
-                type="number"
-                min="1"
-                max="20"
-                class="w-20 rounded-md border border-border bg-background px-2 py-1"
-                [value]="max()"
-                (input)="max.set(+$any($event.target).value)"
-                [disabled]="fromManifest()"
-                data-testid="autoscaling-max"
-              />
-            </label>
-            <label class="flex flex-col gap-1">
-              <span class="text-xs text-sub">Add one above CPU %</span>
-              <input
-                type="number"
-                min="10"
-                max="95"
-                class="w-20 rounded-md border border-border bg-background px-2 py-1"
-                [value]="cpu()"
-                (input)="cpu.set(+$any($event.target).value)"
-                data-testid="autoscaling-cpu"
-              />
-            </label>
-          </div>
         }
+      </ng-container>
 
-        @if (fromManifest()) {
-          <p class="m-0 text-xs text-sub" data-testid="autoscaling-manifest">
-            The range comes from this app's flui.yaml (deploy.scaling): change it there and deploy.
-          </p>
-        }
+      @if (failed(); as f) {
+        <div class="p-4">
+          <fl-alert tone="error" [title]="f" />
+        </div>
+      } @else if (current()) {
+        <div class="flex flex-col gap-4 p-4">
+          <fieldset class="fl-fieldset" [disabled]="fromManifest()">
+            <legend class="fl-sr">Replica count</legend>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label class="fl-radiocard">
+                <input
+                  type="radio"
+                  [name]="uid"
+                  [checked]="!enabled()"
+                  (change)="enabled.set(false)"
+                />
+                <span class="fl-radiocard__text">
+                  <span class="fl-radiocard__title">Fixed count</span>
+                  <span class="fl-radiocard__desc">Keeps the replica count you set.</span>
+                </span>
+              </label>
+              <label class="fl-radiocard">
+                <input
+                  type="radio"
+                  [name]="uid"
+                  [checked]="enabled()"
+                  (change)="enabled.set($any($event.target).checked)"
+                  data-testid="autoscaling-enabled"
+                />
+                <span class="fl-radiocard__text">
+                  <span class="fl-radiocard__title">Follow the load</span>
+                  <span class="fl-radiocard__desc">Adds and removes replicas with CPU use.</span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
 
-        <div class="flex items-center gap-3">
+          @if (enabled()) {
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <fl-field label="Minimum replicas" [for]="uid + '-min'" hint="1 to 20">
+                <div class="fl-input fl-input--lg">
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    [id]="uid + '-min'"
+                    [value]="min()"
+                    (input)="min.set(+$any($event.target).value)"
+                    [disabled]="fromManifest()"
+                    data-testid="autoscaling-min"
+                  />
+                </div>
+              </fl-field>
+              <fl-field label="Maximum replicas" [for]="uid + '-max'" hint="Above the minimum">
+                <div class="fl-input fl-input--lg">
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    [id]="uid + '-max'"
+                    [value]="max()"
+                    (input)="max.set(+$any($event.target).value)"
+                    [disabled]="fromManifest()"
+                    data-testid="autoscaling-max"
+                  />
+                </div>
+              </fl-field>
+              <fl-field
+                label="Add a replica above CPU"
+                [for]="uid + '-cpu'"
+                hint="Percent, 10 to 95"
+              >
+                <div class="fl-input fl-input--lg">
+                  <input
+                    type="number"
+                    min="10"
+                    max="95"
+                    [id]="uid + '-cpu'"
+                    [value]="cpu()"
+                    (input)="cpu.set(+$any($event.target).value)"
+                    data-testid="autoscaling-cpu"
+                  />
+                </div>
+              </fl-field>
+            </div>
+          }
+
+          @if (fromManifest()) {
+            <fl-alert tone="info" title="Range set in flui.yaml" data-testid="autoscaling-manifest">
+              Change deploy.scaling in this app's flui.yaml, then deploy.
+            </fl-alert>
+          }
+
           @if (problem(); as p) {
-            <span class="text-xs text-red-600" data-testid="autoscaling-problem">{{ p }}</span>
+            <fl-alert tone="error" title="Range not valid" data-testid="autoscaling-problem">{{
+              p
+            }}</fl-alert>
+          }
+        </div>
+
+        <div
+          class="flex flex-wrap items-center justify-end gap-2 border-t border-fl-border bg-fl-surface-subtle px-4 py-3"
+        >
+          @if (dirty()) {
+            <button flButton="ghost" type="button" [disabled]="saving()" (click)="reset()">
+              Cancel
+            </button>
           }
           <button
+            flButton="primary"
             type="button"
-            class="ml-auto rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-40"
             [disabled]="!!problem() || !dirty() || saving()"
             (click)="save()"
             data-testid="autoscaling-save"
@@ -117,7 +165,7 @@ import { AppAutoscaling, AppRuntimeService } from '../../service/app-runtime.ser
           </button>
         </div>
       }
-    </div>
+    </fl-panel>
   `,
 })
 export class AppAutoscalingCardComponent {
@@ -125,6 +173,8 @@ export class AppAutoscalingCardComponent {
   private readonly toast = inject(ToastService);
 
   readonly appId = input<string | null>(null);
+
+  protected readonly uid = `autoscaling-${nextId++}`;
 
   protected readonly current = signal<AppAutoscaling | null>(null);
   protected readonly failed = signal<string | null>(null);
@@ -167,6 +217,11 @@ export class AppAutoscalingCardComponent {
     } catch {
       this.failed.set('Autoscaling could not be read.');
     }
+  }
+
+  protected reset(): void {
+    const c = this.current();
+    if (c) this.show(c);
   }
 
   private show(a: AppAutoscaling): void {

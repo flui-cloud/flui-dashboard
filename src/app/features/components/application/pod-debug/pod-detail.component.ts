@@ -1,374 +1,177 @@
-import { Component, Input, output, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideActivity,
-  lucideTerminal,
-  lucideHardDrive,
-  lucideSettings,
-  lucideNetwork,
-  lucideTriangleAlert,
-  lucideExternalLink,
-} from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
-import { ContainerDebugInfo, PodDebugInfo } from '../../../model/pod-debug.models';
+import { Component, computed, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink } from '@ng-icons/lucide';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../../ui/patterns/key-value';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlTable } from '../../../../ui/patterns/table';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../../ui/primitives/status';
+import { ContainerDebugInfo, PodDebugInfo, Probe } from '../../../model/pod-debug.models';
+import { K8sEventsTable } from '../k8s-events-table';
+import { PodContainer, containerStateSummary, probeSummary } from './pod-container';
 
 @Component({
   selector: 'app-pod-detail',
-  standalone: true,
-  imports: [CommonModule, NgIcon, HlmButtonDirective],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideActivity,
-      lucideTerminal,
-      lucideHardDrive,
-      lucideSettings,
-      lucideNetwork,
-      lucideTriangleAlert,
-      lucideExternalLink,
-    }),
+  imports: [
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlAlert,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    K8sEventsTable,
+    PodContainer,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideExternalLink })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="border border-gray-200 border-t-0 rounded-b-lg bg-gray-50/60 -mt-2 p-4 space-y-6">
-      <!-- Metadata + diagnosis link -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div class="bg-white border rounded-lg p-3 text-xs space-y-1">
-          <p class="text-gray-500 font-medium">Metadata</p>
-          <p>
-            <span class="text-gray-500">UID:</span>
-            <span class="font-mono break-all">{{ pod.uid }}</span>
-          </p>
-          <p>
-            <span class="text-gray-500">Namespace:</span>
-            <span class="font-mono">{{ pod.namespace }}</span>
-          </p>
-          @if (pod.qosClass) {
-            <p><span class="text-gray-500">QoS:</span> {{ pod.qosClass }}</p>
+    @let p = pod();
+    <fl-panel [title]="p.name">
+      <div class="flex flex-col gap-5">
+        @if (p.latestDiagnosisId) {
+          <fl-alert tone="warning" title="A diagnosis is available for this pod">
+            <button
+              alertActions
+              flButton
+              size="sm"
+              type="button"
+              (click)="openDiagnosis.emit(p.latestDiagnosisId!)"
+            >
+              <fl-icon name="lucideExternalLink" />
+              Open diagnosis
+            </button>
+          </fl-alert>
+        }
+        <fl-key-value>
+          <fl-kv-item key="Namespace" [mono]="true">{{ p.namespace }}</fl-kv-item>
+          <fl-kv-item key="UID" [mono]="true">{{ p.uid }}</fl-kv-item>
+          @if (p.qosClass) {
+            <fl-kv-item key="QoS class">{{ p.qosClass }}</fl-kv-item>
           }
-          @if (pod.creationTimestamp) {
-            <p>
-              <span class="text-gray-500">Created:</span> {{ formatDate(pod.creationTimestamp) }}
-            </p>
+          @if (p.creationTimestamp) {
+            <fl-kv-item key="Created">{{ formatDate(p.creationTimestamp) }}</fl-kv-item>
           }
-        </div>
-        <div class="bg-white border rounded-lg p-3 text-xs space-y-1">
-          <p class="text-gray-500 font-medium">Network</p>
-          <p>
-            <span class="text-gray-500">Pod IP:</span>
-            <span class="font-mono">{{ pod.podIP ?? '—' }}</span>
-          </p>
-          <p>
-            <span class="text-gray-500">Host IP:</span>
-            <span class="font-mono">{{ pod.hostIP ?? '—' }}</span>
-          </p>
-          <p>
-            <span class="text-gray-500">Node:</span>
-            <span class="font-mono">{{ pod.nodeName ?? '—' }}</span>
-          </p>
-        </div>
+          <fl-kv-item key="Pod IP" [mono]="true">{{ p.podIP ?? '—' }}</fl-kv-item>
+          <fl-kv-item key="Host IP" [mono]="true">{{ p.hostIP ?? '—' }}</fl-kv-item>
+          <fl-kv-item key="Node" [mono]="true">{{ p.nodeName ?? '—' }}</fl-kv-item>
+        </fl-key-value>
       </div>
+    </fl-panel>
 
-      @if (pod.latestDiagnosisId) {
-        <div
-          class="flex items-center justify-between gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3"
-        >
-          <div class="flex items-start gap-2 text-sm text-orange-800 min-w-0">
-            <ng-icon name="lucideTriangleAlert" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>A diagnosis is available for this pod.</span>
-          </div>
-          <button
-            hlmBtn
-            size="sm"
-            variant="outline"
-            (click)="openDiagnosis.emit(pod.latestDiagnosisId!)"
-          >
-            <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 mr-2" />
-            Open diagnosis
-          </button>
-        </div>
-      }
-
-      <!-- Conditions -->
-      @if (pod.conditions.length) {
-        <details open>
-          <summary class="cursor-pointer text-sm font-medium text-gray-900 select-none">
-            Conditions
-          </summary>
-          <div class="mt-2 overflow-x-auto">
-            <table class="w-full text-xs">
-              <thead class="text-left text-gray-500">
-                <tr>
-                  <th class="py-2 pr-3 font-medium">Type</th>
-                  <th class="py-2 pr-3 font-medium">Status</th>
-                  <th class="py-2 pr-3 font-medium">Reason</th>
-                  <th class="py-2 font-medium">Message</th>
+    @if (p.conditions.length) {
+      <fl-panel title="Conditions" [flush]="true">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col" class="is-fit">Type</th>
+                <th scope="col" class="is-fit">Status</th>
+                <th scope="col" class="is-fit">Reason</th>
+                <th scope="col">Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of p.conditions; track c.type) {
+                <tr class="align-top">
+                  <td class="fl-mono">{{ c.type }}</td>
+                  <td><fl-status [tone]="conditionTone(c.status)" [label]="c.status" /></td>
+                  <td class="fl-mono">{{ c.reason ?? '—' }}</td>
+                  <td class="whitespace-normal break-words">{{ c.message ?? '—' }}</td>
                 </tr>
-              </thead>
-              <tbody>
-                @for (c of pod.conditions; track c.type) {
-                  <tr class="border-t border-gray-100 align-top">
-                    <td class="py-2 pr-3 font-mono">{{ c.type }}</td>
-                    <td class="py-2 pr-3">
-                      <span
-                        class="px-1.5 py-0.5 rounded font-medium"
-                        [ngClass]="
-                          c.status === 'True'
-                            ? 'bg-green-100 text-green-800'
-                            : c.status === 'False'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-700'
-                        "
-                      >
-                        {{ c.status }}
-                      </span>
-                    </td>
-                    <td class="py-2 pr-3 font-mono">{{ c.reason ?? '—' }}</td>
-                    <td class="py-2 break-words max-w-md">{{ c.message ?? '—' }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </details>
-      }
-
-      <!-- Containers -->
-      @if (pod.containers.length) {
-        <div class="space-y-3">
-          <p class="text-sm font-medium text-gray-900">Containers</p>
-          @for (c of pod.containers; track c.name) {
-            <div class="bg-white border rounded-lg p-3 text-xs space-y-3">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-mono font-semibold text-gray-900">{{ c.name }}</span>
-                <span
-                  class="px-1.5 py-0.5 rounded font-medium"
-                  [ngClass]="c.ready ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                >
-                  {{ c.ready ? 'ready' : 'not ready' }}
-                </span>
-                <span class="text-gray-500">restarts: {{ c.restartCount }}</span>
-              </div>
-              <p class="font-mono text-gray-600 break-all">
-                {{ c.image }}
-              </p>
-
-              <!-- State -->
-              <div>
-                <p class="text-gray-500 font-medium mb-1">State</p>
-                <p>{{ stateSummary(c) }}</p>
-              </div>
-
-              <!-- Resources -->
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <p class="text-gray-500">Requests</p>
-                  <p class="font-mono">
-                    {{ c.requests.cpu ?? '—' }} · {{ c.requests.memory ?? '—' }}
-                  </p>
-                </div>
-                <div>
-                  <p class="text-gray-500">Limits</p>
-                  <p class="font-mono">{{ c.limits.cpu ?? '—' }} · {{ c.limits.memory ?? '—' }}</p>
-                </div>
-              </div>
-
-              <!-- Probes -->
-              @if (c.readinessProbe || c.livenessProbe || c.startupProbe) {
-                <div class="space-y-1">
-                  <p class="text-gray-500 font-medium">Probes</p>
-                  @if (c.readinessProbe) {
-                    <p>
-                      readiness: <span class="font-mono">{{ probeSummary(c.readinessProbe) }}</span>
-                    </p>
-                  }
-                  @if (c.livenessProbe) {
-                    <p>
-                      liveness: <span class="font-mono">{{ probeSummary(c.livenessProbe) }}</span>
-                    </p>
-                  }
-                  @if (c.startupProbe) {
-                    <p>
-                      startup: <span class="font-mono">{{ probeSummary(c.startupProbe) }}</span>
-                    </p>
-                  }
-                </div>
               }
+            </tbody>
+          </table>
+        </div>
+      </fl-panel>
+    }
 
-              <!-- Env -->
-              @if (c.env.length) {
-                <details>
-                  <summary class="cursor-pointer text-gray-500 font-medium select-none">
-                    Env variables ({{ c.env.length }})
-                  </summary>
-                  <ul class="mt-1 space-y-1">
-                    @for (e of c.env; track e.name) {
-                      <li class="flex items-start gap-2">
-                        <span class="font-mono text-gray-800 break-all">{{ e.name }}</span>
-                        @if (e.valueFrom) {
-                          <span class="text-gray-500">
-                            ← {{ e.valueFrom.kind }}
-                            <span class="font-mono"
-                              >{{ e.valueFrom.name }}.{{ e.valueFrom.key }}</span
-                            >
-                          </span>
-                          @if (e.valueFrom.exists === false) {
-                            <span class="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-700">
-                              missing resource
-                            </span>
-                          }
-                        } @else if (e.value != null) {
-                          <span class="text-gray-500"
-                            >= <span class="font-mono">{{ e.value }}</span></span
-                          >
-                        }
-                      </li>
-                    }
-                  </ul>
-                </details>
-              }
-            </div>
+    @if (p.containers.length) {
+      <fl-panel title="Containers" [count]="p.containers.length">
+        <div class="flex flex-col gap-5">
+          @for (c of p.containers; track c.name) {
+            <app-pod-container
+              [container]="c"
+              [class.border-t]="!$first"
+              [class.border-fl-border-subtle]="!$first"
+              [class.pt-5]="!$first"
+            />
           }
         </div>
-      }
+      </fl-panel>
+    }
 
-      <!-- Volumes -->
-      @if (pod.volumes.length) {
-        <details>
-          <summary class="cursor-pointer text-sm font-medium text-gray-900 select-none">
-            Volumes
-          </summary>
-          <ul class="mt-2 space-y-1 text-xs">
-            @for (v of pod.volumes; track v.name) {
-              <li class="flex items-start gap-2">
-                <span class="font-mono text-gray-800">{{ v.name }}</span>
-                <span class="text-gray-500"
-                  >({{ v.kind }}
-                  @if (v.resourceName) {
-                    : <span class="font-mono">{{ v.resourceName }}</span>
-                  }
-                  )</span
-                >
-                @if (v.exists === false) {
-                  <span class="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-700">
-                    missing resource
-                  </span>
-                }
-              </li>
-            }
-          </ul>
-        </details>
-      }
-
-      <!-- Events -->
-      @if (pod.events.length) {
-        <details>
-          <summary class="cursor-pointer text-sm font-medium text-gray-900 select-none">
-            Events ({{ pod.events.length }})
-          </summary>
-          <div class="mt-2 overflow-x-auto">
-            <table class="w-full text-xs">
-              <thead class="text-left text-gray-500">
+    @if (p.volumes.length) {
+      <fl-panel title="Volumes" [count]="p.volumes.length" [flush]="true">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col" class="is-fit">Kind</th>
+                <th scope="col">Resource</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">State</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (v of p.volumes; track v.name) {
                 <tr>
-                  <th class="py-2 pr-3 font-medium">Type</th>
-                  <th class="py-2 pr-3 font-medium">Reason</th>
-                  <th class="py-2 pr-3 font-medium">Message</th>
-                  <th class="py-2 pr-3 font-medium">Count</th>
-                  <th class="py-2 font-medium">Last</th>
+                  <td class="fl-mono">{{ v.name }}</td>
+                  <td>{{ v.kind }}</td>
+                  <td class="fl-mono">{{ v.resourceName ?? '—' }}</td>
+                  <td>
+                    @if (v.exists === false) {
+                      <fl-status tone="error" label="Missing resource" />
+                    }
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                @for (ev of sortedEvents(); track $index) {
-                  <tr class="border-t border-gray-100 align-top">
-                    <td class="py-2 pr-3">
-                      <span
-                        class="px-1.5 py-0.5 rounded font-medium"
-                        [ngClass]="
-                          ev.type === 'Warning'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-700'
-                        "
-                      >
-                        {{ ev.type }}
-                      </span>
-                    </td>
-                    <td class="py-2 pr-3 font-mono">{{ ev.reason }}</td>
-                    <td class="py-2 pr-3 break-words max-w-sm">{{ ev.message }}</td>
-                    <td class="py-2 pr-3 tabular-nums">
-                      {{ ev.count }}
-                      @if (ev.count > 10) {
-                        <span class="ml-1 text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-700"
-                          >repeated</span
-                        >
-                      }
-                    </td>
-                    <td class="py-2 text-gray-500">
-                      {{ ev.lastTimestamp ? formatDate(ev.lastTimestamp) : '—' }}
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </details>
-      }
+              }
+            </tbody>
+          </table>
+        </div>
+      </fl-panel>
+    }
 
-      <!-- Scheduling -->
-      @if (hasScheduling()) {
-        <details>
-          <summary class="cursor-pointer text-sm font-medium text-gray-900 select-none">
-            Scheduling
-          </summary>
-          <pre
-            class="mt-2 p-3 rounded-lg bg-gray-900 text-gray-100 text-xs font-mono overflow-x-auto"
-            >{{ schedulingJson() }}</pre>
-        </details>
-      }
-    </div>
+    @if (p.events.length) {
+      <fl-panel title="Events" [count]="p.events.length" [flush]="true">
+        <app-k8s-events-table [events]="events()" />
+      </fl-panel>
+    }
+
+    @if (hasScheduling()) {
+      <fl-panel title="Scheduling">
+        <pre
+          class="fl-mono m-0 overflow-x-auto rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3 text-fl-ink"
+          >{{ schedulingJson() }}</pre>
+      </fl-panel>
+    }
   `,
 })
 export class PodDetailComponent {
-  @Input({ required: true }) pod!: PodDebugInfo;
+  readonly pod = input.required<PodDebugInfo>();
   readonly openDiagnosis = output<string>();
 
+  protected readonly events = computed(() => this.sortedEvents());
+
   stateSummary(c: ContainerDebugInfo): string {
-    if (c.state.running) {
-      const since = c.state.running.startedAt
-        ? ' since ' + this.formatDate(c.state.running.startedAt)
-        : '';
-      return `running${since}`;
-    }
-    if (c.state.waiting) {
-      const reason = c.state.waiting.reason ?? 'waiting';
-      return c.state.waiting.message ? `${reason} — ${c.state.waiting.message}` : reason;
-    }
-    if (c.state.terminated) {
-      const t = c.state.terminated;
-      const parts = [`terminated (${t.reason ?? '—'})`];
-      if (t.exitCode != null) parts.push(`exit ${t.exitCode}`);
-      if (t.message) parts.push(t.message);
-      return parts.join(' · ');
-    }
-    return 'unknown';
+    return containerStateSummary(c);
   }
 
-  probeSummary(p: {
-    type?: string | null;
-    path?: string;
-    port?: number | string;
-    command?: string[];
-  }): string {
-    if (!p?.type) return '—';
-    if (p.type === 'http') return `HTTP ${p.path ?? '/'} :${p.port ?? ''}`;
-    if (p.type === 'tcp') return `TCP :${p.port ?? ''}`;
-    if (p.type === 'exec') return `exec ${(p.command ?? []).join(' ')}`;
-    return p.type;
+  probeSummary(p: Probe): string {
+    return probeSummary(p);
+  }
+
+  conditionTone(status: string): StatusTone {
+    if (status === 'True') return 'success';
+    if (status === 'False') return 'error';
+    return 'neutral';
   }
 
   sortedEvents() {
-    return [...this.pod.events].sort((a, b) => {
+    return [...this.pod().events].sort((a, b) => {
       const ta = a.lastTimestamp ? new Date(a.lastTimestamp).getTime() : 0;
       const tb = b.lastTimestamp ? new Date(b.lastTimestamp).getTime() : 0;
       return tb - ta;
@@ -376,12 +179,12 @@ export class PodDetailComponent {
   }
 
   hasScheduling(): boolean {
-    const s = this.pod.scheduling ?? {};
+    const s = this.pod().scheduling ?? {};
     return !!(s.nodeSelector || s.tolerations?.length || s.affinity);
   }
 
   schedulingJson(): string {
-    return JSON.stringify(this.pod.scheduling ?? {}, null, 2);
+    return JSON.stringify(this.pod().scheduling ?? {}, null, 2);
   }
 
   formatDate(iso: string): string {

@@ -1,125 +1,182 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideMessagesSquare } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationService } from '../../service/application.service';
 import { AppMessaging, AppMessagingService, QueueView } from '../../service/app-messaging.service';
 import { consoleError } from '../database-console/search-format';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
 
 @Component({
   selector: 'app-messaging-tab',
-  standalone: true,
-  imports: [NgIconComponent, FormsModule],
-  providers: [provideIcons({ lucideMessagesSquare })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    FormsModule,
+    FlPanel,
+    FlTable,
+    FlAlert,
+    FlField,
+    FlCopyId,
+    FlKeyValue,
+    FlKvItem,
+    FlEmptyState,
+    FlStatus,
+    FlButton,
+    FlActionsMenu,
+  ],
+  host: { class: 'fl-stack' },
   template: `
-    <section class="rounded-fl-lg border border-border bg-card p-5" data-testid="messaging">
-      <h2 class="flex items-center gap-2 text-base font-semibold text-foreground">
-        <ng-icon name="lucideMessagesSquare" class="h-4 w-4" /> Messaging
-      </h2>
-      @if (error()) {
-        <p class="mt-2 text-sm text-destructive">{{ error() }}</p>
+    <fl-panel title="Messaging" data-testid="messaging">
+      @if (state()?.connected) {
+        <button
+          panelActions
+          flButton
+          size="sm"
+          type="button"
+          [disabled]="busy()"
+          (click)="disconnect()"
+        >
+          Disconnect
+        </button>
       }
-      @if (state(); as s) {
-        @if (s.connected) {
-          <dl class="mt-3 grid gap-1 text-sm sm:grid-cols-[8rem_1fr]">
-            <dt class="text-muted-foreground">Address</dt>
-            <dd class="font-mono text-foreground">{{ s.url }}</dd>
-            <dt class="text-muted-foreground">Variables</dt>
-            <dd class="font-mono text-foreground">NATS_URL, NATS_CREDS</dd>
-          </dl>
-          <div class="mt-5" data-testid="queues">
-            <h3 class="text-sm font-semibold text-foreground">Queues</h3>
-            @if (queues().length === 0) {
-              <p class="mt-1 text-sm text-muted-foreground">No queues yet.</p>
-            } @else {
-              <table class="mt-2 w-full text-sm">
-                <thead class="text-left text-xs text-muted-foreground">
+      <div class="flex flex-col gap-4">
+        @if (error()) {
+          <fl-alert tone="error" title="Request failed">{{ error() }}</fl-alert>
+        }
+        @if (state(); as s) {
+          @if (s.connected) {
+            <fl-status tone="success" label="Connected" />
+            <fl-key-value>
+              <fl-kv-item key="Address">
+                @if (s.url) {
+                  <fl-copy-id [value]="s.url" label="address" />
+                } @else {
+                  —
+                }
+              </fl-kv-item>
+              <fl-kv-item key="Variables" [mono]="true">NATS_URL, NATS_CREDS</fl-kv-item>
+            </fl-key-value>
+          } @else {
+            <fl-status tone="neutral" label="Not connected" />
+            <p class="text-fl-body-sm text-fl-ink-muted">
+              Give this app its own account on the cluster's NATS, with queues and streams no other
+              app can see. It receives NATS_URL and NATS_CREDS and is redeployed.
+            </p>
+            <div>
+              <button flButton="primary" type="button" [disabled]="busy()" (click)="connect()">
+                Connect
+              </button>
+            </div>
+          }
+        }
+      </div>
+    </fl-panel>
+
+    @if (state()?.connected) {
+      <fl-panel title="Queues" [count]="queues().length" [flush]="true" data-testid="queues">
+        @if (queues().length === 0) {
+          <fl-empty-state [compact]="true" title="No queues yet" />
+        } @else {
+          <div class="fl-table-wrap">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col" class="is-num">Waiting</th>
+                  <th scope="col" class="is-num">In flight</th>
+                  <th scope="col" class="is-num">Given up</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (q of queues(); track q.name) {
                   <tr>
-                    <th class="py-1">Name</th>
-                    <th>Waiting</th>
-                    <th>In flight</th>
-                    <th>Given up</th>
-                    <th></th>
+                    <td class="fl-mono">{{ q.name }}</td>
+                    <td class="is-num">{{ q.waiting }}</td>
+                    <td class="is-num">{{ q.inFlight }}</td>
+                    <td class="is-num">{{ q.deadLetters ?? '—' }}</td>
+                    <td class="is-fit">
+                      <fl-actions-menu
+                        label="Queue actions"
+                        [compact]="true"
+                        [items]="queueActions()"
+                        (action)="deleteQueue(q.name)"
+                      />
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  @for (q of queues(); track q.name) {
-                    <tr class="border-t border-border">
-                      <td class="py-1 font-mono">{{ q.name }}</td>
-                      <td>{{ q.waiting }}</td>
-                      <td>{{ q.inFlight }}</td>
-                      <td>{{ q.deadLetters ?? '—' }}</td>
-                      <td class="text-right">
-                        <button
-                          type="button"
-                          class="text-xs font-medium text-destructive underline underline-offset-2 disabled:opacity-50"
-                          [disabled]="busy()"
-                          (click)="deleteQueue(q.name)"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            }
-            <form class="mt-3 flex flex-wrap items-center gap-2" (ngSubmit)="createQueue()">
-              <input
-                class="rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
-                name="qname"
-                placeholder="ORDERS"
-                [(ngModel)]="queueName"
-                required
-              />
-              <button
-                type="submit"
-                class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-                [disabled]="busy() || !queueName"
-              >
-                Add queue
-              </button>
-              <span class="text-xs text-muted-foreground"
-                >Kept 7 days, 5 deliveries, failed messages kept apart.</span
-              >
-            </form>
+                }
+              </tbody>
+            </table>
           </div>
-          <div class="mt-5" data-testid="queue-scaling">
-            <h3 class="text-sm font-semibold text-foreground">Scale on a queue</h3>
-            @if (s.queueScaling; as qs) {
-              <p class="mt-1 text-sm text-foreground">
-                One replica for every {{ qs.lagThreshold }} messages waiting in
-                <span class="font-mono">{{ qs.stream }}</span>, between {{ qs.min }} and
-                {{ qs.max }}.{{ qs.min === 0 ? ' The app stops while the queue is empty.' : '' }}
+        }
+        <form class="flex flex-col gap-2 border-t border-fl-border p-4" (ngSubmit)="createQueue()">
+          <div class="flex flex-wrap items-end gap-3">
+            <fl-field label="New queue" for="messaging-queue-name">
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="messaging-queue-name"
+                  class="fl-mono"
+                  name="qname"
+                  placeholder="ORDERS"
+                  [(ngModel)]="queueName"
+                  required
+                />
+              </div>
+            </fl-field>
+            <button flButton="primary" type="submit" [disabled]="busy() || !queueName">
+              Add queue
+            </button>
+          </div>
+          <p class="text-fl-caption text-fl-ink-muted">
+            Kept 7 days, 5 deliveries, failed messages kept apart.
+          </p>
+        </form>
+      </fl-panel>
+
+      <fl-panel title="Scale on a queue" data-testid="queue-scaling">
+        @if (state()?.queueScaling) {
+          <button
+            panelActions
+            flButton
+            size="sm"
+            type="button"
+            [disabled]="busy()"
+            (click)="stopScaling()"
+          >
+            Stop scaling
+          </button>
+        }
+        @if (state()?.queueScaling; as qs) {
+          <div class="flex flex-col gap-4">
+            <fl-status tone="success" label="Scaling on the queue" />
+            <fl-key-value>
+              <fl-kv-item key="Queue" [mono]="true">{{ qs.stream }}</fl-kv-item>
+              <fl-kv-item key="Per replica">{{ qs.lagThreshold }} messages waiting</fl-kv-item>
+              <fl-kv-item key="Replicas">{{ qs.min }} to {{ qs.max }}</fl-kv-item>
+            </fl-key-value>
+            @if (qs.min === 0) {
+              <p class="text-fl-body-sm text-fl-ink-muted">
+                The app stops while the queue is empty.
               </p>
-              <button
-                type="button"
-                class="mt-2 rounded-md border border-border px-4 py-2 text-sm font-medium disabled:opacity-50"
-                [disabled]="busy()"
-                (click)="stopScaling()"
-              >
-                Stop scaling on the queue
-              </button>
-            } @else if (queues().length === 0) {
-              <p class="mt-1 text-sm text-muted-foreground">Add a queue first.</p>
-            } @else {
-              <form
-                class="mt-2 grid gap-2 sm:grid-cols-[1fr_6rem_5rem_5rem_auto] sm:items-end"
-                (ngSubmit)="scale()"
-              >
-                <label class="text-xs text-muted-foreground"
-                  >Queue
+            }
+          </div>
+        } @else if (queues().length === 0) {
+          <p class="text-fl-body-sm text-fl-ink-muted">Add a queue first.</p>
+        } @else {
+          <form class="flex flex-col gap-4" (ngSubmit)="scale()">
+            <div class="grid gap-3 sm:grid-cols-4">
+              <fl-field label="Queue" for="messaging-scale-queue">
+                <span class="fl-select-wrap">
                   <select
-                    class="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
+                    id="messaging-scale-queue"
+                    class="fl-select fl-mono"
                     name="sq"
                     [(ngModel)]="scaleQueue"
                     required
@@ -128,75 +185,55 @@ import { consoleError } from '../database-console/search-format';
                       <option [value]="q.name">{{ q.name }}</option>
                     }
                   </select>
-                </label>
-                <label class="text-xs text-muted-foreground"
-                  >Per replica
+                </span>
+              </fl-field>
+              <fl-field label="Per replica" for="messaging-scale-lag">
+                <div class="fl-input fl-input--lg">
                   <input
-                    class="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    id="messaging-scale-lag"
                     name="lag"
                     type="number"
                     min="1"
                     [(ngModel)]="scaleLag"
                   />
-                </label>
-                <label class="text-xs text-muted-foreground"
-                  >Min
+                </div>
+              </fl-field>
+              <fl-field label="Min" for="messaging-scale-min">
+                <div class="fl-input fl-input--lg">
                   <input
-                    class="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    id="messaging-scale-min"
                     name="min"
                     type="number"
                     min="0"
                     [(ngModel)]="scaleMin"
                   />
-                </label>
-                <label class="text-xs text-muted-foreground"
-                  >Max
+                </div>
+              </fl-field>
+              <fl-field label="Max" for="messaging-scale-max">
+                <div class="fl-input fl-input--lg">
                   <input
-                    class="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    id="messaging-scale-max"
                     name="max"
                     type="number"
                     min="1"
                     [(ngModel)]="scaleMax"
                   />
-                </label>
-                <button
-                  type="submit"
-                  class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-                  [disabled]="busy() || !scaleQueue"
-                >
-                  Scale
-                </button>
-              </form>
-              <p class="mt-1 text-xs text-muted-foreground">
-                With Min at 0 the app stops while the queue is empty and starts when a message
-                arrives.
-              </p>
-            }
-          </div>
-          <button
-            type="button"
-            class="mt-5 rounded-md border border-border px-4 py-2 text-sm font-medium disabled:opacity-50"
-            [disabled]="busy()"
-            (click)="disconnect()"
-          >
-            Disconnect
-          </button>
-        } @else {
-          <p class="mt-1 text-sm text-muted-foreground">
-            Give this app its own account on the cluster's NATS, with queues and streams no other
-            app can see. It receives NATS_URL and NATS_CREDS and is redeployed.
-          </p>
-          <button
-            type="button"
-            class="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-            [disabled]="busy()"
-            (click)="connect()"
-          >
-            Connect
-          </button>
+                </div>
+              </fl-field>
+            </div>
+            <p class="text-fl-body-sm text-fl-ink-muted">
+              With Min at 0 the app stops while the queue is empty and starts when a message
+              arrives.
+            </p>
+            <div>
+              <button flButton size="sm" type="submit" [disabled]="busy() || !scaleQueue">
+                Scale
+              </button>
+            </div>
+          </form>
         }
-      }
-    </section>
+      </fl-panel>
+    }
   `,
 })
 export class AppMessagingTabComponent {
@@ -213,6 +250,9 @@ export class AppMessagingTabComponent {
   scaleMax = 5;
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
+  readonly queueActions = computed<MenuAction[]>(() => [
+    { id: 'delete', label: 'Delete queue', danger: true, disabled: this.busy() },
+  ]);
 
   constructor() {
     effect(() => {

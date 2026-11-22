@@ -1,9 +1,10 @@
-import { Component, output, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, output, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { FlButton } from '../../../ui/primitives/button';
 
 export interface LogDateRange {
-  start: string; // ISO 8601
-  end: string; // ISO 8601
+  start: string;
+  end: string;
 }
 
 function todayLocal(): string {
@@ -15,69 +16,59 @@ function todayLocal(): string {
 @Component({
   selector: 'app-log-date-range-picker',
   standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, FlButton],
   template: `
-    <div class="flex flex-col gap-4 p-4 w-full">
-      <!-- Start -->
-      <div class="flex flex-col gap-1.5">
-        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Start</span>
+    <div class="flex w-full flex-col gap-4 p-4">
+      <fieldset class="fl-fieldset">
+        <legend>Start</legend>
         <div class="flex gap-2">
-          <input
-            type="date"
-            [ngModel]="startDate()"
-            (ngModelChange)="startDate.set($event)"
-            class="flex-1 px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-          <input
-            type="time"
-            step="1"
-            [ngModel]="startTime()"
-            (ngModelChange)="startTime.set($event)"
-            class="w-28 px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+          <label class="fl-input flex-1">
+            <span class="fl-sr">Start date</span>
+            <input type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" />
+          </label>
+          <label class="fl-input w-32">
+            <span class="fl-sr">Start time</span>
+            <input
+              type="time"
+              step="1"
+              [ngModel]="startTime()"
+              (ngModelChange)="startTime.set($event)"
+            />
+          </label>
         </div>
-      </div>
+      </fieldset>
 
-      <!-- End -->
-      <div class="flex flex-col gap-1.5">
-        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">End</span>
+      <fieldset class="fl-fieldset">
+        <legend>End</legend>
         <div class="flex gap-2">
-          <input
-            type="date"
-            [ngModel]="endDate()"
-            (ngModelChange)="endDate.set($event)"
-            class="flex-1 px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-          <input
-            type="time"
-            step="1"
-            [ngModel]="endTime()"
-            (ngModelChange)="endTime.set($event)"
-            class="w-28 px-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+          <label class="fl-input flex-1">
+            <span class="fl-sr">End date</span>
+            <input type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" />
+          </label>
+          <label class="fl-input w-32">
+            <span class="fl-sr">End time</span>
+            <input
+              type="time"
+              step="1"
+              [ngModel]="endTime()"
+              (ngModelChange)="endTime.set($event)"
+            />
+          </label>
         </div>
-      </div>
+      </fieldset>
 
-      <!-- Validation hint -->
       @if (validationError()) {
-        <p class="text-xs text-red-500">{{ validationError() }}</p>
+        <p class="fl-field__error" role="alert">{{ validationError() }}</p>
       }
 
-      <!-- Actions -->
-      <div class="flex justify-end gap-2 pt-1 border-t border-gray-100">
+      <div class="flex justify-end gap-2 border-t border-fl-border-subtle pt-3">
+        <button flButton size="sm" type="button" (click)="cancelled.emit()">Cancel</button>
         <button
-          type="button"
-          (click)="cancelled.emit()"
-          class="px-3 py-1.5 text-xs rounded border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          Cancel
-        </button>
-        <button
+          flButton="primary"
+          size="sm"
           type="button"
           (click)="applyRange()"
           [disabled]="!canApply()"
-          class="px-3 py-1.5 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           Apply
         </button>

@@ -1,17 +1,14 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { BackupsService } from '../../../core/api/api/backups.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
 import { DecisionSource, decisionPanel } from './app-backup-decision';
+import { coverageReasonState } from './backup-protection-state';
 
 /**
  * The top of the Backup tab while an app holding data is not protected: why,
@@ -19,115 +16,108 @@ import { DecisionSource, decisionPanel } from './app-backup-decision';
  */
 @Component({
   selector: 'app-backup-decision',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, FlPanel, FlAlert, FlStatus, FlButton],
+  host: { class: 'block' },
   template: `
     @if (panel(); as p) {
-      <section
-        class="card-surface p-4 space-y-2 border"
-        [class]="p.state === 'unprotected' ? 'border-amber-200' : 'border-border'"
-        data-testid="backup-decision"
-      >
-        @if (p.state === 'unprotected') {
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0">
-              <h2 class="text-sm font-semibold">Not backed up</h2>
-              @if (p.why) {
-                <p class="text-xs text-muted-foreground" data-testid="backup-decision-why">
-                  {{ p.why }}
-                </p>
-              }
-            </div>
-            @if (!confirming()) {
-              <div class="flex shrink-0 flex-wrap gap-2">
-                @if (p.protectPath) {
-                  <button
-                    type="button"
-                    (click)="protect.emit()"
-                    class="px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                    data-testid="backup-decision-protect"
-                  >
-                    Protect
-                  </button>
-                }
-                <button
-                  type="button"
-                  (click)="confirming.set(true)"
-                  class="px-3 py-1.5 text-xs rounded-md border border-border hover:bg-muted"
-                  data-testid="backup-decision-skip"
-                >
-                  Don't back up this app
-                </button>
-              </div>
+      <fl-panel title="Backup protection" data-testid="backup-decision">
+        <div panelActions class="fl-row">
+          @if (p.state === 'unprotected' && !confirming()) {
+            @if (p.protectPath) {
+              <button
+                flButton="primary"
+                size="sm"
+                type="button"
+                (click)="protect.emit()"
+                data-testid="backup-decision-protect"
+              >
+                Protect
+              </button>
             }
-          </div>
-          @if (confirming()) {
-            <div class="flex flex-wrap items-center gap-2" data-testid="backup-decision-confirm">
-              <input
-                [ngModel]="note()"
-                (ngModelChange)="note.set($event)"
-                maxlength="500"
-                placeholder="Why (optional)"
-                aria-label="Why this app is not backed up"
-                class="h-8 min-w-0 flex-1 px-2 rounded-md border border-input bg-background text-xs"
-              />
-              <button
-                type="button"
-                (click)="decide(true)"
-                [disabled]="saving()"
-                class="px-3 py-1.5 text-xs font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
-                data-testid="backup-decision-confirm-skip"
-              >
-                {{ saving() ? 'Saving…' : "Don't back up" }}
-              </button>
-              <button
-                type="button"
-                (click)="cancel()"
-                class="px-3 py-1.5 text-xs rounded-md hover:bg-muted"
-              >
-                Cancel
-              </button>
-            </div>
-            <p class="text-xs text-muted-foreground">
-              Flui stops asking for a backup. Nothing already taken is deleted.
-            </p>
-          }
-        } @else {
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0 space-y-0.5">
-              <h2 class="text-sm font-semibold">Not backed up by choice</h2>
-              @if (p.note) {
-                <p class="text-sm" data-testid="backup-decision-note">{{ p.note }}</p>
-              }
-              <p class="text-xs text-muted-foreground">{{ p.by }}</p>
-              @if (p.running.length) {
-                <p class="text-xs text-muted-foreground" data-testid="backup-decision-running">
-                  Still running:
-                  @for (pol of p.running; track pol.path; let last = $last) {
-                    <a [routerLink]="pol.path" class="text-primary hover:underline">{{
-                      pol.name
-                    }}</a>{{ last ? '' : ', ' }}
-                  }
-                  — pause it there if you want.
-                </p>
-              }
-            </div>
             <button
+              flButton
+              size="sm"
+              type="button"
+              (click)="confirming.set(true)"
+              data-testid="backup-decision-skip"
+            >
+              Don't back up this app
+            </button>
+          } @else if (p.state === 'decided') {
+            <button
+              flButton
+              size="sm"
               type="button"
               (click)="decide(false)"
               [disabled]="saving()"
-              class="shrink-0 px-3 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted disabled:opacity-50"
               data-testid="backup-decision-undo"
             >
               {{ saving() ? 'Saving…' : 'Back up again' }}
             </button>
-          </div>
-        }
-        @if (failure(); as f) {
-          <p class="text-xs text-red-600">{{ f }}</p>
-        }
-      </section>
+          }
+        </div>
+        <div class="flex flex-col gap-3">
+          @if (p.state === 'unprotected') {
+            <div class="flex flex-col gap-1">
+              <fl-status [tone]="reasonState().tone" [label]="reasonState().label" />
+              @if (p.why) {
+                <p class="text-fl-body-sm text-fl-ink-muted" data-testid="backup-decision-why">
+                  {{ p.why }}
+                </p>
+              }
+            </div>
+            @if (confirming()) {
+              <div class="flex flex-wrap items-center gap-2" data-testid="backup-decision-confirm">
+                <div class="fl-input min-w-0 flex-1">
+                  <input
+                    [ngModel]="note()"
+                    (ngModelChange)="note.set($event)"
+                    maxlength="500"
+                    placeholder="Why (optional)"
+                    aria-label="Why this app is not backed up"
+                  />
+                </div>
+                <button
+                  flButton="primary"
+                  size="sm"
+                  type="button"
+                  (click)="decide(true)"
+                  [disabled]="saving()"
+                  data-testid="backup-decision-confirm-skip"
+                >
+                  {{ saving() ? 'Saving…' : "Don't back up" }}
+                </button>
+                <button flButton="ghost" size="sm" type="button" (click)="cancel()">Cancel</button>
+              </div>
+              <p class="text-fl-caption text-fl-ink-muted">
+                Flui stops asking for a backup. Nothing already taken is deleted.
+              </p>
+            }
+          } @else {
+            <div class="flex flex-col gap-1">
+              <fl-status tone="neutral" label="Not backed up by choice" />
+              @if (p.note) {
+                <p data-testid="backup-decision-note">{{ p.note }}</p>
+              }
+              <p class="text-fl-caption text-fl-ink-muted">{{ p.by }}</p>
+              @if (p.running.length) {
+                <p class="text-fl-body-sm text-fl-ink-muted" data-testid="backup-decision-running">
+                  Still running:
+                  @for (pol of p.running; track pol.path; let last = $last) {
+                    <a [routerLink]="pol.path" class="fl-link">{{ pol.name }}</a>{{
+                      last ? '.' : ', '
+                    }}
+                  }
+                  Pause it there if you want.
+                </p>
+              }
+            </div>
+          }
+          @if (failure(); as f) {
+            <fl-alert tone="error" title="Decision not saved">{{ f }}</fl-alert>
+          }
+        </div>
+      </fl-panel>
     }
   `,
 })
@@ -142,6 +132,9 @@ export class AppBackupDecisionComponent {
   readonly protect = output<void>();
 
   protected readonly panel = computed(() => decisionPanel(this.protection()));
+  protected readonly reasonState = computed(() =>
+    coverageReasonState(this.protection()?.coverage?.reason ?? ''),
+  );
   protected readonly confirming = signal(false);
   protected readonly note = signal('');
   protected readonly saving = signal(false);

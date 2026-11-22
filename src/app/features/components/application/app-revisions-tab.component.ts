@@ -1,47 +1,33 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  inject,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideAlertCircle } from '@ng-icons/lucide';
 import { AppRevisionsService, AuditEventType } from '../../service/app-revisions.service';
 import { AppAuditEventSummaryDto } from '../../../core/api/model/appAuditEventSummaryDto';
 import { AppActivityFeedComponent } from './app-activity-feed.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { ConfirmService } from '../../../ui/overlays/confirm';
 
 @Component({
   selector: 'app-revisions-tab',
   standalone: true,
-  imports: [NgIconComponent, AppActivityFeedComponent],
-  providers: [provideIcons({ lucideAlertCircle })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [AppActivityFeedComponent, FlAlert],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-3">
-      @if (service.rollbackError()) {
-        <div
-          class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
-        >
-          <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
-          {{ service.rollbackError() }}
-        </div>
-      }
-      <app-activity-feed
-        [activeFilter]="activeEventFilter()"
-        (filterChange)="onFilterChange($event)"
-        (loadMore)="loadMoreEvents()"
-        (rollback)="doRollback($event)"
-      />
-    </div>
+    @if (service.rollbackError()) {
+      <fl-alert tone="error" title="Rollback failed">{{ service.rollbackError() }}</fl-alert>
+    }
+    <app-activity-feed
+      [activeFilter]="activeEventFilter()"
+      (filterChange)="onFilterChange($event)"
+      (loadMore)="loadMoreEvents()"
+      (rollback)="doRollback($event)"
+    />
   `,
 })
 export class AppRevisionsTabComponent implements OnInit, OnDestroy {
   service = inject(AppRevisionsService);
   private readonly route = inject(ActivatedRoute);
+  private readonly confirmService = inject(ConfirmService);
 
   activeEventFilter = signal<AuditEventType | undefined>(undefined);
 
@@ -83,6 +69,13 @@ export class AppRevisionsTabComponent implements OnInit, OnDestroy {
 
   async doRollback(event: AppAuditEventSummaryDto) {
     if (!this.appId || event.revisionNumber == null) return;
+    const confirmed = await this.confirmService.confirm({
+      title: `Roll back to revision #${event.revisionNumber}`,
+      body: 'The application is redeployed with what ran at this revision.',
+      confirmLabel: 'Roll back',
+      destructive: true,
+    });
+    if (!confirmed) return;
     await this.service.rollback(this.appId, event.revisionNumber);
     if (!this.service.rollbackError()) {
       this.eventsOffset = 0;

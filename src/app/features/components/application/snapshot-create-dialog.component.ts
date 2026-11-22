@@ -1,62 +1,61 @@
-import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
+import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideX } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { FlField } from '../../../ui/patterns/field';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 import { CreateSnapshotRequest } from '../../model/volume-management.models';
 
 @Component({
   selector: 'app-snapshot-create-dialog',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIconComponent],
-  providers: [provideIcons({ lucideX, lucideLoader })],
+  imports: [FormsModule, FlField, FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideX })],
   template: `
     @if (open()) {
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
         (click)="cancelled.emit()"
       >
         <div
-          class="bg-background rounded-lg border border-border max-w-md w-full p-6"
+          class="fl-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="snapshot-create-title"
           (click)="$event.stopPropagation()"
         >
-          <div class="flex items-start justify-between mb-4">
-            <div>
-              <h3 class="text-lg font-semibold">Take a copy of this volume</h3>
-              <p class="text-xs text-muted-foreground mt-1">
-                Captures the current data of this application's volume.
-              </p>
-            </div>
-            <button (click)="cancelled.emit()" class="p-1 hover:bg-muted rounded">
-              <ng-icon name="lucideX" class="h-4 w-4" />
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" id="snapshot-create-title">Take a copy of this volume</h2>
+            <button
+              type="button"
+              class="fl-dialog__close"
+              aria-label="Close"
+              (click)="cancelled.emit()"
+            >
+              <fl-icon name="lucideX" />
             </button>
-          </div>
+          </header>
 
-          <div class="space-y-4">
-            <div>
-              <label class="text-sm font-medium mb-1 block" for="snapshot-description"
-                >Description (optional)</label
-              >
-              <input
-                id="snapshot-description"
-                type="text"
-                [ngModel]="description()"
-                (ngModelChange)="description.set($event)"
-                placeholder="e.g. before-major-upgrade"
-                maxlength="120"
-                class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
-              />
-            </div>
-            <label class="flex items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                class="mt-1"
-                [ngModel]="pause()"
-                (ngModelChange)="pause.set($event)"
-              />
-              <span>
+          <div class="fl-dialog__body">
+            <p class="text-fl-ink-muted">Captures the current data of this application's volume.</p>
+            <fl-field label="Description (optional)" for="snapshot-description">
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="snapshot-description"
+                  type="text"
+                  [ngModel]="description()"
+                  (ngModelChange)="description.set($event)"
+                  placeholder="before-major-upgrade"
+                  maxlength="120"
+                />
+              </div>
+            </fl-field>
+            <label class="fl-check items-start">
+              <input type="checkbox" [ngModel]="pause()" (ngModelChange)="pause.set($event)" />
+              <span class="flex flex-col gap-0.5">
                 Stop the application during the copy
-                <span class="block text-xs text-muted-foreground">
+                <span class="text-fl-caption text-fl-ink-muted">
                   A short interruption; it starts again as soon as the copy is taken.
                   @if (suggestPause()) {
                     A database copied while it runs may not restore.
@@ -65,40 +64,35 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
               </span>
             </label>
             @if (showVolume()) {
-              <div>
-                <label class="text-sm font-medium mb-1 block" for="snapshot-volume">Volume</label>
-                <input
-                  id="snapshot-volume"
-                  type="text"
-                  [ngModel]="volumeName()"
-                  (ngModelChange)="volumeName.set($event)"
-                  placeholder="needed only when the application has more than one"
-                  class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm font-mono text-xs"
-                />
-              </div>
+              <fl-field
+                label="Volume"
+                for="snapshot-volume"
+                hint="Needed only when the application has more than one."
+              >
+                <div class="fl-input fl-input--lg">
+                  <input
+                    id="snapshot-volume"
+                    type="text"
+                    class="fl-mono"
+                    [ngModel]="volumeName()"
+                    (ngModelChange)="volumeName.set($event)"
+                  />
+                </div>
+              </fl-field>
             }
           </div>
 
-          <div class="flex items-center gap-2 mt-6">
-            <button
-              (click)="cancelled.emit()"
-              class="flex-1 px-4 py-2 border border-border rounded-md hover:bg-muted text-sm transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              (click)="onSubmit()"
-              [disabled]="creating()"
-              class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm transition-colors disabled:opacity-50"
-            >
+          <footer class="fl-dialog__footer">
+            <button flButton="ghost" type="button" (click)="cancelled.emit()">Cancel</button>
+            <button flButton="primary" type="button" (click)="onSubmit()" [disabled]="creating()">
               @if (creating()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+                <fl-spinner label="Creating" />
                 Creating…
               } @else {
                 Create
               }
             </button>
-          </div>
+          </footer>
         </div>
       </div>
     }

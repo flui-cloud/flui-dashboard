@@ -1,15 +1,8 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideHardDrive, lucideTriangleAlert } from '@ng-icons/lucide';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { DbDiskInfo, DbDiskService } from '../../service/db-disk.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
 
 /**
  * Disk usage + near-full alert for a database app. Interim `df`-based reading (the disk hosting
@@ -20,63 +13,49 @@ import { DbDiskInfo, DbDiskService } from '../../service/db-disk.service';
 @Component({
   selector: 'app-db-disk-usage',
   standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideHardDrive, lucideTriangleAlert })],
+  imports: [FlPanel, FlUsageBar, FlAlert],
+  host: { class: 'block' },
   template: `
     @if (info(); as d) {
       @if (d.available) {
-        <div
-          class="rounded-lg border p-4"
-          [class]="
-            d.alert_level === 'critical'
-              ? 'border-red-300 bg-red-50'
-              : d.alert_level === 'warning'
-                ? 'border-amber-300 bg-amber-50'
-                : 'border-border bg-card'
-          "
-        >
-          <div class="flex items-center gap-2">
-            <ng-icon name="lucideHardDrive" class="h-5 w-5 text-muted-foreground" />
-            <h3 class="text-base font-semibold">Disk</h3>
-            <span class="text-xs text-muted-foreground">
-              · hosting filesystem{{ d.engine ? ' · ' + d.engine : '' }}
-            </span>
-            <span class="ml-auto font-mono text-sm" [class]="pctClass()">
-              {{ d.utilization_percent !== null ? d.utilization_percent.toFixed(1) + '%' : 'n/a' }}
-            </span>
-          </div>
-
-          <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              class="h-full rounded-full"
-              [class]="barClass()"
-              [style.width.%]="d.utilization_percent ?? 0"
-            ></div>
-          </div>
-
-          <div class="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
-            <span>{{ human(d.used_bytes) }} used / {{ human(d.size_bytes) }}</span>
-            <span>{{ human(d.available_bytes) }} free</span>
-            @if (d.mountPath) {
-              <span class="font-mono">{{ d.mountPath }}</span>
+        <fl-panel title="Disk">
+          <span panelActions class="fl-toolbar__info"
+            >Hosting filesystem{{ d.engine ? ' · ' + d.engine : '' }}</span
+          >
+          <div class="flex flex-col gap-3">
+            @if (d.utilization_percent !== null) {
+              <fl-usage-bar
+                [percent]="d.utilization_percent"
+                label="Disk"
+                [aside]="human(d.used_bytes) + ' used of ' + human(d.size_bytes)"
+                [warnAt]="warnAt()"
+                [criticalAt]="criticalAt()"
+              />
+            } @else {
+              <span class="fl-muted text-fl-body-sm"
+                >Usage n/a · {{ human(d.used_bytes) }} used of {{ human(d.size_bytes) }}</span
+              >
+            }
+            <div class="fl-row fl-muted text-fl-body-sm">
+              <span>{{ human(d.available_bytes) }} free</span>
+              @if (d.mountPath) {
+                <span class="fl-mono">{{ d.mountPath }}</span>
+              }
+            </div>
+            @if (d.alert_level !== 'none') {
+              <fl-alert
+                [tone]="d.alert_level === 'critical' ? 'error' : 'warning'"
+                [title]="
+                  'The disk hosting this database is ' +
+                  (d.alert_level === 'critical' ? 'almost full' : 'getting full')
+                "
+              >
+                Free space or grow the node disk soon. Per-volume quotas and metrics are on the
+                roadmap.
+              </fl-alert>
             }
           </div>
-
-          @if (d.alert_level !== 'none') {
-            <div
-              class="mt-3 flex items-start gap-2 text-sm"
-              [class]="d.alert_level === 'critical' ? 'text-red-700' : 'text-amber-700'"
-            >
-              <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-              <span>
-                The disk hosting this database is
-                {{ d.alert_level === 'critical' ? 'almost full' : 'getting full' }} — free space or
-                grow the node disk soon. (Per-volume quota/metrics: see roadmap.)
-              </span>
-            </div>
-          }
-        </div>
+        </fl-panel>
       }
     }
   `,
@@ -87,26 +66,16 @@ export class DbDiskUsageComponent {
   readonly appId = input<string | null>(null);
   readonly info = signal<DbDiskInfo | null>(null);
 
-  readonly pctClass = computed(() => {
-    const a = this.info()?.alert_level;
-    if (a === 'critical') return 'text-red-600';
-    if (a === 'warning') return 'text-amber-600';
-    return 'text-foreground';
-  });
-
-  readonly barClass = computed(() => {
-    const a = this.info()?.alert_level;
-    if (a === 'critical') return 'bg-red-500';
-    if (a === 'warning') return 'bg-amber-500';
-    return 'bg-emerald-500';
-  });
+  protected readonly warnAt = computed(() => (this.info()?.alert_level === 'none' ? 101 : 0));
+  protected readonly criticalAt = computed(() =>
+    this.info()?.alert_level === 'critical' ? 0 : 101,
+  );
 
   constructor() {
     effect(() => {
       const id = this.appId();
       this.info.set(null);
       if (!id) return;
-      // 4xx (non-DB / no pod) → leave hidden.
       this.svc.disk(id).subscribe({
         next: (d) => this.info.set(d),
         error: () => this.info.set(null),

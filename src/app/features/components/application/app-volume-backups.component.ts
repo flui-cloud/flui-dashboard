@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   effect,
@@ -9,8 +8,12 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideArchive, lucideCircleAlert, lucideRefreshCw } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw } from '@ng-icons/lucide';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { ApplicationService } from '../../service/application.service';
 import { VolumeBackupsService } from '../../service/volume-backups.service';
 import { VolumeBackup, offClusterBackups } from '../../model/volume-backup.models';
@@ -35,77 +38,67 @@ interface RunningOperation extends VolumeRestoreStarted {
  */
 @Component({
   selector: 'app-volume-backups',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    NgIconComponent,
+    FlPanel,
+    FlAlert,
+    FlButton,
+    FlIcon,
     VolumeBackupBrowserComponent,
     AssistantOperationProgressComponent,
     VolumeBackupsTableComponent,
     VolumeBackupRestoreDialogComponent,
     VolumeBackupDeleteDialogComponent,
   ],
-  providers: [
-    provideIcons({
-      lucideArchive,
-      lucideCircleAlert,
-      lucideRefreshCw,
-    }),
-  ],
+  providers: [provideIcons({ lucideRefreshCw })],
+  host: { class: 'fl-stack' },
   template: `
     @if (backups().length || error() || operations().length) {
-      <section class="space-y-3" data-testid="volume-backups">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="text-lg font-semibold flex items-center gap-2">
-              <ng-icon name="lucideArchive" class="h-5 w-5 text-indigo-600" />
-              Volume backups
-            </h2>
-            <p class="text-sm text-muted-foreground mt-0.5">
-              Encrypted copies of this app's volumes in backup storage.
-              <button
-                (click)="showHelp.set(!showHelp())"
-                class="underline-offset-2 hover:underline"
-              >
-                {{ showHelp() ? 'Less' : 'More' }}
-              </button>
-            </p>
-            @if (showHelp()) {
-              <p class="text-xs text-muted-foreground mt-1 max-w-2xl">
-                Each backup stores only what changed since the one before, so "Added" is what it
-                cost in storage and "Size" is what a restore writes back. A whole restore lands in a
-                new volume beside the app and leaves the running app alone; you switch to it when
-                ready. Scheduled backups follow the policy's retention; manual ones stay until you
-                delete them.
-              </p>
-            }
-          </div>
-          <button
-            (click)="load()"
-            [disabled]="loading()"
-            class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted disabled:opacity-50"
-          >
-            <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
+      <fl-panel
+        title="Volume backups"
+        [count]="backups().length || null"
+        [flush]="true"
+        data-testid="volume-backups"
+      >
+        <div panelActions class="fl-row">
+          <button flButton="ghost" size="sm" type="button" (click)="showHelp.set(!showHelp())">
+            {{ showHelp() ? 'Less' : 'More' }}
+          </button>
+          <button flButton="ghost" size="sm" type="button" (click)="load()" [disabled]="loading()">
+            <fl-icon name="lucideRefreshCw" [size]="14" />
             Refresh
           </button>
         </div>
 
-        @if (error(); as e) {
-          <p class="flex items-center gap-1.5 text-sm text-red-600">
-            <ng-icon name="lucideCircleAlert" class="h-4 w-4" /> {{ e }}
+        <div class="flex flex-col gap-3 p-4">
+          <p class="text-fl-body-sm text-fl-ink-muted">
+            Encrypted copies of this app's volumes in backup storage.
           </p>
-        }
+          @if (showHelp()) {
+            <p class="max-w-2xl text-fl-body-sm text-fl-ink-muted">
+              Each backup stores only what changed since the one before, so "Added" is what it cost
+              in storage and "Size" is what a restore writes back. A whole restore lands in a new
+              volume beside the app and leaves the running app alone; you switch to it when ready.
+              Scheduled backups follow the policy's retention; manual ones stay until you delete
+              them.
+            </p>
+          }
 
-        @for (op of operations(); track op.operationId) {
-          <app-assistant-operation-progress
-            [operationId]="op.operationId"
-            [label]="op.label"
-            (settled)="onSettled(op, $event)"
-          />
-        }
+          @if (error(); as e) {
+            <fl-alert tone="error" title="Volume backups unavailable">{{ e }}</fl-alert>
+          }
+
+          @for (op of operations(); track op.operationId) {
+            <app-assistant-operation-progress
+              [operationId]="op.operationId"
+              [label]="op.label"
+              (settled)="onSettled(op, $event)"
+            />
+          }
+        </div>
 
         @if (backups().length) {
           <app-volume-backups-table
+            class="border-t border-fl-border"
             [backups]="backups()"
             [browsingId]="browsing()?.id ?? null"
             [busyIds]="busyIds()"
@@ -115,17 +108,17 @@ interface RunningOperation extends VolumeRestoreStarted {
             (remove)="askDelete($event)"
           />
         }
+      </fl-panel>
 
-        @if (browsing(); as b) {
-          <app-volume-backup-browser
-            [appId]="appId()!"
-            [backup]="b"
-            [targets]="targets()"
-            (started)="track($event, 'restore', b.id)"
-            (closed)="browsing.set(null)"
-          />
-        }
-      </section>
+      @if (browsing(); as b) {
+        <app-volume-backup-browser
+          [appId]="appId()!"
+          [backup]="b"
+          [targets]="targets()"
+          (started)="track($event, 'restore', b.id)"
+          (closed)="browsing.set(null)"
+        />
+      }
     }
 
     @if (pendingRestore(); as b) {

@@ -1,335 +1,213 @@
 import {
   Component,
-  Input,
+  ElementRef,
+  Injector,
+  afterNextRender,
   computed,
-  signal,
+  effect,
   inject,
   input,
+  linkedSignal,
   output,
-  ChangeDetectionStrategy,
+  untracked,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideX,
-  lucideExternalLink,
-  lucideRotateCcw,
-  lucideInfo,
-  lucideLoader,
-  lucideCircleCheck,
-  lucideTerminal,
-  lucideActivity,
-  lucideTriangleAlert,
-  lucideWand,
-} from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink, lucideRotateCcw, lucideWand, lucideX } from '@ng-icons/lucide';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../../ui/patterns/key-value';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlSpinner } from '../../../../ui/primitives/spinner';
+import { FlStatus } from '../../../../ui/primitives/status';
 import {
   AutoFixActionPayload,
   CrashDiagnosis,
   autoFixPayload,
-  categoryLabel,
   isAutoRemediated,
-  severityBadgeClass,
 } from '../../../model/crash-diagnosis.models';
+import { K8sEventsTable } from '../k8s-events-table';
+import { SEVERITY_STATUS, diagnosisCategoryLabel, formatDateTime } from './diagnosis-labels';
+
+type ConfigurationPayload = { envVar?: string; kind?: string; name?: string } | undefined;
 
 @Component({
   selector: 'app-diagnosis-detail-dialog',
-  standalone: true,
-  imports: [CommonModule, NgIcon, HlmButtonDirective],
-  providers: [
-    provideIcons({
-      lucideX,
-      lucideExternalLink,
-      lucideRotateCcw,
-      lucideInfo,
-      lucideLoader,
-      lucideCircleCheck,
-      lucideTerminal,
-      lucideActivity,
-      lucideTriangleAlert,
-      lucideWand,
-    }),
+  imports: [
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlStatus,
+    FlAlert,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    K8sEventsTable,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideX, lucideExternalLink, lucideRotateCcw, lucideWand })],
+  host: { class: 'block' },
   template: `
-    @if (diagnosis) {
-      <div class="fixed inset-0 z-50 bg-background/80 overflow-y-auto" (click)="close()">
-        <div class="flex min-h-screen items-start justify-center p-4">
-          <div
-            class="relative w-full max-w-3xl bg-white border border-gray-200 rounded-lg my-8"
-            (click)="$event.stopPropagation()"
+    @if (diagnosis(); as d) {
+      <fl-panel [title]="d.title">
+        <ng-container panelActions>
+          @if (!d.resolvedAt) {
+            <button
+              flButton
+              size="sm"
+              type="button"
+              [disabled]="dismissing()"
+              (click)="onDismiss()"
+            >
+              @if (dismissing()) {
+                <fl-spinner label="Dismissing" />
+                Dismissing…
+              } @else {
+                Dismiss
+              }
+            </button>
+          }
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [iconOnly]="true"
+            aria-label="Close"
+            (click)="close()"
           >
-            <!-- Header -->
-            <div class="flex items-start justify-between gap-4 p-6 border-b border-gray-200">
-              <div class="flex-1 space-y-2 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span [class]="severityClass()">{{ diagnosis.severity }}</span>
-                  <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-                    {{ category() }}
-                  </span>
-                  @if (diagnosis.patternMatchedKey) {
-                    <span class="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono">
-                      {{ diagnosis.patternMatchedKey }}
-                    </span>
-                  }
-                  @if (autoRemediated()) {
-                    <span
-                      class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-medium"
-                    >
-                      <ng-icon name="lucideWand" class="h-3 w-3" />
-                      Auto-remediated
-                    </span>
-                  }
-                  @if (autoFix(); as af) {
-                    <span
-                      class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono"
-                    >
-                      Memory {{ af.previousMemoryLimit }} → {{ af.newMemoryLimit }}
-                    </span>
-                  }
-                  @if (diagnosis.resolvedAt) {
-                    <span
-                      class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-50 text-green-700"
-                    >
-                      <ng-icon name="lucideCircleCheck" class="h-3 w-3" />
-                      resolved
-                    </span>
-                  }
-                </div>
-                <h3 class="text-lg font-semibold text-gray-900 break-words">
-                  {{ diagnosis.title }}
-                </h3>
-                <p class="text-xs text-gray-500">
-                  Pod: <span class="font-mono">{{ diagnosis.podName }}</span>
-                  @if (diagnosis.containerName) {
-                    · <span class="font-mono">{{ diagnosis.containerName }}</span>
-                  }
-                  · {{ formatDate(diagnosis.createdAt) }}
-                </p>
-              </div>
-              <button
-                hlmBtn
-                variant="ghost"
-                size="sm"
-                (click)="close()"
-                class="h-8 w-8 p-0 flex-shrink-0"
-                aria-label="Close"
-              >
-                <ng-icon name="lucideX" class="h-4 w-4" />
-              </button>
-            </div>
+            <fl-icon name="lucideX" />
+          </button>
+        </ng-container>
 
-            <!-- Body -->
-            <div class="p-6 space-y-6">
-              <!-- Explanation -->
-              <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {{ diagnosis.explanation }}
+        <div class="flex flex-col gap-5">
+          <fl-key-value>
+            <fl-kv-item key="Severity">
+              <fl-status [tone]="severity().tone" [label]="severity().label" />
+            </fl-kv-item>
+            <fl-kv-item key="State">
+              @if (d.resolvedAt) {
+                <fl-status tone="success" label="Resolved" />
+              } @else {
+                <fl-status tone="neutral" label="Open" />
+              }
+            </fl-kv-item>
+            <fl-kv-item key="Category">{{ category() }}</fl-kv-item>
+            <fl-kv-item key="Detected">{{ formatDate(d.createdAt) }}</fl-kv-item>
+            <fl-kv-item key="Pod" [mono]="true">{{ d.podName }}</fl-kv-item>
+            @if (d.containerName) {
+              <fl-kv-item key="Container" [mono]="true">{{ d.containerName }}</fl-kv-item>
+            }
+            @if (d.patternMatchedKey) {
+              <fl-kv-item key="Matched pattern" [mono]="true">{{ d.patternMatchedKey }}</fl-kv-item>
+            }
+            @if (d.evidence.exitCode != null) {
+              <fl-kv-item key="Exit code" [mono]="true">{{ d.evidence.exitCode }}</fl-kv-item>
+            }
+            @if (d.evidence.lastTerminationReason) {
+              <fl-kv-item key="Last termination reason" [mono]="true">
+                {{ d.evidence.lastTerminationReason }}
+              </fl-kv-item>
+            }
+            @if (autoFix(); as af) {
+              <fl-kv-item key="Memory limit" [mono]="true">
+                {{ af.previousMemoryLimit }} → {{ af.newMemoryLimit }}
+              </fl-kv-item>
+            }
+          </fl-key-value>
+
+          <p class="m-0 whitespace-pre-wrap text-fl-body-sm text-fl-ink">{{ d.explanation }}</p>
+
+          @if (d.evidence.missingResource; as missing) {
+            <fl-alert tone="error" [title]="'Missing ' + missing.kind">
+              <span class="fl-mono">{{ missing.name }}</span>
+            </fl-alert>
+          }
+
+          @if (d.suggestedAction) {
+            <section class="flex flex-col gap-2">
+              <h3 class="m-0 text-fl-body-sm font-semibold text-fl-ink">
+                {{ autoRemediated() ? 'Applied automatically' : 'Suggested action' }}
+              </h3>
+              <p class="m-0 whitespace-pre-wrap text-fl-body-sm text-fl-ink-secondary">
+                {{ d.suggestedAction.message }}
               </p>
-
-              <!-- Suggested action -->
-              @if (diagnosis.suggestedAction) {
-                @if (autoRemediated()) {
-                  <div class="rounded-lg border border-purple-200 bg-purple-50 p-4 space-y-3">
-                    <div class="flex items-start gap-2">
-                      <ng-icon
-                        name="lucideWand"
-                        class="h-4 w-4 text-purple-700 mt-0.5 flex-shrink-0"
-                      />
-                      <p class="text-sm text-purple-900 whitespace-pre-wrap">
-                        {{ diagnosis.suggestedAction.message }}
-                      </p>
-                    </div>
-                  </div>
-                } @else {
-                  <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
-                    <div class="flex items-start gap-2">
-                      <ng-icon
-                        name="lucideInfo"
-                        class="h-4 w-4 text-blue-700 mt-0.5 flex-shrink-0"
-                      />
-                      <p class="text-sm text-blue-900 whitespace-pre-wrap">
-                        {{ diagnosis.suggestedAction.message }}
-                      </p>
-                    </div>
-                    @if (canApply()) {
-                      <button hlmBtn size="sm" (click)="onApply()" [disabled]="applying()">
-                        @if (applying()) {
-                          <ng-icon name="lucideLoader" class="h-3.5 w-3.5 mr-2 animate-spin" />
-                          Applying…
-                        } @else {
-                          <ng-icon name="lucideWand" class="h-3.5 w-3.5 mr-2" />
-                          Apply
-                        }
-                      </button>
-                      @if (applyError()) {
-                        <p class="text-xs text-red-700">{{ applyError() }}</p>
+              @if (!autoRemediated()) {
+                @if (canApply()) {
+                  <div class="fl-row">
+                    <button
+                      flButton
+                      size="sm"
+                      type="button"
+                      [disabled]="applying()"
+                      (click)="onApply()"
+                    >
+                      @if (applying()) {
+                        <fl-spinner label="Applying" />
+                        Applying…
+                      } @else {
+                        <fl-icon name="lucideWand" />
+                        Apply
                       }
-                    } @else if (showUserInputCta()) {
-                      <button hlmBtn size="sm" (click)="gotoConfiguration()">
-                        <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 mr-2" />
-                        {{ userInputCtaLabel() }}
-                      </button>
-                    } @else if (diagnosis.suggestedAction.type === 'redeploy') {
-                      <button
-                        hlmBtn
-                        size="sm"
-                        variant="outline"
-                        [disabled]="true"
-                        title="Coming in Phase 3"
-                      >
-                        <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5 mr-2" />
-                        Redeploy (coming soon)
-                      </button>
-                    }
+                    </button>
+                  </div>
+                  @if (applyError()) {
+                    <fl-alert tone="error" title="Could not apply the change">
+                      {{ applyError() }}
+                    </fl-alert>
+                  }
+                } @else if (showUserInputCta()) {
+                  <div class="fl-row">
+                    <button flButton size="sm" type="button" (click)="gotoConfiguration()">
+                      <fl-icon name="lucideExternalLink" />
+                      {{ userInputCtaLabel() }}
+                    </button>
+                  </div>
+                } @else if (d.suggestedAction.type === 'redeploy') {
+                  <div class="fl-row">
+                    <button flButton size="sm" type="button" [disabled]="true" title="Coming soon">
+                      <fl-icon name="lucideRotateCcw" />
+                      Redeploy (coming soon)
+                    </button>
                   </div>
                 }
               }
+            </section>
+          }
 
-              <!-- Evidence: exit code & termination reason -->
-              @if (
-                diagnosis.evidence.exitCode != null || diagnosis.evidence.lastTerminationReason
-              ) {
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  @if (diagnosis.evidence.exitCode != null) {
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                      <p class="text-xs text-gray-500">Exit code</p>
-                      <p class="text-sm font-mono font-medium">{{ diagnosis.evidence.exitCode }}</p>
-                    </div>
-                  }
-                  @if (diagnosis.evidence.lastTerminationReason) {
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                      <p class="text-xs text-gray-500">Last termination reason</p>
-                      <p class="text-sm font-mono font-medium">
-                        {{ diagnosis.evidence.lastTerminationReason }}
-                      </p>
-                    </div>
-                  }
-                </div>
-              }
+          @if (d.evidence.logsSnippet) {
+            <details open>
+              <summary class="cursor-pointer select-none text-fl-body-sm font-semibold text-fl-ink">
+                Log excerpt
+              </summary>
+              <pre
+                class="fl-mono m-0 mt-2 max-h-64 overflow-auto whitespace-pre-wrap rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3 text-fl-ink"
+                >{{ d.evidence.logsSnippet }}</pre>
+            </details>
+          }
 
-              <!-- Missing resource -->
-              @if (diagnosis.evidence.missingResource) {
-                <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-                  <div class="flex items-start gap-2">
-                    <ng-icon name="lucideTriangleAlert" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <div>
-                      Missing resource:
-                      <span class="font-medium">{{
-                        diagnosis.evidence.missingResource!.kind
-                      }}</span>
-                      <span class="font-mono">{{ diagnosis.evidence.missingResource!.name }}</span>
-                    </div>
-                  </div>
-                </div>
-              }
-
-              <!-- Logs snippet -->
-              @if (diagnosis.evidence.logsSnippet) {
-                <details class="group" open>
-                  <summary
-                    class="cursor-pointer text-sm font-medium text-gray-900 flex items-center gap-2 select-none"
-                  >
-                    <ng-icon name="lucideTerminal" class="h-4 w-4 text-gray-500" />
-                    Log snippet
-                  </summary>
-                  <pre
-                    class="mt-2 p-3 rounded-lg bg-gray-900 text-gray-100 text-xs font-mono overflow-x-auto whitespace-pre-wrap max-h-64 overflow-y-auto"
-                    >{{ diagnosis.evidence.logsSnippet }}</pre>
-                </details>
-              }
-
-              <!-- Events -->
-              @if (diagnosis.evidence.events?.length) {
-                <details class="group">
-                  <summary
-                    class="cursor-pointer text-sm font-medium text-gray-900 flex items-center gap-2 select-none"
-                  >
-                    <ng-icon name="lucideActivity" class="h-4 w-4 text-gray-500" />
-                    Kubernetes events ({{ diagnosis.evidence.events!.length }})
-                  </summary>
-                  <div class="mt-2 overflow-x-auto">
-                    <table class="w-full text-xs">
-                      <thead class="text-left text-gray-500">
-                        <tr>
-                          <th class="py-2 pr-3 font-medium">Type</th>
-                          <th class="py-2 pr-3 font-medium">Reason</th>
-                          <th class="py-2 pr-3 font-medium">Message</th>
-                          <th class="py-2 pr-3 font-medium">Count</th>
-                          <th class="py-2 font-medium">Last</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (ev of diagnosis.evidence!.events; track $index) {
-                          <tr class="border-t border-gray-100 align-top">
-                            <td class="py-2 pr-3">
-                              <span
-                                class="px-1.5 py-0.5 rounded font-medium"
-                                [ngClass]="
-                                  ev.type === 'Warning'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-gray-100 text-gray-700'
-                                "
-                              >
-                                {{ ev.type }}
-                              </span>
-                            </td>
-                            <td class="py-2 pr-3 font-mono">{{ ev.reason }}</td>
-                            <td class="py-2 pr-3 break-words max-w-sm">{{ ev.message }}</td>
-                            <td class="py-2 pr-3 tabular-nums">
-                              {{ ev.count }}
-                              @if (ev.count > 10) {
-                                <span
-                                  class="ml-1 text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-700"
-                                  >repeated</span
-                                >
-                              }
-                            </td>
-                            <td class="py-2 text-gray-500">
-                              {{ ev.lastTimestamp ? formatDate(ev.lastTimestamp) : '—' }}
-                            </td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
-                </details>
-              }
-            </div>
-
-            <!-- Footer -->
-            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200">
-              <button hlmBtn variant="outline" (click)="close()">Close</button>
-              @if (!diagnosis.resolvedAt) {
-                <button hlmBtn (click)="onDismiss()" [disabled]="dismissing()">
-                  @if (dismissing()) {
-                    <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                    Dismissing…
-                  } @else {
-                    <ng-icon name="lucideCircleCheck" class="h-4 w-4 mr-2" />
-                    Dismiss
-                  }
-                </button>
-              }
-            </div>
-          </div>
+          @if (d.evidence.events?.length) {
+            <details>
+              <summary class="cursor-pointer select-none text-fl-body-sm font-semibold text-fl-ink">
+                Kubernetes events ({{ d.evidence.events!.length }})
+              </summary>
+              <div
+                class="mt-2 overflow-hidden rounded-fl-md border border-fl-border bg-fl-surface-subtle"
+              >
+                <app-k8s-events-table [events]="d.evidence.events!" />
+              </div>
+            </details>
+          }
         </div>
-      </div>
+      </fl-panel>
     }
   `,
 })
 export class DiagnosisDetailDialogComponent {
   private readonly router = inject(Router);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
-  private _diagnosis: CrashDiagnosis | null = null;
-  @Input()
-  set diagnosis(value: CrashDiagnosis | null) {
-    this._diagnosis = value;
-    this.dismissing.set(false);
-  }
-  get diagnosis(): CrashDiagnosis | null {
-    return this._diagnosis;
-  }
+  readonly diagnosis = input<CrashDiagnosis | null>(null);
   readonly applicationId = input<string | null>(null);
 
   readonly closed = output<void>();
@@ -339,36 +217,62 @@ export class DiagnosisDetailDialogComponent {
   readonly applying = input(false);
   readonly applyError = input<string | null>(null);
 
-  dismissing = signal(false);
+  readonly dismissing = linkedSignal({ source: this.diagnosis, computation: () => false });
 
-  severityClass = computed(() =>
-    this.diagnosis ? severityBadgeClass(this.diagnosis.severity) : '',
-  );
+  private shownId: string | null = null;
 
-  category = computed(() => (this.diagnosis ? categoryLabel(this.diagnosis.category) : ''));
+  readonly severity = computed(() => {
+    const d = this.diagnosis();
+    return SEVERITY_STATUS[d?.severity ?? 'info'];
+  });
 
-  autoRemediated = computed(() => (this.diagnosis ? isAutoRemediated(this.diagnosis) : false));
+  readonly category = computed(() => {
+    const d = this.diagnosis();
+    return d ? diagnosisCategoryLabel(d.category) : '';
+  });
 
-  autoFix = computed<AutoFixActionPayload | null>(() =>
-    this.diagnosis ? autoFixPayload(this.diagnosis) : null,
-  );
+  readonly autoRemediated = computed(() => {
+    const d = this.diagnosis();
+    return d ? isAutoRemediated(d) : false;
+  });
+
+  readonly autoFix = computed<AutoFixActionPayload | null>(() => {
+    const d = this.diagnosis();
+    return d ? autoFixPayload(d) : null;
+  });
+
+  constructor() {
+    effect(() => {
+      const id = this.diagnosis()?.id ?? null;
+      if (id === this.shownId) return;
+      this.shownId = id;
+      if (!id) return;
+      untracked(() =>
+        afterNextRender(
+          { write: () => this.host.nativeElement.scrollIntoView({ block: 'nearest' }) },
+          { injector: this.injector },
+        ),
+      );
+    });
+  }
 
   canApply(): boolean {
-    return this.diagnosis?.suggestedAction?.type === 'resources' && !this.diagnosis.resolvedAt;
+    const d = this.diagnosis();
+    return d?.suggestedAction?.type === 'resources' && !d.resolvedAt;
   }
 
   onApply(): void {
-    if (!this.diagnosis) return;
-    this.apply.emit(this.diagnosis);
+    const d = this.diagnosis();
+    if (!d) return;
+    this.apply.emit(d);
   }
 
   showUserInputCta(): boolean {
-    return this.diagnosis?.suggestedAction?.type === 'user_input';
+    return this.diagnosis()?.suggestedAction?.type === 'user_input';
   }
 
   userInputCtaLabel(): string {
-    const payload = this.diagnosis?.suggestedAction?.payload as
-      { envVar?: string; kind?: string; name?: string } | undefined;
+    const payload = this.configurationPayload();
     if (payload?.envVar) return `Add variable: ${payload.envVar}`;
     if (payload?.kind && payload?.name) return `Fix ${payload.kind}: ${payload.name}`;
     return 'Open configuration';
@@ -377,8 +281,7 @@ export class DiagnosisDetailDialogComponent {
   gotoConfiguration(): void {
     const applicationId = this.applicationId();
     if (!applicationId) return;
-    const payload = this.diagnosis?.suggestedAction?.payload as
-      { envVar?: string; kind?: string; name?: string } | undefined;
+    const payload = this.configurationPayload();
     const queryParams: Record<string, string> = {};
     if (payload?.envVar) queryParams['focusVar'] = payload.envVar;
     else if (payload?.kind && payload?.name) {
@@ -392,7 +295,7 @@ export class DiagnosisDetailDialogComponent {
   }
 
   formatDate(iso: string): string {
-    return new Date(iso).toLocaleString();
+    return formatDateTime(iso);
   }
 
   close(): void {
@@ -400,12 +303,17 @@ export class DiagnosisDetailDialogComponent {
   }
 
   onDismiss(): void {
-    if (!this.diagnosis) return;
+    const d = this.diagnosis();
+    if (!d) return;
     this.dismissing.set(true);
-    this.dismiss.emit(this.diagnosis);
+    this.dismiss.emit(d);
   }
 
   setDismissing(v: boolean): void {
     this.dismissing.set(v);
+  }
+
+  private configurationPayload(): ConfigurationPayload {
+    return this.diagnosis()?.suggestedAction?.payload as ConfigurationPayload;
   }
 }

@@ -1,22 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  inject,
-  signal,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideClock,
-  lucideLoader,
-  lucidePlay,
-  lucidePlus,
-  lucideRefreshCw,
-  lucideTrash2,
-} from '@ng-icons/lucide';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideClock, lucidePlus, lucideRefreshCw, lucideX } from '@ng-icons/lucide';
 
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationCronService } from '../../service/application-cron.service';
@@ -25,412 +9,138 @@ import {
   ScheduledJob,
   ScheduledJobRun,
 } from '../../model/scheduled-job.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { ScheduleJobsTable } from './schedule-jobs-table';
+import { ScheduleEditor } from './schedule-editor';
+import { RunLogs, ScheduleRuns } from './schedule-runs';
 
 @Component({
   selector: 'app-schedules-tab',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideClock,
-      lucidePlus,
-      lucidePlay,
-      lucideTrash2,
-      lucideRefreshCw,
-      lucideLoader,
-      lucideCircleAlert,
-    }),
+  imports: [
+    FlPanel,
+    FlAlert,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    ScheduleJobsTable,
+    ScheduleEditor,
+    ScheduleRuns,
   ],
+  providers: [provideIcons({ lucideClock, lucidePlus, lucideRefreshCw, lucideX })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-semibold">Scheduled jobs</h2>
-          <p class="text-sm text-muted-foreground">
-            Run a command on this app's image + env on a cron schedule.
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-md hover:bg-muted"
-            (click)="refresh()"
-          >
-            <ng-icon name="lucideRefreshCw" class="h-4 w-4" />
-            Refresh
-          </button>
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700"
-            (click)="openCreate()"
-          >
-            <ng-icon name="lucidePlus" class="h-4 w-4" />
-            New schedule
-          </button>
-        </div>
+    <fl-panel
+      title="Scheduled jobs"
+      [count]="jobs().length || null"
+      [flush]="true"
+      data-testid="schedules"
+    >
+      <div panelActions class="fl-row">
+        <button flButton="ghost" size="sm" type="button" (click)="refresh()">
+          <fl-icon name="lucideRefreshCw" [size]="14" />
+          Refresh
+        </button>
+        <button flButton="primary" size="sm" type="button" (click)="openCreate()">
+          <fl-icon name="lucidePlus" [size]="14" />
+          New schedule
+        </button>
       </div>
 
-      @if (error()) {
-        <div
-          class="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700"
-        >
-          <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
-          <span>{{ error() }}</span>
-        </div>
-      }
+      <div class="flex flex-col gap-3 p-4">
+        <p class="text-fl-body-sm text-fl-ink-muted">
+          Run a command with this app's image and environment on a cron schedule.
+        </p>
+        @if (error()) {
+          <fl-alert tone="error" title="Request failed">{{ error() }}</fl-alert>
+        }
+      </div>
 
       @if (loading()) {
-        <div class="card-inner p-4 space-y-2">
-          <div class="skeleton h-6 w-full"></div>
-          <div class="skeleton h-6 w-full"></div>
-        </div>
+        <fl-loading-state [rows]="2" />
       } @else if (jobs().length === 0) {
-        <div class="card-inner p-8 text-center">
-          <ng-icon name="lucideClock" class="h-8 w-8 mx-auto text-muted-foreground" />
-          <p class="mt-2 text-sm font-medium">No schedules yet</p>
-          <p class="text-sm text-muted-foreground">
-            Create one to run a recurring command against this application.
-          </p>
-        </div>
+        <fl-empty-state
+          class="border-t border-fl-border"
+          icon="lucideClock"
+          title="No schedules yet"
+          body="Create one to run a recurring command against this application."
+          [compact]="true"
+        />
       } @else {
-        <div class="card-inner overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-left text-muted-foreground border-b border-border">
-                <th class="py-2 px-3 font-medium">Name</th>
-                <th class="py-2 px-3 font-medium">Schedule</th>
-                <th class="py-2 px-3 font-medium">Command</th>
-                <th class="py-2 px-3 font-medium">State</th>
-                <th class="py-2 px-3 font-medium">Last run</th>
-                <th class="py-2 px-3 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (job of jobs(); track job.name) {
-                <tr class="border-b border-border/60">
-                  <td class="py-2 px-3 font-medium">{{ job.name }}</td>
-                  <td class="py-2 px-3">
-                    <code class="text-xs">{{ job.schedule }}</code>
-                    @if (job.timezone) {
-                      <span class="text-xs text-muted-foreground"> · {{ job.timezone }}</span>
-                    }
-                  </td>
-                  <td
-                    class="py-2 px-3 max-w-[240px] truncate text-muted-foreground"
-                    [title]="job.command"
-                  >
-                    {{ job.command }}
-                  </td>
-                  <td class="py-2 px-3">
-                    <span
-                      class="text-xs px-2 py-0.5 rounded-full"
-                      [class]="
-                        job.failing
-                          ? 'bg-red-100 text-red-700'
-                          : job.enabled
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-amber-100 text-amber-700'
-                      "
-                      [title]="
-                        job.failing ? 'The last ' + job.consecutiveFailures + ' runs failed' : ''
-                      "
-                    >
-                      {{ job.failing ? 'failing' : job.enabled ? 'enabled' : 'suspended' }}
-                    </span>
-                    @if (job.origin === 'manifest') {
-                      <span class="ml-1 text-xs text-muted-foreground">from flui.yaml</span>
-                    }
-                    @if (job.onCluster === false) {
-                      <span
-                        class="ml-1 text-xs text-amber-600"
-                        title="Recorded by Flui; the next release or a run puts it back on the cluster."
-                        >not on the cluster yet</span
-                      >
-                    }
-                  </td>
-                  <td class="py-2 px-3 text-xs text-muted-foreground">
-                    {{ formatDate(job.lastScheduleTime) }}
-                  </td>
-                  <td class="py-2 px-3">
-                    <div class="flex items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        class="p-1.5 rounded-md hover:bg-muted"
-                        title="Run now"
-                        (click)="trigger(job)"
-                      >
-                        <ng-icon name="lucidePlay" class="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        class="px-2 py-1 text-xs rounded-md hover:bg-muted"
-                        (click)="openRuns(job)"
-                      >
-                        Runs
-                      </button>
-                      @if (job.origin !== 'manifest') {
-                        <button
-                          type="button"
-                          class="px-2 py-1 text-xs rounded-md hover:bg-muted"
-                          (click)="openEdit(job)"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          class="px-2 py-1 text-xs rounded-md hover:bg-muted"
-                          (click)="toggle(job)"
-                        >
-                          {{ job.enabled ? 'Suspend' : 'Enable' }}
-                        </button>
-                        <button
-                          type="button"
-                          class="p-1.5 rounded-md hover:bg-muted text-red-600"
-                          title="Delete"
-                          (click)="confirmDelete(job)"
-                        >
-                          <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                        </button>
-                      }
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <app-schedule-jobs-table
+          class="border-t border-fl-border"
+          [jobs]="jobs()"
+          [selected]="runsFor()?.name ?? null"
+          (runNow)="trigger($event)"
+          (runs)="openRuns($event)"
+          (edit)="openEdit($event)"
+          (toggled)="toggle($event)"
+          (remove)="confirmDelete($event)"
+        />
       }
-    </div>
+    </fl-panel>
 
-    <!-- Create dialog -->
-    @if (createOpen()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-background rounded-lg border border-border max-w-md w-full p-6 space-y-4">
-          <h3 class="text-base font-semibold">
-            {{ editingName() ? 'Edit scheduled job' : 'New scheduled job' }}
-          </h3>
-
-          <label class="block space-y-1">
-            <span class="text-sm font-medium">Name</span>
-            <input
-              class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm disabled:opacity-60"
-              placeholder="nightly-cleanup"
-              [disabled]="!!editingName()"
-              [ngModel]="fName()"
-              (ngModelChange)="fName.set($event)"
-            />
-            @if (editingName()) {
-              <span class="text-xs text-muted-foreground">
-                The name identifies the schedule and cannot be changed.
-              </span>
-            }
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-sm font-medium">Schedule (cron)</span>
-            <input
-              class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm font-mono"
-              placeholder="0 3 * * *"
-              [ngModel]="fSchedule()"
-              (ngModelChange)="fSchedule.set($event)"
-            />
-            <span class="text-xs text-muted-foreground">
-              5 fields: minute hour day month weekday.
-            </span>
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-sm font-medium">Command</span>
-            <input
-              class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm font-mono"
-              placeholder="node dist/cleanup.js"
-              [ngModel]="fCommand()"
-              (ngModelChange)="fCommand.set($event)"
-            />
-          </label>
-
-          <div class="grid grid-cols-2 gap-3">
-            <label class="block space-y-1">
-              <span class="text-sm font-medium">Timezone</span>
-              <input
-                class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
-                placeholder="Europe/Rome"
-                [ngModel]="fTimezone()"
-                (ngModelChange)="fTimezone.set($event)"
-              />
-            </label>
-            <label class="block space-y-1">
-              <span class="text-sm font-medium">Overlap</span>
-              <select
-                class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
-                [ngModel]="fConcurrency()"
-                (ngModelChange)="fConcurrency.set($event)"
-              >
-                <option value="Forbid">Forbid (skip)</option>
-                <option value="Allow">Allow</option>
-                <option value="Replace">Replace</option>
-              </select>
-            </label>
-          </div>
-
-          @if (formError()) {
-            <p class="text-sm text-red-600">{{ formError() }}</p>
-          }
-
-          <div class="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              class="px-4 py-2 text-sm border border-border rounded-md hover:bg-muted"
-              (click)="closeCreate()"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-              [disabled]="saving()"
-              (click)="submitCreate()"
-            >
-              @if (saving()) {
-                <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-              }
-              {{ editingName() ? 'Save' : 'Create' }}
-            </button>
-          </div>
-        </div>
-      </div>
+    @if (runsFor(); as job) {
+      <app-schedule-runs
+        [jobName]="job.name"
+        [runs]="runs()"
+        [loading]="runsLoading()"
+        [logs]="runLogs()"
+        [logsLoading]="runLogsLoading()"
+        (viewLogs)="viewRunLogs($event)"
+        (hideLogs)="runLogs.set(null)"
+        (closed)="closeRuns()"
+      />
     }
 
-    <!-- Delete confirm -->
-    @if (pendingDelete()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-background rounded-lg border border-border max-w-md w-full p-6 space-y-4">
-          <h3 class="text-base font-semibold">Delete schedule</h3>
-          <p class="text-sm text-muted-foreground">
-            Delete "{{ pendingDelete()?.name }}"? Running jobs are not interrupted, but no further
-            runs will be scheduled.
-          </p>
-          <div class="flex justify-end gap-2">
+    @if (createOpen()) {
+      <app-schedule-editor
+        [editing]="editingName()"
+        [saving]="saving()"
+        [error]="formError()"
+        [(name)]="fName"
+        [(schedule)]="fSchedule"
+        [(command)]="fCommand"
+        [(timezone)]="fTimezone"
+        [(concurrency)]="fConcurrency"
+        (saved)="submitCreate()"
+        (cancelled)="closeCreate()"
+      />
+    }
+
+    @if (pendingDelete(); as job) {
+      <div class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          class="fl-dialog"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="schedule-delete-title"
+        >
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" id="schedule-delete-title">Delete schedule</h2>
             <button
               type="button"
-              class="px-4 py-2 text-sm border border-border rounded-md hover:bg-muted"
+              class="fl-dialog__close"
+              aria-label="Close"
               (click)="pendingDelete.set(null)"
             >
-              Cancel
+              <fl-icon name="lucideX" />
             </button>
-            <button
-              type="button"
-              class="px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700"
-              (click)="executeDelete()"
-            >
-              Delete
-            </button>
+          </header>
+          <div class="fl-dialog__body">
+            <p>
+              Delete "{{ job.name }}"? Running jobs are not interrupted, but no further runs will be
+              scheduled.
+            </p>
           </div>
-        </div>
-      </div>
-    }
-
-    <!-- Runs panel -->
-    @if (runsFor()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-background rounded-lg border border-border max-w-2xl w-full p-6 space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">Runs · {{ runsFor()?.name }}</h3>
-            <button
-              type="button"
-              class="px-3 py-1 text-sm border border-border rounded-md hover:bg-muted"
-              (click)="closeRuns()"
-            >
-              Close
-            </button>
-          </div>
-
-          @if (runsLoading()) {
-            <div class="space-y-2">
-              <div class="skeleton h-6 w-full"></div>
-              <div class="skeleton h-6 w-full"></div>
-            </div>
-          } @else if (runs().length === 0) {
-            <p class="text-sm text-muted-foreground">No runs yet.</p>
-          } @else {
-            <div class="overflow-x-auto max-h-80 overflow-y-auto">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="text-left text-muted-foreground border-b border-border">
-                    <th class="py-2 px-3 font-medium">Run</th>
-                    <th class="py-2 px-3 font-medium">Status</th>
-                    <th class="py-2 px-3 font-medium">Trigger</th>
-                    <th class="py-2 px-3 font-medium">Started</th>
-                    <th class="py-2 px-3 font-medium text-right">Logs</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (r of runs(); track r.jobName) {
-                    <tr class="border-b border-border/60">
-                      <td class="py-2 px-3 font-mono text-xs">
-                        {{ r.jobName }}
-                      </td>
-                      <td class="py-2 px-3">
-                        <span
-                          class="text-xs px-2 py-0.5 rounded-full"
-                          [class]="runStatusClass(r)"
-                          >{{ r.status }}</span
-                        >
-                        @if (r.reason) {
-                          <div class="mt-1 text-xs text-red-600">
-                            {{ r.reason }}
-                          </div>
-                        }
-                      </td>
-                      <td class="py-2 px-3 text-xs">
-                        {{ r.manual ? 'manual' : 'cron' }}
-                      </td>
-                      <td class="py-2 px-3 text-xs text-muted-foreground">
-                        {{ formatDate(r.startTime) }}
-                      </td>
-                      <td class="py-2 px-3 text-right">
-                        <button
-                          type="button"
-                          class="px-2 py-1 text-xs rounded-md hover:bg-muted"
-                          (click)="viewRunLogs(r)"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-
-          @if (runLogs()) {
-            <div class="space-y-1">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-mono text-muted-foreground">
-                  {{ runLogs()?.jobName }}
-                </span>
-                <button
-                  type="button"
-                  class="text-xs text-muted-foreground hover:underline"
-                  (click)="runLogs.set(null)"
-                >
-                  Hide
-                </button>
-              </div>
-              @if (runLogsLoading()) {
-                <div class="skeleton h-24 w-full"></div>
-              } @else {
-                @if (runLogs()?.reason) {
-                  <p class="text-xs text-red-600">Failed: {{ runLogs()?.reason }}</p>
-                }
-                <pre
-                  class="max-h-64 overflow-auto rounded-md bg-muted/50 p-3 text-xs whitespace-pre-wrap"
-                  >{{ runLogs()?.logs || '(the run printed nothing)' }}</pre>
-              }
-            </div>
-          }
+          <footer class="fl-dialog__footer">
+            <button flButton="ghost" type="button" (click)="pendingDelete.set(null)">Cancel</button>
+            <button flButton="danger" type="button" (click)="executeDelete()">Delete</button>
+          </footer>
         </div>
       </div>
     }
@@ -459,11 +169,7 @@ export class AppSchedulesTabComponent implements OnInit, OnDestroy {
   readonly runsFor = signal<ScheduledJob | null>(null);
   readonly runs = signal<ScheduledJobRun[]>([]);
   readonly runsLoading = signal(false);
-  readonly runLogs = signal<{
-    jobName: string;
-    logs: string;
-    reason?: string | null;
-  } | null>(null);
+  readonly runLogs = signal<RunLogs | null>(null);
   readonly runLogsLoading = signal(false);
 
   private appId(): string | null {
@@ -590,24 +296,5 @@ export class AppSchedulesTabComponent implements OnInit, OnDestroy {
     this.runsFor.set(null);
     this.runs.set([]);
     this.runLogs.set(null);
-  }
-
-  formatDate(value?: string | null): string {
-    if (!value) return '—';
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
-  }
-
-  runStatusClass(run: ScheduledJobRun): string {
-    switch (run.status) {
-      case 'Succeeded':
-        return 'bg-green-100 text-green-700';
-      case 'Failed':
-        return 'bg-red-100 text-red-700';
-      case 'Running':
-        return 'bg-blue-100 text-blue-700';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
   }
 }

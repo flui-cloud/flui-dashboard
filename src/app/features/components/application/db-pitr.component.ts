@@ -1,7 +1,11 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideClock, lucideHistory, lucideLoader, lucideTriangleAlert } from '@ng-icons/lucide';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlField } from '../../../ui/patterns/field';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
 
 /**
@@ -12,153 +16,115 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
  */
 @Component({
   selector: 'app-db-pitr',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon],
-  providers: [
-    provideIcons({
-      lucideClock,
-      lucideHistory,
-      lucideLoader,
-      lucideTriangleAlert,
-    }),
-  ],
+  imports: [FormsModule, FlPanel, FlKeyValue, FlKvItem, FlField, FlAlert, FlButton, FlSpinner],
+  host: { class: 'block' },
   template: `
     @if (status(); as s) {
       @if (s.continuousBackupEnabled || s.backupCount > 0) {
-        <div class="rounded-lg border border-border bg-card p-4">
-          <div class="flex items-start gap-2">
-            <ng-icon name="lucideHistory" class="mt-0.5 h-5 w-5 text-indigo-600" />
-            <div class="min-w-0 flex-1">
-              <h3 class="text-base font-semibold">
-                {{ s.pointInTime === false ? 'Scheduled dumps' : 'Point-in-time recovery' }}
-              </h3>
-              <p class="mt-0.5 text-sm text-muted-foreground">
-                @if (s.pointInTime === false) {
-                  This database's image cannot back up continuously, so it is dumped on a schedule.
-                  A restore brings back the latest dump into a
-                  <span class="font-medium">new install</span> — changes after it are not kept.
-                } @else if (s.continuousBackupEnabled) {
-                  Continuous backup is on.
-                } @else {
-                  Continuous backup is currently off — you can still recover from the
-                  {{ s.backupCount }} existing backup(s).
-                }
-                @if (s.pointInTime !== false) {
-                  Restore this database as of an instant into a
-                  <span class="font-medium">new install</span> — the live database is untouched.
-                }
-              </p>
-
-              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-                <div>
-                  <dt class="text-xs text-muted-foreground">
-                    {{ s.pointInTime === false ? 'Oldest dump' : 'Recoverable from' }}
-                  </dt>
-                  <dd>{{ fmt($safeNavigationMigration(s.window?.oldest)) }}</dd>
-                </div>
-                <div>
-                  <dt class="text-xs text-muted-foreground">
-                    {{ s.pointInTime === false ? 'Newest dump' : 'up to' }}
-                  </dt>
-                  <dd>
-                    {{ fmt($safeNavigationMigration(s.window?.newest)) }}
-                    @if (s.pointInTime !== false) {
-                      <span class="text-xs text-muted-foreground">(last change archived)</span>
-                    }
-                  </dd>
-                </div>
-                <div>
-                  <dt class="text-xs text-muted-foreground">
-                    {{ s.pointInTime === false ? 'Dumps' : 'Base backups' }}
-                  </dt>
-                  <dd>{{ s.backupCount }}</dd>
-                </div>
-              </dl>
-
-              @if (!open()) {
-                <button
-                  type="button"
-                  (click)="open.set(true)"
-                  class="mt-3 inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium hover:bg-muted"
-                >
-                  <ng-icon name="lucideClock" class="h-4 w-4" />
-                  {{
-                    s.pointInTime === false
-                      ? 'Restore the latest dump…'
-                      : 'Restore to a point in time…'
-                  }}
-                </button>
+        @let dumps = s.pointInTime === false;
+        <fl-panel
+          [title]="dumps ? 'Scheduled dumps' : 'Point-in-time recovery'"
+          data-testid="db-pitr"
+        >
+          @if (!open()) {
+            <button panelActions flButton size="sm" type="button" (click)="open.set(true)">
+              {{ dumps ? 'Restore the latest dump…' : 'Restore to a point in time…' }}
+            </button>
+          }
+          <div class="flex flex-col gap-4">
+            <p class="text-fl-body-sm text-fl-ink-muted">
+              @if (dumps) {
+                This database's image cannot back up continuously, so it is dumped on a schedule. A
+                restore brings back the latest dump into a new install; changes after it are not
+                kept.
+              } @else if (s.continuousBackupEnabled) {
+                Continuous backup is on.
               } @else {
-                <div class="mt-3 space-y-3 rounded-md border border-border bg-muted/40 p-3">
-                  <div>
-                    <label class="block text-xs font-medium text-muted-foreground" for="pitr-name"
-                      >New install name</label
-                    >
+                Continuous backup is off. You can still recover from the
+                {{ s.backupCount }} existing backup(s).
+              }
+              @if (!dumps) {
+                Restore this database as of an instant into a new install; the live database is
+                untouched.
+              }
+            </p>
+
+            <fl-key-value class="fl-kv--compact">
+              <fl-kv-item [key]="dumps ? 'Oldest dump' : 'Recoverable from'">{{
+                fmt(s.window?.oldest)
+              }}</fl-kv-item>
+              <fl-kv-item [key]="dumps ? 'Newest dump' : 'Up to'">
+                {{ fmt(s.window?.newest) }}
+                @if (!dumps) {
+                  <span class="text-fl-caption text-fl-ink-muted">(last change archived)</span>
+                }
+              </fl-kv-item>
+              <fl-kv-item [key]="dumps ? 'Dumps' : 'Base backups'">{{ s.backupCount }}</fl-kv-item>
+            </fl-key-value>
+
+            @if (open()) {
+              <div class="flex flex-col gap-3">
+                <fl-field label="New install name" for="pitr-name">
+                  <div class="fl-input fl-input--lg">
                     <input
                       id="pitr-name"
                       type="text"
                       [ngModel]="name()"
                       (ngModelChange)="name.set($event)"
-                      placeholder="e.g. orders-db-restored"
-                      class="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                      placeholder="orders-db-restored"
                     />
                   </div>
-                  @if (s.pointInTime !== false) {
-                    <div>
-                      <label class="block text-xs font-medium text-muted-foreground" for="pitr-at">
-                        Recover to (leave empty for the latest recoverable point)
-                      </label>
+                </fl-field>
+                @if (!dumps) {
+                  <fl-field
+                    label="Recover to"
+                    for="pitr-at"
+                    hint="Leave empty for the latest recoverable point."
+                  >
+                    <div class="fl-input fl-input--lg">
                       <input
                         id="pitr-at"
                         type="datetime-local"
                         [ngModel]="at()"
                         (ngModelChange)="at.set($event)"
-                        class="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
                       />
                     </div>
-                  }
-
-                  <div class="flex items-center gap-2">
-                    <button
-                      type="button"
-                      (click)="submit()"
-                      [disabled]="restoring() || !name().trim()"
-                      class="inline-flex h-9 items-center gap-1.5 rounded-md bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      <ng-icon
-                        [name]="restoring() ? 'lucideLoader' : 'lucideHistory'"
-                        class="h-4 w-4"
-                        [class.animate-spin]="restoring()"
-                      />
-                      {{ restoring() ? 'Starting…' : 'Restore' }}
-                    </button>
-                    <button
-                      type="button"
-                      (click)="cancel()"
-                      [disabled]="restoring()"
-                      class="inline-flex h-9 items-center rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-muted disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                  </fl-field>
+                }
+                <div class="fl-row">
+                  <button
+                    flButton
+                    size="sm"
+                    type="button"
+                    (click)="submit()"
+                    [disabled]="restoring() || !name().trim()"
+                  >
+                    @if (restoring()) {
+                      <fl-spinner label="Starting" />
+                    }
+                    {{ restoring() ? 'Starting…' : 'Restore' }}
+                  </button>
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    (click)="cancel()"
+                    [disabled]="restoring()"
+                  >
+                    Cancel
+                  </button>
                 </div>
-              }
+              </div>
+            }
 
-              @if (ok(); as m) {
-                <p class="mt-2 text-xs text-emerald-600">
-                  {{ m }}
-                </p>
-              }
-              @if (error(); as e) {
-                <p class="mt-2 flex items-center gap-1.5 text-xs text-destructive">
-                  <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5" />
-                  {{ e }}
-                </p>
-              }
-            </div>
+            @if (ok(); as m) {
+              <fl-alert tone="info" title="Restore started">{{ m }}</fl-alert>
+            }
+            @if (error(); as e) {
+              <fl-alert tone="error" title="Restore failed">{{ e }}</fl-alert>
+            }
           </div>
-        </div>
+        </fl-panel>
       }
     }
   `,
@@ -182,7 +148,6 @@ export class DbPitrComponent {
       this.reset();
       this.status.set(null);
       if (!id) return;
-      // status 4xx (not a DB / no backup) → leave hidden.
       this.svc.status(id).subscribe({
         next: (s) => this.status.set(s),
         error: () => this.status.set(null),
@@ -197,7 +162,6 @@ export class DbPitrComponent {
     this.restoring.set(true);
     this.error.set(null);
     this.ok.set(null);
-    // datetime-local is a local wall-clock string; send an absolute instant.
     const local = this.at().trim();
     const recoveryTargetTime = local ? new Date(local).toISOString() : undefined;
     this.svc.restore(id, { name, recoveryTargetTime }).subscribe({
@@ -205,7 +169,7 @@ export class DbPitrComponent {
         this.restoring.set(false);
         this.open.set(false);
         this.ok.set(
-          `Restore started into "${name}" (job ${r.id.slice(0, 8)}). It provisions in the background.`,
+          `Restoring into "${name}" (job ${r.id.slice(0, 8)}). It provisions in the background.`,
         );
       },
       error: (e) => {

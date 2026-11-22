@@ -1,5 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { reasonOf } from '../../core/state/http-error';
 import { ApplicationsService } from '../../core/api/api/applications.service';
 import { AvailableVersionDto } from '../../core/api/model/availableVersionDto';
 import { AvailableVersionsResponseDto } from '../../core/api/model/availableVersionsResponseDto';
@@ -73,7 +75,7 @@ export class AppVersioningService {
         nextPage: response.nextPage ?? null,
       });
     } catch (err: any) {
-      this.errorSig.set(this.extractError(err, 'Failed to load available versions'));
+      this.errorSig.set(this.extractError(err, 'The available versions could not be read'));
       throw err;
     } finally {
       this.loadingSig.set(false);
@@ -96,7 +98,7 @@ export class AppVersioningService {
         nextPage: response.nextPage ?? null,
       }));
     } catch (err: any) {
-      this.errorSig.set(this.extractError(err, 'Failed to load more versions'));
+      this.errorSig.set(this.extractError(err, 'More versions could not be read'));
       throw err;
     } finally {
       this.loadingMoreSig.set(false);
@@ -115,7 +117,8 @@ export class AppVersioningService {
   }
 
   private extractError(err: unknown, fallback: string): string {
-    const e = err as { error?: { message?: string }; message?: string };
-    return e?.error?.message ?? e?.message ?? fallback;
+    if (err instanceof HttpErrorResponse) return `${fallback}: ${reasonOf(err)}.`;
+    const e = err as { message?: string };
+    return e?.message ?? fallback;
   }
 }

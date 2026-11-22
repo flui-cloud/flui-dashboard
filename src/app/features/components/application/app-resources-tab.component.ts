@@ -1,14 +1,5 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  computed,
-  inject,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject } from '@angular/core';
 
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideAlertCircle } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { AppRuntimeService } from '../../service/app-runtime.service';
 import { AppResourcesEditorComponent } from './app-resources-editor.component';
@@ -18,67 +9,60 @@ import { AppAutoscalingCardComponent } from './app-autoscaling-card.component';
 import { AppEgressNoteComponent } from '../egress/app-egress-note.component';
 import { UpdateResourcesDto } from '../../../core/api/model/updateResourcesDto';
 import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
-import { LookOnlyDirective } from '../../../shared/directives/look-only.directive';
 import { accessOf } from '../../model/app-access';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-resources-tab',
   standalone: true,
   imports: [
-    NgIconComponent,
-    LookOnlyDirective,
     AppResourcesEditorComponent,
     AppResourceProposalComponent,
     AppMaintenanceCardComponent,
     AppAutoscalingCardComponent,
     AppEgressNoteComponent,
+    FlAlert,
+    FlSpinner,
   ],
-  providers: [provideIcons({ lucideLoader, lucideAlertCircle })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'fl-stack', '[class.look-only]': 'readOnly()' },
   template: `
     @if (app(); as app) {
-      <div class="space-y-4" [appLookOnly]="readOnly()">
-        @if (runtimeService.loading()) {
-          <div class="flex items-center gap-2 py-4">
-            <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin text-blue-600" />
-            <span class="text-sm text-gray-600">Loading runtime status...</span>
-          </div>
-        }
+      @if (runtimeService.loading()) {
+        <div class="flex items-center gap-2 text-fl-body-sm text-fl-ink-muted">
+          <fl-spinner label="Loading runtime status" />
+          Loading runtime status
+        </div>
+      }
 
-        @if (runtimeService.error()) {
-          <div
-            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
-          >
-            <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{{ runtimeService.error() }}</span>
-          </div>
-        }
+      @if (runtimeService.error(); as error) {
+        <fl-alert tone="error" title="Runtime status request failed">{{ error }}</fl-alert>
+      }
 
-        @if (!readOnly()) {
-          <app-resource-proposal [appId]="app.id ?? null" (deferred)="maintenanceCard.reload()" />
-          <app-app-maintenance-card #maintenanceCard [appId]="app.id ?? null" />
-        }
+      @if (!readOnly()) {
+        <app-resource-proposal [appId]="app.id ?? null" (deferred)="maintenanceCard.reload()" />
+        <app-app-maintenance-card #maintenanceCard [appId]="app.id ?? null" />
+      }
 
-        <app-resources-editor
-          [runtime]="runtimeService.runtime()"
-          [savingReplicas]="runtimeService.savingReplicas()"
-          [savingResources]="runtimeService.savingResources()"
-          [savingRestart]="runtimeService.savingRestart()"
-          [appId]="app.id ?? null"
-          [clusterId]="app.clusterId ?? null"
-          [advice]="!readOnly()"
-          [rollout]="runtimeService.rollout()"
-          (saveResourcesEvent)="onSaveResources($event)"
-          (saveReplicasEvent)="onSaveReplicas($event)"
-          (restartEvent)="onRestart()"
-          (refreshEvent)="onRefresh()"
-        />
+      <app-resources-editor
+        [runtime]="runtimeService.runtime()"
+        [savingReplicas]="runtimeService.savingReplicas()"
+        [savingResources]="runtimeService.savingResources()"
+        [savingRestart]="runtimeService.savingRestart()"
+        [appId]="app.id ?? null"
+        [clusterId]="app.clusterId ?? null"
+        [advice]="!readOnly()"
+        [rollout]="runtimeService.rollout()"
+        (saveResourcesEvent)="onSaveResources($event)"
+        (saveReplicasEvent)="onSaveReplicas($event)"
+        (restartEvent)="onRestart()"
+        (refreshEvent)="onRefresh()"
+      />
 
-        @if (!readOnly()) {
-          <app-autoscaling-card [appId]="app.id ?? null" />
-          <app-egress-note [appId]="app.id ?? null" />
-        }
-      </div>
+      @if (!readOnly()) {
+        <app-autoscaling-card [appId]="app.id ?? null" />
+        <app-egress-note [appId]="app.id ?? null" />
+      }
     }
   `,
 })

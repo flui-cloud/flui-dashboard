@@ -1,128 +1,67 @@
-import { Component, Input, output, ChangeDetectionStrategy } from '@angular/core';
-
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, computed, input, output } from '@angular/core';
+import { FlStatus } from '../../../../ui/primitives/status';
 import {
-  lucideCircleAlert,
-  lucideMemoryStick,
-  lucideRefreshCw,
-  lucideSettings,
-  lucideImageOff,
-  lucideActivity,
-  lucideCalendarX,
-  lucideCircleHelp,
-  lucideCircleCheck,
-  lucideChevronRight,
-  lucideWand,
-} from '@ng-icons/lucide';
-import {
-  AutoFixActionPayload,
   CrashDiagnosis,
   autoFixPayload,
-  categoryIcon,
-  categoryLabel,
   isAutoRemediated,
-  severityBadgeClass,
 } from '../../../model/crash-diagnosis.models';
+import { SEVERITY_STATUS, diagnosisCategoryLabel, formatDateTime } from './diagnosis-labels';
 
 @Component({
-  selector: 'app-diagnosis-row',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideMemoryStick,
-      lucideRefreshCw,
-      lucideSettings,
-      lucideImageOff,
-      lucideActivity,
-      lucideCalendarX,
-      lucideCircleHelp,
-      lucideCircleCheck,
-      lucideChevronRight,
-      lucideWand,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  selector: 'tr[app-diagnosis-row]',
+  imports: [FlStatus],
+  host: { '[class.is-selected]': 'selected()' },
   template: `
-    <button
-      type="button"
-      (click)="clicked.emit(diagnosis)"
-      class="w-full flex items-start gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors text-left"
-    >
-      <div class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 flex-shrink-0">
-        <ng-icon [name]="icon" class="h-4 w-4 text-gray-600" />
+    @let d = diagnosis();
+    <td>
+      <fl-status [tone]="severity().tone" [label]="severity().label" />
+    </td>
+    <td class="whitespace-normal">
+      <div class="flex min-w-0 flex-col gap-0.5">
+        <button
+          type="button"
+          class="fl-link text-left"
+          [attr.aria-expanded]="selected()"
+          (click)="clicked.emit(d)"
+        >
+          {{ d.title }}
+        </button>
+        <span class="text-fl-caption text-fl-ink-muted">
+          {{ category() }} · <span class="fl-mono">{{ d.podName }}</span>
+          @if (d.containerName) {
+            · <span class="fl-mono">{{ d.containerName }}</span>
+          }
+          @if (autoRemediated()) {
+            · Fixed automatically
+          }
+          @if (memoryChange(); as change) {
+            · Memory <span class="fl-mono">{{ change }}</span>
+          }
+        </span>
       </div>
-      <div class="flex-1 min-w-0 space-y-1">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span [class]="severityClass">{{ diagnosis.severity }}</span>
-          <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-            {{ category }}
-          </span>
-          @if (autoRemediated) {
-            <span
-              class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-medium"
-            >
-              <ng-icon name="lucideWand" class="h-3 w-3" />
-              Auto-remediated
-            </span>
-          }
-          @if (autoFix && autoFix!.previousMemoryLimit && autoFix!.newMemoryLimit) {
-            <span
-              class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono"
-            >
-              Memory {{ autoFix!.previousMemoryLimit }} → {{ autoFix!.newMemoryLimit }}
-            </span>
-          }
-          @if (diagnosis.resolvedAt) {
-            <span
-              class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-50 text-green-700"
-            >
-              <ng-icon name="lucideCircleCheck" class="h-3 w-3" />
-              resolved
-            </span>
-          }
-        </div>
-        <p class="text-sm font-medium text-gray-900 truncate">
-          {{ diagnosis.title }}
-        </p>
-        <p class="text-xs text-gray-500 truncate">
-          Pod: <span class="font-mono">{{ diagnosis.podName }}</span>
-          @if (diagnosis.containerName) {
-            · <span class="font-mono">{{ diagnosis.containerName }}</span>
-          }
-          · {{ formatDate(diagnosis.createdAt) }}
-        </p>
-      </div>
-      <ng-icon name="lucideChevronRight" class="h-4 w-4 text-gray-400 mt-1 flex-shrink-0" />
-    </button>
+    </td>
+    <td class="text-fl-ink-muted">{{ detected() }}</td>
+    <td>
+      @if (d.resolvedAt) {
+        <fl-status tone="success" label="Resolved" />
+      } @else {
+        <fl-status tone="neutral" label="Open" />
+      }
+    </td>
   `,
 })
 export class DiagnosisRowComponent {
-  @Input({ required: true }) diagnosis!: CrashDiagnosis;
+  readonly diagnosis = input.required<CrashDiagnosis>();
+  readonly selected = input(false);
   readonly clicked = output<CrashDiagnosis>();
 
-  get icon(): string {
-    return categoryIcon(this.diagnosis.category);
-  }
-
-  get category(): string {
-    return categoryLabel(this.diagnosis.category);
-  }
-
-  get severityClass(): string {
-    return severityBadgeClass(this.diagnosis.severity);
-  }
-
-  get autoRemediated(): boolean {
-    return isAutoRemediated(this.diagnosis);
-  }
-
-  get autoFix(): AutoFixActionPayload | null {
-    return autoFixPayload(this.diagnosis);
-  }
-
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleString();
-  }
+  protected readonly severity = computed(() => SEVERITY_STATUS[this.diagnosis().severity]);
+  protected readonly category = computed(() => diagnosisCategoryLabel(this.diagnosis().category));
+  protected readonly autoRemediated = computed(() => isAutoRemediated(this.diagnosis()));
+  protected readonly detected = computed(() => formatDateTime(this.diagnosis().createdAt));
+  protected readonly memoryChange = computed(() => {
+    const fix = autoFixPayload(this.diagnosis());
+    if (!fix?.previousMemoryLimit || !fix.newMemoryLimit) return null;
+    return `${fix.previousMemoryLimit} → ${fix.newMemoryLimit}`;
+  });
 }

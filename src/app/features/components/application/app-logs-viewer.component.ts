@@ -1,17 +1,13 @@
-import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, signal, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideSearch,
   lucideRefreshCw,
-  lucideChevronDown,
   lucideDownload,
   lucideX,
-  lucideAlertCircle,
-  lucideActivity,
   lucideCalendar,
-  lucideTriangleAlert,
 } from '@ng-icons/lucide';
 
 import { ApplicationService } from '../../service/application.service';
@@ -23,200 +19,185 @@ import {
 } from '../../service/application-logs.service';
 import type { LogTimeRangeValue, LogCustomRange } from '../../service/application-logs.service';
 import { LogDateRangePickerComponent } from './log-date-range-picker.component';
-import { LogVolumeHistogramComponent } from '../../../shared/components/charts/log-volume-histogram/log-volume-histogram.component';
+import { LogVolumeBarsComponent } from './log-volume-bars';
 import { LogTableComponent } from './log-table.component';
 import type { LogVolumeRangeSelection } from '../../../shared/components/charts/chart.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+
+const LEVEL_MARKERS: Record<string, string> = {
+  error: 'var(--fl-danger)',
+  warn: 'var(--fl-warning-fill)',
+  info: 'var(--fl-accent)',
+  debug: 'var(--fl-level-debug)',
+  trace: 'var(--fl-level-trace)',
+};
+
+const LEVEL_LABELS: Record<string, string> = {
+  error: 'Error',
+  warn: 'Warn',
+  info: 'Info',
+  debug: 'Debug',
+  trace: 'Trace',
+};
 
 @Component({
   selector: 'app-logs-viewer',
   standalone: true,
   imports: [
     FormsModule,
-    NgIconComponent,
+    FlPanel,
+    FlAlert,
+    FlButton,
+    FlIcon,
     LogDateRangePickerComponent,
-    LogVolumeHistogramComponent,
+    LogVolumeBarsComponent,
     LogTableComponent,
   ],
   providers: [
     provideIcons({
       lucideSearch,
       lucideRefreshCw,
-      lucideChevronDown,
       lucideDownload,
       lucideX,
-      lucideAlertCircle,
-      lucideActivity,
       lucideCalendar,
-      lucideTriangleAlert,
     }),
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'fl-stack' },
   template: `
-    <div class="flex flex-col gap-0 min-h-0">
-      @if (maskMode.enabled()) {
-        <div
-          data-testid="mask-mode-log-banner"
-          class="flex items-center gap-2 rounded-t-lg border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800"
-        >
-          <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 shrink-0" />
-          Mask mode cannot protect log content — do not share this screen.
-        </div>
-      }
+    @if (maskMode.enabled()) {
+      <fl-alert
+        tone="warning"
+        title="Mask mode cannot protect log content"
+        data-testid="mask-mode-log-banner"
+        >Do not share this screen.</fl-alert
+      >
+    }
 
-      <!-- ── Log Volume Distribution ─────────────────────────────────────── -->
-      <div class="bg-white border border-gray-200 rounded-t-lg p-4">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Log Volume Distribution
-          </span>
-          <span class="text-xs text-gray-400">{{ logs.selectedRangeLabel() }}</span>
-        </div>
-
-        <!-- Level summary pills -->
-        <div class="flex items-center gap-2 flex-wrap mb-3">
-          @for (lvl of allLevels; track lvl) {
-            <button
-              (click)="logs.toggleLevel(lvl)"
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
-              [class]="
-                logs.levelActive()[lvl]
-                  ? getLevelPillActive(lvl)
-                  : 'border-gray-200 text-gray-400 bg-transparent opacity-40'
-              "
-            >
-              <span class="w-2 h-2 rounded-full" [class]="getLevelDot(lvl)"></span>
-              {{ lvl.toUpperCase() }}
-              <span class="font-mono tabular-nums">{{
-                logs.volumeLevelTotals()[lvl] ?? logs.levelCounts()[lvl] ?? 0
-              }}</span>
-            </button>
-          }
-        </div>
-
-        <!-- Log Volume Histogram -->
-        <app-log-volume-histogram
-          [data]="logs.volume()"
-          [loading]="logs.volumeLoading()"
-          [config]="{ height: '80px', highlightRange: brushHighlight() }"
-          (rangeSelected)="onHistogramRangeSelected($event)"
-        />
-      </div>
-
-      <!-- ── Toolbar ──────────────────────────────────────────────────────── -->
-      <div class="bg-white border-x border-gray-200 px-4 py-2.5 flex items-center gap-3 flex-wrap">
-        <!-- Search -->
-        <div class="relative flex-[2] min-w-72 flex gap-1.5">
-          <div class="relative flex-1">
-            <ng-icon
-              name="lucideSearch"
-              class="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400"
-            />
+    <fl-panel [flush]="true">
+      <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Log filters">
+        <div class="fl-toolbar__group">
+          <div class="fl-input">
+            <fl-icon name="lucideSearch" [size]="14" />
+            <label class="fl-sr" for="app-logs-search">Search logs</label>
             <input
+              id="app-logs-search"
               type="text"
               [ngModel]="searchInput()"
               (ngModelChange)="searchInput.set($event)"
               (keyup.enter)="onSearchSubmit()"
-              placeholder="Search logs…"
-              class="w-full pl-8 pr-8 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="Search logs"
             />
             @if (searchInput()) {
-              <button (click)="clearSearch()" class="absolute right-2 top-1/2 -translate-y-1/2">
-                <ng-icon name="lucideX" class="h-3 w-3 text-gray-400 hover:text-gray-600" />
+              <button
+                type="button"
+                class="inline-flex rounded-fl-sm text-fl-ink-muted hover:text-fl-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-fl-accent"
+                aria-label="Clear search"
+                (click)="clearSearch()"
+              >
+                <fl-icon name="lucideX" [size]="14" />
               </button>
             }
           </div>
-          <button
-            type="button"
-            (click)="onSearchSubmit()"
-            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap"
-          >
-            <ng-icon name="lucideSearch" class="h-3 w-3" />
-            Search
-          </button>
-        </div>
+          <button flButton size="sm" type="button" (click)="onSearchSubmit()">Search</button>
 
-        <!-- Time range preset -->
-        <div class="flex items-center gap-1.5 bg-muted border border-border rounded px-2 py-1.5">
-          <ng-icon name="lucideCalendar" class="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-          <select
-            [ngModel]="logs.selectedRange()"
-            (ngModelChange)="onPresetRangeChange($event)"
-            class="text-xs bg-card text-foreground focus:outline-none cursor-pointer"
-          >
-            @for (r of timeRanges; track r.value) {
-              <option [value]="r.value" class="bg-card text-foreground">{{ r.label }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- Custom range button + picker -->
-        @if (logs.selectedRange() === 'custom') {
-          <div class="relative">
-            <button
-              type="button"
-              (click)="customRangeOpen.set(!customRangeOpen())"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition-colors"
-              [class]="
-                logs.customRangeLabel()
-                  ? 'border-blue-400 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-              "
-            >
-              <ng-icon name="lucideCalendar" class="h-3.5 w-3.5" />
-              {{ logs.customRangeLabel() || 'Select date range' }}
-            </button>
-
-            @if (customRangeOpen()) {
-              <div
-                class="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg w-80"
+          <div class="fl-row" role="group" aria-label="Levels">
+            @for (lvl of allLevels; track lvl) {
+              <button
+                type="button"
+                class="fl-chip"
+                [attr.aria-pressed]="!!logs.levelActive()[lvl]"
+                (click)="logs.toggleLevel(lvl)"
               >
-                <app-log-date-range-picker
-                  (rangeSelected)="onCustomRangeSelected($event)"
-                  (cancelled)="customRangeOpen.set(false)"
-                />
-              </div>
+                <span class="fl-chip__marker" [style.background]="levelMarkers[lvl]"></span>
+                {{ levelLabels[lvl] }}
+                <span class="fl-chip__count">{{ levelCount(lvl) }}</span>
+              </button>
             }
           </div>
-        }
 
-        <div class="flex-1"></div>
+          <span class="fl-select-wrap">
+            <select
+              class="fl-select fl-select--sm"
+              aria-label="Time range"
+              [ngModel]="logs.selectedRange()"
+              (ngModelChange)="onPresetRangeChange($event)"
+            >
+              @for (r of timeRanges; track r.value) {
+                <option [value]="r.value">{{ r.label }}</option>
+              }
+            </select>
+          </span>
 
-        <!-- Count -->
-        <span class="text-xs text-gray-400 whitespace-nowrap">
-          {{ logs.filteredLogs().length }} / {{ logs.logs().length }} entries
-        </span>
+          @if (logs.selectedRange() === 'custom') {
+            <div class="relative">
+              <button
+                flButton
+                size="sm"
+                type="button"
+                [attr.aria-expanded]="customRangeOpen()"
+                (click)="customRangeOpen.set(!customRangeOpen())"
+              >
+                <fl-icon name="lucideCalendar" [size]="14" />
+                {{ logs.customRangeLabel() || 'Select dates' }}
+              </button>
+              @if (customRangeOpen()) {
+                <div
+                  class="absolute left-0 top-full z-50 mt-1 w-80 rounded-fl-lg border border-fl-border bg-fl-surface"
+                >
+                  <app-log-date-range-picker
+                    (rangeSelected)="onCustomRangeSelected($event)"
+                    (cancelled)="customRangeOpen.set(false)"
+                  />
+                </div>
+              }
+            </div>
+          }
+        </div>
 
-        <!-- Refresh -->
-        <button
-          (click)="logs.refresh()"
-          title="Refresh"
-          class="p-1.5 rounded hover:bg-gray-100 transition-colors"
-        >
-          <ng-icon
-            name="lucideRefreshCw"
-            class="h-3.5 w-3.5 text-gray-500"
-            [class.animate-spin]="logs.loading()"
-          />
-        </button>
-
-        <!-- Download -->
-        <button
-          (click)="downloadLogs()"
-          title="Download logs"
-          class="p-1.5 rounded hover:bg-gray-100 transition-colors"
-        >
-          <ng-icon name="lucideDownload" class="h-3.5 w-3.5 text-gray-500" />
-        </button>
+        <div class="fl-toolbar__group">
+          <span class="fl-toolbar__info">{{ entriesLabel() }}</span>
+          <button
+            flButton
+            size="sm"
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
+            [attr.aria-busy]="logs.loading()"
+            (click)="logs.refresh()"
+          >
+            <fl-icon name="lucideRefreshCw" [size]="14" [class.animate-spin]="logs.loading()" />
+          </button>
+          <button
+            flButton
+            size="sm"
+            type="button"
+            [iconOnly]="true"
+            aria-label="Download"
+            (click)="downloadLogs()"
+          >
+            <fl-icon name="lucideDownload" [size]="14" />
+          </button>
+        </div>
       </div>
 
-      <!-- ── Log Table ────────────────────────────────────────────────────── -->
+      <div class="border-b border-fl-border px-4 pb-2 pt-3">
+        <app-log-volume-bars
+          [data]="logs.volume()"
+          [loading]="logs.volumeLoading()"
+          [highlightRange]="brushHighlight()"
+          (rangeSelected)="onHistogramRangeSelected($event)"
+        />
+      </div>
+
       <app-log-table
         [entries]="logs.filteredLogs()"
         [loading]="logs.loading()"
         [error]="logs.error()"
-        class="[&>div]:rounded-t-none [&>div]:border-t-0"
       />
-    </div>
+    </fl-panel>
   `,
 })
 export class AppLogsViewerComponent {
@@ -226,6 +207,8 @@ export class AppLogsViewerComponent {
 
   readonly allLevels = ALL_LOG_LEVELS;
   readonly timeRanges = LOG_TIME_RANGES;
+  protected readonly levelMarkers = LEVEL_MARKERS;
+  protected readonly levelLabels = LEVEL_LABELS;
 
   readonly searchInput = signal('');
   readonly customRangeOpen = signal(false);
@@ -233,7 +216,16 @@ export class AppLogsViewerComponent {
   private readonly _brushHighlight = signal<{ start: Date; end: Date } | null>(null);
   readonly brushHighlight = this._brushHighlight.asReadonly();
 
-  // ── Actions ───────────────────────────────────────────────────────────────
+  protected readonly entriesLabel = computed(() => {
+    const shown = this.logs.filteredLogs().length;
+    const total = this.logs.logs().length;
+    const noun = total === 1 ? 'entry' : 'entries';
+    return shown === total ? `${total} ${noun}` : `${shown} of ${total} ${noun}`;
+  });
+
+  protected levelCount(level: string): number {
+    return this.logs.volumeLevelTotals()[level] ?? this.logs.levelCounts()[level] ?? 0;
+  }
 
   onPresetRangeChange(value: LogTimeRangeValue) {
     if (value === 'custom') {
@@ -281,41 +273,5 @@ export class AppLogsViewerComponent {
     a.download = `logs-${this.appService.selectedApplication()?.slug ?? 'app'}-${Date.now()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-  }
-
-  // ── Level styling helpers ─────────────────────────────────────────────────
-
-  getLevelDot(level: string): string {
-    switch (level.toLowerCase()) {
-      case 'error':
-        return 'bg-red-500';
-      case 'warn':
-        return 'bg-amber-400';
-      case 'info':
-        return 'bg-blue-500';
-      case 'debug':
-        return 'bg-gray-400';
-      case 'trace':
-        return 'bg-purple-400';
-      default:
-        return 'bg-gray-300';
-    }
-  }
-
-  getLevelPillActive(level: string): string {
-    switch (level.toLowerCase()) {
-      case 'error':
-        return 'border-red-200 bg-red-50 text-red-700';
-      case 'warn':
-        return 'border-amber-200 bg-amber-50 text-amber-700';
-      case 'info':
-        return 'border-blue-200 bg-blue-50 text-blue-700';
-      case 'debug':
-        return 'border-gray-200 bg-gray-50 text-gray-600';
-      case 'trace':
-        return 'border-purple-200 bg-purple-50 text-purple-700';
-      default:
-        return 'border-gray-200 bg-gray-50 text-gray-500';
-    }
   }
 }

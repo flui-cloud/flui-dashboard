@@ -1,327 +1,161 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideChevronDown,
   lucideChevronRight,
-  lucideCircleAlert,
-  lucideLoader,
-  lucideLock,
   lucideNetwork,
   lucidePlus,
   lucideRefreshCw,
-  lucideTrash2,
 } from '@ng-icons/lucide';
 
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationGatewayService } from '../../service/application-gateway.service';
 import { GatewayMinRole, GatewayRoute } from '../../model/gateway-route.models';
 import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { GatewayRoutePolicies } from './gateway-route-policies';
+import { GatewayAddRouteDialog } from './gateway-add-route-dialog';
+
+const ROUTE_ACTIONS: MenuAction[] = [{ id: 'remove', label: 'Remove route', danger: true }];
 
 @Component({
   selector: 'app-gateway-tab',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIconComponent],
+  imports: [
+    FlPanel,
+    FlTable,
+    FlAlert,
+    FlEmptyState,
+    FlLoadingState,
+    FlStatus,
+    FlButton,
+    FlIcon,
+    FlActionsMenu,
+    GatewayRoutePolicies,
+    GatewayAddRouteDialog,
+  ],
   providers: [
     provideIcons({
       lucideNetwork,
       lucidePlus,
-      lucideTrash2,
       lucideRefreshCw,
-      lucideLoader,
-      lucideCircleAlert,
-      lucideLock,
       lucideChevronDown,
       lucideChevronRight,
     }),
   ],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-semibold">Gateway</h2>
-          <p class="text-sm text-muted-foreground">
-            Routes into this app and their edge policies: SSO, rate limit, IP filter.
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-md hover:bg-muted"
-            (click)="refresh()"
-          >
-            <ng-icon name="lucideRefreshCw" class="h-4 w-4" />
-            Refresh
-          </button>
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700"
-            (click)="openAdd()"
-          >
-            <ng-icon name="lucidePlus" class="h-4 w-4" />
-            Add route
-          </button>
-        </div>
-      </div>
+    @if (error()) {
+      <fl-alert tone="error" title="Gateway request failed">{{ error() }}</fl-alert>
+    }
 
-      @if (error()) {
-        <div
-          class="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700"
-        >
-          <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
-          <span>{{ error() }}</span>
-        </div>
-      }
+    <fl-panel title="Routes" [count]="loading() ? null : routes().length" [flush]="true">
+      <ng-container panelActions>
+        <button flButton size="sm" type="button" (click)="refresh()">
+          <fl-icon name="lucideRefreshCw" />
+          Refresh
+        </button>
+        <button flButton="primary" size="sm" type="button" (click)="openAdd()">
+          <fl-icon name="lucidePlus" />
+          Add route
+        </button>
+      </ng-container>
 
       @if (loading()) {
-        <div class="card-inner p-4 space-y-2">
-          <div class="skeleton h-6 w-full"></div>
-          <div class="skeleton h-6 w-full"></div>
-        </div>
+        <fl-loading-state [rows]="2" />
       } @else if (routes().length === 0) {
-        <div class="card-inner p-8 text-center">
-          <ng-icon name="lucideNetwork" class="h-8 w-8 mx-auto text-muted-foreground" />
-          <p class="mt-2 text-sm font-medium">No routes yet</p>
-          <p class="text-sm text-muted-foreground">
-            Add a route to expose this application on a hostname with edge policies.
-          </p>
-        </div>
+        <fl-empty-state
+          icon="lucideNetwork"
+          title="No routes yet"
+          body="Add a route to expose this application on a hostname with SSO, rate limit and IP filter policies."
+        />
       } @else {
-        <div class="card-inner overflow-x-auto">
-          <table class="w-full text-sm">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
             <thead>
-              <tr class="text-left text-muted-foreground border-b border-border">
-                <th class="py-2 px-3 font-medium w-8"></th>
-                <th class="py-2 px-3 font-medium">Host</th>
-                <th class="py-2 px-3 font-medium">Path</th>
-                <th class="py-2 px-3 font-medium">TLS</th>
-                <th class="py-2 px-3 font-medium">Policies</th>
-                <th class="py-2 px-3 font-medium">Status</th>
-                <th class="py-2 px-3 font-medium text-right">Actions</th>
+              <tr>
+                <th scope="col" class="is-fit"><span class="fl-sr">Details</span></th>
+                <th scope="col">Host</th>
+                <th scope="col">Path</th>
+                <th scope="col">TLS</th>
+                <th scope="col">Policies</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
               </tr>
             </thead>
             <tbody>
               @for (route of routes(); track route.endpointId) {
-                <tr
-                  class="border-b border-border/60 cursor-pointer hover:bg-muted/30"
-                  (click)="toggleExpand(route)"
-                >
-                  <td class="py-2 px-3">
-                    <ng-icon
-                      [name]="
-                        expandedId() === route.endpointId
-                          ? 'lucideChevronDown'
-                          : 'lucideChevronRight'
+                @let open = expandedId() === route.endpointId;
+                <tr class="cursor-pointer" [class.is-selected]="open" (click)="toggleExpand(route)">
+                  <td class="is-fit">
+                    <button
+                      flButton="ghost"
+                      size="sm"
+                      type="button"
+                      [iconOnly]="true"
+                      [attr.aria-expanded]="open"
+                      [attr.aria-label]="
+                        (open ? 'Hide policies for ' : 'Edit policies for ') + route.host
                       "
-                      class="h-4 w-4 text-muted-foreground"
+                      (click)="$event.stopPropagation(); toggleExpand(route)"
+                    >
+                      <fl-icon [name]="open ? 'lucideChevronDown' : 'lucideChevronRight'" />
+                    </button>
+                  </td>
+                  <td class="fl-mono">{{ route.host }}</td>
+                  <td class="fl-mono">{{ route.path }}</td>
+                  <td>
+                    <fl-status
+                      [tone]="route.tlsEnabled ? 'success' : 'neutral'"
+                      [label]="route.tlsEnabled ? 'HTTPS' : route.certificateStatus || 'HTTP'"
                     />
                   </td>
-                  <td class="py-2 px-3 font-mono text-xs font-medium">
-                    {{ route.host }}
+                  <td class="text-fl-ink-secondary">{{ policySummary(route) }}</td>
+                  <td>
+                    <fl-status [tone]="statusTone(route)" [label]="statusLabel(route)" />
                   </td>
-                  <td class="py-2 px-3 font-mono text-xs">{{ route.path }}</td>
-                  <td class="py-2 px-3">
-                    <span
-                      class="text-xs px-2 py-0.5 rounded-full"
-                      [class]="
-                        route.tlsEnabled
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-muted text-muted-foreground'
-                      "
-                    >
-                      {{ route.tlsEnabled ? 'https' : route.certificateStatus || 'http' }}
-                    </span>
-                  </td>
-                  <td class="py-2 px-3">
-                    <div class="flex items-center gap-1 flex-wrap">
-                      @if (route.auth?.sso) {
-                        <span
-                          class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-fl-sm bg-fl-surface text-blue-700 border"
-                        >
-                          <ng-icon name="lucideLock" class="h-3 w-3" />
-                          SSO{{ route.auth?.minRole ? ' · ' + route.auth?.minRole : '' }}
-                        </span>
-                      }
-                      @if (route.rateLimit?.average) {
-                        <span
-                          class="text-xs px-2 py-0.5 rounded-fl-sm bg-fl-surface text-purple-700 border"
-                        >
-                          {{ route.rateLimit?.average }} req/{{ route.rateLimit?.period || '1s' }}
-                        </span>
-                      }
-                      @if (route.allowIps?.length) {
-                        <span class="text-xs text-amber-700">
-                          {{ route.allowIps?.length }} IP range(s)
-                        </span>
-                      }
-                      @if (
-                        !route.auth?.sso && !route.rateLimit?.average && !route.allowIps?.length
-                      ) {
-                        <span class="text-xs text-muted-foreground">public · no policies</span>
-                      }
-                    </div>
-                  </td>
-                  <td class="py-2 px-3">
-                    <span class="text-xs px-2 py-0.5 rounded-full" [class]="statusClass(route)">
-                      {{ statusLabel(route) }}
-                    </span>
-                  </td>
-                  <td class="py-2 px-3">
-                    <div
-                      class="flex items-center justify-end gap-1"
-                      (click)="$event.stopPropagation()"
-                    >
+                  <td class="is-fit" (click)="$event.stopPropagation()">
+                    <div class="flex items-center justify-end gap-1">
                       <button
+                        flButton
+                        size="sm"
                         type="button"
-                        class="px-2 py-1 text-xs rounded-md hover:bg-muted"
                         title="Reconcile now"
                         (click)="reconcile(route)"
                       >
                         Reconcile
                       </button>
-                      <button
-                        type="button"
-                        class="p-1.5 rounded-md hover:bg-muted text-red-600"
-                        title="Remove route"
-                        (click)="confirmDelete(route)"
-                      >
-                        <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                      </button>
+                      <fl-actions-menu
+                        label="Route actions"
+                        [compact]="true"
+                        [items]="routeActions"
+                        (action)="confirmDelete(route)"
+                      />
                     </div>
                   </td>
                 </tr>
-                @if (expandedId() === route.endpointId) {
-                  <tr class="border-b border-border/60 bg-muted/20">
-                    <td colspan="7" class="p-4">
-                      @if (route.errorMessage) {
-                        <div
-                          class="mb-3 rounded-md border border-red-300 bg-red-50 p-2 text-xs text-red-700"
-                        >
-                          {{ route.errorMessage }}
-                        </div>
-                      }
-                      <div class="grid gap-4 md:grid-cols-3">
-                        <!-- Authentication -->
-                        <div class="rounded-md border border-border bg-background p-4 space-y-3">
-                          <h4 class="text-sm font-semibold flex items-center gap-2">
-                            <ng-icon name="lucideLock" class="h-4 w-4" />
-                            Authentication
-                          </h4>
-                          <label class="flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              [ngModel]="fSso()"
-                              (ngModelChange)="fSso.set($event)"
-                            />
-                            Require Flui SSO login
-                          </label>
-                          <label class="block space-y-1">
-                            <span class="text-xs text-muted-foreground">Minimum role</span>
-                            <select
-                              class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm disabled:opacity-50"
-                              [disabled]="!fSso()"
-                              [ngModel]="fMinRole()"
-                              (ngModelChange)="fMinRole.set($event)"
-                            >
-                              <option value="">Any authenticated user</option>
-                              <option value="viewer">Viewer</option>
-                              <option value="operator">Operator</option>
-                              <option value="maintainer">Maintainer</option>
-                            </select>
-                          </label>
-                        </div>
-
-                        <!-- Rate limit -->
-                        <div class="rounded-md border border-border bg-background p-4 space-y-3">
-                          <h4 class="text-sm font-semibold">Rate limit</h4>
-                          <label class="block space-y-1">
-                            <span class="text-xs text-muted-foreground"
-                              >Requests per period (0 = off)</span
-                            >
-                            <input
-                              type="number"
-                              min="0"
-                              class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
-                              [ngModel]="fAverage()"
-                              (ngModelChange)="fAverage.set($event)"
-                            />
-                          </label>
-                          <div class="grid grid-cols-2 gap-2">
-                            <label class="block space-y-1">
-                              <span class="text-xs text-muted-foreground">Burst</span>
-                              <input
-                                type="number"
-                                min="0"
-                                class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
-                                [ngModel]="fBurst()"
-                                (ngModelChange)="fBurst.set($event)"
-                              />
-                            </label>
-                            <label class="block space-y-1">
-                              <span class="text-xs text-muted-foreground">Period</span>
-                              <select
-                                class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
-                                [ngModel]="fPeriod()"
-                                (ngModelChange)="fPeriod.set($event)"
-                              >
-                                <option value="1s">1s</option>
-                                <option value="1m">1m</option>
-                                <option value="1h">1h</option>
-                              </select>
-                            </label>
-                          </div>
-                        </div>
-
-                        <!-- IP filtering -->
-                        <div class="rounded-md border border-border bg-background p-4 space-y-3">
-                          <h4 class="text-sm font-semibold">IP filtering</h4>
-                          <label class="block space-y-1">
-                            <span class="text-xs text-muted-foreground">
-                              Allowed CIDR ranges, one per line (empty = allow all). Anyone else
-                              gets a plain "Forbidden" page (403).
-                            </span>
-                            <textarea
-                              rows="4"
-                              class="w-full px-3 py-2 rounded-md border border-input bg-background text-sm font-mono"
-                              placeholder="203.0.113.0/24"
-                              [ngModel]="fAllowIps()"
-                              (ngModelChange)="fAllowIps.set($event)"
-                            ></textarea>
-                          </label>
-                          @if (invalidAllowIps().length) {
-                            <p class="text-xs text-red-600">
-                              Not an IP address or range:
-                              {{ invalidAllowIps().join(', ') }}
-                            </p>
-                          }
-                        </div>
-                      </div>
-
-                      <div class="flex items-center justify-between mt-4">
-                        <p class="text-xs text-muted-foreground">
-                          Changes are applied to the cluster in the background after saving.
-                        </p>
-                        <button
-                          type="button"
-                          class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                          [disabled]="saving() || invalidAllowIps().length > 0"
-                          (click)="savePolicies(route)"
-                        >
-                          @if (saving()) {
-                            <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                          }
-                          Save policies
-                        </button>
-                      </div>
+                @if (open) {
+                  <tr>
+                    <td colspan="7" class="whitespace-normal">
+                      <app-gateway-route-policies
+                        [(sso)]="fSso"
+                        [(minRole)]="fMinRole"
+                        [(average)]="fAverage"
+                        [(burst)]="fBurst"
+                        [(period)]="fPeriod"
+                        [(allowIps)]="fAllowIps"
+                        [invalidAllowIps]="invalidAllowIps()"
+                        [saving]="saving()"
+                        [errorMessage]="route.errorMessage"
+                        (save)="savePolicies(route)"
+                      />
                     </td>
                   </tr>
                 }
@@ -330,104 +164,25 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
           </table>
         </div>
       }
-    </div>
+    </fl-panel>
 
-    <!-- Add route dialog -->
     @if (addOpen()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-background rounded-lg border border-border max-w-md w-full p-6 space-y-4">
-          <h3 class="text-base font-semibold">Add route</h3>
-
-          <label class="block space-y-1">
-            <span class="text-sm font-medium">Host</span>
-            <input
-              class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm font-mono"
-              placeholder="api.example.com"
-              [ngModel]="fHost()"
-              (ngModelChange)="fHost.set($event)"
-            />
-            <span class="text-xs text-muted-foreground">
-              If the domain belongs to a cluster DNS zone, the record is created automatically;
-              otherwise point your DNS at the cluster.
-            </span>
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-sm font-medium">Path prefix</span>
-            <input
-              class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm font-mono"
-              placeholder="/"
-              [ngModel]="fPath()"
-              (ngModelChange)="fPath.set($event)"
-            />
-          </label>
-
-          <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" [ngModel]="fTls()" (ngModelChange)="fTls.set($event)" />
-            Issue a TLS certificate (HTTPS)
-          </label>
-
-          @if (formError()) {
-            <p class="text-sm text-red-600">{{ formError() }}</p>
-          }
-
-          <div class="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              class="px-4 py-2 text-sm border border-border rounded-md hover:bg-muted"
-              (click)="addOpen.set(false)"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-              [disabled]="saving()"
-              (click)="submitAdd()"
-            >
-              @if (saving()) {
-                <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-              }
-              Add route
-            </button>
-          </div>
-        </div>
-      </div>
-    }
-
-    <!-- Delete confirm -->
-    @if (pendingDelete()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-background rounded-lg border border-border max-w-md w-full p-6 space-y-4">
-          <h3 class="text-base font-semibold">Remove route</h3>
-          <p class="text-sm text-muted-foreground">
-            Remove "{{ pendingDelete()?.host }}"? Its DNS record, TLS certificate and edge policies
-            are cleaned up and the hostname stops serving this app.
-          </p>
-          <div class="flex justify-end gap-2">
-            <button
-              type="button"
-              class="px-4 py-2 text-sm border border-border rounded-md hover:bg-muted"
-              (click)="pendingDelete.set(null)"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700"
-              (click)="executeDelete()"
-            >
-              Remove
-            </button>
-          </div>
-        </div>
-      </div>
+      <app-gateway-add-route-dialog
+        [(host)]="fHost"
+        [(path)]="fPath"
+        [(tls)]="fTls"
+        [formError]="formError()"
+        [saving]="saving()"
+        (cancelled)="addOpen.set(false)"
+        (submitted)="submitAdd()"
+      />
     }
   `,
 })
 export class AppGatewayTabComponent implements OnInit, OnDestroy {
   private readonly appService = inject(ApplicationService);
   private readonly gatewayService = inject(ApplicationGatewayService);
+  private readonly confirmService = inject(ConfirmService);
 
   readonly routes = this.gatewayService.routes;
   readonly loading = this.gatewayService.loading;
@@ -438,8 +193,8 @@ export class AppGatewayTabComponent implements OnInit, OnDestroy {
   readonly addOpen = signal(false);
   readonly pendingDelete = signal<GatewayRoute | null>(null);
   readonly formError = signal<string | null>(null);
+  readonly routeActions = ROUTE_ACTIONS;
 
-  // Policy editor state (bound to the expanded route)
   readonly fSso = signal(false);
   readonly fMinRole = signal<'' | GatewayMinRole>('');
   readonly fAverage = signal(0);
@@ -450,7 +205,6 @@ export class AppGatewayTabComponent implements OnInit, OnDestroy {
     this.allowIpLines().filter((ip) => !isAddressOrCidr(ip)),
   );
 
-  // Add-route form state
   readonly fHost = signal('');
   readonly fPath = signal('');
   readonly fTls = signal(true);
@@ -548,8 +302,16 @@ export class AppGatewayTabComponent implements OnInit, OnDestroy {
     if (created) this.addOpen.set(false);
   }
 
-  confirmDelete(route: GatewayRoute): void {
+  async confirmDelete(route: GatewayRoute): Promise<void> {
     this.pendingDelete.set(route);
+    const ok = await this.confirmService.confirm({
+      title: `Remove ${route.host}?`,
+      body: 'Its DNS record, TLS certificate and edge policies are cleaned up and the hostname stops serving this app.',
+      confirmLabel: 'Remove route',
+      destructive: true,
+    });
+    if (ok) await this.executeDelete();
+    this.pendingDelete.set(null);
   }
 
   async executeDelete(): Promise<void> {
@@ -567,19 +329,28 @@ export class AppGatewayTabComponent implements OnInit, OnDestroy {
 
   statusLabel(route: GatewayRoute): string {
     const status = (route.reconciliationStatus || '').toLowerCase();
-    if (status === 'in_sync') return 'synced';
-    if (status === 'error') return 'error';
-    return 'reconciling';
+    if (status === 'in_sync') return 'Synced';
+    if (status === 'error') return 'Failed';
+    return 'Reconciling';
   }
 
-  statusClass(route: GatewayRoute): string {
+  statusTone(route: GatewayRoute): StatusTone {
     const status = (route.reconciliationStatus || '').toLowerCase();
-    if (status === 'in_sync') {
-      return 'bg-green-100 text-green-700';
+    if (status === 'in_sync') return 'success';
+    if (status === 'error') return 'error';
+    return 'progress';
+  }
+
+  policySummary(route: GatewayRoute): string {
+    const parts: string[] = [];
+    if (route.auth?.sso) {
+      const role = route.auth.minRole ? ', ' + route.auth.minRole : '';
+      parts.push(`SSO${role}`);
     }
-    if (status === 'error') {
-      return 'bg-red-100 text-red-700';
+    if (route.rateLimit?.average) {
+      parts.push(`${route.rateLimit.average} req/${route.rateLimit.period || '1s'}`);
     }
-    return 'bg-amber-100 text-amber-700';
+    if (route.allowIps?.length) parts.push(`${route.allowIps.length} IP ranges`);
+    return parts.length ? parts.join(' · ') : 'Public, no policies';
   }
 }

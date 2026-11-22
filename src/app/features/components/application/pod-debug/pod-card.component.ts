@@ -1,102 +1,71 @@
-import { Component, Input, input, output, ChangeDetectionStrategy } from '@angular/core';
-
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideBox,
-  lucideChevronDown,
-  lucideChevronRight,
-  lucideTriangleAlert,
-  lucideCircleAlert,
-} from '@ng-icons/lucide';
+import { Component, computed, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideChevronDown, lucideChevronRight } from '@ng-icons/lucide';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../../ui/primitives/status';
 import {
   PodDebugInfo,
   hasMissingResources,
   hasUnreadyContainer,
-  phaseBadgeClass,
   totalRestarts,
 } from '../../../model/pod-debug.models';
 
+const PHASE_TONES: Record<string, StatusTone> = {
+  Running: 'success',
+  Pending: 'progress',
+  Succeeded: 'neutral',
+  Failed: 'error',
+};
+
 @Component({
-  selector: 'app-pod-card',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideBox,
-      lucideChevronDown,
-      lucideChevronRight,
-      lucideTriangleAlert,
-      lucideCircleAlert,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  selector: 'tr[app-pod-card]',
+  imports: [FlIcon, FlStatus],
+  providers: [provideIcons({ lucideChevronDown, lucideChevronRight })],
+  host: { '[class.is-selected]': 'expanded()' },
   template: `
-    <button
-      type="button"
-      (click)="toggled.emit(pod.name)"
-      class="w-full flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors text-left"
-    >
-      <ng-icon
-        [name]="expanded() ? 'lucideChevronDown' : 'lucideChevronRight'"
-        class="h-4 w-4 text-gray-400 flex-shrink-0"
-      />
-      <div class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 flex-shrink-0">
-        <ng-icon name="lucideBox" class="h-4 w-4 text-gray-600" />
+    @let p = pod();
+    <td class="fl-cell-name">
+      <button
+        type="button"
+        class="fl-link fl-mono inline-flex max-w-full items-center gap-1.5 text-left"
+        [attr.aria-expanded]="expanded()"
+        (click)="toggled.emit(p.name)"
+      >
+        <fl-icon [name]="expanded() ? 'lucideChevronDown' : 'lucideChevronRight'" [size]="14" />
+        <span class="truncate">{{ p.name }}</span>
+      </button>
+    </td>
+    <td><fl-status [tone]="phaseTone()" [label]="p.phase" /></td>
+    <td class="is-num">{{ readyCount() }}/{{ p.containers.length }}</td>
+    <td class="is-num">{{ restarts() }}</td>
+    <td class="fl-mono text-fl-ink-secondary">{{ p.nodeName ?? '—' }}</td>
+    <td>
+      <div class="flex flex-wrap gap-x-3 gap-y-1">
+        @if (unready()) {
+          <fl-status tone="error" label="Container not ready" />
+        }
+        @if (missing()) {
+          <fl-status tone="error" label="Missing resource" />
+        }
+        @if (!unready() && !missing()) {
+          <span class="text-fl-ink-muted">—</span>
+        }
       </div>
-      <div class="flex-1 min-w-0 space-y-1">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span [class]="phaseClass">{{ pod.phase }}</span>
-          @if (unready) {
-            <span
-              class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-700"
-            >
-              <ng-icon name="lucideCircleAlert" class="h-3 w-3" />
-              container not ready
-            </span>
-          }
-          @if (missing) {
-            <span
-              class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-700"
-            >
-              <ng-icon name="lucideTriangleAlert" class="h-3 w-3" />
-              missing resource
-            </span>
-          }
-        </div>
-        <p class="text-sm font-mono font-medium text-gray-900 truncate">
-          {{ pod.name }}
-        </p>
-        <p class="text-xs text-gray-500 truncate">
-          {{ pod.containers.length }} container · {{ restarts }} restart
-          @if (restarts !== 1) {
-            s
-          }
-          @if (pod.nodeName) {
-            · node: <span class="font-mono">{{ pod.nodeName }}</span>
-          }
-        </p>
-      </div>
-    </button>
+    </td>
   `,
 })
 export class PodCardComponent {
-  @Input({ required: true }) pod!: PodDebugInfo;
+  readonly pod = input.required<PodDebugInfo>();
   readonly expanded = input(false);
   readonly toggled = output<string>();
 
-  get phaseClass(): string {
-    return phaseBadgeClass(this.pod.phase);
-  }
-
-  get unready(): boolean {
-    return hasUnreadyContainer(this.pod);
-  }
-
-  get missing(): boolean {
-    return hasMissingResources(this.pod);
-  }
-
-  get restarts(): number {
-    return totalRestarts(this.pod);
-  }
+  protected readonly phaseTone = computed<StatusTone>(
+    () => PHASE_TONES[this.pod().phase] ?? 'neutral',
+  );
+  protected readonly unready = computed(() => hasUnreadyContainer(this.pod()));
+  protected readonly missing = computed(() => hasMissingResources(this.pod()));
+  protected readonly restarts = computed(() => totalRestarts(this.pod()));
+  protected readonly readyCount = computed(
+    () => this.pod().containers.filter((c) => c.ready).length,
+  );
 }

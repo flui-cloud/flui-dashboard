@@ -1,430 +1,171 @@
-<div class="space-y-6">
-  <!-- Disk usage + near-full alert (DB apps with a volume; hidden otherwise) -->
-  @if (showsDisk()) {
-    <app-db-disk-usage [appId]="appId()" />
-  }
+@if (showsDisk()) {
+  <app-db-disk-usage [appId]="appId()" />
+}
 
-  <div class="flex flex-wrap items-start justify-between gap-4">
-    <div>
-      <h2 class="text-xl font-semibold text-foreground">Monitoring</h2>
-      <div class="flex items-center gap-2 mt-1">
-        <p class="text-sm text-sub">
-          @if (pollingPaused()) {
-            <span class="font-medium text-foreground">Auto-refresh paused</span>
-          } @else {
-            Live values every 5 seconds · history over the {{ rangeLabel() }}
-          }
-        </p>
-        @if (!pollingPaused() && !isLoading()) {
-          <span class="inline-flex h-2 w-2 rounded-full bg-green-500"></span>
-        }
-      </div>
-    </div>
+<div class="flex flex-wrap items-center justify-between gap-3" data-testid="monitoring-toolbar">
+  <div class="fl-row">
+    <fl-status [tone]="liveTone()" [label]="liveLabel()" />
+    @if (!pollingPaused()) {
+      <span class="fl-toolbar__info"
+        >Values every 5 seconds · history over the {{ rangeLabel() }}</span
+      >
+    }
+  </div>
+  <div class="fl-row">
+    <fl-segmented
+      label="Time range"
+      [options]="rangeOptions"
+      [value]="timeRange()"
+      (valueChange)="onRangeChange($event)"
+    />
+    <button
+      flButton
+      size="sm"
+      type="button"
+      [iconOnly]="true"
+      (click)="refreshMetrics()"
+      [disabled]="isLoading() || (pollingPaused() && !canRetry())"
+      [title]="pollingPaused() ? 'Retry' : 'Refresh'"
+      [attr.aria-label]="pollingPaused() ? 'Retry' : 'Refresh'"
+    >
+      <fl-icon name="lucideRefreshCw" [size]="14" [class.animate-spin]="isLoading()" />
+    </button>
+  </div>
+</div>
 
-    <div class="flex items-center gap-2">
-      <div class="inline-flex p-0.5 gap-0.5 bg-muted rounded-lg">
-        @for (range of ranges; track range.value) {
-          <button
-            type="button"
-            (click)="setTimeRange(range.value)"
-            [attr.aria-pressed]="timeRange() === range.value"
-            class="px-3 py-1 rounded-md text-xs font-semibold transition-colors"
-            [class]="
-              timeRange() === range.value
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            "
-          >
-            {{ range.label }}
-          </button>
-        }
-      </div>
+@if (capacityAdvice(); as advice) {
+  <app-monitoring-capacity [advice]="advice" [busy]="addingReplica()" (apply)="addReplica()" />
+}
+
+@if (error()) {
+  <fl-alert tone="error" title="Metrics could not be read">{{ error() }}</fl-alert>
+}
+
+@if (metrics(); as m) {
+  @if (availableReplicas().length > 1) {
+    <fieldset
+      class="fl-row m-0 min-w-0 border-0 p-0"
+      aria-label="Replica"
+      data-testid="replica-selector"
+    >
       <button
         type="button"
-        (click)="refreshMetrics()"
-        [disabled]="isLoading() || (pollingPaused() && !canRetry())"
-        [title]="pollingPaused() ? 'Retry' : 'Refresh'"
-        [attr.aria-label]="pollingPaused() ? 'Retry' : 'Refresh'"
-        class="inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        [class]="
-          pollingPaused() && canRetry()
-            ? 'border-border text-foreground hover:bg-muted'
-            : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
-        "
+        class="fl-chip"
+        [attr.aria-pressed]="selectedPod() === null"
+        (click)="selectPod(null)"
       >
-        <ng-icon name="lucideRefreshCw" [class.animate-spin]="isLoading()" class="h-3.5 w-3.5" />
+        All replicas
+        <span class="fl-chip__count">({{ availableReplicas().length }})</span>
       </button>
-    </div>
-  </div>
+      @for (replica of availableReplicas(); track replica.pod) {
+        <button
+          type="button"
+          class="fl-chip fl-mono"
+          [attr.aria-pressed]="selectedPod() === replica.pod"
+          (click)="selectPod(replica.pod)"
+        >
+          {{ replica.pod }}
+        </button>
+      }
+    </fieldset>
+  }
 
-  @if (capacityAdvice(); as advice) {
-    <div
-      class="flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3"
-      data-testid="capacity-advice"
-    >
-      <ng-icon
-        [name]="
-          advice.tone === 'ok'
-            ? 'lucideCircleCheck'
-            : advice.tone === 'act'
-              ? 'lucideTriangleAlert'
-              : 'lucideHourglass'
-        "
-        class="mt-0.5 h-4 w-4 shrink-0"
-        [class]="
-          advice.tone === 'ok'
-            ? 'text-green-600'
-            : advice.tone === 'act'
-              ? 'text-amber-600'
-              : 'text-sub'
-        "
+  @if (availableReplicas().length === 1) {
+    <div class="fl-row">
+      <fl-status
+        [tone]="availableReplicas()[0].status.ready === 1 ? 'success' : 'error'"
+        [label]="availableReplicas()[0].status.ready === 1 ? 'Ready' : 'Not ready'"
       />
-      <div class="min-w-0 flex-1">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <p class="m-0 text-sm font-semibold text-foreground">{{ advice.title }}</p>
-          @if (advice.advice === 'add_replicas') {
-            <button
-              type="button"
-              class="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
-              [disabled]="addingReplica()"
-              (click)="addReplica()"
-              data-testid="capacity-advice-apply"
-            >
-              Run {{ advice.desired + 1 }} copies
-            </button>
-          }
-        </div>
-        <p class="m-0 text-sm text-sub">{{ advice.sentence }}</p>
-        @if (advice.reasons.length || advice.next_copy) {
-          <button
-            type="button"
-            class="mt-1 text-xs font-medium text-sub hover:text-foreground hover:underline"
-            (click)="showAdviceWhy.set(!showAdviceWhy())"
-            data-testid="capacity-advice-why"
-            [attr.aria-expanded]="showAdviceWhy()"
-          >
-            {{ showAdviceWhy() ? 'Hide why' : 'Why' }}
-          </button>
-          @if (showAdviceWhy()) {
-            <ul class="mt-1 list-disc pl-4 text-xs text-sub" data-testid="capacity-advice-reasons">
-              @for (reason of advice.reasons; track reason) {
-                <li>{{ reason }}</li>
-              }
-              @if (advice.next_copy; as next) {
-                <li>{{ next.sentence }}</li>
-              }
-            </ul>
-            <p class="m-0 mt-1 text-[11px] text-sub">
-              Judged on the last {{ advice.thresholds.window_minutes }} minutes.
-            </p>
-          }
+      <span class="fl-mono fl-muted">{{ availableReplicas()[0].pod }}</span>
+    </div>
+  }
+
+  @if ((m.health?.unavailable_pods ?? 0) > 0) {
+    <fl-alert
+      tone="warning"
+      [title]="m.health!.unavailable_pods + ' of ' + m.health!.total_pods + ' pods unavailable'"
+    >
+      {{ m.health!.condition_message ?? '' }}
+    </fl-alert>
+  }
+
+  <app-monitoring-summary [metrics]="tiles()" />
+
+  <div class="fl-grid-2" data-testid="app-metrics-grid">
+    @if (cpuHistory(); as cpu) {
+      <app-monitoring-chart
+        title="CPU"
+        caption="of its limit"
+        [value]="cpuNow()"
+        [data]="cpu"
+        [config]="cpuConfig.inline"
+        [expandedConfig]="cpuConfig.expanded"
+      />
+    }
+    @if (memoryHistory(); as memory) {
+      <app-monitoring-chart
+        title="Memory"
+        caption="of its limit"
+        [value]="memoryNow()"
+        [data]="memory"
+        [config]="memoryConfig.inline"
+        [expandedConfig]="memoryConfig.expanded"
+      />
+    }
+    @if (networkHistory(); as network) {
+      <app-monitoring-chart
+        title="Network"
+        caption="in and out"
+        [value]="networkNow()"
+        [data]="network"
+        [config]="networkConfig.inline"
+        [expandedConfig]="networkConfig.expanded"
+      />
+    }
+    @if (replicasHistory(); as replicas) {
+      <app-monitoring-chart
+        title="Replicas"
+        caption="ready of desired"
+        [value]="replicasNow()"
+        [data]="replicas"
+        [config]="replicasConfig.inline"
+        [expandedConfig]="replicasConfig.expanded"
+      />
+    }
+  </div>
+  @if (loadingHistory() && !cpuHistory()) {
+    <fl-panel title="History"><fl-loading-state [rows]="3" /></fl-panel>
+  }
+
+  @if (availableReplicas().length > 1) {
+    <app-monitoring-replicas
+      [replicas]="availableReplicas()"
+      [selected]="selectedPod()"
+      (replicaSelected)="selectPod($event)"
+    />
+  }
+
+  @if (monitoring.podPhases().length > 0) {
+    <fl-panel title="Pod phases">
+      <div class="fl-row">
+        @for (pod of monitoring.podPhases(); track pod.phase) {
+          <fl-status [tone]="phaseTone(pod.phase)" [label]="pod.phase + ' · ' + pod.count" />
         }
       </div>
-    </div>
+    </fl-panel>
   }
+}
 
-  <!-- Error message -->
-  @if (error()) {
-    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-      <p class="text-red-700">{{ error() }}</p>
-    </div>
-  }
+<app-traffic-section [appId]="appId()" [range]="trafficRange()" />
 
-  <!-- Real-time Gauges -->
-  @if (metrics(); as m) {
-    <!-- Pod / Replica selector: shown only with 2+ replicas -->
-    @if (availableReplicas().length > 1) {
-      <div class="bg-white border border-gray-200 rounded-lg px-4 py-3">
-        <div class="flex items-center gap-3 min-w-0">
-          <span class="text-xs font-medium text-gray-500 shrink-0">View:</span>
-          <div class="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
-            <!-- All replicas chip -->
-            <button
-              (click)="selectPod(null)"
-              class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors"
-              [class.bg-foreground]="selectedPod() === null"
-              [class.text-background]="selectedPod() === null"
-              [class.bg-muted]="selectedPod() !== null"
-              [class.text-sub]="selectedPod() !== null"
-            >
-              All replicas
-              <span class="opacity-70">({{ availableReplicas().length }})</span>
-            </button>
-            <!-- Per-pod chips -->
-            @for (replica of availableReplicas(); track replica.pod) {
-              <button
-                (click)="selectPod(replica.pod)"
-                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors"
-                [class.bg-foreground]="selectedPod() === replica.pod"
-                [class.text-background]="selectedPod() === replica.pod"
-                [class.bg-muted]="selectedPod() !== replica.pod"
-                [class.text-sub]="selectedPod() !== replica.pod"
-              >
-                <span
-                  class="inline-flex h-1.5 w-1.5 rounded-full shrink-0"
-                  [class.bg-green-400]="replica.status.ready === 1"
-                  [class.bg-red-400]="replica.status.ready !== 1"
-                ></span>
-                {{ replica.pod }}
-              </button>
-            }
-          </div>
-        </div>
-      </div>
-    }
+<app-alerts-section [appId]="appId()" [refreshKey]="alertsRefreshKey()" />
 
-    <!-- Single replica: show pod name as non-interactive label -->
-    @if (availableReplicas().length === 1) {
-      <div class="flex items-center gap-2 text-xs text-gray-500">
-        <span
-          class="inline-flex h-1.5 w-1.5 rounded-full"
-          [class.bg-green-400]="availableReplicas()[0].status.ready === 1"
-          [class.bg-red-400]="availableReplicas()[0].status.ready !== 1"
-        ></span>
-        <span class="font-mono">{{ availableReplicas()[0].pod }}</span>
-      </div>
-    }
+@if (!metrics() && !isLoading() && !error()) {
+  <fl-panel>
+    <fl-empty-state icon="lucideActivity" title="No metrics yet" body="Waiting for data." />
+  </fl-panel>
+}
 
-    @if ((m.health?.unavailable_pods ?? 0) > 0) {
-      <div class="flex items-start gap-3 rounded-lg border border-border bg-card p-3">
-        <ng-icon name="lucideTriangleAlert" class="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-        <div class="min-w-0 text-sm">
-          <p class="m-0 font-medium text-foreground">
-            {{ m.health!.unavailable_pods }} of {{ m.health!.total_pods }} pods unavailable
-          </p>
-          @if (m.health!.condition_message) {
-            <p class="m-0 mt-0.5 text-xs text-muted-foreground">
-              {{ m.health!.condition_message }}
-            </p>
-          }
-        </div>
-      </div>
-    }
-
-    <div
-      class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"
-      data-testid="app-metrics-summary"
-    >
-      @for (tile of tiles(); track tile.label) {
-        <app-stat-tile [data]="tile" [sparkWidth]="112" />
-      }
-    </div>
-
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="app-metrics-grid">
-      @if (cpuHistory(); as cpu) {
-        <app-chart-panel
-          title="CPU"
-          subtitle="of its limit"
-          [value]="cpuNow()"
-          [body]="cpuBody"
-          [inlineHeight]="inlineHeight"
-          [expandedHeight]="expandedHeight"
-        >
-          <ng-template #cpuBody let-mode>
-            <app-time-series-line [data]="cpu" [config]="pick(cpuConfig, mode)" />
-          </ng-template>
-        </app-chart-panel>
-      }
-      @if (memoryHistory(); as memory) {
-        <app-chart-panel
-          title="Memory"
-          subtitle="of its limit"
-          [value]="memoryNow()"
-          [body]="memoryBody"
-          [inlineHeight]="inlineHeight"
-          [expandedHeight]="expandedHeight"
-        >
-          <ng-template #memoryBody let-mode>
-            <app-time-series-line [data]="memory" [config]="pick(memoryConfig, mode)" />
-          </ng-template>
-        </app-chart-panel>
-      }
-      @if (networkHistory(); as network) {
-        <app-chart-panel
-          title="Network"
-          subtitle="in and out"
-          [value]="networkNow()"
-          [body]="networkBody"
-          [inlineHeight]="inlineHeight"
-          [expandedHeight]="expandedHeight"
-        >
-          <ng-template #networkBody let-mode>
-            <app-time-series-line [data]="network" [config]="pick(networkConfig, mode)" />
-          </ng-template>
-        </app-chart-panel>
-      }
-      @if (replicasHistory(); as replicas) {
-        <app-chart-panel
-          title="Replicas"
-          subtitle="ready of desired"
-          [value]="replicasNow()"
-          [body]="replicasBody"
-          [inlineHeight]="inlineHeight"
-          [expandedHeight]="expandedHeight"
-        >
-          <ng-template #replicasBody let-mode>
-            <app-time-series-line [data]="replicas" [config]="pick(replicasConfig, mode)" />
-          </ng-template>
-        </app-chart-panel>
-      }
-    </div>
-    @if (loadingHistory() && !cpuHistory()) {
-      <p class="text-sm text-muted-foreground">Loading history…</p>
-    }
-
-    <!-- Per-replica breakdown: shown only with 2+ replicas -->
-    @if (availableReplicas().length > 1) {
-      <div class="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 class="text-sm font-semibold text-gray-900 mb-3">Replicas breakdown</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          @for (replica of availableReplicas(); track replica.pod) {
-            <button
-              type="button"
-              (click)="selectPod(replica.pod)"
-              class="text-left bg-gray-50 border rounded-lg p-3 transition-colors hover:bg-gray-100"
-              [class.border-blue-500]="selectedPod() === replica.pod"
-              [class.border-gray-200]="selectedPod() !== replica.pod"
-            >
-              <!-- Pod header -->
-              <div class="flex items-center gap-2 mb-3 min-w-0">
-                <span
-                  class="inline-flex h-1.5 w-1.5 rounded-full shrink-0"
-                  [class.bg-green-400]="replica.status.ready === 1"
-                  [class.bg-red-400]="replica.status.ready !== 1"
-                ></span>
-                <span class="font-mono text-xs text-gray-700 truncate" [title]="replica.pod">
-                  {{ replica.pod }}
-                </span>
-                <span class="ml-auto text-xs text-gray-500 shrink-0">
-                  {{ replica.status.phase }}
-                </span>
-              </div>
-
-              <!-- CPU -->
-              <div class="mb-3">
-                <div class="flex items-center justify-between text-xs mb-1">
-                  <span class="text-gray-500">CPU</span>
-                  <span class="font-medium text-gray-900">
-                    {{ (replica.cpu.utilization_percent ?? 0).toFixed(1) }}%
-                  </span>
-                </div>
-                <div class="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
-                  <div
-                    class="h-full bg-blue-500"
-                    [style.width.%]="replica.cpu.utilization_percent ?? 0"
-                  ></div>
-                </div>
-                <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
-                  <span>{{ formatCpu(replica.cpu.usage_cores ?? 0) }}</span>
-                  <span>limit {{ formatCpu(replica.cpu.limits_cores ?? 0) }}</span>
-                </div>
-              </div>
-
-              <!-- Memory -->
-              <div class="mb-3">
-                <div class="flex items-center justify-between text-xs mb-1">
-                  <span class="text-gray-500">Memory</span>
-                  <span class="font-medium text-gray-900">
-                    {{ (replica.memory.utilization_percent ?? 0).toFixed(1) }}%
-                  </span>
-                </div>
-                <div class="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
-                  <div
-                    class="h-full bg-purple-500"
-                    [style.width.%]="replica.memory.utilization_percent ?? 0"
-                  ></div>
-                </div>
-                <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
-                  <span>{{ formatBytes(replica.memory.usage_bytes ?? 0) }}</span>
-                  <span>limit {{ formatBytes(replica.memory.limits_bytes ?? 0) }}</span>
-                </div>
-              </div>
-
-              <!-- Network + restarts -->
-              <div class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-gray-200">
-                <div>
-                  <p class="text-gray-500">Net In</p>
-                  <p class="font-medium text-gray-900">
-                    {{ formatBytes(replica.network.receive_bytes_rate ?? 0) }}/s
-                  </p>
-                </div>
-                <div>
-                  <p class="text-gray-500">Net Out</p>
-                  <p class="font-medium text-gray-900">
-                    {{ formatBytes(replica.network.transmit_bytes_rate ?? 0) }}/s
-                  </p>
-                </div>
-                <div>
-                  <p class="text-gray-500">Restarts</p>
-                  <p class="font-medium text-foreground">
-                    {{ replica.status.restart_total ?? 0 }}
-                  </p>
-                </div>
-                <div>
-                  <p class="text-gray-500">Last Hour</p>
-                  <p class="font-medium text-foreground">
-                    {{ (replica.status.restart_rate_1h ?? 0).toFixed(1) }}
-                  </p>
-                </div>
-              </div>
-            </button>
-          }
-        </div>
-      </div>
-    }
-
-    <!-- Pod Phases -->
-    @if (monitoring.podPhases().length > 0) {
-      <div class="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 class="text-sm font-semibold text-gray-900 mb-3">Pod Phases</h3>
-        <div class="flex gap-3 flex-wrap">
-          @for (pod of monitoring.podPhases(); track pod.phase) {
-            <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-              <span
-                class="inline-flex h-2 w-2 rounded-full"
-                [class.bg-green-500]="pod.phase === 'Running'"
-                [class.bg-yellow-500]="pod.phase === 'Pending'"
-                [class.bg-red-500]="pod.phase === 'Failed'"
-                [class.bg-gray-400]="
-                  pod.phase !== 'Running' && pod.phase !== 'Pending' && pod.phase !== 'Failed'
-                "
-              ></span>
-              <span class="text-sm text-gray-700">{{ pod.phase }}</span>
-              <span class="text-sm font-bold text-gray-900">{{ pod.count }}</span>
-            </div>
-          }
-        </div>
-      </div>
-    }
-  }
-
-  <!-- Traffic -->
-  <div class="bg-white border border-gray-200 rounded-lg p-6">
-    <app-traffic-section [appId]="appId()" [range]="trafficRange()" />
-  </div>
-
-  <!-- Alerts -->
-  <div class="bg-white border border-gray-200 rounded-lg p-6">
-    <app-alerts-section [appId]="appId()" [refreshKey]="alertsRefreshKey()" />
-  </div>
-
-  <!-- Empty state -->
-  @if (!metrics() && !isLoading() && !error()) {
-    <div class="bg-white border border-gray-200 rounded-lg p-12">
-      <div class="text-center">
-        <ng-icon name="lucideActivity" class="h-12 w-12 text-gray-400 mx-auto mb-3" />
-        <p class="text-gray-600">No metrics available. Waiting for data...</p>
-      </div>
-    </div>
-  }
-
-  <!-- Loading skeleton -->
-  @if (isLoading() && !metrics()) {
-    <div class="bg-white border border-gray-200 rounded-lg p-12">
-      <div class="text-center">
-        <ng-icon name="lucideRefreshCw" class="h-12 w-12 text-gray-400 mx-auto mb-3 animate-spin" />
-        <p class="text-gray-600">Loading metrics...</p>
-      </div>
-    </div>
-  }
-</div>
+@if (isLoading() && !metrics()) {
+  <fl-panel title="Metrics"><fl-loading-state [rows]="4" /></fl-panel>
+}

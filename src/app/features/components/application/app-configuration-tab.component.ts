@@ -1,102 +1,61 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideLoader,
-  lucideAlertCircle,
-  lucideInfo,
-  lucideCopy,
-  lucideCheck,
-} from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { AppVariablesService } from '../../service/app-variables.service';
 import {
   AppVariablesEditorComponent,
   VariablesSavePayload,
 } from './app-variables-editor.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-configuration-tab',
   standalone: true,
-  imports: [NgIconComponent, AppVariablesEditorComponent],
-  providers: [
-    provideIcons({ lucideLoader, lucideAlertCircle, lucideInfo, lucideCopy, lucideCheck }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [AppVariablesEditorComponent, FlAlert, FlCopyId, FlSpinner],
+  host: { class: 'fl-stack' },
   template: `
     @if (app(); as app) {
-      <div class="space-y-6">
-        @if (focusVar() || missingName()) {
-          <div
-            class="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800"
-          >
-            <ng-icon name="lucideInfo" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <div class="flex-1 space-y-1 min-w-0">
-              @if (focusVar()) {
-                <p>
-                  Suggested by the diagnosis: add the variable
-                  <button
-                    type="button"
-                    (click)="copy(focusVar()!)"
-                    class="font-mono font-semibold inline-flex items-center gap-1 underline underline-offset-2 hover:no-underline"
-                  >
-                    {{ focusVar() }}
-                    @if (copiedKey() === focusVar()) {
-                      <ng-icon name="lucideCheck" class="h-3 w-3" />
-                    } @else {
-                      <ng-icon name="lucideCopy" class="h-3 w-3" />
-                    }
-                  </button>
-                  in the section below.
-                </p>
-              } @else if (missingName()) {
-                <p>
-                  Suggested by the diagnosis:
-                  {{ missingKind() ?? 'resource' }}
-                  <span class="font-mono font-semibold">{{ missingName() }}</span>
-                  is missing. Create or add the reference in the section below.
-                </p>
-              }
-            </div>
-          </div>
-        }
+      @if (focusVar(); as name) {
+        <fl-alert tone="info" title="Suggested by the diagnosis">
+          Add the variable <fl-copy-id [value]="name" label="variable name" /> under Variables.
+        </fl-alert>
+      } @else if (missingName(); as name) {
+        <fl-alert tone="info" title="Suggested by the diagnosis">
+          The {{ missingKind() ?? 'resource' }} <span class="fl-mono">{{ name }}</span> is missing.
+          Create it or add the reference below.
+        </fl-alert>
+      }
 
-        @if (variablesService.loading()) {
-          <div class="flex items-center gap-2 py-4">
-            <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin text-blue-600" />
-            <span class="text-sm text-gray-600">Loading variables...</span>
-          </div>
-        }
+      @if (variablesService.loading()) {
+        <div class="flex items-center gap-2 text-fl-body-sm text-fl-ink-muted">
+          <fl-spinner label="Loading variables" />
+          Loading variables
+        </div>
+      }
 
-        @if (variablesService.error()) {
-          <div
-            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
-          >
-            <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{{ variablesService.error() }}</span>
-          </div>
-        }
+      @if (variablesService.error(); as error) {
+        <fl-alert tone="error" title="Variables request failed">{{ error }}</fl-alert>
+      }
 
-        <!-- Plain Variables (ConfigMap) -->
-        <app-variables-editor
-          title="Plain Variables (ConfigMap)"
-          [data]="variablesService.plainData()"
-          [sensitiveKeys]="[]"
-          [saving]="variablesService.saving()"
-          (save)="onSavePlain($event)"
-        />
+      <app-variables-editor
+        title="Variables"
+        [data]="variablesService.plainData()"
+        [sensitiveKeys]="[]"
+        [saving]="variablesService.saving()"
+        (save)="onSavePlain($event)"
+      />
 
-        <!-- Sensitive Variables (Secrets) -->
-        <app-variables-editor
-          title="Sensitive Variables (Secrets)"
-          [data]="variablesService.sensitiveData()"
-          [sensitiveKeys]="variablesService.sensitiveKeys()"
-          [pendingKeys]="variablesService.pendingKeys()"
-          [saving]="variablesService.saving()"
-          (save)="onSaveSensitive($event)"
-        />
-      </div>
+      <app-variables-editor
+        title="Secrets"
+        [data]="variablesService.sensitiveData()"
+        [sensitiveKeys]="variablesService.sensitiveKeys()"
+        [pendingKeys]="variablesService.pendingKeys()"
+        [saving]="variablesService.saving()"
+        (save)="onSaveSensitive($event)"
+      />
     }
   `,
 })
@@ -110,7 +69,6 @@ export class AppConfigurationTabComponent implements OnInit {
   focusVar = signal<string | null>(null);
   missingKind = signal<string | null>(null);
   missingName = signal<string | null>(null);
-  copiedKey = signal<string | null>(null);
 
   ngOnInit(): void {
     void (async () => {
@@ -123,13 +81,6 @@ export class AppConfigurationTabComponent implements OnInit {
       if (!app?.id) return;
       await this.variablesService.loadVariables(app.id);
     })();
-  }
-
-  copy(value: string): void {
-    navigator.clipboard?.writeText(value).then(() => {
-      this.copiedKey.set(value);
-      setTimeout(() => this.copiedKey.set(null), 1500);
-    });
   }
 
   protected async onSavePlain(payload: VariablesSavePayload): Promise<void> {

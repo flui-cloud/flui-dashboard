@@ -1,14 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideKeyRound, lucideLoader, lucideUserPlus } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideUserPlus } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationService } from '../../service/application.service';
 import {
@@ -18,167 +11,222 @@ import {
   IdentityUser,
 } from '../../service/app-identity.service';
 import { consoleError } from '../database-console/search-format';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 const IDENTITY_COMPONENT = 'zitadel';
 
+const USER_TONE: Record<IdentityUser['state'], StatusTone> = {
+  active: 'success',
+  invited: 'progress',
+  blocked: 'error',
+  locked: 'warning',
+};
+
+const USER_STATE: Record<IdentityUser['state'], string> = {
+  active: 'Active',
+  invited: 'Invited',
+  blocked: 'Blocked',
+  locked: 'Locked',
+};
+
 @Component({
   selector: 'app-identity-tab',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent],
-  providers: [provideIcons({ lucideKeyRound, lucideLoader, lucideUserPlus })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    FormsModule,
+    FlPanel,
+    FlTable,
+    FlAlert,
+    FlField,
+    FlCopyId,
+    FlKeyValue,
+    FlKvItem,
+    FlEmptyState,
+    FlLoadingState,
+    FlStatus,
+    FlButton,
+    FlIcon,
+  ],
+  providers: [provideIcons({ lucideUserPlus })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-4">
-      @if (error()) {
-        <p
-          class="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-          data-testid="identity-error"
+    @if (error()) {
+      <fl-alert tone="error" title="Request failed" data-testid="identity-error">{{
+        error()
+      }}</fl-alert>
+    }
+
+    @if (isServer()) {
+      <fl-panel
+        title="People"
+        [count]="loading() ? null : users().length"
+        [flush]="true"
+        data-testid="identity-people"
+      >
+        <form
+          class="grid items-end gap-3 border-b border-fl-border p-4 sm:grid-cols-2 lg:grid-cols-4"
+          (ngSubmit)="invite()"
         >
-          {{ error() }}
-        </p>
-      }
-
-      @if (isServer()) {
-        <section
-          class="rounded-fl-lg border border-border bg-card p-5"
-          data-testid="identity-people"
-        >
-          <h2 class="text-base font-semibold text-foreground">People</h2>
-          <p class="mt-1 text-sm text-muted-foreground">
-            Who can sign in to the apps connected to this identity install.
-          </p>
-
-          <form class="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]" (ngSubmit)="invite()">
-            <input
-              class="rounded-md border border-input bg-background px-3 py-2 text-sm"
-              name="email"
-              type="email"
-              placeholder="Email"
-              [(ngModel)]="email"
-              required
-            />
-            <input
-              class="rounded-md border border-input bg-background px-3 py-2 text-sm"
-              name="given"
-              placeholder="First name"
-              [(ngModel)]="givenName"
-              required
-            />
-            <input
-              class="rounded-md border border-input bg-background px-3 py-2 text-sm"
-              name="family"
-              placeholder="Last name"
-              [(ngModel)]="familyName"
-              required
-            />
-            <button
-              type="submit"
-              [disabled]="busy()"
-              class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-            >
-              <ng-icon name="lucideUserPlus" class="h-4 w-4" /> Invite
+          <fl-field label="Email" for="identity-email">
+            <div class="fl-input fl-input--lg">
+              <input id="identity-email" name="email" type="email" [(ngModel)]="email" required />
+            </div>
+          </fl-field>
+          <fl-field label="First name" for="identity-given">
+            <div class="fl-input fl-input--lg">
+              <input id="identity-given" name="given" [(ngModel)]="givenName" required />
+            </div>
+          </fl-field>
+          <fl-field label="Last name" for="identity-family">
+            <div class="fl-input fl-input--lg">
+              <input id="identity-family" name="family" [(ngModel)]="familyName" required />
+            </div>
+          </fl-field>
+          <div>
+            <button flButton="primary" type="submit" [disabled]="busy()">
+              <fl-icon name="lucideUserPlus" />
+              Invite
             </button>
-          </form>
-
-          @if (loading()) {
-            <p class="mt-4 text-sm text-muted-foreground">
-              <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" /> Loading…
-            </p>
-          } @else if (users().length === 0) {
-            <p class="mt-4 text-sm text-muted-foreground">Nobody yet.</p>
-          } @else {
-            <ul class="mt-4 divide-y divide-border">
-              @for (u of users(); track u.id) {
-                <li class="flex flex-wrap items-center justify-between gap-2 py-2">
-                  <span class="text-sm text-foreground">{{ u.email ?? u.username }}</span>
-                  <span class="flex items-center gap-3">
-                    <span
-                      class="text-xs"
-                      [class.text-muted-foreground]="u.state === 'active'"
-                      [class.text-destructive]="u.state !== 'active'"
-                      >{{ u.state }}</span
-                    >
-                    <button
-                      type="button"
-                      class="text-xs font-medium text-primary underline underline-offset-2 disabled:opacity-50"
-                      [disabled]="busy()"
-                      (click)="toggle(u)"
-                    >
-                      {{ u.state === 'blocked' ? 'Unblock' : 'Block' }}
-                    </button>
-                  </span>
-                </li>
-              }
-            </ul>
-          }
-        </section>
-      } @else {
-        <section class="rounded-fl-lg border border-border bg-card p-5" data-testid="identity-link">
-          <h2 class="flex items-center gap-2 text-base font-semibold text-foreground">
-            <ng-icon name="lucideKeyRound" class="h-4 w-4" /> Sign-in for this app's users
-          </h2>
-          @if (link(); as l) {
-            <dl class="mt-3 grid gap-1 text-sm sm:grid-cols-[10rem_1fr]">
-              <dt class="text-muted-foreground">Identity</dt>
-              <dd class="text-foreground">{{ l.issuer }}</dd>
-              <dt class="text-muted-foreground">Client id</dt>
-              <dd class="font-mono text-foreground">{{ l.clientId }}</dd>
-              <dt class="text-muted-foreground">Returns to</dt>
-              <dd class="text-foreground">{{ l.redirectUris.join(', ') }}</dd>
-              <dt class="text-muted-foreground">Variables</dt>
-              <dd class="font-mono text-foreground">
-                {{ l.envNames.issuer }}, {{ l.envNames.clientId }}, {{ l.envNames.clientSecret }}
-              </dd>
-            </dl>
-            <button
-              type="button"
-              class="mt-4 rounded-md border border-border px-4 py-2 text-sm font-medium disabled:opacity-50"
-              [disabled]="busy()"
-              (click)="disconnect()"
-            >
-              Disconnect
-            </button>
-          } @else if (installs().length === 0) {
-            <p class="mt-2 text-sm text-muted-foreground">
+          </div>
+        </form>
+        @if (loading()) {
+          <fl-loading-state [rows]="3" />
+        } @else if (users().length === 0) {
+          <fl-empty-state
+            [compact]="true"
+            title="Nobody yet"
+            body="People invited here can sign in to the apps connected to this identity install."
+          />
+        } @else {
+          <div class="fl-table-wrap">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">User</th>
+                  <th scope="col">State</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (u of users(); track u.id) {
+                  <tr>
+                    <td>
+                      @if (u.email) {
+                        {{ u.email }}
+                      } @else {
+                        <span class="fl-mono">{{ u.username }}</span>
+                      }
+                    </td>
+                    <td><fl-status [tone]="userTone[u.state]" [label]="userState[u.state]" /></td>
+                    <td class="is-fit">
+                      <button
+                        flButton
+                        size="sm"
+                        type="button"
+                        [disabled]="busy()"
+                        (click)="toggle(u)"
+                      >
+                        {{ u.state === 'blocked' ? 'Unblock' : 'Block' }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </fl-panel>
+    } @else {
+      <fl-panel title="Sign-in" data-testid="identity-link">
+        @if (link()) {
+          <button
+            panelActions
+            flButton
+            size="sm"
+            type="button"
+            [disabled]="busy()"
+            (click)="disconnect()"
+          >
+            Disconnect
+          </button>
+        }
+        @if (link(); as l) {
+          <div class="flex flex-col gap-4">
+            <fl-status tone="success" label="Connected" />
+            <fl-key-value>
+              <fl-kv-item key="Identity" [mono]="true">{{ l.issuer }}</fl-kv-item>
+              <fl-kv-item key="Client ID">
+                <fl-copy-id [value]="l.clientId" label="client ID" />
+              </fl-kv-item>
+              <fl-kv-item key="Returns to" [mono]="true">{{
+                l.redirectUris.join(', ')
+              }}</fl-kv-item>
+              <fl-kv-item key="Variables" [mono]="true"
+                >{{ l.envNames.issuer }}, {{ l.envNames.clientId }},
+                {{ l.envNames.clientSecret }}</fl-kv-item
+              >
+            </fl-key-value>
+          </div>
+        } @else if (installs().length === 0) {
+          <div class="flex flex-col gap-3">
+            <fl-status tone="neutral" label="Not connected" />
+            <p class="text-fl-body-sm text-fl-ink-muted">
               No identity install yet. Install Zitadel from the catalog to sign this app's users in
               with it.
             </p>
-          } @else {
-            <p class="mt-1 text-sm text-muted-foreground">
-              The app receives only the issuer, client id and client secret, and is redeployed.
+          </div>
+        } @else {
+          <div class="flex flex-col gap-4">
+            <fl-status tone="neutral" label="Not connected" />
+            <p class="text-fl-body-sm text-fl-ink-muted">
+              The app receives only the issuer, client ID and client secret, and is redeployed.
             </p>
-            <form class="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]" (ngSubmit)="connect()">
-              <select
-                class="rounded-md border border-input bg-background px-3 py-2 text-sm"
-                name="install"
-                [(ngModel)]="installId"
-                required
-              >
-                @for (i of installs(); track i.identityInstallId) {
-                  <option [value]="i.identityInstallId" [disabled]="!i.managed">
-                    {{ i.name }}{{ i.managed ? '' : ' — reinstall to manage from Flui' }}
-                  </option>
-                }
-              </select>
-              <input
-                class="rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
-                name="path"
-                placeholder="/auth/callback"
-                [(ngModel)]="redirectPath"
-                required
-              />
-              <button
-                type="submit"
-                [disabled]="busy()"
-                class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-              >
-                Connect
-              </button>
+            <form class="grid items-end gap-3 sm:grid-cols-3" (ngSubmit)="connect()">
+              <fl-field label="Identity install" for="identity-install">
+                <span class="fl-select-wrap">
+                  <select
+                    id="identity-install"
+                    class="fl-select"
+                    name="install"
+                    [(ngModel)]="installId"
+                    required
+                  >
+                    @for (i of installs(); track i.identityInstallId) {
+                      <option [value]="i.identityInstallId" [disabled]="!i.managed">
+                        {{ i.name }}{{ i.managed ? '' : ' (reinstall to manage from Flui)' }}
+                      </option>
+                    }
+                  </select>
+                </span>
+              </fl-field>
+              <fl-field label="Callback path" for="identity-path">
+                <div class="fl-input fl-input--lg">
+                  <input
+                    id="identity-path"
+                    class="fl-mono"
+                    name="path"
+                    placeholder="/auth/callback"
+                    [(ngModel)]="redirectPath"
+                    required
+                  />
+                </div>
+              </fl-field>
+              <div>
+                <button flButton="primary" type="submit" [disabled]="busy()">Connect</button>
+              </div>
             </form>
-          }
-        </section>
-      }
-    </div>
+          </div>
+        }
+      </fl-panel>
+    }
   `,
 })
 export class AppIdentityTabComponent {
@@ -202,6 +250,8 @@ export class AppIdentityTabComponent {
   readonly loading = signal(false);
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
+  readonly userTone = USER_TONE;
+  readonly userState = USER_STATE;
 
   email = '';
   givenName = '';

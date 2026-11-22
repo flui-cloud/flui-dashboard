@@ -1,24 +1,22 @@
-import {
-  Component,
-  computed,
-  inject,
-  input,
-  effect,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, computed, inject, input, effect, signal } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideActivity, lucideExternalLink, lucideGlobe, lucideInfo } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideActivity, lucideInfo } from '@ng-icons/lucide';
 import {
-  MultiStatCardComponent,
-  MultiStatCardData,
+  DEFAULT_CHART_COLORS,
   TimeSeriesChartConfig,
   TimeSeriesChartData,
-  TimeSeriesLineComponent,
 } from '../../../shared/components/charts';
 import { ApplicationTrafficService } from '../../service/application-traffic.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlMetric, FlMetricStrip } from '../../../ui/patterns/metric-strip';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { AppMonitoringChart } from './app-monitoring-chart';
 import { breakdownOf } from './traffic-breakdown';
 
 export interface TrafficRange {
@@ -27,99 +25,103 @@ export interface TrafficRange {
   step: string;
 }
 
+const CHART_HEIGHT = '260px';
+
+interface TrafficMetric {
+  readonly label: string;
+  readonly value: string;
+}
+
 @Component({
   selector: 'app-traffic-section',
   standalone: true,
-  imports: [RouterLink, NgIconComponent, TimeSeriesLineComponent, MultiStatCardComponent],
-  providers: [
-    provideIcons({
-      lucideActivity,
-      lucideExternalLink,
-      lucideGlobe,
-      lucideInfo,
-    }),
+  imports: [
+    RouterLink,
+    FlAlert,
+    FlEmptyState,
+    FlIcon,
+    FlMetric,
+    FlMetricStrip,
+    FlPanel,
+    FlStatus,
+    FlTable,
+    AppMonitoringChart,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideActivity, lucideInfo })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-4">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <ng-icon name="lucideGlobe" class="text-sub" size="20" />
-            Traffic
-          </h3>
-          <p class="text-sm text-gray-500">
-            HTTP requests measured at the ingress — no instrumentation required
+    <fl-panel title="Traffic">
+      <a
+        panelActions
+        class="fl-link text-fl-body-sm"
+        [routerLink]="['../logs']"
+        [queryParams]="logsQueryParams()"
+        >View logs</a
+      >
+      @if (traffic.error(); as err) {
+        <fl-alert tone="error" title="Traffic could not be read">{{ err }}</fl-alert>
+      } @else if (current() && !current()!.is_routable) {
+        <fl-empty-state
+          icon="lucideActivity"
+          title="Not exposed through the ingress"
+          body="This application has no public HTTP route, so there is no edge traffic to measure."
+          [compact]="true"
+        />
+      } @else {
+        <div class="flex flex-col gap-3">
+          <p class="m-0 fl-muted text-fl-body-sm">
+            HTTP requests measured at the ingress, no instrumentation required.
           </p>
+          <fl-metric-strip data-testid="traffic-summary">
+            @for (metric of metrics(); track metric.label) {
+              <fl-metric [label]="metric.label" [value]="metric.value" />
+            }
+          </fl-metric-strip>
+          @if (latencyIsCoarse()) {
+            <p
+              class="m-0 fl-row fl-muted text-fl-body-sm"
+              data-testid="latency-coarse"
+              [title]="coarseHint()"
+            >
+              <fl-icon name="lucideInfo" [size]="14" />
+              Percentiles are rough here: trust the mean.
+            </p>
+          }
         </div>
-        <a
-          [routerLink]="['../logs']"
-          [queryParams]="logsQueryParams()"
-          class="shrink-0 inline-flex items-center gap-1.5 text-sm text-sub hover:text-foreground hover:underline"
-        >
-          View logs
-          <ng-icon name="lucideExternalLink" size="14" />
-        </a>
+      }
+    </fl-panel>
+
+    @if (!traffic.error() && (!current() || current()!.is_routable)) {
+      <div class="fl-grid-2">
+        <app-monitoring-chart
+          title="Request rate"
+          caption="requests per second"
+          [data]="requestRateChart()"
+          [config]="requestRateConfig"
+        />
+        <app-monitoring-chart
+          title="Errors"
+          caption="4xx and 5xx per second"
+          [data]="errorChart()"
+          [config]="errorConfig"
+        />
+        <app-monitoring-chart
+          title="Latency"
+          caption="p95"
+          [data]="latencyChart()"
+          [config]="latencyConfig"
+        />
       </div>
 
-      @if (traffic.error(); as err) {
-        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {{ err }}
-        </div>
-      } @else if (current() && !current()!.is_routable) {
-        <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
-          <ng-icon name="lucideActivity" class="text-gray-400 mx-auto mb-2" size="24" />
-          <p class="text-sm font-medium text-gray-700">Not exposed through the ingress</p>
-          <p class="text-sm text-gray-500 mt-1">
-            This application has no public HTTP route, so there is no edge traffic to measure.
-          </p>
-        </div>
-      } @else {
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <app-multi-stat-card [data]="requestStats()" />
-          <app-multi-stat-card [data]="errorStats()" />
-          <app-multi-stat-card [data]="latencyStats()" />
-        </div>
-
-        @if (latencyIsCoarse()) {
-          <p class="m-0 flex items-center gap-1.5 text-xs text-sub" data-testid="latency-coarse">
-            <ng-icon name="lucideInfo" class="shrink-0" size="14" [attr.title]="coarseHint()" />
-            Percentiles are rough here: trust the mean.
-          </p>
-        }
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <app-time-series-line [data]="requestRateChart()" [config]="requestRateConfig" />
-          <app-time-series-line [data]="errorChart()" [config]="errorConfig" />
-        </div>
-
-        <app-time-series-line [data]="latencyChart()" [config]="latencyConfig" />
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      @if (statusView() || methodView()) {
+        <div class="fl-grid-2">
           @if (statusView(); as view) {
-            <div
-              class="rounded-lg border border-border bg-card p-4"
-              data-testid="traffic-status-codes"
-            >
-              <h4 class="m-0 mb-2 text-sm font-semibold text-foreground">Status codes</h4>
-              <div class="min-h-24">
-                @for (entry of view.rows; track entry.code) {
-                  <div class="flex h-6 items-center justify-between text-sm">
-                    <span class="flex items-center gap-2">
-                      <span
-                        class="inline-block h-2 w-2 rounded-full"
-                        [class]="codeDot(entry.code)"
-                      ></span>
-                      <span class="font-mono text-foreground">{{ entry.code }}</span>
-                    </span>
-                    <span class="text-sub">{{ formatRate(entry.requests_per_second) }}</span>
-                  </div>
-                }
-              </div>
+            <fl-panel title="Status codes" [flush]="true" data-testid="traffic-status-codes">
               @if (view.hidden > 0 || showAllCodes()) {
                 <button
+                  panelActions
                   type="button"
-                  class="mt-1 text-xs font-medium text-sub hover:text-foreground hover:underline"
+                  class="fl-link text-fl-body-sm"
                   (click)="showAllCodes.set(!showAllCodes())"
                 >
                   {{
@@ -129,24 +131,32 @@ export interface TrafficRange {
                   }}
                 </button>
               }
-            </div>
+              <table flTable density="dense">
+                <thead>
+                  <tr>
+                    <th scope="col">Code</th>
+                    <th scope="col" class="is-num">Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (entry of view.rows; track entry.code) {
+                    <tr>
+                      <td><fl-status [tone]="codeTone(entry.code)" [label]="entry.code" /></td>
+                      <td class="is-num">{{ formatRate(entry.requests_per_second) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </fl-panel>
           }
 
           @if (methodView(); as view) {
-            <div class="rounded-lg border border-border bg-card p-4" data-testid="traffic-methods">
-              <h4 class="m-0 mb-2 text-sm font-semibold text-foreground">Methods</h4>
-              <div class="min-h-24">
-                @for (entry of view.rows; track entry.method) {
-                  <div class="flex h-6 items-center justify-between text-sm">
-                    <span class="font-mono text-foreground">{{ entry.method }}</span>
-                    <span class="text-sub">{{ formatRate(entry.requests_per_second) }}</span>
-                  </div>
-                }
-              </div>
+            <fl-panel title="Methods" [flush]="true" data-testid="traffic-methods">
               @if (view.hidden > 0 || showAllMethods()) {
                 <button
+                  panelActions
                   type="button"
-                  class="mt-1 text-xs font-medium text-sub hover:text-foreground hover:underline"
+                  class="fl-link text-fl-body-sm"
                   (click)="showAllMethods.set(!showAllMethods())"
                 >
                   {{
@@ -156,11 +166,27 @@ export interface TrafficRange {
                   }}
                 </button>
               }
-            </div>
+              <table flTable density="dense">
+                <thead>
+                  <tr>
+                    <th scope="col">Method</th>
+                    <th scope="col" class="is-num">Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (entry of view.rows; track entry.method) {
+                    <tr>
+                      <td class="fl-mono">{{ entry.method }}</td>
+                      <td class="is-num">{{ formatRate(entry.requests_per_second) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </fl-panel>
           }
         </div>
       }
-    </div>
+    }
   `,
 })
 export class AppTrafficSectionComponent {
@@ -184,25 +210,28 @@ export class AppTrafficSectionComponent {
 
   readonly requestRateConfig: TimeSeriesChartConfig = {
     unit: ' req/s',
-    height: '260px',
+    height: CHART_HEIGHT,
     showGrid: true,
     showLegend: false,
+    showTitle: false,
     valueFormatter: (v: number) => this.formatRate(v),
   };
 
   readonly errorConfig: TimeSeriesChartConfig = {
     unit: ' req/s',
-    height: '260px',
+    height: CHART_HEIGHT,
     showGrid: true,
     showLegend: true,
+    showTitle: false,
     valueFormatter: (v: number) => this.formatRate(v),
   };
 
   readonly latencyConfig: TimeSeriesChartConfig = {
     unit: 's',
-    height: '260px',
+    height: CHART_HEIGHT,
     showGrid: true,
     showLegend: false,
+    showTitle: false,
     valueFormatter: (v: number) => this.formatDuration(v),
   };
 
@@ -237,63 +266,25 @@ export class AppTrafficSectionComponent {
     this.byMethod().length ? breakdownOf(this.byMethod(), this.showAllMethods()) : null,
   );
 
-  protected readonly requestStats = computed<MultiStatCardData>(() => {
-    const rate = this.current()?.traffic.rate;
-    return {
-      title: 'Requests',
-      stats: [
-        {
-          label: 'Rate',
-          value: this.formatRate(rate?.requests_per_second ?? null),
-          severity: 'info',
-        },
-        {
-          label: `In ${this.current()?.window ?? '5m'}`,
-          value: String(Math.round(rate?.requests_in_window ?? 0)),
-          severity: 'info',
-        },
-      ],
-    };
-  });
-
-  protected readonly errorStats = computed<MultiStatCardData>(() => {
-    const status = this.current()?.traffic.status;
-    const server = status?.server_error_percent ?? null;
-    const client = status?.client_error_percent ?? null;
-    return {
-      title: 'Errors',
-      stats: [
-        {
-          label: 'Server 5xx',
-          value: this.formatPercent(server),
-          severity: this.errorSeverity(server),
-        },
-        {
-          label: 'Client 4xx',
-          value: this.formatPercent(client),
-          severity: client !== null && client > 0 ? 'warning' : 'success',
-        },
-      ],
-    };
-  });
-
-  protected readonly latencyStats = computed<MultiStatCardData>(() => {
-    const latency = this.current()?.traffic.latency;
-    return {
-      title: 'Latency',
-      stats: [
-        {
-          label: 'Mean',
-          value: this.formatDuration(latency?.mean_seconds ?? null),
-          severity: 'info',
-        },
-        {
-          label: latency?.estimates_are_coarse ? 'p95 (rough)' : 'p95',
-          value: this.formatDuration(latency?.p95_seconds ?? null),
-          severity: 'info',
-        },
-      ],
-    };
+  protected readonly metrics = computed<TrafficMetric[]>(() => {
+    const traffic = this.current()?.traffic;
+    const rate = traffic?.rate;
+    const status = traffic?.status;
+    const latency = traffic?.latency;
+    return [
+      { label: 'Request rate', value: this.formatRate(rate?.requests_per_second ?? null) },
+      {
+        label: `Requests in ${this.current()?.window ?? '5m'}`,
+        value: String(Math.round(rate?.requests_in_window ?? 0)),
+      },
+      { label: 'Server 5xx', value: this.formatPercent(status?.server_error_percent ?? null) },
+      { label: 'Client 4xx', value: this.formatPercent(status?.client_error_percent ?? null) },
+      { label: 'Mean latency', value: this.formatDuration(latency?.mean_seconds ?? null) },
+      {
+        label: latency?.estimates_are_coarse ? 'p95 latency (rough)' : 'p95 latency',
+        value: this.formatDuration(latency?.p95_seconds ?? null),
+      },
+    ];
   });
 
   protected readonly requestRateChart = computed<TimeSeriesChartData>(() => ({
@@ -308,7 +299,6 @@ export class AppTrafficSectionComponent {
             value: p.requests_per_second!,
           })),
         smooth: true,
-        color: '#3b82f6',
       },
     ],
   }));
@@ -322,7 +312,7 @@ export class AppTrafficSectionComponent {
           .filter((p) => p.rate_4xx != null)
           .map((p) => ({ timestamp: new Date(p.timestamp), value: p.rate_4xx! })),
         smooth: true,
-        color: '#f59e0b',
+        color: DEFAULT_CHART_COLORS.warning[0],
       },
       {
         name: 'Server 5xx',
@@ -330,7 +320,7 @@ export class AppTrafficSectionComponent {
           .filter((p) => p.rate_5xx != null)
           .map((p) => ({ timestamp: new Date(p.timestamp), value: p.rate_5xx! })),
         smooth: true,
-        color: '#ef4444',
+        color: DEFAULT_CHART_COLORS.danger[0],
       },
     ],
   }));
@@ -344,17 +334,15 @@ export class AppTrafficSectionComponent {
           .filter((p) => p.p95_seconds != null)
           .map((p) => ({ timestamp: new Date(p.timestamp), value: p.p95_seconds! })),
         smooth: true,
-        color: '#8b5cf6',
       },
     ],
   }));
 
-  protected codeDot(code: string): string {
-    if (/^5\d{2}$/.test(code)) return 'bg-red-500';
-    if (/^4\d{2}$/.test(code)) return 'bg-amber-500';
-    if (/^2\d{2}$/.test(code)) return 'bg-emerald-500';
-    if (/^3\d{2}$/.test(code)) return 'bg-blue-500';
-    return 'bg-gray-400';
+  protected codeTone(code: string): StatusTone {
+    if (/^5\d{2}$/.test(code)) return 'error';
+    if (/^4\d{2}$/.test(code)) return 'warning';
+    if (/^2\d{2}$/.test(code)) return 'success';
+    return 'neutral';
   }
 
   protected formatRate(value: number | null): string {
@@ -373,10 +361,5 @@ export class AppTrafficSectionComponent {
   protected formatPercent(value: number | null): string {
     if (value === null || value === undefined) return '—';
     return `${value.toFixed(2)}%`;
-  }
-
-  private errorSeverity(value: number | null): 'success' | 'warning' | 'danger' {
-    if (value === null || value === 0) return 'success';
-    return value >= 5 ? 'danger' : 'warning';
   }
 }

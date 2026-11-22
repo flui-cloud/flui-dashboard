@@ -1,6 +1,6 @@
-import { Component, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
-
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { Component, inject, input, output } from '@angular/core';
+import { formatDate as formatDateIn } from '@angular/common';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideRocket,
   lucideRotateCcw,
@@ -11,19 +11,44 @@ import {
   lucideSquare,
   lucideSettings,
   lucideGitCommit,
-  lucideLoader,
-  lucideAlertCircle,
   lucideWand,
 } from '@ng-icons/lucide';
 import { AppAuditEventSummaryDto } from '../../../core/api/model/appAuditEventSummaryDto';
 import { AppRevisionsService, AuditEventType } from '../../service/app-revisions.service';
 import { ApplicationService } from '../../service/application.service';
 import { appEventText } from './app-recap-view';
+import { formatRelativeDate } from './builds/build-format.utils';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState, FlErrorState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+
+const ROLLBACK_ITEMS: readonly MenuAction[] = [
+  { id: 'rollback', label: 'Roll back to this revision', danger: true },
+];
+const ROLLBACK_ITEMS_BUSY: readonly MenuAction[] = [
+  { id: 'rollback', label: 'Roll back to this revision', danger: true, disabled: true },
+];
 
 @Component({
   selector: 'app-activity-feed',
   standalone: true,
-  imports: [NgIconComponent],
+  imports: [
+    FlPanel,
+    FlTable,
+    FlEmptyState,
+    FlErrorState,
+    FlLoadingState,
+    FlActionsMenu,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    FlTag,
+  ],
   providers: [
     provideIcons({
       lucideRocket,
@@ -35,123 +60,109 @@ import { appEventText } from './app-recap-view';
       lucideSquare,
       lucideSettings,
       lucideGitCommit,
-      lucideLoader,
-      lucideAlertCircle,
       lucideWand,
     }),
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="space-y-3">
-      <!-- Filter bar -->
-      <div class="flex items-center gap-2 flex-wrap">
-        @for (filter of filters; track filter.value) {
-          <button
-            (click)="filterChange.emit(filter.value)"
-            class="px-3 py-1 text-xs rounded-full border transition-colors font-medium"
-            [class]="
-              activeFilter() === filter.value
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-            "
-          >
-            {{ filter.label }}
-          </button>
-        }
-      </div>
-
-      @if (service.eventsLoading()) {
-        <div class="flex items-center justify-center py-12">
-          <ng-icon name="lucideLoader" class="h-6 w-6 animate-spin text-blue-600" />
-        </div>
-      } @else if (service.eventsError()) {
-        <div
-          class="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
-        >
-          <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
-          {{ service.eventsError() }}
-        </div>
-      } @else if (service.events().length === 0) {
-        <p class="text-sm text-gray-500 py-6 text-center">No activity events found.</p>
-      } @else {
-        <div class="relative">
-          <div class="absolute left-5 top-0 bottom-0 w-px bg-gray-200"></div>
-          <div class="space-y-3">
-            @for (event of service.events(); track event.id) {
-              <div class="flex items-start gap-4 pl-12 relative">
-                <div
-                  class="absolute left-3.5 top-2 w-3 h-3 rounded-full border-2 border-white"
-                  [class]="isAutoFix(event) ? 'bg-purple-500' : getEventDotColor(event.eventType)"
-                ></div>
-                <div class="flex-1 bg-white border border-gray-200 rounded-lg p-3">
-                  <div class="flex items-start justify-between gap-2">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <ng-icon
-                        [name]="isAutoFix(event) ? 'lucideWand' : getEventIcon(event.eventType)"
-                        class="h-4 w-4 shrink-0"
-                        [class]="isAutoFix(event) ? 'text-purple-600' : 'text-gray-500'"
-                      />
-                      <span class="text-sm font-medium text-gray-900">{{
-                        formatChangeMetadata(event)
-                      }}</span>
-                      @if (isAutoFix(event)) {
-                        <span
-                          class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-medium"
-                        >
-                          Flui automatic remediation
-                        </span>
-                      }
-                      @if (event.revisionNumber) {
-                        <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500"
-                          >#{{ event.revisionNumber }}</span
-                        >
-                      }
-                      @if (isCurrentRevision(event)) {
-                        <span
-                          class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-medium"
-                          >current</span
-                        >
-                      }
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                      <span class="text-xs text-gray-400 whitespace-nowrap">{{
-                        formatDate(event.createdAt)
-                      }}</span>
-                      @if (canRollback(event)) {
-                        <button
-                          (click)="rollback.emit(event)"
-                          [disabled]="service.rollingBack()"
-                          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          @if (service.rollingBack()) {
-                            <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
-                          } @else {
-                            <ng-icon name="lucideRotateCcw" class="h-3 w-3" />
-                          }
-                          Rollback
-                        </button>
-                      }
-                    </div>
-                  </div>
-                  <p class="text-xs text-gray-500 mt-1">by {{ formatActor(event.actor) }}</p>
-                  @if (service.rollbackError() && service.rollingBack() === false) {
-                    <!-- error shown at feed level -->
-                  }
-                </div>
-              </div>
+    <fl-panel title="Revision history" [count]="service.eventsTotal()" [flush]="true">
+      <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+        <div class="fl-toolbar__group">
+          <div class="fl-segmented" role="group" aria-label="Event type">
+            @for (filter of filters; track filter.label) {
+              <button
+                type="button"
+                [attr.aria-pressed]="activeFilter() === filter.value"
+                (click)="filterChange.emit(filter.value)"
+              >
+                {{ filter.label }}
+              </button>
             }
           </div>
         </div>
+      </div>
+
+      @if (service.eventsLoading()) {
+        <fl-loading-state [rows]="4" />
+      } @else if (service.eventsError()) {
+        <fl-error-state
+          title="Could not load revisions"
+          [reason]="service.eventsError()"
+          (retry)="filterChange.emit(activeFilter())"
+        />
+      } @else if (service.events().length === 0) {
+        <fl-empty-state title="No activity yet" />
+      } @else {
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Revision</th>
+                <th scope="col">Change</th>
+                <th scope="col">Status</th>
+                <th scope="col">By</th>
+                <th scope="col" class="is-num">When</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (event of service.events(); track event.id) {
+                <tr>
+                  <td>
+                    @if (event.revisionNumber) {
+                      <span class="fl-mono">#{{ event.revisionNumber }}</span>
+                    } @else {
+                      <span class="fl-muted">—</span>
+                    }
+                  </td>
+                  <td class="whitespace-normal">
+                    <div class="flex min-w-0 flex-wrap items-center gap-2">
+                      <fl-icon
+                        class="text-fl-ink-muted"
+                        [name]="isAutoFix(event) ? 'lucideWand' : getEventIcon(event.eventType)"
+                        [size]="14"
+                      />
+                      <span class="min-w-0 break-words">{{ formatChangeMetadata(event) }}</span>
+                      @if (isAutoFix(event)) {
+                        <fl-tag>Automatic remediation</fl-tag>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    @if (isCurrentRevision(event)) {
+                      <fl-status tone="success" label="Running" />
+                    } @else {
+                      <span class="fl-muted">—</span>
+                    }
+                  </td>
+                  <td>{{ formatActor(event.actor) }}</td>
+                  <td class="is-num" [title]="formatDate(event.createdAt)">
+                    {{ relativeDate(event.createdAt) }}
+                  </td>
+                  <td class="is-fit">
+                    @if (canRollback(event)) {
+                      <fl-actions-menu
+                        [compact]="true"
+                        [label]="'Actions for revision ' + event.revisionNumber"
+                        [items]="service.rollingBack() ? rollbackItemsBusy : rollbackItems"
+                        (action)="rollback.emit(event)"
+                      />
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
 
         @if (service.eventsTotal() > service.events().length) {
-          <div class="text-center pt-2">
-            <button (click)="loadMore.emit()" class="text-sm text-blue-600 hover:underline">
+          <div class="flex justify-center border-t border-fl-border-subtle p-3">
+            <button flButton size="sm" type="button" (click)="loadMore.emit()">
               Load more ({{ service.eventsTotal() - service.events().length }} remaining)
             </button>
           </div>
         }
       }
-    </div>
+    </fl-panel>
   `,
 })
 export class AppActivityFeedComponent {
@@ -163,12 +174,15 @@ export class AppActivityFeedComponent {
   readonly loadMore = output<void>();
   readonly rollback = output<AppAuditEventSummaryDto>();
 
+  protected readonly rollbackItems = ROLLBACK_ITEMS;
+  protected readonly rollbackItemsBusy = ROLLBACK_ITEMS_BUSY;
+
   filters: { label: string; value: AuditEventType | undefined }[] = [
     { label: 'All', value: undefined },
     { label: 'Deploy', value: 'deploy' },
     { label: 'Scale', value: 'scale' },
     { label: 'Restart', value: 'restart' },
-    { label: 'Stop/Start', value: 'stop' },
+    { label: 'Stop and start', value: 'stop' },
     { label: 'Resources', value: 'resource_update' },
   ];
 
@@ -207,33 +221,16 @@ export class AppActivityFeedComponent {
     return icons[type] ?? 'lucideGitCommit';
   }
 
-  getEventDotColor(type: string): string {
-    const colors: Record<string, string> = {
-      deploy: 'bg-green-500',
-      rollback: 'bg-orange-500',
-      scale: 'bg-blue-500',
-      resource_update: 'bg-purple-500',
-      restart: 'bg-yellow-500',
-      start: 'bg-green-400',
-      stop: 'bg-red-400',
-      config_update: 'bg-gray-400',
-      created: 'bg-blue-600',
-      reconciled: 'bg-teal-500',
-    };
-    return colors[type] ?? 'bg-gray-400';
-  }
-
   formatActor(actor?: { type: string; name?: string | null }): string {
     return actor?.name ?? actor?.type ?? 'system';
   }
 
   formatDate(iso: string): string {
-    const d = new Date(iso);
-    return (
-      d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
-      ' ' +
-      d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    );
+    return formatDateIn(iso, 'd MMM y, HH:mm', 'en-US');
+  }
+
+  relativeDate(iso: string): string {
+    return formatRelativeDate(iso);
   }
 
   formatChangeMetadata(event: AppAuditEventSummaryDto): string {

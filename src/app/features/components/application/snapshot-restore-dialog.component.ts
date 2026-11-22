@@ -1,66 +1,83 @@
-import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideRotateCcw } from '@ng-icons/lucide';
+import { Component, effect, input, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 import { ApplicationSnapshot } from '../../model/volume-management.models';
 
 @Component({
   selector: 'app-snapshot-restore-dialog',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIconComponent],
-  providers: [provideIcons({ lucideLoader, lucideRotateCcw })],
+  imports: [FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideX })],
   template: `
     @if (snapshot(); as snap) {
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
         (click)="cancelled.emit()"
       >
         <div
-          class="bg-background rounded-lg border border-border max-w-md w-full p-6"
+          class="fl-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="snapshot-restore-title"
           (click)="$event.stopPropagation()"
         >
-          <h3 class="text-lg font-semibold">Restore snapshot</h3>
-          <p class="text-sm text-muted-foreground mt-2">
-            Creates a brand-new PVC with the data from this snapshot. Your live application is NOT
-            affected.
-            <span class="block mt-1 text-xs font-mono break-all">{{ snap.exportId }}</span>
-          </p>
-          <label class="flex items-start gap-2 mt-4 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              [checked]="restoreAndSwap()"
-              (change)="restoreAndSwap.set(!restoreAndSwap())"
-              class="mt-0.5"
-            />
-            <span>
-              Also swap the live application to the new PVC
-              <span class="block text-xs text-muted-foreground mt-0.5">
-                Triggers a rolling restart. The current PVC stays in the cluster as a backup.
-              </span>
-            </span>
-          </label>
-          <div class="flex items-center gap-2 mt-6">
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" id="snapshot-restore-title">Restore copy</h2>
             <button
+              type="button"
+              class="fl-dialog__close"
+              aria-label="Close"
+              [disabled]="restoring()"
+              (click)="cancelled.emit()"
+            >
+              <fl-icon name="lucideX" />
+            </button>
+          </header>
+          <div class="fl-dialog__body">
+            <p>
+              Creates a new volume with the data from this copy. The running application is not
+              affected.
+            </p>
+            <p class="fl-mono break-all text-fl-ink-muted">{{ snap.exportId }}</p>
+            <label class="fl-check items-start">
+              <input
+                type="checkbox"
+                [checked]="restoreAndSwap()"
+                (change)="restoreAndSwap.set(!restoreAndSwap())"
+              />
+              <span class="flex flex-col gap-0.5">
+                Also switch the application to the new volume
+                <span class="text-fl-caption text-fl-ink-muted">
+                  Triggers a rolling restart. The current volume stays in the cluster as a backup.
+                </span>
+              </span>
+            </label>
+          </div>
+          <footer class="fl-dialog__footer">
+            <button
+              flButton="ghost"
+              type="button"
               (click)="cancelled.emit()"
               [disabled]="restoring()"
-              class="flex-1 px-4 py-2 border border-border rounded-md hover:bg-muted text-sm transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
+              flButton="primary"
+              type="button"
               (click)="execute.emit(restoreAndSwap())"
               [disabled]="restoring()"
-              class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm transition-colors disabled:opacity-50"
             >
               @if (restoring()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                {{ restoreAndSwap() ? 'Restoring & swapping…' : 'Restoring…' }}
+                <fl-spinner label="Restoring" />
+                {{ restoreAndSwap() ? 'Restoring and switching…' : 'Restoring…' }}
               } @else {
-                <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
-                {{ restoreAndSwap() ? 'Restore & swap' : 'Restore' }}
+                {{ restoreAndSwap() ? 'Restore and switch' : 'Restore' }}
               }
             </button>
-          </div>
+          </footer>
         </div>
       </div>
     }

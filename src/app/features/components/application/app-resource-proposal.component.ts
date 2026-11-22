@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { AppRuntimeService, ResourceProposal } from '../../service/app-runtime.service';
 import { ExplainComponent } from '../../../shared/components/explain.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
 import {
   AppMaintenance,
   MaintenanceService,
@@ -22,99 +24,85 @@ import { ToastService } from '../../../shared/services/toast.service';
 @Component({
   selector: 'app-resource-proposal',
   standalone: true,
-  imports: [ExplainComponent],
+  imports: [ExplainComponent, FlAlert, FlButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (proposal(); as p) {
-      <section
-        class="rounded-lg border border-amber-200 bg-amber-50 p-4"
-        data-testid="resource-proposal"
-      >
-        <div class="flex flex-wrap items-start justify-between gap-3">
-          <div class="min-w-0 space-y-1">
-            <app-explain
-              label="Flui proposes more memory"
-              labelClass="text-sm font-semibold text-amber-900"
-              testid="proposal-why"
-            >
-              @for (r of p.reasons; track r.kind) {
-                <span class="block">{{ r.sentence }}</span>
-              }
-              <span class="mt-1 block">{{ p.restart }}</span>
-              @if (p.configurationNote) {
-                <span class="mt-1 block">{{ p.configurationNote }}</span>
-              }
-            </app-explain>
-            <p class="m-0 font-mono text-[13px] text-gray-800" data-testid="proposal-values">
-              memory
-              @if (p.consequence.requests.memory !== p.currentRequests.memory) {
-                {{ p.currentRequests.memory ?? '—' }} →
-                {{ p.consequence.requests.memory ?? '—' }} reserved
-              } @else {
-                {{ p.currentRequests.memory ?? '—' }} reserved
-              }
-              ·
-              @if (p.consequence.limits.memory !== p.currentLimits.memory) {
-                {{ p.currentLimits.memory ?? '—' }} → {{ p.consequence.limits.memory ?? '—' }} at
-                most
-              } @else {
-                {{ p.currentLimits.memory ?? '—' }} at most
-              }
-            </p>
-            <p class="m-0 text-[12px] text-gray-600">
-              {{ p.consequence.placement.sentence }}
-            </p>
-          </div>
-          <div class="flex items-center gap-2">
-            @if (confirming()) {
-              <button
-                type="button"
-                class="rounded-md px-3 py-1.5 text-sm text-gray-700 hover:bg-amber-100"
-                (click)="confirming.set(false)"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                class="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
-                [disabled]="applying() || !!p.consequence.problem"
-                (click)="apply(p)"
-                data-testid="proposal-confirm"
-              >
-                {{ applying() ? 'Applying…' : 'Apply and restart' }}
-              </button>
-              <button
-                type="button"
-                class="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50"
-                [disabled]="
-                  applying() ||
-                  !!p.consequence.problem ||
-                  !window()?.nextOpening ||
-                  window()?.mode === 'anytime'
-                "
-                [title]="window()?.nextOpening ? '' : (window()?.says ?? '')"
-                (click)="defer()"
-                data-testid="proposal-defer"
-              >
-                At next window{{
-                  window()?.nextOpening && window()?.mode !== 'anytime'
-                    ? ' (' + label(window()!.nextOpening) + ')'
-                    : ''
-                }}
-              </button>
-            } @else {
-              <button
-                type="button"
-                class="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100"
-                (click)="confirming.set(true)"
-                data-testid="proposal-apply"
-              >
-                Apply
-              </button>
+      <fl-alert tone="warning" title="Flui proposes more memory" data-testid="resource-proposal">
+        <span class="block fl-mono" data-testid="proposal-values">
+          Memory
+          @if (p.consequence.requests.memory !== p.currentRequests.memory) {
+            {{ p.currentRequests.memory ?? '—' }} → {{ p.consequence.requests.memory ?? '—' }}
+            reserved,
+          } @else {
+            {{ p.currentRequests.memory ?? '—' }} reserved,
+          }
+          @if (p.consequence.limits.memory !== p.currentLimits.memory) {
+            {{ p.currentLimits.memory ?? '—' }} → {{ p.consequence.limits.memory ?? '—' }} at most
+          } @else {
+            {{ p.currentLimits.memory ?? '—' }} at most
+          }
+        </span>
+        <span class="mt-1 block">{{ p.consequence.placement.sentence }}</span>
+        <span class="mt-1 block">
+          <app-explain label="Why" labelClass="text-fl-body-sm font-medium" testid="proposal-why">
+            @for (r of p.reasons; track r.kind) {
+              <span class="block">{{ r.sentence }}</span>
             }
-          </div>
-        </div>
-      </section>
+            <span class="mt-1 block">{{ p.restart }}</span>
+            @if (p.configurationNote) {
+              <span class="mt-1 block">{{ p.configurationNote }}</span>
+            }
+          </app-explain>
+        </span>
+        <ng-container alertActions>
+          @if (confirming()) {
+            <button
+              flButton="primary"
+              size="sm"
+              type="button"
+              [disabled]="applying() || !!p.consequence.problem"
+              (click)="apply(p)"
+              data-testid="proposal-confirm"
+            >
+              {{ applying() ? 'Applying…' : 'Apply and restart' }}
+            </button>
+            <button
+              flButton
+              size="sm"
+              type="button"
+              [disabled]="
+                applying() ||
+                !!p.consequence.problem ||
+                !window()?.nextOpening ||
+                window()?.mode === 'anytime'
+              "
+              [attr.title]="window()?.nextOpening ? null : (window()?.says ?? null)"
+              (click)="defer()"
+              data-testid="proposal-defer"
+            >
+              At next window{{
+                window()?.nextOpening && window()?.mode !== 'anytime'
+                  ? ' (' + label(window()!.nextOpening) + ')'
+                  : ''
+              }}
+            </button>
+            <button flButton="ghost" size="sm" type="button" (click)="confirming.set(false)">
+              Cancel
+            </button>
+          } @else {
+            <button
+              flButton
+              size="sm"
+              type="button"
+              (click)="confirming.set(true)"
+              data-testid="proposal-apply"
+            >
+              Apply
+            </button>
+          }
+        </ng-container>
+      </fl-alert>
     }
   `,
 })

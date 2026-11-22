@@ -1,21 +1,13 @@
-import {
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideShieldAlert,
-  lucideRefreshCw,
-  lucideFilter,
-} from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCircleCheck, lucideRefreshCw } from '@ng-icons/lucide';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../../ui/patterns/states';
+import { FlTable } from '../../../../ui/patterns/table';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
 import { CrashDiagnosesService } from '../../../service/crash-diagnoses.service';
 import {
   CrashCategory,
@@ -25,6 +17,7 @@ import {
 } from '../../../model/crash-diagnosis.models';
 import { DiagnosisRowComponent } from './diagnosis-row.component';
 import { DiagnosisDetailDialogComponent } from './diagnosis-detail-dialog.component';
+import { SEVERITY_STATUS, diagnosisCategoryLabel } from './diagnosis-labels';
 
 const ALL_CATEGORIES: CrashCategory[] = [
   'oom_killed',
@@ -40,133 +33,128 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
 
 @Component({
   selector: 'app-diagnoses-tab',
-  standalone: true,
   imports: [
-    CommonModule,
-    NgIcon,
-    HlmButtonDirective,
+    FlPanel,
+    FlTable,
+    FlAlert,
+    FlButton,
+    FlIcon,
+    FlEmptyState,
+    FlLoadingState,
     DiagnosisRowComponent,
     DiagnosisDetailDialogComponent,
   ],
-  providers: [
-    provideIcons({ lucideCircleAlert, lucideShieldAlert, lucideRefreshCw, lucideFilter }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideRefreshCw, lucideCircleCheck })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-4">
-      <!-- Filters -->
-      <div class="flex items-center justify-between gap-3 flex-wrap">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-xs text-gray-500 font-medium">
-            <ng-icon name="lucideFilter" class="h-3.5 w-3.5 inline mr-1" />
-            Severity:
-          </span>
-          <button
-            type="button"
-            class="text-xs px-2 py-0.5 rounded border"
-            [ngClass]="
-              severityFilter() === null
-                ? 'bg-blue-50 border-blue-300 text-blue-700'
-                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-            "
-            (click)="severityFilter.set(null)"
-          >
-            All
-          </button>
-          @for (s of severities; track s) {
+    @if (service.error()) {
+      <fl-alert tone="error" [title]="service.error()!" />
+    }
+
+    <fl-panel
+      title="Diagnoses"
+      [count]="filtered().length > 0 ? filtered().length : null"
+      [flush]="true"
+    >
+      <button
+        panelActions
+        flButton
+        size="sm"
+        type="button"
+        [disabled]="service.loading()"
+        (click)="refresh()"
+      >
+        <fl-icon name="lucideRefreshCw" [class.animate-spin]="service.loading()" />
+        Refresh
+      </button>
+
+      <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+        <div class="fl-toolbar__group">
+          <div class="fl-segmented" role="group" aria-label="Severity">
             <button
               type="button"
-              class="text-xs px-2 py-0.5 rounded border capitalize"
-              [ngClass]="
-                severityFilter() === s
-                  ? 'bg-blue-50 border-blue-300 text-blue-700'
-                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-              "
-              (click)="severityFilter.set(s)"
+              [attr.aria-pressed]="severityFilter() === null"
+              (click)="severityFilter.set(null)"
             >
-              {{ s }}
+              All
             </button>
-          }
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-xs text-gray-500 font-medium">Category:</span>
-          <select
-            class="text-xs border border-gray-200 rounded px-2 py-1 bg-white text-gray-700"
-            [value]="categoryFilter() ?? ''"
-            (change)="onCategoryChange($event)"
-          >
-            <option value="">All</option>
-            @for (c of categories; track c) {
-              <option [value]="c">{{ categoryLabel(c) }}</option>
+            @for (s of severities; track s) {
+              <button
+                type="button"
+                [attr.aria-pressed]="severityFilter() === s"
+                (click)="severityFilter.set(s)"
+              >
+                {{ severityLabel(s) }}
+              </button>
             }
-          </select>
-          <button
-            hlmBtn
-            size="sm"
-            variant="outline"
-            (click)="refresh()"
-            [disabled]="service.loading()"
-          >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-3.5 w-3.5 mr-2"
-              [class.animate-spin]="service.loading()"
-            />
-            Refresh
-          </button>
+          </div>
+          <span class="fl-select-wrap">
+            <select
+              class="fl-select fl-select--sm"
+              aria-label="Category"
+              [value]="categoryFilter() ?? ''"
+              (change)="onCategoryChange($event)"
+            >
+              <option value="">Category: All</option>
+              @for (c of categories; track c) {
+                <option [value]="c">{{ diagnosisCategoryLabel(c) }}</option>
+              }
+            </select>
+          </span>
         </div>
       </div>
 
-      <!-- Error -->
-      @if (service.error()) {
-        <div
-          class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
-        >
-          <ng-icon name="lucideCircleAlert" class="h-4 w-4 shrink-0" />
-          {{ service.error() }}
-        </div>
-      }
-
-      <!-- List -->
       @if (service.loading() && filtered().length === 0) {
-        <div class="flex items-center justify-center py-12 text-sm text-gray-500">
-          Loading diagnoses…
-        </div>
+        <fl-loading-state [rows]="3" />
       } @else if (filtered().length === 0) {
-        <div
-          class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 rounded-lg"
-        >
-          <ng-icon name="lucideShieldAlert" class="h-10 w-10 text-gray-300 mb-3" />
-          <p class="text-sm font-medium text-gray-700">No diagnoses</p>
-          <p class="text-xs text-gray-500 mt-1">
-            All clear — no crashes detected for the current filters.
-          </p>
-        </div>
+        <fl-empty-state
+          [compact]="true"
+          icon="lucideCircleCheck"
+          title="No diagnoses"
+          body="No crashes detected for the current filters."
+        />
       } @else {
-        <div class="space-y-2">
-          @for (d of filtered(); track d.id) {
-            <app-diagnosis-row [diagnosis]="d" (clicked)="openDetail($event)" />
-          }
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col" class="is-fit">Severity</th>
+                <th scope="col">Diagnosis</th>
+                <th scope="col" class="is-fit">Detected</th>
+                <th scope="col" class="is-fit">State</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of filtered(); track d.id) {
+                <tr
+                  app-diagnosis-row
+                  [diagnosis]="d"
+                  [selected]="selected()?.id === d.id"
+                  (clicked)="openDetail($event)"
+                ></tr>
+              }
+            </tbody>
+          </table>
         </div>
         @if (canLoadMore()) {
-          <div class="flex justify-center pt-2">
+          <div class="flex justify-center border-t border-fl-border-subtle p-3">
             <button
-              hlmBtn
-              variant="outline"
+              flButton
               size="sm"
-              (click)="loadMore()"
+              type="button"
               [disabled]="service.loading()"
+              (click)="loadMore()"
             >
               Load more
             </button>
           </div>
         }
       }
-    </div>
+    </fl-panel>
 
     <app-diagnosis-detail-dialog
       [diagnosis]="selected()"
-      [applicationId]="appId"
+      [applicationId]="appId()"
       (closed)="closeDetail()"
       (dismiss)="onDismiss($event)"
       (apply)="onApply($event)"
@@ -182,7 +170,7 @@ export class AppDiagnosesTabComponent implements OnInit {
   readonly categories = ALL_CATEGORIES;
   readonly severities = ALL_SEVERITIES;
 
-  appId: string | null = null;
+  readonly appId = signal<string | null>(null);
   private readonly offset = signal(0);
   private readonly PAGE_SIZE = 50;
   private readonly lastPageSize = signal(0);
@@ -206,33 +194,39 @@ export class AppDiagnosesTabComponent implements OnInit {
 
   ngOnInit(): void {
     void (async () => {
-      this.appId = this.route.parent?.snapshot.paramMap.get('id') ?? null;
-      if (this.appId) {
+      this.appId.set(this.route.parent?.snapshot.paramMap.get('id') ?? null);
+      if (this.appId()) {
         await this.refresh();
       }
     })();
   }
 
   categoryLabel = categoryLabel;
+  diagnosisCategoryLabel = diagnosisCategoryLabel;
+
+  severityLabel(s: CrashSeverity): string {
+    return SEVERITY_STATUS[s].label;
+  }
 
   async refresh() {
-    if (!this.appId) return;
+    const appId = this.appId();
+    if (!appId) return;
     this.offset.set(0);
     const before = this.service.diagnoses().length;
-    await this.service.loadList(this.appId, { limit: this.PAGE_SIZE, offset: 0 });
+    await this.service.loadList(appId, { limit: this.PAGE_SIZE, offset: 0 });
     this.lastPageSize.set(this.service.diagnoses().length);
-    // guard: se prima avevo già caricato più pagine, il reset azzera
     if (before > this.service.diagnoses().length) {
       this.offset.set(0);
     }
   }
 
   async loadMore() {
-    if (!this.appId) return;
+    const appId = this.appId();
+    if (!appId) return;
     const nextOffset = this.service.diagnoses().length;
     this.offset.set(nextOffset);
     const before = this.service.diagnoses().length;
-    await this.service.loadList(this.appId, { limit: this.PAGE_SIZE, offset: nextOffset });
+    await this.service.loadList(appId, { limit: this.PAGE_SIZE, offset: nextOffset });
     this.lastPageSize.set(this.service.diagnoses().length - before);
   }
 
@@ -245,13 +239,15 @@ export class AppDiagnosesTabComponent implements OnInit {
   }
 
   async onDismiss(d: CrashDiagnosis) {
-    if (!this.appId) return;
-    await this.service.dismiss(this.appId, d.id);
+    const appId = this.appId();
+    if (!appId) return;
+    await this.service.dismiss(appId, d.id);
   }
 
   async onApply(d: CrashDiagnosis) {
-    if (!this.appId) return;
-    await this.service.apply(this.appId, d.id);
+    const appId = this.appId();
+    if (!appId) return;
+    await this.service.apply(appId, d.id);
   }
 
   onCategoryChange(ev: Event) {

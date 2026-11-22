@@ -7,18 +7,10 @@ import {
   effect,
   untracked,
   viewChild,
-  ChangeDetectionStrategy,
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideGlobe,
-  lucideLoader,
-  lucidePlusCircle,
-  lucideRefreshCw,
-  lucideAlertCircle,
-  lucideCheckCircle,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlus, lucideRefreshCw } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationService } from '../../service/application.service';
 import { ClusterService } from '../../service/cluster.service';
@@ -37,125 +29,117 @@ import { CatalogService } from '../../../core/api/api/catalog.service';
 import { hasPublicEndpoint } from '../../model/app-exposure';
 import { accessOf } from '../../model/app-access';
 import { ToastService } from '../../../shared/services/toast.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-app-dns-tab',
   standalone: true,
   imports: [
     RouterModule,
-    NgIconComponent,
     DnsEndpointsListComponent,
     ClusterEndpointFormComponent,
     ConfirmationDialogComponent,
+    FlAlert,
+    FlPanel,
+    FlTable,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
   ],
-  providers: [
-    provideIcons({
-      lucideGlobe,
-      lucideLoader,
-      lucidePlusCircle,
-      lucideRefreshCw,
-      lucideAlertCircle,
-      lucideCheckCircle,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucidePlus, lucideRefreshCw })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-6">
-      @if (isInternalApp()) {
-        <div class="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-          <p class="text-sm text-blue-700">
-            <span class="font-medium text-blue-900">Internal app.</span>
-            Endpoints use the
-            <span class="font-mono text-xs">.internal.&lt;zone&gt;</span> subdomain convention and
-            are reachable only from the Flui dashboard via an authenticated proxy. DNS records and
-            certificates are managed here through the standard flow.
-          </p>
-        </div>
-      }
+    @if (isInternalApp()) {
+      <fl-alert tone="info" title="Internal app">
+        Endpoints use the <span class="fl-mono">.internal.&lt;zone&gt;</span> subdomain and are
+        reachable only from the Flui dashboard, through an authenticated proxy. DNS records and
+        certificates follow the standard flow.
+      </fl-alert>
+    }
 
-      @if (isLoading()) {
-        <div class="flex items-center justify-center py-8">
-          <ng-icon name="lucideLoader" class="h-6 w-6 animate-spin text-blue-600" />
-          <p class="ml-2 text-sm text-gray-600">Loading DNS configuration...</p>
-        </div>
-      } @else {
-        <!-- Error banners -->
-        @if (clusterDnsZoneService.error()) {
-          <div
-            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
-          >
-            <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{{ clusterDnsZoneService.error() }}</span>
+    @if (isLoading()) {
+      <fl-panel title="DNS zone">
+        <fl-loading-state [rows]="3" />
+      </fl-panel>
+    } @else {
+      <fl-panel title="DNS zone" [flush]="true">
+        @if (clusterDnsZoneService.error(); as error) {
+          <div class="p-4">
+            <fl-alert tone="error" title="DNS zone request failed">{{ error }}</fl-alert>
           </div>
         }
-        @if (appEndpointsService.error()) {
-          <div
-            class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
-          >
-            <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{{ appEndpointsService.error() }}</span>
+        @if (clusterDnsZoneService.hasAssignment()) {
+          <div class="fl-table-wrap">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">Zone</th>
+                  <th scope="col">Provider</th>
+                  <th scope="col" class="is-fit">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (zone of clusterDnsZoneService.assignments(); track zone.id) {
+                  <tr>
+                    <td class="fl-mono">{{ zone.dnsZone.zoneName }}</td>
+                    <td>{{ zone.dnsZone.dnsProvider }}</td>
+                    <td><fl-status tone="success" label="Assigned" /></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
+        } @else {
+          <fl-empty-state
+            [compact]="true"
+            title="No DNS zone assigned"
+            body="Assign a zone to this cluster in its DNS settings."
+          >
+            <a flButton size="sm" [routerLink]="['/cluster', clusterId(), 'dns']">
+              Open cluster DNS
+            </a>
+          </fl-empty-state>
         }
+      </fl-panel>
 
-        <!-- DNS Zone info (read-only) -->
-        <div class="bg-white border border-gray-200 rounded-lg p-4 space-y-2">
-          <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-600" />
-            DNS Zone
-          </h3>
-          @if (clusterDnsZoneService.hasAssignment()) {
-            @for (zone of clusterDnsZoneService.assignments(); track zone.id) {
-              <div class="flex items-center gap-2">
-                <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-green-600 flex-shrink-0" />
-                <span class="text-sm text-gray-700 font-mono">{{ zone.dnsZone.zoneName }}</span>
-                <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-                  {{ zone.dnsZone.dnsProvider }}
-                </span>
-              </div>
+      <fl-panel title="Endpoints" [count]="filteredEndpoints().length">
+        <ng-container panelActions>
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh endpoints"
+            [disabled]="refreshingEndpoints()"
+            (click)="refreshEndpoints()"
+          >
+            @if (refreshingEndpoints()) {
+              <fl-spinner label="Refreshing endpoints" />
+            } @else {
+              <fl-icon name="lucideRefreshCw" />
             }
-          } @else {
-            <p class="text-sm text-gray-500">
-              No DNS zone assigned to this cluster.
-              <a
-                [routerLink]="['/cluster', clusterId(), 'dns']"
-                class="ml-1 text-blue-600 hover:underline"
-                >Configure in cluster DNS settings →</a
-              >
-            </p>
+          </button>
+          @if (!readOnly()) {
+            <button flButton size="sm" type="button" (click)="openAddForm()">
+              <fl-icon name="lucidePlus" />
+              Add endpoint
+            </button>
           }
-        </div>
-
-        <!-- App Endpoints -->
-        <div class="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-semibold text-gray-900">App Endpoints</h3>
-            <div class="flex items-center gap-3">
-              @if (!readOnly()) {
-                <button
-                  (click)="openAddForm()"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors"
-                >
-                  <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
-                  Add Endpoint
-                </button>
-              }
-              <button
-                (click)="refreshEndpoints()"
-                [disabled]="refreshingEndpoints()"
-                class="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-colors"
-                title="Refresh endpoints"
-              >
-                <ng-icon
-                  name="lucideRefreshCw"
-                  class="h-3.5 w-3.5"
-                  [class.animate-spin]="refreshingEndpoints()"
-                />
-              </button>
-            </div>
-          </div>
-
-          <!-- Endpoints list with inline actions (filtered to this app only) -->
+        </ng-container>
+        <div class="flex flex-col gap-4">
+          @if (appEndpointsService.error(); as error) {
+            <fl-alert tone="error" title="Endpoints request failed">{{ error }}</fl-alert>
+          }
           <app-dns-endpoints-list
             [endpoints]="filteredEndpoints()"
             [reconcilingId]="reconcilingId()"
@@ -166,19 +150,17 @@ import { ToastService } from '../../../shared/services/toast.service';
             (deleteAction)="deleteEndpoint($event)"
           />
         </div>
-      }
-    </div>
+      </fl-panel>
+    }
 
-    <!-- Add/Edit endpoint modal — keeps the form out of the page flow so the
-         "Add Endpoint" action doesn't push the list down and disorient users. -->
     @if (showEndpointForm()) {
-      <div
-        class="fixed inset-0 z-50 bg-background/80 overflow-y-auto"
-        (click)="closeEndpointForm()"
-      >
-        <div class="min-h-full flex items-center justify-center p-4 py-10">
+      <div class="fl-backdrop fixed inset-0 z-50 overflow-y-auto" (click)="closeEndpointForm()">
+        <div class="flex min-h-full items-center justify-center p-4 py-10">
           <div
-            class="w-full max-w-2xl bg-white border border-gray-200 rounded-lg pb-4"
+            class="w-full max-w-2xl rounded-fl-lg bg-fl-surface"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-label]="editingEndpoint() ? 'Edit endpoint' : 'New endpoint'"
             (click)="$event.stopPropagation()"
           >
             <app-cluster-endpoint-form
@@ -209,7 +191,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 
     <app-confirmation-dialog
       #deleteEndpointDialog
-      title="Delete Endpoint"
+      title="Delete endpoint"
       [message]="
         endpointToDelete()
           ? 'Delete endpoint ' + endpointToDelete()!.fqdn + '? This cannot be undone.'
@@ -358,7 +340,6 @@ export class AppDnsTabComponent implements OnInit {
       );
       this.capabilities.set(caps);
     } catch {
-      // Capabilities are best-effort — the form falls back to disabling internal options.
       this.capabilities.set(null);
     }
   }

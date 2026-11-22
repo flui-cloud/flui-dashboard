@@ -1,9 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, computed, signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { NgIconComponent } from '@ng-icons/core';
 import { of } from 'rxjs';
-import { StatTileComponent } from '../../../shared/components/charts';
 import { UserEventsService } from '../../../core/services/user-events.service';
 import { ApplicationMetricsService } from '../../../core/api/api/applicationMetrics.service';
 import { ApplicationMonitoringService } from '../../service/application-monitoring.service';
@@ -16,6 +14,8 @@ import {
 import { AppRuntimeService } from '../../service/app-runtime.service';
 import { AppMonitoringTabComponent } from './app-monitoring-tab.component';
 import { ApplicationService } from '../../service/application.service';
+import { AppMonitoringSummary } from './app-monitoring-summary';
+import { AppMonitoringCapacity } from './app-monitoring-capacity';
 
 type Status = {
   replicas_ready: number | null;
@@ -72,9 +72,15 @@ describe('application monitoring tab', () => {
   let runtime: { savingReplicas: ReturnType<typeof signal<boolean>>; updateReplicas: jasmine.Spy };
 
   const tile = (label: string): HTMLElement =>
-    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('app-stat-tile')).find((t) =>
-      t.textContent!.includes(label),
+    (fixture.nativeElement as HTMLElement).querySelector(
+      `[data-testid="app-metric"][data-metric="${label}"]`,
     ) as HTMLElement;
+  const notes = (label: string): HTMLElement[] =>
+    Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        `[data-testid="stat-tile-note"][data-metric="${label}"]`,
+      ),
+    );
 
   const build = async (
     status: Partial<Status> | null,
@@ -122,7 +128,10 @@ describe('application monitoring tab', () => {
       ],
     })
       .overrideComponent(AppMonitoringTabComponent, {
-        set: { imports: [NgIconComponent, StatTileComponent], schemas: [NO_ERRORS_SCHEMA] },
+        set: {
+          imports: [AppMonitoringSummary, AppMonitoringCapacity],
+          schemas: [NO_ERRORS_SCHEMA],
+        },
       })
       .compileComponents();
     fixture = TestBed.createComponent(AppMonitoringTabComponent);
@@ -152,16 +161,14 @@ describe('application monitoring tab', () => {
       { timestamp: 2, datetime: minute(20), cpu_throttled_percent: 41.6 },
       { timestamp: 3, datetime: minute(25), cpu_throttled_percent: 3 },
     ]);
-    const note = tile('CPU').querySelector('[data-testid="stat-tile-note"]')!;
+    const [note] = notes('CPU');
     expect(note.textContent).toContain('Held back by its limit 42% of the time');
-    expect(note.querySelector('[title]')!.getAttribute('title')).toContain(
-      'More replicas spread the load',
-    );
+    expect(note.getAttribute('title')).toContain('More replicas spread the load');
   });
 
   it('stays quiet when throttling is low', async () => {
     await build({}, [{ timestamp: 1, datetime: minute(0), cpu_throttled_percent: 20 }]);
-    expect(tile('CPU').querySelector('[data-testid="stat-tile-note"]')).toBeNull();
+    expect(notes('CPU')).toHaveSize(0);
   });
 
   it('shows no data instead of all ready when the replica counts are missing', async () => {
@@ -183,7 +190,7 @@ describe('application monitoring tab', () => {
     ]);
     expect(tile('Replicas').textContent).toContain('2/2');
     expect(tile('Replicas').textContent).toContain('all ready');
-    expect(tile('Replicas').querySelector('[data-testid="stat-tile-note"]')).toBeNull();
+    expect(notes('Replicas')).toHaveSize(0);
   });
 
   it('flags replicas that were not ready at times, with the last dip on hover', async () => {
@@ -192,7 +199,7 @@ describe('application monitoring tab', () => {
       { timestamp: 2, datetime: minute(5), replicas_ready: 1, replicas_desired: 2 },
       { timestamp: 3, datetime: minute(10), replicas_ready: 2, replicas_desired: 2 },
     ]);
-    const chip = tile('Replicas').querySelector('[data-testid="stat-tile-note"]')!;
+    const [chip] = notes('Replicas');
     expect(chip.textContent).toContain('Not ready at times');
     expect(chip.getAttribute('title')).toMatch(/^Last at /);
   });
@@ -208,8 +215,6 @@ describe('application monitoring tab', () => {
       read: true,
       ...over,
     });
-    const notes = (label: string) =>
-      Array.from(tile(label).querySelectorAll('[data-testid="stat-tile-note"]')) as HTMLElement[];
 
     it('starts its own refresh for this application and stops it on leave', async () => {
       await build({}, [], checks());
@@ -222,11 +227,9 @@ describe('application monitoring tab', () => {
       await build({}, [], checks());
       expect(tile('Health checks').textContent).toContain('0');
       expect(notes('Health checks')).toHaveSize(0);
-      expect(
-        tile('Health checks')
-          .querySelector('[data-testid="stat-tile-hint"]')!
-          .getAttribute('title'),
-      ).toContain('More replicas keep the route open.');
+      expect(tile('Health checks').getAttribute('title')).toContain(
+        'More replicas keep the route open.',
+      );
     });
 
     it('shows a dash, never zero, when the cluster could not be asked', async () => {
@@ -235,7 +238,7 @@ describe('application monitoring tab', () => {
       expect(tile('Health checks').textContent).toContain('not read');
     });
 
-    it('says how often the app was too busy to answer, marked amber', async () => {
+    it('says how often the app was too busy to answer, marked as a warning', async () => {
       await build(
         {},
         [],
@@ -243,29 +246,25 @@ describe('application monitoring tab', () => {
       );
       const [line] = notes('Health checks');
       expect(line.textContent).toMatch(/Too busy to answer 3 times · last at \d{2}:\d{2}/);
-      expect(line.querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain(
-        'bg-amber-500',
-      );
+      expect(line.querySelector('fl-status')!.className).toContain('fl-status--warning');
     });
 
     it('does not count a copy starting or stopping as a busy one', async () => {
       await build({}, [], checks({ readiness: 84, readiness_busy: 0 }));
       expect(tile('Health checks').textContent).toContain('0');
       expect(notes('Health checks')).toHaveSize(0);
-      expect(
-        tile('Health checks').querySelector('[data-testid="stat-tile-footnote"]')!.textContent,
-      ).toContain('84 while starting');
+      expect(tile('Health checks').querySelector('.fl-metric__caption')!.textContent).toContain(
+        '84 while starting',
+      );
     });
 
-    it('says the liveness check restarted it, marked red', async () => {
+    it('says the liveness check restarted it, marked as an error', async () => {
       await build({}, [], checks({ readiness: 1, readiness_busy: 1, restarts_by_liveness: 2 }));
       const lines = notes('Health checks');
       expect(lines).toHaveSize(2);
       expect(lines[0].textContent).toContain('Too busy to answer 1 time');
       expect(lines[1].textContent).toContain('Restarted 2 times by its liveness check');
-      expect(lines[1].querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain(
-        'bg-destructive',
-      );
+      expect(lines[1].querySelector('fl-status')!.className).toContain('fl-status--error');
     });
   });
 

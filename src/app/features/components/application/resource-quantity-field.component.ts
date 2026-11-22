@@ -17,40 +17,44 @@ import {
   splitMemory,
 } from './resource-quantity';
 
+let nextId = 0;
+
 @Component({
   selector: 'app-resource-quantity-field',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <label class="block">
-      <span class="text-xs font-medium text-gray-600">{{ label() }}</span>
-      <div
-        class="mt-1 flex rounded-lg border bg-white overflow-hidden transition-colors"
-        [class]="invalid() ? 'border-red-400' : 'border-gray-200 focus-within:border-blue-500'"
-      >
-        <input
-          type="number"
-          inputmode="decimal"
-          min="0"
-          [step]="step()"
-          [value]="amount()"
-          [disabled]="disabled()"
-          [attr.aria-label]="label()"
-          (input)="onAmount($event)"
-          class="w-full min-w-0 px-3 py-2 text-sm font-mono bg-transparent text-gray-900 outline-none disabled:text-gray-500 disabled:cursor-not-allowed"
-        />
-        <select
-          [disabled]="disabled()"
-          [attr.aria-label]="label() + ' unit'"
-          (change)="onUnit($event)"
-          class="px-2 text-xs font-mono bg-gray-50 text-gray-600 border-l border-gray-200 outline-none disabled:cursor-not-allowed"
-        >
-          @for (u of units(); track u.value) {
-            <option [value]="u.value" [selected]="u.value === unit()">{{ u.label }}</option>
-          }
-        </select>
+    <div class="fl-field" [class.is-invalid]="invalid()">
+      <label class="fl-field__label" [for]="id">{{ label() }}</label>
+      <div class="flex gap-2">
+        <div class="fl-input fl-input--lg min-w-0 flex-1">
+          <input
+            class="fl-mono"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            [id]="id"
+            [step]="step()"
+            [value]="amount()"
+            [disabled]="disabled()"
+            [attr.aria-invalid]="invalid()"
+            (input)="onAmount($event)"
+          />
+        </div>
+        <span class="fl-select-wrap w-24 shrink-0">
+          <select
+            class="fl-select"
+            [disabled]="disabled()"
+            [attr.aria-label]="label() + ' unit'"
+            (change)="onUnit($event)"
+          >
+            @for (u of units(); track u.value) {
+              <option [value]="u.value" [selected]="u.value === unit()">{{ u.label }}</option>
+            }
+          </select>
+        </span>
       </div>
-    </label>
+    </div>
   `,
 })
 export class ResourceQuantityFieldComponent {
@@ -59,6 +63,8 @@ export class ResourceQuantityFieldComponent {
   readonly value = input<string | null>(null);
   readonly disabled = input(false);
   readonly valueChange = output<string | null>();
+
+  protected readonly id = `resource-quantity-${nextId++}`;
 
   protected readonly amount = signal('');
   protected readonly unit = signal<string>('Mi');

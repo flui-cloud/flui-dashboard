@@ -11,429 +11,223 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { RouterLink } from '@angular/router';
-import {
-  lucideRefreshCw,
-  lucideMinus,
-  lucidePlus,
-  lucideAlertTriangle,
-  lucideRotateCcw,
-  lucideLoader,
-  lucideCpu,
-  lucidePencil,
-  lucideX,
-  lucideCheck,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePencil } from '@ng-icons/lucide';
 import { AppRuntimeResponseDto } from '../../../core/api/model/appRuntimeResponseDto';
+import { ContainerResourcesDto } from '../../../core/api/model/containerResourcesDto';
 import { UpdateResourcesDto } from '../../../core/api/model/updateResourcesDto';
 import { UpdateReplicasDto } from '../../../core/api/model/updateReplicasDto';
 import { ResourceQuantityFieldComponent } from './resource-quantity-field.component';
 import { cpuMillicores, memoryMi } from './resource-quantity';
 import {
   AppRuntimeService,
-  PlacementVerdict,
   ResourcesConsequence,
   RolloutState,
 } from '../../service/app-runtime.service';
 import { ApplicationMonitoringService } from '../../service/application-monitoring.service';
+import { ReplicasPanel } from './replicas-panel';
+import { ResourceHint, ResourceKind, resourceHint, usageOf, verdictTone } from './resources-format';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
+
+type Field = 'cpuRequest' | 'cpuLimit' | 'memRequest' | 'memLimit';
+type Draft = Record<Field, string | null>;
+const FIELDS: Field[] = ['cpuRequest', 'cpuLimit', 'memRequest', 'memLimit'];
+const EMPTY_DRAFT: Draft = { cpuRequest: null, cpuLimit: null, memRequest: null, memLimit: null };
+
+const KINDS: readonly { kind: ResourceKind; title: string; request: Field; limit: Field }[] = [
+  { kind: 'cpu', title: 'CPU', request: 'cpuRequest', limit: 'cpuLimit' },
+  { kind: 'memory', title: 'Memory', request: 'memRequest', limit: 'memLimit' },
+];
 
 @Component({
   selector: 'app-resources-editor',
   standalone: true,
-  imports: [NgIconComponent, ResourceQuantityFieldComponent, RouterLink],
-  providers: [
-    provideIcons({
-      lucideRefreshCw,
-      lucideMinus,
-      lucidePlus,
-      lucideAlertTriangle,
-      lucideRotateCcw,
-      lucideLoader,
-      lucideCpu,
-      lucidePencil,
-      lucideX,
-      lucideCheck,
-    }),
+  imports: [
+    ResourceQuantityFieldComponent,
+    ReplicasPanel,
+    FlAlert,
+    FlKeyValue,
+    FlKvItem,
+    FlPanel,
+    FlEmptyState,
+    FlUsageBar,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
   ],
+  providers: [provideIcons({ lucidePencil })],
+  host: { class: 'fl-stack' },
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="space-y-4">
-      <!-- ── Top bar: Refresh ── -->
-      <div class="flex justify-end">
-        <button
-          type="button"
-          (click)="onRefresh()"
-          [disabled]="savingReplicas() || savingResources() || savingRestart()"
-          class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50"
-        >
-          <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" />
-          Refresh runtime data
-        </button>
-      </div>
+    @if (restartRollout; as r) {
+      <fl-alert tone="info" title="Restarting" data-testid="restart-progress">
+        <span class="block">{{ r.message }}</span>
+        <span class="block fl-num">{{ r.readyReplicas }} of {{ r.desiredReplicas }} ready</span>
+      </fl-alert>
+    }
 
-      @if (restartRollout) {
-        <div
-          class="bg-white rounded-fl-lg border border-blue-300 overflow-hidden"
-          data-testid="restart-progress"
-        >
-          <p class="px-5 py-3 text-xs text-blue-600 font-mono">
-            Restarting — {{ restartRollout.message }} — {{ restartRollout.readyReplicas }}/{{
-              restartRollout.desiredReplicas
-            }}
-            ready
-          </p>
-          <div class="h-1 w-full bg-blue-100 overflow-hidden">
-            <div class="h-1 w-1/3 bg-blue-500 animate-indeterminate"></div>
-          </div>
-        </div>
-      }
+    <app-replicas-panel
+      [runtime]="runtime"
+      [rollout]="rollout"
+      [saving]="savingReplicas()"
+      [busy]="savingReplicas() || savingResources() || savingRestart()"
+      [clusterId]="clusterId()"
+      (applied)="applyReplicas($event)"
+      (refresh)="onRefresh()"
+    />
 
-      <!-- ── Replicas card ── -->
-      <div class="bg-white rounded-fl-lg border border-gray-200 overflow-hidden">
-        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-          <div class="flex items-center gap-3">
-            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
-              >Replicas</span
-            >
-            @if (runtime) {
-              <div class="flex items-center gap-2 text-xs">
-                <span class="flex items-center gap-1">
-                  <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                  <span class="text-gray-500">desired</span>
-                  <strong class="text-gray-900">{{ runtime.replicas.desired ?? '—' }}</strong>
-                </span>
-                <span class="flex items-center gap-1">
-                  <span class="w-1.5 h-1.5 rounded-full" [class]="readyDot()"></span>
-                  <span class="text-gray-500">ready</span>
-                  <strong [class]="readyColor()">{{ runtime.replicas.ready ?? '—' }}</strong>
-                </span>
-                <span class="flex items-center gap-1">
-                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                  <span class="text-gray-500">available</span>
-                  <strong class="text-gray-900">{{ runtime.replicas.available ?? '—' }}</strong>
-                </span>
-              </div>
-            }
-          </div>
-          <!-- Edit / Save-Cancel toggle -->
-          @if (!replicaEditing() && !runtime?.replicasRefusal) {
-            <button
-              type="button"
-              (click)="startReplicaEdit()"
-              [disabled]="savingReplicas() || !runtime"
-              class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-40"
-            >
-              <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
-              Edit
-            </button>
-          } @else if (replicaEditing()) {
-            <div class="flex items-center gap-1">
+    @if (runtime && runtime.containers.length > 0) {
+      @for (container of runtime.containers; track container.name; let i = $index) {
+        <fl-panel [title]="container.name">
+          <ng-container panelActions>
+            @if (editingContainerIndex() !== i) {
               <button
+                flButton
+                size="sm"
                 type="button"
-                (click)="cancelReplicaEdit()"
-                class="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
+                [disabled]="savingResources()"
+                (click)="startResourceEdit(i)"
               >
-                <ng-icon name="lucideX" class="h-3.5 w-3.5" />
+                <fl-icon name="lucidePencil" />
+                Edit
+              </button>
+            } @else {
+              <button flButton="ghost" size="sm" type="button" (click)="cancelResourceEdit()">
                 Cancel
               </button>
               <button
+                flButton="primary"
+                size="sm"
                 type="button"
-                (click)="applyReplicas()"
-                [disabled]="!replicaDirty() || savingReplicas()"
-                class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-40 transition-colors"
+                [disabled]="!canSave()"
+                (click)="saveResources(i)"
               >
-                @if (savingReplicas()) {
-                  <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                } @else {
-                  <ng-icon name="lucideCheck" class="h-3.5 w-3.5" />
+                @if (savingResources()) {
+                  <fl-spinner label="Saving" />
                 }
-                Apply
+                {{ savingResources() ? 'Saving…' : 'Save' }}
               </button>
-            </div>
-          }
-        </div>
-
-        <div class="px-5 py-4">
-          <div class="flex items-center gap-3">
-            <button
-              type="button"
-              (click)="decReplicas()"
-              [disabled]="!replicaEditing() || replicaValue() <= 0 || savingReplicas()"
-              class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ng-icon name="lucideMinus" class="h-4 w-4" />
-            </button>
-            <span class="text-2xl font-bold text-gray-900 w-8 text-center select-none">{{
-              replicaValue()
-            }}</span>
-            <button
-              type="button"
-              (click)="incReplicas()"
-              [disabled]="!replicaEditing() || replicaValue() >= 20 || savingReplicas()"
-              class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ng-icon name="lucidePlus" class="h-4 w-4" />
-            </button>
-            <span class="text-sm text-gray-400">replica{{ replicaValue() !== 1 ? 's' : '' }}</span>
-            @if (rollout?.operation === 'scale') {
-              <span class="ml-auto text-xs text-blue-600 font-mono">
-                {{ rollout!.readyReplicas }}/{{ rollout!.desiredReplicas }} ready
-              </span>
             }
-          </div>
-          @if (runtime?.replicasRefusal; as refusal) {
-            <p class="mt-2 text-xs text-gray-500" data-testid="replicas-refusal">
-              {{ refusal }}
+          </ng-container>
+
+          <div class="flex flex-col gap-5">
+            <p class="m-0 truncate fl-mono fl-muted" [title]="container.image">
+              {{ container.image }}
             </p>
-          }
-          @if (replicaEditing() && replicaValue() === 0) {
-            <div class="flex items-center gap-1.5 mt-2 text-xs text-amber-600">
-              <ng-icon name="lucideAlertTriangle" class="h-3.5 w-3.5 flex-shrink-0" />
-              Setting replicas to 0 stops the application without deleting it
-            </div>
-          }
-          @if (roomWait(); as wait) {
-            <div
-              class="mt-3 flex flex-wrap items-start gap-x-2 gap-y-1 rounded-lg px-3 py-2 text-xs bg-amber-50 text-amber-800"
-              data-testid="replicas-waiting-for-room"
-            >
-              <ng-icon name="lucideLoader" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 animate-spin" />
-              <span class="flex-1">{{ wait }}</span>
-              @if (clusterId()) {
-                <a
-                  [routerLink]="['/cluster', clusterId(), 'scaling']"
-                  class="font-medium underline underline-offset-2"
-                  >Scaling</a
-                >
-              }
-            </div>
-          }
-          @if (rollout?.operation === 'scale' && !roomWait()) {
-            <div class="mt-3 h-1 w-full bg-blue-100 rounded-full overflow-hidden">
-              <div class="h-1 w-1/3 bg-blue-500 rounded-full animate-indeterminate"></div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- ── Container Resources cards ── -->
-      @if (runtime && runtime.containers.length > 0) {
-        @for (container of runtime.containers; track container.name; let i = $index) {
-          <div class="bg-white rounded-fl-lg border border-gray-200 overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-              <div class="flex items-center gap-2 min-w-0">
-                <ng-icon name="lucideCpu" class="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                <span class="text-xs font-semibold text-gray-900 font-mono">{{
-                  container.name
-                }}</span>
-                <span class="text-xs text-gray-400 font-mono truncate max-w-48">{{
-                  container.image
-                }}</span>
-              </div>
-
-              @if (editingContainerIndex() !== i) {
-                <button
-                  type="button"
-                  (click)="startResourceEdit(i)"
-                  [disabled]="savingResources()"
-                  class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-40"
-                >
-                  <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
-                  Edit
-                </button>
-              } @else {
-                <div class="flex items-center gap-1">
-                  <button
-                    type="button"
-                    (click)="cancelResourceEdit()"
-                    class="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
-                  >
-                    <ng-icon name="lucideX" class="h-3.5 w-3.5" />
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    (click)="saveResources(i)"
-                    [disabled]="!canSave()"
-                    class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    @if (savingResources()) {
-                      <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                    } @else {
-                      <ng-icon name="lucideCheck" class="h-3.5 w-3.5" />
-                    }
-                    {{ savingResources() ? 'Saving…' : 'Save' }}
-                  </button>
-                </div>
-              }
-            </div>
-
-            <div class="px-5 py-5 space-y-5">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between text-xs">
-                    <span class="font-semibold text-gray-700">CPU</span>
-                    @if (monitoringService.metrics(); as m) {
-                      <span class="text-gray-400"
-                        >in use
-                        <span
-                          class="font-mono font-semibold"
-                          [class]="usageColor(cpuUsagePercent(m))"
-                          >{{ formatCpuCores(m.cpu.usage_cores) }}</span
-                        >
-                      </span>
-                    }
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <app-resource-quantity-field
-                      label="Reserved"
-                      kind="cpu"
-                      [value]="valueFor(i, 'cpuRequest', container.requests.cpu)"
-                      [disabled]="editingContainerIndex() !== i || savingResources()"
-                      (valueChange)="edit('cpuRequest', $event)"
-                    />
-                    <app-resource-quantity-field
-                      label="Maximum"
-                      kind="cpu"
-                      [value]="valueFor(i, 'cpuLimit', container.limits.cpu)"
-                      [disabled]="editingContainerIndex() !== i || savingResources()"
-                      (valueChange)="edit('cpuLimit', $event)"
-                    />
-                  </div>
-                  @if (monitoringService.metrics(); as m) {
-                    @if (resourceHint(cpuUsagePercent(m), 'CPU'); as hint) {
-                      <p
-                        class="flex items-start gap-1.5 text-xs rounded-lg px-2.5 py-2"
-                        [class]="hintClass(hint.level)"
-                      >
-                        <ng-icon name="lucideAlertTriangle" class="h-3 w-3 mt-0.5 flex-shrink-0" />
-                        {{ hint.message }}
-                      </p>
-                    }
-                  }
-                </div>
-
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between text-xs">
-                    <span class="font-semibold text-gray-700">Memory</span>
-                    @if (monitoringService.metrics(); as m) {
-                      <span class="text-gray-400"
-                        >in use
-                        <span
-                          class="font-mono font-semibold"
-                          [class]="usageColor(memUsagePercent(m))"
-                          >{{ formatMemBytes(m.memory.usage_bytes) }}</span
-                        >
-                      </span>
-                    }
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <app-resource-quantity-field
-                      label="Reserved"
-                      kind="memory"
-                      [value]="valueFor(i, 'memRequest', container.requests.memory)"
-                      [disabled]="editingContainerIndex() !== i || savingResources()"
-                      (valueChange)="edit('memRequest', $event)"
-                    />
-                    <app-resource-quantity-field
-                      label="Maximum"
-                      kind="memory"
-                      [value]="valueFor(i, 'memLimit', container.limits.memory)"
-                      [disabled]="editingContainerIndex() !== i || savingResources()"
-                      (valueChange)="edit('memLimit', $event)"
-                    />
-                  </div>
-                  @if (monitoringService.metrics(); as m) {
-                    @if (resourceHint(memUsagePercent(m), 'Memory'); as hint) {
-                      <p
-                        class="flex items-start gap-1.5 text-xs rounded-lg px-2.5 py-2"
-                        [class]="hintClass(hint.level)"
-                      >
-                        <ng-icon name="lucideAlertTriangle" class="h-3 w-3 mt-0.5 flex-shrink-0" />
-                        {{ hint.message }}
-                      </p>
-                    }
-                  }
-                </div>
-              </div>
-
-              @if (editingContainerIndex() === i) {
-                @if (fieldProblem(); as problem) {
-                  <p
-                    class="flex items-start gap-1.5 text-xs rounded-lg px-3 py-2 bg-red-50 text-red-700"
-                  >
-                    <ng-icon name="lucideAlertTriangle" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                    {{ problem }}
-                  </p>
-                } @else if (resourcesDirty()) {
-                  @if (checking()) {
-                    <p class="flex items-center gap-1.5 text-xs text-gray-400">
-                      <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                      Checking where it would run…
-                    </p>
-                  } @else if (consequence(); as c) {
-                    <div
-                      class="rounded-lg px-3 py-2 text-xs"
-                      [class]="verdictClass(c.placement.verdict)"
-                    >
-                      <p class="flex items-start gap-1.5">
-                        <ng-icon
-                          [name]="
-                            c.placement.verdict === 'fits' ? 'lucideCheck' : 'lucideAlertTriangle'
-                          "
-                          class="h-3.5 w-3.5 mt-0.5 flex-shrink-0"
-                        />
-                        <span>
-                          {{ c.placement.sentence }}
-                          @if (c.placement.why) {
-                            <button
-                              type="button"
-                              (click)="showWhy.set(!showWhy())"
-                              class="ml-1 underline underline-offset-2 font-medium"
-                            >
-                              {{ showWhy() ? 'Hide' : 'Why' }}
-                            </button>
-                          }
-                        </span>
-                      </p>
-                      @if (showWhy() && c.placement.why) {
-                        <p class="mt-1.5 pl-5 opacity-80">{{ c.placement.why }}</p>
-                      }
-                      <p class="mt-1.5 pl-5 opacity-70 font-mono">
-                        Saved as: CPU {{ c.requests.cpu ?? '—' }} / {{ c.limits.cpu ?? '—' }} ·
-                        memory {{ c.requests.memory ?? '—' }} / {{ c.limits.memory ?? '—' }} — the
-                        app restarts
-                      </p>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              @for (k of kinds; track k.kind) {
+                <section class="flex flex-col gap-3" [attr.aria-label]="k.title">
+                  <h3 class="m-0 text-fl-body-sm font-semibold">{{ k.title }}</h3>
+                  @if (editingContainerIndex() === i) {
+                    <div class="grid grid-cols-2 gap-3">
+                      <app-resource-quantity-field
+                        label="Reserved"
+                        [kind]="k.kind"
+                        [value]="valueFor(i, k.request, amount(container.requests, k.kind))"
+                        [disabled]="savingResources()"
+                        (valueChange)="edit(k.request, $event)"
+                      />
+                      <app-resource-quantity-field
+                        label="Maximum"
+                        [kind]="k.kind"
+                        [value]="valueFor(i, k.limit, amount(container.limits, k.kind))"
+                        [disabled]="savingResources()"
+                        (valueChange)="edit(k.limit, $event)"
+                      />
                     </div>
-                  } @else if (consequenceError(); as err) {
-                    <p class="text-xs text-red-600">{{ err }}</p>
+                  } @else {
+                    <fl-key-value class="fl-kv--compact">
+                      <fl-kv-item key="Reserved" [mono]="true">{{
+                        amount(container.requests, k.kind) ?? '—'
+                      }}</fl-kv-item>
+                      <fl-kv-item key="Maximum" [mono]="true">{{
+                        amount(container.limits, k.kind) ?? '—'
+                      }}</fl-kv-item>
+                    </fl-key-value>
                   }
+                  @if (monitoringService.metrics(); as m) {
+                    @let u = usage(m, k.kind);
+                    @if (u.percent !== null) {
+                      <fl-usage-bar
+                        [percent]="u.percent"
+                        [label]="k.title + ' in use'"
+                        [aside]="u.amount + ' in use'"
+                        [warnAt]="70"
+                      />
+                      @if (hint(u.percent, k.kind); as h) {
+                        <fl-alert [tone]="h.tone" [title]="h.title">{{ h.body }}</fl-alert>
+                      }
+                    } @else {
+                      <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+                        <span class="fl-mono">{{ u.amount }}</span> in use, no maximum set
+                      </p>
+                    }
+                  }
+                </section>
+              }
+            </div>
+
+            @if (editingContainerIndex() === i) {
+              @if (fieldProblem(); as problem) {
+                <fl-alert tone="error" title="Cannot save these values">{{ problem }}</fl-alert>
+              } @else if (resourcesDirty()) {
+                @if (checking()) {
+                  <fl-status tone="progress" label="Checking where it would run" />
+                } @else if (consequence(); as c) {
+                  <fl-alert [tone]="tone(c.placement.verdict)" title="Where it would run">
+                    <span class="block">{{ c.placement.sentence }}</span>
+                    @if (showWhy() && c.placement.why) {
+                      <span class="mt-1 block">{{ c.placement.why }}</span>
+                    }
+                    <span class="mt-1 block fl-mono">
+                      CPU {{ c.requests.cpu ?? '—' }} / {{ c.limits.cpu ?? '—' }}, memory
+                      {{ c.requests.memory ?? '—' }} / {{ c.limits.memory ?? '—' }}. Saving restarts
+                      the app.
+                    </span>
+                    @if (c.placement.why) {
+                      <button
+                        alertActions
+                        flButton="ghost"
+                        size="sm"
+                        type="button"
+                        [attr.aria-expanded]="showWhy()"
+                        (click)="showWhy.set(!showWhy())"
+                      >
+                        {{ showWhy() ? 'Hide why' : 'Why' }}
+                      </button>
+                    }
+                  </fl-alert>
+                } @else if (consequenceError(); as err) {
+                  <fl-alert tone="error" title="Placement check failed">{{ err }}</fl-alert>
                 }
               }
-            </div>
+            }
 
-            @if (resourcesRollout) {
-              <div class="px-5 pb-3">
-                <p class="text-xs text-blue-600 font-mono mb-2">
-                  {{ resourcesRollout.message }} — {{ resourcesRollout.readyReplicas }}/{{
-                    resourcesRollout.desiredReplicas
-                  }}
-                  ready
-                </p>
-              </div>
-              <div class="h-1 w-full bg-blue-100 overflow-hidden">
-                <div class="h-1 w-1/3 bg-blue-500 animate-indeterminate"></div>
+            @if (resourcesRollout; as r) {
+              <div class="flex flex-wrap items-center gap-2">
+                <fl-status tone="progress" [label]="r.message" />
+                <span class="fl-num fl-muted"
+                  >{{ r.readyReplicas }} of {{ r.desiredReplicas }} ready</span
+                >
               </div>
             }
           </div>
-        }
-      } @else if (!runtime) {
-        <div class="bg-white rounded-fl-lg border border-gray-200 px-5 py-8 text-center">
-          <p class="text-sm text-gray-400">Runtime data not available</p>
-        </div>
+        </fl-panel>
       }
-    </div>
+    } @else if (!runtime) {
+      <fl-panel title="Containers">
+        <fl-empty-state [compact]="true" title="Runtime data not available" />
+      </fl-panel>
+    }
   `,
 })
 export class AppResourcesEditorComponent implements OnChanges {
@@ -446,10 +240,6 @@ export class AppResourcesEditorComponent implements OnChanges {
   /** Shown to somebody who cannot change it: the advice on sizing is not theirs to act on. */
   readonly advice = input(true);
 
-  protected roomWait(): string | null {
-    if (this.rollout?.waitingForRoom) return this.rollout.message;
-    return this.runtime?.waitingForRoom?.says ?? null;
-  }
   @Input() rollout: RolloutState | null = null;
 
   protected get restartRollout(): RolloutState | null {
@@ -468,12 +258,10 @@ export class AppResourcesEditorComponent implements OnChanges {
   readonly restartEvent = output<void>();
   readonly refreshEvent = output<void>();
 
-  // Replica state
-  protected replicaEditing = signal(false);
-  protected replicaValue = signal(1);
-  protected originalReplicas = 1;
+  protected readonly kinds = KINDS;
+  protected readonly usage = usageOf;
+  protected readonly tone = verdictTone;
 
-  // Resource edit — which container is being edited (-1 = none)
   protected editingContainerIndex = signal(-1);
 
   protected draft = signal<Draft>(EMPTY_DRAFT);
@@ -485,11 +273,8 @@ export class AppResourcesEditorComponent implements OnChanges {
   private checkTimer: ReturnType<typeof setTimeout> | null = null;
   private checkSeq = 0;
 
-  // UI
   protected confirmRestart = signal(false);
 
-  // Dirty
-  protected replicaDirty = computed(() => this.replicaValue() !== this.originalReplicas);
   protected resourcesDirty = computed(() =>
     FIELDS.some((field) => this.draft()[field] !== this.original[field]),
   );
@@ -517,55 +302,27 @@ export class AppResourcesEditorComponent implements OnChanges {
       this.resourcesDirty() && !this.fieldProblem() && !this.checking() && !this.savingResources(),
   );
 
-  protected readyColor = computed(() => {
-    const desired = this.runtime?.replicas?.desired ?? 0;
-    const ready = this.runtime?.replicas?.ready ?? 0;
-    if (ready === 0) return 'font-semibold text-red-500';
-    if (ready < desired) return 'font-semibold text-amber-500';
-    return 'font-semibold text-green-600';
-  });
-
-  protected readyDot = computed(() => {
-    const desired = this.runtime?.replicas?.desired ?? 0;
-    const ready = this.runtime?.replicas?.ready ?? 0;
-    if (ready === 0) return 'w-1.5 h-1.5 rounded-full bg-red-400';
-    if (ready < desired) return 'w-1.5 h-1.5 rounded-full bg-amber-400';
-    return 'w-1.5 h-1.5 rounded-full bg-green-400';
-  });
-
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['runtime'] && this.runtime) {
-      // Replicas
-      const desired = this.runtime.replicas?.desired ?? 1;
-      this.originalReplicas = desired;
-      this.replicaValue.set(desired);
-      this.replicaEditing.set(false);
-
       this.editingContainerIndex.set(-1);
     }
   }
 
-  // ── Replica edit ──
-  protected startReplicaEdit(): void {
-    this.replicaEditing.set(true);
-  }
-  protected cancelReplicaEdit(): void {
-    this.replicaValue.set(this.originalReplicas);
-    this.replicaEditing.set(false);
-  }
-  protected decReplicas(): void {
-    if (this.replicaValue() > 0) this.replicaValue.update((v) => v - 1);
-  }
-  protected incReplicas(): void {
-    if (this.replicaValue() < 20) this.replicaValue.update((v) => v + 1);
-  }
-  protected applyReplicas(): void {
-    this.saveReplicasEvent.emit({ replicas: this.replicaValue() });
-    this.originalReplicas = this.replicaValue();
-    this.replicaEditing.set(false);
+  protected applyReplicas(replicas: number): void {
+    this.saveReplicasEvent.emit({ replicas });
   }
 
-  // ── Resource edit ──
+  protected amount(
+    resources: ContainerResourcesDto | undefined,
+    kind: ResourceKind,
+  ): string | null {
+    return resources?.[kind] ?? null;
+  }
+
+  protected hint(percent: number, kind: ResourceKind): ResourceHint | null {
+    return this.advice() ? resourceHint(percent, kind) : null;
+  }
+
   protected startResourceEdit(containerIndex: number): void {
     const c = this.runtime?.containers[containerIndex];
     if (!c) return;
@@ -603,12 +360,6 @@ export class AppResourcesEditorComponent implements OnChanges {
     if (!this.canSave()) return;
     this.saveResourcesEvent.emit(this.dtoFor(containerIndex));
     this.resetConsequence();
-  }
-
-  protected verdictClass(verdict: PlacementVerdict): string {
-    if (verdict === 'fits') return 'bg-green-50 text-green-700';
-    if (verdict === 'buys' || verdict === 'proposes') return 'bg-blue-50 text-blue-700';
-    return 'bg-amber-50 text-amber-700';
   }
 
   private dtoFor(containerIndex: number): UpdateResourcesDto {
@@ -665,7 +416,6 @@ export class AppResourcesEditorComponent implements OnChanges {
     }, 400);
   }
 
-  // ── Restart ──
   protected promptRestart(): void {
     this.confirmRestart.set(true);
   }
@@ -680,81 +430,4 @@ export class AppResourcesEditorComponent implements OnChanges {
   protected onRefresh(): void {
     this.refreshEvent.emit();
   }
-
-  // ── Monitoring helpers ──
-  protected cpuUsagePercent(m: {
-    cpu: { usage_cores: number | null; limits_cores: number | null };
-  }): number {
-    const u = m.cpu.usage_cores ?? 0;
-    const l = m.cpu.limits_cores ?? 0;
-    return l > 0 ? (u / l) * 100 : 0;
-  }
-
-  protected memUsagePercent(m: {
-    memory: { usage_bytes: number | null; limits_bytes: number | null };
-  }): number {
-    const u = m.memory.usage_bytes ?? 0;
-    const l = m.memory.limits_bytes ?? 0;
-    return l > 0 ? (u / l) * 100 : 0;
-  }
-
-  protected usageColor(pct: number): string {
-    if (pct >= 90) return 'text-red-600';
-    if (pct >= 70) return 'text-orange-500';
-    return 'text-green-600';
-  }
-
-  protected resourceHint(
-    pct: number,
-    resource: 'CPU' | 'Memory',
-  ): { level: 'low' | 'warn' | 'critical'; message: string } | null {
-    if (!this.advice()) return null;
-    if (pct >= 90)
-      return {
-        level: 'critical',
-        message: `${resource} limit almost reached — risk of ${resource === 'CPU' ? 'throttling' : 'OOM kill'}`,
-      };
-    if (pct >= 70)
-      return {
-        level: 'warn',
-        message: `${resource} usage at ${pct.toFixed(0)}% of limit — consider increasing`,
-      };
-    if (pct > 0 && pct < 15)
-      return {
-        level: 'low',
-        message: `${resource} limit is much higher than actual usage — consider reducing`,
-      };
-    return null;
-  }
-
-  protected hintClass(level: 'low' | 'warn' | 'critical'): string {
-    if (level === 'critical') return 'bg-red-50 text-red-600';
-    if (level === 'warn') return 'bg-orange-50 text-orange-600';
-    return 'bg-blue-50 text-blue-600';
-  }
-
-  protected formatCpuCores(cores: number | null): string {
-    return this.formatCores(cores ?? 0);
-  }
-
-  private formatCores(c: number): string {
-    if (c >= 1) return `${c.toFixed(2)} cores`;
-    return `${(c * 1000).toFixed(0)}m`;
-  }
-
-  protected formatMemBytes(bytes: number | null): string {
-    return this.formatBytes(bytes ?? 0);
-  }
-
-  private formatBytes(b: number): string {
-    if (b >= 1024 * 1024 * 1024) return `${(b / (1024 * 1024 * 1024)).toFixed(1)} GiB`;
-    if (b >= 1024 * 1024) return `${(b / (1024 * 1024)).toFixed(1)} MiB`;
-    if (b >= 1024) return `${(b / 1024).toFixed(1)} KiB`;
-    return `${b.toFixed(0)} B`;
-  }
 }
-
-type Field = 'cpuRequest' | 'cpuLimit' | 'memRequest' | 'memLimit';
-type Draft = Record<Field, string | null>;
-const FIELDS: Field[] = ['cpuRequest', 'cpuLimit', 'memRequest', 'memLimit'];
-const EMPTY_DRAFT: Draft = { cpuRequest: null, cpuLimit: null, memRequest: null, memLimit: null };

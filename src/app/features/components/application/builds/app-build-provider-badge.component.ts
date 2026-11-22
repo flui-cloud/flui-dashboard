@@ -1,64 +1,40 @@
-import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, computed, input } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideGithub, lucideBox, lucideFileCode, lucideHammer } from '@ng-icons/lucide';
 import { AppBuildResponseDto } from '../../../../core/api/model/appBuildResponseDto';
+import { FlIcon } from '../../../../ui/primitives/icon';
 
 type Provider = AppBuildResponseDto['provider'];
 
 interface ProviderMeta {
   label: string;
   icon: 'lucideGithub' | 'lucideBox' | 'lucideFileCode' | 'lucideHammer';
-  cssClass: string;
 }
-
-const BASE = 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium';
 
 function metaFor(provider: Provider): ProviderMeta {
   switch (provider) {
     case 'GITHUB_ACTIONS':
-      return {
-        label: 'GitHub Actions',
-        icon: 'lucideGithub',
-        cssClass: `${BASE} bg-blue-100 text-blue-700`,
-      };
+      return { label: 'GitHub Actions', icon: 'lucideGithub' };
     case 'IN_CLUSTER_AGENT':
-      return {
-        label: 'Flui In-Cluster',
-        icon: 'lucideHammer',
-        cssClass: `${BASE} bg-purple-100 text-purple-700`,
-      };
+      return { label: 'In-cluster', icon: 'lucideHammer' };
     case 'RAILPACK':
-      return {
-        label: 'Railpack',
-        icon: 'lucideBox',
-        cssClass: `${BASE} bg-amber-100 text-amber-700`,
-      };
+      return { label: 'Railpack', icon: 'lucideBox' };
     case 'DOCKERFILE':
-      return {
-        label: 'Dockerfile',
-        icon: 'lucideFileCode',
-        cssClass: `${BASE} bg-slate-100 text-slate-700`,
-      };
+      return { label: 'Dockerfile', icon: 'lucideFileCode' };
     default:
-      return {
-        label: provider,
-        icon: 'lucideHammer',
-        cssClass: `${BASE} bg-muted text-muted-foreground`,
-      };
+      return { label: provider, icon: 'lucideHammer' };
   }
 }
 
 @Component({
   selector: 'app-build-provider-badge',
   standalone: true,
-  imports: [NgIcon],
+  imports: [FlIcon],
   providers: [provideIcons({ lucideGithub, lucideBox, lucideFileCode, lucideHammer })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'inline-flex items-center gap-1.5' },
   template: `
-    <span [class]="meta().cssClass">
-      <ng-icon [name]="meta().icon" class="h-3 w-3" />
-      {{ meta().label }}
-    </span>
+    <fl-icon class="text-fl-ink-muted" [name]="meta().icon" [size]="14" />
+    <span>{{ meta().label }}</span>
   `,
 })
 export class AppBuildProviderBadgeComponent {

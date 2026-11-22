@@ -101,14 +101,8 @@
 
     <div class="fl-resource">
       <fl-resource-nav label="Application sections" [groups]="sections()" />
-      <div class="fl-stack">
-        @if (onOverview()) {
-          <router-outlet />
-        } @else {
-          <fl-panel>
-            <router-outlet />
-          </fl-panel>
-        }
+      <div class="min-w-0">
+        <router-outlet />
       </div>
     </div>
   }

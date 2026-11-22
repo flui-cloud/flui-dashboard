@@ -1,12 +1,11 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideFolderOpen,
-  lucideLoader,
-  lucideLock,
-  lucideRotateCcw,
-  lucideTrash2,
-} from '@ng-icons/lucide';
+import { Component, computed, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideLock } from '@ng-icons/lucide';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import {
   VolumeBackup,
   backupTriggerLabel,
@@ -17,104 +16,69 @@ import { formatDate } from './snapshot-format';
 
 @Component({
   selector: 'app-volume-backups-table',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideFolderOpen,
-      lucideLoader,
-      lucideLock,
-      lucideRotateCcw,
-      lucideTrash2,
-    }),
-  ],
+  imports: [FlTable, FlActionsMenu, FlStatus, FlButton, FlIcon],
+  providers: [provideIcons({ lucideLock })],
+  host: { class: 'block' },
   template: `
-    <div class="card-inner overflow-x-auto">
-      <table class="w-full text-sm">
+    <div class="fl-table-wrap">
+      <table flTable density="dense">
         <thead>
-          <tr class="text-left text-muted-foreground border-b border-border">
-            <th class="px-4 py-3 font-normal">Taken</th>
-            <th class="px-4 py-3 font-normal">Volume</th>
-            <th class="px-4 py-3 font-normal">Trigger</th>
-            <th class="px-4 py-3 font-normal text-right">Size</th>
-            <th class="px-4 py-3 font-normal text-right">Added</th>
-            <th class="px-4 py-3 font-normal"></th>
+          <tr>
+            <th scope="col">Taken</th>
+            <th scope="col">Volume</th>
+            <th scope="col">Trigger</th>
+            <th scope="col" class="is-num">Size</th>
+            <th scope="col" class="is-num">Added</th>
+            <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
           </tr>
         </thead>
         <tbody>
-          @for (b of backups(); track b.id) {
-            <tr
-              class="border-b border-border/50 last:border-0 hover:bg-muted/30"
-              [class.bg-muted]="browsingId() === b.id"
-            >
-              <td class="px-4 py-3 text-xs whitespace-nowrap">
-                <span class="inline-flex items-center gap-1.5">
+          @for (row of rows(); track row.backup.id) {
+            @let b = row.backup;
+            <tr [class.is-selected]="browsingId() === b.id">
+              <td>
+                <span class="inline-flex items-center gap-1.5 fl-num">
                   @if (b.encrypted) {
-                    <ng-icon name="lucideLock" class="h-3 w-3 text-emerald-600" title="Encrypted" />
+                    <span class="inline-flex text-fl-ink-muted" title="Encrypted">
+                      <fl-icon name="lucideLock" [size]="13" />
+                    </span>
                   }
-                  {{ b.createdAt ? formatDate(b.createdAt) : '—' }}
+                  {{ row.taken }}
                 </span>
                 @if (b.stored !== 'present') {
-                  <div class="text-[11px] text-amber-600">
-                    {{ b.reason ?? 'No longer stored' }}
+                  <div>
+                    <fl-status tone="warning" [label]="b.reason ?? 'No longer stored'" />
                   </div>
                 }
               </td>
-              <td class="px-4 py-3 font-mono text-xs">
-                {{ b.volumeName || '—' }}
-              </td>
-              <td class="px-4 py-3">
-                <span
-                  class="text-xs px-2 py-0.5 rounded-full"
-                  [class]="
-                    b.kept === 'retention'
-                      ? 'bg-muted text-muted-foreground'
-                      : 'bg-indigo-100 text-indigo-800'
-                  "
-                  [title]="triggerTitle(b)"
-                >
-                  {{ triggerLabel(b) }}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-right whitespace-nowrap">
-                {{ bytes(b.logicalBytes) }}
-              </td>
-              <td class="px-4 py-3 text-right whitespace-nowrap text-muted-foreground">
-                {{ bytes(b.uploadedBytes) }}
-              </td>
-              <td class="px-4 py-3 text-right">
-                <div class="inline-flex items-center gap-1">
-                  <button
-                    (click)="browse.emit(b)"
-                    [disabled]="!b.browsable"
-                    class="p-1.5 rounded hover:bg-muted transition-colors disabled:opacity-40"
-                    [title]="
-                      b.browsable ? 'Browse files' : 'This backup can only be restored whole'
-                    "
-                  >
-                    <ng-icon name="lucideFolderOpen" class="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    (click)="restore.emit(b)"
-                    [disabled]="!b.restorable || busyIds().has(b.id)"
-                    class="p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors disabled:opacity-40"
-                    [title]="b.restorable ? 'Restore whole backup' : (b.reason ?? 'Not restorable')"
-                  >
-                    <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    (click)="remove.emit(b)"
-                    [disabled]="busyIds().has(b.id)"
-                    class="p-1.5 rounded hover:bg-red-50 text-red-600 transition-colors disabled:opacity-40"
-                    title="Delete backup"
-                  >
-                    @if (deletingIds().has(b.id)) {
-                      <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                    } @else {
-                      <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
-                    }
-                  </button>
+              <td class="fl-mono">{{ b.volumeName || '—' }}</td>
+              <td class="text-fl-ink-muted" [title]="triggerTitle(b)">{{ triggerLabel(b) }}</td>
+              <td class="is-num">{{ bytes(b.logicalBytes) }}</td>
+              <td class="is-num text-fl-ink-muted">{{ bytes(b.uploadedBytes) }}</td>
+              <td class="is-fit">
+                <div class="fl-row flex-nowrap justify-end">
+                  @if (deletingIds().has(b.id)) {
+                    <fl-status tone="progress" label="Deleting" />
+                  } @else {
+                    <button
+                      flButton
+                      size="sm"
+                      type="button"
+                      [disabled]="!b.restorable || busyIds().has(b.id)"
+                      [title]="
+                        b.restorable ? 'Restore whole backup' : (b.reason ?? 'Not restorable')
+                      "
+                      (click)="restore.emit(b)"
+                    >
+                      Restore
+                    </button>
+                  }
+                  <fl-actions-menu
+                    [compact]="true"
+                    [label]="'Actions for the backup of ' + row.taken"
+                    [items]="row.menu"
+                    (action)="onAction(b, $event)"
+                  />
                 </div>
               </td>
             </tr>
@@ -134,8 +98,32 @@ export class VolumeBackupsTableComponent {
   readonly restore = output<VolumeBackup>();
   readonly remove = output<VolumeBackup>();
 
-  protected readonly formatDate = formatDate;
   protected readonly triggerLabel = backupTriggerLabel;
   protected readonly triggerTitle = backupTriggerTitle;
   protected readonly bytes = bytesOrDash;
+
+  protected readonly rows = computed(() =>
+    this.backups().map((backup) => {
+      const menu: MenuAction[] = [
+        {
+          id: 'browse',
+          label: this.browsingId() === backup.id ? 'Hide files' : 'Browse files',
+          disabled: !backup.browsable,
+        },
+        {
+          id: 'delete',
+          label: 'Delete',
+          danger: true,
+          disabled: this.busyIds().has(backup.id),
+          separatorBefore: true,
+        },
+      ];
+      return { backup, taken: backup.createdAt ? formatDate(backup.createdAt) : '—', menu };
+    }),
+  );
+
+  protected onAction(backup: VolumeBackup, id: string): void {
+    if (id === 'browse') this.browse.emit(backup);
+    else if (id === 'delete') this.remove.emit(backup);
+  }
 }

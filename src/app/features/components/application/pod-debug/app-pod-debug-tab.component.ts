@@ -1,9 +1,20 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideRefreshCw, lucideCircleAlert, lucideBug, lucideClock } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { provideIcons } from '@ng-icons/core';
+import { lucideBox, lucideRefreshCw } from '@ng-icons/lucide';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlPanel } from '../../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../../ui/patterns/states';
+import { FlTable } from '../../../../ui/patterns/table';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
 import { PodDebugService } from '../../../service/pod-debug.service';
 import { CrashDiagnosesService } from '../../../service/crash-diagnoses.service';
 import { PodCardComponent } from './pod-card.component';
@@ -13,108 +24,109 @@ import { CrashDiagnosis } from '../../../model/crash-diagnosis.models';
 
 @Component({
   selector: 'app-pod-debug-tab',
-  standalone: true,
   imports: [
-    NgIcon,
-    HlmButtonDirective,
+    FlPanel,
+    FlTable,
+    FlAlert,
+    FlButton,
+    FlIcon,
+    FlEmptyState,
+    FlLoadingState,
     PodCardComponent,
     PodDetailComponent,
     DiagnosisDetailDialogComponent,
   ],
-  providers: [provideIcons({ lucideRefreshCw, lucideCircleAlert, lucideBug, lucideClock })],
+  providers: [provideIcons({ lucideRefreshCw, lucideBox })],
   changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-4">
-      <!-- Header -->
-      <div class="flex items-start justify-between gap-3 flex-wrap">
-        <div class="space-y-1">
-          <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <ng-icon name="lucideBug" class="h-4 w-4" />
-            Debug pods
-          </h3>
-          <p class="text-xs text-gray-500 max-w-xl">
-            On-demand snapshot of the application pods. Rate limit: 10 req/min. No automatic
-            polling.
-          </p>
-        </div>
-        <div class="flex items-center gap-3">
-          @if (service.lastFetchedAt()) {
-            <span class="text-xs text-gray-500 flex items-center gap-1">
-              <ng-icon name="lucideClock" class="h-3.5 w-3.5" />
-              {{ formatFetched(service.lastFetchedAt()!) }}
-            </span>
+    @if (service.error()) {
+      <fl-alert tone="error" [title]="service.error()!" />
+    }
+
+    <fl-panel
+      title="Pods"
+      [count]="service.pods().length > 0 ? service.pods().length : null"
+      [flush]="true"
+    >
+      <ng-container panelActions>
+        @if (service.lastFetchedAt()) {
+          <span class="text-fl-caption text-fl-ink-muted">
+            {{ formatFetched(service.lastFetchedAt()!) }}
+          </span>
+        }
+        <button
+          flButton
+          size="sm"
+          type="button"
+          [disabled]="service.loading() || service.isRateLimited()"
+          (click)="refresh()"
+        >
+          <fl-icon name="lucideRefreshCw" [class.animate-spin]="service.loading()" />
+          @if (service.isRateLimited()) {
+            Retry in {{ service.rateLimitedSecondsLeft() }}s
+          } @else {
+            Refresh
           }
-          <button
-            hlmBtn
-            size="sm"
-            variant="outline"
-            (click)="refresh()"
-            [disabled]="service.loading() || service.isRateLimited()"
-          >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-3.5 w-3.5 mr-2"
-              [class.animate-spin]="service.loading()"
-            />
-            @if (service.isRateLimited()) {
-              Retry in {{ service.rateLimitedSecondsLeft() }}s
-            } @else {
-              Refresh
-            }
-          </button>
-        </div>
+        </button>
+      </ng-container>
+
+      <div panelToolbar class="fl-toolbar">
+        <span class="fl-toolbar__info">
+          On-demand snapshot of the application pods. No automatic refresh, up to 10 per minute.
+        </span>
       </div>
 
-      <!-- Error -->
-      @if (service.error()) {
-        <div
-          class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
-        >
-          <ng-icon name="lucideCircleAlert" class="h-4 w-4 shrink-0" />
-          {{ service.error() }}
-        </div>
-      }
-
-      <!-- Pods -->
       @if (service.loading() && service.pods().length === 0) {
-        <div class="flex items-center justify-center py-12 text-sm text-gray-500">
-          Loading pods…
-        </div>
+        <fl-loading-state [rows]="3" />
       } @else if (service.pods().length === 0) {
-        <div
-          class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 rounded-lg"
-        >
-          <ng-icon name="lucideBug" class="h-10 w-10 text-gray-300 mb-3" />
-          <p class="text-sm font-medium text-gray-700">No pod debug info</p>
-          <p class="text-xs text-gray-500 mt-1">Press refresh to load the pod state.</p>
-        </div>
+        <fl-empty-state
+          [compact]="true"
+          icon="lucideBox"
+          title="No pods"
+          body="Refresh to load the pod state."
+        />
       } @else {
-        <div class="space-y-2">
-          @for (pod of service.pods(); track pod.uid) {
-            <div>
-              <app-pod-card
-                [pod]="pod"
-                [expanded]="expandedPod() === pod.name"
-                (toggled)="togglePod($event)"
-              />
-              @if (expandedPod() === pod.name) {
-                <app-pod-detail [pod]="pod" (openDiagnosis)="openDiagnosis($event)" />
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Pod</th>
+                <th scope="col" class="is-fit">Phase</th>
+                <th scope="col" class="is-num is-fit">Ready</th>
+                <th scope="col" class="is-num is-fit">Restarts</th>
+                <th scope="col" class="is-fit">Node</th>
+                <th scope="col">Issues</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (pod of service.pods(); track pod.uid) {
+                <tr
+                  app-pod-card
+                  [pod]="pod"
+                  [expanded]="expandedPod() === pod.name"
+                  (toggled)="togglePod($event)"
+                ></tr>
               }
-            </div>
-          }
+            </tbody>
+          </table>
         </div>
       }
-    </div>
+    </fl-panel>
 
     <app-diagnosis-detail-dialog
       [diagnosis]="diagnosesService.selected()"
-      [applicationId]="appId"
+      [applicationId]="appId()"
       (closed)="diagnosesService.select(null)"
       (dismiss)="onDismissDiagnosis($event)"
       (apply)="onApplyDiagnosis($event)"
       [applying]="diagnosesService.applyingId() === diagnosesService.selected()?.id"
       [applyError]="diagnosesService.applyError()"
     />
+
+    @if (expanded(); as pod) {
+      <app-pod-detail [pod]="pod" (openDiagnosis)="openDiagnosis($event)" />
+    }
   `,
 })
 export class AppPodDebugTabComponent implements OnInit {
@@ -122,21 +134,28 @@ export class AppPodDebugTabComponent implements OnInit {
   diagnosesService = inject(CrashDiagnosesService);
   private readonly route = inject(ActivatedRoute);
 
-  appId: string | null = null;
+  readonly appId = signal<string | null>(null);
   expandedPod = signal<string | null>(null);
+
+  protected readonly expanded = computed(() => {
+    const name = this.expandedPod();
+    return name ? (this.service.pods().find((p) => p.name === name) ?? null) : null;
+  });
 
   ngOnInit(): void {
     void (async () => {
-      this.appId = this.route.parent?.snapshot.paramMap.get('id') ?? null;
-      if (this.appId) {
-        await this.service.loadAll(this.appId);
+      this.appId.set(this.route.parent?.snapshot.paramMap.get('id') ?? null);
+      const appId = this.appId();
+      if (appId) {
+        await this.service.loadAll(appId);
       }
     })();
   }
 
   async refresh() {
-    if (!this.appId) return;
-    await this.service.loadAll(this.appId);
+    const appId = this.appId();
+    if (!appId) return;
+    await this.service.loadAll(appId);
   }
 
   togglePod(name: string) {
@@ -144,27 +163,30 @@ export class AppPodDebugTabComponent implements OnInit {
   }
 
   async openDiagnosis(diagnosisId: string) {
-    if (!this.appId) return;
-    await this.diagnosesService.loadOne(this.appId, diagnosisId);
+    const appId = this.appId();
+    if (!appId) return;
+    await this.diagnosesService.loadOne(appId, diagnosisId);
   }
 
   async onDismissDiagnosis(d: CrashDiagnosis) {
-    if (!this.appId) return;
-    await this.diagnosesService.dismiss(this.appId, d.id);
+    const appId = this.appId();
+    if (!appId) return;
+    await this.diagnosesService.dismiss(appId, d.id);
   }
 
   async onApplyDiagnosis(d: CrashDiagnosis) {
-    if (!this.appId) return;
-    if (await this.diagnosesService.apply(this.appId, d.id)) {
-      await this.service.loadAll(this.appId);
+    const appId = this.appId();
+    if (!appId) return;
+    if (await this.diagnosesService.apply(appId, d.id)) {
+      await this.service.loadAll(appId);
     }
   }
 
   formatFetched(ms: number): string {
     const diff = Math.floor((Date.now() - ms) / 1000);
-    if (diff < 5) return 'updated just now';
-    if (diff < 60) return `updated ${diff}s ago`;
+    if (diff < 5) return 'Updated just now';
+    if (diff < 60) return `Updated ${diff}s ago`;
     const m = Math.floor(diff / 60);
-    return `updated ${m}m ago`;
+    return `Updated ${m}m ago`;
   }
 }

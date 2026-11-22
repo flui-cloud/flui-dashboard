@@ -1,52 +1,58 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideTrash2 } from '@ng-icons/lucide';
+import { Component, computed, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 import { VolumeBackup } from '../../model/volume-backup.models';
 import { formatDate } from './snapshot-format';
 
 @Component({
   selector: 'app-volume-backup-delete-dialog',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIconComponent],
-  providers: [provideIcons({ lucideLoader, lucideTrash2 })],
+  imports: [FlAlert, FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideX })],
   template: `
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       (click)="dismissed.emit()"
     >
       <div
-        class="bg-background rounded-lg border border-border max-w-md w-full p-6 space-y-4"
+        class="fl-dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="volume-backup-delete-title"
         (click)="$event.stopPropagation()"
       >
-        <h3 class="text-lg font-semibold">Delete backup</h3>
-        <p class="text-sm text-muted-foreground">
-          The backup of {{ taken() }} ({{ backup().volumeName || 'volume' }}) is removed from backup
-          storage and cannot be restored afterwards.
-        </p>
-        @if (error(); as e) {
-          <p class="text-sm text-red-600">{{ e }}</p>
-        }
-        <div class="flex items-center gap-2">
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="volume-backup-delete-title">Delete backup</h2>
           <button
+            type="button"
+            class="fl-dialog__close"
+            aria-label="Close"
             (click)="dismissed.emit()"
-            class="flex-1 px-4 py-2 border border-border rounded-md hover:bg-muted text-sm"
           >
-            Cancel
+            <fl-icon name="lucideX" />
           </button>
-          <button
-            (click)="confirm.emit()"
-            [disabled]="working()"
-            class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm disabled:opacity-50"
-          >
-            <ng-icon
-              [name]="working() ? 'lucideLoader' : 'lucideTrash2'"
-              class="h-3.5 w-3.5"
-              [class.animate-spin]="working()"
-            />
+        </header>
+        <div class="fl-dialog__body">
+          <p>
+            The backup of {{ taken() }} ({{ backup().volumeName || 'volume' }}) is removed from
+            backup storage and cannot be restored afterwards.
+          </p>
+          @if (error(); as e) {
+            <fl-alert tone="error" title="Delete failed">{{ e }}</fl-alert>
+          }
+        </div>
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" (click)="dismissed.emit()">Cancel</button>
+          <button flButton="danger" type="button" (click)="confirm.emit()" [disabled]="working()">
+            @if (working()) {
+              <fl-spinner label="Deleting" />
+            }
             Delete
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   `,

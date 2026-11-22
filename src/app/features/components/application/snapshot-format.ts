@@ -1,3 +1,4 @@
+import { StatusTone } from '../../../ui/primitives/status';
 import {
   ApplicationSnapshot,
   SnapshotStatus,
@@ -22,12 +23,6 @@ export function kindTooltip(snap: ApplicationSnapshot): string {
     : 'A full file-level copy of the volume, taking as much space again on the same storage.';
 }
 
-export function kindBadgeClass(snap: ApplicationSnapshot): string {
-  return getSnapshotKind(snap) === 'native'
-    ? 'bg-emerald-100 text-emerald-800'
-    : 'bg-amber-100 text-amber-800';
-}
-
 export function statusLabel(snap: ApplicationSnapshot): string {
   const st = snapshotStatus(snap);
   if (st === 'PENDING') {
@@ -35,7 +30,7 @@ export function statusLabel(snap: ApplicationSnapshot): string {
   }
   if (st === 'DELETING') return 'Deleting…';
   if (st === 'READY') return 'Ready';
-  return st;
+  return 'Failed';
 }
 
 export function sizeLine(snap: ApplicationSnapshot): string {
@@ -46,17 +41,13 @@ export function sizeSubline(snap: ApplicationSnapshot): string | null {
   return snapshotSizeLabel(snap).subline;
 }
 
-export function statusClass(status: SnapshotStatus): string {
+export function statusTone(status: SnapshotStatus): StatusTone {
   switch (status) {
     case 'READY':
-      return 'text-green-600 font-medium';
-    case 'PENDING':
-      return 'text-blue-600';
+      return 'success';
     case 'FAILED':
-      return 'text-red-600 font-medium';
-    case 'DELETING':
-      return 'text-amber-600';
+      return 'error';
     default:
-      return 'text-muted-foreground';
+      return 'progress';
   }
 }

@@ -98,6 +98,12 @@ describe('AppSessionsTabComponent', () => {
   const q = (el: HTMLElement, id: string) =>
     el.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
 
+  const openMenu = (el: HTMLElement, id: string): HTMLButtonElement[] => {
+    (q(el, id)!.querySelector('button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    return Array.from(document.querySelectorAll<HTMLButtonElement>('.fl-menu__item'));
+  };
+
   it('says the database in one line before any table', () => {
     const el = render();
     expect(q(el, 'sessions-summary')?.textContent).toContain('3 connected · 1 running · 1 blocked');
@@ -106,7 +112,7 @@ describe('AppSessionsTabComponent', () => {
 
   it('marks the blocker and draws the waiting session under it', () => {
     const el = render();
-    expect(q(el, 'session-blocking-11')?.textContent).toContain('blocking 1');
+    expect(q(el, 'session-blocking-11')?.textContent).toContain('Blocking 1');
     const rows = Array.from(el.querySelectorAll('tbody tr')).map((r) =>
       r.getAttribute('data-testid'),
     );
@@ -124,16 +130,16 @@ describe('AppSessionsTabComponent', () => {
   it('turns off what the API refuses and says why', () => {
     const el = render();
     const cancel = q(el, 'session-cancel-13') as HTMLButtonElement;
-    const close = q(el, 'session-terminate-13') as HTMLButtonElement;
     expect(cancel.disabled).toBeTrue();
-    expect(close.disabled).toBeTrue();
-    expect(close.title).toBe('A replica reads from this session.');
+    expect(q(el, 'session-actions-13')!.title).toBe('A replica reads from this session.');
+    const [close] = openMenu(el, 'session-actions-13');
+    expect(close.getAttribute('aria-disabled')).toBe('true');
     expect((q(el, 'session-cancel-11') as HTMLButtonElement).disabled).toBeTrue();
   });
 
   it('asks before closing a session, then sends the start time the list returned', () => {
     const el = render();
-    (q(el, 'session-terminate-12') as HTMLButtonElement).click();
+    openMenu(el, 'session-actions-12')[0].click();
     fixture.detectChanges();
     expect(act).not.toHaveBeenCalled();
     expect(el.textContent).toContain('Close this session?');
@@ -207,7 +213,7 @@ describe('AppSessionsTabComponent', () => {
     expect(q(el, 'pooled-client-5')).toBeNull();
     q(el, 'sessions-pooler-toggle')!.click();
     fixture.detectChanges();
-    (q(el, 'pooled-client-close-5') as HTMLButtonElement).click();
+    openMenu(el, 'pooled-client-actions-5')[0].click();
     fixture.detectChanges();
     expect(closeClient).not.toHaveBeenCalled();
     expect(el.textContent).toContain('Close this pooled connection?');

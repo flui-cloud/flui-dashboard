@@ -278,8 +278,6 @@ export class ApplicationDetailComponent implements OnDestroy {
     return app && hasPublicEndpoint(app) ? openUrlOf(app.url ?? '', null) : '';
   });
 
-  protected readonly onOverview = computed(() => this.activeTab() === 'overview');
-
   protected statusOf(status: string): StatusTone {
     return statusToneOf(statusTone(status));
   }
