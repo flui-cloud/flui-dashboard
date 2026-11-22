@@ -5,22 +5,25 @@ import type { ClassValue } from 'clsx';
 import { injectBrnButtonConfig } from './hlm-button.token';
 
 export const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background',
+  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-fl-md border text-fl-body-sm focus-visible:outline-none focus-visible:shadow-fl-focus disabled:opacity-50 disabled:pointer-events-none',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        outline: 'border border-input hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'underline-offset-4 hover:underline text-primary',
+        default:
+          'border-fl-accent bg-fl-accent font-medium text-fl-on-accent hover:border-fl-accent-strong hover:bg-fl-accent-strong',
+        destructive:
+          'border-fl-danger bg-fl-danger font-medium text-fl-on-accent hover:brightness-95',
+        outline: 'border-fl-border-button bg-fl-surface text-fl-ink hover:bg-fl-surface-hover',
+        secondary: 'border-fl-border-button bg-fl-surface text-fl-ink hover:bg-fl-surface-hover',
+        ghost:
+          'border-transparent text-fl-ink-secondary hover:bg-fl-surface-hover hover:text-fl-ink',
+        link: 'border-transparent font-medium text-fl-accent underline-offset-4 hover:text-fl-accent-strong hover:underline',
       },
       size: {
-        default: 'h-10 py-2 px-4',
-        sm: 'h-9 px-3 rounded-md',
-        lg: 'h-11 px-8 rounded-md',
-        icon: 'h-10 w-10',
+        default: 'h-[var(--fl-control-height)] px-3',
+        sm: 'h-[var(--fl-control-height-sm)] px-3',
+        lg: 'h-[var(--fl-control-height)] px-4',
+        icon: 'h-[var(--fl-control-height)] w-[var(--fl-control-height)]',
       },
     },
     defaultVariants: {

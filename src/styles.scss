@@ -51,153 +51,126 @@
  *   skeleton          → animate-pulse placeholder block
  */
 @layer components {
-  /* ── Surfaces ─────────────────────────────────────────────── */
   .card-surface {
-    @apply bg-card text-card-foreground border border-border rounded-lg;
+    @apply rounded-fl-lg border border-fl-border bg-fl-surface text-fl-ink;
   }
 
   .card-inner {
-    @apply bg-muted/50 rounded;
+    @apply rounded-fl-md bg-fl-surface-subtle;
   }
 
-  /* ── Typography ───────────────────────────────────────────── */
   .text-label {
-    @apply text-xs font-medium text-muted-foreground uppercase tracking-wide;
+    @apply text-fl-caption text-fl-ink-muted;
   }
 
   .text-value {
-    @apply font-medium text-foreground;
+    @apply font-medium text-fl-ink;
   }
 
   .text-sub {
-    @apply text-xs text-muted-foreground;
+    @apply text-fl-caption text-fl-ink-muted;
   }
 
-  /* ── Status colors ────────────────────────────────────────── */
   .status-healthy {
-    @apply text-green-600 dark:text-green-400;
+    @apply text-fl-success;
   }
 
   .status-degraded {
-    @apply text-orange-500 dark:text-orange-400;
+    @apply text-fl-warning-text;
   }
 
   .status-error {
-    @apply text-red-600 dark:text-red-400;
+    @apply text-fl-danger;
   }
 
   .status-pending {
-    @apply text-muted-foreground;
+    @apply text-fl-ink-muted;
   }
 
   .dot-healthy {
-    @apply bg-green-500;
+    @apply bg-fl-success;
   }
   .dot-degraded {
-    @apply bg-orange-400;
+    @apply bg-fl-warning;
   }
   .dot-error {
-    @apply bg-red-500;
+    @apply bg-fl-danger;
   }
   .dot-pending {
-    @apply bg-muted-foreground;
+    @apply bg-fl-border-input;
   }
 
-  /* ── Skeleton ─────────────────────────────────────────────── */
   .skeleton {
-    @apply animate-pulse rounded bg-muted;
+    @apply rounded-fl-sm bg-fl-track;
   }
 
-  /* ── Link inline ──────────────────────────────────────────── */
   .card-link {
-    @apply mt-3 flex items-center gap-1 text-xs text-primary hover:underline;
+    @apply mt-3 flex items-center gap-1 text-fl-caption font-medium text-fl-accent hover:text-fl-accent-strong hover:underline;
   }
 
-  /* ── Badges ───────────────────────────────────────────────── */
   .badge {
-    @apply text-xs px-2.5 py-1 rounded-full font-medium;
+    @apply inline-flex h-[18px] items-center whitespace-nowrap rounded-fl-sm border border-fl-border bg-fl-surface px-1.5 text-fl-caption text-fl-ink-secondary;
   }
   .badge-success {
-    @apply bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400;
+    @apply text-fl-success;
   }
   .badge-error {
-    @apply bg-destructive/10 text-destructive;
+    @apply border-fl-danger-border text-fl-danger;
   }
   .badge-in-progress {
-    @apply bg-muted text-muted-foreground;
+    @apply text-fl-accent;
   }
   .badge-pending {
-    @apply bg-muted text-muted-foreground;
+    @apply text-fl-ink-muted;
   }
 
-  /* ── Step icon (deploy/operation timeline) ────────────────── */
   .step-icon {
-    @apply flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0;
+    @apply flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-fl-caption font-semibold;
   }
   .step-icon-completed {
-    @apply bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400;
+    @apply border-fl-accent bg-fl-accent text-fl-on-accent;
   }
   .step-icon-running {
-    @apply bg-muted text-foreground;
+    @apply border-2 border-fl-accent text-fl-accent;
   }
   .step-icon-error {
-    @apply bg-destructive/10 text-destructive;
+    @apply border-fl-danger text-fl-danger;
   }
   .step-icon-pending {
-    @apply bg-muted text-muted-foreground/50;
+    @apply border-fl-border-input text-fl-ink-muted;
   }
 
-  /* ── Inline spinner (small, subtle) ──────────────────────── */
   .spinner-sm {
-    @apply h-4 w-4 animate-spin text-muted-foreground;
+    @apply h-4 w-4 animate-spin text-fl-ink-muted;
   }
 
   .icon-chip {
-    @apply flex h-[38px] w-[38px] flex-none items-center justify-center rounded-[10px];
+    @apply flex h-8 w-8 flex-none items-center justify-center rounded-fl-md border border-fl-border bg-fl-surface-subtle;
   }
   .icon-chip-sm {
-    @apply h-7 w-7 rounded-lg;
+    @apply h-7 w-7;
   }
   .icon-chip-lg {
-    @apply h-[60px] w-[60px] rounded-full;
+    @apply h-12 w-12;
   }
 
-  .chip-brand {
-    background: hsl(var(--brand) / 0.1);
-    color: hsl(var(--brand));
-  }
+  .chip-brand,
   .chip-purple {
-    background: hsl(var(--purple) / 0.12);
-    color: hsl(var(--purple));
+    @apply text-fl-ink-muted;
   }
   .chip-ok {
-    background: hsl(var(--ok) / 0.12);
-    color: hsl(var(--ok));
+    @apply text-fl-success;
   }
   .chip-warn {
-    background: hsl(var(--warn) / 0.12);
-    color: hsl(var(--warn));
+    @apply text-fl-warning;
   }
   .chip-danger {
-    background: hsl(var(--destructive) / 0.1);
-    color: hsl(var(--destructive));
+    @apply text-fl-danger;
   }
 
   .brand-soft {
-    background: hsl(var(--brand) / 0.1);
-    color: hsl(var(--brand));
+    @apply bg-fl-accent-soft text-fl-accent;
   }
-}
-
-hlm-sidebar a.active {
-  background: hsl(var(--brand) / 0.1);
-  box-shadow: inset 2.5px 0 0 hsl(var(--brand));
-  border-radius: 0.5rem;
-}
-hlm-sidebar a.active span,
-hlm-sidebar a.active ng-icon {
-  color: hsl(var(--brand)) !important;
-  font-weight: 600;
 }
 
 /* Shimmer animation for progress bars */

@@ -5,38 +5,21 @@ import { type VariantProps, cva } from 'class-variance-authority';
 import type { ClassValue } from 'clsx';
 
 export const badgeVariants = cva(
-  'inline-flex items-center border rounded-full px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  'inline-flex h-[18px] items-center whitespace-nowrap rounded-fl-sm border px-1.5 text-[11.5px] focus:outline-none focus-visible:shadow-fl-focus',
   {
     variants: {
       variant: {
-        default: 'bg-primary border-transparent text-primary-foreground',
-        secondary: 'bg-secondary border-transparent text-secondary-foreground',
-        destructive: 'bg-destructive border-transparent text-destructive-foreground',
-        outline: 'text-foreground border-border',
+        default: 'border-fl-border bg-fl-surface text-fl-ink-secondary',
+        secondary: 'border-fl-border bg-fl-surface text-fl-ink-secondary',
+        destructive: 'border-fl-danger-border bg-fl-surface text-fl-danger',
+        outline: 'border-fl-border bg-fl-surface text-fl-ink-secondary',
       },
       size: {
-        default: 'text-xs',
-        lg: 'text-sm',
+        default: '',
+        lg: 'h-5 text-fl-caption',
       },
       static: { true: '', false: '' },
     },
-    compoundVariants: [
-      {
-        variant: 'default',
-        static: false,
-        class: 'hover:bg-primary/80',
-      },
-      {
-        variant: 'secondary',
-        static: false,
-        class: 'hover:bg-secondary/80',
-      },
-      {
-        variant: 'destructive',
-        static: false,
-        class: 'hover:bg-destructive/80',
-      },
-    ],
     defaultVariants: {
       variant: 'default',
       size: 'default',

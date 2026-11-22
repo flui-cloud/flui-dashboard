@@ -3,7 +3,7 @@ import { hlm } from '@spartan-ng/brain/core';
 import { type VariantProps, cva } from 'class-variance-authority';
 import type { ClassValue } from 'clsx';
 
-export const cardTitleVariants = cva('text-lg font-semibold leading-none tracking-tight', {
+export const cardTitleVariants = cva('text-fl-section-title text-fl-ink', {
   variants: {},
   defaultVariants: {},
 });

@@ -3,7 +3,7 @@ import { hlm } from '@spartan-ng/brain/core';
 import { type VariantProps, cva } from 'class-variance-authority';
 import type { ClassValue } from 'clsx';
 
-export const cardFooterVariants = cva('flex p-6 pt-0', {
+export const cardFooterVariants = cva('flex p-4 pt-0', {
   variants: {
     direction: {
       row: 'flex-row items-center space-x-1.5',

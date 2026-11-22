@@ -3,7 +3,7 @@ import { hlm } from '@spartan-ng/brain/core';
 import { type VariantProps, cva } from 'class-variance-authority';
 import type { ClassValue } from 'clsx';
 
-export const cardContentVariants = cva('p-6 pt-0', {
+export const cardContentVariants = cva('p-4 pt-0', {
   variants: {},
   defaultVariants: {},
 });

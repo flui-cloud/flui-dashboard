@@ -4,6 +4,18 @@ const flColors = Object.fromEntries(
   Object.keys(tokens.themes.light).map((role) => [role, `var(--fl-${role})`]),
 );
 
+const paletteBridge = Object.fromEntries(
+  Object.entries(tokens.tailwindBridge.families).map(([family, ramp]) => [
+    family,
+    Object.fromEntries(
+      Object.entries(tokens.tailwindBridge.ramps[ramp]).map(([step, primitive]) => [
+        step,
+        tokens.primitives[primitive],
+      ]),
+    ),
+  ]),
+);
+
 const flRadius = Object.fromEntries(
   Object.keys(tokens.radius).map((k) => [`fl-${k}`, `var(--fl-radius-${k})`]),
 );
@@ -29,7 +41,7 @@ module.exports = {
   content: ['./src/**/*.{html,ts}', './libs/**/*.{html,ts}'],
   theme: {
     extend: {
-      colors: { fl: flColors },
+      colors: { ...paletteBridge, fl: flColors },
       borderRadius: flRadius,
       fontSize: flText,
       fontFamily: {

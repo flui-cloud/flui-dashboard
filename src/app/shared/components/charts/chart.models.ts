@@ -3,6 +3,10 @@
  * Shared types for all chart components
  */
 
+import tokens from '../../../../theme/tokens.json';
+
+const c = (primitive: keyof typeof tokens.primitives): string => tokens.primitives[primitive];
+
 /**
  * Theme options for charts
  */
@@ -84,19 +88,19 @@ export interface GaugeChartData {
 }
 
 /**
- * Default color scheme matching Tailwind theme
+ * Chart colors come from the console tokens: charts draw on canvas, where CSS variables do not reach.
  */
 export const DEFAULT_CHART_COLORS: ChartColorScheme = {
-  success: ['#10b981', '#34d399', '#6ee7b7'],
-  warning: ['#f59e0b', '#fbbf24', '#fcd34d'],
-  danger: ['#ef4444', '#f87171', '#fca5a5'],
-  info: ['#3b82f6', '#60a5fa', '#93c5fd'],
-  neutral: ['#6b7280', '#9ca3af', '#d1d5db'],
+  success: [c('green-700'), c('green-400'), c('green-200')],
+  warning: [c('amber-700'), c('amber-400'), c('amber-200')],
+  danger: [c('red-700'), c('red-400'), c('red-200')],
+  info: [c('blue-600'), c('blue-400'), c('blue-200')],
+  neutral: [c('gray-600'), c('gray-500'), c('gray-300')],
   gradient: {
-    success: ['#10b981', '#34d399'],
-    warning: ['#f59e0b', '#fbbf24'],
-    danger: ['#ef4444', '#f87171'],
-    info: ['#3b82f6', '#60a5fa'],
+    success: [c('green-700'), c('green-400')],
+    warning: [c('amber-700'), c('amber-400')],
+    danger: [c('red-700'), c('red-400')],
+    info: [c('blue-600'), c('blue-400')],
   },
 };
 
@@ -450,42 +454,38 @@ export interface LogVolumeHistogramConfig extends BaseChartConfig {
 }
 
 export const LOG_LEVEL_COLORS: Record<string, string> = {
-  error: '#ef4444',
-  warn: '#f59e0b',
-  info: '#3b82f6',
-  debug: '#6b7280',
-  trace: '#8b5cf6',
+  error: c('red-700'),
+  warn: c('amber-700'),
+  info: c('blue-600'),
+  debug: c('gray-500'),
+  trace: c('gray-300'),
 };
 
 /**
- * Default color palette for distribution charts (12 distinguishable colors)
+ * Distribution charts tell slices apart by lightness within the accent and neutral ramps, never by a
+ * new hue: the console keeps one accent, and green, amber and red for state only.
  */
 export const DISTRIBUTION_PALETTE = [
-  '#3b82f6', // blue
-  '#10b981', // green
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#8b5cf6', // violet
-  '#ec4899', // pink
-  '#06b6d4', // cyan
-  '#f97316', // orange
-  '#14b8a6', // teal
-  '#6366f1', // indigo
-  '#a855f7', // purple
-  '#84cc16', // lime
+  c('blue-600'),
+  c('gray-700'),
+  c('blue-300'),
+  c('gray-500'),
+  c('blue-800'),
+  c('gray-300'),
+  c('blue-400'),
+  c('gray-600'),
+  c('blue-200'),
+  c('gray-800'),
+  c('blue-500'),
+  c('gray-200'),
 ];
 
 /**
- * Per-node series palette for cluster metrics.
- * Validated for colour-vision deficiency separation and 3:1 contrast against
- * both the light and dark card surfaces; kept apart from the status hues
- * (success/warning/danger) so a series is never mistaken for a health state.
- * Assigned by node index, in this fixed order, never cycled by rank. Four is
- * the ceiling this palette can honestly reach — no larger set of hues clears
- * colour-vision separation against these surfaces — so past four nodes the
- * charts summarise rather than name each node by colour.
+ * Per-node series palette for cluster metrics, assigned by node index in this fixed order. The first
+ * node takes the accent, the rest step through neutral and lighter accent so nodes differ by
+ * lightness, not hue; past four nodes the charts summarise rather than name each node by color.
  */
-export const NODE_SERIES_COLORS = ['#2259F1', '#0D9488', '#B5179E', '#8A6D00'];
+export const NODE_SERIES_COLORS = [c('blue-600'), c('gray-700'), c('blue-300'), c('gray-500')];
 
 /** Horizontal usage bar with optional warning/danger tick marks. */
 export interface MeterBarConfig {
