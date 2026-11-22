@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { AppUdpPortsService, UdpPortsView } from './app-udp-ports.service';
 import { RepositoryAnalysisDto } from '../../core/api/model/repositoryAnalysisDto';
 import { DockerfileAnalysisDto } from '../../core/api/model/dockerfileAnalysisDto';
 import { ExtractedEnvVarDto } from '../../core/api/model/extractedEnvVarDto';
@@ -132,6 +133,7 @@ export class DeployWizardStateService {
   private readonly repositoryService = inject(RepositoryService);
   private readonly templateService = inject(TemplateService);
   private readonly catalogService = inject(CatalogService);
+  private readonly udpPortsService = inject(AppUdpPortsService);
   private readonly notifications = inject(NotificationService);
   private readonly clustersApi = inject(InfrastructureClustersService);
 
@@ -198,6 +200,8 @@ export class DeployWizardStateService {
   readonly backendFieldErrors = signal<Record<string, string>>({});
   readonly envOverrides = signal<Record<string, string>>({});
   readonly catalogAuthMode = signal<CatalogAuthSpecDto.ModesEnum | null>(null);
+  /** With single sign-on: the identity install the app's users sign in with; null is Flui sign-in, for the team. */
+  readonly catalogIdentityInstallId = signal<string | null>(null);
   readonly catalogFeatureToggles = signal<Record<string, boolean>>({});
   /** 'auto' → backend assigns {install-slug}.{zoneName}; 'custom' → user-provided FQDN; 'skip' → no endpoint. */
   readonly domainMode = signal<'auto' | 'custom' | 'skip'>('auto');
@@ -227,6 +231,8 @@ export class DeployWizardStateService {
 
   // ========== Catalog resource overrides + capacity check ==========
   readonly catalogResourceOverrides = signal<CatalogResourceOverridesForm>({ ...EMPTY_OVERRIDES });
+  /** The UDP ports the catalog app publishes, checked against the chosen cluster; null when it has none. */
+  readonly catalogUdpPorts = signal<UdpPortsView | null>(null);
   readonly catalogAvailability = signal<ResourceAvailabilityResponseDto | null>(null);
   readonly catalogAvailabilityLoading = signal<boolean>(false);
   readonly catalogAvailabilityError = signal<string | null>(null);
@@ -637,6 +643,7 @@ export class DeployWizardStateService {
     this.backendFieldErrors.set({});
     this.envOverrides.set({});
     this.catalogAuthMode.set(null);
+    this.catalogIdentityInstallId.set(null);
     this.catalogFeatureToggles.set({});
     this.domainMode.set('auto');
     this.requestedDomain.set('');
@@ -667,8 +674,10 @@ export class DeployWizardStateService {
     const slug = this.catalogSlug();
     if (!clusterId || !slug) {
       this.catalogAvailability.set(null);
+      this.catalogUdpPorts.set(null);
       return;
     }
+    void this.checkCatalogUdpPorts(slug, clusterId);
     this.catalogAvailabilityLoading.set(true);
     this.catalogAvailabilityError.set(null);
     this.forceInstallDespiteCapacity.set(false);
@@ -690,6 +699,20 @@ export class DeployWizardStateService {
       this.catalogAvailability.set(null);
     } finally {
       this.catalogAvailabilityLoading.set(false);
+    }
+  }
+
+  private async checkCatalogUdpPorts(
+    slug: string,
+    clusterId: string,
+  ): Promise<void> {
+    try {
+      const view = await firstValueFrom(
+        this.udpPortsService.forInstall(slug, clusterId),
+      );
+      this.catalogUdpPorts.set(view.ports.length ? view : null);
+    } catch {
+      this.catalogUdpPorts.set(null);
     }
   }
 
@@ -1274,6 +1297,11 @@ export class DeployWizardStateService {
     const authMode = this.catalogAuthMode();
     if (authMode && authMode !== detail.auth?.default) {
       dto.authMode = authMode;
+    }
+    const effectiveAuth = authMode ?? detail.auth?.default;
+    const identityInstallId = this.catalogIdentityInstallId();
+    if (effectiveAuth === 'oidc' && identityInstallId) {
+      dto.identityInstallId = identityInstallId;
     }
 
     const featureToggles = this.catalogFeatureToggles();

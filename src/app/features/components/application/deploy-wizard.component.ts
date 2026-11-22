@@ -70,6 +70,7 @@ import { catalogOptionEnabled } from './deploy-wizard-catalog-steps/catalog-opti
 import { CatalogLinkedBbStepComponent } from './deploy-wizard-catalog-steps/catalog-linked-bb-step.component';
 import { CatalogDependenciesStepComponent } from './deploy-wizard-catalog-steps/catalog-dependencies-step.component';
 import { CatalogSuccessStepComponent } from './deploy-wizard-catalog-steps/catalog-success-step.component';
+import { CatalogUdpPortsNoticeComponent } from './deploy-wizard-catalog-steps/catalog-udp-ports-notice.component';
 import { CatalogResourcesReviewComponent } from './deploy-wizard-catalog-steps/catalog-resources-review.component';
 import { CatalogService } from '../../service/catalog.service';
 import { PublicRepoSearchResultDto } from '../../../core/api/model/publicRepoSearchResultDto';
@@ -115,7 +116,8 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
     CatalogLinkedBbStepComponent,
     CatalogDependenciesStepComponent,
     CatalogSuccessStepComponent,
-    CatalogResourcesReviewComponent
+    CatalogResourcesReviewComponent,
+    CatalogUdpPortsNoticeComponent
 ],
   providers: [
     DeployWizardStateService,
@@ -1388,6 +1390,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   @if (selectedCluster() && flowSubtype() === 'marketplace') {
                     <!-- Marketplace: capacity check uses manifest resources + optional overrides. -->
                     <app-catalog-resources-review />
+                    <app-catalog-udp-ports-notice />
                   } @else if (selectedCluster()) {
                     @if (checkingAvailability()) {
                       <div class="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-md border border-border">
@@ -1969,6 +1972,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
               <!-- Marketplace: resource footprint + capacity check + overrides -->
               @if (flowSubtype() === 'marketplace') {
                 <app-catalog-resources-review />
+                <app-catalog-udp-ports-notice />
               }
 
               <!-- Environment -->
