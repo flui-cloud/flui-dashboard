@@ -1,0 +1,106 @@
+<div class="fl-page">
+  @let state = headerState();
+  <fl-page-header
+    [title]="phase() === 'confirm' ? 'Create application' : 'Building application'"
+    [breadcrumb]="breadcrumb"
+  >
+    <fl-status headerStatus [tone]="state.tone" [label]="state.label" />
+    @if (phase() === 'building') {
+      <span headerMeta class="fl-num">{{ progressPercent() }}%</span>
+    }
+    <span headerMeta>
+      Elapsed <span class="fl-mono fl-num">{{ elapsed() }}</span>
+    </span>
+    @if (phase() === 'building') {
+      <span headerMeta>The application is created once the build succeeds</span>
+    }
+  </fl-page-header>
+
+  @if (connectionLost() && phase() === 'building') {
+    <fl-alert tone="warning" title="Connection lost">
+      The build is still running. Reconnecting…
+    </fl-alert>
+  }
+
+  @if (phase() === 'failed') {
+    <fl-alert tone="error" title="Build failed">
+      {{ errorMessage() || 'The build stopped before it finished.' }}
+      No application was created.
+      <ng-container alertActions>
+        <button
+          flButton="primary"
+          size="sm"
+          type="button"
+          [disabled]="isDeleting()"
+          (click)="retryFromWizard()"
+        >
+          @if (isDeleting()) {
+            <fl-spinner label="Starting a new build" />
+          } @else {
+            <fl-icon name="lucideRefreshCw" />
+          }
+          Try again
+        </button>
+        <button flButton="ghost" size="sm" type="button" (click)="navigateBack()">
+          Back to deploy
+        </button>
+      </ng-container>
+    </fl-alert>
+  }
+
+  <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+    <div class="fl-stack lg:col-span-2">
+      <app-deploy-progress-steps [steps]="steps()" [now]="now()" />
+
+      @if (phase() === 'confirm') {
+        <app-standalone-build-confirm
+          [(appName)]="appName"
+          [(selectedProfile)]="selectedProfile"
+          [(startCommandOverride)]="startCommandOverride"
+          [(startCommandExpanded)]="startCommandOverrideExpanded"
+          [port]="effectivePort()"
+          [portDetected]="!!detectedPort()"
+          [profiles]="availableProfiles()"
+          [loadingProfiles]="loadingProfiles()"
+          [framework]="detectedFramework()"
+          [wizard]="wizardState()"
+          [detectedStartCommand]="detectedStartCommand()"
+          [startCommandAutoCorrected]="startCommandIsAutoCorrected()"
+          [creating]="isCreating()"
+          (portInput)="onPortInput($event)"
+          (create)="createAndDeploy()"
+        />
+      } @else {
+        <app-build-log-panel
+          [lines]="buildLogs()"
+          [waiting]="phase() === 'building'"
+          (copied)="copyLogs()"
+        />
+      }
+    </div>
+
+    <fl-panel title="Details">
+      <fl-key-value class="fl-kv--compact">
+        <fl-kv-item key="Build ID">
+          <fl-copy-id [value]="buildId()" [display]="shortId(buildId())" label="build ID" />
+        </fl-kv-item>
+        @if (detectedFramework()) {
+          <fl-kv-item key="Runtime">{{ detectedFramework() }}</fl-kv-item>
+        }
+        @if (imageRef(); as image) {
+          <fl-kv-item key="Image">
+            <fl-copy-id [value]="image" label="image" />
+          </fl-kv-item>
+        }
+        @if (detectedStartCommand()) {
+          <fl-kv-item key="Start command">
+            <span class="fl-mono block break-all">{{ detectedStartCommand() }}</span>
+            <span class="block text-fl-caption text-fl-ink-muted">
+              {{ startCommandIsAutoCorrected() ? 'Auto-corrected' : 'Detected' }}
+            </span>
+          </fl-kv-item>
+        }
+      </fl-key-value>
+    </fl-panel>
+  </div>
+</div>

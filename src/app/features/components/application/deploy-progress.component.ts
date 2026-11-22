@@ -1,409 +1,209 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  signal,
-  computed,
-  inject,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { firstValueFrom } from 'rxjs';
-import {
-  lucideArrowLeft,
-  lucideCheck,
-  lucideLoader,
-  lucideTriangleAlert,
-  lucideX,
-  lucideGitBranch,
-  lucidePackage,
-  lucideServer,
-  lucideRocket,
-  lucideActivity,
-  lucideClock,
-  lucideExternalLink,
-  lucideCopy,
-  lucideRefreshCw,
-} from '@ng-icons/lucide';
+import { lucideCopy, lucideExternalLink, lucideRefreshCw } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { AppRuntimeWebSocketService } from '../../service/app-runtime-websocket.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { InfrastructureOperationsService } from '../../../core/api/api/infrastructureOperations.service';
-import { DeploymentProgress, DeploymentStep } from '../../model/application.models';
+import { Application, DeploymentProgress } from '../../model/application.models';
 import { buildOpenAppUrl } from '../../model/open-app-url';
 import { evaluateEndpointReadiness } from '../../model/endpoint-readiness';
 import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { DeployProgressSteps } from './deploy-progress-steps';
+import {
+  DEPLOY_STEPS,
+  buildDeploySteps,
+  deploymentState,
+  formatDuration,
+  mapDeploymentStatus,
+  pendingDeploySteps,
+  secondsBetween,
+} from './deploy-progress-model';
 
-// Steps for deploy_application operation type (from API doc)
-const DEPLOY_STEPS: Array<{
-  id: string;
-  name: string;
-  description: string;
-  progress: number;
-}> = [
-  {
-    id: 'app_deploy_init',
-    name: 'Initialization',
-    description: 'Preparing deployment configuration',
-    progress: 0,
-  },
-  {
-    id: 'app_deploy_generate_manifests',
-    name: 'Generate Manifests',
-    description: 'Generating deployment manifests',
-    progress: 15,
-  },
-  {
-    id: 'app_deploy_apply_manifests',
-    name: 'Apply Manifests',
-    description: 'Applying manifests to the cluster',
-    progress: 30,
-  },
-  {
-    id: 'app_deploy_wait_ready',
-    name: 'Wait for Instances',
-    description: 'Waiting for instances to be ready',
-    progress: 60,
-  },
-  {
-    id: 'app_deploy_finalize',
-    name: 'Finalize',
-    description: 'Finalizing and saving revision',
-    progress: 90,
-  },
-];
+interface OperationStatusResponse {
+  status: string;
+  progress?: number;
+  currentStep?: string;
+  totalSteps?: number;
+  errorMessage?: string;
+  startedAt?: string;
+  resourceName?: string;
+  metadata?: { applicationName?: string; applicationId?: string; stepDescription?: string };
+}
 
 @Component({
   selector: 'app-deploy-progress',
-  standalone: true,
-  imports: [MaskIdPipe, CommonModule, NgIcon],
-  providers: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideCheck,
-      lucideLoader,
-      lucideTriangleAlert,
-      lucideX,
-      lucideGitBranch,
-      lucidePackage,
-      lucideServer,
-      lucideRocket,
-      lucideActivity,
-      lucideClock,
-      lucideExternalLink,
-      lucideCopy,
-      lucideRefreshCw,
-    }),
+  imports: [
+    MaskIdPipe,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlKeyValue,
+    FlKvItem,
+    FlCopyId,
+    FlLoadingState,
+    FlStatus,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    DeployProgressSteps,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideCopy, lucideExternalLink, lucideRefreshCw })],
   template: `
-    <div class="max-w-6xl mx-auto p-6">
-      <!-- Back Button -->
-      <div class="mb-6">
-        <button
-          (click)="navigateBack()"
-          class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ng-icon name="lucideArrowLeft" class="h-4 w-4 mr-2" />
-          Back to Applications
-        </button>
-      </div>
-
+    <div class="fl-page">
       @if (progress(); as deployment) {
-        <!-- Header -->
-        <div class="mb-8">
-          <div class="flex items-start justify-between mb-4">
-            <div class="flex-1">
-              <h1 class="text-2xl font-bold mb-2">
-                {{ deployment.applicationName }}
-              </h1>
-              <p class="text-sm text-muted-foreground">
-                @switch (deployment.status) {
-                  @case ('completed') {
-                    Deployed
-                  }
-                  @case ('failed') {
-                    Deployment failed
-                  }
-                  @default {
-                    Deployment in progress...
-                  }
-                }
-              </p>
-            </div>
-            <div class="text-right">
-              <div [class]="getStatusBadgeClass(deployment.status)" class="inline-block mb-2">
-                {{ getStatusLabel(deployment.status) }}
-              </div>
-              @if (deployment.startedAt) {
-                <div class="text-xs text-muted-foreground flex items-center justify-end">
-                  <ng-icon name="lucideClock" class="h-3 w-3 mr-1" />
-                  Elapsed: {{ getElapsedTime(deployment.startedAt) }}
-                </div>
+        @let state = headerState();
+        <fl-page-header [title]="deployment.applicationName" [breadcrumb]="breadcrumb()">
+          <fl-status headerStatus [tone]="state.tone" [label]="state.label" />
+          <span headerMeta class="fl-num">
+            Step {{ deployment.currentStepIndex + 1 }} of {{ deployment.totalSteps }}
+          </span>
+          <span headerMeta class="fl-num">{{ deployment.progress }}%</span>
+          @if (deployment.startedAt) {
+            <span headerMeta>
+              Elapsed <span class="fl-mono fl-num">{{ elapsed() }}</span>
+            </span>
+          }
+          @if (deployment.status === 'in_progress') {
+            <span headerMeta>This may take a few minutes</span>
+          }
+          @if (deployment.status === 'completed') {
+            <ng-container headerActions>
+              <button flButton="ghost" type="button" (click)="deployAnother()">
+                Deploy another
+              </button>
+              @if (appUrl(); as url) {
+                <a flButton [href]="url" target="_blank" rel="noopener noreferrer">
+                  <fl-icon name="lucideExternalLink" />
+                  Open URL
+                </a>
               }
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          <div class="flex items-center gap-3">
-            <div class="flex-1 h-3 bg-border rounded-full overflow-hidden">
-              <div
-                [style.width.%]="deployment.progress"
-                [class]="getProgressBarClass(deployment.status)"
-                class="h-full transition-all duration-500 ease-out"
-              ></div>
-            </div>
-            <span class="text-xs text-muted-foreground tabular-nums w-8 text-right"
-              >{{ deployment.progress }}%</span
-            >
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Main Column: Steps -->
-          <div class="lg:col-span-2 space-y-6">
-            <!-- Steps Timeline -->
-            <div class="bg-card border border-border rounded-lg p-6">
-              <h2 class="text-lg font-semibold mb-4 flex items-center">
-                <ng-icon name="lucideActivity" class="h-5 w-5 mr-2" />
-                Deployment Steps
-              </h2>
-
-              <div class="space-y-4">
-                @for (step of deployment.steps; track step.id; let i = $index) {
-                  <div class="flex items-start gap-4">
-                    <!-- Step Icon -->
-                    <div [class]="getStepIconClass(step.status)" class="flex-shrink-0">
-                      @switch (step.status) {
-                        @case ('completed') {
-                          <ng-icon name="lucideCheck" class="h-5 w-5" />
-                        }
-                        @case ('running') {
-                          <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin" />
-                        }
-                        @case ('error') {
-                          <ng-icon name="lucideX" class="h-5 w-5" />
-                        }
-                        @default {
-                          <div class="w-3 h-3 rounded-full bg-current"></div>
-                        }
-                      }
-                    </div>
-
-                    <!-- Step Content -->
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center justify-between mb-1">
-                        <h4 [class]="getStepTitleClass(step.status)">
-                          {{ step.name }}
-                        </h4>
-                        @if (step.duration) {
-                          <span class="text-xs text-muted-foreground ml-2">
-                            {{ step.duration | number: '1.0-1' }}s
-                          </span>
-                        }
-                      </div>
-                      <p class="text-sm text-muted-foreground">
-                        {{ step.description }}
-                      </p>
-
-                      @if (step.status === 'error' && step.errorMessage) {
-                        <div class="mt-2 p-2 bg-red-50 rounded text-xs text-red-700">
-                          {{ step.errorMessage }}
-                        </div>
-                      }
-                    </div>
-
-                    <!-- Connector -->
-                    @if (i < deployment.steps.length - 1) {
-                      <div class="absolute left-[18px] top-[40px] w-0.5 h-8 bg-border"></div>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Build Logs -->
-            <div class="bg-card border border-border rounded-lg">
-              <div class="p-4 border-b border-border flex items-center justify-between">
-                <h2 class="text-lg font-semibold flex items-center">
-                  <ng-icon name="lucidePackage" class="h-5 w-5 mr-2" />
-                  Build Logs
-                </h2>
-                <button
-                  (click)="copyLogs()"
-                  class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ng-icon name="lucideCopy" class="h-4 w-4 mr-1" />
-                  Copy Logs
+              @if (deployment.applicationId) {
+                <button flButton="primary" type="button" (click)="viewApplicationDetails()">
+                  Open application
                 </button>
+              }
+            </ng-container>
+          }
+        </fl-page-header>
+
+        @if (deployment.status === 'failed') {
+          <fl-alert tone="error" title="Deployment failed">
+            {{ deployment.errorMessage || 'The deployment stopped before it finished.' }}
+            <ng-container alertActions>
+              <button flButton="primary" size="sm" type="button" (click)="retryDeployment()">
+                <fl-icon name="lucideRefreshCw" />
+                Retry deployment
+              </button>
+              <button flButton size="sm" type="button" (click)="editConfiguration()">
+                Edit configuration
+              </button>
+              <button flButton="ghost" size="sm" type="button" (click)="navigateBack()">
+                Back to applications
+              </button>
+            </ng-container>
+          </fl-alert>
+        }
+
+        <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+          <div class="fl-stack lg:col-span-2">
+            <app-deploy-progress-steps
+              [steps]="deployment.steps"
+              [now]="now()"
+              [detail]="lastLog()"
+            />
+
+            <fl-panel title="Log">
+              <button
+                panelActions
+                flButton="ghost"
+                size="sm"
+                type="button"
+                [disabled]="!deployment.logs.length"
+                (click)="copyLogs()"
+              >
+                <fl-icon name="lucideCopy" />
+                Copy log
+              </button>
+              <div
+                class="fl-mono max-h-96 overflow-auto whitespace-pre-wrap break-all rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3 text-fl-ink"
+              >
+                @for (log of deployment.logs; track $index) {
+                  <div>{{ log }}</div>
+                }
+                @if (deployment.status === 'in_progress') {
+                  <div class="fl-row text-fl-ink-muted">
+                    <fl-spinner label="Waiting for output" />
+                    Waiting for output
+                  </div>
+                } @else if (!deployment.logs.length) {
+                  <div class="text-fl-ink-muted">No output yet</div>
+                }
               </div>
-              <div class="p-4 bg-gray-900">
-                <div class="font-mono text-xs text-slate-200 space-y-1 max-h-96 overflow-y-auto">
-                  @for (log of deployment.logs; track $index) {
-                    <div class="whitespace-pre-wrap">{{ log }}</div>
-                  }
-                  @if (deployment.status === 'in_progress') {
-                    <div class="flex items-center gap-1.5 text-gray-600 text-xs">
-                      <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
-                      waiting...
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
+            </fl-panel>
           </div>
 
-          <!-- Sidebar: Info & Actions -->
-          <div class="space-y-6">
-            <!-- Success State -->
-            @if (deployment.status === 'completed') {
-              <div class="card-surface p-6">
-                <div class="flex items-center mb-4">
-                  <div
-                    class="h-12 w-12 rounded-full bg-green-500/15 flex items-center justify-center mr-4"
-                  >
-                    <ng-icon name="lucideCheck" class="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-foreground">Deployment Successful!</h3>
-                    <p class="text-sm text-muted-foreground">Your application is live</p>
-                  </div>
-                </div>
-
-                <div class="space-y-2">
-                  @if (appUrl(); as url) {
-                    <a
-                      [href]="url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-                    >
-                      <ng-icon name="lucideExternalLink" class="h-4 w-4 mr-2" />
-                      View Application
-                    </a>
-                  }
-                  <button
-                    (click)="viewApplicationDetails()"
-                    class="inline-flex items-center justify-center w-full rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-                  >
-                    Application Details
-                  </button>
-                  <button
-                    (click)="deployAnother()"
-                    class="inline-flex items-center justify-center w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-                  >
-                    Deploy Another
-                  </button>
-                </div>
-              </div>
-            }
-
-            <!-- Error State -->
-            @if (deployment.status === 'failed') {
-              <div class="bg-red-50 border border-red-200 rounded-lg p-6">
-                <div class="flex items-center mb-4">
-                  <div
-                    class="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center mr-4"
-                  >
-                    <ng-icon name="lucideTriangleAlert" class="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-red-900">Deployment Failed</h3>
-                    <p class="text-sm text-red-700">An error occurred</p>
-                  </div>
-                </div>
-
-                @if (deployment.errorMessage) {
-                  <div class="mb-4 p-3 bg-red-100 rounded text-sm text-red-800">
-                    {{ deployment.errorMessage }}
-                  </div>
-                }
-
-                <div class="space-y-2">
-                  <button
-                    (click)="retryDeployment()"
-                    class="inline-flex items-center justify-center w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
-                  >
-                    <ng-icon name="lucideRefreshCw" class="h-4 w-4 mr-2" />
-                    Retry Deployment
-                  </button>
-                  <button
-                    (click)="editConfiguration()"
-                    class="inline-flex items-center justify-center w-full rounded-md border border-red-300 bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-                  >
-                    Edit Configuration
-                  </button>
-                  <button
-                    (click)="navigateBack()"
-                    class="inline-flex items-center justify-center w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-                  >
-                    Back to Applications
-                  </button>
-                </div>
-              </div>
-            }
-
-            <!-- Deployment Info -->
-            <div class="bg-card border border-border rounded-lg p-4">
-              <h3 class="font-medium mb-3">Deployment Info</h3>
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                  <span class="text-muted-foreground">Operation ID:</span>
-                  <code class="text-xs bg-muted px-2 py-1 rounded">
-                    {{ deployment.operationId.substring(0, 12) }}...
-                  </code>
-                </div>
-                @if (deployment.applicationId) {
-                  <div class="flex justify-between">
-                    <span class="text-muted-foreground">App ID:</span>
-                    <code class="text-xs bg-muted px-2 py-1 rounded">
-                      {{ deployment.applicationId | maskId }}
-                    </code>
-                  </div>
-                }
-                <div class="flex justify-between">
-                  <span class="text-muted-foreground">Steps:</span>
-                  <span class="font-medium">
-                    {{ deployment.currentStepIndex + 1 }} /
-                    {{ deployment.totalSteps }}
-                  </span>
-                </div>
-                @if (deployment.estimatedDuration) {
-                  <div class="flex justify-between">
-                    <span class="text-muted-foreground">Est. Duration:</span>
-                    <span class="font-medium">~{{ deployment.estimatedDuration }}s</span>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Progress Info -->
-            @if (deployment.status === 'in_progress') {
-              <div class="bg-muted/40 border border-border rounded-lg p-4">
-                <div class="flex items-start gap-3">
-                  <ng-icon
-                    name="lucideLoader"
-                    class="h-4 w-4 text-muted-foreground mt-0.5 animate-spin flex-shrink-0"
+          <fl-panel title="Details">
+            <fl-key-value class="fl-kv--compact">
+              <fl-kv-item key="Operation ID">
+                <fl-copy-id
+                  [value]="deployment.operationId"
+                  [display]="deployment.operationId.substring(0, 12) + '…'"
+                  label="operation ID"
+                />
+              </fl-kv-item>
+              @if (deployment.applicationId) {
+                <fl-kv-item key="Application ID">
+                  <fl-copy-id
+                    [value]="deployment.applicationId"
+                    [display]="deployment.applicationId | maskId"
+                    label="application ID"
                   />
-                  <div>
-                    <h4 class="text-sm font-medium text-foreground mb-1">Deploying...</h4>
-                    <p class="text-xs text-muted-foreground">This may take a few minutes.</p>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
+                </fl-kv-item>
+              }
+              @if (application(); as app) {
+                <fl-kv-item key="Cluster">
+                  <fl-copy-id
+                    [value]="app.clusterId"
+                    [display]="app.clusterId | maskId"
+                    label="cluster ID"
+                  />
+                </fl-kv-item>
+                <fl-kv-item key="Namespace" [mono]="true">{{ app.k8sNamespace }}</fl-kv-item>
+                @if (app.imageRef) {
+                  <fl-kv-item key="Image">
+                    <fl-copy-id [value]="app.imageRef" label="image" />
+                  </fl-kv-item>
+                }
+              }
+              @if (appUrl(); as url) {
+                <fl-kv-item key="URL">
+                  <fl-copy-id [value]="url" label="URL" />
+                </fl-kv-item>
+              }
+              @if (deployment.estimatedDuration) {
+                <fl-kv-item key="Estimated duration">
+                  <span class="fl-mono fl-num">~{{ deployment.estimatedDuration }}s</span>
+                </fl-kv-item>
+              }
+            </fl-key-value>
+          </fl-panel>
         </div>
       } @else {
-        <!-- Loading State -->
-        <div class="flex items-center justify-center min-h-[400px]">
-          <div class="flex items-center gap-3 text-muted-foreground">
-            <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-            <span class="text-sm">Loading deployment...</span>
-          </div>
-        </div>
+        <fl-panel><fl-loading-state [rows]="5" /></fl-panel>
       }
     </div>
   `,
@@ -417,7 +217,26 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
   private readonly endpointsService = inject(AppEndpointsService);
 
   progress = signal<DeploymentProgress | null>(null);
-  elapsedTime = signal<string>('0s');
+  readonly application = signal<Application | null>(null);
+  protected readonly now = signal(Date.now());
+
+  protected readonly headerState = computed(() =>
+    deploymentState(this.progress()?.status ?? 'pending'),
+  );
+
+  protected readonly breadcrumb = computed<Crumb[]>(() => [
+    { label: 'Applications', link: '/apps/applications' },
+    { label: 'Deploy', link: '/apps/deploy/new' },
+    { label: this.progress()?.applicationName ?? 'Application' },
+  ]);
+
+  protected readonly elapsed = computed(() => {
+    const deployment = this.progress();
+    const seconds = secondsBetween(deployment?.startedAt, deployment?.completedAt ?? this.now());
+    return seconds === null ? '' : formatDuration(seconds);
+  });
+
+  protected readonly lastLog = computed(() => this.progress()?.logs.at(-1) ?? null);
 
   readonly appUrl = computed<string | null>(() => {
     const deployment = this.progress();
@@ -439,11 +258,11 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
 
   private endpointsLoadedFor: string | null = null;
 
-  private pollingIntervalId: any = null;
-  private elapsedIntervalId: any = null;
+  private pollingIntervalId: ReturnType<typeof setInterval> | null = null;
+  private elapsedIntervalId: ReturnType<typeof setInterval> | null = null;
   private operationId = '';
   private appId = '';
-  private readonly maxPolls = 200; // ~10 min at 3s
+  private readonly maxPolls = 200;
   private pollCount = 0;
 
   ngOnInit(): void {
@@ -477,7 +296,7 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
       currentStep: '',
       currentStepIndex: 0,
       totalSteps: DEPLOY_STEPS.length,
-      steps: DEPLOY_STEPS.map((s) => ({ ...s, status: 'pending' as const })),
+      steps: pendingDeploySteps(),
       logs: [],
       startedAt: new Date(),
     });
@@ -502,34 +321,32 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
     }
     this.pollCount++;
 
-    try {
-      const op: any = await firstValueFrom(
-        this.operationsApi.infrastructureOperationsControllerGetOperationStatus(this.operationId),
-      );
-      const mappedStatus = this.mapStatus(op.status);
-      const name = op.resourceName ?? op.metadata?.applicationName;
-      if (name) {
-        this.progress.update((p) => (p ? { ...p, applicationName: name } : p));
-      }
-      this.applyOperationUpdate({
-        percentage: op.progress ?? 0,
-        currentStep: op.currentStep ?? '',
-        totalSteps: op.totalSteps ?? DEPLOY_STEPS.length,
-        message: op.metadata?.stepDescription ?? '',
-        status: mappedStatus,
-        errorMessage: op.errorMessage,
-        appId: op.metadata?.applicationId ?? this.appId,
-        startedAt: op.startedAt,
-      });
+    const op = (await firstValueFrom(
+      this.operationsApi.infrastructureOperationsControllerGetOperationStatus(this.operationId),
+    ).catch(() => null)) as OperationStatusResponse | null;
+    if (!op) return;
 
-      if (mappedStatus === 'completed' || mappedStatus === 'failed') {
-        this.stopPolling();
-      }
-      if (mappedStatus === 'completed') {
-        await this.loadEndpointsForApp();
-      }
-    } catch {
-      // Keep polling on transient errors
+    const mappedStatus = mapDeploymentStatus(op.status);
+    const name = op.resourceName ?? op.metadata?.applicationName;
+    if (name) {
+      this.progress.update((p) => (p ? { ...p, applicationName: name } : p));
+    }
+    this.applyOperationUpdate({
+      percentage: op.progress ?? 0,
+      currentStep: op.currentStep ?? '',
+      totalSteps: op.totalSteps ?? DEPLOY_STEPS.length,
+      message: op.metadata?.stepDescription ?? '',
+      status: mappedStatus,
+      errorMessage: op.errorMessage,
+      appId: op.metadata?.applicationId ?? this.appId,
+      startedAt: op.startedAt,
+    });
+
+    if (mappedStatus === 'completed' || mappedStatus === 'failed') {
+      this.stopPolling();
+    }
+    if (mappedStatus === 'completed') {
+      await this.loadEndpointsForApp();
     }
   }
 
@@ -539,6 +356,7 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
     this.endpointsLoadedFor = appId;
     try {
       const app = await this.appService.getApplication(appId);
+      this.application.set(app);
       if (app?.clusterId) {
         await this.endpointsService.loadEndpoints(app.clusterId);
       }
@@ -561,7 +379,7 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
           status: 'in_progress',
         });
       },
-      onCompleted: (e) => {
+      onCompleted: () => {
         this.applyOperationUpdate({
           percentage: 100,
           currentStep: 'app_deploy_finalize',
@@ -599,14 +417,22 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
     this.progress.update((prev) => {
       if (!prev) return prev;
 
-      const mappedStatus = this.mapStatus(update.status);
-      const steps = this.buildSteps(update.currentStep, update.percentage, update.errorMessage);
+      const now = new Date();
+      const mappedStatus = mapDeploymentStatus(update.status);
+      const steps = buildDeploySteps(
+        prev.steps,
+        update.currentStep,
+        update.percentage,
+        update.errorMessage,
+        now,
+      );
       const runningIdx = steps.findIndex((s) => s.status === 'running');
       const allCompleted = steps.every((s) => s.status === 'completed');
       let currentStepIdx: number;
       if (runningIdx >= 0) currentStepIdx = runningIdx;
       else if (allCompleted) currentStepIdx = steps.length - 1;
       else currentStepIdx = -1;
+      const terminal = mappedStatus === 'completed' || mappedStatus === 'failed';
 
       return {
         ...prev,
@@ -619,126 +445,14 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
         errorMessage: update.errorMessage,
         applicationId: update.appId || prev.applicationId,
         startedAt: prev.startedAt ?? (update.startedAt ? new Date(update.startedAt) : undefined),
+        completedAt: terminal ? (prev.completedAt ?? now) : undefined,
         logs: update.message ? [...prev.logs, update.message].slice(-50) : prev.logs,
       };
     });
   }
 
-  private buildSteps(
-    currentStepId: string,
-    percentage: number,
-    errorMsg?: string,
-  ): DeploymentStep[] {
-    const allDone = percentage >= 100 && !errorMsg;
-    const currentIdx = DEPLOY_STEPS.findIndex((s) => s.id === currentStepId);
-    return DEPLOY_STEPS.map((s, i) => {
-      let status: DeploymentStep['status'] = 'pending';
-      if (allDone) {
-        status = 'completed';
-      } else if (i < currentIdx) {
-        status = 'completed';
-      } else if (i === currentIdx) {
-        status = errorMsg ? 'error' : 'running';
-      }
-      return {
-        ...s,
-        status,
-        errorMessage: i === currentIdx ? errorMsg : undefined,
-      };
-    });
-  }
-
-  private mapStatus(apiStatus: string): DeploymentProgress['status'] {
-    if (apiStatus === 'COMPLETED' || apiStatus === 'completed') return 'completed';
-    if (apiStatus === 'FAILED' || apiStatus === 'failed') return 'failed';
-    if (apiStatus === 'IN_PROGRESS' || apiStatus === 'in_progress') return 'in_progress';
-    return 'pending';
-  }
-
   startElapsedTimer(): void {
-    this.elapsedIntervalId = setInterval(() => {
-      const deployment = this.progress();
-      if (deployment?.startedAt) {
-        const elapsed = Math.floor((Date.now() - new Date(deployment.startedAt).getTime()) / 1000);
-        this.elapsedTime.set(this.formatDuration(elapsed));
-      }
-    }, 1000);
-  }
-
-  getElapsedTime(startedAt: Date): string {
-    const elapsed = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
-    return this.formatDuration(elapsed);
-  }
-
-  formatDuration(seconds: number): string {
-    if (seconds < 60) {
-      return `${seconds}s`;
-    }
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
-  }
-
-  getStatusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      pending: 'Pending',
-      in_progress: 'In Progress',
-      completed: 'Completed',
-      failed: 'Failed',
-    };
-    return labels[status] || status;
-  }
-
-  getStatusBadgeClass(status: string): string {
-    switch (status) {
-      case 'completed':
-        return 'badge badge-success';
-      case 'in_progress':
-        return 'badge badge-in-progress';
-      case 'failed':
-        return 'badge badge-error';
-      default:
-        return 'badge badge-pending';
-    }
-  }
-
-  getProgressBarClass(status: string): string {
-    switch (status) {
-      case 'completed':
-        return 'bg-primary';
-      case 'failed':
-        return 'bg-destructive';
-      default:
-        return 'bg-muted-foreground';
-    }
-  }
-
-  getStepIconClass(status: string): string {
-    switch (status) {
-      case 'completed':
-        return 'step-icon step-icon-completed';
-      case 'running':
-        return 'step-icon step-icon-running';
-      case 'error':
-        return 'step-icon step-icon-error';
-      default:
-        return 'step-icon step-icon-pending';
-    }
-  }
-
-  getStepTitleClass(status: string): string {
-    const baseClass = 'text-sm font-medium';
-
-    switch (status) {
-      case 'completed':
-        return `${baseClass} text-foreground`;
-      case 'running':
-        return `${baseClass} text-primary`;
-      case 'error':
-        return `${baseClass} text-red-600`;
-      default:
-        return `${baseClass} text-muted-foreground`;
-    }
+    this.elapsedIntervalId = setInterval(() => this.now.set(Date.now()), 1000);
   }
 
   copyLogs(): void {

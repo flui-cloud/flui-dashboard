@@ -1,60 +1,54 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DeployWizardStateService } from '../../../service/deploy-wizard-state.service';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlTag } from '../../../../ui/primitives/tag';
 
 @Component({
   selector: 'app-catalog-config-step',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, FlButton, FlTag],
+  host: { class: 'flex flex-col gap-5' },
   template: `
-    <div class="space-y-5">
-      <div>
-        <h3 class="text-base font-semibold">Editable settings</h3>
-        <p class="text-sm text-muted-foreground">
-          Defaults are pre-filled from the app manifest. Override any value you need to change.
-        </p>
-      </div>
+    <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+      Defaults come from the app manifest. Override a value only where you need to.
+    </p>
 
-      @for (env of envs(); track env.name) {
-        <div>
-          <label class="mb-1.5 flex items-center gap-2 text-sm font-medium">
-            <span class="font-mono text-xs text-foreground">{{ env.name }}</span>
-            @if (isOverridden(env.name, env.default)) {
-              <span
-                class="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary"
-              >
-                Overridden
-              </span>
+    @for (env of envs(); track env.name) {
+      @let id = 'catalog-env-' + env.name;
+      @let overridden = isOverridden(env.name, env.default);
+      <div class="fl-field">
+        <div class="flex items-center justify-between gap-2">
+          <label class="fl-field__label flex items-center gap-2" [attr.for]="id">
+            <span class="fl-mono">{{ env.name }}</span>
+            @if (overridden) {
+              <fl-tag>Overridden</fl-tag>
             }
           </label>
+          @if (env.default !== undefined && overridden) {
+            <button
+              flButton="ghost"
+              size="sm"
+              type="button"
+              (click)="resetToDefault(env.name, env.default)"
+            >
+              Reset to default
+            </button>
+          }
+        </div>
+        <div class="fl-input fl-input--lg">
           <input
+            [id]="id"
             type="text"
             [ngModel]="valueFor(env.name)"
             (ngModelChange)="setValue(env.name, $event)"
             [placeholder]="env.default ?? 'Enter a value'"
-            class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm
-                   focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
-          <div class="mt-1 flex items-center justify-between gap-2">
-            @if (env.description) {
-              <p class="text-xs text-muted-foreground">{{ env.description }}</p>
-            } @else {
-              <span></span>
-            }
-            @if (env.default !== undefined && isOverridden(env.name, env.default)) {
-              <button
-                type="button"
-                (click)="resetToDefault(env.name, env.default)"
-                class="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Reset to default
-              </button>
-            }
-          </div>
         </div>
-      }
-    </div>
+        @if (env.description) {
+          <span class="fl-field__hint">{{ env.description }}</span>
+        }
+      </div>
+    }
   `,
 })
 export class CatalogConfigStepComponent {

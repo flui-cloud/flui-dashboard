@@ -1,0 +1,114 @@
+<div class="fl-page">
+  @let state = headerState();
+  @let active = phase() === 'building' || phase() === 'deploying';
+  <fl-page-header title="Building application" [breadcrumb]="breadcrumb()">
+    <fl-status headerStatus [tone]="state.tone" [label]="state.label" />
+    @if (phase() === 'building') {
+      <span headerMeta class="fl-num">{{ progressPercent() }}%</span>
+    } @else if (phase() === 'deploying') {
+      <span headerMeta class="fl-num">{{ deployProgress() }}%</span>
+    }
+    <span headerMeta>
+      Elapsed <span class="fl-mono fl-num">{{ elapsed() }}</span>
+    </span>
+    @if (active) {
+      <span headerMeta>This may take a few minutes</span>
+    }
+    <ng-container headerActions>
+      @if (phase() === 'building') {
+        <button flButton type="button" [disabled]="isCancelling()" (click)="cancelBuild()">
+          @if (isCancelling()) {
+            <fl-spinner label="Cancelling build" />
+          } @else {
+            <fl-icon name="lucideSquare" />
+          }
+          Cancel build
+        </button>
+      } @else if (phase() === 'completed') {
+        <button flButton type="button" (click)="viewBuildHistory()">Build history</button>
+        <button flButton="primary" type="button" (click)="viewApplication()">
+          <fl-icon name="lucideExternalLink" />
+          Open application
+        </button>
+      }
+    </ng-container>
+  </fl-page-header>
+
+  @if (connectionLost() && active) {
+    <fl-alert tone="warning" title="Connection lost">
+      The build is still running. Reconnecting…
+    </fl-alert>
+  }
+
+  @if (phase() === 'failed') {
+    <fl-alert tone="error" [title]="failureTitle()">
+      @if (isResourceError()) {
+        The cluster did not have enough resources to run the build job. Free up resources on the
+        cluster, or start a new build once autoscaling completes.
+        @if (errorMessage()) {
+          <span class="fl-mono mt-2 block break-all">{{ errorMessage() }}</span>
+        }
+      } @else {
+        {{ errorMessage() || 'The build stopped before it finished.' }}
+      }
+      <ng-container alertActions>
+        <button
+          flButton="primary"
+          size="sm"
+          type="button"
+          [disabled]="isRetrying()"
+          (click)="retryBuild()"
+        >
+          @if (isRetrying()) {
+            <fl-spinner label="Starting a new build" />
+          } @else {
+            <fl-icon name="lucideRefreshCw" />
+          }
+          {{ isResourceError() ? 'Retry when resources free up' : 'Retry build' }}
+        </button>
+        <button flButton size="sm" type="button" (click)="viewBuildHistory()">Build history</button>
+      </ng-container>
+    </fl-alert>
+  }
+
+  <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+    <div class="fl-stack lg:col-span-2">
+      <app-deploy-progress-steps [steps]="steps()" [now]="now()" />
+      <app-build-log-panel
+        [lines]="buildLogs()"
+        [waiting]="phase() === 'building'"
+        (copied)="copyLogs()"
+      />
+    </div>
+
+    <fl-panel title="Details">
+      <fl-key-value class="fl-kv--compact">
+        <fl-kv-item key="Build ID">
+          <fl-copy-id [value]="buildId()" [display]="shortId(buildId())" label="build ID" />
+        </fl-kv-item>
+        <fl-kv-item key="Application ID">
+          <fl-copy-id
+            [value]="applicationId()"
+            [display]="applicationId() | maskId"
+            label="application ID"
+          />
+        </fl-kv-item>
+        @if (detectedFramework()) {
+          <fl-kv-item key="Runtime">{{ detectedFramework() }}</fl-kv-item>
+        }
+        @if (detectedFrontendFramework()) {
+          <fl-kv-item key="Frontend">{{ detectedFrontendFramework() }}</fl-kv-item>
+        }
+        @if (detectedPort()) {
+          <fl-kv-item key="Port" [mono]="true">{{ detectedPort() }}</fl-kv-item>
+        }
+        @if (buildCommand()) {
+          <fl-kv-item key="Build command" [mono]="true">{{ buildCommand() }}</fl-kv-item>
+        }
+        @if (startCommand()) {
+          <fl-kv-item key="Start command" [mono]="true">{{ startCommand() }}</fl-kv-item>
+        }
+      </fl-key-value>
+    </fl-panel>
+  </div>
+</div>

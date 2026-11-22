@@ -1,0 +1,94 @@
+@let inst = install();
+@if (inst && waiting(); as wait) {
+  <div class="flex flex-col gap-4" data-testid="install-waiting-for-room">
+    <fl-status tone="warning" label="Waiting for room" />
+    <div class="flex flex-col gap-1">
+      <h3 class="m-0 text-fl-section-title">
+        {{ inst.displayName }} is installed and waiting for room
+      </h3>
+      <p class="m-0 text-fl-body-sm text-fl-ink-secondary">
+        {{
+          wait.says ??
+            'No node has room for what it reserves yet. It starts on its own as soon as one joins.'
+        }}
+      </p>
+    </div>
+    <div class="fl-row">
+      <a flButton="primary" [routerLink]="['/cluster', inst.clusterId, 'scaling']">Open scaling</a>
+      @if (detailRoute(); as route) {
+        <a flButton [routerLink]="route">
+          <fl-icon name="lucideLayoutDashboard" />
+          {{ isComposedInstall() ? 'Open bundle' : 'Open app details' }}
+        </a>
+      }
+    </div>
+  </div>
+} @else if (inst) {
+  <div class="flex flex-col gap-4">
+    <fl-status tone="success" label="Running" />
+    <div class="flex flex-col gap-1">
+      <h3 class="m-0 text-fl-section-title">{{ inst.displayName }} is running</h3>
+      @if (!inst.resolvedFqdn && !(isInternalApp() && internalApp()?.internalUrl)) {
+        <p class="m-0 text-fl-body-sm text-fl-ink-secondary">
+          @if (state.catalogDetail()?.appType === 'building-block') {
+            An internal service: other apps on the same cluster can reach it.
+          } @else if (isInternalApp()) {
+            It gets a private URL on the cluster's internal domain. It is reachable from the
+            internet, and Flui sign-in is required to open it.
+          } @else {
+            Add a domain from the app's DNS section to expose it publicly.
+          }
+        </p>
+      }
+    </div>
+
+    @if (inst.resolvedFqdn) {
+      @let r = readiness();
+      <fl-key-value>
+        <fl-kv-item key="Address" [mono]="true">{{ inst.resolvedFqdn }}</fl-kv-item>
+        <fl-kv-item key="Endpoint">
+          <fl-status [tone]="toneOf(r.state)" [label]="r.label" />
+          @if (r.state !== 'failed' && r.detail) {
+            <span class="mt-1 block text-fl-caption text-fl-ink-muted">{{ r.detail }}</span>
+          }
+        </fl-kv-item>
+      </fl-key-value>
+      @if (r.state === 'failed') {
+        <fl-alert tone="error" [title]="r.label">{{ r.detail }}</fl-alert>
+      }
+    } @else if (isInternalApp()) {
+      @let ir = internalReadiness();
+      <fl-key-value>
+        @if (internalApp()?.internalUrl; as url) {
+          <fl-kv-item key="Address" [mono]="true">{{ url }}</fl-kv-item>
+        }
+        <fl-kv-item key="Endpoint">
+          <fl-status [tone]="toneOf(ir.state)" [label]="ir.label" />
+          @if (ir.state !== 'failed' && ir.detail) {
+            <span class="mt-1 block text-fl-caption text-fl-ink-muted">{{ ir.detail }}</span>
+          }
+        </fl-kv-item>
+      </fl-key-value>
+      @if (ir.state === 'failed') {
+        <fl-alert tone="error" [title]="ir.label">{{ ir.detail }}</fl-alert>
+      }
+    }
+
+    <div class="fl-row">
+      @if (openTarget(); as href) {
+        <a flButton="primary" [href]="href" target="_blank" rel="noopener noreferrer">
+          <fl-icon name="lucideExternalLink" />
+          Open app
+        </a>
+      }
+      @if (detailRoute(); as route) {
+        <a [flButton]="detailsVariant()" [routerLink]="route">
+          <fl-icon name="lucideLayoutDashboard" />
+          {{ isComposedInstall() ? 'Open bundle' : 'Open app details' }}
+        </a>
+      }
+    </div>
+  </div>
+} @else {
+  <fl-status tone="progress" label="Waiting for the install to finish" />
+}

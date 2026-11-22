@@ -1,202 +1,131 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowRight,
-  lucideCircleAlert,
-  lucideGlobe,
-  lucideLoader,
-  lucideShieldCheck,
-  lucideTriangleAlert,
-  lucideZap,
-  lucideLock,
-} from '@ng-icons/lucide';
 import { DeployWizardStateService } from '../../../service/deploy-wizard-state.service';
 import { CatalogService } from '../../../service/catalog.service';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlField } from '../../../../ui/patterns/field';
+import { FlKeyValue, FlKvItem } from '../../../../ui/patterns/key-value';
+import { FlStatus } from '../../../../ui/primitives/status';
+
+type DomainMode = 'auto' | 'custom' | 'skip';
 
 @Component({
   selector: 'app-catalog-domain-step',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon],
-  providers: [
-    provideIcons({
-      lucideArrowRight,
-      lucideCircleAlert,
-      lucideGlobe,
-      lucideLoader,
-      lucideShieldCheck,
-      lucideTriangleAlert,
-      lucideZap,
-      lucideLock,
-    }),
-  ],
+  imports: [FormsModule, FlAlert, FlField, FlKeyValue, FlKvItem, FlStatus],
+  host: { class: 'flex flex-col gap-5' },
   template: `
-    <div class="space-y-5">
-      <div>
-        <h3 class="text-base font-semibold">Domain & endpoint</h3>
-        <p class="text-sm text-muted-foreground">
-          Pick how this app will be reached. Flui provisions DNS and TLS automatically when your
-          cluster is ready.
-        </p>
-      </div>
+    <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+      How people reach the app. Flui sets up DNS and TLS once the cluster is ready.
+    </p>
 
-      @if (catalog.capabilitiesLoading()) {
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-          Checking cluster capabilities…
-        </div>
-      } @else if (catalog.capabilitiesError()) {
-        <div
-          class="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
-        >
-          <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
-          <div class="flex-1">
-            {{ catalog.capabilitiesError() }}
-          </div>
-        </div>
+    @if (catalog.capabilitiesLoading()) {
+      <fl-status tone="progress" label="Checking cluster capabilities" />
+    } @else if (catalog.capabilitiesError()) {
+      <fl-alert tone="error" title="Could not check the cluster">{{
+        catalog.capabilitiesError()
+      }}</fl-alert>
+    } @else {
+      @let caps = catalog.capabilities();
+
+      @if (domainLocked()) {
+        <fl-alert tone="info" title="Endpoint set by the app">
+          The app manifest fixes the hostname, so it cannot be changed here. Flui creates the
+          endpoint during install.
+        </fl-alert>
+        @if (autoFqdnPreview()) {
+          <fl-key-value>
+            <fl-kv-item key="Address" [mono]="true">https://{{ autoFqdnPreview() }}</fl-kv-item>
+          </fl-key-value>
+        }
       } @else {
-        @let caps = catalog.capabilities();
-
-        <!-- Manifest-locked: app declares the endpoint config and the user can't override it. -->
-        @if (domainLocked()) {
-          <div class="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
-            <div class="flex items-center gap-2">
-              <ng-icon name="lucideLock" class="h-4 w-4 text-muted-foreground" />
-              <p class="text-sm font-medium">Endpoint configured by the app</p>
-            </div>
-            <p class="text-xs text-muted-foreground">
-              This app's manifest pins the hostname source — you can't override it from the wizard.
-              Flui will create the endpoint automatically.
-            </p>
-            @if (autoFqdnPreview()) {
-              <div class="mt-2 flex items-baseline gap-2 font-mono text-xs">
-                <span class="text-muted-foreground">https://</span>
-                <span class="text-foreground">{{ autoFqdnPreview() }}</span>
-              </div>
+        <fieldset class="fl-fieldset">
+          <legend>Endpoint</legend>
+          <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
+            @for (option of modes(); track option.value) {
+              <label class="fl-radiocard" [class.is-checked]="state.domainMode() === option.value">
+                <input
+                  type="radio"
+                  name="catalog-domain-mode"
+                  [value]="option.value"
+                  [checked]="state.domainMode() === option.value"
+                  (change)="setMode(option.value)"
+                />
+                <span class="fl-radiocard__text">
+                  <span class="fl-radiocard__title">{{ option.title }}</span>
+                  <span class="fl-radiocard__desc">{{ option.description }}</span>
+                </span>
+              </label>
             }
           </div>
-        } @else {
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <button
-              type="button"
-              (click)="setMode('auto')"
-              [class]="modeCardClass(state.domainMode() === 'auto')"
-            >
-              <ng-icon [name]="autoModeIcon()" class="h-5 w-5 text-primary" />
-              <div class="mt-2 text-sm font-medium">{{ autoModeLabel() }}</div>
-              <p class="mt-1 text-xs text-muted-foreground">
-                {{ autoModeDescription() }}
-              </p>
-            </button>
+        </fieldset>
 
-            <button
-              type="button"
-              (click)="setMode('custom')"
-              [class]="modeCardClass(state.domainMode() === 'custom')"
-            >
-              <ng-icon name="lucideGlobe" class="h-5 w-5 text-primary" />
-              <div class="mt-2 text-sm font-medium">Custom FQDN</div>
-              <p class="mt-1 text-xs text-muted-foreground">
-                Bring your own hostname. Make sure DNS points to the cluster.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              (click)="setMode('skip')"
-              [class]="modeCardClass(state.domainMode() === 'skip')"
-            >
-              <ng-icon name="lucideArrowRight" class="h-5 w-5 text-primary" />
-              <div class="mt-2 text-sm font-medium">Configure later</div>
-              <p class="mt-1 text-xs text-muted-foreground">
-                Install without an endpoint — add DNS/TLS from the app page afterwards.
-              </p>
-            </button>
+        @if (state.domainMode() === 'auto') {
+          <div class="flex flex-col gap-2">
+            <fl-key-value>
+              <fl-kv-item key="Address" [mono]="true">https://{{ autoFqdnPreview() }}</fl-kv-item>
+            </fl-key-value>
+            <p class="m-0 text-fl-caption text-fl-ink-muted">
+              @if (caps?.canAutoAssignDomain) {
+                The final name may carry a short random suffix to avoid collisions.
+              } @else {
+                No domain is connected, so Flui creates a test address that points to the cluster.
+              }
+              @if (caps?.certificateProvider === 'lets_encrypt_staging') {
+                The certificate is in test mode, so browsers show a warning.
+              }
+            </p>
           </div>
+        }
 
-          @if (state.domainMode() === 'auto') {
-            <div class="rounded-lg border border-border bg-muted/30 p-4">
-              <div class="text-xs uppercase tracking-wide text-muted-foreground">Preview</div>
-              <div class="mt-1 flex items-baseline gap-2 font-mono text-sm">
-                <span class="text-muted-foreground">https://</span>
-                <span class="text-foreground">{{ autoFqdnPreview() }}</span>
-              </div>
-              <p class="mt-2 text-[11px] text-muted-foreground">
-                @if (caps?.canAutoAssignDomain) {
-                  The final slug may include a short random suffix to avoid collisions.
-                } @else {
-                  No domain connected — Flui will create a test address pointing to your cluster.
-                }
-                @if (caps?.certificateProvider === 'lets_encrypt_staging') {
-                  Certificate is in test mode (browser will show a warning).
-                }
-              </p>
-            </div>
-          }
-
-          @if (state.domainMode() === 'custom') {
-            <div>
-              <label class="mb-1.5 block text-sm font-medium">
-                Domain <span class="text-red-500">*</span>
-              </label>
+        @if (state.domainMode() === 'custom') {
+          <fl-field
+            label="Domain"
+            for="catalog-domain"
+            hint="Point a DNS record for this hostname to the cluster before the install ends, or the certificate cannot be issued."
+            [error]="
+              !state.catalogDomainValid() && state.requestedDomain().length > 0
+                ? 'Enter a fully qualified domain name, such as app.example.com.'
+                : null
+            "
+          >
+            <div class="fl-input fl-input--lg">
               <input
+                id="catalog-domain"
                 type="text"
                 inputmode="url"
                 [ngModel]="state.requestedDomain()"
                 (ngModelChange)="state.requestedDomain.set($event)"
                 placeholder="app.example.com"
-                class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm
-                       focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
-              @if (!state.catalogDomainValid() && state.requestedDomain().length > 0) {
-                <p class="mt-1 text-xs text-destructive">
-                  Enter a valid fully-qualified domain name.
-                </p>
-              }
-              <p class="mt-1 text-xs text-muted-foreground">
-                Make sure a DNS record for this hostname points to your cluster before the install
-                finishes, or the endpoint will fail certificate provisioning.
-              </p>
             </div>
-          }
+          </fl-field>
+        }
 
-          @if (state.domainMode() === 'skip') {
-            <div
-              class="rounded-lg border border-border bg-muted/30 p-4 text-xs text-muted-foreground"
-            >
-              No endpoint will be provisioned. Once the app is running, open its page and add a
-              domain from the DNS tab.
-            </div>
-          }
+        @if (state.domainMode() === 'skip') {
+          <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+            No endpoint is created. Once the app runs, add a domain from its DNS section.
+          </p>
+        }
 
-          @if (state.domainMode() !== 'skip') {
-            <label
-              class="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 transition hover:bg-accent/40"
-            >
+        @if (state.domainMode() !== 'skip') {
+          <div class="flex flex-col gap-1">
+            <label class="fl-check">
               <input
                 type="checkbox"
                 [ngModel]="state.enableTls()"
                 (ngModelChange)="state.enableTls.set($event)"
                 name="enable-tls"
-                class="mt-0.5 h-4 w-4 rounded border-input accent-primary"
               />
-              <span class="block">
-                <span class="flex items-center gap-1.5 text-sm font-medium">
-                  <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-primary" />
-                  Provision an HTTPS certificate
-                </span>
-                <span class="mt-0.5 block text-xs text-muted-foreground">
-                  On by default. Turn off to serve the endpoint over plain HTTP — DNS only, no
-                  per-app certificate. Useful to avoid certificate rate limits or when TLS is
-                  terminated upstream.
-                </span>
-              </span>
+              <span class="font-medium">Provision an HTTPS certificate</span>
             </label>
-          }
+            <p class="m-0 pl-6 text-fl-caption text-fl-ink-muted">
+              Turn off to serve plain HTTP with DNS only, for example to avoid certificate rate
+              limits or when TLS ends upstream.
+            </p>
+          </div>
         }
       }
-    </div>
+    }
   `,
 })
 export class CatalogDomainStepComponent {
@@ -214,40 +143,41 @@ export class CatalogDomainStepComponent {
     }
     const zone = caps?.zoneName;
     if (zone) return `${slug}-xxxx.${zone}`;
-    // No DNS zone → backend will fall back to nip.io against the master IP.
     return `${slug}-xxxx.<cluster-ip>.nip.io`;
   });
 
-  /** Manifest declares `userCustomizable=false` — the user can't override the FQDN.  */
   protected readonly domainLocked = computed(
     () => this.state.catalogDetail()?.domain?.userCustomizable === false,
   );
 
-  /** Cluster has a managed DNS zone & wildcard issuer → "auto" means subdomain on the cluster zone.
-   *  Otherwise "auto" means a nip.io fallback off the master IP. */
   protected readonly autoModeLabel = computed(() =>
     this.catalog.capabilities()?.canAutoAssignDomain ? 'Auto-assigned' : 'Test address',
   );
 
-  protected readonly autoModeIcon = computed(() =>
-    this.catalog.capabilities()?.canAutoAssignDomain ? 'lucideShieldCheck' : 'lucideZap',
-  );
-
   protected readonly autoModeDescription = computed(() =>
     this.catalog.capabilities()?.canAutoAssignDomain
-      ? "Flui picks a subdomain under your cluster's domain, with a free certificate."
-      : 'Instant address derived from your cluster IP — no DNS setup needed.',
+      ? "Flui picks a subdomain of the cluster's domain, with a free certificate."
+      : 'An address derived from the cluster IP, with no DNS setup.',
   );
 
-  setMode(mode: 'auto' | 'custom' | 'skip'): void {
+  protected readonly modes = computed<{ value: DomainMode; title: string; description: string }[]>(
+    () => [
+      { value: 'auto', title: this.autoModeLabel(), description: this.autoModeDescription() },
+      {
+        value: 'custom',
+        title: 'Custom domain',
+        description: 'Bring your own hostname and point its DNS to the cluster.',
+      },
+      {
+        value: 'skip',
+        title: 'Configure later',
+        description: 'Install without an endpoint and add DNS and TLS from the app later.',
+      },
+    ],
+  );
+
+  setMode(mode: DomainMode): void {
     this.state.domainMode.set(mode);
     if (mode !== 'custom') this.state.requestedDomain.set('');
-  }
-
-  modeCardClass(active: boolean): string {
-    const base = 'flex flex-col items-start rounded-lg border p-4 text-left transition w-full';
-    return active
-      ? `${base} border-primary bg-primary/5`
-      : `${base} border-border hover:bg-accent/40`;
   }
 }

@@ -1,32 +1,25 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AppConfigService } from '../../../../core/services/app-config.service';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideCircleCheck,
-  lucideExternalLink,
-  lucideLayoutDashboard,
-  lucideLoader,
-  lucideRocket,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink, lucideLayoutDashboard } from '@ng-icons/lucide';
 import { DeployWizardStateService } from '../../../service/deploy-wizard-state.service';
 import { AppEndpointsService } from '../../../service/app-endpoints.service';
 import { ApplicationService } from '../../../service/application.service';
-import { evaluateEndpointReadiness } from '../../../model/endpoint-readiness';
+import {
+  EndpointReadinessState,
+  evaluateEndpointReadiness,
+} from '../../../model/endpoint-readiness';
 import { buildOpenAppUrl } from '../../../model/open-app-url';
 import { CreateApplicationDto } from '../../../../core/api/model/createApplicationDto';
 import { ApplicationResponseDto } from '../../../../core/api/model/applicationResponseDto';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../../ui/patterns/key-value';
+import { ButtonVariant, FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../../ui/primitives/status';
 
 interface InternalReadiness {
   state: 'loading' | 'pending' | 'failed' | 'ready';
@@ -38,187 +31,9 @@ interface InternalReadiness {
 
 @Component({
   selector: 'app-catalog-success-step',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, NgIcon],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideCircleCheck,
-      lucideExternalLink,
-      lucideLayoutDashboard,
-      lucideLoader,
-      lucideRocket,
-    }),
-  ],
-  template: `
-    @let inst = install();
-    @if (inst && waiting(); as wait) {
-      <div
-        class="flex flex-col items-center gap-4 py-6 text-center"
-        data-testid="install-waiting-for-room"
-      >
-        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10">
-          <ng-icon name="lucideLoader" class="h-8 w-8 text-amber-500 animate-spin" />
-        </div>
-        <div class="space-y-1 max-w-lg">
-          <h3 class="text-lg font-semibold text-foreground">
-            {{ inst.displayName }} is installed and waiting for room
-          </h3>
-          <p class="text-sm text-muted-foreground">
-            {{
-              wait.says ??
-                'No node has room for what it reserves yet. It starts on its own as soon as one joins.'
-            }}
-          </p>
-        </div>
-        <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <a
-            [routerLink]="['/cluster', inst.clusterId, 'scaling']"
-            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Open scaling
-          </a>
-          @if (detailRoute(); as route) {
-            <a
-              [routerLink]="route"
-              class="inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-            >
-              <ng-icon name="lucideLayoutDashboard" class="h-4 w-4" />
-              {{ isComposedInstall() ? 'Bundle details' : 'App details' }}
-            </a>
-          }
-        </div>
-      </div>
-    } @else if (inst) {
-      <div class="flex flex-col items-center gap-4 py-6 text-center">
-        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10">
-          <ng-icon name="lucideCircleCheck" class="h-8 w-8 text-green-500" />
-        </div>
-        <div class="space-y-1">
-          <h3 class="text-lg font-semibold text-foreground">{{ inst.displayName }} is running</h3>
-          @if (inst.resolvedFqdn) {
-            <p class="text-sm text-muted-foreground">
-              Available at
-              <span class="font-mono text-foreground">{{ inst.resolvedFqdn }}</span>
-            </p>
-          } @else if (isInternalApp() && internalApp()?.internalUrl) {
-            <p class="text-sm text-muted-foreground">
-              Available at
-              <span class="font-mono text-foreground">{{ internalApp()!.internalUrl }}</span>
-            </p>
-          } @else if (state.catalogDetail()?.appType === 'building-block') {
-            <p class="text-sm text-muted-foreground">
-              This is an internal service — other apps on the same cluster can reach it.
-            </p>
-          } @else if (isInternalApp()) {
-            <p class="text-sm text-muted-foreground">
-              Gets a private URL on your cluster's internal domain, protected by Flui
-              authentication. Accessible from the internet — Flui login required to open.
-            </p>
-          } @else {
-            <p class="text-sm text-muted-foreground">
-              The app is running. Add a domain from the DNS tab to expose it publicly.
-            </p>
-          }
-        </div>
-
-        @if (inst.resolvedFqdn) {
-          @let r = readiness();
-          @if (r.state === 'cert-pending' || r.state === 'dns-pending' || r.state === 'loading') {
-            <div
-              class="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground max-w-md"
-            >
-              <ng-icon name="lucideLoader" class="h-4 w-4 mt-0.5 animate-spin text-primary" />
-              <div class="flex-1 text-left">
-                <p class="font-medium text-foreground">{{ r.label }}</p>
-                @if (r.detail) {
-                  <p class="mt-0.5">{{ r.detail }}</p>
-                }
-              </div>
-            </div>
-          } @else if (r.state === 'failed') {
-            <div
-              class="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive max-w-md"
-            >
-              <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
-              <div class="flex-1 text-left">
-                <p class="font-medium">{{ r.label }}</p>
-                @if (r.detail) {
-                  <p class="mt-0.5">{{ r.detail }}</p>
-                }
-              </div>
-            </div>
-          }
-        } @else if (isInternalApp()) {
-          @let ir = internalReadiness();
-          @if (ir.state === 'pending' || ir.state === 'loading') {
-            <div
-              class="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground max-w-md"
-            >
-              <ng-icon name="lucideLoader" class="h-4 w-4 mt-0.5 animate-spin text-primary" />
-              <div class="flex-1 text-left">
-                <p class="font-medium text-foreground">{{ ir.label }}</p>
-                @if (ir.detail) {
-                  <p class="mt-0.5">{{ ir.detail }}</p>
-                }
-              </div>
-            </div>
-          } @else if (ir.state === 'failed') {
-            <div
-              class="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive max-w-md"
-            >
-              <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
-              <div class="flex-1 text-left">
-                <p class="font-medium">{{ ir.label }}</p>
-                @if (ir.detail) {
-                  <p class="mt-0.5">{{ ir.detail }}</p>
-                }
-              </div>
-            </div>
-          }
-        }
-
-        <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-          @if (inst.resolvedFqdn && readiness().isReady) {
-            <a
-              [href]="openAppUrl()"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm
-                     font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              <ng-icon name="lucideRocket" class="h-4 w-4" />
-              Open app
-              <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-            </a>
-          } @else if (
-            isInternalApp() && internalReadiness().isReady && internalApp()?.internalUrl
-          ) {
-            <a
-              [href]="internalApp()!.internalUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm
-                     font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              <ng-icon name="lucideRocket" class="h-4 w-4" />
-              Open app
-              <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-            </a>
-          }
-          @if (detailRoute(); as route) {
-            <a [routerLink]="route" [class]="appDetailsButtonClass()">
-              <ng-icon name="lucideLayoutDashboard" class="h-4 w-4" />
-              {{ isComposedInstall() ? 'Bundle details' : 'App details' }}
-            </a>
-          }
-        </div>
-      </div>
-    } @else {
-      <p class="text-sm text-muted-foreground">Waiting for install to finish…</p>
-    }
-  `,
+  imports: [RouterLink, FlAlert, FlKeyValue, FlKvItem, FlButton, FlIcon, FlStatus],
+  providers: [provideIcons({ lucideExternalLink, lucideLayoutDashboard })],
+  templateUrl: './catalog-success-step.component.html',
 })
 export class CatalogSuccessStepComponent implements OnDestroy {
   protected readonly state = inject(DeployWizardStateService);
@@ -227,7 +42,6 @@ export class CatalogSuccessStepComponent implements OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly appConfig = inject(AppConfigService);
 
-  /** Set when an installed app is declared but no node has room for it yet. */
   protected readonly waiting = signal<{ says: string | null } | null>(null);
   private waitingChecked: string | null = null;
 
@@ -252,9 +66,6 @@ export class CatalogSuccessStepComponent implements OnDestroy {
   private pollingAbort = false;
   private internalPollingAbort = false;
 
-  /** True when the install targets an internal-exposure app (manifest `exposure: "internal"`
-   *  or user opted into Internal for a privatizable public app). Building blocks are excluded:
-   *  they never surface a user-facing URL. */
   protected readonly isInternalApp = computed(() => {
     const detail = this.state.catalogDetail();
     if (!detail || detail.appType === 'building-block') return false;
@@ -280,14 +91,11 @@ export class CatalogSuccessStepComponent implements OnDestroy {
 
   protected readonly readiness = computed(() => evaluateEndpointReadiness(this.matchedEndpoint()));
 
-  /** Readiness of the internal URL, mirroring the AppOverviewTab pattern:
-   *  an internal app is ready once the backend populates `internalUrl` on the
-   *  Application (which happens after the internal DNS + wildcard TLS reconcile). */
   protected readonly internalReadiness = computed<InternalReadiness>(() => {
     if (!this.isInternalApp()) {
       return {
         state: 'loading',
-        label: 'Checking internal endpoint…',
+        label: 'Checking internal endpoint',
         isReady: false,
         isTerminal: false,
       };
@@ -296,7 +104,7 @@ export class CatalogSuccessStepComponent implements OnDestroy {
     if (!app) {
       return {
         state: 'loading',
-        label: 'Checking internal endpoint…',
+        label: 'Checking internal endpoint',
         isReady: false,
         isTerminal: false,
       };
@@ -316,23 +124,32 @@ export class CatalogSuccessStepComponent implements OnDestroy {
     }
     return {
       state: 'pending',
-      label: 'Setting up internal endpoint…',
+      label: 'Setting up internal endpoint',
       detail: 'Flui is configuring the internal DNS and TLS certificate. This takes a few minutes.',
       isReady: false,
       isTerminal: false,
     };
   });
 
-  protected readonly appDetailsButtonClass = computed(() => {
-    // Secondary styling when "Open app" is visible, primary otherwise.
+  protected readonly openTarget = computed<string | null>(() => {
+    if (this.install()?.resolvedFqdn && this.readiness().isReady) return this.openAppUrl();
+    const internalUrl = this.internalApp()?.internalUrl;
+    if (this.isInternalApp() && this.internalReadiness().isReady && internalUrl) return internalUrl;
+    return null;
+  });
+
+  protected readonly detailsVariant = computed<ButtonVariant>(() => {
     const publicReady = !!this.install()?.resolvedFqdn && this.readiness().isReady;
     const internalReady =
       this.isInternalApp() && this.internalReadiness().isReady && !!this.internalApp()?.internalUrl;
-    const primaryVisible = publicReady || internalReady;
-    return primaryVisible
-      ? 'inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted'
-      : 'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90';
+    return publicReady || internalReady ? 'secondary' : 'primary';
   });
+
+  protected toneOf(state: EndpointReadinessState | InternalReadiness['state']): StatusTone {
+    if (state === 'ready') return 'success';
+    if (state === 'failed') return 'error';
+    return 'progress';
+  }
 
   constructor() {
     effect(() => {
@@ -342,8 +159,6 @@ export class CatalogSuccessStepComponent implements OnDestroy {
       void this.checkWaiting(installId);
     });
 
-    // Public apps: load endpoints when the install's cluster becomes known,
-    // then poll cert status while it's still issuing.
     effect(() => {
       const inst = this.install();
       if (!inst?.resolvedFqdn || !inst.clusterId) return;
@@ -352,11 +167,9 @@ export class CatalogSuccessStepComponent implements OnDestroy {
       this.bootstrapReadiness(inst.clusterId);
     });
 
-    // Internal apps: fetch the application and poll until `internalUrl` is
-    // populated (or reconciliation errors out).
     effect(() => {
       if (!this.isInternalApp()) return;
-      if (this.install()?.resolvedFqdn) return; // public flow covers it
+      if (this.install()?.resolvedFqdn) return;
       const appId = this.firstAppId();
       if (!appId) return;
       if (this.internalAppLoaded() === appId) return;
@@ -399,8 +212,6 @@ export class CatalogSuccessStepComponent implements OnDestroy {
     const r = evaluateEndpointReadiness(ep);
     if (r.isTerminal) return;
 
-    // Light client-side polling — service already has an 8s polling helper,
-    // we drive our own loop so we refresh the list signal consistently.
     this.pollingAbort = false;
     const start = Date.now();
     const timeoutMs = 5 * 60_000;

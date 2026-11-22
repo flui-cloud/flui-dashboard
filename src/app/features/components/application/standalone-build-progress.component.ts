@@ -5,32 +5,13 @@ import {
   signal,
   computed,
   inject,
-  ElementRef,
-  AfterViewChecked,
-  viewChild,
-  ChangeDetectionStrategy,
+  linkedSignal,
 } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { firstValueFrom } from 'rxjs';
-import {
-  lucideArrowLeft,
-  lucideCheck,
-  lucideLoader,
-  lucideTriangleAlert,
-  lucideX,
-  lucideGitBranch,
-  lucidePackage,
-  lucideTerminal,
-  lucideClock,
-  lucideCopy,
-  lucideRefreshCw,
-  lucideHammer,
-  lucideContainer,
-  lucideRocket,
-  lucideCpu,
-} from '@ng-icons/lucide';
+import { lucideRefreshCw } from '@ng-icons/lucide';
 import { BuildsService } from '../../../core/api/api/builds.service';
 import { ApplicationsService } from '../../../core/api/api/applications.service';
 import { ImagesService } from '../../../core/api/api/images.service';
@@ -45,540 +26,58 @@ import {
   StandaloneBuildCompletedEvent,
   StandaloneBuildFailedEvent,
 } from '../../service/app-runtime-websocket.service';
+import { DeploymentStep } from '../../model/application.models';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { DeployProgressSteps } from './deploy-progress-steps';
+import { formatDuration } from './deploy-progress-model';
+import { BuildLogPanel } from './build-log-panel';
+import { StandaloneBuildConfirm, StandaloneWizardState } from './standalone-build-confirm';
+import {
+  BuildPhase,
+  buildPageState,
+  buildPhaseSteps,
+  buildProgressPercent,
+  phasesFromLog,
+  shortId,
+  trackStepTimes,
+} from './build-progress-model';
 
-type BuildPhase = AppBuildResponseDto['status'];
-
-const BUILD_PHASES: Array<{ id: BuildPhase; label: string; icon: string }> = [
-  { id: 'CLONING', label: 'Cloning repository', icon: 'lucideGitBranch' },
-  { id: 'ANALYZING', label: 'Detecting framework', icon: 'lucidePackage' },
-  { id: 'BUILDING', label: 'Building image', icon: 'lucideHammer' },
-  { id: 'PUSHING', label: 'Pushing to registry', icon: 'lucideContainer' },
+const BREADCRUMB: readonly Crumb[] = [
+  { label: 'Applications', link: '/apps/applications' },
+  { label: 'Deploy', link: '/apps/deploy/new' },
+  { label: 'Build' },
 ];
-
-const PHASE_ORDER: BuildPhase[] = [
-  'PENDING',
-  'CLONING',
-  'ANALYZING',
-  'BUILDING',
-  'PUSHING',
-  'COMPLETED',
-];
-
-function phaseIndex(status: BuildPhase): number {
-  return PHASE_ORDER.indexOf(status);
-}
-
-interface WizardState {
-  clusterId: string;
-  projectId?: string | null;
-  gitUrl: string;
-  branch: string;
-  port: number | null;
-  replicas: number;
-  resourceProfile: string;
-  envVars: Array<{ name: string; value: string; secret: boolean }>;
-  autoDeploy: boolean;
-}
 
 @Component({
   selector: 'app-standalone-build-progress',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideCheck,
-      lucideLoader,
-      lucideTriangleAlert,
-      lucideX,
-      lucideGitBranch,
-      lucidePackage,
-      lucideTerminal,
-      lucideClock,
-      lucideCopy,
-      lucideRefreshCw,
-      lucideHammer,
-      lucideContainer,
-      lucideRocket,
-      lucideCpu,
-    }),
+  imports: [
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlKeyValue,
+    FlKvItem,
+    FlCopyId,
+    FlStatus,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    DeployProgressSteps,
+    BuildLogPanel,
+    StandaloneBuildConfirm,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <div class="max-w-6xl mx-auto p-6">
-      <!-- Back -->
-      <div class="mb-6">
-        <button
-          (click)="navigateBack()"
-          class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ng-icon name="lucideArrowLeft" class="h-4 w-4 mr-2" />
-          Back to Deploy Wizard
-        </button>
-      </div>
-
-      <!-- Header -->
-      <div class="mb-8">
-        <div class="flex items-start justify-between mb-2">
-          <div>
-            <h1 class="text-2xl font-bold mb-1">
-              {{
-                phase() === 'confirm'
-                  ? 'Build Complete — Create Application'
-                  : 'Building Application'
-              }}
-            </h1>
-            <p class="text-sm text-muted-foreground font-mono">{{ buildId() }}</p>
-          </div>
-          <div class="text-right">
-            <span [class]="getStatusBadgeClass()">{{ getStatusLabel() }}</span>
-            <div class="text-xs text-muted-foreground mt-1 flex items-center justify-end">
-              <ng-icon name="lucideClock" class="h-3 w-3 mr-1" />
-              {{ formatDuration(elapsedSeconds()) }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Build progress bar -->
-        @if (phase() === 'building') {
-          <div class="flex items-center gap-3 mt-4">
-            <div class="flex-1 h-2 bg-border rounded-full overflow-hidden">
-              <div
-                [style.width.%]="getBuildProgressPercent()"
-                class="h-full bg-blue-500 transition-all duration-500 ease-out"
-              ></div>
-            </div>
-            <span class="text-xs text-muted-foreground tabular-nums w-8 text-right">
-              {{ getBuildProgressPercent() }}%
-            </span>
-          </div>
-        }
-      </div>
-
-      <!-- Connection lost banner -->
-      @if (connectionLost() && phase() === 'building') {
-        <div
-          class="mb-6 flex items-center gap-3 px-4 py-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-800"
-        >
-          <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
-          <span>Connection lost — the build is still running. Reconnecting...</span>
-          <ng-icon name="lucideLoader" class="h-4 w-4 flex-shrink-0 animate-spin ml-auto" />
-        </div>
-      }
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left: phases + logs -->
-        <div class="lg:col-span-2 space-y-6">
-          <!-- Build Phase Timeline -->
-          <div class="bg-card border border-border rounded-lg p-6">
-            <h2 class="text-lg font-semibold mb-4 flex items-center">
-              <ng-icon name="lucideHammer" class="h-5 w-5 mr-2" />
-              Build Pipeline
-            </h2>
-            <div class="space-y-4">
-              @for (ph of buildPhases; track ph.id) {
-                <div class="flex items-start gap-4">
-                  <div [class]="getPhaseIconClass(ph.id)" class="flex-shrink-0 mt-0.5">
-                    @if (getPhaseStatus(ph.id) === 'completed') {
-                      <ng-icon name="lucideCheck" class="h-4 w-4" />
-                    } @else if (getPhaseStatus(ph.id) === 'running') {
-                      <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                    } @else if (getPhaseStatus(ph.id) === 'error') {
-                      <ng-icon name="lucideX" class="h-4 w-4" />
-                    } @else {
-                      <div class="w-2.5 h-2.5 rounded-full bg-current"></div>
-                    }
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <span [class]="getPhaseLabelClass(ph.id)" class="text-sm font-medium">
-                        {{ ph.label }}
-                      </span>
-                      @if (ph.id === 'ANALYZING' && detectedFramework()) {
-                        <span
-                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
-                        >
-                          <ng-icon name="lucidePackage" class="h-3 w-3 mr-1" />
-                          {{ detectedFramework() }}
-                        </span>
-                      }
-                    </div>
-                  </div>
-                </div>
-              }
-
-              <!-- Confirm phase indicator -->
-              @if (phase() === 'confirm') {
-                <div class="flex items-start gap-4">
-                  <div
-                    class="h-6 w-6 rounded-full flex items-center justify-center border border-border text-[hsl(var(--ok))] flex-shrink-0 mt-0.5"
-                  >
-                    <ng-icon name="lucideCheck" class="h-4 w-4" />
-                  </div>
-                  <div class="flex-1">
-                    <span class="text-sm font-medium text-foreground">Image ready</span>
-                    @if (imageRef()) {
-                      <p class="text-xs text-muted-foreground font-mono mt-0.5 truncate">
-                        {{ imageRef() }}
-                      </p>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Live Logs (hidden in confirm phase) -->
-          @if (phase() === 'building' || phase() === 'failed') {
-            <div class="bg-card border border-border rounded-lg">
-              <div class="p-4 border-b border-border flex items-center justify-between">
-                <h2 class="text-lg font-semibold flex items-center">
-                  <ng-icon name="lucideTerminal" class="h-5 w-5 mr-2" />
-                  Build Logs
-                </h2>
-                <button
-                  (click)="copyLogs()"
-                  class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ng-icon name="lucideCopy" class="h-4 w-4 mr-1" />
-                  Copy
-                </button>
-              </div>
-              <div class="p-4 bg-zinc-950 rounded-b-lg">
-                <div
-                  #logContainer
-                  class="font-mono text-xs text-zinc-300 space-y-0.5 h-80 overflow-y-auto"
-                >
-                  @for (log of buildLogs(); track $index) {
-                    <div
-                      [class]="log.startsWith('[stderr]') ? 'text-amber-300' : ''"
-                      class="whitespace-pre-wrap leading-relaxed"
-                    >
-                      {{ log }}
-                    </div>
-                  }
-                  @if (phase() === 'building' && buildLogs().length === 0) {
-                    <div class="flex items-center gap-1.5 text-gray-500 text-xs">
-                      <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
-                      Waiting for build output...
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-          }
-
-          <!-- Confirm: Name + summary -->
-          @if (phase() === 'confirm') {
-            <div class="bg-card border border-border rounded-lg p-6 space-y-5">
-              <h2 class="text-lg font-semibold flex items-center">
-                <ng-icon name="lucideRocket" class="h-5 w-5 mr-2" />
-                Create your application
-              </h2>
-
-              <div>
-                <label class="block text-sm font-medium mb-1.5">Application name</label>
-                <div class="flex items-center gap-2">
-                  <input
-                    type="text"
-                    [value]="appName()"
-                    (input)="appName.set($any($event.target).value)"
-                    class="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    placeholder="my-application"
-                  />
-                </div>
-                @if (!isNameValid()) {
-                  <p class="text-xs text-destructive mt-1">Name is required</p>
-                }
-              </div>
-
-              <!-- Port: always show, editable, required -->
-              <div>
-                <label class="block text-sm font-medium mb-1.5">
-                  Port
-                  @if (detectedPort()) {
-                    <span class="ml-1.5 text-xs font-normal text-muted-foreground"
-                      >auto-detected</span
-                    >
-                  } @else {
-                    <span class="ml-1.5 text-xs font-normal text-amber-600"
-                      >not detected — required</span
-                    >
-                  }
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="65535"
-                  [value]="effectivePort() ?? ''"
-                  (input)="onPortInput($any($event.target).value)"
-                  class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="e.g. 3000"
-                />
-                @if (!effectivePort()) {
-                  <p class="text-xs text-amber-600 mt-1">
-                    Port is required to expose the application.
-                  </p>
-                }
-              </div>
-
-              <!-- Resource Profile -->
-              <div>
-                <label class="block text-sm font-medium mb-1.5">Resource Profile</label>
-                @if (loadingProfiles()) {
-                  <div class="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                    <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                    Loading profiles...
-                  </div>
-                } @else if (availableProfiles().length > 0) {
-                  <div class="grid grid-cols-5 gap-2">
-                    @for (profile of availableProfiles(); track profile.name) {
-                      <button
-                        type="button"
-                        [class]="getProfileCardClass(profile.name)"
-                        (click)="selectedProfile.set(profile.name)"
-                      >
-                        <div class="text-xs font-semibold mb-1.5">
-                          {{ getProfileLabel(profile.name) }}
-                        </div>
-                        <div class="flex items-center gap-1 text-xs text-muted-foreground">
-                          <ng-icon name="lucideCpu" class="w-3 h-3 shrink-0" />
-                          <span>{{ getProfileCpu(profile) }} CPU</span>
-                        </div>
-                        <div class="text-xs text-muted-foreground mt-0.5">
-                          {{ getProfileMemory(profile) }}
-                          <span class="text-muted-foreground/60">RAM</span>
-                        </div>
-                      </button>
-                    }
-                  </div>
-                  @if (selectedProfileInfo()) {
-                    <p class="text-xs text-muted-foreground mt-1.5 pl-0.5">
-                      {{ getProfileDescription(selectedProfile()) }}
-                    </p>
-                  }
-                }
-              </div>
-
-              <div class="rounded-lg bg-muted/40 border border-border p-4 space-y-2 text-sm">
-                <h3 class="font-medium mb-2 text-xs text-muted-foreground uppercase tracking-wide">
-                  Deploy config
-                </h3>
-                @if (detectedFramework()) {
-                  <div class="flex justify-between">
-                    <span class="text-muted-foreground">Runtime</span>
-                    <span class="font-medium">{{ detectedFramework() }}</span>
-                  </div>
-                }
-                <div class="flex justify-between">
-                  <span class="text-muted-foreground">Branch</span>
-                  <span class="font-medium font-mono">{{ wizardState()?.branch }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-muted-foreground">Replicas</span>
-                  <span class="font-medium">{{ wizardState()?.replicas ?? 1 }}</span>
-                </div>
-                @if (wizardState()?.resourceProfile) {
-                  <div class="flex justify-between">
-                    <span class="text-muted-foreground">Resources</span>
-                    <span class="font-medium">{{ wizardState()?.resourceProfile }}</span>
-                  </div>
-                }
-                @if ((wizardState()?.envVars?.length ?? 0) > 0) {
-                  <div class="flex justify-between">
-                    <span class="text-muted-foreground">Env vars</span>
-                    <span class="font-medium">{{ wizardState()?.envVars?.length }}</span>
-                  </div>
-                }
-              </div>
-
-              <!-- Start command -->
-              @if (detectedStartCommand() || startCommandOverrideExpanded()) {
-                <div class="space-y-2">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm font-medium">Start command</span>
-                      @if (!startCommandOverride()) {
-                        <span class="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                          {{ startCommandIsAutoCorrected() ? 'Auto-corrected' : 'Auto' }}
-                        </span>
-                      } @else {
-                        <span class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700"
-                          >Custom</span
-                        >
-                      }
-                    </div>
-                    @if (!startCommandOverrideExpanded()) {
-                      <button
-                        type="button"
-                        (click)="startCommandOverrideExpanded.set(true)"
-                        class="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Edit
-                      </button>
-                    } @else if (startCommandOverride()) {
-                      <button
-                        type="button"
-                        (click)="
-                          startCommandOverride.set(''); startCommandOverrideExpanded.set(false)
-                        "
-                        class="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Reset to auto
-                      </button>
-                    }
-                  </div>
-                  @if (!startCommandOverrideExpanded()) {
-                    <code class="block text-xs bg-muted px-2 py-1.5 rounded font-mono break-all">{{
-                      detectedStartCommand()
-                    }}</code>
-                  } @else {
-                    <textarea
-                      [value]="startCommandOverride()"
-                      (input)="startCommandOverride.set($any($event.target).value)"
-                      rows="2"
-                      [placeholder]="detectedStartCommand() ?? 'e.g. java -jar app.jar'"
-                      class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono resize-none"
-                    ></textarea>
-                    <p class="text-xs text-muted-foreground">
-                      Leave empty to use the auto-detected command.
-                    </p>
-                  }
-                </div>
-              }
-
-              <button
-                (click)="createAndDeploy()"
-                [disabled]="isCreating() || !isNameValid() || !effectivePort()"
-                class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
-              >
-                @if (isCreating()) {
-                  <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                  Creating application...
-                } @else {
-                  <ng-icon name="lucideRocket" class="h-4 w-4 mr-2" />
-                  Create &amp; Deploy
-                }
-              </button>
-            </div>
-          }
-        </div>
-
-        <!-- Right Sidebar -->
-        <div class="space-y-4">
-          <!-- Failed -->
-          @if (phase() === 'failed') {
-            <div class="bg-card border border-destructive/40 rounded-lg p-5">
-              <div class="flex items-start gap-2 mb-4">
-                <div class="mt-0.5 text-destructive">
-                  <ng-icon name="lucideTriangleAlert" class="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 class="text-sm font-medium">Build failed</h3>
-                  <p class="text-xs text-muted-foreground mt-0.5">No application was created</p>
-                </div>
-              </div>
-              @if (errorMessage()) {
-                <div
-                  class="mb-4 p-3 bg-muted rounded-md text-xs text-destructive font-mono break-all"
-                >
-                  {{ errorMessage() }}
-                </div>
-              }
-              <button
-                (click)="retryFromWizard()"
-                [disabled]="isDeleting()"
-                class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
-              >
-                @if (isDeleting()) {
-                  <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                } @else {
-                  <ng-icon name="lucideRefreshCw" class="h-4 w-4 mr-2" />
-                }
-                Try again
-              </button>
-            </div>
-          }
-
-          <!-- In-progress -->
-          @if (phase() === 'building') {
-            <div class="bg-muted/40 border border-border rounded-lg p-4">
-              <div class="flex items-start gap-3">
-                <ng-icon
-                  name="lucideLoader"
-                  class="h-4 w-4 text-muted-foreground mt-0.5 animate-spin flex-shrink-0"
-                />
-                <div>
-                  <h4 class="text-sm font-medium mb-1">Building...</h4>
-                  <p class="text-xs text-muted-foreground">This may take a few minutes.</p>
-                  <p class="text-xs text-muted-foreground mt-1">
-                    Your application will only be created once the build succeeds.
-                  </p>
-                </div>
-              </div>
-            </div>
-          }
-
-          <!-- Build Info -->
-          <div class="bg-card border border-border rounded-lg p-4">
-            <h3 class="font-medium mb-3 text-sm">Build Info</h3>
-            <div class="space-y-2 text-sm">
-              <div class="flex justify-between">
-                <span class="text-muted-foreground">Build ID:</span>
-                <code class="text-xs bg-muted px-2 py-0.5 rounded"
-                  >{{ buildId().substring(0, 12) }}...</code
-                >
-              </div>
-              @if (detectedFramework()) {
-                <div class="flex justify-between items-center">
-                  <span class="text-muted-foreground">Runtime:</span>
-                  <span
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
-                  >
-                    {{ detectedFramework() }}
-                  </span>
-                </div>
-              }
-              <div class="flex justify-between">
-                <span class="text-muted-foreground">Status:</span>
-                <span class="font-medium text-xs">{{ buildStatus() }}</span>
-              </div>
-              @if (detectedStartCommand()) {
-                <div class="pt-1 border-t border-border mt-1">
-                  <div class="flex items-center gap-1.5 mb-1">
-                    <span class="text-muted-foreground text-xs">Start command</span>
-                    @if (startCommandIsAutoCorrected()) {
-                      <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700"
-                        >Auto-corrected</span
-                      >
-                    } @else {
-                      <span class="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
-                        >Auto</span
-                      >
-                    }
-                  </div>
-                  <code
-                    class="block text-xs bg-muted px-2 py-1 rounded font-mono break-all leading-relaxed"
-                    >{{ detectedStartCommand() }}</code
-                  >
-                </div>
-              }
-              <div class="flex justify-between">
-                <span class="text-muted-foreground">Elapsed:</span>
-                <span class="font-medium text-xs tabular-nums">{{
-                  formatDuration(elapsedSeconds())
-                }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
+  providers: [provideIcons({ lucideRefreshCw })],
+  templateUrl: './standalone-build-progress.component.html',
 })
-export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, AfterViewChecked {
-  private readonly logContainer = viewChild<ElementRef<HTMLDivElement>>('logContainer');
-
+export class StandaloneBuildProgressComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly location = inject(Location);
@@ -614,27 +113,34 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
   startCommandOverrideExpanded = signal(false);
   isDeleting = signal(false);
   connectionLost = signal(false);
-  wizardState = signal<WizardState | null>(null);
+  wizardState = signal<StandaloneWizardState | null>(null);
 
-  readonly buildPhases = BUILD_PHASES;
+  protected readonly breadcrumb = BREADCRUMB;
+  protected readonly shortId = shortId;
+  protected readonly now = signal(Date.now());
   readonly isNameValid = computed(() => this.appName().trim().length > 0);
   readonly effectivePort = computed(() => this.detectedPort() ?? this.wizardState()?.port ?? null);
-  readonly selectedProfileInfo = computed(
-    () => this.availableProfiles().find((p) => p.name === this.selectedProfile()) ?? null,
-  );
 
-  private readonly profileMeta: Record<string, { label: string; description: string }> = {
-    nano: { label: 'Nano', description: 'Static sites, lightweight proxies' },
-    small: { label: 'Small', description: 'REST microservices, simple apps' },
-    medium: { label: 'Medium', description: 'Node.js, PHP, CMS apps' },
-    large: { label: 'Large', description: 'Java, databases, heavier workloads' },
-    xlarge: { label: 'XLarge', description: 'Elasticsearch, Kafka, MongoDB' },
-  };
+  protected readonly headerState = computed(() => buildPageState(this.phase(), this.buildStatus()));
+  protected readonly progressPercent = computed(() => buildProgressPercent(this.buildStatus()));
+  protected readonly elapsed = computed(() => formatDuration(this.elapsedSeconds()));
+
+  private readonly phaseSteps = computed(() => {
+    const framework = this.detectedFramework();
+    return buildPhaseSteps(this.buildStatus(), {
+      ANALYZING: framework ? `Detected ${framework}` : null,
+    });
+  });
+
+  protected readonly steps = linkedSignal<DeploymentStep[], DeploymentStep[]>({
+    source: this.phaseSteps,
+    computation: (steps, previous) => trackStepTimes(previous?.value, steps, new Date()),
+  });
 
   private pollingIntervalId: ReturnType<typeof setInterval> | null = null;
   private elapsedIntervalId: ReturnType<typeof setInterval> | null = null;
   private heartbeatTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private shouldScrollLogs = false;
+  private readonly clockIntervalId = setInterval(() => this.now.set(Date.now()), 1000);
 
   private readonly HEARTBEAT_TIMEOUT_MS = 60_000;
 
@@ -647,7 +153,7 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
       }
 
       const state = (this.router.currentNavigation()?.extras?.state ?? history.state) as
-        WizardState | undefined;
+        StandaloneWizardState | undefined;
       if (state?.clusterId) {
         this.wizardState.set(state);
       }
@@ -661,50 +167,51 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
     this.stopPolling();
     this.stopElapsedTimer();
     this.stopHeartbeatWatchdog();
+    clearInterval(this.clockIntervalId);
     this.wsService.unsubscribeFromStandaloneBuild(this.buildId());
   }
 
-  ngAfterViewChecked(): void {
-    if (this.shouldScrollLogs) {
-      this.scrollLogsToBottom();
-      this.shouldScrollLogs = false;
-    }
-  }
-
   private async loadInitialState(bId: string): Promise<void> {
-    try {
-      const build = await firstValueFrom(this.buildsApi.standaloneBuildsControllerGetBuild(bId));
-      this.buildStatus.set(build.status);
-      if (build.logs?.length) {
-        this.buildLogs.set(build.logs);
-        this.shouldScrollLogs = true;
-      }
-      if (build.detectedFramework && build.detectedFramework !== 'unknown') {
-        this.detectedFramework.set(build.detectedFramework);
-      }
-      if (build.detectedPort) this.detectedPort.set(build.detectedPort);
-      if (build.suggestedName && !this.appName()) {
-        this.appName.set(build.suggestedName);
-      }
-      if (build.imageRef) this.imageRef.set(build.imageRef);
-      if (build.detectedStartCommand) this.detectedStartCommand.set(build.detectedStartCommand);
-
-      if (build.status === 'COMPLETED') {
-        this.phase.set('confirm');
-        return;
-      }
-      if (build.status === 'FAILED' || build.status === 'CANCELLED') {
-        this.phase.set('failed');
-        this.errorMessage.set(build.errorMessage ?? 'Build failed');
-        return;
-      }
-    } catch {
-      // proceed — WS will deliver state
+    const build = await firstValueFrom(
+      this.buildsApi.standaloneBuildsControllerGetBuild(bId),
+    ).catch(() => null);
+    if (build) {
+      this.applyInitialBuild(build);
+      if (this.settleTerminalBuild(build)) return;
     }
 
     this.startElapsedTimer();
     this.subscribeWebSocket(bId);
     this.startPolling(bId);
+  }
+
+  private applyInitialBuild(build: AppBuildResponseDto): void {
+    this.buildStatus.set(build.status);
+    if (build.logs?.length) {
+      this.buildLogs.set(build.logs);
+    }
+    if (build.detectedFramework && build.detectedFramework !== 'unknown') {
+      this.detectedFramework.set(build.detectedFramework);
+    }
+    if (build.detectedPort) this.detectedPort.set(build.detectedPort);
+    if (build.suggestedName && !this.appName()) {
+      this.appName.set(build.suggestedName);
+    }
+    if (build.imageRef) this.imageRef.set(build.imageRef);
+    if (build.detectedStartCommand) this.detectedStartCommand.set(build.detectedStartCommand);
+  }
+
+  private settleTerminalBuild(build: AppBuildResponseDto): boolean {
+    if (build.status === 'COMPLETED') {
+      this.phase.set('confirm');
+      return true;
+    }
+    if (build.status === 'FAILED' || build.status === 'CANCELLED') {
+      this.phase.set('failed');
+      this.errorMessage.set(build.errorMessage ?? 'Build failed');
+      return true;
+    }
+    return false;
   }
 
   private subscribeWebSocket(bId: string): void {
@@ -715,7 +222,6 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
         this.resetHeartbeatWatchdog();
         const prefix = e.stream === 'stderr' ? '[stderr] ' : '';
         this.buildLogs.update((logs) => [...logs, prefix + e.line].slice(-500));
-        this.shouldScrollLogs = true;
         this.inferPhaseFromLog(e.line);
       },
       onPlan: (e: StandaloneBuildPlanEvent) => {
@@ -750,58 +256,34 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
   }
 
   private inferPhaseFromLog(line: string): void {
-    const current = this.buildStatus();
-    if (current === 'COMPLETED' || current === 'FAILED' || current === 'CANCELLED') return;
-    const l = line.toLowerCase();
-    if (current === 'PENDING' || current === 'CLONING') {
-      if (l.includes('railpack') || l.includes('detected ') || l.includes('deploying as')) {
-        this.buildStatus.set('ANALYZING');
-      }
-    }
-    if (current === 'PENDING' || current === 'CLONING' || current === 'ANALYZING') {
-      if (
-        l.includes('railpack build') ||
-        l.includes('buildctl') ||
-        l.includes('#1 ') ||
-        l.includes('load build definition')
-      ) {
-        this.buildStatus.set('BUILDING');
-      }
-    }
-    if (current === 'BUILDING') {
-      if (l.includes('pushing') || l.includes('exporting') || l.includes('writing image')) {
-        this.buildStatus.set('PUSHING');
-      }
-    }
+    const next = phasesFromLog(this.buildStatus(), line).at(-1);
+    if (next) this.buildStatus.set(next);
   }
 
   private startPolling(bId: string): void {
     this.pollingIntervalId = setInterval(async () => {
-      try {
-        const build = await firstValueFrom(this.buildsApi.standaloneBuildsControllerGetBuild(bId));
-        this.buildStatus.set(build.status);
+      const build = await firstValueFrom(
+        this.buildsApi.standaloneBuildsControllerGetBuild(bId),
+      ).catch(() => null);
+      if (!build) return;
+      this.buildStatus.set(build.status);
 
-        if (build.logs?.length && build.logs.length > this.buildLogs().length) {
-          this.buildLogs.set(build.logs);
-          this.shouldScrollLogs = true;
-        }
-        this.applyDetectedFieldsIfMissing(build);
-        if (build.detectedStartCommand && !this.detectedStartCommand())
-          this.detectedStartCommand.set(build.detectedStartCommand);
-
-        const currentPhase = this.phase();
-        if (currentPhase === 'confirm' || currentPhase === 'failed') {
-          this.stopPolling();
-          return;
-        }
-        this.applyTerminalPhaseTransition(build, false);
-      } catch {
-        /* ignore */
+      if (build.logs?.length && build.logs.length > this.buildLogs().length) {
+        this.buildLogs.set(build.logs);
       }
+      this.applyDetectedFieldsIfMissing(build);
+      if (build.detectedStartCommand && !this.detectedStartCommand())
+        this.detectedStartCommand.set(build.detectedStartCommand);
+
+      const currentPhase = this.phase();
+      if (currentPhase === 'confirm' || currentPhase === 'failed') {
+        this.stopPolling();
+        return;
+      }
+      this.applyTerminalPhaseTransition(build, false);
     }, 5000);
   }
 
-  /** Picks up detected fields we may have missed via WS, without overriding what's already set. */
   private applyDetectedFieldsIfMissing(build: {
     detectedFramework?: string | null;
     detectedPort?: number | null;
@@ -861,19 +343,16 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
   }
 
   private async syncBuildState(): Promise<void> {
-    try {
-      const build = await firstValueFrom(
-        this.buildsApi.standaloneBuildsControllerGetBuild(this.buildId()),
-      );
-      this.buildStatus.set(build.status);
-      this.connectionLost.set(false);
-      this.applyDetectedFieldsIfMissing(build);
-      const currentPhase = this.phase();
-      if (currentPhase === 'confirm' || currentPhase === 'failed') return;
-      this.applyTerminalPhaseTransition(build, true);
-    } catch {
-      /* ignore */
-    }
+    const build = await firstValueFrom(
+      this.buildsApi.standaloneBuildsControllerGetBuild(this.buildId()),
+    ).catch(() => null);
+    if (!build) return;
+    this.buildStatus.set(build.status);
+    this.connectionLost.set(false);
+    this.applyDetectedFieldsIfMissing(build);
+    const currentPhase = this.phase();
+    if (currentPhase === 'confirm' || currentPhase === 'failed') return;
+    this.applyTerminalPhaseTransition(build, true);
   }
 
   private startElapsedTimer(): void {
@@ -886,14 +365,6 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
     if (this.elapsedIntervalId) {
       clearInterval(this.elapsedIntervalId);
       this.elapsedIntervalId = null;
-    }
-  }
-
-  private scrollLogsToBottom(): void {
-    const logContainer = this.logContainer();
-    if (logContainer) {
-      const el = logContainer.nativeElement;
-      el.scrollTop = el.scrollHeight;
     }
   }
 
@@ -911,7 +382,7 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
           buildId: this.buildId(),
           category: CreateApplicationDto.CategoryEnum.User,
           sourceType: CreateApplicationDto.SourceTypeEnum.GitBuild,
-          sourceConfig: {}, // backend ignores this when buildId is provided
+          sourceConfig: {},
           autoDeploy: true,
           port: this.effectivePort() ?? undefined,
           replicas: state.replicas,
@@ -946,21 +417,15 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
 
     this.isDeleting.set(true);
 
-    // Teardown current build
     const oldBuildId = this.buildId();
     this.stopPolling();
     this.stopElapsedTimer();
     this.stopHeartbeatWatchdog();
     this.wsService.unsubscribeFromStandaloneBuild(oldBuildId);
-    try {
-      await firstValueFrom(
-        this.buildsApi.standaloneBuildsControllerDeleteStandaloneBuild(oldBuildId),
-      );
-    } catch {
-      /* ignore — build may already be deleted */
-    }
+    await firstValueFrom(
+      this.buildsApi.standaloneBuildsControllerDeleteStandaloneBuild(oldBuildId),
+    ).catch(() => undefined);
 
-    // Trigger new build
     let buildResp;
     try {
       buildResp = await firstValueFrom(
@@ -975,7 +440,6 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
       return;
     }
 
-    // Reset all signals in-place
     this.buildId.set(buildResp.id);
     this.buildStatus.set('PENDING');
     this.buildLogs.set([]);
@@ -991,52 +455,21 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
     this.isDeleting.set(false);
     this.connectionLost.set(false);
 
-    // Update URL to reflect new buildId without a full navigation
     this.location.replaceState(`/apps/deploy/standalone/${buildResp.id}`);
 
-    // Boot the new build (WebSocket + polling + elapsed timer)
     await this.loadInitialState(buildResp.id);
   }
 
   private async loadProfiles(): Promise<void> {
     this.loadingProfiles.set(true);
-    try {
-      const res = await firstValueFrom(this.imagesApi.imagesControllerGetProfiles());
+    const res = await firstValueFrom(this.imagesApi.imagesControllerGetProfiles()).catch(
+      () => null,
+    );
+    if (res) {
       this.availableProfiles.set(res.profiles);
       this.selectedProfile.set(res.defaultProfile);
-    } catch {
-      // silent — 'small' default applies
-    } finally {
-      this.loadingProfiles.set(false);
     }
-  }
-
-  getProfileLabel(name: string): string {
-    return this.profileMeta[name]?.label ?? name;
-  }
-
-  getProfileDescription(name: string): string {
-    return this.profileMeta[name]?.description ?? '';
-  }
-
-  getProfileCpu(profile: ResourceProfileDto): string {
-    const v = profile.cpu as any;
-    if (typeof v === 'string') return v;
-    return v?.cpu ?? v?.requests ?? v?.limit ?? v?.value ?? '—';
-  }
-
-  getProfileMemory(profile: ResourceProfileDto): string {
-    const v = profile.memory as any;
-    if (typeof v === 'string') return v;
-    return v?.memory ?? v?.requests ?? v?.limit ?? v?.value ?? '—';
-  }
-
-  getProfileCardClass(profileName: string): string {
-    const base =
-      'flex flex-col items-start p-3 rounded-lg border text-left transition-all cursor-pointer text-sm';
-    return this.selectedProfile() === profileName
-      ? `${base} border-primary bg-primary/5 ring-1 ring-primary`
-      : `${base} border-border hover:border-primary/50 hover:bg-muted/40`;
+    this.loadingProfiles.set(false);
   }
 
   onPortInput(value: string): void {
@@ -1050,81 +483,5 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
 
   copyLogs(): void {
     navigator.clipboard.writeText(this.buildLogs().join('\n'));
-  }
-
-  // ── Phase helpers ───────────────────────────────────────────────
-
-  getPhaseStatus(phaseId: BuildPhase): 'pending' | 'running' | 'completed' | 'error' {
-    const status = this.buildStatus();
-    if (status === 'FAILED' && phaseIndex(phaseId) < phaseIndex('COMPLETED')) {
-      return phaseIndex(phaseId) < phaseIndex(status) ? 'completed' : 'error';
-    }
-    if (phaseIndex(status) > phaseIndex(phaseId)) return 'completed';
-    if (status === phaseId) return 'running';
-    return 'pending';
-  }
-
-  getPhaseIconClass(phaseId: BuildPhase): string {
-    const s = this.getPhaseStatus(phaseId);
-    const base = 'h-6 w-6 rounded-full flex items-center justify-center text-sm';
-    switch (s) {
-      case 'completed':
-        return `${base} border border-border text-[hsl(var(--ok))]`;
-      case 'running':
-        return `${base} bg-primary text-primary-foreground`;
-      case 'error':
-        return `${base} bg-destructive text-destructive-foreground`;
-      default:
-        return `${base} bg-muted text-muted-foreground`;
-    }
-  }
-
-  getPhaseLabelClass(phaseId: BuildPhase): string {
-    const s = this.getPhaseStatus(phaseId);
-    switch (s) {
-      case 'completed':
-        return 'text-foreground';
-      case 'running':
-        return 'text-primary';
-      case 'error':
-        return 'text-destructive';
-      default:
-        return 'text-muted-foreground';
-    }
-  }
-
-  getBuildProgressPercent(): number {
-    const order = phaseIndex(this.buildStatus());
-    const total = PHASE_ORDER.length - 1;
-    return Math.round((order / total) * 100);
-  }
-
-  getStatusLabel(): string {
-    switch (this.phase()) {
-      case 'building':
-        return this.buildStatus();
-      case 'confirm':
-        return 'BUILD COMPLETE';
-      case 'failed':
-        return 'FAILED';
-    }
-  }
-
-  getStatusBadgeClass(): string {
-    switch (this.phase()) {
-      case 'confirm':
-        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--ok)/0.12)] text-[hsl(var(--ok))]';
-      case 'failed':
-        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive';
-      default:
-        return 'inline-flex items-center px-2.5 py-0.5 rounded-fl-sm text-xs font-medium bg-fl-surface text-blue-800 border';
-    }
-  }
-
-  formatDuration(seconds: number): string {
-    if (seconds < 60) return `${seconds}s`;
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}m ${s}s`;
   }
 }

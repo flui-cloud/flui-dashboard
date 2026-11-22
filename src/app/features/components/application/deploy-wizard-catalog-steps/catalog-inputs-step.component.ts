@@ -1,83 +1,69 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideEye, lucideEyeOff, lucideKey } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideEye, lucideEyeOff } from '@ng-icons/lucide';
 import { DeployWizardStateService } from '../../../service/deploy-wizard-state.service';
 import { pickInputType } from '../../../model/prompt-validation';
 import { CatalogUserInputPromptDto } from '../../../../core/api/model/catalogUserInputPromptDto';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../../ui/patterns/key-value';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlIcon } from '../../../../ui/primitives/icon';
+import { FlTag } from '../../../../ui/primitives/tag';
 
 @Component({
   selector: 'app-catalog-inputs-step',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon],
-  providers: [provideIcons({ lucideCircleAlert, lucideEye, lucideEyeOff, lucideKey })],
+  imports: [FormsModule, FlAlert, FlKeyValue, FlKvItem, FlButton, FlIcon, FlTag],
+  providers: [provideIcons({ lucideEye, lucideEyeOff })],
+  host: { class: 'flex flex-col gap-5' },
   template: `
-    <div class="space-y-5">
-      <div>
-        <h3 class="text-base font-semibold">App configuration</h3>
-        <p class="text-sm text-muted-foreground">
-          Secrets and settings the app needs to run. Values marked
-          <span class="text-red-500">*</span> are required.
-        </p>
-      </div>
+    <p class="m-0 text-fl-body-sm text-fl-ink-muted">Secrets and settings the app needs to run.</p>
 
-      @if (defaultCredentials(); as creds) {
-        <div class="space-y-3 rounded-md border border-input bg-muted/40 p-4">
-          <div class="flex items-center gap-2">
-            <ng-icon name="lucideKey" class="h-4 w-4 text-amber-600" />
-            <span class="text-sm font-medium">Default login</span>
-          </div>
-          <p class="text-xs text-muted-foreground">
-            This app ships with a built-in account — Flui does not set it. Use these credentials to
-            sign in.
-          </p>
+    @if (defaultCredentials(); as creds) {
+      <section class="flex flex-col gap-3" aria-label="Default login">
+        <h3 class="m-0 text-fl-body-sm font-semibold">Default login</h3>
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+          The app ships with this account. Flui does not set it.
+        </p>
+        <fl-key-value class="fl-kv--compact">
           @if (creds.username) {
-            <div>
-              <label class="mb-1 block text-sm font-medium">Username</label>
-              <input type="text" [value]="creds.username" disabled [class]="readonlyInputClass" />
-            </div>
+            <fl-kv-item key="Username" [mono]="true">{{ creds.username }}</fl-kv-item>
           }
           @if (creds.password) {
-            <div>
-              <label class="mb-1 block text-sm font-medium">Password</label>
-              <input type="text" [value]="creds.password" disabled [class]="readonlyInputClass" />
-            </div>
+            <fl-kv-item key="Password" [mono]="true">{{ creds.password }}</fl-kv-item>
           }
-          @if (creds.changeNote) {
-            <p class="flex items-start gap-1.5 text-xs text-amber-600">
-              <ng-icon name="lucideCircleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              {{ creds.changeNote }}
-            </p>
+        </fl-key-value>
+        @if (creds.changeNote) {
+          <fl-alert tone="warning" title="Change the default login">{{
+            creds.changeNote
+          }}</fl-alert>
+        }
+      </section>
+    }
+
+    @for (prompt of prompts(); track prompt.name) {
+      @let fieldError = errorFor(prompt.name);
+      @let visible = revealed().has(prompt.name);
+      @let baseType = inputTypeFor(prompt);
+      @let type = baseType === 'password' && visible ? 'text' : baseType;
+      @let canToggle = baseType === 'password';
+      @let label = prompt.label ?? prompt.name;
+      @let id = 'catalog-input-' + prompt.name;
+
+      <div class="fl-field" [class.is-invalid]="!!fieldError">
+        <label class="fl-field__label flex items-center gap-2" [attr.for]="id">
+          <span>{{ label }}</span>
+          @if (prompt.default === undefined) {
+            <fl-tag>Required</fl-tag>
           }
-        </div>
-      }
-
-      @for (prompt of prompts(); track prompt.name) {
-        @let fieldError = errorFor(prompt.name);
-        @let visible = revealed().has(prompt.name);
-        @let baseType = inputTypeFor(prompt);
-        @let type = baseType === 'password' && visible ? 'text' : baseType;
-        @let canToggle = baseType === 'password';
-
-        <div>
-          <label class="mb-1.5 flex items-center gap-2 text-sm font-medium">
-            <span>{{ prompt.label ?? prompt.name }}</span>
-            @if (prompt.sensitive) {
-              <span
-                class="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600"
-              >
-                <ng-icon name="lucideKey" class="mr-1 inline-block h-2.5 w-2.5" />
-                Secret
-              </span>
-            }
-            @if (prompt.default === undefined) {
-              <span class="text-red-500">*</span>
-            }
-          </label>
-
-          <div class="relative">
+          @if (prompt.sensitive) {
+            <fl-tag>Secret</fl-tag>
+          }
+        </label>
+        <div class="flex items-center gap-2">
+          <div class="fl-input fl-input--lg flex-1">
             <input
+              [id]="id"
               [type]="type"
               autocomplete="off"
               [name]="prompt.name"
@@ -86,51 +72,47 @@ import { CatalogUserInputPromptDto } from '../../../../core/api/model/catalogUse
               [placeholder]="placeholderFor(prompt)"
               [attr.minlength]="prompt.minLength ?? null"
               [attr.maxlength]="prompt.maxLength ?? null"
-              [class]="inputClass(!!fieldError, canToggle)"
             />
-            @if (canToggle) {
-              <button
-                type="button"
-                (click)="toggleReveal(prompt.name)"
-                class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
-                [attr.aria-label]="visible ? 'Hide value' : 'Show value'"
-              >
-                <ng-icon [name]="visible ? 'lucideEyeOff' : 'lucideEye'" class="h-4 w-4" />
-              </button>
-            }
           </div>
+          @if (canToggle) {
+            <button
+              flButton
+              [iconOnly]="true"
+              type="button"
+              [attr.aria-label]="visible ? 'Hide value' : 'Show value'"
+              (click)="toggleReveal(prompt.name)"
+            >
+              <fl-icon [name]="visible ? 'lucideEyeOff' : 'lucideEye'" />
+            </button>
+          }
+        </div>
 
-          @if (prompt.confirm) {
-            <label class="mb-1.5 mt-3 block text-sm font-medium">
-              Confirm {{ (prompt.label ?? prompt.name).toLowerCase() }}
-              @if (prompt.default === undefined) {
-                <span class="text-red-500">*</span>
-              }
-            </label>
+        @if (prompt.confirm) {
+          <label class="fl-field__label mt-2" [attr.for]="id + '-confirm'">
+            Confirm {{ label.toLowerCase() }}
+          </label>
+          <div class="fl-input fl-input--lg">
             <input
+              [id]="id + '-confirm'"
               [type]="type"
               autocomplete="off"
               [name]="prompt.name + '__confirm'"
               [ngModel]="confirmFor(prompt.name)"
               (ngModelChange)="setConfirm(prompt.name, $event)"
-              [placeholder]="'Repeat ' + (prompt.label ?? prompt.name)"
-              [class]="inputClass(!!fieldError, false)"
+              [placeholder]="'Repeat ' + label"
             />
-          }
+          </div>
+        }
 
-          @if (fieldError) {
-            <p class="mt-1 flex items-center gap-1 text-xs text-destructive">
-              <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5" />
-              {{ fieldError }}
-            </p>
-          } @else if (prompt.description) {
-            <p class="mt-1 text-xs text-muted-foreground">{{ prompt.description }}</p>
-          } @else if (prompt.patternDescription) {
-            <p class="mt-1 text-xs text-muted-foreground">{{ prompt.patternDescription }}</p>
-          }
-        </div>
-      }
-    </div>
+        @if (fieldError) {
+          <span class="fl-field__error" role="alert">{{ fieldError }}</span>
+        } @else if (prompt.description) {
+          <span class="fl-field__hint">{{ prompt.description }}</span>
+        } @else if (prompt.patternDescription) {
+          <span class="fl-field__hint">{{ prompt.patternDescription }}</span>
+        }
+      </div>
+    }
   `,
 })
 export class CatalogInputsStepComponent {
@@ -142,10 +124,6 @@ export class CatalogInputsStepComponent {
     () => this.state.catalogDetail()?.defaultCredentials ?? null,
   );
 
-  protected readonly readonlyInputClass =
-    'h-10 w-full rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground cursor-not-allowed';
-
-  /** Names of prompts currently shown in plaintext (password-type only). */
   private readonly revealedSet = signal<Set<string>>(new Set());
   protected readonly revealed = this.revealedSet.asReadonly();
 
@@ -168,7 +146,6 @@ export class CatalogInputsStepComponent {
   }
 
   errorFor(name: string): string | null {
-    // Backend-reported error stays sticky until the user edits the field.
     const backend = this.state.backendFieldErrors()[name];
     if (backend) return backend;
     return this.state.catalogInputErrors()[name] ?? null;
@@ -189,15 +166,5 @@ export class CatalogInputsStepComponent {
       else next.add(name);
       return next;
     });
-  }
-
-  inputClass(hasError: boolean, withToggle: boolean): string {
-    const base =
-      'h-10 w-full rounded-md border bg-background px-3 text-sm focus:outline-none focus:ring-2';
-    const colors = hasError
-      ? 'border-destructive focus:border-destructive focus:ring-destructive/30'
-      : 'border-input focus:border-primary focus:ring-primary/30';
-    const padding = withToggle ? 'pr-9' : '';
-    return `${base} ${colors} ${padding}`.trim();
   }
 }

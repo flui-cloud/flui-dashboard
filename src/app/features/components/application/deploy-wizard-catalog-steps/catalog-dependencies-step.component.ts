@@ -1,140 +1,80 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideCircleCheck,
-  lucideDatabase,
-  lucideLoader,
-  lucidePlus,
-} from '@ng-icons/lucide';
+import { Component, computed, inject } from '@angular/core';
 import { DeployWizardStateService } from '../../../service/deploy-wizard-state.service';
 import { CatalogDependencyDto } from '../../../../core/api/model/catalogDependencyDto';
 import { CatalogReusableInstanceDto } from '../../../../core/api/model/catalogReusableInstanceDto';
 import { DependencyChoiceDto } from '../../../../core/api/model/dependencyChoiceDto';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlStatus, StatusTone } from '../../../../ui/primitives/status';
+import { FlTag } from '../../../../ui/primitives/tag';
+import { instanceState } from './catalog-instance-status';
 
 @Component({
   selector: 'app-catalog-dependencies-step',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideCircleCheck,
-      lucideDatabase,
-      lucideLoader,
-      lucidePlus,
-    }),
-  ],
+  imports: [FlAlert, FlStatus, FlTag],
+  host: { class: 'flex flex-col gap-6' },
   template: `
-    <div class="space-y-6">
-      <div>
-        <h3 class="text-base font-semibold">Dependencies</h3>
-        <p class="text-sm text-muted-foreground">
-          This app needs other building blocks to run. For each one, pick a running instance to
-          reuse or let Flui create a dedicated one alongside the install.
-        </p>
-      </div>
+    <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+      The app needs these building blocks. Reuse a running instance or let Flui create a dedicated
+      one with the install.
+    </p>
 
-      @if (state.dependencyInstancesLoading()) {
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-          Looking for compatible instances…
-        </div>
-      } @else if (state.dependencyInstancesError()) {
-        <div
-          class="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
-        >
-          <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
-          <div>{{ state.dependencyInstancesError() }}</div>
-        </div>
-      } @else {
-        @for (dep of dependencies(); track dep.as) {
-          <div class="space-y-3 rounded-lg border border-border bg-card p-4">
-            <div class="flex flex-wrap items-center gap-2">
-              <ng-icon name="lucideDatabase" class="h-4 w-4 text-primary" />
-              <span class="text-sm font-semibold text-foreground">{{ dep.ref }}</span>
-              <span
-                class="rounded-full border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-              >
-                alias: {{ dep.as }}
-              </span>
-              @if (dep.required) {
-                <span class="text-[10px] font-medium text-amber-800"> required </span>
-              }
-            </div>
-
-            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                (click)="pickDedicated(dep)"
-                [class]="optionClass(isDedicated(dep))"
-              >
-                <div class="flex items-start gap-3">
-                  <ng-icon name="lucidePlus" class="h-5 w-5 text-primary mt-0.5" />
-                  <div class="min-w-0 flex-1 text-left">
-                    <div class="text-sm font-semibold text-foreground">Create new dedicated</div>
-                    <div class="mt-0.5 text-xs text-muted-foreground">
-                      Flui installs a fresh {{ dep.ref }} as a private dependency of this app.
-                    </div>
-                  </div>
-                  @if (isDedicated(dep)) {
-                    <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-primary" />
-                  }
-                </div>
-              </button>
-
-              @if (instancesFor(dep.ref).length > 0) {
-                <div [class]="optionClass(isReuse(dep))" class="cursor-default">
-                  <div class="space-y-2">
-                    <div class="text-sm font-semibold text-foreground">Reuse existing</div>
-                    <ul class="space-y-1.5">
-                      @for (instance of instancesFor(dep.ref); track instance.applicationId) {
-                        <li>
-                          <button
-                            type="button"
-                            (click)="pickReuse(dep, instance)"
-                            [class]="instanceClass(isReuseSelected(dep, instance))"
-                          >
-                            <div class="flex items-center gap-2">
-                              <ng-icon
-                                name="lucideDatabase"
-                                class="h-4 w-4 text-muted-foreground"
-                              />
-                              <span class="text-xs font-medium text-foreground">
-                                {{ instance.displayName }}
-                              </span>
-                              <span [class]="statusBadgeClass(instance.status)">
-                                {{ instance.status }}
-                              </span>
-                              @if (isReuseSelected(dep, instance)) {
-                                <ng-icon
-                                  name="lucideCircleCheck"
-                                  class="h-4 w-4 text-primary ml-auto"
-                                />
-                              }
-                            </div>
-                            <div class="mt-0.5 truncate text-[11px] text-muted-foreground">
-                              {{ instance.applicationName }}
-                            </div>
-                          </button>
-                        </li>
-                      }
-                    </ul>
-                  </div>
-                </div>
-              } @else {
-                <div
-                  class="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground"
+    @if (state.dependencyInstancesLoading()) {
+      <fl-status tone="progress" label="Looking for compatible instances" />
+    } @else if (state.dependencyInstancesError()) {
+      <fl-alert tone="error" title="Could not list instances">{{
+        state.dependencyInstancesError()
+      }}</fl-alert>
+    } @else {
+      @for (dep of dependencies(); track dep.as) {
+        @let reusable = instancesFor(dep.ref);
+        <fieldset class="fl-fieldset">
+          <legend class="flex flex-wrap items-center gap-2">
+            <span class="fl-mono">{{ dep.ref }}</span>
+            <fl-tag>Alias {{ dep.as }}</fl-tag>
+            @if (dep.required) {
+              <fl-tag>Required</fl-tag>
+            }
+          </legend>
+          <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <label class="fl-radiocard" [class.is-checked]="isDedicated(dep)">
+              <input
+                type="radio"
+                [name]="'catalog-dep-' + dep.as"
+                [checked]="isDedicated(dep)"
+                (change)="pickDedicated(dep)"
+              />
+              <span class="fl-radiocard__text">
+                <span class="fl-radiocard__title">Create a dedicated one</span>
+                <span class="fl-radiocard__desc"
+                  >Flui installs a new {{ dep.ref }} that only this app uses.</span
                 >
-                  No running {{ dep.ref }} on this cluster — Flui will create a dedicated one.
-                </div>
-              }
-            </div>
+              </span>
+            </label>
+            @for (instance of reusable; track instance.applicationId) {
+              @let st = statusOf(instance.status);
+              <label class="fl-radiocard" [class.is-checked]="isReuseSelected(dep, instance)">
+                <input
+                  type="radio"
+                  [name]="'catalog-dep-' + dep.as"
+                  [checked]="isReuseSelected(dep, instance)"
+                  (change)="pickReuse(dep, instance)"
+                />
+                <span class="fl-radiocard__text flex-1">
+                  <span class="fl-radiocard__title">Reuse {{ instance.displayName }}</span>
+                  <span class="fl-radiocard__desc fl-mono">{{ instance.applicationName }}</span>
+                </span>
+                <fl-status [tone]="st.tone" [label]="st.label" />
+              </label>
+            }
           </div>
-        }
+          @if (reusable.length === 0) {
+            <p class="m-0 text-fl-caption text-fl-ink-muted">
+              No running {{ dep.ref }} on this cluster, so Flui creates a dedicated one.
+            </p>
+          }
+        </fieldset>
       }
-    </div>
+    }
   `,
 })
 export class CatalogDependenciesStepComponent {
@@ -148,12 +88,6 @@ export class CatalogDependenciesStepComponent {
 
   protected isDedicated(dep: CatalogDependencyDto): boolean {
     return this.state.dependencyChoices()[dep.as]?.mode === DependencyChoiceDto.ModeEnum.Dedicated;
-  }
-
-  protected isReuse(dep: CatalogDependencyDto): boolean {
-    return (
-      this.state.dependencyChoices()[dep.as]?.mode === DependencyChoiceDto.ModeEnum.ReuseExisting
-    );
   }
 
   protected isReuseSelected(
@@ -180,32 +114,10 @@ export class CatalogDependenciesStepComponent {
     });
   }
 
-  protected optionClass(active: boolean): string {
-    const base = 'flex w-full rounded-lg border p-3 text-left transition';
-    return active
-      ? `${base} border-primary bg-primary/5`
-      : `${base} border-border hover:bg-accent/40`;
-  }
-
-  protected instanceClass(active: boolean): string {
-    const base = 'flex w-full flex-col rounded-md border px-2.5 py-1.5 text-left transition';
-    return active
-      ? `${base} border-primary bg-primary/10`
-      : `${base} border-border hover:bg-accent/40`;
-  }
-
-  protected statusBadgeClass(status: CatalogReusableInstanceDto.StatusEnum): string {
-    const base =
-      'inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium capitalize';
-    switch (status) {
-      case CatalogReusableInstanceDto.StatusEnum.Running:
-        return `${base} bg-emerald-100 text-emerald-700`;
-      case CatalogReusableInstanceDto.StatusEnum.Degraded:
-        return `${base} bg-amber-100 text-amber-700`;
-      case CatalogReusableInstanceDto.StatusEnum.Failed:
-        return `${base} bg-rose-100 text-rose-700`;
-      default:
-        return `${base} bg-muted text-muted-foreground`;
-    }
+  protected statusOf(status: CatalogReusableInstanceDto.StatusEnum): {
+    tone: StatusTone;
+    label: string;
+  } {
+    return instanceState(status);
   }
 }
