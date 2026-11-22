@@ -84,6 +84,12 @@
   position: relative;
   display: block;
 }
+.fl-select-wrap:has(> .fl-select--sm) {
+  display: inline-block;
+  align-self: start;
+  justify-self: start;
+  max-width: 100%;
+}
 .fl-select-wrap::after {
   content: '';
   position: absolute;

@@ -13,6 +13,12 @@
   color: var(--fl-ink);
   font-size: 13px;
 }
+dialog.fl-dialog {
+  position: relative;
+  inset: auto;
+  margin: 0;
+  padding: 0;
+}
 .fl-dialog--wide {
   width: min(720px, calc(100vw - 32px));
 }

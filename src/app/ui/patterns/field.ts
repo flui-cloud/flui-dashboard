@@ -4,7 +4,9 @@ import { Component, input } from '@angular/core';
   selector: 'fl-field',
   host: { class: 'fl-field', '[class.is-invalid]': '!!error()' },
   template: `
-    <label class="fl-field__label" [attr.for]="for()">{{ label() }}</label>
+    <label class="fl-field__label" [attr.for]="for()" [attr.id]="for() + '-label'">{{
+      label()
+    }}</label>
     <ng-content />
     @if (error()) {
       <span class="fl-field__error" role="alert">{{ error() }}</span>
