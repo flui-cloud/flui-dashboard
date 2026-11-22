@@ -6,6 +6,8 @@ import { Router, ActivatedRoute, RouterModule, NavigationEnd } from '@angular/ro
 import { filter, map } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
+  lucideKeyRound,
+  lucideMessagesSquare,
   lucideArrowLeft,
   lucideLayoutDashboard,
   lucideChartArea,
@@ -98,6 +100,8 @@ interface TabItem {
       lucideShieldCheck,
       lucideClock,
       lucideNetwork,
+      lucideKeyRound,
+      lucideMessagesSquare,
       lucidePlug,
       lucideShieldAlert,
       lucideBug,
@@ -639,6 +643,8 @@ export class ApplicationDetailComponent implements OnDestroy {
       baseTabs.push(
         { label: 'Schedules', route: 'schedules', icon: 'lucideClock' },
         { label: 'Gateway', route: 'gateway', icon: 'lucideNetwork' },
+        { label: 'Sign-in', route: 'identity', icon: 'lucideKeyRound' },
+        { label: 'Messaging', route: 'messaging', icon: 'lucideMessagesSquare' },
       );
     }
     const access = accessOf(app);

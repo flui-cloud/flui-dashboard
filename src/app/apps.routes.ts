@@ -152,6 +152,20 @@ export const appsRoutes: Routes = [
               ),
           },
           {
+            path: 'identity',
+            loadComponent: () =>
+              import('./features/components/application/app-identity-tab.component').then(
+                (m) => m.AppIdentityTabComponent
+              ),
+          },
+          {
+            path: 'messaging',
+            loadComponent: () =>
+              import('./features/components/application/app-messaging-tab.component').then(
+                (m) => m.AppMessagingTabComponent
+              ),
+          },
+          {
             path: 'gateway',
             loadComponent: () =>
               import('./features/components/application/app-gateway-tab.component').then(
