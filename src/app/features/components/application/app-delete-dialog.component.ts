@@ -1,200 +1,188 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  signal,
-  output,
-} from '@angular/core';
+import { Component, computed, inject, input, signal, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideTrash2, lucideTriangleAlert } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import { ApplicationService, RemovalPreview } from '../../service/application.service';
 import { CatalogService } from '../../service/catalog.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AppGroupView, Application } from '../../model/application.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-delete-dialog',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
-  imports: [NgIcon, FormsModule],
-  providers: [provideIcons({ lucideLoader, lucideTrash2, lucideTriangleAlert })],
+  imports: [FormsModule, FlPanel, FlAlert, FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideX })],
   template: `
     @if (canDelete() && compact()) {
-      <div
-        class="flex flex-wrap items-center justify-between gap-3 rounded-fl-lg border border-dashed border-red-300 px-4 py-3"
-        data-testid="danger-line"
-      >
-        <div class="min-w-0 text-xs text-muted-foreground">
-          <ng-content />
-        </div>
-        <button
-          type="button"
-          (click)="openDelete()"
-          class="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium text-red-700 hover:bg-red-50"
-        >
-          <ng-icon name="lucideTrash2" class="h-4 w-4" />
-          {{ deleteButtonText() }}
-        </button>
-      </div>
-    } @else if (canDelete()) {
-      <section class="rounded-fl-lg border border-red-200 bg-card p-6">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-red-600">Danger zone</h2>
-        <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <div class="min-w-0">
-            <p class="text-sm font-medium text-foreground">
-              {{ deleteHeading() }}
-            </p>
-            <p class="text-xs text-muted-foreground">{{ deleteSubtext() }}</p>
-          </div>
+      <fl-panel [title]="deleteButtonText()" data-testid="danger-line">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="min-w-0 text-fl-body-sm text-fl-ink-muted">
+            <ng-content />
+          </p>
           <button
+            flButton="secondary"
+            size="sm"
             type="button"
+            class="text-fl-danger"
             (click)="openDelete()"
-            class="inline-flex shrink-0 items-center gap-2 rounded-md border border-red-300 px-3 py-1.5 text-sm
-                   font-medium text-red-700 hover:bg-red-50"
           >
-            <ng-icon name="lucideTrash2" class="h-4 w-4" />
+            {{ deleteButtonText() }}
+          </button>
+        </div>
+      </fl-panel>
+    } @else if (canDelete()) {
+      <fl-panel [title]="deleteButtonText()">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="min-w-0 text-fl-body-sm text-fl-ink-muted">{{ deleteSubtext() }}</p>
+          <button
+            flButton="secondary"
+            size="sm"
+            type="button"
+            class="text-fl-danger"
+            (click)="openDelete()"
+          >
             Delete
           </button>
         </div>
-      </section>
+      </fl-panel>
     }
 
     @if (showModal()) {
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
         (click)="closeDelete()"
       >
         <div
-          class="w-full max-w-lg rounded-fl-lg border border-border bg-card p-6"
+          class="fl-dialog"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="app-delete-title"
           (click)="$event.stopPropagation()"
         >
-          <div class="flex items-start gap-3">
-            <div
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10"
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" id="app-delete-title">{{ deleteHeading() }}</h2>
+            <button
+              type="button"
+              class="fl-dialog__close"
+              aria-label="Close"
+              [disabled]="isDeleting()"
+              (click)="closeDelete()"
             >
-              <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-destructive" />
-            </div>
-            <div class="min-w-0 flex-1">
-              <h3 class="text-lg font-semibold text-foreground">
-                {{ deleteHeading() }}
-              </h3>
-              <p class="mt-0.5 text-sm text-muted-foreground">
-                This action is permanent and cannot be undone.
-              </p>
-            </div>
-          </div>
+              <fl-icon name="lucideX" />
+            </button>
+          </header>
 
-          <div class="mt-4 space-y-2">
-            <p class="text-sm text-foreground">The following will be permanently deleted:</p>
-            <div
-              class="max-h-48 space-y-1 overflow-auto rounded-md border border-border bg-muted/40 p-2"
-            >
-              @for (c of deleteTargets(); track c.id) {
-                <div class="flex items-center justify-between gap-2 px-1 text-sm">
-                  <span class="truncate font-medium text-foreground">{{ componentRole(c) }}</span>
-                  <span class="shrink-0 truncate font-mono text-xs text-muted-foreground">{{
-                    c.slug
-                  }}</span>
-                </div>
-              }
-            </div>
-          </div>
+          <div class="fl-dialog__body">
+            <p class="text-fl-ink-muted">This action is permanent and cannot be undone.</p>
 
-          <div class="mt-4" data-testid="data-impact">
-            @if (loadingPreview()) {
-              <p class="flex items-center gap-2 text-xs text-muted-foreground">
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                Checking what this removes…
-              </p>
-            } @else {
-              @let p = preview();
-              @if (!p || !p.volumesKnown) {
-                <p
-                  class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800
-"
-                >
-                  The volumes this would delete could not be read from the cluster. Assume data will
-                  be lost — it is not known to be none.
+            <div class="flex flex-col gap-2">
+              <p>The following will be permanently deleted:</p>
+              <ul
+                class="flex max-h-48 flex-col gap-1 overflow-auto rounded-fl-md border border-fl-border px-3 py-2"
+              >
+                @for (c of deleteTargets(); track c.id) {
+                  <li class="flex items-center justify-between gap-2">
+                    <span class="truncate font-medium text-fl-ink">{{ componentRole(c) }}</span>
+                    <span class="fl-mono shrink-0 truncate text-fl-caption text-fl-ink-muted">{{
+                      c.slug
+                    }}</span>
+                  </li>
+                }
+              </ul>
+            </div>
+
+            <div data-testid="data-impact">
+              @if (loadingPreview()) {
+                <p class="flex items-center gap-2 text-fl-body-sm text-fl-ink-muted">
+                  <fl-spinner label="Checking what this removes" />
+                  Checking what this removes…
                 </p>
-              } @else if (p.volumes.length) {
-                <div class="rounded-md border border-red-300 bg-red-50 px-3 py-2">
-                  <p class="text-xs font-semibold text-red-700" data-testid="data-warning">
-                    {{ p.dataWarning }}
-                  </p>
-                  <ul class="mt-1.5 space-y-0.5">
-                    @for (v of p.volumes; track v.namespace + '/' + v.name) {
-                      <li class="flex items-center justify-between gap-2 text-xs text-red-700/90">
-                        <span class="truncate font-mono">{{ v.name }}</span>
-                        <span class="shrink-0 font-semibold">{{ v.sizeLabel }}</span>
-                      </li>
-                    }
-                  </ul>
-                </div>
               } @else {
-                <p class="text-xs text-muted-foreground">
-                  No persistent volume is attached — there is no stored data to lose.
-                </p>
+                @let p = preview();
+                @if (!p || !p.volumesKnown) {
+                  <fl-alert tone="warning" title="Stored data unknown">
+                    The volumes this would delete could not be read from the cluster. Assume data
+                    will be lost — it is not known to be none.
+                  </fl-alert>
+                } @else if (p.volumes.length) {
+                  <fl-alert tone="error" title="Data will be deleted">
+                    <span class="flex flex-col gap-1.5">
+                      <span data-testid="data-warning">{{ p.dataWarning }}</span>
+                      <ul class="flex flex-col gap-0.5">
+                        @for (v of p.volumes; track v.namespace + '/' + v.name) {
+                          <li class="flex items-center justify-between gap-2">
+                            <span class="fl-mono truncate">{{ v.name }}</span>
+                            <span class="shrink-0 font-medium">{{ v.sizeLabel }}</span>
+                          </li>
+                        }
+                      </ul>
+                    </span>
+                  </fl-alert>
+                } @else {
+                  <p class="text-fl-body-sm text-fl-ink-muted">
+                    No persistent volume is attached — there is no stored data to lose.
+                  </p>
+                }
+                @if (p?.backupNote) {
+                  <p class="mt-2 text-fl-body-sm text-fl-ink-muted" data-testid="backup-note">
+                    {{ p?.backupNote }}
+                  </p>
+                }
               }
-              @if (p?.backupNote) {
-                <p class="mt-2 text-xs text-muted-foreground" data-testid="backup-note">
-                  {{ p?.backupNote }}
-                </p>
-              }
+            </div>
+
+            <div class="fl-field">
+              <label class="fl-field__label" for="app-delete-confirm">
+                Type <span class="fl-mono">{{ deleteToken() }}</span> to confirm
+              </label>
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="app-delete-confirm"
+                  type="text"
+                  [ngModel]="confirmInput()"
+                  (ngModelChange)="confirmInput.set($event)"
+                  [disabled]="isDeleting()"
+                  autocomplete="off"
+                  autocapitalize="off"
+                  spellcheck="false"
+                />
+              </div>
+            </div>
+
+            @if (deleteError()) {
+              <fl-alert tone="error" title="Deletion failed">{{ deleteError() }}</fl-alert>
             }
           </div>
 
-          <div class="mt-4 space-y-1.5">
-            <label class="block text-xs text-muted-foreground">
-              Type
-              <span class="font-mono font-semibold text-foreground">{{ deleteToken() }}</span>
-              to confirm
-            </label>
-            <input
-              type="text"
-              [ngModel]="confirmInput()"
-              (ngModelChange)="confirmInput.set($event)"
-              [disabled]="isDeleting()"
-              autocomplete="off"
-              autocapitalize="off"
-              spellcheck="false"
-              class="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground
-                     focus:border-transparent focus:outline-none focus:ring-2 focus:ring-destructive/50"
-            />
-          </div>
-
-          @if (deleteError()) {
-            <p class="mt-2 text-xs text-destructive">{{ deleteError() }}</p>
-          }
-
-          <div class="mt-5 flex justify-end gap-2">
+          <footer class="fl-dialog__footer">
             <button
+              flButton="ghost"
               type="button"
               (click)="closeDelete()"
               [disabled]="isDeleting()"
-              class="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
             >
               Cancel
             </button>
             <button
+              flButton="danger"
               type="button"
               (click)="executeDelete()"
               [disabled]="!canConfirmDelete()"
-              class="inline-flex items-center gap-2 rounded-md bg-destructive px-3 py-1.5 text-sm font-medium
-                     text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
             >
               @if (isDeleting()) {
-                <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
+                <fl-spinner label="Deleting" />
                 Deleting…
               } @else {
                 {{ deleteButtonText() }}
               }
             </button>
-          </div>
+          </footer>
         </div>
       </div>
     }

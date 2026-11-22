@@ -16,6 +16,7 @@ import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 import { FlTag } from '../../../ui/primitives/tag';
 import { FlButton } from '../../../ui/primitives/button';
 import { appDetailNav } from './app-detail-sections';
+import { openUrlOf } from './app-recap-header';
 import { statusTone } from './applications-list-rows';
 import { statusToneOf } from '../dashboard/home-state';
 
@@ -33,7 +34,7 @@ import {
   availabilityOf,
 } from '../../model/application.models';
 import { isActionAvailable } from '../../model/app-status-actions';
-import { isBuildingBlock } from '../../model/app-exposure';
+import { hasPublicEndpoint, isBuildingBlock } from '../../model/app-exposure';
 import { databaseEngineOf } from '../../model/db-engine';
 import {
   WORKLOAD_LIST_LABEL,
@@ -271,6 +272,13 @@ export class ApplicationDetailComponent implements OnDestroy {
     crumbs.push({ label: this.title() ?? app?.name ?? '' });
     return crumbs;
   });
+
+  protected readonly openUrl = computed(() => {
+    const app = this.application();
+    return app && hasPublicEndpoint(app) ? openUrlOf(app.url ?? '', null) : '';
+  });
+
+  protected readonly onOverview = computed(() => this.activeTab() === 'overview');
 
   protected statusOf(status: string): StatusTone {
     return statusToneOf(statusTone(status));

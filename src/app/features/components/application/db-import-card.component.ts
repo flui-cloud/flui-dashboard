@@ -15,162 +15,188 @@ import {
   ACTIVE_IMPORT,
   DbImportService,
   DbImportSource,
+  DbImportStatus,
   DbImportView,
   IMPORT_STATE_TEXT,
   bytesText,
 } from '../../service/db-import.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
 
 const POLL_MS = 10_000;
+
+const STATE_TONE: Record<DbImportStatus, StatusTone> = {
+  checking: 'progress',
+  copying: 'progress',
+  streaming: 'success',
+  'cutting-over': 'progress',
+  completed: 'success',
+  failed: 'error',
+  aborted: 'neutral',
+};
 
 @Component({
   selector: 'app-db-import-card',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, FlPanel, FlKeyValue, FlKvItem, FlAlert, FlField, FlStatus, FlButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (supported()) {
-      <div class="rounded-lg border border-border px-4 py-3 text-sm" data-testid="db-import">
-        <div class="font-medium">Import from another {{ engineName() }}</div>
+      <fl-panel title="Import data" data-testid="db-import">
         @if (view(); as v) {
-          <dl class="mt-2 grid grid-cols-[8rem_1fr] gap-x-3 gap-y-1 text-xs">
-            <dt class="text-muted-foreground">From</dt>
-            <dd class="font-mono">
-              {{ v.source.user }}&#64;{{ v.source.host }}:{{ v.source.port }}/{{
-                v.source.database
-              }}
-            </dd>
-            <dt class="text-muted-foreground">State</dt>
-            <dd>{{ stateText[v.status] }}</dd>
-            @if (v.tablesTotal !== null) {
-              <dt class="text-muted-foreground">Tables</dt>
-              <dd>{{ v.tablesCopied ?? 0 }} of {{ v.tablesTotal }} copied</dd>
+          <div class="flex flex-col gap-4">
+            <fl-status [tone]="stateTone[v.status]" [label]="stateText[v.status]" />
+            <fl-key-value>
+              <fl-kv-item key="From" [mono]="true"
+                >{{ v.source.user }}&#64;{{ v.source.host }}:{{ v.source.port }}/{{
+                  v.source.database
+                }}</fl-kv-item
+              >
+              @if (v.tablesTotal !== null) {
+                <fl-kv-item key="Tables"
+                  >{{ v.tablesCopied ?? 0 }} of {{ v.tablesTotal }} copied</fl-kv-item
+                >
+              }
+              @if (lag()) {
+                <fl-kv-item key="Behind">{{ lag() }} behind the source</fl-kv-item>
+              }
+            </fl-key-value>
+            @if (v.tablesWithoutKey.length) {
+              <p class="text-fl-body-sm text-fl-ink-muted">
+                Without a primary key, given a full replica identity on the source until the end:
+                <span class="fl-mono">{{ v.tablesWithoutKey.join(', ') }}</span>
+              </p>
             }
-            @if (lag()) {
-              <dt class="text-muted-foreground">Behind</dt>
-              <dd>{{ lag() }} behind the source</dd>
+            @if (v.detail) {
+              @if (v.status === 'failed') {
+                <fl-alert tone="error" title="Import failed">{{ v.detail }}</fl-alert>
+              } @else {
+                <p class="text-fl-body-sm text-fl-ink-muted">{{ v.detail }}</p>
+              }
             }
-          </dl>
-          @if (v.tablesWithoutKey.length) {
-            <p class="mt-2 text-xs text-muted-foreground">
-              Without a primary key, given a full replica identity on the source until the end:
-              {{ v.tablesWithoutKey.join(', ') }}
-            </p>
-          }
-          @if (v.detail) {
-            <p
-              class="mt-2 text-xs"
-              [class]="v.status === 'failed' ? 'text-red-600' : 'text-muted-foreground'"
-            >
-              {{ v.detail }}
-            </p>
-          }
-          @if (v.status === 'streaming') {
-            <p class="mt-2 text-xs text-muted-foreground">
-              When you are ready, stop every write to the source, then switch. Flui waits for the
-              last changes, then detaches.
-            </p>
-          }
-          <div class="mt-3 flex gap-2">
             @if (v.status === 'streaming') {
-              <button
-                type="button"
-                class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
-                [disabled]="busy()"
-                (click)="switchOver()"
-              >
-                Switch to Flui
-              </button>
+              <p class="text-fl-body-sm text-fl-ink-muted">
+                When you are ready, stop every write to the source, then switch. Flui waits for the
+                last changes, then detaches.
+              </p>
             }
-            @if (active()) {
-              <button
-                type="button"
-                class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                [disabled]="busy()"
-                (click)="cancel()"
-              >
-                Cancel the import
-              </button>
-            } @else {
-              <button
-                type="button"
-                class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                (click)="view.set(null)"
-              >
-                Start another
-              </button>
-            }
+            <div class="flex flex-wrap gap-2">
+              @if (v.status === 'streaming') {
+                <button
+                  flButton="primary"
+                  size="sm"
+                  type="button"
+                  [disabled]="busy()"
+                  (click)="switchOver()"
+                >
+                  Switch to Flui
+                </button>
+              }
+              @if (active()) {
+                <button
+                  flButton="secondary"
+                  size="sm"
+                  type="button"
+                  [disabled]="busy()"
+                  (click)="cancel()"
+                >
+                  Cancel the import
+                </button>
+              } @else {
+                <button flButton="secondary" size="sm" type="button" (click)="view.set(null)">
+                  Start another
+                </button>
+              }
+            </div>
           </div>
         } @else {
-          <p class="mt-1 text-xs text-muted-foreground">
-            Copies a database that runs elsewhere into this one, which must be empty, and keeps it
-            in step until you switch. {{ requirement() }}
-          </p>
-          <form
-            class="mt-3 grid grid-cols-2 gap-2 text-xs"
-            (ngSubmit)="start()"
-            data-testid="db-import-form"
-          >
-            <input
-              class="col-span-2 rounded-md border bg-background px-2 py-1.5"
-              name="host"
-              placeholder="Host"
-              [(ngModel)]="form.host"
-              required
-            />
-            <input
-              class="rounded-md border bg-background px-2 py-1.5"
-              name="port"
-              type="number"
-              placeholder="Port"
-              [(ngModel)]="form.port"
-              required
-            />
-            <select
-              class="rounded-md border bg-background px-2 py-1.5"
-              name="sslmode"
-              [(ngModel)]="form.sslmode"
-            >
-              <option value="require">TLS required</option>
-              <option value="verify-full">TLS, verify certificate</option>
-              <option value="prefer">TLS if available</option>
-              <option value="disable">No TLS</option>
-            </select>
-            <input
-              class="rounded-md border bg-background px-2 py-1.5"
-              name="database"
-              placeholder="Database"
-              [(ngModel)]="form.database"
-              required
-            />
-            <input
-              class="rounded-md border bg-background px-2 py-1.5"
-              name="user"
-              placeholder="User"
-              [(ngModel)]="form.user"
-              required
-            />
-            <input
-              class="col-span-2 rounded-md border bg-background px-2 py-1.5"
-              name="password"
-              type="password"
-              autocomplete="off"
-              placeholder="Password (kept encrypted until the import ends)"
-              [(ngModel)]="password"
-              required
-            />
-            <button
-              type="submit"
-              class="col-span-2 justify-self-start rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground"
-              [disabled]="busy()"
-            >
-              Start the import
-            </button>
-          </form>
+          <div class="flex flex-col gap-4">
+            <p class="text-fl-body-sm text-fl-ink-muted">
+              Copies another {{ engineName() }} database into this one, which must be empty, and
+              keeps it in step until you switch. {{ requirement() }}
+            </p>
+            <form class="grid grid-cols-2 gap-3" (ngSubmit)="start()" data-testid="db-import-form">
+              <fl-field class="col-span-2" label="Host" for="db-import-host">
+                <div class="fl-input fl-input--lg">
+                  <input id="db-import-host" name="host" [(ngModel)]="form.host" required />
+                </div>
+              </fl-field>
+              <fl-field label="Port" for="db-import-port">
+                <div class="fl-input fl-input--lg">
+                  <input
+                    id="db-import-port"
+                    name="port"
+                    type="number"
+                    [(ngModel)]="form.port"
+                    required
+                  />
+                </div>
+              </fl-field>
+              <fl-field label="TLS" for="db-import-sslmode">
+                <span class="fl-select-wrap">
+                  <select
+                    id="db-import-sslmode"
+                    class="fl-select"
+                    name="sslmode"
+                    [(ngModel)]="form.sslmode"
+                  >
+                    <option value="require">TLS required</option>
+                    <option value="verify-full">TLS, verify certificate</option>
+                    <option value="prefer">TLS if available</option>
+                    <option value="disable">No TLS</option>
+                  </select>
+                </span>
+              </fl-field>
+              <fl-field label="Database" for="db-import-database">
+                <div class="fl-input fl-input--lg">
+                  <input
+                    id="db-import-database"
+                    name="database"
+                    [(ngModel)]="form.database"
+                    required
+                  />
+                </div>
+              </fl-field>
+              <fl-field label="User" for="db-import-user">
+                <div class="fl-input fl-input--lg">
+                  <input id="db-import-user" name="user" [(ngModel)]="form.user" required />
+                </div>
+              </fl-field>
+              <fl-field
+                class="col-span-2"
+                label="Password"
+                for="db-import-password"
+                hint="Kept encrypted until the import ends."
+              >
+                <div class="fl-input fl-input--lg">
+                  <input
+                    id="db-import-password"
+                    name="password"
+                    type="password"
+                    autocomplete="off"
+                    [(ngModel)]="password"
+                    required
+                  />
+                </div>
+              </fl-field>
+              <div class="col-span-2">
+                <button flButton="primary" size="sm" type="submit" [disabled]="busy()">
+                  Start the import
+                </button>
+              </div>
+            </form>
+          </div>
         }
         @if (error()) {
-          <p class="mt-2 text-xs text-red-600">{{ error() }}</p>
+          <div class="mt-4">
+            <fl-alert tone="error" title="Request refused">{{ error() }}</fl-alert>
+          </div>
         }
-      </div>
+      </fl-panel>
     }
   `,
 })
@@ -182,6 +208,7 @@ export class DbImportCardComponent {
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
   readonly stateText = IMPORT_STATE_TEXT;
+  readonly stateTone = STATE_TONE;
 
   form: DbImportSource = {
     host: '',

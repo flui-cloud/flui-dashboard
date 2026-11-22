@@ -1,18 +1,14 @@
 import { accessOf } from '../../model/app-access';
 import { availabilityOf } from '../../model/application.models';
-import {
-  Component,
-  OnInit,
-  inject,
-  computed,
-  signal,
-  effect,
-  viewChild,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnInit, inject, computed, signal, effect, viewChild } from '@angular/core';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucidePin, lucideTrash2 } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlButton } from '../../../ui/primitives/button';
+import { AppOverviewProtection } from './app-overview-protection';
+import { AppOverviewConnect } from './app-overview-connect';
+import { AppRecapStore } from './app-recap-store';
+import { databaseEngineOf } from '../../model/db-engine';
 
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationMonitoringService } from '../../service/application-monitoring.service';
@@ -39,9 +35,12 @@ import { DbImportCardComponent } from './db-import-card.component';
 
 @Component({
   selector: 'app-overview-tab',
-  standalone: true,
   imports: [
-    NgIconComponent,
+    FlAlert,
+    FlPanel,
+    FlButton,
+    AppOverviewProtection,
+    AppOverviewConnect,
     ConfirmationDialogComponent,
     DiagnosesBannerComponent,
     ClientConnectionSectionComponent,
@@ -56,8 +55,7 @@ import { DbImportCardComponent } from './db-import-card.component';
     AppUdpPortsCardComponent,
     DbImportCardComponent,
   ],
-  providers: [provideIcons({ lucidePin, lucideTrash2 })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [AppRecapStore],
   templateUrl: './app-overview-tab.component.html',
 })
 export class AppOverviewTabComponent implements OnInit {
@@ -99,6 +97,8 @@ export class AppOverviewTabComponent implements OnInit {
       }
     });
   }
+
+  readonly isDatabase = computed(() => !!databaseEngineOf(this.app()));
 
   readonly isPublicApp = computed(() => hasPublicEndpoint(this.app()));
 

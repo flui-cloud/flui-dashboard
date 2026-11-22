@@ -91,8 +91,8 @@ Signals, no state library.
 | 0    | Theme, tokens, tooling, state primitives, the kit in Angular, `/kit`                    |
 | 1    | Frame: top bar, side navigation, breadcrumb, page header; new menu structure            |
 | 2    | Kit primitives replace badges, cards and pills across existing pages                    |
-| 3    | Reference pages: Overview, Applications, Data stores, Cluster monitoring, Deploy wizard |
-| 4    | Infrastructure pages                                                                    |
+| 3    | Reference pages: Overview, Applications, Data stores, application detail, Deploy wizard |
+| 4    | Infrastructure pages; cluster detail moves to the resource menu, as the application did |
 | 5    | Delivery pages                                                                          |
 | 6    | Operations and Administration pages                                                     |
 | 7    | Long tail, dark theme, removal of the legacy variables, slop count at zero              |

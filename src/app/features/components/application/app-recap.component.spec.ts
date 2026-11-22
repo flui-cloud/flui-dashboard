@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter, ActivatedRoute, convertToParamMap } from '@angular/router';
+import { provideRouter, ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { AppRecapComponent } from './app-recap.component';
 import { ApplicationService } from '../../service/application.service';
@@ -85,6 +85,7 @@ const protection = (id: string, over: Record<string, unknown> = {}): AppProtecti
 describe('AppRecapComponent', () => {
   let fixture: ComponentFixture<AppRecapComponent>;
   let runOnDemand: jasmine.Spy;
+  let navigate: jasmine.Spy;
 
   async function build(group: AppGroupView, protections: Record<string, AppProtection>) {
     runOnDemand = jasmine.createSpy('runOnDemand').and.resolveTo({ job: { id: 'j1' } });
@@ -195,6 +196,7 @@ describe('AppRecapComponent', () => {
         { provide: NotificationService, useValue: { add: () => undefined } },
       ],
     }).compileComponents();
+    navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     fixture = TestBed.createComponent(AppRecapComponent);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -226,43 +228,34 @@ describe('AppRecapComponent', () => {
 
     beforeEach(() => build(group, { whoami: protection('whoami') }));
 
-    it('heads the page with the image, the cluster and Open app', () => {
-      expect(q('[data-testid="recap-meta"]').textContent).toContain('traefik/whoami:v1.10');
-      expect(q('[data-testid="recap-meta"]').textContent).toContain('ovh-scaling-test');
-      expect(q('[data-testid="recap-open"]').getAttribute('href')).toBe(
-        'https://whoami.example.com',
-      );
+    it('opens the application itself, where its overview lives', () => {
+      expect(navigate).toHaveBeenCalledWith(['/apps/applications', 'whoami', 'overview'], {
+        replaceUrl: true,
+      });
     });
+  });
 
-    it('shows the endpoint with its health and the three facts', () => {
-      expect(q('[data-testid="recap-endpoint-health"]').textContent).toContain(
-        'DNS and certificate ok',
-      );
-      const facts = q('[data-testid="recap-facts"]').textContent ?? '';
-      expect(facts).toContain('1 / 1 ready');
-      expect(facts).toContain('0 restarts in the last hour');
-      expect(facts).toContain('CPU 6% · MEM 22%');
-      expect(facts).toContain('Succeeded');
-      expect(facts).toContain('v1.10');
-    });
+  describe('a bundle of one component', () => {
+    const pg = app('pg', { url: '' });
+    const group: AppGroupView = {
+      id: 'g2',
+      type: 'composed' as AppGroupView['type'],
+      name: 'pg-bundle',
+      status: 'running' as AppGroupView['status'],
+      category: 'user' as AppGroupView['category'],
+      clusterId: 'c1',
+      url: '',
+      createdAt: '2026-09-26T16:47:00Z',
+      primaryComponentId: 'pg',
+      components: [pg],
+    };
 
-    it('shows the backup band and backs up now through the covering policy', async () => {
-      const band = q('[data-testid="recap-backup"]').textContent ?? '';
-      expect(band).toContain('Backed up');
-      expect(band).toContain('nightly · daily 03:00 UTC');
-      expect(band).toContain('3h ago · 2 MB');
-      expect(band).toContain('30 days');
-      expect(band).toContain('Restore');
-      q('[data-testid="recap-backup-now"]').click();
-      await fixture.whenStable();
-      fixture.detectChanges();
-      expect(runOnDemand).toHaveBeenCalledWith('policy-whoami');
-      expect(q('[data-testid="recap-backup-now"]').textContent).toContain('Backup started');
-    });
+    beforeEach(() => build(group, { pg: protection('pg') }));
 
-    it('reduces the danger zone to one line', () => {
-      expect(q('[data-testid="danger-line"]').textContent).toContain('Delete application');
-      expect(q('[data-testid="danger-line"]').textContent).toContain('user-someone');
+    it('opens the one component, where the bundle can still be deleted', () => {
+      expect(navigate).toHaveBeenCalledWith(['/apps/applications', 'pg', 'overview'], {
+        replaceUrl: true,
+      });
     });
   });
 
@@ -314,7 +307,7 @@ describe('AppRecapComponent', () => {
       const alarm = q('[data-testid="recap-backup-alarm"]');
       expect(alarm.textContent).toContain('The database has no backup');
       expect(alarm.textContent).toContain('5.0 GB volume');
-      expect(alarm.getAttribute('href')).toContain('engineClass=database');
+      expect(alarm.querySelector('a')!.getAttribute('href')).toContain('engineClass=database');
     });
 
     it('draws each component with its readings and backup state', () => {

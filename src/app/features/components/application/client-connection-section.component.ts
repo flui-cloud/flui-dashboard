@@ -1,23 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnChanges,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideCircleCheck,
-  lucideDatabase,
-  lucideLoader,
-  lucidePlug,
-  lucidePower,
-  lucideRefreshCw,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { Component, OnChanges, computed, inject, input, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlug, lucidePower, lucideRefreshCw } from '@ng-icons/lucide';
 import { CatalogService } from '../../service/catalog.service';
 import {
   CatalogDetailResponseDto,
@@ -25,105 +8,108 @@ import {
 } from '../../../core/api/model/models';
 import { Application } from '../../model/application.models';
 import { BbInstancePickerModalComponent } from './bb-instance-picker-modal.component';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-client-connection-section',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, BbInstancePickerModalComponent],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideCircleCheck,
-      lucideDatabase,
-      lucideLoader,
-      lucidePlug,
-      lucidePower,
-      lucideRefreshCw,
-      lucideTriangleAlert,
-    }),
+  imports: [
+    BbInstancePickerModalComponent,
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlAlert,
+    FlCopyId,
+    FlLoadingState,
+    FlStatus,
+    FlButton,
+    FlIcon,
+    FlSpinner,
   ],
+  providers: [provideIcons({ lucidePlug, lucidePower, lucideRefreshCw })],
   template: `
     @if (isClient()) {
-      <div class="rounded-fl-lg border border-border bg-card p-5">
-        <div class="flex items-center gap-2">
-          <ng-icon name="lucideDatabase" class="h-4 w-4 text-primary" />
-          <h3 class="text-sm font-semibold text-foreground">Connection</h3>
-        </div>
-
+      <fl-panel title="Connection" [flush]="loading()">
         @if (loading()) {
-          <div class="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-            <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-            Loading link status…
-          </div>
+          <fl-loading-state [rows]="2" />
         } @else if (error()) {
-          <div
-            class="mt-3 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive"
-          >
-            <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5 mt-0.5" />
-            <div>{{ error() }}</div>
-          </div>
+          <fl-alert tone="error" title="Connection error">{{ error() }}</fl-alert>
         } @else if (!install()?.connectedInstallId) {
-          <p class="mt-2 text-xs text-muted-foreground">
-            This client is installed but not connected to a
-            <span class="font-mono">{{ bbRefs().join(' / ') }}</span> yet. It will start running
-            once connected.
-          </p>
-          <button
-            type="button"
-            (click)="openPicker()"
-            [disabled]="submitting()"
-            class="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-          >
-            <ng-icon name="lucidePlug" class="h-3 w-3" />
-            Connect to database
-          </button>
-        } @else {
-          <div class="mt-3 space-y-2">
-            <div class="flex flex-wrap items-center gap-2 text-sm">
-              <ng-icon name="lucideCircleCheck" class="h-4 w-4 text-emerald-500" />
-              <span class="text-muted-foreground">Connected to</span>
-              <span class="font-mono font-medium text-foreground">
-                {{ install()?.connectedSlug ?? bbRef() }}
-              </span>
-              <span
-                class="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground"
-              >
-                {{ install()!.connectedInstallId!.slice(0, 8) }}
-              </span>
-            </div>
-            <p class="text-xs text-muted-foreground">
-              Credentials are wired via the database's internal Secret. Changing the target will
-              rolling-restart this client.
+          <div class="flex flex-col gap-3">
+            <fl-status tone="neutral" label="Not connected" />
+            <p class="text-fl-body-sm text-fl-ink-muted">
+              This client is installed but not connected to
+              <span class="fl-mono">{{ bbRefs().join(' / ') }}</span> yet. It starts once connected.
             </p>
-            <div class="flex flex-wrap items-center gap-2 pt-1">
+            <div>
               <button
+                flButton="secondary"
+                size="sm"
                 type="button"
                 (click)="openPicker()"
                 [disabled]="submitting()"
-                class="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted disabled:opacity-50"
               >
-                <ng-icon name="lucideRefreshCw" class="h-3 w-3" />
+                <fl-icon name="lucidePlug" />
+                Connect to database
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="flex flex-col gap-4">
+            <fl-status tone="success" label="Connected" />
+            <fl-key-value class="fl-kv--compact">
+              <fl-kv-item key="Database" [mono]="true">{{
+                install()?.connectedSlug ?? bbRef()
+              }}</fl-kv-item>
+              <fl-kv-item key="Instance">
+                <fl-copy-id
+                  [value]="install()!.connectedInstallId!"
+                  label="instance ID"
+                  [display]="install()!.connectedInstallId!.slice(0, 8)"
+                />
+              </fl-kv-item>
+            </fl-key-value>
+            <p class="text-fl-body-sm text-fl-ink-muted">
+              Credentials come from the database's internal secret. Changing the target restarts
+              this client.
+            </p>
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                flButton="secondary"
+                size="sm"
+                type="button"
+                (click)="openPicker()"
+                [disabled]="submitting()"
+              >
+                <fl-icon name="lucideRefreshCw" />
                 Change database
               </button>
               <button
+                flButton="secondary"
+                size="sm"
                 type="button"
                 (click)="disconnect()"
                 [disabled]="submitting()"
-                class="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
                 title="Remove the link. The pod stays running but disconnected."
               >
                 @if (submitting()) {
-                  <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
+                  <fl-spinner label="Disconnecting" />
                 } @else {
-                  <ng-icon name="lucidePower" class="h-3 w-3" />
+                  <fl-icon name="lucidePower" />
                 }
                 Disconnect
               </button>
             </div>
           </div>
         }
-      </div>
+      </fl-panel>
 
       @if (pickerOpen() && bbRefs().length > 0 && clusterId()) {
         <app-bb-instance-picker-modal

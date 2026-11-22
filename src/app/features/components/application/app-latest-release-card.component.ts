@@ -7,126 +7,98 @@ import {
   inject,
   signal,
   input,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-
+import { formatDate as formatDateIn } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideRocket,
-  lucideTriangleAlert,
-  lucideCheckCircle,
-  lucideLoader,
-  lucideExternalLink,
-  lucideRotateCcw,
-  lucideArrowRight,
-  lucideRefreshCw,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink, lucideRotateCcw } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 
 import { AppReleaseService } from '../../service/app-release.service';
 import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleaseDto';
 import { AppBuildsService } from '../../../core/api/api/appBuilds.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
 
+const STATUS_TONE: Record<string, StatusTone> = {
+  SUCCEEDED: 'success',
+  FAILED: 'error',
+  IN_PROGRESS: 'progress',
+  ROLLED_BACK: 'warning',
+};
+
 @Component({
   selector: 'app-latest-release-card',
-  standalone: true,
-  imports: [RouterModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideRocket,
-      lucideTriangleAlert,
-      lucideCheckCircle,
-      lucideLoader,
-      lucideExternalLink,
-      lucideRotateCcw,
-      lucideArrowRight,
-      lucideRefreshCw,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [RouterModule, FlPanel, FlStatus, FlButton, FlIcon],
+  providers: [provideIcons({ lucideExternalLink, lucideRotateCcw })],
   template: `
     @if (release(); as r) {
-      <div class="rounded-lg border px-4 py-3" [class]="containerClass(r.status)">
-        <div class="flex items-start gap-3">
-          <ng-icon
-            [name]="iconFor(r.status)"
-            class="h-5 w-5 flex-shrink-0 mt-0.5"
-            [class]="iconClass(r.status)"
-            [class.animate-spin]="r.status === 'IN_PROGRESS'"
-          />
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-sm font-semibold">{{ titleFor(r.status) }}</span>
-              <span
-                class="text-xs px-2 py-0.5 rounded-full font-medium"
-                [class]="badgeClass(r.status)"
-              >
-                {{ statusLabel(r.status) }}
-              </span>
-              @if (r.startedAt) {
-                <span class="text-xs text-gray-500"> · {{ formatDate(r.startedAt) }} </span>
+      <fl-panel title="Latest release">
+        <a
+          panelActions
+          class="fl-link text-fl-body-sm"
+          [routerLink]="['/apps/applications', r.applicationId, 'releases']"
+          >Release history</a
+        >
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <fl-status [tone]="toneOf(r.status)" [label]="statusLabel(r.status)" />
+            @if (r.startedAt) {
+              <span class="text-fl-body-sm text-fl-ink-muted">{{ formatDate(r.startedAt) }}</span>
+            }
+          </div>
+
+          @if (r.imageRef || r.previousImageRef) {
+            <p class="fl-mono min-w-0 truncate text-fl-body-sm text-fl-ink">
+              @if (r.previousImageRef && r.previousImageRef !== r.imageRef) {
+                <span class="text-fl-ink-muted" [title]="r.previousImageRef">{{
+                  shortImage(r.previousImageRef)
+                }}</span>
+                <span class="text-fl-ink-muted"> → </span>
               }
-            </div>
+              @if (r.imageRef) {
+                <span [title]="r.imageRef">{{ shortImage(r.imageRef) }}</span>
+              }
+            </p>
+          }
 
-            <!-- Image diff -->
-            @if (r.imageRef || r.previousImageRef) {
-              <div class="mt-2 flex items-center gap-2 text-xs font-mono flex-wrap min-w-0">
-                @if (r.previousImageRef && r.previousImageRef !== r.imageRef) {
-                  <span class="text-gray-500 truncate" [title]="r.previousImageRef">
-                    {{ shortImage(r.previousImageRef) }}
-                  </span>
-                  <ng-icon name="lucideArrowRight" class="h-3 w-3 text-gray-400 flex-shrink-0" />
-                }
-                @if (r.imageRef) {
-                  <span class="font-medium truncate" [title]="r.imageRef">
-                    {{ shortImage(r.imageRef) }}
-                  </span>
-                }
-              </div>
-            }
+          @if (r.status === 'FAILED' && r.failureReason) {
+            <p class="whitespace-pre-wrap break-words text-fl-body-sm text-fl-ink-muted">
+              {{ r.failureReason }}
+            </p>
+          }
 
-            <!-- Failure reason -->
-            @if (r.status === 'FAILED' && r.failureReason) {
-              <p class="mt-2 text-xs whitespace-pre-wrap break-words text-red-700">
-                {{ r.failureReason }}
-              </p>
-            }
-
-            <!-- Action row -->
-            <div class="mt-3 flex items-center gap-3 flex-wrap">
+          @if (buildExternalUrl() || (r.status === 'FAILED' && canRollback())) {
+            <div class="flex flex-wrap items-center gap-3">
+              @if (r.status === 'FAILED' && canRollback()) {
+                <a
+                  flButton
+                  size="sm"
+                  [routerLink]="['/apps/applications', r.applicationId, 'revisions']"
+                >
+                  <fl-icon name="lucideRotateCcw" />
+                  Rollback
+                </a>
+              }
               @if (buildExternalUrl(); as url) {
                 <a
                   [href]="url"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
+                  class="fl-link inline-flex items-center gap-1 text-fl-body-sm"
                 >
-                  <ng-icon name="lucideExternalLink" class="h-3 w-3" />
                   View build on GitHub
-                </a>
-              }
-              <a
-                [routerLink]="['/apps/applications', r.applicationId, 'releases']"
-                class="inline-flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900"
-              >
-                Release history
-              </a>
-              @if (r.status === 'FAILED' && canRollback()) {
-                <a
-                  [routerLink]="['/apps/applications', r.applicationId, 'revisions']"
-                  class="inline-flex items-center gap-1 text-xs font-medium text-red-700 hover:underline"
-                >
-                  <ng-icon name="lucideRotateCcw" class="h-3 w-3" />
-                  Rollback
+                  <fl-icon name="lucideExternalLink" [size]="14" />
                 </a>
               }
             </div>
-          </div>
+          }
         </div>
-      </div>
+      </fl-panel>
     }
   `,
 })
@@ -174,60 +146,8 @@ export class AppLatestReleaseCardComponent implements OnChanges {
     }
   }
 
-  containerClass(status: ReleaseStatus): string {
-    switch (status) {
-      case 'FAILED':
-        return 'bg-red-50 border-red-200';
-      case 'IN_PROGRESS':
-        return 'bg-blue-50 border-blue-200';
-      case 'ROLLED_BACK':
-        return 'bg-amber-50 border-amber-200';
-      case 'SUCCEEDED':
-      default:
-        return 'bg-white border-gray-200';
-    }
-  }
-
-  iconClass(status: ReleaseStatus): string {
-    switch (status) {
-      case 'FAILED':
-        return 'text-red-600';
-      case 'IN_PROGRESS':
-        return 'text-blue-600';
-      case 'ROLLED_BACK':
-        return 'text-amber-600';
-      case 'SUCCEEDED':
-      default:
-        return 'text-green-600';
-    }
-  }
-
-  iconFor(status: ReleaseStatus): string {
-    switch (status) {
-      case 'FAILED':
-        return 'lucideTriangleAlert';
-      case 'IN_PROGRESS':
-        return 'lucideLoader';
-      case 'ROLLED_BACK':
-        return 'lucideRotateCcw';
-      case 'SUCCEEDED':
-      default:
-        return 'lucideCheckCircle';
-    }
-  }
-
-  titleFor(status: ReleaseStatus): string {
-    switch (status) {
-      case 'FAILED':
-        return 'Last release failed';
-      case 'IN_PROGRESS':
-        return 'Release in progress';
-      case 'ROLLED_BACK':
-        return 'Rolled back';
-      case 'SUCCEEDED':
-      default:
-        return 'Latest release';
-    }
+  toneOf(status: ReleaseStatus): StatusTone {
+    return STATUS_TONE[status] ?? 'neutral';
   }
 
   statusLabel(status: ReleaseStatus): string {
@@ -245,22 +165,7 @@ export class AppLatestReleaseCardComponent implements OnChanges {
     }
   }
 
-  badgeClass(status: ReleaseStatus): string {
-    switch (status) {
-      case 'FAILED':
-        return 'bg-red-100 text-red-800';
-      case 'IN_PROGRESS':
-        return 'bg-blue-100 text-blue-800';
-      case 'ROLLED_BACK':
-        return 'bg-amber-100 text-amber-800';
-      case 'SUCCEEDED':
-      default:
-        return 'bg-green-100 text-green-800';
-    }
-  }
-
   shortImage(ref: string): string {
-    // Show only the tag/digest portion when long; full ref still in title.
     const colonIdx = ref.lastIndexOf(':');
     if (colonIdx > 0 && ref.length > 48) {
       const repo = ref.slice(0, colonIdx);
@@ -272,11 +177,6 @@ export class AppLatestReleaseCardComponent implements OnChanges {
   }
 
   formatDate(iso: string): string {
-    const d = new Date(iso);
-    return (
-      d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) +
-      ' ' +
-      d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-    );
+    return formatDateIn(iso, 'd MMM y, HH:mm', 'en-US');
   }
 }

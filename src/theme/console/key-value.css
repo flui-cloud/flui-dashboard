@@ -24,3 +24,4 @@
 .fl-table .is-fit {
   width: 1px;
 }
+.fl-kv__value .fl-status { white-space: normal; align-items: flex-start; }

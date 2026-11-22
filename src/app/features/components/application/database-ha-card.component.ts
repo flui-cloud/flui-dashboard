@@ -1,73 +1,66 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideShieldCheck, lucideShieldAlert, lucideLoader } from '@ng-icons/lucide';
+import { DatePipe } from '@angular/common';
+import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { ApplicationResponseDto } from '../../../core/api';
 import { databaseEngineOf } from '../../model/db-engine';
 import { DbHaService, DatabaseHaView } from '../../service/db-ha.service';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
 
 @Component({
   selector: 'app-database-ha-card',
-  standalone: true,
-  imports: [NgIconComponent, ConfirmationDialogComponent],
-  providers: [provideIcons({ lucideShieldCheck, lucideShieldAlert, lucideLoader })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    DatePipe,
+    ConfirmationDialogComponent,
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlAlert,
+    FlStatus,
+    FlButton,
+  ],
   template: `
     @if (isPostgres() && view(); as v) {
-      <div
-        class="flex items-start justify-between gap-3 rounded-lg border px-4 py-2.5"
-        [class]="
-          v.state?.state === 'active'
-            ? 'border-emerald-200 bg-emerald-50/70'
-            : 'border-border bg-muted/30'
-        "
-      >
-        <div class="flex items-start gap-3">
-          <ng-icon
-            [name]="
-              v.state?.state === 'copying'
-                ? 'lucideLoader'
-                : v.state?.state === 'active'
-                  ? 'lucideShieldCheck'
-                  : 'lucideShieldAlert'
-            "
-            class="mt-0.5 h-4 w-4 flex-shrink-0"
-            [class.animate-spin]="v.state?.state === 'copying'"
-          />
-          <div class="text-sm">
-            <div class="font-medium">{{ title() }}</div>
-            <div class="mt-0.5 text-xs text-muted-foreground">
-              {{ subtitle() }}
-            </div>
-            @if (placementLine()) {
-              <div class="mt-0.5 text-xs text-muted-foreground" data-testid="database-ha-placement">
-                {{ placementLine() }}
-              </div>
-            }
-          </div>
-        </div>
+      <fl-panel title="High availability">
         @if (!v.state || v.state.state === 'failed') {
           <button
+            panelActions
+            flButton="secondary"
+            size="sm"
             type="button"
-            class="shrink-0 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
             (click)="dialog().open()"
           >
             Make highly available
           </button>
         }
-      </div>
-      @if (error()) {
-        <p class="mt-1 text-xs text-red-600">{{ error() }}</p>
-      }
+        <div class="flex flex-col gap-3">
+          <fl-status [tone]="tone()" [label]="title()" />
+          <p class="text-fl-body-sm text-fl-ink-muted">{{ subtitle() }}</p>
+          @if (v.state || placementLine()) {
+            <fl-key-value>
+              @if (v.state) {
+                @if (v.state.state === 'active') {
+                  <fl-kv-item key="Instances">{{ v.state.instances }}</fl-kv-item>
+                }
+                <fl-kv-item key="Since">{{ v.state.since | date: 'd MMM y, HH:mm' }}</fl-kv-item>
+              }
+              @if (placementLine()) {
+                <fl-kv-item key="Placement" data-testid="database-ha-placement">{{
+                  placementLine()
+                }}</fl-kv-item>
+              }
+            </fl-key-value>
+          }
+          @if (error()) {
+            <fl-alert tone="error" title="Could not make it highly available">{{
+              error()
+            }}</fl-alert>
+          }
+        </div>
+      </fl-panel>
       <app-confirmation-dialog
         title="Make this database highly available"
         message="Flui builds an instance in each of the cluster's three locations and moves the database to them. Writes pause for a few seconds."
@@ -97,6 +90,14 @@ export class DatabaseHaCardComponent {
     'No confirmed write is lost. The single instance is kept, stopped, with its data, as the way back.',
     'The cluster must be highly available across three locations; otherwise the request is refused with the reason.',
   ];
+
+  readonly tone = computed<StatusTone>(() => {
+    const s = this.view()?.state;
+    if (!s) return 'neutral';
+    if (s.state === 'active') return 'success';
+    if (s.state === 'copying') return 'progress';
+    return 'error';
+  });
 
   readonly title = computed(() => {
     const s = this.view()?.state;

@@ -1,35 +1,32 @@
 @if (app(); as app) {
-  <app-client-connection-section [application]="app" />
-  <div class="space-y-4">
+  <div class="fl-stack">
     <app-diagnoses-banner [applicationId]="app.id" />
 
-    @if (monitoringService.metrics(); as m) {
-      <app-overview-status-strip [metrics]="m" [appStatus]="app.status" />
+    <app-overview-summary [app]="app" />
+
+    <div class="fl-grid-2">
+      @if (monitoringService.metrics(); as m) {
+        <app-overview-status-strip [metrics]="m" [appStatus]="app.status" />
+      }
+      <app-latest-release-card class="block" [appId]="app.id" [canRollback]="rollbackAvailable()" />
+    </div>
+
+    @if (isDatabase()) {
+      <app-overview-connect [app]="app" />
     }
 
-    <app-latest-release-card class="block" [appId]="app.id" [canRollback]="rollbackAvailable()" />
+    <app-overview-protection [app]="app" />
 
+    <app-client-connection-section [application]="app" />
     <app-database-ha-card #haCard class="block" [app]="app" />
-
+    <app-db-import-card class="block" [app]="app" />
     <app-udp-ports-card class="block" [app]="app" />
 
-    <app-db-import-card class="block" [app]="app" />
-
     @if (app.persistenceScope === 'dedicated' && !haCard.active()) {
-      <div
-        class="flex items-start gap-3 rounded-lg border border-indigo-200 bg-indigo-50/70 px-4 py-2.5"
-      >
-        <ng-icon name="lucidePin" class="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-600" />
-        <div class="text-sm">
-          <div class="font-medium text-indigo-900">
-            Pinned to {{ app.dedicatedNodeName ?? 'the master node' }}
-          </div>
-          <div class="mt-0.5 text-xs text-indigo-700/80">
-            This app keeps its data on one node's local disk, so it always runs there. Resizing that
-            node will briefly stop the app.
-          </div>
-        </div>
-      </div>
+      <fl-alert [title]="'Pinned to ' + (app.dedicatedNodeName ?? 'the master node')">
+        This app keeps its data on one node's local disk, so it always runs there. Resizing that
+        node briefly stops the app.
+      </fl-alert>
     }
 
     @if (!isPublicApp()) {
@@ -41,8 +38,6 @@
         [mode]="internalServiceMode()"
       />
     }
-
-    <app-overview-summary [app]="app" />
 
     <app-project-section [application]="app" />
 
@@ -60,47 +55,35 @@
         deleteGroup();
       as group
     ) {
-      <div>
-        <app-delete-dialog [group]="group" [primary]="app" [compact]="true">
-          {{
-            group.type === 'composed'
-              ? 'Removes the bundle, all its components and their resources.'
-              : 'Removes this application and everything created for it.'
-          }}
-        </app-delete-dialog>
-      </div>
+      <app-delete-dialog [group]="group" [primary]="app" [compact]="true">
+        {{
+          group.type === 'composed'
+            ? 'Removes the bundle, all its components and their resources.'
+            : 'Removes this application and everything created for it.'
+        }}
+      </app-delete-dialog>
     } @else if (!app.systemProtected && app.status !== 'deleted') {
-      <div
-        class="flex flex-wrap items-center justify-between gap-3 rounded-fl-lg border border-dashed border-red-300 px-4 py-3"
-        data-testid="danger-line"
-      >
-        @if (app.status === 'deleting') {
-          <span class="min-w-0 text-xs text-muted-foreground">
-            {{ deleteStepMessage() || 'Removing application and its resources...' }}
+      <fl-panel title="Delete application" data-testid="danger-line">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-fl-body-sm text-fl-ink-muted">
+            @if (app.status === 'deleting') {
+              {{ deleteStepMessage() || 'Removing the application and its resources…' }}
+            } @else {
+              Removes this application and everything created for it.
+            }
           </span>
           <button
+            flButton
+            size="sm"
             type="button"
-            (click)="openDeleteDialog()"
+            class="text-fl-danger"
             [disabled]="isDeleting()"
-            class="shrink-0 rounded-md px-2.5 py-1 text-sm font-medium text-muted-foreground hover:text-red-600 disabled:opacity-50"
-          >
-            Retry delete
-          </button>
-        } @else {
-          <span class="min-w-0 text-xs text-muted-foreground">
-            Removes this application and everything created for it.
-          </span>
-          <button
-            type="button"
             (click)="openDeleteDialog()"
-            [disabled]="isDeleting()"
-            class="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <ng-icon name="lucideTrash2" class="h-4 w-4" />
-            Delete application
+            {{ app.status === 'deleting' ? 'Retry delete' : 'Delete application' }}
           </button>
-        }
-      </div>
+        </div>
+      </fl-panel>
     }
 
     <app-confirmation-dialog

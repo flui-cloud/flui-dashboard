@@ -1,28 +1,39 @@
-import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { FlPanel } from '../../../ui/patterns/panel';
 import { ProjectsService } from '../../service/projects.service';
-import { ProjectBadgeComponent } from '../projects/project-badge.component';
 
 @Component({
   selector: 'app-project-section',
-  standalone: true,
   host: { class: 'block' },
-  imports: [ProjectBadgeComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel],
   template: `
     @if (!hidden()) {
-      <div class="card-surface text-sm" data-testid="overview-project">
-        <div class="flex flex-wrap items-center gap-3 px-4 py-2.5">
-          <span class="text-label shrink-0">Project</span>
-          <app-project-badge [project]="current()" />
+      <fl-panel [flush]="true" data-testid="overview-project">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 text-fl-body-sm">
+          <span class="text-fl-ink-muted">Project</span>
+          @if (current(); as p) {
+            <span class="inline-flex min-w-0 items-center gap-2 text-fl-ink">
+              @if (p.color) {
+                <span
+                  class="h-2 w-2 shrink-0 rounded-fl-sm"
+                  [style.background-color]="p.color"
+                  aria-hidden="true"
+                ></span>
+              }
+              <span class="truncate">{{ p.name }}</span>
+            </span>
+          } @else {
+            <span class="text-fl-ink-muted">Not in a project</span>
+          }
           <span class="flex-1"></span>
           <span
-            class="text-xs text-muted-foreground"
+            class="text-fl-caption text-fl-ink-muted"
             title="The project is where the application runs. Moving it to another project means moving its data, which is not available yet."
           >
             Set when the app was created
           </span>
         </div>
-      </div>
+      </fl-panel>
     }
   `,
 })

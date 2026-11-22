@@ -33,6 +33,11 @@
         />
       }
       <ng-container headerActions>
+        @if (openUrl(); as url) {
+          <a flButton [href]="url" target="_blank" rel="noopener noreferrer" data-testid="app-open"
+            >Open</a
+          >
+        }
         @if (!access()?.readOnly) {
           @let pending = runtimeService.runtime()?.restartPending;
           <button
@@ -97,9 +102,13 @@
     <div class="fl-resource">
       <fl-resource-nav label="Application sections" [groups]="sections()" />
       <div class="fl-stack">
-        <fl-panel>
+        @if (onOverview()) {
           <router-outlet />
-        </fl-panel>
+        } @else {
+          <fl-panel>
+            <router-outlet />
+          </fl-panel>
+        }
       </div>
     </div>
   }

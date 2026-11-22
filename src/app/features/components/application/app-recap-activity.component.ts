@@ -1,43 +1,51 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
 import { RecentEvent } from './app-recap-bundle';
-import { TONE_DOT, shortDate } from './app-recap-view';
+import { shortDate } from './app-recap-view';
 
 @Component({
   selector: 'app-recap-activity',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [RouterLink, FlPanel, FlTable, FlEmptyState, FlLoadingState],
   host: { class: 'block' },
   template: `
-    <section class="card-surface p-5" data-testid="recap-activity">
-      <div class="flex items-center justify-between">
-        <h2 class="font-semibold text-foreground">Recent activity</h2>
-        <a
-          [routerLink]="['/apps/applications', appId(), 'revisions']"
-          [queryParams]="recapPath() ? { returnTo: recapPath() } : null"
-          class="text-xs font-medium text-primary hover:underline"
-          >{{ linkLabel() }}</a
-        >
-      </div>
+    <fl-panel title="Recent activity" [flush]="events().length > 0" data-testid="recap-activity">
+      <a
+        panelActions
+        class="fl-link text-fl-body-sm"
+        [routerLink]="['/apps/applications', appId(), 'revisions']"
+        [queryParams]="recapPath() ? { returnTo: recapPath() } : null"
+        >{{ linkLabel() }}</a
+      >
       @if (events().length === 0) {
-        <p class="mt-3 text-sm text-muted-foreground">
-          {{ loaded() ? 'No events recorded yet.' : 'Loading…' }}
-        </p>
+        @if (loaded()) {
+          <fl-empty-state [compact]="true" title="No events recorded yet" />
+        } @else {
+          <fl-loading-state [rows]="3" />
+        }
       } @else {
-        <ul class="mt-3 space-y-2.5">
-          @for (e of events(); track e.id) {
-            <li class="flex items-start gap-2.5 text-sm">
-              <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full" [class]="dot[e.tone]"></span>
-              <span class="w-20 shrink-0 font-mono text-xs text-muted-foreground">{{
-                shortDate(e.at)
-              }}</span>
-              <span class="min-w-0 text-foreground">{{ e.text }}</span>
-            </li>
-          }
-        </ul>
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col" class="is-fit">Time</th>
+                <th scope="col">Event</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of events(); track e.id) {
+                <tr>
+                  <td class="fl-mono text-fl-caption text-fl-ink-muted">{{ shortDate(e.at) }}</td>
+                  <td class="whitespace-normal text-fl-ink">{{ e.text }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
-    </section>
+    </fl-panel>
   `,
 })
 export class AppRecapActivityComponent {
@@ -47,6 +55,5 @@ export class AppRecapActivityComponent {
   readonly recapPath = input('');
   readonly linkLabel = input('All events');
 
-  protected readonly dot = TONE_DOT;
   protected readonly shortDate = shortDate;
 }

@@ -1,79 +1,71 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight } from '@ng-icons/lucide';
 import type { AppMetricsDto } from '../../../core/api/model/appMetricsDto';
-import { TONE_DOT, TONE_TEXT } from './app-recap-view';
-import {
-  formatCores,
-  formatUsageBytes,
-  limitPercent,
-  loadTone,
-  runStateOf,
-} from './app-overview-view';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlStatus } from '../../../ui/primitives/status';
+import { statusToneOf } from '../dashboard/home-state';
+import { formatCores, formatUsageBytes, limitPercent, runStateOf } from './app-overview-view';
 
 @Component({
   selector: 'app-overview-status-strip',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, NgIcon],
-  providers: [provideIcons({ lucideArrowRight })],
+  imports: [RouterLink, FlPanel, FlStatus, FlUsageBar],
   host: { class: 'block' },
   template: `
     @let s = state();
-    <a
-      [routerLink]="['../monitoring']"
-      class="card-surface flex items-center gap-4 overflow-hidden px-4 py-2.5 text-sm transition-colors hover:border-primary/30 sm:gap-6"
-      data-testid="overview-status"
-    >
-      <span class="flex shrink-0 items-center gap-1.5 font-semibold" [class]="text[s.tone]">
-        <span class="h-2 w-2 rounded-full" [class]="dot[s.tone]"></span>
-        {{ s.label }}
-      </span>
-      @for (bar of bars(); track bar.key) {
-        <span class="hidden items-center gap-2 sm:flex">
-          <span class="text-label">{{ bar.key }}</span>
-          <span class="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
-            <span
-              class="block h-full rounded-full transition-all"
-              [class]="dot[bar.tone]"
-              [style.width.%]="bar.percent"
-            ></span>
-          </span>
-          <span class="font-medium tabular-nums" [class]="text[bar.tone]"
-            >{{ bar.percent.toFixed(0) }}%</span
-          >
-        </span>
-      }
-      <span class="hidden truncate text-xs text-muted-foreground lg:inline">{{ usage() }}</span>
-      <span class="ml-auto flex shrink-0 items-center gap-1 text-xs font-medium text-primary">
-        <span class="hidden sm:inline">Monitoring</span>
-        <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-      </span>
-    </a>
+    <fl-panel title="Live usage" data-testid="overview-status">
+      <a panelActions class="fl-link text-fl-body-sm" [routerLink]="['../monitoring']"
+        >Monitoring</a
+      >
+      <div class="flex flex-col gap-4">
+        <fl-status [tone]="tone()" [label]="s.label" />
+        <div class="grid gap-4 sm:grid-cols-2">
+          @for (bar of bars(); track bar.key) {
+            <fl-usage-bar
+              [percent]="bar.percent"
+              [label]="bar.key"
+              [aside]="bar.aside"
+              [warnAt]="bar.warnAt"
+              [criticalAt]="90"
+            />
+          }
+        </div>
+      </div>
+    </fl-panel>
   `,
 })
 export class AppOverviewStatusStripComponent {
   readonly metrics = input.required<AppMetricsDto>();
   readonly appStatus = input<string | null | undefined>(null);
 
-  protected readonly text = TONE_TEXT;
-  protected readonly dot = TONE_DOT;
-
   protected readonly state = computed(() => runStateOf(this.metrics(), this.appStatus()));
+  protected readonly tone = computed(() => statusToneOf(this.state().tone));
 
   protected readonly bars = computed(() => {
     const m = this.metrics();
-    const cpu = limitPercent(m.cpu.usage_cores, m.cpu.limits_cores);
-    const mem = limitPercent(m.memory.usage_bytes, m.memory.limits_bytes);
     return [
-      { key: 'CPU', percent: cpu, tone: loadTone(cpu, 70, 90) },
-      { key: 'Memory', percent: mem, tone: loadTone(mem, 75, 90) },
+      {
+        key: 'CPU',
+        percent: limitPercent(m.cpu.usage_cores, m.cpu.limits_cores),
+        aside: asideOf('CPU', m.cpu.usage_cores, m.cpu.limits_cores, formatCores),
+        warnAt: 70,
+      },
+      {
+        key: 'Memory',
+        percent: limitPercent(m.memory.usage_bytes, m.memory.limits_bytes),
+        aside: asideOf('Memory', m.memory.usage_bytes, m.memory.limits_bytes, formatUsageBytes),
+        warnAt: 75,
+      },
     ];
   });
+}
 
-  protected readonly usage = computed(() => {
-    const m = this.metrics();
-    return `${formatCores(m.cpu.usage_cores ?? 0)} · ${formatUsageBytes(m.memory.usage_bytes ?? 0)}`;
-  });
+function asideOf(
+  key: string,
+  usage: number | null | undefined,
+  limit: number | null | undefined,
+  format: (value: number) => string,
+): string {
+  const used = format(usage ?? 0);
+  return limit && limit > 0 ? `${key} · ${used} of ${format(limit)}` : `${key} · ${used}, no limit`;
 }
